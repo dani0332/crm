@@ -13,32 +13,32 @@
   ✓ middleware returns array                                             0.02s  
   ✓ job implements should queue                                          0.03s  
   ✓ job uses correct traits                                              0.03s  
-  ✓ job properties are correctly typed                                   0.02s  
-  ✓ job has required methods                                             0.02s  
+  ✓ job properties are correctly typed                                   0.03s  
+  ✓ job has required methods                                             0.03s  
   ✓ job methods are public                                               0.03s  
   ✓ job constructor accepts array                                        0.03s  
   ✓ job constructor with empty array                                     0.04s  
   ✓ job constructor with minimal data                                    0.05s  
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
-  ✓ is health questionnaire validation                                   0.11s  
+  ✓ is health questionnaire validation                                   0.15s  
   ✓ extract health questionnaire success                                 0.03s  
   ✓ extract health questionnaire not found                               0.03s  
   ✓ extract health questionnaire empty fields                            0.03s  
   ✓ extract health questionnaire missing submitted data                  0.03s  
   ✓ extract health questionnaire missing fields                          0.03s  
-  ✓ is health questionnaire with missing required fields                 0.02s  
+  ✓ is health questionnaire with missing required fields                 0.03s  
   ✓ is health questionnaire with empty array                             0.03s  
   ✓ is health questionnaire with null                                    0.03s  
   ✓ is health questionnaire case sensitivity                             0.03s  
-  ✓ is health questionnaire with extra fields                            0.03s  
-  ✓ extract health questionnaire with multiple forms                     0.03s  
-  ✓ service instantiation                                                0.03s  
+  ✓ is health questionnaire with extra fields                            0.05s  
+  ✓ extract health questionnaire with multiple forms                     0.04s  
+  ✓ service instantiation                                                0.05s  
   ✓ service has required methods                                         0.03s  
   ✓ service methods are private or public                                0.02s  
 
    FAIL  Tests\Unit\Services\MetLife\MetLifeApiServiceTest
-  ✓ is metlife enabled returns boolean                                   0.13s  
+  ✓ is metlife enabled returns boolean                                   0.19s  
   ✓ get mime type from extension pdf                                     0.03s  
   ✓ get mime type from extension docx                                    0.03s  
   ✓ get mime type from extension unknown                                 0.03s  
@@ -70,14 +70,14 @@
   ✓ upload to metlife response consistency                               0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeCacheServiceTest
-  ✓ load session returns cached data                                     0.23s  
+  ✓ load session returns cached data                                     0.31s  
   ✓ cache session stores data                                            0.03s  
   ✓ cache tokens stores data                                             0.03s  
   ✓ load cached session data with type casting                           0.03s  
   ✓ clear cache removes all data                                         0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeRequestServiceTest
-  ✓ make request get success                                             0.07s  
+  ✓ make request get success                                             0.09s  
   ✓ make request post success                                            0.03s  
   ✓ make request unsupported method                                      0.03s  
   ✓ make request failure                                                 0.03s  
@@ -97,7 +97,7 @@
   ✓ response structure consistency                                       0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeSimpleTest
-  ✓ request service http calls                                           0.10s  
+  ✓ request service http calls                                           0.12s  
   ✓ cache service operations                                             0.03s  
   ✓ validation service logic                                             0.03s  
   ✓ http headers building                                                0.03s  
@@ -106,7 +106,7 @@
   ✓ exception handling                                                   0.03s  
 
    FAIL  Tests\Unit\Services\MetLife\MetLifeValidationServiceTest
-  ✓ is session valid with valid session                                  0.08s  
+  ✓ is session valid with valid session                                  0.10s  
   ✓ is session valid with expired session                                0.03s  
   ✓ is session valid with null session id original                       0.03s  
   ✓ is csrf token valid with valid token                                 0.03s  
@@ -148,11 +148,11 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.61s  
-  ✓ validates required fields when creating life quote                   0.04s  
+  ✓ can create a life quote using actual controller method               0.64s  
+  ✓ validates required fields when creating life quote                   0.05s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
-  ⨯ initialize with successful api response                              0.05s  
+  ⨯ initialize with successful api response                              0.06s  
   ⨯ login with successful api response                                   0.03s  
   ✓ cache session and load                                               0.03s  
   ✓ cached session data with type casting                                0.03s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 5.71s
+  Duration: 6.26s
 
