@@ -5,40 +5,40 @@
   ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.17s  
-  ✓ handle success                                                       0.05s  
-  ✓ handle with error response                                           0.04s  
+  ✓ job constructor sets properties                                      0.19s  
+  ✓ handle success                                                       0.03s  
+  ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
   ✓ handle with array result success true                                0.03s  
   ✓ middleware returns array                                             0.03s  
   ✓ job implements should queue                                          0.03s  
   ✓ job uses correct traits                                              0.03s  
-  ✓ job properties are correctly typed                                   0.04s  
+  ✓ job properties are correctly typed                                   0.03s  
   ✓ job has required methods                                             0.03s  
   ✓ job methods are public                                               0.03s  
   ✓ job constructor accepts array                                        0.02s  
   ✓ job constructor with empty array                                     0.03s  
-  ✓ job constructor with minimal data                                    0.03s  
+  ✓ job constructor with minimal data                                    0.04s  
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
-  ✓ is health questionnaire validation                                   0.15s  
-  ✓ extract health questionnaire success                                 0.03s  
-  ✓ extract health questionnaire not found                               0.04s  
+  ✓ is health questionnaire validation                                   0.16s  
+  ✓ extract health questionnaire success                                 0.04s  
+  ✓ extract health questionnaire not found                               0.03s  
   ✓ extract health questionnaire empty fields                            0.03s  
   ✓ extract health questionnaire missing submitted data                  0.04s  
   ✓ extract health questionnaire missing fields                          0.03s  
   ✓ is health questionnaire with missing required fields                 0.03s  
-  ✓ is health questionnaire with empty array                             0.03s  
+  ✓ is health questionnaire with empty array                             0.05s  
   ✓ is health questionnaire with null                                    0.03s  
   ✓ is health questionnaire case sensitivity                             0.04s  
-  ✓ is health questionnaire with extra fields                            0.03s  
+  ✓ is health questionnaire with extra fields                            0.04s  
   ✓ extract health questionnaire with multiple forms                     0.04s  
   ✓ service instantiation                                                0.03s  
   ✓ service has required methods                                         0.03s  
   ✓ service methods are private or public                                0.03s  
 
    FAIL  Tests\Unit\Services\MetLife\MetLifeApiServiceTest
-  ✓ is metlife enabled returns boolean                                   0.17s  
+  ✓ is metlife enabled returns boolean                                   0.18s  
   ✓ get mime type from extension pdf                                     0.03s  
   ✓ get mime type from extension docx                                    0.03s  
   ✓ get mime type from extension unknown                                 0.03s  
@@ -47,14 +47,14 @@
   ✓ service initialization properties                                    0.03s  
   ✓ upload to metlife validation missing policy number                   0.03s  
   ✓ upload to metlife validation missing file                            0.03s  
-  ✓ upload to metlife validation empty policy number                     0.03s  
-  ✓ upload to metlife validation empty file                              0.03s  
-  ✓ response structure consistency                                       0.03s  
-  ✓ upload to metlife with valid data structure                          0.03s  
-  ✓ upload to metlife with null policy number                            0.03s  
-  ✓ upload to metlife with null file                                     0.03s  
-  ✓ upload to metlife with whitespace policy number                      0.03s  
-  ✓ upload to metlife with whitespace file                               0.03s  
+  ✓ upload to metlife validation empty policy number                     0.04s  
+  ✓ upload to metlife validation empty file                              0.04s  
+  ✓ response structure consistency                                       0.04s  
+  ✓ upload to metlife with valid data structure                          0.05s  
+  ✓ upload to metlife with null policy number                            0.04s  
+  ✓ upload to metlife with null file                                     0.04s  
+  ✓ upload to metlife with whitespace policy number                      0.04s  
+  ✓ upload to metlife with whitespace file                               0.04s  
   ✓ get api version returns string                                       0.04s  
   ⨯ accepted document mime types contains expected types                 0.04s  
   ⨯ accepted document mime types is array                                0.03s  
@@ -73,7 +73,7 @@
   ✓ load session returns cached data                                     0.32s  
   ✓ cache session stores data                                            0.03s  
   ✓ cache tokens stores data                                             0.03s  
-  ✓ load cached session data with type casting                           0.04s  
+  ✓ load cached session data with type casting                           0.03s  
   ✓ clear cache removes all data                                         0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeRequestServiceTest
@@ -86,7 +86,7 @@
   ✓ exception handling                                                   0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeResponseServiceTest
-  ✓ create response success                                              0.10s  
+  ✓ create response success                                              0.11s  
   ✓ create response failure                                              0.03s  
   ✓ handle upload response success                                       0.03s  
   ✓ handle upload response nested file reference                         0.03s  
@@ -97,7 +97,7 @@
   ✓ response structure consistency                                       0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeSimpleTest
-  ✓ request service http calls                                           0.12s  
+  ✓ request service http calls                                           0.13s  
   ✓ cache service operations                                             0.03s  
   ✓ validation service logic                                             0.03s  
   ✓ http headers building                                                0.03s  
@@ -123,7 +123,7 @@
   ✓ is csrf token valid with null token                                  0.03s  
   ✓ is csrf token valid with null created at                             0.03s  
   ✓ is csrf token valid with both null                                   0.03s  
-  ✓ is csrf token valid with zero timeout                                0.04s  
+  ✓ is csrf token valid with zero timeout                                0.03s  
   ✓ is csrf token valid with negative timeout                            0.03s  
   ✓ is session valid with null session id                                0.03s  
   ✓ is session valid with null created at                                0.03s  
@@ -148,11 +148,11 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.57s  
-  ✓ validates required fields when creating life quote                   0.14s  
+  ✓ can create a life quote using actual controller method               0.54s  
+  ✓ validates required fields when creating life quote                   0.05s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
-  ⨯ initialize with successful api response                              0.07s  
+  ⨯ initialize with successful api response                              0.06s  
   ⨯ login with successful api response                                   0.03s  
   ✓ cache session and load                                               0.03s  
   ✓ cached session data with type casting                                0.03s  
@@ -169,11 +169,11 @@
   ⨯ upload validation missing file                                       0.03s  
   ⨯ upload validation empty policy number                                0.03s  
   ⨯ upload validation empty file                                         0.03s  
-  ⨯ response structure consistency                                       0.04s  
-  ✓ null session validation                                              0.05s  
-  ✓ response validation                                                  0.04s  
-  ✓ exception handling                                                   0.04s  
-  ✓ provider metlife check                                               0.05s  
+  ⨯ response structure consistency                                       0.03s  
+  ✓ null session validation                                              0.03s  
+  ✓ response validation                                                  0.03s  
+  ✓ exception handling                                                   0.03s  
+  ✓ provider metlife check                                               0.03s  
   ────────────────────────────────────────────────────────────────────────────  
    FAILED  Tests\Unit\Services\MetLife\MetLifeApiServic…  ReflectionException   
   Property App\Services\MetLife\MetLifeApiService::$acceptedDocumentMimeTypes does not exist
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.33s
+  Duration: 6.50s
 
