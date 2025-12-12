@@ -28,7 +28,7 @@ class AdnicApiService
      * @param  mixed  $quote
      * @param  mixed  $process
      */
-    public function issuePolicy($quote, $process): array
+    public function issuePolicy($quote, $process, $healthInsurerRequestResponse): array
     {
         LoggerService::info('Initiating policy issuance API call', extra: [
             'process_id' => $process->id,
@@ -37,17 +37,12 @@ class AdnicApiService
         ]);
 
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_ISSUE_POLICY);
-        $endPoint = '/cyber/generatePolicy';
-
-        $customer = $quote->customer;
-        $nationality = $quote->nationality;
-        $emirateOfRegistration = $quote->cyberQuote->emirateOfRegistration;
-        $planDetail = $quote->cyberPlanDetail;
+        $endPoint = '/GeneratePolicy';
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
-        $payload = $this->requestBuilder->buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment, $emirateOfRegistration);
+        $payload = $this->requestBuilder->buildIssuePolicyPayload($quote, $process, $healthInsurerRequestResponse, $splitPayment);
         $headers = $this->requestBuilder->buildIssuePolicyHeaders();
 
         $httpResponse = AdnicHttpFacade::post($endPoint, $payload, $headers);

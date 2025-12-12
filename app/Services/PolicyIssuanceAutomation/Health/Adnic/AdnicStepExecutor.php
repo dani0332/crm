@@ -36,7 +36,7 @@ class AdnicStepExecutor {
             'plan_id' => $quote->plan_id,
         ]);
 
-        $policyIssuanceResponse = $this->apiService->issuePolicy($quote, $process);
+        $policyIssuanceResponse = $this->apiService->issuePolicy($quote, $process, $this->healthInsurerRequestResponse);
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::error('Policy issuance failed', extra: [

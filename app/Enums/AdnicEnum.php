@@ -22,4 +22,12 @@ class AdnicEnum
 
     public const UNKNOWN_ERROR = 'Unknown error';
     public const ALL_STEPS_ARE_EDITABLE = 'All Steps are editable';
+
+    public const LOADING_TYPE = 'PER';
+    public const LOADING_VALUE = 0;
+    public const LOADING_AMOUNT = 0;
+
+    public const PAYMENT_TYPE = 5;
+
+    public const NO = 'NO';
 }
