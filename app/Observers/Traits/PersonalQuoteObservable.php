@@ -118,10 +118,6 @@ trait PersonalQuoteObservable
             LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
         }
 
-        if ($personalQuote->isCyber()) {
-
-        }
-
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
     }
 
