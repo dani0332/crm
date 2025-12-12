@@ -5,24 +5,24 @@
   ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.16s  
-  ✓ handle success                                                       0.03s  
-  ✓ handle with error response                                           0.03s  
-  ✓ handle with exception                                                0.03s  
-  ✓ handle with array result success true                                0.03s  
+  ✓ job constructor sets properties                                      0.17s  
+  ✓ handle success                                                       0.05s  
+  ✓ handle with error response                                           0.05s  
+  ✓ handle with exception                                                0.05s  
+  ✓ handle with array result success true                                0.05s  
   ✓ middleware returns array                                             0.03s  
   ✓ job implements should queue                                          0.03s  
   ✓ job uses correct traits                                              0.03s  
   ✓ job properties are correctly typed                                   0.03s  
   ✓ job has required methods                                             0.03s  
   ✓ job methods are public                                               0.03s  
-  ✓ job constructor accepts array                                        0.04s  
-  ✓ job constructor with empty array                                     0.04s  
-  ✓ job constructor with minimal data                                    0.04s  
+  ✓ job constructor accepts array                                        0.03s  
+  ✓ job constructor with empty array                                     0.03s  
+  ✓ job constructor with minimal data                                    0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
   ✓ is health questionnaire validation                                   0.15s  
-  ✓ extract health questionnaire success                                 0.04s  
+  ✓ extract health questionnaire success                                 0.03s  
   ✓ extract health questionnaire not found                               0.03s  
   ✓ extract health questionnaire empty fields                            0.03s  
   ✓ extract health questionnaire missing submitted data                  0.03s  
@@ -40,10 +40,10 @@
    FAIL  Tests\Unit\Services\MetLife\MetLifeApiServiceTest
   ✓ is metlife enabled returns boolean                                   0.18s  
   ✓ get mime type from extension pdf                                     0.03s  
-  ✓ get mime type from extension docx                                    0.03s  
+  ✓ get mime type from extension docx                                    0.04s  
   ✓ get mime type from extension unknown                                 0.03s  
   ✓ get mime type from extension case insensitive                        0.03s  
-  ⨯ accepted document mime types structure                               0.03s  
+  ⨯ accepted document mime types structure                               0.04s  
   ✓ service initialization properties                                    0.03s  
   ✓ upload to metlife validation missing policy number                   0.02s  
   ✓ upload to metlife validation missing file                            0.02s  
@@ -62,7 +62,7 @@
   ✓ get mime type from extension empty string                            0.03s  
   ✓ get mime type from extension with dots                               0.03s  
   ✓ get mime type from extension mixed case                              0.03s  
-  ✓ service constructor initializes dependencies                         0.04s  
+  ✓ service constructor initializes dependencies                         0.03s  
   ✓ upload to metlife data structure validation                          0.03s  
   ✓ upload to metlife with provider code                                 0.03s  
   ✓ upload to metlife document name handling                             0.03s  
@@ -70,10 +70,10 @@
   ✓ upload to metlife response consistency                               0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeCacheServiceTest
-  ✓ load session returns cached data                                     0.32s  
+  ✓ load session returns cached data                                     0.31s  
   ✓ cache session stores data                                            0.03s  
   ✓ cache tokens stores data                                             0.03s  
-  ✓ load cached session data with type casting                           0.04s  
+  ✓ load cached session data with type casting                           0.03s  
   ✓ clear cache removes all data                                         0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeRequestServiceTest
@@ -86,18 +86,18 @@
   ✓ exception handling                                                   0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeResponseServiceTest
-  ✓ create response success                                              0.11s  
+  ✓ create response success                                              0.10s  
   ✓ create response failure                                              0.03s  
   ✓ handle upload response success                                       0.03s  
-  ✓ handle upload response nested file reference                         0.05s  
-  ✓ handle upload response failure                                       0.05s  
-  ✓ handle http response success                                         0.04s  
-  ✓ handle http response failure                                         0.04s  
+  ✓ handle upload response nested file reference                         0.03s  
+  ✓ handle upload response failure                                       0.03s  
+  ✓ handle http response success                                         0.03s  
+  ✓ handle http response failure                                         0.03s  
   ✓ handle exception response                                            0.03s  
   ✓ response structure consistency                                       0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeSimpleTest
-  ✓ request service http calls                                           0.13s  
+  ✓ request service http calls                                           0.12s  
   ✓ cache service operations                                             0.03s  
   ✓ validation service logic                                             0.03s  
   ✓ http headers building                                                0.03s  
@@ -132,7 +132,7 @@
   ✓ is session valid with negative timeout                               0.03s  
   ✓ is session valid exactly at timeout                                  0.03s  
   ✓ is csrf token valid exactly at timeout                               0.03s  
-  ✓ validate response with missing status                                0.04s  
+  ✓ validate response with missing status                                0.03s  
   ✓ validate response with string status                                 0.03s  
   ✓ validate response with integer status                                0.03s  
   ✓ validate response with empty array                                   0.03s  
@@ -144,12 +144,12 @@
   ⨯ should validate payment with integration false                       0.03s  
   ⨯ should validate payment with integration string true                 0.03s  
   ⨯ should validate payment with integration string false                0.03s  
-  ✓ is integration enabled returns boolean                               0.04s  
+  ✓ is integration enabled returns boolean                               0.03s  
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.73s  
-  ✓ validates required fields when creating life quote                   0.12s  
+  ✓ can create a life quote using actual controller method               0.59s  
+  ✓ validates required fields when creating life quote                   0.19s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
   ⨯ initialize with successful api response                              0.05s  
@@ -158,7 +158,7 @@
   ✓ cached session data with type casting                                0.03s  
   ✓ expired session detection                                            0.03s  
   ✓ valid session detection                                              0.03s  
-  ✓ session at timeout boundary                                          0.04s  
+  ✓ session at timeout boundary                                          0.03s  
   ⨯ api failure response                                                 0.03s  
   ⨯ network timeout handling                                             0.03s  
   ⨯ invalid credentials response                                         0.04s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.68s
+  Duration: 6.18s
 
