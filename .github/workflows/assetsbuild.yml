@@ -39,7 +39,7 @@ jobs:
         id: tests
         continue-on-error: true
         run: |
-          set +e
+          #set +e
           vendor/bin/pest --log-junit test-results.xml > test-output.txt 2>&1
           TEST_EXIT_CODE=$?
           echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
