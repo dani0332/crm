@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
+use App\Services\Logger\LoggerService;
 
 class ClaimNextFollowUpUpdateRequest extends FormRequest
 {
@@ -77,7 +78,7 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
             $dateValue = $this->input('next_follow_up_date');
 
             // Debug: Log the incoming date value
-            \Log::info('NextFollowUp - Incoming date value:', [
+            LoggerService::info('NextFollowUp - Incoming date value:', [
                 'original_value' => $dateValue,
                 'type' => gettype($dateValue),
             ]);
@@ -88,7 +89,7 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
                     $date = new \DateTime($dateValue);
                     $formattedDate = $date->format('Y-m-d H:i:s');
 
-                    \Log::info('NextFollowUp - Converted date:', [
+                    LoggerService::info('NextFollowUp - Converted date:', [
                         'formatted_date' => $formattedDate,
                     ]);
 
@@ -96,11 +97,10 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
                         'next_follow_up_date' => $formattedDate,
                     ]);
                 } catch (\Exception $e) {
-                    \Log::error('NextFollowUp - Date conversion failed:', [
+                    LoggerService::error('NextFollowUp - Date conversion failed:', [
                         'error' => $e->getMessage(),
                         'original_value' => $dateValue,
                     ]);
-                    // Keep original value if conversion fails - let validation handle it
                 }
             }
         }
@@ -131,7 +131,7 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
                     // Check if date is in the past (with a 1-minute buffer to handle processing time)
                     $nowWithBuffer = new \DateTime('-1 minute');
                     if ($selectedDate <= $nowWithBuffer) {
-                        \Log::warning('NextFollowUp - Date is in the past');
+                        LoggerService::warning('NextFollowUp - Date is in the past');
                         $validator->errors()->add(
                             'next_follow_up_date',
                             'The next follow-up date must be in the future.'
@@ -140,7 +140,7 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
 
                     // Check if date is more than 15 days in the future
                     if ($selectedDate > $maxDate) {
-                        \Log::warning('NextFollowUp - Date is too far in the future');
+                        LoggerService::warning('NextFollowUp - Date is too far in the future');
                         $validator->errors()->add(
                             'next_follow_up_date',
                             'The next follow-up date cannot be more than 15 days in the future.'
@@ -148,7 +148,7 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
                     }
 
                 } catch (\Exception $e) {
-                    \Log::error('NextFollowUp - Custom validation failed:', [
+                    LoggerService::error('NextFollowUp - Custom validation failed:', [
                         'error' => $e->getMessage(),
                         'date_value' => $dateValue,
                     ]);

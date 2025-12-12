@@ -405,7 +405,6 @@ class ClaimsService extends BaseService
                 'requestReferenceNumber' => $data['request_reference_number'] ?? null,
             ];
 
-            // dd($apiData, $data);
             // Remove null values from $apiData before sending request
             $apiData = array_filter($apiData, function ($value) {
                 return ! is_null($value);
@@ -838,10 +837,10 @@ class ClaimsService extends BaseService
         $isRequiredFieldsFilled = false;
 
         if ($isCarQuoteType) {
-            $isRequiredFieldsFilled = $claimRequestDetails->plate_number && $claimRequestDetails->car_make && $claimRequestDetails->car_model && $claimRequestDetails->model_year;
+            $isRequiredFieldsFilled = $claimRequestDetails?->plate_number && $claimRequestDetails?->car_make && $claimRequestDetails?->car_model && $claimRequestDetails?->model_year;
         } else {
 
-            $isRequiredFieldsFilled = $claimRequest->policy_number && $claimRequest->claim_number && $claimRequest->incident_date;
+            $isRequiredFieldsFilled = $claimRequest?->policy_number && $claimRequest?->claim_number && $claimRequest?->incident_date;
         }
 
         return $isRequiredFieldsFilled;
@@ -907,7 +906,7 @@ class ClaimsService extends BaseService
     {
         $updateClaimData['claim_sub_status_id'] = $request->claim_sub_status_id;
         $subStatus = ClaimStatus::find($request->claim_sub_status_id);
-        $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->text) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
+        $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
         if ($targetStatus) {
             $updateClaimData['claim_status_id'] = ClaimStatus::where('text', $targetStatus)->where('status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)->where('is_active', 1)->first()?->id;
         }

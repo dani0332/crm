@@ -111,6 +111,6 @@ class GenericDocumentType extends Model implements AuditableContract
      */
     public function genericDocuments()
     {
-        return $this->hasMany(GenericDocument::class, 'document_type_id');
+        return $this->hasMany(GenericDocument::class, 'generic_document_type_id');
     }
 }

@@ -78,6 +78,10 @@ class ClaimDetailsUpdateRequest extends FormRequest
                 'string',
                 'max:2000',
             ],
+            'quote_type_id' => [
+                'nullable',
+                'integer',
+            ],
             'incident_date' => [
                 'required',
                 'date',
