@@ -5,30 +5,30 @@
   ✓ example
 
    PASS  Tests\Unit\Jobs\LifeSyncHealthQuestionnaireJobTest
-  ✓ job constructor sets properties                                      0.17s  
+  ✓ job constructor sets properties                                      0.16s  
   ✓ handle success                                                       0.03s  
   ✓ handle with error response                                           0.03s  
   ✓ handle with exception                                                0.03s  
   ✓ handle with array result success true                                0.03s  
   ✓ middleware returns array                                             0.03s  
   ✓ job implements should queue                                          0.03s  
-  ✓ job uses correct traits                                              0.04s  
-  ✓ job properties are correctly typed                                   0.04s  
+  ✓ job uses correct traits                                              0.03s  
+  ✓ job properties are correctly typed                                   0.03s  
   ✓ job has required methods                                             0.03s  
   ✓ job methods are public                                               0.03s  
   ✓ job constructor accepts array                                        0.03s  
   ✓ job constructor with empty array                                     0.03s  
-  ✓ job constructor with minimal data                                    0.05s  
+  ✓ job constructor with minimal data                                    0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MTLHealthQuestionnaireServiceTest
-  ✓ is health questionnaire validation                                   0.17s  
-  ✓ extract health questionnaire success                                 0.04s  
-  ✓ extract health questionnaire not found                               0.03s  
-  ✓ extract health questionnaire empty fields                            0.03s  
+  ✓ is health questionnaire validation                                   0.15s  
+  ✓ extract health questionnaire success                                 0.05s  
+  ✓ extract health questionnaire not found                               0.05s  
+  ✓ extract health questionnaire empty fields                            0.04s  
   ✓ extract health questionnaire missing submitted data                  0.03s  
   ✓ extract health questionnaire missing fields                          0.03s  
   ✓ is health questionnaire with missing required fields                 0.03s  
-  ✓ is health questionnaire with empty array                             0.03s  
+  ✓ is health questionnaire with empty array                             0.04s  
   ✓ is health questionnaire with null                                    0.03s  
   ✓ is health questionnaire case sensitivity                             0.03s  
   ✓ is health questionnaire with extra fields                            0.03s  
@@ -86,7 +86,7 @@
   ✓ exception handling                                                   0.03s  
 
    PASS  Tests\Unit\Services\MetLife\MetLifeResponseServiceTest
-  ✓ create response success                                              0.10s  
+  ✓ create response success                                              0.11s  
   ✓ create response failure                                              0.03s  
   ✓ handle upload response success                                       0.03s  
   ✓ handle upload response nested file reference                         0.03s  
@@ -148,24 +148,24 @@
   ✓ validation methods return boolean                                    0.03s  
 
    PASS  Tests\Feature\LifeQuoteTest
-  ✓ can create a life quote using actual controller method               0.52s  
-  ✓ validates required fields when creating life quote                   0.15s  
+  ✓ can create a life quote using actual controller method               0.72s  
+  ✓ validates required fields when creating life quote                   0.05s  
 
    FAIL  Tests\Feature\MetLifeIntegrationTest
   ⨯ initialize with successful api response                              0.06s  
   ⨯ login with successful api response                                   0.03s  
   ✓ cache session and load                                               0.03s  
-  ✓ cached session data with type casting                                0.04s  
-  ✓ expired session detection                                            0.04s  
-  ✓ valid session detection                                              0.04s  
-  ✓ session at timeout boundary                                          0.04s  
-  ⨯ api failure response                                                 0.04s  
-  ⨯ network timeout handling                                             0.04s  
-  ⨯ invalid credentials response                                         0.04s  
-  ✓ cache clear removes all data                                         0.04s  
-  ⨯ get api version                                                      0.04s  
-  ⨯ is metlife enabled returns boolean                                   0.04s  
-  ⨯ upload validation missing policy number                              0.04s  
+  ✓ cached session data with type casting                                0.03s  
+  ✓ expired session detection                                            0.03s  
+  ✓ valid session detection                                              0.03s  
+  ✓ session at timeout boundary                                          0.03s  
+  ⨯ api failure response                                                 0.03s  
+  ⨯ network timeout handling                                             0.03s  
+  ⨯ invalid credentials response                                         0.03s  
+  ✓ cache clear removes all data                                         0.03s  
+  ⨯ get api version                                                      0.03s  
+  ⨯ is metlife enabled returns boolean                                   0.03s  
+  ⨯ upload validation missing policy number                              0.03s  
   ⨯ upload validation missing file                                       0.03s  
   ⨯ upload validation empty policy number                                0.03s  
   ⨯ upload validation empty file                                         0.03s  
@@ -551,5 +551,5 @@ Failed asserting that true is false.
 
 
   Tests:    21 failed, 131 passed (362 assertions)
-  Duration: 6.20s
+  Duration: 6.43s
 
