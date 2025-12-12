@@ -714,9 +714,9 @@ class ClaimsService extends BaseService
     {
         try {
             $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
-            $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED;
+            $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED->value;
             if ($isCarQuoteType) {
-                $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION;
+                $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION->value;
             }
             // Find the "Claim initiated" status for the specific quote type
             $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->where('quote_type_id', $claimRequest->quote_type_id)->where('is_active', 1)->where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->first();
@@ -799,7 +799,7 @@ class ClaimsService extends BaseService
 
     public function markClaimAsOpen(ClaimRequest $claimRequest): void
     {
-        $claimStatusOpen = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_OPEN)->where('is_active', 1)->first();
+        $claimStatusOpen = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_OPEN->value)->where('is_active', 1)->first();
         if ($claimStatusOpen) {
             $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Open" - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -813,7 +813,7 @@ class ClaimsService extends BaseService
 
     public function markClaimAsClosed(ClaimRequest $claimRequest): void
     {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED)->where('is_active', 1)->first();
+        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->update(['claim_status_id' => $claimStatusClosed->id]);
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -997,7 +997,7 @@ class ClaimsService extends BaseService
 
     public function updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claimRequest): void
     {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS)->where('is_active', 1)->first();
+        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->save();
@@ -1012,7 +1012,7 @@ class ClaimsService extends BaseService
 
     public function updateClaimSubStatusToTotalLossOfferLetterShared(ClaimRequest $claimRequest): void
     {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED)->where('is_active', 1)->first();
+        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->save();
@@ -1027,7 +1027,7 @@ class ClaimsService extends BaseService
 
     public function updateClaimSubStatusToCashLossApproved(ClaimRequest $claimRequest): void
     {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED)->where('is_active', 1)->first();
+        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->save();
