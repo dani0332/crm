@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
-use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicHttpClient;
 use Carbon\Carbon;
 use App\Models\HealthUMAFResponses;
 use App\Enums\AdnicEnum;
@@ -17,7 +16,7 @@ class AdnicRequestBuilder
         private AdnicHttpClient $httpClient,
     ) {}
 
-     /**
+    /**
      * Build payload for issue policy API
      *
      * @param  mixed  $quote
@@ -157,7 +156,7 @@ class AdnicRequestBuilder
                 'IsDocumentValidated' => 'Y',
                 'DocumentContent' => $base64Content,
             ],
-        ];;
+        ];
     }
 
     /**
