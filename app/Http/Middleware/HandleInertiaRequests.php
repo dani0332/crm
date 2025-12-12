@@ -366,7 +366,7 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Services', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB),
+                        auth()->user()->can(PermissionsEnum::CLAIM_LIST),
                         'Claims',
                         route('claims.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
