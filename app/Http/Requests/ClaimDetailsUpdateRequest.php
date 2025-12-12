@@ -211,7 +211,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
 
         $claimRequestTypeId = $this->claim_request_type_id;
         $claimRequestType = Lookup::find($claimRequestTypeId);
-        $isPendingClaimRequestType = $claimRequestType->code === ClaimsEnum::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE;
+        $isPendingClaimRequestType = $claimRequestType?->code === ClaimsEnum::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE->value;
 
         if ($isPendingClaimRequestType && ! $this->filled('service_type_id')) {
             $validator->errors()->add('service_type_id', 'Service type is required.');

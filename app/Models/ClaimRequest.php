@@ -145,7 +145,7 @@ class ClaimRequest extends Model implements AuditableContract
 
     public function claimSubStatus(): BelongsTo
     {
-        return $this->belongsTo(Lookup::class, 'claim_sub_status_id');
+        return $this->belongsTo(ClaimStatus::class, 'claim_sub_status_id');
     }
 
     public function claimType(): BelongsTo
@@ -170,7 +170,7 @@ class ClaimRequest extends Model implements AuditableContract
 
     public function activities(): HasMany
     {
-        return $this->hasMany(Activities::class, 'claim_request_id');
+        return $this->hasMany(ClaimActivity::class, 'claim_request_id');
     }
 
     public function customerBankAccounts()

@@ -757,8 +757,10 @@ class ClaimsService extends BaseService
         }
     }
 
-    public function checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusCode): bool
+    public function checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusId): bool
     {
+        $newClaimStatus = ClaimStatus::find($newClaimSubStatusId);
+
         $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
         $isHealthQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Health;
         $isLifeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Life;
@@ -793,7 +795,7 @@ class ClaimsService extends BaseService
             ];
         }
 
-        return in_array($newClaimSubStatusCode, $subStatusListForClaimClosed);
+        return in_array($newClaimStatus?->text, $subStatusListForClaimClosed);
     }
 
     public function markClaimAsOpen(ClaimRequest $claimRequest): void
@@ -1388,7 +1390,7 @@ class ClaimsService extends BaseService
             // Check if complaint status has changed to open complaint status
             $newComplaintStatus = ClaimStatus::where('id', $complaintStatusId)->where('is_active', 1)->first();
 
-            $isNewStatusComplaintOpen = $newComplaintStatus->text === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
+            $isNewStatusComplaintOpen = $newComplaintStatus?->text === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 
             if ($isNewStatusComplaintOpen) {
                 $this->markClaimAsOpen($claim);
