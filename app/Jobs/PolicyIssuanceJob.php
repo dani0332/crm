@@ -251,7 +251,14 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'message' => json_encode(['error' => $errorMessage]),
             ]);
         } else {
-            if (isset($response['booking_pending']) && $response['booking_pending']) {
+            if (isset($response['documents_pending']) && $response['documents_pending']) {
+                LoggerService::info('Automation: Documents pending (async job dispatched)', [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'provider' => $insuranceProvider->text,
+                ]);
+                return;
+            } elseif (isset($response['booking_pending']) && $response['booking_pending']) {
                 LoggerService::info('Automation: Booking pending', [
                     'process_id' => $this->process->id,
                     'quote_code' => $quoteCode,
@@ -305,7 +312,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         ]);
 
         LoggerService::error('Exception occurred during policy issuance automation', [
-            'process_id' => $this->process->id ?? $this->processId,
+            'process_id' => $this->process?->id ?? $this->processId,
             'quote_code' => $quoteCode,
         ], exception: $e);
     }

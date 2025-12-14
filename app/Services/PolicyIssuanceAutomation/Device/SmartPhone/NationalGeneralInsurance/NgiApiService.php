@@ -45,10 +45,10 @@ class NgiApiService
         $deviceQuote = $deviceQuote??$quote?->deviceQuote;
         $latestInsured = $latestInsured??$quote?->latestInsured;
 
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
+        $payment = $quote?->payments()?->mainLeadPayment()?->first();
+        $splitPayment = $payment?->paymentSplits()?->where('payment_method', PaymentMethodsEnum::CreditCard)?->first();
 
-        $payload = $this->requestBuilder->buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $splitPayment ?? $payment, $latestInsured);
+        $payload = $this->requestBuilder->buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $splitPayment ?? $payment ?? null, $latestInsured);
         $headers = $this->requestBuilder->buildCreatePolicyHeaders();
 
         $httpResponse = Ngi::post($endPoint, $payload, $headers);
@@ -106,11 +106,11 @@ class NgiApiService
     {
         LoggerService::info('Initiating GetPolicyDocuments API call', extra: [
             'process_id' => $process->id,
-            'step' => NgiEnum::STEP_GET_POLICY_DOCUMENTS,
+            'step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             'policy_number' => $quote->policy_number,
         ]);
 
-        $response = $this->responseHandler->buildStepResponse(NgiEnum::STEP_GET_POLICY_DOCUMENTS);
+        $response = $this->responseHandler->buildStepResponse(NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
         // Validate policy number exists
         $validationResult = $this->validationService->validatePolicyNumberExists($quote);
@@ -129,7 +129,7 @@ class NgiApiService
             $queryParams,
             $policyDocumentsResponse,
             Ngi::getBaseUrl() . $endPoint . '?' . http_build_query($queryParams),
-            NgiEnum::STEP_GET_POLICY_DOCUMENTS,
+            NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             $policyDocumentsResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
             $process
         );
@@ -162,7 +162,7 @@ class NgiApiService
 
         $response['status'] = true;
         $response['message'] = 'Policy documents retrieved successfully';
-        $response['completed_step'] = NgiEnum::STEP_GET_POLICY_DOCUMENTS;
+        $response['completed_step'] = NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM;
         $response['data'] = $policyDocumentsResult;
 
         return $response;

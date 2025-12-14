@@ -7,6 +7,7 @@ namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGenera
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\NgiEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Services\ApplicationStorageService;
@@ -18,8 +19,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
 {
     private array $stepHandlers = [
         NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE => 'executeCreatePolicyFromQuoteStep',
-        NgiEnum::STEP_GET_POLICY_DOCUMENTS => 'executeGetPolicyDocumentsStep',
-        NgiEnum::STEP_UPLOAD_POLICY_DOCS => 'executeUploadPolicyDocumentsStep',
+        NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM => 'executeGetPolicyDocumentsAndUploadToIMCRMStep',
         NgiEnum::STEP_BOOK_POLICY => 'executeBookPolicyStep',
     ];
 
@@ -39,8 +39,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     {
         return [
             NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
-            NgiEnum::STEP_GET_POLICY_DOCUMENTS,
-            NgiEnum::STEP_UPLOAD_POLICY_DOCS,
+            NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             NgiEnum::STEP_BOOK_POLICY,
         ];
     }
@@ -171,7 +170,9 @@ class NgiInsuranceService implements PolicyIssuanceInterface
             ]);
 
             $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted, $customer, $deviceQuote, $latestInsured);
-
+            if (isset($executeStepSequence['documents_pending']) && $executeStepSequence['documents_pending']) {
+                $response['documents_pending'] = $executeStepSequence['documents_pending'];
+            }
             $response['status'] = $executeStepSequence['status'];
             $response['message'] = $executeStepSequence['message'];
             $response['error'] = $executeStepSequence['error'];
@@ -244,6 +245,22 @@ class NgiInsuranceService implements PolicyIssuanceInterface
 
             $response = $this->stepExecutor->{$handler}($quote, $process, $customer, $deviceQuote, $latestInsured);
             $stepsExecuted[] = $currentStep;
+
+            if (isset($response['documents_pending']) && $response['documents_pending']) {
+                LoggerService::info('Step dispatched async job, setting documents_pending status and exiting', extra: [
+                    'process_id' => $process->id,
+                    'current_step' => $currentStep,
+                    'steps_executed' => $stepsExecuted,
+                ]);
+
+                return [
+                    'status' => true,
+                    'documents_pending' => true,
+                    'message' => $response['message'] ?? 'Document retrieval job dispatched',
+                    'completed_step' => $response['completed_step'] ?? $currentStep,
+                    'error' => null,
+                ];
+            }
 
             if (isset($response['status']) && ! $response['status']) {
                 LoggerService::error('Step execution failed', extra: [

@@ -88,6 +88,7 @@ class NgiQuoteUpdaterService
      */
     public function updatePaymentFromPolicyDocumentsResponse(string $quoteCode, $policyDocumentsResult): void
     {
+        // TODO:: NGI:: missing from FRD ask and map it according to FRD
         $updateData = [];
 
         // Commission details

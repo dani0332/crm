@@ -104,51 +104,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
-if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
-    Route::get('/debug/cc-payment-process/{id}', function ($id) {
-        $ccPaymentProcess = \App\Models\CcPaymentProcess::find($id);
-        if (!$ccPaymentProcess) {
-            return response()->json(['error' => 'CcPaymentProcess not found'], 404);
-        }
-        // Update status to pending, then to queued (mimicking command behavior)
-//        $ccPaymentProcess->update(['status' => \App\Enums\PaymentProcessJobEnum::PENDING]);
-        $ccPaymentProcess->update(['status' => \App\Enums\PaymentProcessJobEnum::QUEUED]);
-        // Call the job directly (synchronously) instead of dispatching
-        $job = new \App\Jobs\ProcessCCPaymentJob($id, $ccPaymentProcess->splitPayment->code);
-        $job->handle();
-        return response()->json([
-            'message' => 'Debug route executed synchronously',
-            'cc_payment_process_id' => $id,
-        ]);
-    });
-}
-
-if (config('constants.APP_ENV') !== EnvEnum::PRODUCTION && config('app.debug') === true) {
-    Route::get('/debug/policy-issuance/{policyIssuanceId}/{policyStatus?}/{policyCompletedStep?}', function ($policyIssuanceId, $policyStatus = null, $policyCompletedStep = null) {
-        // TODO:: create all common update values of policy issuance table from request data to update, move this func code inside and comment route and push for quick testing debugging.
-        $policyIssuanceProcess = \App\Models\PolicyIssuance::find($policyIssuanceId);
-        if (!empty($policyStatus)) {
-            if (in_array($policyStatus, ['ON_HOLD', 'complete', 'completed', 'failed', 'timeout', 'pending', 'booking_pending'])) {
-                $policyIssuanceProcess->status = $policyStatus;
-            } else if ($policyStatus === 'NULL') {
-                $policyIssuanceProcess->status = null;
-            }
-        }
-        if (!empty($policyCompletedStep)) {
-            if (in_array($policyCompletedStep, ['Book Policy', 'BookPolicy', 'ExecuteOCRProcessing', 'FillPolicyBookingDetails', 'GetAndUploadPolicyDocumentsToIMCRM', 'IssuePolicy', 'PurchasePolicy', 'Upload Policy Documents', 'UploadDocuments', 'UploadPolicyDocuments', 'UploadPolicyDocumentsToIMCRM'])) {
-                $policyIssuanceProcess->completed_step = $policyCompletedStep;
-            } else if ($policyCompletedStep === 'NULL') {
-                $policyIssuanceProcess->completed_step = null;
-            }
-        }
-        // dd($policyIssuanceProcess->only(['id', 'status', 'completed_step']));
-        $policyIssuanceProcess->save();
-        \App\Jobs\PolicyIssuanceJob::dispatchSync($policyIssuanceProcess->id); // ->onQueue('policy-issuance-automation');
-        //         app(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class)->executePolicyIssuanceAutomationSteps();
-        echo 'Policy Issuance Triggered for Quote ID: ' . $policyIssuanceProcess->model_id . ' - Policy Issuance ID: ' . $policyIssuanceProcess->id . ' - Policy Status: ' . $policyStatus . ' - Policy Completed Step: ' . $policyCompletedStep;
-    })->name('debug-policy-issuance-update');
-}
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes

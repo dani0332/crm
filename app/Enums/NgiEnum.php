@@ -8,8 +8,7 @@ class NgiEnum
 {
     // API Steps for Device/SmartPhone policy issuance
     public const STEP_CREATE_POLICY_FROM_QUOTE = 'CreatePolicyFromQuote';
-    public const STEP_GET_POLICY_DOCUMENTS = 'GetPolicyDocuments';
-    public const STEP_UPLOAD_POLICY_DOCS = 'UploadPolicyDocumentsToIMCRM';
+    public const STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'GetAndUpoadPolicyDocuments';
     public const STEP_BOOK_POLICY = 'BookPolicy';
 
     // Response types for API calls

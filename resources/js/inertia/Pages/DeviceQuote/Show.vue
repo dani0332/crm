@@ -472,6 +472,13 @@ const selectedPlanIds = computed(() => {
   return [];
 });
 
+const isNGI = computed(() => {
+  return (
+    page.props.quote?.insurance_provider?.code ===
+    page.props.insuranceProviderCodeEnum?.NGI
+  );
+});
+
 const copyLink = () => {
   copy(page.props.planURL);
   if (copied)
@@ -1684,6 +1691,14 @@ const copyLink = () => {
       v-if="can(permissionsEnum.API_LOG_VIEW)"
       :type="modelClass"
       :id="$page.props.quote.id"
+    />
+
+    <PolicyIssuanceApiLogs
+      v-if="isNGI"
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <OcrLogs

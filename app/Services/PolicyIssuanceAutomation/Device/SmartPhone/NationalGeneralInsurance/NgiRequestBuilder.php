@@ -20,10 +20,17 @@ class NgiRequestBuilder
     public function buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $payment, $latestInsured): array
     {
         $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
+
+        $paymentReferenceNumber = match (true) {
+            $payment instanceof \App\Models\Payment => $payment?->paymentSplits?->first()?->paymentCharges?->transaction_id ?? null,
+            $payment instanceof \App\Models\PaymentSplits => $payment?->paymentCharges?->transaction_id ?? null,
+            default => null,
+        } ?? '';
+
         return [
             'client_reference_number' => $quote->code ?? null,
             'quote_reference_number' => $quote->insurer_quote_number,
-            'payment_reference_number' => $payment?->code ?? null,
+            // 'payment_reference_number' => $paymentReferenceNumber, // TODO:: NGI:: Rucha ask to send payload without this field which is not according to the FRD or documentation discussion link is https://chat.google.com/room/AAQAZXb03Dc/a6vYYW81pkM/I_2Yfeqb1xc?cls=10
             'transaction_country' => 'UAE',
             'sales_info' => [
                 'policy_sold_date' => Carbon::now()->format('Y-m-d'),

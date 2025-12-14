@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
 use App\Enums\NgiEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\PolicyIssuanceEnum;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
@@ -60,88 +61,46 @@ class NgiStepExecutor
     }
 
     /**
-     * Execute get policy documents step
+     * Execute get policy documents and upload to IMCRM step - dispatches async job with FRD-compliant delay
+     *
+     * FRD Requirements:
+     * - Wait 3 minutes after policy creation before calling GetPolicyDocuments
+     * - Retry up to 3 times with 5-minute gaps (handled by job's $tries and $backoff)
+     * - Download documents from provider and store to IMCRM
      *
      * @param mixed $quote
      * @param mixed $process
      * @return array
      */
-    public function executeGetPolicyDocumentsStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
+    public function executeGetPolicyDocumentsAndUploadToIMCRMStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
-
-        // need to check 3 minutes difference
-
-        LoggerService::info('Starting get policy documents', extra: [
-            'step' => NgiEnum::STEP_GET_POLICY_DOCUMENTS,
+        LoggerService::info('Dispatching ' . NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM . ' job with 3-minute delay per FRD', extra: [
+            'step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             'process_id' => $process->id,
             'policy_number' => $quote->policy_number,
         ]);
 
-        $getPolicyDocumentsResponse = $this->apiService->getPolicyDocuments($quote, $process, $customer, $deviceQuote, $latestInsured);
+        // Dispatch job with 3-minute delay per FRD requirement
+        $delayMinutes = 0.25; // NgiEnum::DOCUMENT_FETCH_DELAY_MINUTES; // TODO:: NGI:: Revert it after testing
 
-        if (! $getPolicyDocumentsResponse['status']) {
-            LoggerService::error('Get policy documents failed', extra: [
-                'step' => NgiEnum::STEP_GET_POLICY_DOCUMENTS,
-                'error' => $getPolicyDocumentsResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
-                'message' => $getPolicyDocumentsResponse['message'] ?? null,
-            ]);
+        NgiGetPolicyDocumentsJob::dispatch($process->id)
+            ->delay(now()->addMinutes($delayMinutes));
 
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
-                $quote,
-                QuoteTypes::DEVICE->value,
-                PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
-                PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
-                'Get Policy Documents'
-            );
+        $scheduledAt = now()->addMinutes($delayMinutes)->toDateTimeString();
 
-            return $getPolicyDocumentsResponse;
-        }
-
-        LoggerService::info('Get policy documents successful', extra: [
-            'step' => NgiEnum::STEP_GET_POLICY_DOCUMENTS,
-        ]);
-
-        return $getPolicyDocumentsResponse;
-    }
-
-    /**
-     * Execute upload policy documents step
-     *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
-     */
-    public function executeUploadPolicyDocumentsStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
-    {
-        LoggerService::info('Starting policy document upload to IMCRM', extra: [
-            'step' => NgiEnum::STEP_UPLOAD_POLICY_DOCS,
+        LoggerService::info(NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM . ' job dispatched successfully', extra: [
+            'step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             'process_id' => $process->id,
+            'delay_minutes' => $delayMinutes,
+            'scheduled_at' => $scheduledAt,
         ]);
 
-        $uploadPolicyDocumentsToIMCRMResponse = $this->apiService->uploadPolicyDocumentsToIMCRM($quote, $process, $customer, $deviceQuote, $latestInsured);
-
-        if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
-            LoggerService::error('Policy document upload to IMCRM failed', extra: [
-                'step' => NgiEnum::STEP_UPLOAD_POLICY_DOCS,
-                'error' => $uploadPolicyDocumentsToIMCRMResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
-                'message' => $uploadPolicyDocumentsToIMCRMResponse['message'] ?? null,
-            ]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
-                $quote,
-                QuoteTypes::DEVICE->value,
-                PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
-                PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
-                'Retrieve Document'
-            );
-
-            return $uploadPolicyDocumentsToIMCRMResponse;
-        }
-
-        LoggerService::info('Policy documents uploaded to IMCRM successfully', extra: [
-            'step' => NgiEnum::STEP_UPLOAD_POLICY_DOCS,
-        ]);
-
-        return $uploadPolicyDocumentsToIMCRMResponse;
+        return [
+            'status' => true,
+            'documents_pending' => true,
+            'message' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM . " job dispatched with {$delayMinutes}-minute delay. Scheduled at: {$scheduledAt}",
+            'completed_step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
+        ];
     }
 
     /**

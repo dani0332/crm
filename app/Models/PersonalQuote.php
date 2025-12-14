@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -594,6 +596,32 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id');
     }
+
+    public function isBookingFailed()
+    {
+        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+    }
+
+    /**
+     * Get the policy issuance for this quote
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     */
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
+    /**
+     * Check if policy issuance has failed
+     *
+     * @return bool
+     */
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+    }
+
     public function subSource()
     {
         return $this->belongsTo(Lookup::class, 'sub_source_id');
@@ -603,4 +631,5 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Lookup::class, 'sub_source_options_id');
     }
+
 }
