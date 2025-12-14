@@ -1505,19 +1505,19 @@ class SplitPaymentService
         );
 
         // Check if the job is triggered for Travel or Car quotes
-        $isTravelOCarOrDeviceQuote = in_array($modelType, [QuoteTypes::TRAVEL->value, QuoteTypes::CAR->value, QuoteTypes::DEVICE->value]);
-        LoggerService::info("Split payment Code: {$paymentCode} isTravelOCarOrDeviceQuote: ".($isTravelOCarOrDeviceQuote ? 'true' : 'false'));
+        $isTravelOrCarQuote = in_array($modelType, [QuoteTypes::TRAVEL->value, QuoteTypes::CAR->value, QuoteTypes::DEVICE->value]);
+        LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuote: ".($isTravelOrCarQuote ? 'true' : 'false'));
 
         // Check if the insurance provider is ALNC or AXA
-        $isAlncAxaOrNgi = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::NGI]);
-        LoggerService::info("Split payment Code: {$paymentCode} isAlncAxaOrNgi: ".($isAlncAxaOrNgi ? 'true' : 'false'));
+        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::NGI]);
+        LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: ".($isAlncOrAxa ? 'true' : 'false'));
 
         // Only process if payment is not approved and:
         // - not from job, or
         // - from job AND is Travel/Car AND provider is ALNC/AXA
         $shouldProcess = $paymentNotApproved && (
             ! $isFromJob ||
-            ($isTravelOCarOrDeviceQuote && $isAlncAxaOrNgi)
+            ($isTravelOrCarQuote && $isAlncOrAxa)
         );
 
         LoggerService::info("Split payment Code: {$paymentCode} shouldProcess: ".($shouldProcess ? 'true' : 'false'));
