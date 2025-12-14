@@ -247,10 +247,6 @@ class NgiBookPolicyService
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Get Policy Documents and Update Booking Details are editable';
-            } elseif ($policyIssuance?->completed_step === NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) {
-                $response['isEditPolicyDetailsDisabled'] = false;
-                $response['isEditBookingDetailsDisabled'] = false;
-                $response['message'] = 'Booking Details is editable';
             }
 
             return $response;

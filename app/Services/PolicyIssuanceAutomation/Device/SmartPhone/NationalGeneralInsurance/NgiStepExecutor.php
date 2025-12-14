@@ -81,7 +81,7 @@ class NgiStepExecutor
         ]);
 
         // Dispatch job with 3-minute delay per FRD requirement
-        $delayMinutes = 0.25; // NgiEnum::DOCUMENT_FETCH_DELAY_MINUTES; // TODO:: NGI:: Revert it after testing
+        $delayMinutes = NgiEnum::DOCUMENT_FETCH_DELAY_MINUTES;
 
         NgiGetPolicyDocumentsJob::dispatch($process->id)
             ->delay(now()->addMinutes($delayMinutes));

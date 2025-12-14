@@ -8,7 +8,7 @@ class NgiEnum
 {
     // API Steps for Device/SmartPhone policy issuance
     public const STEP_CREATE_POLICY_FROM_QUOTE = 'CreatePolicyFromQuote';
-    public const STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'GetAndUpoadPolicyDocuments';
+    public const STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'GetAndUploadPolicyDocs';
     public const STEP_BOOK_POLICY = 'BookPolicy';
 
     // Response types for API calls
@@ -23,5 +23,5 @@ class NgiEnum
     // API retry configuration
     public const MAX_RETRY_ATTEMPTS = 3;
     public const RETRY_DELAY_MINUTES = 5;
-    public const DOCUMENT_FETCH_DELAY_MINUTES = 3;
+    public const DOCUMENT_FETCH_DELAY_MINUTES = 0.25; // TODO:: NGI:: Revert it 3 after testing for testing it is 15 seconds
 }
