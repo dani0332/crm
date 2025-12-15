@@ -2216,6 +2216,10 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
                 <dd>{{ quote.advisor_id_text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">OE/AE</dt>
+                <dd>{{ quote?.support_user_name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>

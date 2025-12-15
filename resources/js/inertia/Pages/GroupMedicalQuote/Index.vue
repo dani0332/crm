@@ -158,7 +158,7 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
 ];
 

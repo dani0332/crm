@@ -1109,6 +1109,17 @@ class TravelQuoteService extends BaseService
                 });
             }
 
+            // duplicate customer acceptance logs
+            $customerAcceptanceLogs = $leadModal->customerAcceptanceLogs()->get();
+            if ($customerAcceptanceLogs->count() > 0) {
+                LoggerService::info("Duplicating {$customerAcceptanceLogs->count()} customer acceptance logs for lead {$duplicateLead->code}");
+                $customerAcceptanceLogs->each(function ($customerAcceptanceLog) use ($duplicateLead) {
+                    $duplicateCustomerAcceptanceLog = $customerAcceptanceLog->replicate();
+                    $duplicateCustomerAcceptanceLog->quote_uuid = $duplicateLead->uuid;
+                    $duplicateCustomerAcceptanceLog->save();
+                });
+            }
+
             LoggerService::info("Duplicate lead creation completed successfully: {$leadModal->code} -> {$duplicateLead->code}");
         } else {
             LoggerService::error("Failed to create duplicate lead for {$leadModal->code}");

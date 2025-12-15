@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
@@ -48,10 +47,12 @@ use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Services\BranchAssignmentService;
 
 class BusinessQuoteController extends Controller
@@ -100,7 +101,24 @@ class BusinessQuoteController extends Controller
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $this->businessQuoteService->postProcessBusinessQuotes($quotes);
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
-        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+
+        // Support users and assignment permissions for LeadAssignment component
+        $supportUsers = app(UserService::class)->getSupportUsers([
+            'product_filter' => QuoteTypes::CORPLINE,
+            'include_role_in_name' => true,
+            'return_format' => 'collection',
+        ]);
+
+        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)
+            && Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD)
+            && Auth::user()->hasProduct(QuoteTypes::CORPLINE->value);
+
+        $canAssignLeadAdvisor = auth()->user()->isAdmin()
+            || $isManagerORDeputy
+            || Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
+
+        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
+
         // PD Revert
         // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
         $totalCount = 0;
@@ -111,7 +129,19 @@ class BusinessQuoteController extends Controller
 
         $subSources = app(LookupService::class)->getSubSource();
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
+        return inertia('CorpLineQuote/Index', compact(
+            'quotes',
+            'renewalBatches',
+            'dropdownSource',
+            'isManualAllocationAllowed',
+            'canAssignClientSupport',
+            'canAssignLeadAdvisor',
+            'supportUsers',
+            'totalCount',
+            'authorizedDays',
+            'insurerAMLStatus',
+            'subSources'
+        ));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -204,10 +234,7 @@ class BusinessQuoteController extends Controller
         $latestKycLog = KycLog::withTrashed()
             ->where('quote_request_id', $record->id)
             ->where('quote_type_id', QuoteTypes::BUSINESS->id())
-            ->where(function ($aml) {
-                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA, AMLScreeningTypeEnum::INSURER_RSA]);
-                $aml->orWhereNull('screening_type');
-            })
+            ->standardAmlFilters()
             ->latest()->first();
         @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(self::TYPE_ID, $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::CORPLINE);
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
