@@ -1146,10 +1146,9 @@ class EmbeddedProductRepository extends BaseRepository
                     ];
                     $processResponse = $this->processCancelPayment($data);
 
-                    $epShortCode = $transaction->product->embeddedProduct->short_code;
                     if (
-                        $epShortCode == EmbeddedProductEnum::COURIER
-                        && in_array($type->code, self::ALLOWED_LOBS_FOR_EPS[$epShortCode])
+                        $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+                        && in_array($type->code, self::ALLOWED_LOBS_FOR_EPS[EmbeddedProductEnum::COURIER])
                     ) {
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
                     }
