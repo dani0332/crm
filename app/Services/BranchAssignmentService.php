@@ -22,10 +22,8 @@ class BranchAssignmentService extends BaseService
             $query->whereIn('user_id', $request['advisors']);
         })
         ->when(! empty($request['primary_branch']), function ($query) use ($request) {
-            $query->whereHas('branch', function ($query) use ($request) {
-                $query->where('id', $request['primary_branch'])
-                    ->where('is_primary', 1);
-            });
+            $query->where('branch_id', $request['primary_branch'])
+                ->where('is_primary', 1);
         })
         ->where('status', 1)
         ->paginate();
