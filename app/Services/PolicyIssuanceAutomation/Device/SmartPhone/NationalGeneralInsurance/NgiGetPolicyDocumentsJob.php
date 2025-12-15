@@ -78,12 +78,21 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
     public function handle(): void
     {
         $process = PolicyIssuance::with('model')->find($this->processId);
-        $quote = $process->model;
-        if (!$process || !$quote) {
-            LoggerService::error('NgiGetPolicyDocumentsJob: Process or quote not found', [
+
+        if (!$process) {
+            LoggerService::error('NgiGetPolicyDocumentsJob: Process not found', [
                 'process_id' => $this->processId,
             ]);
-            throw new \RuntimeException('NgiGetPolicyDocumentsJob: Process or quote not found. process_id -> ' . $this->processId);
+            throw new \RuntimeException('NgiGetPolicyDocumentsJob: Process not found. process_id -> ' . $this->processId);
+        }
+
+        $quote = $process->model;
+
+        if (!$quote) {
+            LoggerService::error('NgiGetPolicyDocumentsJob: Quote not found', [
+                'process_id' => $this->processId,
+            ]);
+            throw new \RuntimeException('NgiGetPolicyDocumentsJob: Quote not found. process_id -> ' . $this->processId);
         }
 
         LoggerService::info('NgiGetPolicyDocumentsJob: Starting document retrieval', [
