@@ -25,7 +25,7 @@ const quoteTypeIds = page.props.quoteTypeIds;
 const can = permission => useCan(permission);
 
 let availableFilters = {
-  exportType: 'download',
+  exportType: null,
   page: 1,
 };
 
@@ -337,6 +337,13 @@ const canExport = computed(() => {
         filters[key] !== '',
     )
   );
+});
+
+// Initialize car model options on mount if car make is already selected
+onMounted(() => {
+  if (filters.car_make && (isCarLOB.value || isBikeLOB.value)) {
+    getCarModel(false);
+  }
 });
 
 // Watcher to clear vehicle-specific filters when line of business changes away from car/bike

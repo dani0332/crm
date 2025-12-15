@@ -64,8 +64,9 @@ class ClaimsController extends Controller
         try {
             $claims = $this->claimsService->getClaimsData($request);
 
-            // Get dropdown data for filters
-            $claimDropdownOptions = $this->claimsService->getDropdownData();
+            // Get dropdown data for filters, pass car_make if present
+            $carMake = $request->input('car_make');
+            $claimDropdownOptions = $this->claimsService->getDropdownData($carMake);
             $complaintStatuses = $this->claimsService->getClaimComplaintStatuses();
 
             return Inertia::render('Claims/Index', [

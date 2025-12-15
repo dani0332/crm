@@ -12,6 +12,7 @@ use App\Facades\CustomerPortalApiFacade;
 use App\Facades\InstantWriterAIFacade;
 use App\Jobs\SendGoogleReviewEmailJob;
 use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
 use App\Models\ClaimRequestDetail;
@@ -614,7 +615,7 @@ class ClaimsService extends BaseService
     /**
      * Get dropdown data for forms
      */
-    public function getDropdownData(): array
+    public function getDropdownData(?string $carMake = null): array
     {
         return [
             'lineOfBusiness' => $this->getLineOfBusinessOptions(),
@@ -625,7 +626,7 @@ class ClaimsService extends BaseService
             'claimRequestTypes' => $this->getClaimRequestTypes(),
             'claimServiceTypes' => $this->getClaimServiceTypes(),
             'carMake' => $this->getCarMake(),
-            'carModel' => [],
+            'carModel' => $carMake ? $this->getCarModelByMake($carMake) : [],
             'carModelYear' => $this->getCarModelYear(),
         ];
     }
@@ -708,6 +709,25 @@ class ClaimsService extends BaseService
     public function getCarModelYear(): array
     {
         return YearOfManufacture::select('text')->orderBy('sort_order')->get()->toArray();
+    }
+
+    /**
+     * Get car models by car make
+     */
+    public function getCarModelByMake(string $carMake): array
+    {
+        $carMakeCode = CarMake::where('text', $carMake)->where('is_active', true)->value('code');
+        
+        if (!$carMakeCode) {
+            return [];
+        }
+        
+        return CarModel::where('car_make_code', $carMakeCode)
+            ->where('is_active', true)
+            ->select('id', 'text', 'code')
+            ->orderBy('text')
+            ->get()
+            ->toArray();
     }
 
     public function updateClaimSubStatusToClaimRegistered(ClaimRequest $claimRequest): void
