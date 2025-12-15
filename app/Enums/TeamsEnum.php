@@ -58,5 +58,21 @@ enum TeamsEnum: string
             default => null,
         };
     }
+
+    public function getQuoteTypes()
+    {
+        return match ($this) {
+            self::CORPLINE => [
+                QuoteTypes::BUSINESS,
+            ],
+            self::GROUP_MEDICAL => [
+                QuoteTypes::BUSINESS,
+            ],
+            self::DEVICE_INSURANCE => [
+                QuoteTypes::DEVICE,
+            ],
+            default => [$this],
+        };
+    }
 }
 

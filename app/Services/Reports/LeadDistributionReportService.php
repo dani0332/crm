@@ -15,6 +15,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamsEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
@@ -169,13 +170,9 @@ class LeadDistributionReportService extends BaseService
 
     private function getPersonalQuoteQuery($lob)
     {
-        $lobId = $this->getLobId($lob);
+        $quoteType = $this->getLOBFromTeamName($lob);
+        $lobId = QuoteTypes::getId($quoteType);
 
-        if($lob == TeamNameEnum::DEVICE_INSURANCE){
-            $quoteType = QuoteTypes::DEVICE;
-        }else{
-            $quoteType = QuoteTypes::from($lob);
-        }
         $parentTeam = $this->getProductByName($lob);
 
         $personalQuoteQuery = PersonalQuote::query()
@@ -219,13 +216,18 @@ class LeadDistributionReportService extends BaseService
         return $personalQuoteQuery;
     }
 
-    private function getLobId($lob)
+    private function getLOBFromTeamName($lob)
     {
-        $mappedLob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])
-            ? quoteTypeCode::Business
-            : $lob;
+        $quoteType = QuoteTypes::tryFrom($lob);
 
-        return QuoteTypeRepository::where('code', $mappedLob)->value('id');
+        /** We're doing this because $lob has ProductName which can directly be plugged-in as QuoteType but in some cases like DEVICE,
+         *  we need to find its quoteType through "Product & QuoteType" mapping (TeamsEnum::tryFrom($lob)->getQuoteTypes)
+         */
+        if($quoteType !== null){
+            return $quoteType;
+        }else{
+            return TeamsEnum::tryFrom($lob)->getQuoteTypes()[0];
+        }
     }
 
     public function getFilterOptions()
