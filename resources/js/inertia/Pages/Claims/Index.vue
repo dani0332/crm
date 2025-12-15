@@ -144,8 +144,8 @@ const getCarModel = reset => {
 
   axios.get(`/car-model-by-id?id=${carMakeCode}`).then(({ data }) => {
     props.claimDropdownOptions.carModel = data;
-    if (claimForm.car_model !== null && reset) {
-      claimForm.car_model = null;
+    if (filters.car_model !== null && reset) {
+      filters.car_model = null;
     }
   });
 };
@@ -319,6 +319,11 @@ const isCarLOB = computed(() => {
   return quoteTypeIds.Car === filters.quote_type_id;
 });
 
+// Check if selected line of business is car
+const isBikeLOB = computed(() => {
+  return quoteTypeIds.Bike === filters.quote_type_id;
+});
+
 // Check if export is available based on date filters
 const canExport = computed(() => {
   return (
@@ -342,12 +347,12 @@ watch(
       console.log('Line of business changed to:', newValue);
 
       // Check if the new selection is car
-      const isVehicleType = newValue === quoteTypeIds.Car;
+      const isVehicleTypeCarOrBike = newValue === quoteTypeIds.Car || newValue === quoteTypeIds.Bike;
 
-      console.log('Is vehicle type (Car/Bike):', isVehicleType);
+      console.log('Is vehicle type (Car/Bike):', isVehicleTypeCarOrBike);
 
       // Clear vehicle-specific filters if not a vehicle type
-      if (!isVehicleType) {
+      if (!isVehicleTypeCarOrBike) {
         filters.plate_number = '';
         filters.car_make = '';
         filters.car_model = '';
@@ -512,7 +517,7 @@ watch(
           format="yyyy-MM-dd"
         />
 
-        <template v-if="isCarLOB">
+        <template v-if="isCarLOB || isBikeLOB">
           <!-- Vehicle specific filters -->
           <x-input
             v-model="filters.plate_number"
