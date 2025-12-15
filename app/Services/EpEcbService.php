@@ -287,7 +287,7 @@ class EpEcbService extends EpBookingService
 
     private function getValidationRules(string $step): array
     {
-        $documentTypeRule = implode(',', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY]);
+        $documentTypeRule = implode(',', [QuoteDocumentsEnum::COMPANY_CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY]);
         $customerIdTypeRule = implode(',', ['TL','EID']);
         $policySoldDateRules = 'required|date|date_equals:today';
         $documentUrlRules = 'required|url|active_url';
@@ -1088,17 +1088,15 @@ class EpEcbService extends EpBookingService
     private function getCustomerTypeInfo(): array
     {
         $latestInsuredData = $this->quote?->latestInsured;
-        $insuredKyc = $latestInsuredData?->insuredKyc;
 
         $proceedWithTradeLicense = $this->quote?->registration_type == CarRegistrationType::COMPANY
             && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE
-            && $latestInsuredData?->customer_type == CustomerTypeEnum::Entity
-            && $insuredKyc?->id_type == 'tradeLicense';
+            && $latestInsuredData?->customer_type == CustomerTypeEnum::Entity;
 
         $customerIdType = $proceedWithTradeLicense ? 'TL' : 'EID';
         $customerIdNo = $customerIdType == 'TL' 
-            ? $insuredKyc?->id_number 
-            : formatEmiratesIdNumber($insuredKyc?->id_number ?? '');
+            ? $latestInsuredData?->trade_license_no
+            : ($latestInsuredData?->id_type == 'emiratesId' ? formatEmiratesIdNumber($latestInsuredData?->id_number ?? '') : '');
 
         return [
             'customer_id_type' => $customerIdType,
