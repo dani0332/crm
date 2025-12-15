@@ -1682,6 +1682,15 @@ class RenewalsUploadService
 
         $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
 
+        if (! $provider) {
+            LoggerService::warning($logPrefix.' Provider not found', extra: [
+                'provider' => $data['provider_name'] ?? null,
+                'quote_uuid' => $quote->uuid,
+            ]);
+
+            return 'Provider not found: '.($data['provider_name'] ?? 'N/A');
+        }
+
         $carPlan = CarPlan::where([
             'text' => $data['plan_name'],
             'repair_type' => $data['plan_type'],
@@ -1695,6 +1704,18 @@ class RenewalsUploadService
                 CarPlanAddonsCode::BREAKDOWN_COVER,
             ])->with('carAddonOptions');
         }])->first();
+
+        if (! $carPlan) {
+            LoggerService::warning($logPrefix.' Plan not found', extra: [
+                'provider' => $data['provider_name'] ?? null,
+                'plan' => $data['plan_name'] ?? null,
+                'plan_type' => $data['plan_type'] ?? null,
+                'provider_id' => $provider->id,
+                'quote_uuid' => $quote->uuid,
+            ]);
+
+            return 'Car plan not found for provider: '.($data['provider_name'] ?? 'N/A').', plan: '.($data['plan_name'] ?? 'N/A').', type: '.($data['plan_type'] ?? 'N/A');
+        }
 
         $planData = [
             'quoteUID' => $quote->uuid,
