@@ -164,7 +164,32 @@ class ClaimStatusesSeeder extends Seeder
     {
         $chunks = array_chunk($data, $chunkSize);
         foreach ($chunks as $chunk) {
-            DB::table($table)->insert($chunk);
+            foreach ($chunk as $record) {
+                // Check if record already exists based on unique combination
+                $exists = DB::table($table)
+                    ->where('text', $record['text'])
+                    ->where('status_type', $record['status_type'])
+                    ->where(function ($query) use ($record) {
+                        if (isset($record['quote_type_id'])) {
+                            $query->where('quote_type_id', $record['quote_type_id']);
+                        } else {
+                            $query->whereNull('quote_type_id');
+                        }
+                    })
+                    ->where(function ($query) use ($record) {
+                        if (isset($record['claim_request_type_id'])) {
+                            $query->where('claim_request_type_id', $record['claim_request_type_id']);
+                        } else {
+                            $query->whereNull('claim_request_type_id');
+                        }
+                    })
+                    ->exists();
+
+                // Only insert if record doesn't exist
+                if (!$exists) {
+                    DB::table($table)->insert($record);
+                }
+            }
         }
     }
 }
