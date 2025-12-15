@@ -81,15 +81,12 @@ class MetLifeApiServiceTest extends TestCase
     public function test_accepted_document_mime_types_structure()
     {
         $reflection = new \ReflectionClass($this->service);
-        $property = $reflection->getProperty('acceptedDocumentMimeTypes');
-        $property->setAccessible(true);
+        $constant = $reflection->getConstant('ACCEPTED_DOCUMENT_MIME_TYPES');
 
-        $mimeTypes = $property->getValue($this->service);
-
-        $this->assertIsArray($mimeTypes);
-        $this->assertContains('application/pdf', $mimeTypes);
-        $this->assertContains('image/jpeg', $mimeTypes);
-        $this->assertContains('image/png', $mimeTypes);
+        $this->assertIsArray($constant);
+        $this->assertContains('application/pdf', $constant);
+        $this->assertContains('image/jpeg', $constant);
+        $this->assertContains('image/png', $constant);
     }
 
     public function test_service_initialization_properties()
@@ -260,10 +257,7 @@ class MetLifeApiServiceTest extends TestCase
     public function test_accepted_document_mime_types_contains_expected_types()
     {
         $reflection = new \ReflectionClass($this->service);
-        $property = $reflection->getProperty('acceptedDocumentMimeTypes');
-        $property->setAccessible(true);
-
-        $mimeTypes = $property->getValue($this->service);
+        $mimeTypes = $reflection->getConstant('ACCEPTED_DOCUMENT_MIME_TYPES');
 
         $expectedTypes = [
             'application/pdf',
@@ -281,10 +275,7 @@ class MetLifeApiServiceTest extends TestCase
     public function test_accepted_document_mime_types_is_array()
     {
         $reflection = new \ReflectionClass($this->service);
-        $property = $reflection->getProperty('acceptedDocumentMimeTypes');
-        $property->setAccessible(true);
-
-        $mimeTypes = $property->getValue($this->service);
+        $mimeTypes = $reflection->getConstant('ACCEPTED_DOCUMENT_MIME_TYPES');
 
         $this->assertIsArray($mimeTypes);
         $this->assertGreaterThan(0, count($mimeTypes));
