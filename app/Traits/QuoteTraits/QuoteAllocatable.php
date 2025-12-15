@@ -250,7 +250,6 @@ trait QuoteAllocatable
             return;
         }
 
-       
         if ($this->lead_allocation_failed_at) {
             self::withoutEvents(function () {
                 $this->update([
