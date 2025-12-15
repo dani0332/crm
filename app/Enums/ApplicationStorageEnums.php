@@ -322,6 +322,4 @@ final class ApplicationStorageEnums extends Enum
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
-    public const BRANCH_LIVE_DATE_V1 = 'BRANCH_LIVE_DATE_V1';
-    public const BRANCH_LIVE_DATE_V2 = 'BRANCH_LIVE_DATE_V2';
 }

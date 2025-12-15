@@ -1171,25 +1171,5 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BRANCH_LIVE_DATE_V1],
-            [
-                'value' => '2025-08-27 00:00:00',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BRANCH_LIVE_DATE_V2],
-            [
-                'value' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
     }
 }
