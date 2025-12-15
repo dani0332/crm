@@ -45,9 +45,9 @@ trait RolePermissionConditions
         if ($isAdvisor) {
             $query->where($prefix.'.'.'advisor_id', $user->id);
         }
-        if ($isSupportUser && $restrictedQuoteType === quoteTypeCode::Business) {
+        if ($isSupportUser && in_array($restrictedQuoteType, [quoteTypeCode::Business, quoteTypeCode::Health])) {
             // Only apply support_user_id filter for quote types that have this column
-            // Currently only Business quotes have support_user_id column
+            // Currently only Business & Health quotes have support_user_id column
             $query->where($prefix.'.'.'support_user_id', $user->id);
         }
         if ($isNewManager) {
