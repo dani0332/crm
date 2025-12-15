@@ -322,14 +322,32 @@ class AmtController extends Controller
         return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
     }
 
+    /**
+     * Post-process AMT quotes to add branch name information.
+     * Uses eager loading to avoid N+1 query issues.
+     *
+     * @param \Illuminate\Contracts\Pagination\Paginator $quotes
+     * @return \Illuminate\Contracts\Pagination\Paginator
+     */
     private function postProcessAmtQuotes($quotes)
     {
-        return $quotes->map(function ($quote) {
-            $customerInsured = CustomerInsured::where('quote_request_id', $quote->id)
+        // Extract quote IDs from the paginated collection
+        $quoteIds = $quotes->pluck('id')->toArray();
+
+        // Eager load all CustomerInsured records in a single query
+        $customerInsuredRecords = CustomerInsured::whereIn('quote_request_id', $quoteIds)
             ->where('quote_type_id', QuoteTypeId::Business)
             ->with('insured.entity')
-            ->latest('customer_insured.updated_at')
-            ->first();
+            ->get()
+            ->groupBy('quote_request_id')
+            ->map(function ($records) {
+                // Get the latest record by updated_at for each quote_request_id
+                return $records->sortByDesc('updated_at')->first();
+            });
+
+        // Map through quotes and add branch_name using pre-loaded data
+        return $quotes->map(function ($quote) use ($customerInsuredRecords) {
+            $customerInsured = $customerInsuredRecords->get($quote->id);
             $emirateOfRegistrationId = $customerInsured?->insured?->entity?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
