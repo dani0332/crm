@@ -113,9 +113,9 @@ class TravelQuoteObserver
 
                     $branch = app(BranchAssignmentService::class)->getBranch($travelQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
                     $travelQuote->update([
-                        'branch_id' => $branch->id,
+                        'branch_id' => $branch?->id,
                     ]);
-                    $dirty = [...$dirty, 'branch_id' => $branch->id];
+                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
                 });
             } catch (Exception $e) {
                 LoggerService::error('TravelQuoteObserver - save branch data failed', [
