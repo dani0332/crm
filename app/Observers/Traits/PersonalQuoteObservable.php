@@ -187,7 +187,7 @@ trait PersonalQuoteObservable
                 PersonalQuote::withoutEvents(function () use ($personalQuote) {
                     $branch = app(BranchAssignmentService::class)->getBranch($personalQuote?->advisor?->primaryBranch?->branch_id, $personalQuote->quote_type_id);
                     $personalQuote->update([
-                        'branch_id' => $branch->id,
+                        'branch_id' => $branch?->id,
                     ]);
                 });
             } catch (Exception $e) {

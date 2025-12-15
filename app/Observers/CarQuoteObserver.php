@@ -122,9 +122,9 @@ class CarQuoteObserver
 
                     $branch = app(BranchAssignmentService::class)->getBranch($lead?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
                     $lead->update([
-                        'branch_id' => $branch->id,
+                        'branch_id' => $branch?->id,
                     ]);
-                    $dirty = [...$dirty, 'branch_id' => $branch->id];
+                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
                 });
             } catch (Exception $e) {
                 LoggerService::error('CarQuoteObserver - save branch data failed', [
