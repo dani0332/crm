@@ -184,7 +184,7 @@ trait PersonalQuoteObservable
     private function handleBikePolicyCancelled(PersonalQuote $personalQuote): void
     {
         try {
-            EmbeddedProductRepository::cancelEmbeddedProducts($personalQuote->id, quoteTypeCode::Bike);
+            EmbeddedProductRepository::cancelEmbeddedProducts($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
         } catch (Exception $e) {
             Log::error('PersonalQuoteObserver - cancel embedded products failed', [
                 'error' => $e->getMessage(),
