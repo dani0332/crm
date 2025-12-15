@@ -32,7 +32,6 @@ class SukoonMedexEPFailureNotification extends Mailable
      */
     public function build()
     {
-        $isProd = app()->environment('production');
         $refId = $this->quoteObject->code ?? $this->quoteObject->uuid ?? 'Unknown';
         $subject = "❗Action Required: Embedded Product for Medex has failed for REF-ID: {$refId} – Immediate Attention Needed";
 
