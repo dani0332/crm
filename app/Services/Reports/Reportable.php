@@ -9,6 +9,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
@@ -132,7 +133,13 @@ trait Reportable
     protected function getQuoteType($request)
     {
         // Return the 'lob' parameter from the request if it exists, otherwise return the user's product name
-        return $request['lob'] ?? $this->getUserPorductName();
+        if(!empty($request['lob'])){
+            /** Filter sends ProductName */
+            return QuoteTypes::getQuoteTypesFromTeamName($request['lob'])[0];
+        }else{
+            /** Without (Default) case gets logged-in user's products and pass forward */
+            return QuoteTypes::getQuoteTypesFromTeamName($this->getUserPorductName())[0]->value;
+        }
     }
 
     private function isAdvisorManager()
@@ -194,6 +201,7 @@ trait Reportable
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
             quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
+            quoteTypeCode::Device => ! Auth::user()->hasRole(RolesEnum::DeviceAdvisor),
         ];
 
         // Return the filter options with their visibility settings

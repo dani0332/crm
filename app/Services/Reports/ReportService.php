@@ -26,6 +26,7 @@ use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -204,9 +205,9 @@ class ReportService extends BaseService
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
 
-        if (isset($filters->teams) && count($filters->teams) > 0) {
-            info('teamsFilter are : '.json_encode($filters->teams));
-            $value = $filters->teams;
+        if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
+            info('teamsFilter are : '.json_encode($filters->teamsFilter));
+            $value = $filters->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
                     ->select('users.id')
@@ -677,6 +678,7 @@ class ReportService extends BaseService
             quoteTypeCode::Cycle => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
             quoteTypeCode::Jetski => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
             quoteTypeCode::SAVINGS => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Savings],
+            quoteTypeCode::Device => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Device],
         ];
 
         $quoteTypes = [
@@ -692,6 +694,7 @@ class ReportService extends BaseService
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
             QuoteTypes::SAVINGS,
+            QuoteTypes::DEVICE,
         ];
 
         $allowedLOBs = [];
@@ -778,8 +781,11 @@ class ReportService extends BaseService
                 $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
 
-            $dataCollection = $dataCollection->merge($query->groupBy('users.id')
-                ->orderBy('total_leads', 'desc')->get());
+            $query->groupBy('users.id')->orderBy('total_leads', 'desc');
+
+            LoggerService::sql("Payment Authorised Report Query", $query);
+
+            $dataCollection = $dataCollection->merge($query->get());
         }
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [

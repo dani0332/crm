@@ -170,7 +170,12 @@ class LeadDistributionReportService extends BaseService
     private function getPersonalQuoteQuery($lob)
     {
         $lobId = $this->getLobId($lob);
-        $quoteType = QuoteTypes::from($lob);
+
+        if($lob == TeamNameEnum::DEVICE_INSURANCE){
+            $quoteType = QuoteTypes::DEVICE;
+        }else{
+            $quoteType = QuoteTypes::from($lob);
+        }
         $parentTeam = $this->getProductByName($lob);
 
         $personalQuoteQuery = PersonalQuote::query()
