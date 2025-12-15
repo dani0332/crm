@@ -356,7 +356,7 @@
 <body style="margin: 0; padding: 0;">
     {{-- First Page Cover --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/health_first_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
     @endcomponent
@@ -936,7 +936,7 @@
     </main>
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/rm-p3-2.png') }}" class="full-page-image" style="height:90%;" />
+    <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" class="full-page-image" style="height:90%;" />
 </body>
 
 </html>

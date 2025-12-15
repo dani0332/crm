@@ -681,7 +681,7 @@
 
     {{-- First Page --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/ecom-life/pdf-intro.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/life_first_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -691,7 +691,7 @@
 
     {{-- Second Page --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -1006,7 +1006,7 @@
     {{-- Third Page --}}
     <div style="page-break-after: always;"></div>
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -1016,7 +1016,7 @@
     {{-- Fourth Page --}}
     <div style="page-break-after: always;"></div>
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
