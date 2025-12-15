@@ -124,7 +124,7 @@ class QuoteAllocation extends Command
                 'sic_advisor_requested',
                 'quote_status_id',
             ])
-            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->where('created_at', '<=', $to)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
             ->orderByDesc('created_at')
