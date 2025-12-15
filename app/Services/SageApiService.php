@@ -3627,7 +3627,7 @@ class SageApiService
                             $sageProcessRequest = json_decode($sageProcess->request);
 
                             if (json_last_error() !== JSON_ERROR_NONE) {
-                                LoggerService::error('Failed to decode sage process request JSON', extra: [
+                                LoggerService::warning('Failed to decode sage process request JSON', extra: [
                                     'SageProcessID' => $sageProcess?->id,
                                     'json_error' => json_last_error_msg(),
                                     'request_preview' => substr($sageProcess->request, 0, 200),

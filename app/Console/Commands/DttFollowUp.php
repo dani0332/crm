@@ -125,9 +125,6 @@ class DttFollowUp extends Command
         } catch (\Throwable $e) {
             LoggerService::warning('Dtt:followup command failed', extra: [
                 'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return false;
