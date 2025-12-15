@@ -729,11 +729,11 @@ class ClaimsService extends BaseService
     public function getCarModelByMake(string $carMake): array
     {
         $carMakeCode = CarMake::where('text', $carMake)->where('is_active', true)->value('code');
-        
-        if (!$carMakeCode) {
+
+        if (! $carMakeCode) {
             return [];
         }
-        
+
         return CarModel::where('car_make_code', $carMakeCode)
             ->where('is_active', true)
             ->select('id', 'text', 'code')

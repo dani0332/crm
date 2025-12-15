@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
-use App\Services\Logger\LoggerService;
 
 class ClaimNextFollowUpUpdateRequest extends FormRequest
 {

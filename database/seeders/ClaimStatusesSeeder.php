@@ -186,7 +186,7 @@ class ClaimStatusesSeeder extends Seeder
                     ->exists();
 
                 // Only insert if record doesn't exist
-                if (!$exists) {
+                if (! $exists) {
                     DB::table($table)->insert($record);
                 }
             }
