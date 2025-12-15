@@ -761,7 +761,7 @@ class ClaimsService extends BaseService
             if ($claimInitiatedStatus) {
                 // Update the claim sub status without triggering another observer event
                 $claimRequest->claim_sub_status_id = $claimInitiatedStatus->id;
-                $claimRequest->save();
+                $claimRequest->saveQuietly();
 
                 LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim sub status updated to "Claim registered" - Claim UUID: '.$claimRequest->uuid, extra: [
                     'claim_request_id' => $claimRequest->id,
@@ -847,7 +847,7 @@ class ClaimsService extends BaseService
     {
         $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
-            $claimRequest->update(['claim_status_id' => $claimStatusClosed->id]);
+            $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
@@ -1032,7 +1032,7 @@ class ClaimsService extends BaseService
         $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
-            $claimRequest->save();
+            $claimRequest->saveQuietly();
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
@@ -1047,7 +1047,7 @@ class ClaimsService extends BaseService
         $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
-            $claimRequest->save();
+            $claimRequest->saveQuietly();
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
@@ -1062,7 +1062,7 @@ class ClaimsService extends BaseService
         $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
-            $claimRequest->save();
+            $claimRequest->saveQuietly();
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
