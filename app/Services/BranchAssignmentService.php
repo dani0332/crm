@@ -80,9 +80,11 @@ class BranchAssignmentService extends BaseService
             $newPrimary->save();
 
             DB::commit();
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
             LoggerService::warning('Failed to make primary branch for user '.$userId.' and branch '.$branchId.' - Error: '.$e->getMessage());
+            return false;
         }
     }
 

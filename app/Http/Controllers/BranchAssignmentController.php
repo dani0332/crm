@@ -72,7 +72,11 @@ class BranchAssignmentController extends Controller
 
     public function makePrimary(Request $request, $userId, $branchId)
     {
-        $this->branchAssignmentService->makePrimary($userId, $branchId);
+        $result = $this->branchAssignmentService->makePrimary($userId, $branchId);
+
+        if (!$result) {
+            return redirect()->back()->with('error', 'Failed to update primary branch. Please ensure the branch assignment exists and is active.');
+        }
 
         return redirect()->back()->with('success', 'Primary Branch updated successfully');
     }
