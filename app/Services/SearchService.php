@@ -525,6 +525,7 @@ class SearchService extends BaseService
                     QuoteTypeId::Life => 'life_quote_request',
                     QuoteTypeId::Business => 'business_quote_request',
                     QuoteTypeId::Travel => 'travel_quote_request',
+                    QuoteTypeId::Device => 'device_quote_request',
                 ];
 
                 $quoteType = $quoteTypes[request()->line_of_business] ?? null;
