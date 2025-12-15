@@ -1977,7 +1977,7 @@ class CentralService extends BaseService
             'customerName' => "{$quote->first_name} {$quote->last_name}",
             'policyNumber' => $quote->policy_number,
             'lob' => $lobName,
-            'whatsAppNumber' => formatMobileNo($quote->mobile_no),
+            'whatsAppNumber' => '+'.formatMobileNoWithoutPlus($quote->mobile_no),
             'workflowType' => $workFlowType,
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
