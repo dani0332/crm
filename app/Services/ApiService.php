@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
@@ -18,9 +19,11 @@ use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\AIGWorkflowJob;
+use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Jobs\SendHealthSICWAFollowupJob;
+use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -511,4 +514,88 @@ class ApiService
         }
     }
 
+    public function missingDocsReminder($quoteUuid)
+    {
+        try {
+            LoggerService::info(self::class.': Missing docs reminder has been initiated');
+            if (app(BirdService::class)->isFollowupExecuted($quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
+                LoggerService::info(self::class.': Missing docs reminder already executed');
+
+                return ['success' => true, 'message' => 'Missing docs reminder already executed'];
+            }
+            $quote = CarQuote::where('uuid', $quoteUuid)->first();
+            LoggerService::startQuoteLogging($quoteUuid);
+            if (! $quote) {
+                LoggerService::info(self::class.': Quote not found');
+
+                return ['success' => false, 'message' => 'Quote not found'];
+            }
+            CarMissingDocReminderJob::dispatch($quoteUuid)->delay(now()->addSeconds(50));
+
+            return ['success' => true, 'message' => 'Missing docs reminder has been sent to the customer'];
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Missing docs reminder failed', exception: $e);
+
+            return ['success' => false, 'message' => 'Missing docs reminder failed: '.$e->getMessage()];
+        }
+    }
+    public function verifyMissingDocs($quoteUuid, $quoteType)
+    {
+        try {
+            LoggerService::info(self::class.': Verify missing docs has been initiated');
+            switch ($quoteType) {
+                case QuoteTypes::CAR->value:
+                    $quote = CarQuote::where('uuid', $quoteUuid)->first();
+                    if (! $quote) {
+                        LoggerService::info(self::class.': Quote not found');
+
+                        return ['success' => false, 'message' => 'Quote not found', 'isDocumentMissing' => null];
+                    }
+                    $requiredDocuments = [
+                        DocumentTypeCode::EMIRATES_ID,
+                        DocumentTypeCode::REGISTRATION_CARD_MULKIYA,
+                        DocumentTypeCode::DRIVING_LICENSE,
+                    ];
+                    $leadDocuments = $quote->documents()
+                        ->whereIn('document_type_code', $requiredDocuments)
+                        ->get()
+                        ->keyBy('document_type_code');
+
+                    // Check if all required documents are present and complete
+                    $missingOrIncomplete = collect($requiredDocuments)->map(function ($docType) use ($leadDocuments) {
+                        $doc = $leadDocuments->get($docType);
+
+                        return ['document_type_code' => $docType, 'is_complete' => $doc ? true : false];
+                    })->values();
+
+                    if ($missingOrIncomplete->every(function ($item) {
+                        return $item['is_complete'];
+                    })) {
+                        return ['success' => true, 'message' => 'All documents are present and complete', 'isDocumentMissing' => false, 'missingDocuments' => $missingOrIncomplete];
+                    } else {
+                        return ['success' => false, 'message' => 'Missing documents ', 'isDocumentMissing' => true, 'missingDocuments' => $missingOrIncomplete];
+                    }
+
+                    break;
+                default:
+                    LoggerService::warning(self::class.': Unsupported quote type for verify missing docs', ['quote_type' => $quoteType]);
+
+                    return [
+                        'success' => false,
+                        'message' => 'Unsupported quote type. Missing docs verification is only available for CAR quotes.',
+                        'isDocumentMissing' => null,
+                        'missingDocuments' => null,
+                    ];
+            }
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Verify missing docs failed', exception: $e);
+
+            return [
+                'success' => false,
+                'message' => 'Verify missing docs failed: '.$e->getMessage(),
+                'isDocumentMissing' => null,
+                'missingDocuments' => null,
+            ];
+        }
+    }
 }

@@ -36,12 +36,15 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         $isAIG = $this->allocationRequest->isAIG();
         $isPaymentAuthorizedOrLinkRequestedOrDeclined = $this->lead->isPaymentAuthorizedOrLinkRequestedOrDeclined();
         $isLeadFromInstantAlfred = $this->lead->isLeadFromInstantAlfred();
+        $isMultiTrip = $this->lead->isMultiTrip();
 
         $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        $travelTeamId = getTeamId(TeamNameEnum::TRAVEL_TEAM);
 
         $isAIGWithInstantAlfred = $isAIG && $isLeadFromInstantAlfred;
         $isSICOrAIGWithPayment = (($isSIC && ! $isAIG) || $isAIG) && $isPaymentAuthorizedOrLinkRequestedOrDeclined;
         $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequestedOrDeclined;
+        $isMultiTripNonSICNonAIG = $isMultiTrip && ! $isSIC && ! $isAIG;
 
         $teamId = null;
 
@@ -55,6 +58,10 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             $teamId = $sicUnassistedTeamId;
             $reason = $isAIG ? 'AIG with payment authorized or link requested' :
                               'SIC with payment authorized or link requested';
+        } elseif ($isMultiTripNonSICNonAIG) {
+            // Rule 3: Multitrip non-SIC non-AIG leads go to Travel Team
+            $teamId = $travelTeamId;
+            $reason = 'Multitrip non-SIC non-AIG lead';
         } else {
             // Rule 4: Default - all other leads have no specific team
             $teamId = $defaultTeamId;
@@ -67,6 +74,7 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'teamId' => $teamId,
             'isSIC' => $isSIC,
             'isAIG' => $isAIG,
+            'isMultiTrip' => $isMultiTrip,
             'isPaymentAuthorizedOrLinkRequestedOrDeclined' => $isPaymentAuthorizedOrLinkRequestedOrDeclined,
             'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred,
         ]);

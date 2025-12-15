@@ -837,7 +837,7 @@ class SendUpdateLogService
 
     public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false, $insurerDetails = null)
     {
-        LoggerService::info('fn:updatePaymentDetails - SendUpdateLogService');
+        LoggerService::info('Book Update - Update Payment Details');
         try {
             if ($insurerDetails !== null) {
                 $sendUpdatePaymentDetails = [
@@ -865,10 +865,10 @@ class SendUpdateLogService
             LoggerService::info('fn:updatePaymentDetails - Updating Payment Details - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid, extra: ['Payment Details' => json_encode($sendUpdatePaymentDetails)]);
             $payment->update($sendUpdatePaymentDetails);
 
-            info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('Book Update - Payment Details Updated');
 
         } catch (\Exception $exception) {
-            logger()->error('Book Update - Error while updating details in Payment - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+            logger()->warning('Book Update - Error while updating details in Payment - Exception: '.$exception->getMessage());
 
             return false;
         }
@@ -1073,6 +1073,7 @@ class SendUpdateLogService
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
         $sageRequestPayload->quoteTypeId = $sendUpdateLog->quote_type_id;
+        $sageRequestPayload->quoteType = $sendUpdateRequest->quoteType;
         $sageRequestPayload->customer_id = $quoteDetails->customer_id;
         $commissionChargeIds = $preparedDetailsForEndorsement['splitPayments']->flatMap(function ($paymentSplit) {
             return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)
@@ -1409,9 +1410,9 @@ class SendUpdateLogService
         } elseif ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
-            }, $quote->members->toArray()));
+            }, $quote->activeMembers->toArray()));
             $emailData->tpa = $quote?->plan?->healthNetwork->text;
-            $emailData->numberOfMembersCovered = (string) count($quote->members);
+            $emailData->numberOfMembersCovered = (string) count($quote->activeMembers);
 
             $emailData->isHealthAUH = $quote?->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI;
             $emailData->emirateOfYourVisaId = $quote?->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';

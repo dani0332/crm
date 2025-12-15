@@ -110,11 +110,9 @@ class Dtt extends Command
             ->whereNotIn('source', $excludeSources)
             ->whereNull('renewal_batch')
             ->whereNull('previous_quote_policy_number')
-
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-
             ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
-
+            ->orderByDesc('car_value')
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();
 

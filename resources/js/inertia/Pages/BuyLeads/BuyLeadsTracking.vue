@@ -137,6 +137,16 @@ onMounted(() => {
     hide-rows-per-page
     hide-footer
   >
+    <template #item-quote_type.code="{ quote_type, source }">
+      <span v-if="source == 'REVIVAL'">
+        <x-tag color="primary"> Car CAT A </x-tag>
+      </span>
+      <span v-else>
+        <x-tag color="primary">
+          {{ quote_type.code }}
+        </x-tag>
+      </span>
+    </template>
     <template #item-ref_id="item">
       <SanitizeHtml
         v-if="(item.ref_id, item.quote_type_id)"

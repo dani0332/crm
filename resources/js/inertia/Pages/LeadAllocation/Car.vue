@@ -102,6 +102,14 @@ const tableHeader = ref([
     tooltip:
       'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
   },
+  {
+    text: 'BL-CAT-A Assigned',
+    value: 'BLCATAAllocationCount',
+    sortable: true,
+    width: '100',
+    tooltip:
+      'The BL CAT-A ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
+  },
   { text: 'BL Reset CAP', value: 'blResetCap', sortable: true, width: '100' },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);

@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LifeRiderEnum;
 use App\Enums\LookupsEnum;
@@ -500,6 +501,7 @@ class LifeQuoteService extends BaseService
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'lifeCutOffDate' => $lifeCutOffDate,
+            'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
         ];
 
     }
@@ -826,11 +828,13 @@ class LifeQuoteService extends BaseService
 
         $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
 
+        $insuranceProviderEnum = InsuranceProviderEnum::asArray();
+
         $pdf = PDF::setOption([
             'isHtml5ParserEnabled' => true,
             'dpi' => 150,
             'isRemoteEnabled' => true,
-        ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
+        ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans', 'insuranceProviderEnum'));
 
         return ['pdf' => $pdf, 'name' => $this->generatePdfFilename($quote)];
     }
