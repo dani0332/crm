@@ -29,7 +29,7 @@ class NgiQuoteUpdaterService
             'policy_expiry_date' => $createPolicyResult?->policy_end_dt
                 ? Carbon::parse($createPolicyResult->policy_end_dt)->format('Y-m-d')
                 : $quote->policy_expiry_date,
-            'price_vat_applicable' => $createPolicyResult?->policy_premium ?? $quote->price_vat_applicable,
+            'price_vat_applicable' => $createPolicyResult?->policy_premium ?? $quote->price_vat_applicable, // TODO:: NGI:: need to discuss and confirm this with Waris and Rucha
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),

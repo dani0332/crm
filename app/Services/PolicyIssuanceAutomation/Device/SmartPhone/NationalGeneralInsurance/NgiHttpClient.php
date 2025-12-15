@@ -17,6 +17,7 @@ class NgiHttpClient
     private string $baseUrl;
     private int $apiTimeout;
     private ?string $authToken = null;
+    private const APPLICATION_JSON = 'application/json';
 
     public function __construct()
     {
@@ -49,8 +50,8 @@ class NgiHttpClient
         try {
             $response = Http::timeout($this->apiTimeout)
                 ->withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
+                    'Content-Type' => self::APPLICATION_JSON,
+                    'Accept' => self::APPLICATION_JSON,
                 ])
                 ->post($authUrl, $payload);
 
@@ -182,8 +183,8 @@ class NgiHttpClient
         $token = $this->authenticate();
 
         $defaultHeaders = [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
+            'Content-Type' => self::APPLICATION_JSON,
+            'Accept' => self::APPLICATION_JSON,
         ];
 
         if ($token) {

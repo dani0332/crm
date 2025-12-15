@@ -11,9 +11,9 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiException;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiApiService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiDocumentHandler;
-use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiQuoteUpdaterService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
@@ -83,7 +83,11 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
             LoggerService::error('NgiGetPolicyDocumentsJob: Process not found', [
                 'process_id' => $this->processId,
             ]);
-            throw new \RuntimeException('NgiGetPolicyDocumentsJob: Process not found. process_id -> ' . $this->processId);
+            throw new NgiException(
+                'NgiGetPolicyDocumentsJob: Process not found. process_id -> ' . $this->processId,
+                NgiException::PROCESS_NOT_FOUND,
+                ['process_id' => $this->processId]
+            );
         }
 
         $quote = $process->model;
@@ -92,7 +96,11 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
             LoggerService::error('NgiGetPolicyDocumentsJob: Quote not found', [
                 'process_id' => $this->processId,
             ]);
-            throw new \RuntimeException('NgiGetPolicyDocumentsJob: Quote not found. process_id -> ' . $this->processId);
+            throw new NgiException(
+                'NgiGetPolicyDocumentsJob: Quote not found. process_id -> ' . $this->processId,
+                NgiException::QUOTE_NOT_FOUND,
+                ['process_id' => $this->processId]
+            );
         }
 
         LoggerService::info('NgiGetPolicyDocumentsJob: Starting document retrieval', [
@@ -111,7 +119,11 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
                 'process_id' => $this->processId,
                 'error' => $validationResult['error'] ?? 'No policy number',
             ]);
-            throw new \RuntimeException('NgiGetPolicyDocumentsJob: Policy number validation failed ' . ($validationResult['error'] ?? 'Policy number not found'));
+            throw new NgiException(
+                'NgiGetPolicyDocumentsJob: Policy number validation failed ' . ($validationResult['error'] ?? 'Policy number not found'),
+                NgiException::POLICY_NUMBER_VALIDATION_FAILED,
+                ['process_id' => $this->processId, 'error' => $validationResult['error'] ?? 'Policy number not found']
+            );
         }
 
         // Step 1: Call GetPolicyDocuments API
@@ -126,9 +138,11 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
                 'attempt' => $this->attempts(),
                 'error' => $errorMessage,
             ]);
-
-            // Throw exception to trigger Laravel's retry mechanism
-            throw new \RuntimeException('NgiGetPolicyDocumentsJob: API call failed ' . $errorMessage);
+            throw new NgiException(
+                'NgiGetPolicyDocumentsJob: API call failed ' . $errorMessage,
+                NgiException::API_CALL_FAILED,
+                ['process_id' => $this->processId, 'error' => $errorMessage]
+            );
         }
 
         LoggerService::info('NgiGetPolicyDocumentsJob: API call successful, downloading documents', [
@@ -147,8 +161,11 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
                 'attempt' => $this->attempts(),
                 'error' => $errorMessage,
             ]);
-
-            throw new \RuntimeException('NgiGetPolicyDocumentsJob: Document download failed ' . $errorMessage);
+            throw new NgiException(
+                'NgiGetPolicyDocumentsJob: Document download failed ' . $errorMessage,
+                NgiException::DOCUMENT_DOWNLOAD_FAILED,
+                ['process_id' => $this->processId, 'error' => $errorMessage]
+            );
         }
 
         // Success - Update process step and set status back to PENDING for PolicyIssuanceJob to continue
@@ -194,7 +211,7 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
 
         // Validate document URLs exist
         $validationService = app(NgiValidationService::class);
-        $validationResult = $validationService->validateDownloadDocuments($quote, $documentUrls);
+        $validationResult = $validationService->validateDownloadDocuments($documentUrls);
         if (!$validationResult['status']) { // TODO:: NGI:: please revert this false after testign as currently i have only one document URL in response.
             return $validationResult;
         }

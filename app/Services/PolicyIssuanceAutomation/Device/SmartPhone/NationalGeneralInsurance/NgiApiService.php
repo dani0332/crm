@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
-use App\Enums\DocumentTypeCode;
 use App\Enums\NgiEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteTypes;
 use App\Facades\Ngi;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -18,7 +16,6 @@ class NgiApiService
     public function __construct(
         private NgiRequestBuilder $requestBuilder,
         private NgiResponseHandler $responseHandler,
-        private NgiDocumentHandler $documentHandler,
         private NgiQuoteUpdaterService $quoteUpdater,
         private NgiValidationService $validationService,
     ) {}
@@ -102,7 +99,7 @@ class NgiApiService
      * @param mixed $process
      * @return array
      */
-    public function getPolicyDocuments($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
+    public function getPolicyDocuments($quote, $process): array
     {
         LoggerService::info('Initiating GetPolicyDocuments API call', extra: [
             'process_id' => $process->id,
@@ -168,145 +165,4 @@ class NgiApiService
         return $response;
     }
 
-    /**
-     * Upload policy documents to IMCRM
-     *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
-     */
-    public function uploadPolicyDocumentsToIMCRM($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
-    {
-        LoggerService::info('Starting policy documents download and upload to IMCRM', extra: [
-            'process_id' => $process->id,
-            'step' => NgiEnum::STEP_UPLOAD_POLICY_DOCS,
-        ]);
-
-        $response = $this->responseHandler->buildStepResponse(NgiEnum::STEP_UPLOAD_POLICY_DOCS);
-
-        // Get document URLs from quote (stored during GetPolicyDocuments step)
-        $quote->refresh();
-        $documentUrls = [
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $quote->insurer_policy_doc_id,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $quote->insurer_debit_note_doc_id,
-        ];
-
-        // Validate document URLs exist
-        $validationResult = $this->validationService->validateDownloadDocuments($quote, $documentUrls);
-        if (! $validationResult['status']) {
-            return $validationResult;
-        }
-
-        $uploadedDocumentsToIMCRM = collect();
-
-        foreach ($documentUrls as $docCode => $documentUrl) {
-            LoggerService::info('Downloading document from NGI', extra: [
-                'document_code' => $docCode,
-                'document_url' => $documentUrl,
-            ]);
-
-            // Download document from URL
-            $documentContentResponse = $this->documentHandler->fetchDocumentFromUrl($documentUrl);
-
-            if (! $documentContentResponse['status']) {
-                $uploadedDocumentsToIMCRM->push([
-                    'name' => $docCode,
-                    'uploaded' => false,
-                    'status' => false,
-                    'message' => $documentContentResponse['message'] ?? 'Document Download Failed',
-                ]);
-                continue;
-            }
-
-            // Determine file name based on document type
-            $fileName = $this->getDocumentFileName($docCode, $quote->policy_number);
-
-            // Encode content to base64 for upload
-            $base64Content = base64_encode($documentContentResponse['content']);
-
-            LoggerService::info('Uploading document to IMCRM', extra: [
-                'document_code' => $docCode,
-                'file_name' => $fileName,
-            ]);
-
-            // Upload to IMCRM
-            $quoteDocument = $this->documentHandler->uploadAndAttachToQuoteDocuments(
-                $quote,
-                $base64Content,
-                $docCode,
-                $fileName
-            );
-
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
-                $quote,
-                ['document_url' => $documentUrl, 'document_code' => $docCode],
-                ['uploaded' => (bool) $quoteDocument?->id],
-                $documentUrl,
-                NgiEnum::STEP_UPLOAD_POLICY_DOCS,
-                $quoteDocument?->id ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
-                $process
-            );
-
-            $uploadedDocumentsToIMCRM->push([
-                'name' => $docCode,
-                'uploaded' => $quoteDocument?->id ?? false,
-                'status' => (bool) $quoteDocument?->id,
-                'message' => $quoteDocument?->id ? 'Document Uploaded Successfully' : 'Document Upload Failed',
-            ]);
-        }
-
-        $allDocsDownload = $uploadedDocumentsToIMCRM->where('status', true)->count() === 3;
-
-        LoggerService::info('Document processing completed', extra: [
-            'all_successful' => $allDocsDownload,
-            'total_documents' => $uploadedDocumentsToIMCRM->count(),
-            'successful_uploads' => $uploadedDocumentsToIMCRM->where('status', true)->count(),
-            'failed_uploads' => $uploadedDocumentsToIMCRM->where('status', false)->count(),
-        ]);
-
-        if (! $allDocsDownload || $uploadedDocumentsToIMCRM->isEmpty()) {
-            $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('status', false)->pluck('name')->toArray();
-            LoggerService::error('Failed to fetch/upload all documents', extra: [
-                'failed_documents' => $docsUploadToIMCRMFailed,
-                'upload_summary' => $uploadedDocumentsToIMCRM->toArray(),
-            ]);
-
-            $error = 'Policy Issuance is pending as ' . implode(', ', $docsUploadToIMCRMFailed) . ' documents are not uploaded';
-            $response['error'] = $error;
-            $response['message'] = $error;
-            $response['status'] = false;
-
-            return $response;
-        }
-
-        LoggerService::info('All documents fetched and uploaded successfully', extra: [
-            'uploaded_documents' => $uploadedDocumentsToIMCRM->pluck('name')->toArray(),
-        ]);
-
-        $response['status'] = true;
-        $response['message'] = 'Fetched all documents from insurer and uploaded to IMCRM';
-        $response['completed_step'] = NgiEnum::STEP_UPLOAD_POLICY_DOCS;
-
-        return $response;
-    }
-
-    /**
-     * Get document file name based on document type
-     *
-     * @param string $docCode
-     * @param string|null $policyNumber
-     * @return string
-     */
-    private function getDocumentFileName(string $docCode, ?string $policyNumber): string
-    {
-        $prefix = $policyNumber ?? 'policy';
-
-        return match ($docCode) {
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $prefix . '_policy_schedule.pdf',
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $prefix . '_tax_invoice.pdf',
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $prefix . '_commission_invoice.pdf',
-            default => $prefix . '_document.pdf',
-        };
-    }
 }

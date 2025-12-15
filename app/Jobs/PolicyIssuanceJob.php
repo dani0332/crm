@@ -257,7 +257,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                     'quote_code' => $quoteCode,
                     'provider' => $insuranceProvider->text,
                 ]);
-                return;
             } elseif (isset($response['booking_pending']) && $response['booking_pending']) {
                 LoggerService::info('Automation: Booking pending', [
                     'process_id' => $this->process->id,

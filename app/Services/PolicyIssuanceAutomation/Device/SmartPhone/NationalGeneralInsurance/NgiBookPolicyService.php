@@ -33,7 +33,7 @@ class NgiBookPolicyService
      * @param mixed $policyIssuance
      * @return array
      */
-    public function bookPolicy($quote, $policyIssuance = null, $customer = null, $deviceQuote = null, $latestInsured = null): array
+    public function bookPolicy($quote, $policyIssuance = null): array
     {
         LoggerService::info('Starting book policy process for Device/Smartphone', extra: [
             'policy_number' => $quote->policy_number,

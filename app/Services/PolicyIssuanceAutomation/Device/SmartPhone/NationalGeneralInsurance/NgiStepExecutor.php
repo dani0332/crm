@@ -118,7 +118,7 @@ class NgiStepExecutor
             'policy_number' => $quote->policy_number,
         ]);
 
-        $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process, $customer, $deviceQuote, $latestInsured);
+        $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process);
 
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::error('Book policy failed', extra: [
