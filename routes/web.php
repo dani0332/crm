@@ -591,6 +591,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::prefix('config')->group(function () {
                 Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
+                Route::post('fetch-nationalities', [BuyLeadConfigController::class, 'fetchNationalities'])->name('admin.buy-leads.config.fetch-nationalities');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
         });
@@ -656,7 +657,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
         Route::post('assignSupportUser', [CRUDController::class, 'assignSupportUser'])->name('assign-support-user');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
-
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
