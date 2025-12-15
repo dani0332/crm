@@ -84,7 +84,6 @@ class MetLifeIntegrationTest extends TestCase
         $this->assertFalse($isSessionValid);
     }
 
-
     public function test_cache_clear_removes_all_data()
     {
         $cacheService = new MetLifeCacheService;
@@ -104,7 +103,6 @@ class MetLifeIntegrationTest extends TestCase
         $this->assertNull(Cache::get('metlife_session_created_at'));
         $this->assertNull(Cache::get('metlife_csrf_token_created_at'));
     }
-
 
     public function test_null_session_validation()
     {
