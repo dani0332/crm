@@ -103,8 +103,6 @@ class DttFollowUp extends Command
                     ->catch(function (\Throwable $e) use ($logPrefix) {
                         LoggerService::info($logPrefix.' one of batch failed', extra: [
                             'error' => $e->getMessage(),
-                            'file' => $e->getFile(),
-                            'line' => $e->getLine(),
                         ]);
                     })
                     ->finally(function () use ($logPrefix) {
