@@ -159,7 +159,6 @@ const carModelYearOptions = computed(() => {
   );
 });
 
-
 const claimRequestTypeOptions = computed(() => {
   return (
     props.claimDropdownOptions?.claimRequestTypes?.map(ct => ({
@@ -183,7 +182,6 @@ const isPendingClaimRequestType = ref(
   page.props.claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE ===
     filters.claim_request_type_id,
 );
-
 
 function searchClaims(isValid) {
   if (isValid) {
@@ -350,7 +348,6 @@ const isBikeLOB = computed(() => {
   return quoteTypeIds.Bike === filters.quote_type_id;
 });
 
-
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
   return quoteTypeIds.Health === filters.quote_type_id;
@@ -386,7 +383,8 @@ watch(
       console.log('Line of business changed to:', newValue);
 
       // Check if the new selection is car
-      const isVehicleTypeCarOrBike = newValue === quoteTypeIds.Car || newValue === quoteTypeIds.Bike;
+      const isVehicleTypeCarOrBike =
+        newValue === quoteTypeIds.Car || newValue === quoteTypeIds.Bike;
 
       console.log('Is vehicle type (Car/Bike):', isVehicleTypeCarOrBike);
 
@@ -410,7 +408,8 @@ watch(
       item => item.id === newClaimRequestId,
     )?.code;
     if (
-      requestTypeCode !== page.props.claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE
+      requestTypeCode !==
+      page.props.claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE
     ) {
       filters.service_type_id = null;
       isPendingClaimRequestType.value = false;
@@ -611,16 +610,15 @@ watch(
             filterPlaceholder="Filter Vehicle Year...."
             clearable
           />
-
         </template>
         <template v-if="isHealthLOB">
           <x-select
             v-model="filters.claim_request_type_id"
             label="Claim Request Type"
             placeholder="Select Claim Request Type"
-            :options="claimRequestTypeOptions" 
+            :options="claimRequestTypeOptions"
             filterable
-            filterPlaceholder="Filter Claim Request Type...." 
+            filterPlaceholder="Filter Claim Request Type...."
           />
           <x-select
             v-if="isPendingClaimRequestType"
