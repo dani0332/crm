@@ -79,6 +79,7 @@ class AmtController extends Controller
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('lookups as lss', 'lss.id', '=', 'bqr.sub_source_id')
+            ->leftJoin('renewal_batches as rb', 'rb.id', '=', 'bqr.renewal_batch_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -101,6 +102,8 @@ class AmtController extends Controller
                 DB::raw('DATE_FORMAT(bqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
                 'bqr.policy_number',
                 'bqr.renewal_batch',
+                'rb.name as renewal_batch_text',
+                'rb.id as renewal_batch_id',
                 'bqr.renewal_import_code',
                 'bqr.previous_quote_policy_number',
                 DB::raw('DATE_FORMAT(bqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
@@ -238,7 +241,7 @@ class AmtController extends Controller
             });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $data->where('bqr.renewal_batch', $request->renewal_batch);
+            $data->where('rb.name', $request->renewal_batch);
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
@@ -370,7 +373,7 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description']);
+        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name']);
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data */
