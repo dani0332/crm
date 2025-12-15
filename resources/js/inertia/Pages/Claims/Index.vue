@@ -159,6 +159,32 @@ const carModelYearOptions = computed(() => {
   );
 });
 
+
+const claimRequestTypeOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.claimRequestTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
+});
+
+const claimServiceTypeOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.claimServiceTypes?.map(ct => ({
+      value: ct.id,
+      label: ct.text,
+    })) || []
+  );
+});
+
+// Check if the claim request type is pending approval
+const isPendingClaimRequestType = ref(
+  page.props.claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE ===
+    filters.claim_request_type_id,
+);
+
+
 function searchClaims(isValid) {
   if (isValid) {
     filters.page = 1;
@@ -324,6 +350,12 @@ const isBikeLOB = computed(() => {
   return quoteTypeIds.Bike === filters.quote_type_id;
 });
 
+
+// Check if the selected line of business is Health
+const isHealthLOB = computed(() => {
+  return quoteTypeIds.Health === filters.quote_type_id;
+});
+
 // Check if export is available based on date filters
 const canExport = computed(() => {
   return (
@@ -367,6 +399,23 @@ watch(
 
         console.log('Cleared vehicle-specific filters');
       }
+    }
+  },
+);
+
+watch(
+  () => filters.claim_request_type_id,
+  newClaimRequestId => {
+    let requestTypeCode = props.claimDropdownOptions?.claimRequestTypes.find(
+      item => item.id === newClaimRequestId,
+    )?.code;
+    if (
+      requestTypeCode !== page.props.claimsEnum?.CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE
+    ) {
+      filters.service_type_id = null;
+      isPendingClaimRequestType.value = false;
+    } else {
+      isPendingClaimRequestType.value = true;
     }
   },
 );
@@ -560,6 +609,27 @@ watch(
             :options="carModelYearOptions"
             filterable
             filterPlaceholder="Filter Vehicle Year...."
+            clearable
+          />
+
+        </template>
+        <template v-if="isHealthLOB">
+          <x-select
+            v-model="filters.claim_request_type_id"
+            label="Claim Request Type"
+            placeholder="Select Claim Request Type"
+            :options="claimRequestTypeOptions" 
+            filterable
+            filterPlaceholder="Filter Claim Request Type...." 
+          />
+          <x-select
+            v-if="isPendingClaimRequestType"
+            v-model="filters.service_type_id"
+            label="Service Type"
+            placeholder="Select Service Type"
+            :options="claimServiceTypeOptions"
+            filterable
+            filterPlaceholder="Filter Service Type...."
             clearable
           />
         </template>

@@ -210,6 +210,10 @@ class ClaimsService extends BaseService
             $query->where('complaint_status_id', $filters['complaint_status_id']);
         }
 
+        if (! empty($filters['claim_request_type_id'])) {
+            $query->where('claim_request_type_id', $filters['claim_request_type_id']);
+        }
+
         if (! empty($filters['manager_id'])) {
             $query->where('manager_id', $filters['manager_id']);
         }
@@ -269,6 +273,12 @@ class ClaimsService extends BaseService
             });
         }
 
+        if (! empty($filters['service_type_id'])) {
+            $query->whereHas('claimRequestDetails', function ($subQuery) use ($filters) {
+                $subQuery->where('service_type_id', $filters['service_type_id']);
+            });
+        }
+
         return $query;
     }
 
@@ -295,6 +305,8 @@ class ClaimsService extends BaseService
             'car_make',
             'car_model',
             'model_year',
+            'claim_request_type_id',
+            'service_type_id',
         ]);
     }
 
