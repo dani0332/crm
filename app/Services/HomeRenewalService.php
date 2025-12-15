@@ -132,7 +132,7 @@ class HomeRenewalService extends RenewalsUploadService
             $quote->update($quoteData);
 
             // update in home quotes
-            $this->createHomeQuoteData($quoteData, $data);
+            $this->createHomeQuoteData($quoteData, $data, $quote);
 
             unset($quoteData['notes']);
 
@@ -515,7 +515,7 @@ class HomeRenewalService extends RenewalsUploadService
         ]);
     }
 
-    private function createHomeQuoteData(array &$quoteData, array $data): array
+    private function createHomeQuoteData(array &$quoteData, array $data, PersonalQuote $quote): array
     {
         $quoteData['insurance_provider_id'] = (! empty($data['current_insurance_provider'])) ?
             InsuranceProvider::where('code', trim($data['current_insurance_provider']))->first()?->id : null;
@@ -543,6 +543,10 @@ class HomeRenewalService extends RenewalsUploadService
         $quoteData['insurer_quote_number'] = (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null;
         $quoteData['previous_advisor_id'] = (! empty($data['previous_advisor_email'])) ? app(RenewalsAddonServices::class)->getUserInfo($data['previous_advisor_email']) : null;
         $quoteData['additional_notes'] = $data['notes'];
+
+        // Populate previous sum insured fields from renewal upload data
+        // These values should remain unchanged after initial population
+        $this->populatePreviousSumInsuredFields($quoteData, $data, $quote);
 
         return $quoteData;
     }
@@ -607,6 +611,122 @@ class HomeRenewalService extends RenewalsUploadService
     private function updateTotalFailed(RenewalStatusProcess $renewalStatusProcess)
     {
         return RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+    }
+
+    /**
+     * Get previous building AED value from renewal upload data
+     * This value should remain unchanged after initial population
+     */
+    private function getPreviousBuildingAed($data)
+    {
+        LoggerService::info('fn: getPreviousBuildingAed', [
+            'building' => $data['building'] ?? null,
+        ]);
+
+        $previousBuildingAed = null;
+        if (! empty($data['building']) && is_numeric($data['building'])) {
+            $previousBuildingAed = (float) $data['building'];
+        }
+
+        LoggerService::info('fn: getPreviousBuildingAed - previous building AED: '.$previousBuildingAed);
+
+        return $previousBuildingAed;
+    }
+
+    /**
+     * Get previous contents AED value from renewal upload data
+     * This value should remain unchanged after initial population
+     */
+    private function getPreviousContentsAed($data)
+    {
+        LoggerService::info('fn: getPreviousContentsAed', [
+            'contents' => $data['contents'] ?? null,
+        ]);
+
+        // Convert contents range to actual AED value if it's a range lookup
+        $previousContentsAed = null;
+        if (! empty($data['contents'])) {
+            // If it's a numeric value, use it directly
+            if (is_numeric($data['contents'])) {
+                $previousContentsAed = (float) $data['contents'];
+            } else {
+                // If it's a range text, get the range lookup and use min_value as the numeric representation
+                $contentsRange = $this->renewalsHelperService->getRangeLookupByText(RangeLookupKeyEnums::CONTENT_VALUES->value, $data['contents']);
+                if ($contentsRange) {
+                    // Use min_value as the numeric representation, fallback to max_value if min_value is null
+                    $previousContentsAed = $contentsRange->min_value ?? $contentsRange->max_value ?? null;
+                }
+            }
+        }
+
+        LoggerService::info('fn: getPreviousContentsAed - previous contents AED: '.$previousContentsAed);
+
+        return $previousContentsAed;
+    }
+
+    /**
+     * Get previous personal belongings AED value from renewal upload data
+     * This value should remain unchanged after initial population
+     */
+    private function getPreviousPersonalBelongingsAed($data)
+    {
+        LoggerService::info('fn: getPreviousPersonalBelongingsAed', [
+            'personal_belongings' => $data['personal_belongings'] ?? null,
+        ]);
+
+        // Convert personal belongings range to actual AED value if it's a range lookup
+        $previousPersonalBelongingsAed = null;
+        if (! empty($data['personal_belongings'])) {
+            // If it's a numeric value, use it directly
+            if (is_numeric($data['personal_belongings'])) {
+                $previousPersonalBelongingsAed = (float) $data['personal_belongings'];
+            } else {
+                // If it's a range text, get the range lookup and use min_value as the numeric representation
+                $personalBelongingsRange = $this->renewalsHelperService->getRangeLookupByText(RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES->value, $data['personal_belongings']);
+                if ($personalBelongingsRange) {
+                    // Use min_value as the numeric representation, fallback to max_value if min_value is null
+                    $previousPersonalBelongingsAed = $personalBelongingsRange->min_value ?? $personalBelongingsRange->max_value ?? null;
+                }
+            }
+        }
+
+        LoggerService::info('fn: getPreviousPersonalBelongingsAed - previous personal belongings AED: '.$previousPersonalBelongingsAed);
+
+        return $previousPersonalBelongingsAed;
+    }
+
+    /**
+     * Populate previous sum insured fields only if they don't already exist
+     * These values should remain unchanged after initial population
+     */
+    private function populatePreviousSumInsuredFields(array &$quoteData, array $data, PersonalQuote $quote): void
+    {
+        // Get existing home quote if it exists
+        $existingHomeQuote = $quote->homeQuote;
+
+        // Previous Building AED - only set if not already populated
+        if (! $existingHomeQuote || is_null($existingHomeQuote->previous_building_aed)) {
+            $quoteData['previous_building_aed'] = $this->getPreviousBuildingAed($data);
+        } else {
+            // Keep existing value - don't overwrite
+            $quoteData['previous_building_aed'] = $existingHomeQuote->previous_building_aed;
+        }
+
+        // Previous Contents AED - only set if not already populated
+        if (! $existingHomeQuote || is_null($existingHomeQuote->previous_contents_aed)) {
+            $quoteData['previous_contents_aed'] = $this->getPreviousContentsAed($data);
+        } else {
+            // Keep existing value - don't overwrite
+            $quoteData['previous_contents_aed'] = $existingHomeQuote->previous_contents_aed;
+        }
+
+        // Previous Personal Belongings AED - only set if not already populated
+        if (! $existingHomeQuote || is_null($existingHomeQuote->previous_personal_belongings_aed)) {
+            $quoteData['previous_personal_belongings_aed'] = $this->getPreviousPersonalBelongingsAed($data);
+        } else {
+            // Keep existing value - don't overwrite
+            $quoteData['previous_personal_belongings_aed'] = $existingHomeQuote->previous_personal_belongings_aed;
+        }
     }
 
 }
