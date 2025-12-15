@@ -258,13 +258,11 @@ const maxLeadsOptions = computed(() => {
     hide-rows-per-page
     hide-footer
   >
-  <template #item-quote_type.code="{ quote_type, source }">
-    <span v-if="source == 'REVIVAL'">
-        <x-tag color="primary">
-          Car CAT A
-        </x-tag>
+    <template #item-quote_type.code="{ quote_type, source }">
+      <span v-if="source == 'REVIVAL'">
+        <x-tag color="primary"> Car CAT A </x-tag>
       </span>
-      <span v-else> 
+      <span v-else>
         <x-tag color="primary">
           {{ quote_type.code }}
         </x-tag>
