@@ -155,7 +155,7 @@ class SendUpdateLogRepository extends BaseRepository
             $sendUpdate = $this->find($id)->update([
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
-                'car_addons' => $data['car_addons'] ?? null,
+                // 'car_addons' => $data['car_addons'] ?? null,
                 'emirates_id' => $data['emirates_id'] ?? null,
                 'seating_capacity' => $data['seating_capacity'] ?? null,
                 'endorsement_number' => $data['endorsement_number'] ?? null,
@@ -298,6 +298,11 @@ class SendUpdateLogRepository extends BaseRepository
     {
         LoggerService::info('fn:fetchSendUpdateToCustomer - SendUpdateLogRepository');
         $sendUpdateLog = $this->find($request['sendUpdateId']);
+        if (empty($sendUpdateLog->notes)) {
+            $response[] = ['status' => 500, 'message' => 'Notes are required to send update to customer'];
+
+            return $response;
+        }
 
         try {
             if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {

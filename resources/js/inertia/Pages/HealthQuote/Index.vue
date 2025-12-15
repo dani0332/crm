@@ -1,10 +1,13 @@
 <script setup>
 import { computed } from 'vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  supportUsers: Array,
   renewalBatches: Array,
   teams: Object,
   userMaxCap: Number,
@@ -21,14 +24,21 @@ defineProps({
   assignmentTypes: Object,
   insurerAMLStatus: Array,
   emirates: Array,
+  subSources: { type: Array, default: () => [] },
+  canAssignClientSupport: Boolean,
+  canAssignLeadAdvisor: Boolean,
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const notification = useToast();
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const quoteSegments = page.props.quoteSegments;
 
 const loader = reactive({
@@ -40,6 +50,11 @@ const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+const createLeadModal = ref(false);
+
+const manualAssignmentSuccess = () => {
+  quotesSelected.value = [];
+};
 
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -81,6 +96,7 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
+  { text: 'OE/AE', value: 'support_user.name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   {
     text: 'ADVISOR REQUESTED',
@@ -159,6 +175,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -185,6 +202,7 @@ const filters = reactive({
   quote_status: [],
   insurer_aml_status: [],
   advisors: [],
+  support_user_id: [],
   is_ecommerce: '',
   is_renewal: '',
   previous_quote_policy_number: '',
@@ -256,6 +274,13 @@ const advisorOptions = computed(() => {
     value: advisor.id,
     label: advisor.name,
   }));
+});
+
+const supportUserOptions = computed(() => {
+  const list = Array.isArray(page.props.supportUsers)
+    ? page.props.supportUsers
+    : [];
+  return list.map(user => ({ value: user.id, label: user.name }));
 });
 
 const renewalBatchOptions = computed(() => {
@@ -393,6 +418,7 @@ function setQueryStringFilters() {
     'renewal_batches',
     'payment_status',
     'emirate_of_your_visa_id',
+    'sub_source_id',
     'page',
   ];
 
@@ -744,6 +770,9 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+// Handle lead creation from modal
+const onLeadConfirmed = leadData => {};
 </script>
 
 <template>
@@ -782,16 +811,14 @@ const insurerAMLStatusOption = computed(() => {
           </x-button>
         </Link>
 
-        <Link :href="route('health.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </template>
     </StickyHeader>
 
@@ -905,6 +932,28 @@ const insurerAMLStatusOption = computed(() => {
                 )
               "
               @clear="filters.quote_status = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.support_user_id"
+          name="support_user_id"
+          label="OE/AE"
+          placeholder="Search by OE/AE"
+          :options="supportUserOptions"
+          filterable
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.support_user_id = supportUserOptions.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.support_user_id = []"
             />
           </template>
         </x-select>
@@ -1245,42 +1294,20 @@ const insurerAMLStatusOption = computed(() => {
         class="mb-4"
       >
         <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assign_team"
-                label="Assign Subteam"
-                :options="subTeamsOptions"
-                placeholder="Select Subteam"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-                filterable
-                v-if="readOnlyMode.isDisable === true"
-              />
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-                filterable
-                v-if="readOnlyMode.isDisable === true"
-              />
-
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
+          <LeadAssignment
+            :selected="quotesSelected.map(e => e.id)"
+            :advisors="advisorOptions"
+            :supportUsers="
+              $page.props.supportUsers?.map(u => ({
+                value: u.id,
+                label: u.name,
+              })) || []
+            "
+            :canAssignClientSupport="$page.props.canAssignClientSupport"
+            :canAssignLeadAdvisor="$page.props.canAssignLeadAdvisor"
+            quoteType="health"
+            @success="manualAssignmentSuccess"
+          />
         </div>
       </div>
     </Transition>
@@ -1371,6 +1398,15 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- Create Lead Modal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="health.create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

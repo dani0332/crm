@@ -15,19 +15,19 @@ use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use Carbon\Carbon;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
+class CarRevivalFollowUpEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, Stackable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
     public $timeout = 60;
@@ -54,7 +54,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
     {
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            info('Dtt is not enabled from cms');
+            LoggerService::info('Dtt is not enabled from cms');
 
             return false;
         }
@@ -80,7 +80,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             try {
                 $listQuotePlans = app(CarQuoteService::class)->getPlans($this->dttRevival->uuid, true, true);
             } catch (\Exception $exception) {
-                info('DTTFolloupListQuotePlansException: '.$exception->getMessage());
+                LoggerService::info('DTTFolloupListQuotePlansException: '.$exception->getMessage());
 
                 return false;
             }
@@ -192,9 +192,9 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
         if ($response == 201) {
             DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
-            info('CarRevivalFollowUpEmailJob email is sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
+            LoggerService::info('CarRevivalFollowUpEmailJob email is sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         } else {
-            info('CarRevivalFollowUpEmailJob email not sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
+            LoggerService::info('CarRevivalFollowUpEmailJob email not sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         }
     }
 }

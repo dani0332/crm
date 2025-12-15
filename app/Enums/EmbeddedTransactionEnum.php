@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
+use Illuminate\Support\Str;
 
 final class EmbeddedTransactionEnum extends Enum
 {
@@ -32,5 +33,19 @@ final class EmbeddedTransactionEnum extends Enum
     public static function checkPolicyStatusPassed(string $policyStatus = '', string $passedPolicyStatus = ''): bool
     {
         return ! in_array($passedPolicyStatus, self::getRemainingPolicyStatus($policyStatus));
+    }
+
+    /**
+     * Build [{ value, label }] for dropdowns using asArray() as the source of truth.
+     */
+    public static function withLabels(): array
+    {
+        return collect(self::asArray())
+            ->map(fn ($value, string $name) => [
+                'value' => $value,                          // string used in embedded_transactions.policy_status
+                'label' => Str::title(Str::lower($value)),  // prettified label
+            ])
+            ->values()
+            ->toArray();
     }
 }

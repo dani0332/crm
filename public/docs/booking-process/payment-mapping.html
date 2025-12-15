@@ -649,6 +649,248 @@
         </div>
 
         <div class="content-section">
+            <h2>📦 Payment Mapping Scenarios</h2>
+            <p>The system handles payment-to-invoice mapping across three main scenarios, each with specific workflows:</p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🏠 Main Lead Payment Mapping</h4>
+                    <ul>
+                        <li><strong>AR Mapping:</strong> Customer receipts to customer invoices</li>
+                        <li><strong>AP Mapping:</strong> Vendor payments to vendor invoices (if insurer direct payment)</li>
+                        <li><strong>Modes:</strong> Upfront, Split Payments, Non-Split/Non-Upfront</li>
+                        <li><strong>Special Cases:</strong> Zero price policies (credit approval), historic data skip logic</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔗 Embedded Product Payment Mapping</h4>
+                    <ul>
+                        <li><strong>AR Only:</strong> EP customer receipts to EP invoices</li>
+                        <li><strong>AP Mapping:</strong> Currently disabled (commented out in implementation)</li>
+                        <li><strong>Simplicity:</strong> Always upfront payments, no split schedules</li>
+                        <li><strong>Method:</strong> applyPaymentARInvoices() in SageApiEmbeddedProductService</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📝 Send Update Payment Mapping</h4>
+                    <ul>
+                        <li><strong>Context:</strong> Endorsement-related payment adjustments</li>
+                        <li><strong>Scenarios:</strong> Additional payments for increased premium</li>
+                        <li><strong>Mapping:</strong> New prepayment receipts to adjustment invoices</li>
+                        <li><strong>Complexity:</strong> May involve reversals and corrections</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>⚠️ Important: skipApplyPrepaymentsForSpecificLeads()</h4>
+                <p>
+                    <strong>Historic Data Compatibility:</strong> The system includes logic to skip prepayment application for specific leads
+                    to maintain compatibility with data created before M2 launch. This is temporary code that checks specific criteria
+                    and returns early if the quote falls under skippable conditions. See line 666 in applyPaymentARInvoices() implementation.
+                </p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💰 Zero Price Policy Handling</h4>
+                    <ul>
+                        <li><strong>Condition:</strong> payment.total_price == 0</li>
+                        <li><strong>Action:</strong> Skip prepayment application entirely</li>
+                        <li><strong>Reason:</strong> No actual payment to map</li>
+                        <li><strong>Requirement:</strong> Must use CreditApproval payment method</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📊 Payment Frequency Logic</h4>
+                    <ul>
+                        <li><strong>UPFRONT:</strong> Single payment mapping (applyUpfrontPaymentARInvoices)</li>
+                        <li><strong>SPLIT_PAYMENTS:</strong> Multiple installment mappings (applySplitPaymentARInvoices)</li>
+                        <li><strong>Other:</strong> Non-split/non-upfront handling (applyNonSplitNonUpfrontPaymentARInvoices)</li>
+                        <li><strong>Status Check:</strong> Payment must be PAID or CAPTURED</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>💰 Upfront Payment Application</h2>
+            <p><strong>Payment Frequency:</strong> PaymentFrequency::UPFRONT | <strong>Context:</strong> Single payment to single invoice mapping</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Single prepayment receipt already created</li>
+                        <li>Full invoice amount paid at once</li>
+                        <li>Payment status: PAID or CAPTURED</li>
+                        <li>Immediate full settlement</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Application Process</h4>
+                    <ul>
+                        <li>Create AR receipt batch with invoice reference</li>
+                        <li>Apply full receipt amount to invoice</li>
+                        <li>Mark invoice as paid/settled</li>
+                        <li>No partial payments or schedules</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Workflow Steps</h4>
+                    <ul>
+                        <li>Step 13: Create payment receipt application batch</li>
+                        <li>Step 14: Ready to post receipt batch</li>
+                        <li>Step 15: Post receipt batch to GL</li>
+                        <li>Invoice fully reconciled after posting</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>✅ Validation</h4>
+                    <ul>
+                        <li>Payment status must be PAID</li>
+                        <li>Total price cannot be zero (unless CreditApproval)</li>
+                        <li>Receipt ID must exist in payment_splits</li>
+                        <li>Invoice must be posted before application</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Upfront Payment Application</h4>
+                <p>
+                    <strong>One-to-One Mapping:</strong> Single prepayment receipt applied to single invoice<br>
+                    <strong>Full Settlement:</strong> Invoice balance becomes zero after application<br>
+                    <strong>Simple Process:</strong> No complex split tracking or partial applications<br>
+                    <strong>Immediate Reconciliation:</strong> Payment and invoice reconciled in one step
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>📅 Split Payment Application</h2>
+            <p><strong>Payment Frequency:</strong> PaymentFrequency::SPLIT_PAYMENTS | <strong>Context:</strong> Multiple installment payments to invoice with schedules</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Multiple installment receipts</li>
+                        <li>First payment typically paid upfront</li>
+                        <li>Future payments matched to invoice schedules</li>
+                        <li>Each payment tracked separately</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Application Process</h4>
+                    <ul>
+                        <li>Apply only PAID/CAPTURED split receipts</li>
+                        <li>Match payments to PaymentSchedules in invoice</li>
+                        <li>Partial invoice settlement</li>
+                        <li>Track remaining balance per schedule</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔄 Workflow Complexity</h4>
+                    <ul>
+                        <li>Iterate through paid payment splits</li>
+                        <li>Create receipt application for each</li>
+                        <li>Update payment schedule status</li>
+                        <li>Track remaining installments</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>⚖️ Balance Tracking</h4>
+                    <ul>
+                        <li>Invoice total vs paid amounts</li>
+                        <li>Schedule-by-schedule reconciliation</li>
+                        <li>Outstanding balance per installment</li>
+                        <li>Future payment obligations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Split Payment Application</h4>
+                <p>
+                    <strong>Partial Applications:</strong> Apply only paid installments, leave future ones pending<br>
+                    <strong>Schedule Matching:</strong> Each payment maps to specific PaymentSchedule entry<br>
+                    <strong>Incremental Settlement:</strong> Invoice balance reduces with each installment payment<br>
+                    <strong>Status Tracking:</strong> Each split status tracked individually in payment_splits table
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🔄 Non-Split/Non-Upfront Payment Application</h2>
+            <p><strong>Payment Frequency:</strong> Other (Not UPFRONT, Not SPLIT_PAYMENTS) | <strong>Context:</strong> Custom payment arrangements</p>
+
+            <h3>📋 Characteristics</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💳 Payment Structure</h4>
+                    <ul>
+                        <li>Neither standard upfront nor split</li>
+                        <li>First payment must be PAID/CAPTURED</li>
+                        <li>Flexible payment arrangement</li>
+                        <li>Edge case handling</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>📄 Application Logic</h4>
+                    <ul>
+                        <li>Similar to split payment processing</li>
+                        <li>Apply first payment if available</li>
+                        <li>Custom payment schedule handling</li>
+                        <li>Flexible reconciliation rules</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>⚠️ Use Cases</h4>
+                    <ul>
+                        <li>Custom financing arrangements</li>
+                        <li>Deferred payment scenarios</li>
+                        <li>Migration data compatibility</li>
+                        <li>Special payment terms</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>✅ Validation</h4>
+                    <ul>
+                        <li>First payment PAID or CAPTURED check</li>
+                        <li>Custom payment validation rules</li>
+                        <li>Receipt existence verification</li>
+                        <li>Invoice posting status check</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>💡 Key Points for Non-Split/Non-Upfront Application</h4>
+                <p>
+                    <strong>Flexibility Required:</strong> Handles payment scenarios not covered by standard types<br>
+                    <strong>First Payment Focus:</strong> Must have at least first payment paid before processing<br>
+                    <strong>Custom Logic:</strong> May use custom rules based on specific payment arrangement<br>
+                    <strong>Migration Support:</strong> Ensures compatibility with historic/imported data
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
             <h2>🛠️ Core Payment Mapping Functions</h2>
             <p><strong>📍 Function Type:</strong> These are <span style="color: #9b59b6; font-weight: bold;">Sage API Service Methods</span> that orchestrate payment mapping processes.</p>
 

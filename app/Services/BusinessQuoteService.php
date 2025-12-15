@@ -57,6 +57,8 @@ class BusinessQuoteService extends BaseService
                 'bti.TEXT AS business_type_of_insurance_id_text',
                 'bqr.advisor_id',
                 'u.name as advisor_id_text',
+                'bqr.support_user_id',
+                'su.name as support_user_name',
                 'bqr.previous_advisor_id',
                 'uadv.name AS previous_advisor_id_text',
                 'bqr.quote_status_id',
@@ -92,6 +94,14 @@ class BusinessQuoteService extends BaseService
                 // 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
+                // Sub-source and notes fields
+                'bqr.sub_source_id',
+                'bqr.sub_source_options_id',
+                'bqr.additional_notes',
+                'ss.text as sub_source_text',
+                'ss.description as sub_source_description',
+                'sso.text as sub_source_option_text',
+                'sso.description as sub_source_option_description',
                 'i.first_name as insured_first_name',
                 'i.last_name as insured_last_name',
                 DB::raw('IF(i.id_type = "emiratesId", i.id_number, "") as emirates_id_number'),
@@ -143,6 +153,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'bqr.transaction_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
+            ->leftJoin('users as su', 'su.id', '=', 'bqr.support_user_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
@@ -158,7 +169,10 @@ class BusinessQuoteService extends BaseService
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            // Sub-source lookup joins
+            ->leftJoin('lookups as ss', 'ss.id', '=', 'bqr.sub_source_id')
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id');
     }
 
     public function getEntity($id)
@@ -244,6 +258,11 @@ class BusinessQuoteService extends BaseService
     {
         $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
+        // Log sub-source parameters
+        LoggerService::info('BusinessQuoteService create - Sub-source parameters', [
+            'sub_source_id' => $request->sub_source_id ?? null,
+            'sub_source_options_id' => $request->sub_source_options_id ?? null,
+        ]);
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -258,6 +277,10 @@ class BusinessQuoteService extends BaseService
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
+            // Sub-source fields (CAPI will ignore if unsupported)
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'additionalNotes' => $request->additional_notes ?? null,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 
@@ -385,6 +408,10 @@ class BusinessQuoteService extends BaseService
                 $query->where('bqr.policy_number', $request->previous_quote_policy_number)
                     ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
+        }
+        // Filter by support user (OE/AE)
+        if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
+            $this->query->whereIn('bqr.support_user_id', $request->support_user_id);
         }
         if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
             $this->query->whereIn('bqr.renewal_batch_id', $request->renewal_batches);
@@ -518,6 +545,12 @@ class BusinessQuoteService extends BaseService
     {
         $businessQuote = BusinessQuote::where('uuid', $id)->first();
         if ($businessQuote) {
+            // Log sub-source parameters for updates
+            LoggerService::info('BusinessQuoteService update - Sub-source parameters', [
+                'uuid' => $id,
+                'sub_source_id' => $request->sub_source_id ?? null,
+                'sub_source_options_id' => $request->sub_source_options_id ?? null,
+            ]);
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
             $businessQuote->company_name = $request->company_name;
@@ -527,6 +560,17 @@ class BusinessQuoteService extends BaseService
             $businessQuote->premium = $request->premium;
             $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
             $businessQuote->number_of_employees = $request->number_of_employees;
+            // Persist sub-source fields locally on Business LOB
+            if ($request->has('sub_source_id')) {
+                $businessQuote->sub_source_id = $request->sub_source_id;
+            }
+            if ($request->has('sub_source_options_id')) {
+                $businessQuote->sub_source_options_id = $request->sub_source_options_id;
+            }
+
+            if ($request->has('additional_notes')) {
+                $businessQuote->additional_notes = $request->additional_notes;
+            }
             if (isset($request->group_medical_type_id)) {
                 $businessQuote->group_medical_type_id = $request->group_medical_type_id;
             }
@@ -777,7 +821,7 @@ class BusinessQuoteService extends BaseService
             $id = explode('|', $leadId)[0];
 
             // Get the quote object using the trait method
-            $quote = $this->getQuoteObject('business', $id);
+            $quote = $this->getQuoteObject(QuoteTypes::BUSINESS->value, $id);
             if ($quote) {
                 $quote->support_user_id = $supportUserId;
                 $quote->save();

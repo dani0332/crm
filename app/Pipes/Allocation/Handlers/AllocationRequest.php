@@ -47,6 +47,11 @@ class AllocationRequest
         return $this->teamId;
     }
 
+    public function overrideAdvisorId(bool $override = true)
+    {
+        $this->overrideAdvisorId = $override;
+    }
+
     public function isOverrideAdvisorRequest()
     {
         return $this->overrideAdvisorId;
@@ -55,6 +60,11 @@ class AllocationRequest
     public function isReassignmentJob()
     {
         return $this->isReassignmentJob;
+    }
+
+    public function setAsReassignmentJob()
+    {
+        $this->isReassignmentJob = true;
     }
 
     public function getAssignmentType()

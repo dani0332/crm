@@ -2,12 +2,15 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -44,13 +47,13 @@ class SaleSummaryReportService extends ManagementReport
         $this->groupByColumn = $request['groupBy'];
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
-            $this->reportDateRange = (isset($request['policyBookDate'][0]) && $request['policyBookDate'][0] != null && $request['policyBookDate'][0] != 'null' ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
+            $this->reportDateRange = (isset($request['policyBookDate'][0]) && isValidDate($request['policyBookDate'][0]) ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                (isset($request['policyBookDate'][1]) && $request['policyBookDate'][1] != null && $request['policyBookDate'][1] != 'null' ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
+                (isset($request['policyBookDate'][1]) && isValidDate($request['policyBookDate'][1]) ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
         } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && $request['paymentDueDate'][0] != null && $request['paymentDueDate'][0] != 'null' ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
+            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && isValidDate($request['paymentDueDate'][0]) ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
             .' - '.
-            (isset($request['paymentDueDate'][1]) && $request['paymentDueDate'][1] != null && $request['paymentDueDate'][1] != 'null' ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
+            (isset($request['paymentDueDate'][1]) && isValidDate($request['paymentDueDate'][1]) ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
         }
 
         // Subquery to get distinct payment splits with minimum due_date
@@ -199,6 +202,12 @@ class SaleSummaryReportService extends ManagementReport
             ->select('dps.code', 'due_date')
             ->groupBy('dps.code');
 
+        $includeFailedBookings = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS);
+        $statues = [SendUpdateLogStatusEnum::UPDATE_BOOKED];
+        if ($includeFailedBookings) {
+            $statues[] = SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED;
+        }
+
         $query = SendUpdateLog::query()
             ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -227,7 +236,7 @@ class SaleSummaryReportService extends ManagementReport
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.vat_on_commission, 0) ELSE 0 END) as commission_vat'),
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(p.commission_vat_not_applicable, IFNULL(send_update_logs.commission_vat_not_applicable, 0)) ELSE 0 END) as commission_vat_not_applicable'),
             )
-            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->whereIn('send_update_logs.status', $statues)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
             ->when($request->groupBy, function ($query, $groupBy) use ($request) {
                 $groupByArray = [];
@@ -316,7 +325,7 @@ class SaleSummaryReportService extends ManagementReport
                 DB::raw('sum(-1 * IFNULL(p.commission_vat, IFNULL(s2.vat_on_commission, 0))) as commission_vat'),
                 DB::raw('sum(-1 * IFNULL(s2.commission_vat_not_applicable, IFNULL(p.commission_vat_not_applicable, 0))) as commission_vat_not_applicable'),
             )
-            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->whereIn('send_update_logs.status', $statues)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
             ->when($request->groupBy, function ($reversalQuery, $groupBy) use ($request) {
                 $groupByArray = [];

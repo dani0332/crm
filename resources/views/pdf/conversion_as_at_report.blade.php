@@ -276,6 +276,8 @@
                                 <td>
                                     {{$row[$pdfDate['display_by_column']]}}
                                 </td>
+                            @elseif(!empty($row['assignment_type']))
+                                <td>{{$row['assignment_type']}}</td>
                             @else
                                 <td></td>
                             @endif

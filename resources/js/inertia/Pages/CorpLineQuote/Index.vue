@@ -1,10 +1,15 @@
 <script setup>
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 defineProps({
   quotes: Object,
   dropdownSource: Object,
   session: Object,
   isManualAllocationAllowed: Boolean,
+  canAssignClientSupport: Boolean,
+  canAssignLeadAdvisor: Boolean,
   renewalBatches: Array,
+  subSources: Array,
   totalCount: {
     type: Number,
     default: 0,
@@ -17,6 +22,10 @@ const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const canExport = ref(false);
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
@@ -42,6 +51,10 @@ const loader = reactive({
   export: false,
 });
 
+const manualAssignmentSuccess = () => {
+  quotesSelected.value = [];
+};
+
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
@@ -63,6 +76,7 @@ const filters = reactive({
   quote_status_id: [],
   insurer_aml_status: [],
   advisor_id: [],
+  support_user_id: [],
   business_type_of_insurance_id: [],
   company_name: '',
   page: 1,
@@ -123,6 +137,33 @@ const advisorOptions = computed(() => {
   return options;
 });
 
+const supportUserOptions = computed(() => {
+  const list = Array.isArray(page.props.supportUsers)
+    ? page.props.supportUsers
+    : [];
+  return list.map(user => ({ value: user.id, label: user.name }));
+});
+
+const assignableSupportUserOptions = computed(() => {
+  const userRoles = page.props?.auth?.roles || [];
+  const hasOnlyClientSupport =
+    userRoles.includes('OE_AE_CLIENT_SUPPORT') &&
+    !userRoles.includes('OE_AE_CLIENT_SUPPORT_LEAD');
+
+  const supportUsers = Array.isArray(page.props?.supportUsers)
+    ? page.props.supportUsers
+    : [];
+
+  const filteredSupportUsers = hasOnlyClientSupport
+    ? supportUsers.filter(user => user.id === page.props?.auth?.user?.id)
+    : supportUsers;
+
+  return filteredSupportUsers.map(user => ({
+    value: user.id,
+    label: user.name,
+  }));
+});
+
 const renewalBatchOptions = computed(() => {
   return page.props.renewalBatches.map(batch => ({
     value: batch.id,
@@ -151,6 +192,7 @@ const tableHeader = ref([
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
+  { text: 'OE / AE', value: 'support_user_name', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
   {
     text: 'INSURER AML STATUS',
@@ -199,6 +241,7 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text', is_active: true },
 ]);
 
 const setIntialState = () => {
@@ -504,6 +547,11 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
+const createLeadModal = ref(false);
+const onLeadConfirmed = leadData => {
+  createLeadModal.value = false;
+};
+
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -605,16 +653,15 @@ const insurerAMLStatusOption = computed(() => {
             Cards View</x-button
           >
         </Link>
-        <Link :href="route('business.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead</x-button
-          >
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          tag="div"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead</x-button
+        >
       </template>
     </StickyHeader>
 
@@ -766,6 +813,29 @@ const insurerAMLStatusOption = computed(() => {
                 )
               "
               @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.support_user_id"
+          name="support_user_id"
+          placeholder="Search by OE / AE"
+          :options="supportUserOptions"
+          class="w-full"
+          filterable
+          label="OE / AE"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.support_user_id = supportUserOptions.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.support_user_id = []"
             />
           </template>
         </x-select>
@@ -1042,36 +1112,15 @@ const insurerAMLStatusOption = computed(() => {
           class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
           v-if="isManualAllocationAllowed == true"
         >
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="
-                  dropdownSource.advisor_id.map(advisor => ({
-                    label: advisor.name,
-                    value: advisor.id,
-                  }))
-                "
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-                filterable
-                v-if="readOnlyMode.isDisable === true"
-              />
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
+          <LeadAssignment
+            :selected="quotesSelected.map(e => e.id)"
+            :advisors="advisorOptions"
+            :supportUsers="assignableSupportUserOptions"
+            :canAssignClientSupport="canAssignClientSupport"
+            :canAssignLeadAdvisor="canAssignLeadAdvisor"
+            quoteType="business"
+            @success="manualAssignmentSuccess"
+          />
         </div>
       </div>
     </Transition>
@@ -1127,6 +1176,9 @@ const insurerAMLStatusOption = computed(() => {
             : ''
         }}
       </template>
+      <template #item-sub_source_text="{ sub_source_text }">
+        {{ sub_source_text }}
+      </template>
     </DataTable>
 
     <Pagination
@@ -1137,6 +1189,15 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- CreateLeadModal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      :sub-sources="subSources || []"
+      route-name="business.create"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

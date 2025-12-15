@@ -10,8 +10,10 @@ use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -46,18 +48,18 @@ class LifeQuoteObserver
         if (isset($dirty['advisor_id'])) {
             LogAllocation::dispatch($lifeQuote, QuoteTypes::LIFE);
 
-            if ($lifeQuote->source != LeadSourceEnum::IMCRM) {
+            if (! $lifeQuote->isSuppressIntroEmail() && $lifeQuote->source != LeadSourceEnum::IMCRM) {
 
                 $oldAdvisorId = $lifeQuote->getOriginal('advisor_id');
-                info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$lifeQuote->advisor_id} | Time: ".now());
+                LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$lifeQuote->advisor_id} ");
 
                 $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-                info(self::class." Sending {$emailType} email to customer for life quote {$lifeQuote->uuid} | Time: ".now());
+                LoggerService::info(self::class." Sending {$emailType} email to customer for life quote {$lifeQuote->uuid} ");
                 app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lifeQuote, QuoteTypes::LIFE->value, $oldAdvisorId);
-                info(self::class." | {$emailType} email sent to customer for life quote {$lifeQuote->uuid} | Time: ".now());
+                LoggerService::info(self::class." | {$emailType} email sent to customer for life quote {$lifeQuote->uuid} ");
 
             } else {
-                info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id} | Time: ".now());
+                LoggerService::info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id}  Quote Status: {$lifeQuote->quote_status_id} ");
             }
         }
         // $this->syncQuote($lifeQuote, $dirty);
@@ -90,6 +92,8 @@ class LifeQuoteObserver
             isset($dirty['quote_status_id']) &&
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$lifeQuote->code.' Policy Issued ');
+            SendPolicyIssueWhatsappMessageJob::dispatch($lifeQuote->uuid, QuoteTypes::LIFE->id())->onQueue('insly');
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
             event(new PrivateClientUpdatedEvent($lifeQuote, QuoteTypeId::Life));

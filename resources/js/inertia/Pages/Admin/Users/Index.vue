@@ -26,7 +26,7 @@ const loader = reactive({
 });
 
 const tableHeader = [
-  { text: 'Ref-ID', value: 'id' },
+  { text: 'Employee Code', value: 'employee_code' },
   { text: 'NAME', value: 'name' },
   { text: 'EMAIL', value: 'email' },
   { text: 'ROLES', value: 'roles', width: 100 },
@@ -164,12 +164,12 @@ onMounted(() => {
     hide-rows-per-page
     hide-footer
   >
-    <template #item-id="{ id }">
+    <template #item-employee_code="item">
       <Link
-        :href="route('users.show', id)"
+        :href="route('users.show', item.id)"
         class="text-primary-500 hover:underline"
       >
-        {{ id }}
+        {{ item.employee_code ?? 'N/A' }}
       </Link>
     </template>
     <template #item-name="item">

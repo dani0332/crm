@@ -129,7 +129,8 @@ const tableHeader = [
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
-  { text: 'PC Tagging', value: 'pc_qualified' },
+  { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 const tableHeader2 = [
   { text: 'Ref ID', value: 'code' },
@@ -140,7 +141,8 @@ const tableHeader2 = [
   { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
   { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
   { text: 'PREVIOUS GROSS PREMIUM', value: 'previous_quote_policy_premium' },
-  { text: 'PC Tagging', value: 'pc_qualified' },
+  { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 
 const businessHeaders = [
@@ -153,7 +155,8 @@ const businessHeaders = [
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
-  { text: 'PC Tagging', value: 'pc_qualified' },
+  { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 
 const can = permission => useCan(permission);
@@ -306,6 +309,9 @@ const permissionsEnum = page.props.permissionsEnum;
       </template>
       <template #item-pc_qualified="{ pc_qualified }">
         {{ pc_qualified == 1 ? 'Yes' : 'No' }}
+      </template>
+      <template #item-customer_pcp_tag="{ customer }">
+        {{ customer?.pcp_tag == 1 ? 'Yes' : 'No' }}
       </template>
     </DataTable>
 

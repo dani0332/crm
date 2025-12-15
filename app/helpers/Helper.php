@@ -565,6 +565,9 @@ if (! function_exists('getBase64FileInfo')) {
 if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
+        // Normalize NBSP/narrow NBSP to plain spaces so they can be handled like regular whitespace
+        $fileName = str_replace(["\u{00A0}", "\u{202F}"], ' ', $fileName);
+
         // Remove any Unicode control characters, including non-breaking spaces
         $fileName = preg_replace('/[\x{00}-\x{1F}\x{7F}\x{A0}]/u', '', $fileName);
 
@@ -599,7 +602,11 @@ if (! function_exists('getQueryForLogWithBindings')) {
 if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
-        return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+        // Sanitize mobile number: remove all non-digit characters
+        $mobile = preg_replace('/[^0-9]/', '', trim($mobile));
+
+        // Remove leading 971 or 0, then add +971 prefix
+        return preg_replace('/^(?:971|0)?/', '+971', $mobile);
     }
 }
 
@@ -721,6 +728,13 @@ if (! function_exists('addDaysExcludeWeekend')) {
 }
 
 if (! function_exists('getIMLogo')) {
+    /**
+     * Get Insurance Market logo URL
+     *
+     * @param  bool  $isPDF  Whether to return local path for PDF generation
+     * @param  bool  $latest  Whether to use the high-resolution logo version
+     * @return string Logo URL or local path
+     */
     function getIMLogo($isPDF = false, $latest = false)
     {
         $imLogo = 'images/logo-new.png';
@@ -729,7 +743,20 @@ if (! function_exists('getIMLogo')) {
             $imLogo = 'images/im_logo_25k-hi.png';
         }
 
-        return $isPDF ? public_path($imLogo) : asset($imLogo);
+        // For PDF: use local file path, For web: use new GPTW certified CDN logo
+        return $isPDF ? public_path($imLogo) : 'https://cdn.alfred.ae/media/assets/im-logo-gptw-1.png';
+    }
+}
+
+if (! function_exists('getFavicon')) {
+    /**
+     * Get Insurance Market favicon URL
+     *
+     * @return string CDN URL of the favicon
+     */
+    function getFavicon()
+    {
+        return 'https://cdn.alfred.ae/media/assets/im-favicon-48x48.png';
     }
 }
 if (! function_exists('mimeContentType')) {
@@ -1073,13 +1100,22 @@ if (! function_exists('getAppStorageValueByKey')) {
     function getAppStorageValueByKey($keyName, $default = false, bool $useCache = false, $cacheTime = null)
     {
         $getStorageValue = function () use ($keyName, $default) {
-            $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+            try {
+                $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
-            if (! $query) {
-                return $default;
+                if (! $query) {
+                    return $default;
+                }
+
+                return $query->value;
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Handle missing table gracefully (e.g., during tests)
+                // This can happen when the application_storage table doesn't exist yet
+                if (str_contains($e->getMessage(), 'no such table')) {
+                    return $default;
+                }
+                throw $e;
             }
-
-            return $query->value;
         };
 
         if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {
@@ -1131,7 +1167,9 @@ if (! function_exists('isValidDate')) {
     {
         return ! empty($date)
             && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
+            && $date != '0000-00-00'
+            && strtolower($date) != 'nan'
+            && strtolower($date) != 'null';
     }
 }
 
@@ -1259,15 +1297,6 @@ if (! function_exists('transformKeys')) {
         }
 
         return $result;
-    }
-}
-
-if (! function_exists('isValidDate')) {
-    function isValidDate($date): bool
-    {
-        return ! empty($date)
-            && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
     }
 }
 
@@ -1731,6 +1760,13 @@ if (! function_exists('userHasProduct')) {
     }
 }
 
+if (! function_exists('convertFromCamelCase')) {
+    function convertFromCamelCase($string): string
+    {
+        return preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
+    }
+}
+
 /**
  * Get the user's IP address with proper handling of proxies and load balancers
  *
@@ -1758,5 +1794,16 @@ if (! function_exists('getUserIpAddress')) {
 
         // Fallback to Laravel's built-in method
         return $request->ip();
+    }
+}
+
+if (! function_exists('formatEmiratesIdNumber')) {
+    function formatEmiratesIdNumber($idNumber): string
+    {
+        $eidNumber = str_replace('-', '', $idNumber);
+        $formattedIdNumber = substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
+            .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
+
+        return $formattedIdNumber;
     }
 }

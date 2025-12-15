@@ -47,6 +47,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'POLICY PEC FLAG',
             'LEAD STATUS',
             'ADVISOR',
+            'OE/AE',
             'ADVISOR EMAIL',
             'WC ADVISOR',
             'CREATED DATE',
@@ -80,6 +81,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'PAYMENT STATUS',
             'ADVISOR CAR TEAM(s)',
             'PRIVATE CLIENT',
+            'IMCRM SUB-SOURCE',
         ];
     }
 
@@ -93,6 +95,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->has_pec_tag ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
             $quote->advisor?->name,
+            $quote->supportUser?->name ?? '',
             $quote->advisor?->email,
             $quote->wcAdvisor?->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
@@ -126,6 +129,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->payment_status?->payment_status_text ?? 'N/A',
             $quote->car_teams ?? 'N/A',
             $quote->customer->pcp_tag_formatted ?? '',
+            $quote->subSource?->text,
         ];
     }
 

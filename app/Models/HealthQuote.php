@@ -153,6 +153,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(User::class, 'id', 'wcu_id');
     }
 
+    public function supportUser()
+    {
+        return $this->belongsTo(User::class, 'support_user_id');
+    }
+
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->last_name;
@@ -169,6 +174,11 @@ class HealthQuote extends Model implements AuditableContract
     public function members()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
+    public function activeMembers()
+    {
+        return $this->members()->whereNull('deleted_at');
     }
 
     public function plan()
@@ -532,5 +542,21 @@ class HealthQuote extends Model implements AuditableContract
     public function isLeadSourceRevivalOrInsuranceWallet()
     {
         return in_array($this->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::INSURANCE_WALLET]);
+    }
+
+    /**
+     * Sub-source relationship
+     */
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
+
+    /**
+     * Sub-source option relationship
+     */
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
     }
 }

@@ -31,12 +31,19 @@ class RegistrationCertificate extends Model
         'doc_type',
         'provider_id',
         'traffic_code_number',
+        'policy_expiry_date',
+        'chassis_number',
     ];
     protected $casts = [
         'expiry_date' => 'date',
         'number_of_passengers' => 'integer',
         'nationality_id' => 'integer',
     ];
+
+    public function quotable(): MorphTo
+    {
+        return $this->morphTo();
+    }
 
     public function nationality(): BelongsTo
     {
@@ -49,5 +56,11 @@ class RegistrationCertificate extends Model
     public function certificatable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function scopeForQuotable($query, $quotableType, $quotableId)
+    {
+        return $query->where('certificatable_type', $quotableType)
+            ->where('certificatable_id', $quotableId);
     }
 }

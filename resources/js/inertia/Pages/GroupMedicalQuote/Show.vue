@@ -176,7 +176,12 @@ const onLeadStatus = () => {
       },
       onSuccess: response => {
         countDays.value = useDaysSinceStale(response.props.quote?.stale_at);
-        router.reload({ only: ['quote'] });
+        // Optimized partial reload: only reload quote data, preserve state and scroll
+        router.reload({
+          only: ['quote'],
+          preserveState: true,
+          preserveScroll: true,
+        });
       },
     },
   );
@@ -403,13 +408,16 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     page.props.quote.business_type_of_insurance_id,
   );
 
+// Optimized watcher: use computed for stable reference, reducing reactivity overhead
+const quoteStatusId = computed(() => page.props.quote?.quote_status_id);
 watch(
-  () => page.props.quote.quote_status_id,
+  quoteStatusId,
   (newValue, oldValue) => {
-    if (newValue !== oldValue) {
+    if (newValue !== oldValue && newValue !== undefined) {
       leadStatusForm.leadStatus = newValue;
     }
   },
+  { immediate: false, flush: 'post' },
 );
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
@@ -730,6 +738,43 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
+              </div>
+
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source?.description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.sub_source?.text || 'N/A' }}</div>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option?.description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote?.additional_notes || 'N/A' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">

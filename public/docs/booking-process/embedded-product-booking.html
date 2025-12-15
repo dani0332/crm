@@ -546,24 +546,24 @@
 
         <div class="header">
             <h1>🔗 Embedded Product Booking</h1>
-            <p>Comprehensive guide to embedded product integration and Sage 300 booking process</p>
+            <p>Comprehensive guide for MDX (Driver Cover), RDX (Rider Medical Cover), and ECB (Excess Cashback) - Sage 300 booking process</p>
         </div>
 
         <div class="content-section">
             <h2>🎯 Overview</h2>
             <p>
-                The Embedded Product Booking system manages the integration and booking of additional insurance products
-                (like SukoonMedex, Alfred Protect, Courier services) alongside main insurance policies. This process
-                handles the complete lifecycle from product selection through Sage 300 integration including receipts,
-                invoices, and payment applications.
+                The Embedded Product Booking system manages the integration and booking of three specific embedded products:
+                <strong>MDX (Driver Cover - MEDEX)</strong>, <strong>RDX (Rider Medical Cover)</strong>, and
+                <strong>ECB (Excess Cashback)</strong> alongside main insurance policies. This process handles the
+                complete lifecycle from product selection through Sage 300 integration including receipts, invoices, and payment applications.
             </p>
 
             <div class="highlight">
                 <h4>💡 Core Embedded Product Operations</h4>
                 <p>
                     Product eligibility validation, automatic booking triggers during policy booking, separate financial
-                    processing in Sage 300, status synchronization, and comprehensive audit logging. All embedded products
-                    follow the same booking workflow but with product-specific configurations and validation rules.
+                    processing in Sage 300, status synchronization, and comprehensive audit logging. All three embedded products
+                    (MDX, RDX, ECB) follow the same booking workflow but with product-specific API response retrieval and validation rules.
                 </p>
             </div>
 
@@ -591,31 +591,35 @@
 
         <div class="content-section">
             <h2>📋 Embedded Product Types</h2>
+            <p>The system currently supports booking for three specific embedded products, each with unique characteristics and API integration requirements:</p>
 
             <div class="product-types">
                 <div class="product-type">
-                    <span class="icon">🏥</span>
-                    <h4>SukoonMedex (MDX)</h4>
-                    <p>Medical assistance and emergency services for travelers and residents. Requires TAP payment gateway and specific status validations before Sage booking.</p>
-                </div>
-
-                <div class="product-type">
                     <span class="icon">🚗</span>
-                    <h4>Roadside Assistance (RDX)</h4>
-                    <p>24/7 roadside assistance services for vehicle breakdowns. Integrated with car insurance policies and follows standard booking workflow.</p>
+                    <h4>MDX - Driver Cover (MEDEX)</h4>
+                    <p>Driver medical cover provided by MEDEX for comprehensive driver protection. Requires TAP payment gateway, uses viewQuotePolicy API method with EmbeddedProduct call type, and requires specific status validations before Sage booking.</p>
                 </div>
 
                 <div class="product-type">
-                    <span class="icon">🛡️</span>
-                    <h4>Alfred Protect</h4>
-                    <p>Comprehensive protection services with automated document generation. Supports both individual and business policy holders.</p>
+                    <span class="icon">🏍️</span>
+                    <h4>RDX - Rider Medical Cover</h4>
+                    <p>Rider medical cover for motorcycle riders providing medical protection during rides. Integrated with bike/motorcycle insurance policies, uses viewQuotePolicy API method with EmbeddedProduct call type, and follows the same booking workflow as MDX.</p>
                 </div>
 
                 <div class="product-type">
-                    <span class="icon">📦</span>
-                    <h4>Courier Services (COU)</h4>
-                    <p>Document delivery and courier services with tracking integration. Special handling for document synchronization and status updates.</p>
+                    <span class="icon">💰</span>
+                    <h4>ECB - Excess Cashback</h4>
+                    <p>Excess cashback benefit offering financial reimbursement for policy excess amounts. Uses issuePolicy API method (not viewQuotePolicy), requires insurance_provider_id filtering, and has distinct API response retrieval logic compared to MDX/RDX products.</p>
                 </div>
+            </div>
+
+            <div class="highlight">
+                <h4>🔑 Key Product Differentiation</h4>
+                <p>
+                    <strong>MDX & RDX:</strong> Use <code>viewQuotePolicy</code> API method with <code>call_type = 'EmbeddedProduct'</code><br>
+                    <strong>ECB:</strong> Uses <code>issuePolicy</code> API method with <code>insurance_provider_id</code> filtering<br>
+                    All three products follow the same 4-step Sage booking workflow but differ in their API response retrieval.
+                </p>
             </div>
         </div>
 
@@ -625,33 +629,36 @@
             <div class="process-flow">
                 <div class="process-step">
                     <div class="step-number">1</div>
-                    <h4>Eligibility Check</h4>
-                    <p>Validate LOB compatibility, payment gateway, and product status</p>
+                    <h4>AR Receipt Creation</h4>
+                    <p>Generate AR prepayment receipts for embedded product payments (Step 1)</p>
                 </div>
 
                 <div class="process-step">
                     <div class="step-number">2</div>
-                    <h4>Receipt Creation</h4>
-                    <p>Generate AR prepayment receipts for embedded product payments</p>
+                    <h4>AR Invoice Generation</h4>
+                    <p>Create AR premium and commission invoices (Step 2)</p>
                 </div>
 
                 <div class="process-step">
                     <div class="step-number">3</div>
-                    <h4>Invoice Generation</h4>
-                    <p>Create AR premium/commission and AP premium invoices</p>
+                    <h4>AP Invoice Generation</h4>
+                    <p>Create AP premium invoices for vendor payments (Step 3)</p>
                 </div>
 
                 <div class="process-step">
                     <div class="step-number">4</div>
-                    <h4>Payment Application</h4>
-                    <p>Apply prepayments to generated invoices</p>
+                    <h4>AR Payment Application</h4>
+                    <p>Apply AR prepayments to generated AR invoices and mark complete (Step 4)</p>
                 </div>
+            </div>
 
-                <div class="process-step">
-                    <div class="step-number">5</div>
-                    <h4>Status Update</h4>
-                    <p>Mark as booked and create quote tags for tracking</p>
-                </div>
+            <div class="highlight">
+                <h4>📝 Note on Workflow Steps</h4>
+                <p>
+                    The embedded product booking workflow consists of <strong>4 core steps</strong>. AP prepayment receipt creation
+                    and AP payment application steps are not performed for embedded products as they are handled entirely through AR processing.
+                    The actual implementation in <code>SageApiEmbeddedProductService.php</code> has these steps commented out (lines 216-222 and 249-254).
+                </p>
             </div>
 
             <div class="booking-flow">
@@ -682,31 +689,27 @@
             <p><strong>📍 Function Type:</strong> These are <span style="color: #e74c3c; font-weight: bold;">Sage API Service Methods</span> that orchestrate embedded product booking.</p>
 
             <h3>🔗 bookEmbeddedProductOnSage() - API Service Method</h3>
-            <p>Main function in <strong>SageApiEmbeddedProductService</strong> for booking embedded products with complete Sage integration.</p>
+            <p>Main function in <strong>SageApiEmbeddedProductService</strong> for booking embedded products with complete Sage integration. Supports three specific product types: <strong>MDX (Driver Cover - MEDEX)</strong>, <strong>RDX (Rider Medical Cover)</strong>, and <strong>ECB (Excess Cashback)</strong>.</p>
 
             <div class="code-block">
-                <pre>public function bookEmbeddedProductOnSage($sageRequestDataArray)
+                <pre>public function bookEmbeddedProductOnSage($sageRequestDataArray, $epShortCode = null)
 {
-    [$quote, $sageRequest, $sukoonMedXTransaction] = $sageRequestDataArray;
+    [$quote, $sageRequest, $embeddedProductTransaction] = $sageRequestDataArray;
 
     // Update status to queued
-    $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+    $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
     // Start logging for embedded product booking
-    LoggerService::startQuoteLogging($sukoonMedXTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING);
-    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Embedded Product Booking started for: '.$sukoonMedXTransaction->code);
+    LoggerService::startQuoteLogging($embeddedProductTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING);
+    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - Quote Code: '.$quote->code.' - Embedded Product Booking started for: '.$embeddedProductTransaction->code);
 
-    // Get API response data for payload creation
-    $viewQuotePolicyApiLog = InsurerRequestResponse::where([
-        'quote_uuid' => $quote->uuid,
-        'status' => 'passed',
-        'execution_method' => 'viewQuotePolicy',
-        'call_type' => 'EmbeddedProduct',
-    ])->latest()->first();
+    // Get API response data using product-specific retrieval method
+    $insuranceProviderId = $embeddedProductTransaction?->product?->embeddedProduct?->insurance_provider_id;
+    $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId);
 
-    // Create embedded product specific payload
-    $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($sukoonMedXTransaction, $viewQuotePolicyApiLog);
-    $sageLogArray = $sukoonMedXTransaction->sageApiLogs->keyBy('step')->toArray();
+    // Create embedded product specific payload with product type support
+    $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
+    $sageLogArray = $embeddedProductTransaction->sageApiLogs->keyBy('step')->toArray();
 
     // Check if already booked
     $isEmbeddedProductBookedOnSage = QuoteTag::where([
@@ -731,36 +734,40 @@
 
         // Step 2: Create AR Commission and Premium Invoice
         $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([
-            $quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray
+            $quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray
         ]);
 
         if (!$createARInvoicePremAndComm['status']) {
-            $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+            $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
             return $createARInvoicePremAndComm;
         }
 
         // Step 3: Create AP Premium Invoice
         $createAPInvoicePrem = $this->createAPPremInvoice([
-            $quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray
+            $quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray
         ]);
 
         if (!$createAPInvoicePrem['status']) {
-            $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+            $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
             return $createAPInvoicePrem;
         }
 
         // Step 4: Apply Prepayments to AR Invoice
         $applyPaymentARInvoices = $this->applyPaymentARInvoices([
-            $quote, $sukoonMedXTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray
+            $quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray
         ]);
 
         if (!$applyPaymentARInvoices['status']) {
-            $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+            $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
             return $applyPaymentARInvoices;
         }
 
+        // NOTE: AP Prepayment Receipt and AP Payment Application steps are currently
+        // commented out in the implementation (lines 216-222 and 249-254 in service)
+        // This is intentional as EP transactions do not require AP receipt processing
+
         // Mark as completed and create quote tag
-        $this->updateAndLogEPBookingStatus($sukoonMedXTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+        $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
         QuoteTag::create([
             'quote_type_id' => $sageRequest->quoteTypeId,
@@ -769,13 +776,84 @@
             'value' => 1,
         ]);
 
-        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Embedded Product Booked for: '.$quote->code);
+        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - Embedded Product Booked for: '.$quote->code);
     } else {
-        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Embedded Product Already Booked for: '.$quote->code);
+        $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - Embedded Product Booked Already for: '.$quote->code);
     }
 
-    return ['status' => true, 'message' => 'Embedded Product is Booked for EP Code : '.$sukoonMedXTransaction->code];
+    return ['status' => true, 'message' => 'Embedded Product is Booked for EP Code : '.$embeddedProductTransaction->code];
 }</pre>
+            </div>
+
+            <div class="highlight">
+                <h4>⚠️ Important Implementation Note</h4>
+                <p>
+                    <strong>AP Prepayment Receipt Steps Currently Disabled:</strong> The implementation has AP prepayment receipt creation and
+                    AP payment application steps commented out. This is intentional as embedded product transactions are handled entirely
+                    through AR (Accounts Receivable) processing. The workflow consists of only 4 active steps: AR Receipt → AR Invoice → AP Invoice → AR Payment Application.
+                </p>
+            </div>
+
+            <h3>🔄 getInsurerRequestResponse() - Product-Specific API Response Retrieval</h3>
+            <p>Abstraction method that retrieves insurer API responses based on embedded product type. Supports different products with specialized data handling.</p>
+
+            <div class="code-block">
+                <pre>public function getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId = null)
+{
+    return match ($epShortCode) {
+        EmbeddedProductEnum::ECB => self::getInsurerRequestResponseForECB($quote, $insuranceProviderId),
+        default => self::getInsurerRequestResponseForSukoonMedXRedx($quote, $insuranceProviderId),
+    };
+}
+
+public function getInsurerRequestResponseForECB($quote, $insuranceProviderId = null)
+{
+    // ECB-specific API response retrieval with insurance provider filtering
+    return InsurerRequestResponse::where([
+        'quote_uuid' => $quote->uuid,
+        'status' => 'passed',
+        'execution_method' => 'issuePolicy',
+        'insurance_provider_id' => $insuranceProviderId,
+    ])->latest()->first();
+}
+
+public function getInsurerRequestResponseForSukoonMedXRedx($quote, $insuranceProviderId = null)
+{
+    // MDX and RDX API response retrieval
+    // Note: Function name kept as "SukoonMedXRedx" for backward compatibility
+    // MDX = Driver Cover (MEDEX), RDX = Rider Medical Cover
+    return InsurerRequestResponse::where([
+        'quote_uuid' => $quote->uuid,
+        'status' => 'passed',
+        'execution_method' => 'viewQuotePolicy',
+        'call_type' => 'EmbeddedProduct',
+    ])->latest()->first();
+}</pre>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>💰 ECB (Excess Cashback)</h4>
+                    <ul>
+                        <li><strong>Product Code:</strong> ECB</li>
+                        <li><strong>API Method:</strong> issuePolicy (not viewQuotePolicy)</li>
+                        <li><strong>Provider Filtering:</strong> Uses insurance_provider_id</li>
+                        <li><strong>Status:</strong> Passed execution status required</li>
+                        <li><strong>Use Case:</strong> Excess cashback benefit for policy excess reimbursement</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>🚗 MDX & 🏍️ RDX Products</h4>
+                    <ul>
+                        <li><strong>Product Codes:</strong> MDX (Driver Cover), RDX (Rider Medical Cover)</li>
+                        <li><strong>API Method:</strong> viewQuotePolicy</li>
+                        <li><strong>Call Type:</strong> EmbeddedProduct</li>
+                        <li><strong>Status:</strong> Passed execution status required</li>
+                        <li><strong>Use Case:</strong> Driver and rider medical coverage</li>
+                    </ul>
+                </div>
             </div>
 
             <h3>📅 scheduleBookingOfEmbeddedProduct() - API Service Method</h3>
@@ -881,6 +959,7 @@
 
             <div class="code-block">
                 <pre>// Eligibility validation in SageApiService
+// Checks for MDX (Driver Cover), RDX (Rider Medical Cover), and ECB (Excess Cashback)
 $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
 $sukoonEPTransaction = $this->getSukoonEPTransaction($quote, $quoteTypeId);
 $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
@@ -918,7 +997,7 @@ if ($isLobAllowedForEmbeddedProductBooking && $sukoonEPTransaction && $isTapPaym
                     <ul>
                         <li><strong>Purpose:</strong> Validate EP transaction status</li>
                         <li><strong>Required Status:</strong> STATUS_READY_FOR_SAGE</li>
-                        <li><strong>Products:</strong> SukoonMedex (MDX), Roadside (RDX)</li>
+                        <li><strong>Products:</strong> MEDX, RDX, and ECB</li>
                         <li><strong>Usage:</strong> Status gate before Sage processing</li>
                     </ul>
                 </div>
@@ -1343,6 +1422,7 @@ $isEmbeddedProductBookedOnSage = QuoteTag::where([
 
             <div class="code-block">
                 <pre>// Integration point in main booking process (SageApiService)
+// Automatically triggers booking for MDX (Driver Cover), RDX (Rider Medical Cover), or ECB (Excess Cashback)
 $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
 $sukoonEPTransaction = $this->getSukoonEPTransaction($quote, $quoteTypeId);
 $isTapPaymentGateway = $payment->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
@@ -1413,7 +1493,7 @@ if ($isLobAllowedForEmbeddedProductBooking && $sukoonEPTransaction && $isTapPaym
         </div>
 
         <div class="content-section">
-            <h2>🔧 Integration Points</h2>
+            <h2>🔧 Integration Points & Job Queue Processing</h2>
 
             <h3>📞 Called From</h3>
             <div class="info-grid">
@@ -1423,6 +1503,7 @@ if ($isLobAllowedForEmbeddedProductBooking && $sukoonEPTransaction && $isTapPaym
                         <li>Main policy booking orchestrator</li>
                         <li>Automatic EP booking trigger during policy booking</li>
                         <li>Coordinates EP booking with main policy process</li>
+                        <li>Checks EP eligibility during main booking flow</li>
                     </ul>
                 </div>
 
@@ -1432,8 +1513,136 @@ if ($isLobAllowedForEmbeddedProductBooking && $sukoonEPTransaction && $isTapPaym
                         <li>Dedicated EP booking job for queue processing</li>
                         <li>Handles scheduled EP booking requests</li>
                         <li>Processes EP booking independently from main policy</li>
+                        <li>WithoutOverlapping middleware for concurrency control</li>
                     </ul>
                 </div>
+            </div>
+
+            <h3>⚙️ BookEmbeddedProductOnSageJob Implementation Details</h3>
+            <p>Dedicated queue job that handles asynchronous embedded product booking with comprehensive error handling and status management.</p>
+
+            <div class="code-block">
+                <pre>class BookEmbeddedProductOnSageJob implements ShouldQueue
+{
+    public $tries = 1;  // Single attempt to prevent duplicate bookings
+    public $timeout = 80;  // 80-second timeout for Sage API operations
+
+    public function __construct($sageRequest, $epTransaction, $request, $sageProcess)
+    {
+        $this->sageRequest = $sageRequest;
+        $this->epTransaction = $epTransaction;
+        $this->request = $request;
+        $this->sageProcess = $sageProcess;
+        // Time-based lock to prevent concurrent processing
+        $this->lockPostfix = Carbon::now()->format('YmdHi'); // e.g., 2024102113
+    }
+
+    public function handle()
+    {
+        // Start logging with feature flag
+        LoggerService::startQuoteLogging($this->epTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING_REVERSAL);
+
+        // Re-fetch sage process for latest status
+        $this->sageProcess = SageProcess::find($this->sageProcess->id);
+        $quote = $this->getQuoteObjectBy($this->request->modelType, $this->request->quoteId);
+
+        // Validate EP transaction exists
+        $quoteTypeId = QuoteTypes::getIdFromValue($this->request->modelType);
+        $ePTransaction = (new SageApiService)->getEPTransactions($quote, $quoteTypeId);
+
+        if (!$ePTransaction || count($ePTransaction) === 0) {
+            $message = 'Cannot proceed as transaction is not found';
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, $this->logFor);
+            return;
+        }
+
+        // Only process if status is PENDING
+        if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
+            // Update to PROCESSING
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, $this->logFor);
+
+            // Execute booking with epShortCode parameter
+            $response = (new SageApiEmbeddedProductService)->bookEmbeddedProductOnSage(
+                [$quote, $this->sageRequest, $this->epTransaction],
+                $this->sageRequest->epShortCode
+            );
+
+            // Handle response based on status
+            if (!$response['status']) {
+                if ($response['message'] == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
+                    // Sage conflict - revert to PENDING for retry
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $response['message'], $this->logFor);
+                } else {
+                    // Booking failed - mark as FAILED
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $response['message'], $this->logFor);
+                }
+            } else {
+                // Success - mark as COMPLETED
+                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, $this->logFor);
+            }
+        }
+
+        // Trigger next process in queue
+        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+    }
+
+    public function failed(Throwable $exception)
+    {
+        // Handle timeout vs general failure
+        if (str_contains($exception->getMessage(), SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $exception->getMessage());
+        } else {
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
+        }
+
+        // Update EP booking status
+        (new SageApiEmbeddedProductService)->updateAndLogEPBookingStatus($this->epTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), $this->logFor);
+
+        // Reschedule next process
+        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+    }
+
+    public function middleware()
+    {
+        // Prevent overlapping jobs with time-based unique key
+        return [(new WithoutOverlapping($this->epTransaction->code.'-'.$this->lockPostfix))->dontRelease()];
+    }
+}</pre>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🔐 Concurrency Control</h4>
+                    <ul>
+                        <li><strong>Middleware:</strong> WithoutOverlapping with time-based suffix</li>
+                        <li><strong>Lock Key:</strong> {epTransactionCode}-{YmdHi} format</li>
+                        <li><strong>Purpose:</strong> Prevents duplicate EP booking attempts</li>
+                        <li><strong>Release:</strong> dontRelease() - manual cleanup required</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>⚡ Error Handling Strategy</h4>
+                    <ul>
+                        <li><strong>Sage Conflict:</strong> Reverts to PENDING for automatic retry</li>
+                        <li><strong>Timeout:</strong> Marks as TIMEOUT_STATUS for investigation</li>
+                        <li><strong>General Failure:</strong> Marks as FAILED_STATUS</li>
+                        <li><strong>Attempts/Timeout Errors:</strong> Logged as INFO not ERROR</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <h4>🔍 Key Implementation Details</h4>
+                <p>
+                    <strong>Important Parameters:</strong>
+                </p>
+                <ul style="margin-left: 25px; color: white;">
+                    <li><code>$sageRequest->epShortCode</code> - Critical parameter for product type differentiation (ECB vs MDX/RDX)</li>
+                    <li><code>$this->lockPostfix</code> - Time-based suffix (YmdHi format) ensures unique lock keys</li>
+                    <li><code>$this->tries = 1</code> - Single attempt prevents accidental duplicate bookings in Sage</li>
+                    <li><code>$this->timeout = 80</code> - Matches Sage API response time expectations</li>
+                </ul>
             </div>
 
             <h3>🏗️ Dependencies</h3>

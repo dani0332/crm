@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../Partials/LeadAssignment.vue';
+import CreateLeadModal from '../../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -17,6 +18,10 @@ defineProps({
   authorizedDays: Number,
   assignmentTypes: Object,
   insurerAMLStatus: Object,
+  subSources: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -25,6 +30,9 @@ const notification = useNotifications('toast');
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+
+const teamNamesEnum = page.props.teamNamesEnum;
+
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const carRegistrationTypeEnum = page.props.carRegistrationType;
@@ -33,10 +41,7 @@ const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
 const exportLoader = ref(false);
 
-const createLead = reactive({
-  modal: false,
-  type: '',
-});
+const createLeadModal = ref(false);
 
 const serverOptions = ref({
   page: 1,
@@ -88,6 +93,8 @@ const tableHeader = [
     text: 'FOLLOW UP DATE',
     value: 'car_quote_request_detail.next_followup_date_formatted',
   },
+  { text: 'API ISSUANCE STATUS', value: 'api_issuance_status_id' },
+  { text: 'INSURER API STATUS', value: 'insurer_api_status_id' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
@@ -107,6 +114,7 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text' },
 ];
 
 const ecommerceOptions = [
@@ -116,6 +124,10 @@ const ecommerceOptions = [
 ];
 
 const filteredTableHeader = ref([]);
+
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 
 const filterTableHeaders = () => {
   let filtered = [...tableHeader];
@@ -257,6 +269,24 @@ const paymentStatusOptions = computed(() => {
   }
 });
 
+const issuanceStatuses = computed(() => {
+  return Object.entries(page.props.issuanceStatuses).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
+const insurerApiStatus = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
 const filters = reactive({
   code: '',
   first_name: '',
@@ -298,6 +328,8 @@ const filters = reactive({
   private_client: 'all',
   authorize_date: '',
   captured_date: '',
+  api_issuance_status_id: [],
+  insurer_api_status_id: [],
 });
 
 const teamUsers =
@@ -448,6 +480,8 @@ function setQueryStringFilters() {
     'teams',
     'payment_status_id',
     'page',
+    'api_issuance_status_id',
+    'insurer_api_status_id',
   ];
 
   // Group array parameters
@@ -526,11 +560,8 @@ const fetchTeamUsers = () => {
     });
 };
 
-const onConfirmCreateLead = () => {
-  if (createLead.type === 'referral') {
-    router.get(route('car.create'));
-  }
-  createLead.modal = false;
+const onLeadConfirmed = leadData => {
+  // Handle the confirmed lead data if needed
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -681,8 +712,8 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
         filters.created_at_start,
         filters.created_at_end,
       );
-      maxLimit = 31;
-      maxPeriod = '31 days';
+      maxLimit = 15;
+      maxPeriod = '15 days';
     }
 
     if (diff > maxLimit) {
@@ -797,7 +828,7 @@ const onConfirmPUAExport = () => {
         size="sm"
         color="#ff5e00"
         tag="div"
-        @click="createLead.modal = true"
+        @click="createLeadModal = true"
         v-if="readOnlyMode.isDisable === true"
       >
         Create Lead
@@ -1053,6 +1084,7 @@ const onConfirmPUAExport = () => {
           class="w-full"
           filterable
         />
+
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
@@ -1172,6 +1204,55 @@ const onConfirmPUAExport = () => {
           class="w-full"
           filterable
         />
+
+        <x-select
+          v-model="filters.api_issuance_status_id"
+          name="api_issuance_status_id"
+          placeholder="Search by API Issuance Status"
+          :options="issuanceStatuses"
+          class="w-full"
+          label="API Issuance Status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.api_issuance_status_id = issuanceStatuses.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.api_issuance_status_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.insurer_api_status_id"
+          name="insurer_api_status_id"
+          placeholder="Search by Insurer API Status"
+          :options="insurerApiStatus"
+          class="w-full"
+          label="Insurer API Status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_api_status_id = insurerApiStatus.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_api_status_id = []"
+            />
+          </template>
+        </x-select>
+
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -1429,6 +1510,31 @@ const onConfirmPUAExport = () => {
           </x-tag>
         </div>
       </template>
+      <template #item-api_issuance_status_id="{ api_issuance_status_id }">
+        <div class="text-center">
+          <x-tag
+            v-if="api_issuance_status_id"
+            size="sm"
+            :color="api_issuance_status_id == 1 ? 'success' : 'error'"
+          >
+            {{
+              issuanceStatuses.find(s => s.value == api_issuance_status_id)
+                ?.label
+            }}
+          </x-tag>
+          <span v-else>N/A</span>
+        </div>
+      </template>
+      <template #item-insurer_api_status_id="{ insurer_api_status_id }">
+        <div class="text-center">
+          {{
+            insurer_api_status_id
+              ? insurerApiStatus.find(s => s.value == insurer_api_status_id)
+                  ?.label
+              : 'N/A'
+          }}
+        </div>
+      </template>
       <template #item-is_modified="{ is_modified }">
         <div class="text-center">
           <x-tag size="sm" :color="is_modified ? 'success' : 'error'">
@@ -1479,45 +1585,13 @@ const onConfirmPUAExport = () => {
       }"
     />
 
-    <x-modal
-      v-model="createLead.modal"
-      size="md"
-      title="Create Lead"
-      show-close
-      backdrop
-    >
-      <div class="w-full grid md:grid-cols-2 gap-5">
-        <p class="text-md font-bold text-gray-500">
-          Select reason to create manual lead <span class="error">*</span>
-        </p>
-      </div>
-      <div class="flex w-full flex-col gap-5 mt-4 mb-4">
-        <x-form-group v-model="createLead.type">
-          <x-radio value="referral" label="Referral" />
-          <x-radio value="early_renewal" label="Early Renewal" />
-          <x-radio value="payment_status" label="Payment Status" />
-        </x-form-group>
-      </div>
-      <template #actions>
-        <x-button
-          ghost
-          tabindex="-1"
-          size="md"
-          type="button"
-          @click.prevent="createLead.modal = false"
-        >
-          Cancel
-        </x-button>
-        <x-button
-          size="md"
-          color="emerald"
-          type="button"
-          @click.prevent="onConfirmCreateLead"
-        >
-          Confirm
-        </x-button>
-      </template>
-    </x-modal>
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="car.create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
+    />
 
     <!-- PUA Export Modal -->
     <x-modal

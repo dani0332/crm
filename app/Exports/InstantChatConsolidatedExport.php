@@ -48,6 +48,7 @@ class InstantChatConsolidatedExport implements CsvExportableInterface
             'DATE OF FIRST INTERACTION',
             'COMMUNICATION CHANNEL',
             'BATCH',
+            'RENEWAL BATCH',
             'TRANSACTION TYPE',
             'SEGMENT',
             'NO. OF MESSAGES SENT BY CUSTOMER TO AI',
@@ -78,6 +79,7 @@ class InstantChatConsolidatedExport implements CsvExportableInterface
             $chat->chat_initiated_at ?? $chat->date_of_first_interaction ?? 'N/A', // 'DATE OF FIRST INTERACTION'
             $this->formatCommunicationChannel($chat->communication_channels ?? []), // 'COMMUNICATION CHANNEL'
             $chat->quote_batch_id_text ?? 'N/A', // 'BATCH'
+            $chat->renewal_batch_id_text ?? 'N/A', // 'RENEWAL BATCH'
             $chat->transaction_type_text ?? 'N/A', // 'TRANSACTION TYPE'
             $chat->segment ?? 'N/A', // 'SEGMENT'
             $chat->customer_interactions ?? 0, // 'NO. OF MESSAGES SENT BY CUSTOMER TO AI'
@@ -148,7 +150,7 @@ class InstantChatConsolidatedExport implements CsvExportableInterface
         // Pass through any other parameters that might be relevant
         $passThroughParams = [
             'quoteId', 'email', 'mobile_no', 'transaction_type_id',
-            'quote_batch_id', 'quote_status_id', 'payment_status_id',
+            'quote_batch_id', 'renewal_batch_id', 'quote_status_id', 'payment_status_id',
             'assigment_type', 'sale_leads', 'segment',
         ];
 

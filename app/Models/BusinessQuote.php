@@ -36,6 +36,7 @@ class BusinessQuote extends Model implements AuditableContract
         'business_type_of_insurance_id' => FilterTypes::IN,
         'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'previous_quote_policy_number' => FilterTypes::EXACT,
+        'sub_source_id' => FilterTypes::IN,
     ];
 
     protected static function booted()
@@ -132,6 +133,16 @@ class BusinessQuote extends Model implements AuditableContract
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
+
+    public function subSource()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_id');
+    }
+
+    public function subSourceOption()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_source_options_id');
     }
 
     public function quoteRequestEntityMapping()
@@ -326,5 +337,10 @@ class BusinessQuote extends Model implements AuditableContract
     public function personalQuote()
     {
         return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Business);
+    }
+
+    public function renewalBatchModel()
+    {
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 }

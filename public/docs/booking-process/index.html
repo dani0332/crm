@@ -286,34 +286,130 @@
 
         <div class="header">
             <h1>🔧 Sage Integration - Booking Process</h1>
-            <p>Customer Verification & Receipt Creation Documentation</p>
+            <p>Complete Guide to Policy Booking in Sage 300 ERP System</p>
             <span class="status-badge">Active Documentation</span>
         </div>
 
+        <!-- What is This Section -->
         <div class="overview-section">
-            <h2>📋 Booking Process Overview</h2>
-            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
-                Complete workflow covering pre-booking validations, Sage 300 ERP integration processes,
-                and the critical components of <strong>Customer Verification</strong> and <strong>Receipt Creation</strong>.
+            <h2>❓ What is This Documentation About?</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.15em; margin-bottom: 20px; line-height: 1.8;">
+                This documentation explains how our insurance brokerage system integrates with <strong>Sage 300 ERP</strong>
+                to book insurance policies. When a customer purchases a policy, we need to record financial transactions
+                (customer payments, insurer premiums, commissions) in Sage 300 for proper accounting and financial reporting.
+            </p>
+
+            <div class="highlight" style="background: linear-gradient(135deg, #3498db, #2980b9); padding: 25px; border-radius: 10px; color: white; margin-bottom: 30px;">
+                <h4 style="margin-bottom: 15px;">💡 Why Sage 300 Integration?</h4>
+                <p style="margin: 0; line-height: 1.7;">
+                    <strong>Sage 300</strong> is an Enterprise Resource Planning (ERP) system that manages our company's finances.
+                    When a policy is sold, we must:<br><br>
+                    ✓ Record the <strong>customer's payment</strong> (Accounts Receivable - AR)<br>
+                    ✓ Record what we <strong>owe to the insurance company</strong> (Accounts Payable - AP)<br>
+                    ✓ Track <strong>our commission</strong> earnings<br>
+                    ✓ Maintain accurate <strong>financial records</strong> for auditing and reporting<br><br>
+                    This integration automates these accounting entries, ensuring accuracy and compliance.
+                </p>
+            </div>
+        </div>
+
+        <div class="overview-section">
+            <h2>📋 Complete Booking Process Overview</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 15px;">
+                The policy booking process follows a systematic 6-step workflow. Each step builds on the previous one
+                to ensure complete and accurate financial recording in Sage 300.
+            </p>
+            <p style="text-align: center; color: #555; font-size: 1em; margin-bottom: 30px; font-style: italic;">
+                Click on any step below to learn more, or scroll down to explore each component in detail.
             </p>
 
             <div class="process-flow">
-                <div class="process-step">
+                <div class="process-step" title="Ensures system is ready and policy meets all requirements before processing">
                     <strong>1. Pre-Booking Checks</strong>
                     <div>Validate Requirements</div>
+                    <small style="font-size: 0.85em; opacity: 0.9; display: block; margin-top: 5px;">
+                        Verify Sage is enabled, policy not already booked, payment exists
+                    </small>
                 </div>
-                <div class="process-step">
+                <div class="process-step" title="Ensures customer exists in Sage 300 accounting system">
                     <strong>2. Verify Customer</strong>
                     <div>Check/Create in Sage</div>
+                    <small style="font-size: 0.85em; opacity: 0.9; display: block; margin-top: 5px;">
+                        13-step customer verification or creation process
+                    </small>
                 </div>
-                <div class="process-step">
-                    <strong>3. Process AR/AP and Mapping Entries</strong>
-                    <div>Create Receipts and Invoices</div>
+                <div class="process-step" title="Records customer payment received (prepayment/receipt)">
+                    <strong>3. Create AR Receipts</strong>
+                    <div>Generate Payment Receipts</div>
+                    <small style="font-size: 0.85em; opacity: 0.9; display: block; margin-top: 5px;">
+                        Customer payment record for accounts receivable
+                    </small>
                 </div>
-                <div class="process-step">
-                    <strong>4. Book Policy</strong>
-                    <div>Complete & Log</div>
+                <div class="process-step" title="Creates invoices for customer charges and vendor premiums">
+                    <strong>4. Create AR/AP Invoices</strong>
+                    <div>Generate Customer & Vendor Invoices</div>
+                    <small style="font-size: 0.85em; opacity: 0.9; display: block; margin-top: 5px;">
+                        AR = what customer owes, AP = what we owe insurer
+                    </small>
                 </div>
+                <div class="process-step" title="Links the receipt to the invoice to close the transaction">
+                    <strong>5. Apply Prepayments</strong>
+                    <div>Map Receipts to Invoices</div>
+                    <small style="font-size: 0.85em; opacity: 0.9; display: block; margin-top: 5px;">
+                        Matches payment received to charges billed
+                    </small>
+                </div>
+                <div class="process-step" title="Finalizes the booking and updates policy status">
+                    <strong>6. Complete & Log</strong>
+                    <div>Mark Policy Booked</div>
+                    <small style="font-size: 0.85em; opacity: 0.9; display: block; margin-top: 5px;">
+                        Update status, create tags, log completion
+                    </small>
+                </div>
+            </div>
+
+            <!-- Key Terms Explanation -->
+            <div class="tech-specs" style="margin-top: 30px; background: #fff3cd; border-left: 4px solid #ffc107;">
+                <h3>📖 Key Terms to Understand</h3>
+                <div class="tech-grid">
+                    <div class="tech-item" style="background: #fffef7;">
+                        <strong>AR (Accounts Receivable)</strong>
+                        Money customers OWE to us
+                    </div>
+                    <div class="tech-item" style="background: #fffef7;">
+                        <strong>AP (Accounts Payable)</strong>
+                        Money we OWE to insurance companies
+                    </div>
+                    <div class="tech-item" style="background: #fffef7;">
+                        <strong>Prepayment/Receipt</strong>
+                        Customer payment received BEFORE invoice posted (same thing!)
+                    </div>
+                    <div class="tech-item" style="background: #fffef7;">
+                        <strong>Invoice</strong>
+                        Formal bill documenting charges (premium + commission)
+                    </div>
+                    <div class="tech-item" style="background: #fffef7;">
+                        <strong>Apply Payment</strong>
+                        Linking receipt to invoice to settle the charge
+                    </div>
+                    <div class="tech-item" style="background: #fffef7;">
+                        <strong>GL (General Ledger)</strong>
+                        Main accounting record in Sage 300
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight" style="margin-top: 20px; background: linear-gradient(135deg, #27ae60, #229954); padding: 20px; border-radius: 10px; color: white;">
+                <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated October 2024</h4>
+                <p style="margin: 0;">
+                    <strong>All documentation has been updated to reflect actual implementation:</strong><br>
+                    • Embedded Product booking for MDX (Driver Cover), RDX (Rider Medical Cover), and ECB (Excess Cashback) documented with product-specific differentiation<br>
+                    • AR/AP invoice lifecycles comprehensively covered for all scenarios (upfront, split, non-upfront)<br>
+                    • Prepayment receipt creation clarified (prepayment = receipt in Sage 300)<br>
+                    • Payment mapping updated with zero-price and historic data handling<br>
+                    • Job queue integration and error handling thoroughly documented<br>
+                    • All code examples verified against current SageApiService implementation
+                </p>
             </div>
 
             <div class="tech-specs">
@@ -356,70 +452,123 @@
         </div>
 
         <div class="overview-section">
-            <h2>🔍 Pre-Booking Validation Checks (postBookPolicyToSage)</h2>
-            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
-                Critical validation checks performed inside the <strong>postBookPolicyToSage</strong> function
-                before initiating the actual Sage booking process.
+            <h2>🔍 Step 1: Pre-Booking Validation Checks</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.15em; margin-bottom: 15px;">
+                Before we can book a policy to Sage 300, we must verify that everything is ready and correct.
+                These validation checks prevent errors, duplicate bookings, and ensure data integrity.
             </p>
+            <p style="text-align: center; color: #555; font-size: 1em; margin-bottom: 30px; font-style: italic;">
+                These checks happen inside the <strong>postBookPolicyToSage()</strong> function in <code>SageApiService.php</code>
+            </p>
+
+            <div class="highlight" style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 20px; border-radius: 10px; color: white; margin-bottom: 25px;">
+                <h4 style="margin-bottom: 10px;">⚠️ Why Are These Checks Critical?</h4>
+                <p style="margin: 0; line-height: 1.6;">
+                    <strong>Failing any of these checks will STOP the booking process.</strong> This prevents:<br>
+                    • Duplicate financial records in Sage 300<br>
+                    • Booking when the accounting system is unavailable<br>
+                    • Processing policies with missing or invalid payment information<br>
+                    • Creating inconsistencies between our system and Sage 300
+                </p>
+            </div>
 
             <div class="tech-specs">
                 <h3>🚦 Core System Checks</h3>
+                <p style="color: #555; margin-bottom: 15px;">These checks ensure the system is ready and the policy hasn't been processed before.</p>
                 <div class="tech-grid">
                     <div class="tech-item">
-                        <strong>Policy Already Booked</strong>
-                        quote_status_id == QuoteStatusEnum::PolicyBooked
+                        <strong>1. Policy Not Already Booked</strong>
+                        Checks: <code>quote_status_id != PolicyBooked</code>
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> Prevents duplicate bookings that would create incorrect financial records
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Sage System Status</strong>
-                        isSageEnabled() must return true
+                        <strong>2. Sage System Enabled</strong>
+                        Checks: <code>isSageEnabled() == true</code>
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> Ensures Sage 300 integration is active and configured before attempting connection
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Embedded Product Status</strong>
-                        isEmbeddedTransactionStatusReadyForSage() check
+                        <strong>3. Embedded Product Ready</strong>
+                        Checks: <code>isEmbeddedTransactionStatusReadyForSage()</code>
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> Verifies add-on products (MDX, RDX, ECB) are in correct status for booking
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Quote Type Resolution</strong>
-                        QuoteTypes::getIdFromValue() validation
+                        <strong>4. Valid Quote Type</strong>
+                        Checks: <code>QuoteTypes::getIdFromValue()</code>
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> Confirms the policy type (Motor, Health, Travel) is recognized and valid
+                        </div>
                     </div>
                 </div>
 
                 <h3>💳 Payment Validation Logic</h3>
+                <p style="color: #555; margin-bottom: 15px;">Payment must exist and be valid before we can record financial transactions in Sage.</p>
                 <div class="tech-grid">
                     <div class="tech-item">
-                        <strong>Payment Record Lookup</strong>
-                        Payment::where('code', $quote->code)->mainLeadPayment()
+                        <strong>1. Payment Record Exists</strong>
+                        <code>Payment::where('code', $quote->code)->mainLeadPayment()</code>
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> We must have a payment record to create receipts and invoices
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Duplicate Lead Handling</strong>
-                        Check parent_duplicate_quote_id for payment resolution
+                        <strong>2. Duplicate Lead Handling</strong>
+                        Check <code>parent_duplicate_quote_id</code> for payment resolution
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> If this is a duplicate quote, use the parent quote's payment instead
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Credit Card Payment Check</strong>
-                        Unpaid CC payments with INSURER collection type
+                        <strong>3. Credit Card Payment Status</strong>
+                        Unpaid CC payments with <code>INSURER</code> collection type
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> Insurer-collected payments must be confirmed before Sage booking
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Zero Price Validation</strong>
-                        total_price == 0 requires CreditApproval payment method
+                        <strong>4. Zero Price Policies</strong>
+                        <code>total_price == 0</code> requires <code>CreditApproval</code> method
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> Free policies need special approval method (no actual payment to record)
+                        </div>
                     </div>
                 </div>
 
-                <h3>🏢 Health AUH Lead Processing</h3>
+                <h3>🏢 Special Case: Health AUH Lead Processing</h3>
+                <p style="color: #555; margin-bottom: 15px;">Abu Dhabi Health Authority (AUH) leads follow a different process and skip Sage booking.</p>
                 <div class="tech-grid">
                     <div class="tech-item">
-                        <strong>AUH Lead Detection</strong>
-                        isAHisHealthAUHLead() check for special processing
+                        <strong>1. AUH Lead Detection</strong>
+                        <code>isAHisHealthAUHLead()</code> check for special processing
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> AUH leads are handled directly by the health authority, not through Sage
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Document Send Check</strong>
-                        isPolicySentLogExists() for customer documents
+                        <strong>2. Document Sent Verification</strong>
+                        <code>isPolicySentLogExists()</code> for customer documents
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> Confirms policy documents were sent to customer before marking complete
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Status Update</strong>
-                        Direct PolicyBooked status for AUH leads
+                        <strong>3. Status Update</strong>
+                        Direct <code>PolicyBooked</code> status for AUH leads
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> Mark as booked without Sage integration for AUH leads
+                        </div>
                     </div>
                     <div class="tech-item">
-                        <strong>Payment Processing</strong>
-                        straightforwardPayments() for AUH leads
+                        <strong>4. Payment Processing</strong>
+                        <code>straightforwardPayments()</code> for AUH leads
+                        <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+                            <strong>Why:</strong> AUH handles their own accounting; simplified payment processing
+                        </div>
                     </div>
                 </div>
 
@@ -521,14 +670,19 @@
 
 
         <div class="documentation-grid">
+            <!-- 1. Customer Creation -->
             <div class="doc-card">
                 <h3>
                     <span class="icon">👤</span>
-                    Customer Verification
+                    1. Customer Verification & Creation
                 </h3>
                 <p>
-                    Comprehensive guide to the customer verification process including automatic customer creation,
-                    duplicate handling, and polymorphic customer support for both individuals and business entities.
+                    <strong>What it does:</strong> Before we can record any financial transactions in Sage 300, the customer must exist in the accounting system.
+                    This process automatically checks if the customer already exists, and if not, creates a new customer record with proper numbering and categorization.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> When John Smith buys car insurance, we first check if "John Smith" exists in Sage.
+                    If not, we create customer "P00001" (P for Personal) with his details.
                 </p>
                 <ul class="features">
                     <li>Automatic customer existence verification</li>
@@ -542,67 +696,267 @@
                 <a href="/docs/booking-process/customer-verification.html" class="doc-link">View Customer Verification →</a>
             </div>
 
+            <!-- 2. Prepayment/Receipt Creation -->
             <div class="doc-card">
                 <h3>
                     <span class="icon">🧾</span>
-                    Receipt Creation
+                    2. Prepayment Receipt Creation
                 </h3>
                 <p>
-                    Detailed documentation on receipt creation workflows including payment processing,
-                    split payment handling, prepayment receipts, and automatic invoice-to-payment mapping.
+                    <strong>What it does:</strong> Records the customer's payment in Sage 300 as a "prepayment receipt" - note that prepayment and receipt are the SAME thing in Sage, just different terminology.
+                    This creates a payment record that will later be matched to the invoice.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> Customer pays AED 2,500 for their policy on Monday. We immediately create a prepayment receipt showing "Customer paid AED 2,500".
+                    On Tuesday when we generate their invoice, we'll "apply" (link) this receipt to the invoice to close the transaction.
                 </p>
                 <ul class="features">
-                    <li>Payment receipt generation logic</li>
-                    <li>Split payment & installment support</li>
-                    <li>Prepayment receipt handling</li>
-                    <li>Commission receipt processing</li>
-                    <li>Invoice-to-payment mapping</li>
-                    <li>AR/AP receipt coordination</li>
-                    <li>Multi-step process tracking</li>
+                    <li><strong>AR Receipts:</strong> Customer payments received</li>
+                    <li><strong>AP Receipts:</strong> Our payments to insurance companies</li>
+                    <li><strong>NRA Case:</strong> Receipts created AFTER policy booking</li>
+                    <li>Split payment & installment receipt handling</li>
+                    <li>Open → Ready to Post → Posted (3-step workflow)</li>
+                    <li>Database: sage_reciept_id stores receipt reference</li>
                 </ul>
-                <a href="/docs/booking-process/receipt-creation.html" class="doc-link">View Receipt Creation →</a>
+                <a href="/docs/booking-process/receipt-creation.html" class="doc-link">View Prepayment Receipt Creation →</a>
             </div>
 
+            <!-- 3. AR Invoices -->
             <div class="doc-card">
                 <h3>
                     <span class="icon">📄</span>
-                    AR Invoice Lifecycle
+                    3. AR Invoice Lifecycle
                 </h3>
                 <p>
-                    Complete guide to Accounts Receivable invoice creation, management and posting in Sage 300
-                    including premium invoices, commission billing, discount credit notes, and status workflows.
+                    <strong>What it does:</strong> Creates the customer's invoice in Sage 300 showing what they owe us (Accounts Receivable).
+                    This includes the premium they must pay to the insurance company AND our brokerage commission.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> Customer's car insurance costs AED 2,300 (premium) + AED 200 (our commission) = AED 2,500 total.
+                    We create an AR invoice in Sage showing "Customer owes AED 2,500".
                 </p>
                 <ul class="features">
-                    <li>Premium & Commission invoice creation</li>
-                    <li>Split payment invoice schedules</li>
-                    <li>Discount credit note processing</li>
-                    <li>Open → Ready to Post → Posted workflow</li>
-                    <li>Database schema and column usage</li>
-                    <li>Error handling and recovery</li>
-                    <li>API endpoint documentation</li>
+                    <li><strong>Upfront:</strong> Customer pays full amount immediately</li>
+                    <li><strong>Split Payments:</strong> Customer pays in installments (monthly/quarterly)</li>
+                    <li><strong>Non-Upfront:</strong> Custom payment arrangements</li>
+                    <li>Premium & Commission combined in one invoice</li>
+                    <li>Discount credit notes if customer gets a discount</li>
+                    <li>3-step workflow: Open → Ready to Post → Posted to GL</li>
                 </ul>
                 <a href="/docs/booking-process/ar-invoice-lifecycle.html" class="doc-link">View AR Invoice Lifecycle →</a>
             </div>
 
+            <!-- 4. AP Invoices -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🏭</span>
+                    4. AP Invoice Lifecycle
+                </h3>
+                <p>
+                    <strong>What it does:</strong> Creates an invoice in Sage 300 showing what we owe the insurance company (Accounts Payable).
+                    This is the premium amount that we must pay to the insurance provider for the policy.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> Customer's car insurance premium is AED 2,300. We create an AP invoice in Sage showing
+                    "We owe AED 2,300 to XYZ Insurance Company". (Note: Our AED 200 commission is kept by us and recorded separately in AR).
+                </p>
+                <ul class="features">
+                    <li><strong>Upfront:</strong> Pay insurer immediately</li>
+                    <li><strong>Split Payments:</strong> Pay insurer in installments</li>
+                    <li><strong>Non-Upfront:</strong> Custom payment schedules to insurer</li>
+                    <li>Vendor payment obligations to insurance providers</li>
+                    <li>Vendor ID links to insurance_providers table</li>
+                    <li>Entry types: STRAIGHT (new) or REVERSAL (corrections)</li>
+                </ul>
+                <a href="/docs/booking-process/ap-invoice-lifecycle.html" class="doc-link">View AP Invoice Lifecycle →</a>
+            </div>
+
+            <!-- 5. Apply Prepayment -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">💳</span>
+                    5. Payment Mapping & Apply Prepayment
+                </h3>
+                <p>
+                    <strong>What it does:</strong> Links (or "applies") the customer's payment receipt to their invoice, effectively closing the transaction.
+                    This tells Sage "the AED 2,500 the customer paid matches the AED 2,500 they owe - transaction complete!"
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> On Monday, customer paid AED 2,500 (receipt created). On Tuesday, we generated their AED 2,500 invoice.
+                    Now we "apply" Monday's receipt to Tuesday's invoice. Sage marks the invoice as "PAID" and the books balance.
+                </p>
+                <ul class="features">
+                    <li><strong>Upfront:</strong> Match one receipt to one invoice</li>
+                    <li><strong>Split Payments:</strong> Match each installment receipt to invoice schedule</li>
+                    <li><strong>Non-Upfront:</strong> Custom matching logic</li>
+                    <li>Zero price policies: Skip payment application (no money exchanged)</li>
+                    <li>Historic data: Compatibility with pre-M2 migration data</li>
+                </ul>
+                <a href="/docs/booking-process/payment-mapping.html" class="doc-link">View Payment Mapping →</a>
+            </div>
+
+            <!-- 6. Main Lead and Send Update -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">📋</span>
+                    6. Main Lead & Send Update Processing
+                </h3>
+                <p>
+                    <strong>What it does:</strong> Orchestrates the complete booking workflow for both new policies (Main Lead) and policy changes (Send Update/Endorsements).
+                    This is the "master process" that calls all the other steps in the correct order.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> Main Lead = Customer buys new car insurance (run all 6 steps: verify customer → create receipts → invoices → apply payments → complete).
+                    Send Update = Customer upgrades coverage 2 months later (create adjustment invoices and apply additional payment).
+                </p>
+                <ul class="features">
+                    <li>Main Lead: Initial policy booking with customer creation and full Sage workflow</li>
+                    <li>Send Update - STRAIGHT: Simple premium increases and coverage additions</li>
+                    <li>Send Update - REVERSAL: Full reversal and correction endorsement workflow</li>
+                    <li>Send Update - CORRECTION: Error corrections and minor adjustments</li>
+                    <li>Entry type determination (SCT_STRAIGHT, SCT_REVERSAL, SCT_CORRECTION)</li>
+                    <li>Status tracking: quote_status_id vs send_update_logs.status</li>
+                    <li>Payment differentiation: send_update_log_id NULL vs NOT NULL</li>
+                    <li>BookPolicyOnSageJob and BookEndorsementOnSageJob orchestration</li>
+                    <li>Database tables: quotes, send_update_logs, payments, sage_processes</li>
+                    <li>Integration with customer creation, receipts, invoices, and payment application</li>
+                </ul>
+                <a href="/docs/booking-process/main-lead-sendupdate.html" class="doc-link">View Main Lead & Send Update Processing →</a>
+            </div>
+
+            <!-- 7. Embedded Product -->
             <div class="doc-card">
                 <h3>
                     <span class="icon">🔗</span>
-                    Embedded Product Booking
+                    7. Embedded Product Booking (MDX, RDX, ECB)
                 </h3>
                 <p>
-                    Comprehensive guide to embedded product integration and Sage 300 booking process including
-                    SukoonMedex, Alfred Protect, Roadside Assistance, and Courier services integration.
+                    <strong>What it does:</strong> Books add-on products (extras) that customers purchase along with their main policy.
+                    These are separate mini-policies that go through their own simplified Sage booking process.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> Customer buys car insurance (main policy) + Driver Medical Cover (MDX add-on).
+                    Main policy books first using the full 6-step process. Then MDX books separately using a simplified 4-step embedded product process.
                 </p>
                 <ul class="features">
-                    <li>Product eligibility validation and LOB support</li>
-                    <li>Automatic booking triggers during policy booking</li>
-                    <li>EP-specific receipt and invoice creation</li>
-                    <li>Status management and workflow tracking</li>
-                    <li>Database schema for EP transactions</li>
-                    <li>Integration with main policy booking</li>
-                    <li>Error handling and recovery processes</li>
+                    <li>Three product types with distinct API methods (viewQuotePolicy vs issuePolicy)</li>
+                    <li>MDX & RDX: Driver and rider medical cover using viewQuotePolicy with EmbeddedProduct call type</li>
+                    <li>ECB: Excess cashback benefit using issuePolicy with insurance_provider_id filtering</li>
+                    <li>Product eligibility validation and LOB support (Car, Bike)</li>
+                    <li>Automatic booking triggers during policy booking (TAP gateway)</li>
+                    <li>EP-specific AR receipt and invoice creation (4-step process)</li>
+                    <li>BookEmbeddedProductOnSageJob with WithoutOverlapping middleware</li>
+                    <li>Status management: READY_FOR_SAGE → QUEUED → COMPLETED/FAILED</li>
+                    <li>Database: embedded_transactions, sage_embedded_product_statuses</li>
+                    <li>Note: AP receipt creation currently disabled for EP</li>
                 </ul>
                 <a href="/docs/booking-process/embedded-product-booking.html" class="doc-link">View Embedded Product Booking →</a>
+            </div>
+        </div>
+
+        <div class="overview-section" style="margin-top: 60px;">
+            <h2>📚 Additional Resources</h2>
+            <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+                Supporting documentation and integration guides for comprehensive Sage 300 integration understanding.
+            </p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>📋 Sage Integration Rules</h4>
+                    <p>Comprehensive cursor rules and patterns for Sage integration development.</p>
+                    <ul style="font-size: 0.9em; color: #7f8c8d;">
+                        <li>ECB product handling patterns</li>
+                        <li>WithoutOverlapping middleware</li>
+                        <li>AR/AP invoice lifecycle patterns</li>
+                        <li>Payment mapping scenarios</li>
+                        <li>Status management constants</li>
+                        <li>Critical implementation notes</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        <strong>Location:</strong> <code>.cursor/rules/sage/sage-booking-rules.mdc</code>
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔧 Core Classes Reference</h4>
+                    <p>Key service classes and their responsibilities in the Sage integration system.</p>
+                    <ul style="font-size: 0.9em; color: #7f8c8d;">
+                        <li><strong>SageApiService:</strong> Main lead booking orchestration</li>
+                        <li><strong>SageApiEmbeddedProductService:</strong> EP booking handling</li>
+                        <li><strong>SagePayloadFactory:</strong> Payload generation</li>
+                        <li><strong>SageCustomApiService:</strong> Custom API operations</li>
+                        <li><strong>BookEmbeddedProductOnSageJob:</strong> EP queue processing</li>
+                        <li><strong>SageEnum:</strong> Constants and status values</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        <strong>Location:</strong> <code>app/Services/</code> & <code>app/Jobs/</code>
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4>🗄️ Database Schema</h4>
+                    <p>Key database tables and their relationships in Sage integration.</p>
+                    <ul style="font-size: 0.9em; color: #7f8c8d;">
+                        <li><strong>sage_processes:</strong> Process queue management</li>
+                        <li><strong>sage_api_logs:</strong> API call audit trail</li>
+                        <li><strong>embedded_transactions:</strong> EP transaction tracking</li>
+                        <li><strong>payments:</strong> Payment and invoice references</li>
+                        <li><strong>payment_splits:</strong> Installment and split data</li>
+                        <li><strong>quote_tags:</strong> Booking completion flags</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        <strong>Migrations:</strong> <code>database/migrations/</code>
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4>⚡ Key Workflows</h4>
+                    <p>High-level workflow patterns for different booking scenarios.</p>
+                    <ul style="font-size: 0.9em; color: #7f8c8d;">
+                        <li><strong>Main Lead:</strong> AR Receipt → AR/AP Invoice → Apply Payment</li>
+                        <li><strong>Embedded Product:</strong> AR Receipt → AR/AP Invoice → AR Apply (4 steps)</li>
+                        <li><strong>Send Update (Straight):</strong> Additional invoice for increased premium</li>
+                        <li><strong>Send Update (Reversal):</strong> Reversal + Correction invoices</li>
+                        <li><strong>Job Queue:</strong> WithoutOverlapping → Process → Reschedule</li>
+                        <li><strong>Status Flow:</strong> PENDING → PROCESSING → COMPLETED/FAILED</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight" style="margin-top: 60px; background: linear-gradient(135deg, #3498db, #2980b9); padding: 30px; border-radius: 10px; color: white;">
+            <h3 style="margin-top: 0; font-size: 1.5em;">💡 Documentation Best Practices</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div>
+                    <h4 style="margin-bottom: 10px;">📖 Reading Order</h4>
+                    <ol style="margin: 0; padding-left: 20px; font-size: 0.95em;">
+                        <li>Start with <strong>Customer Verification</strong></li>
+                        <li>Then <strong>Receipt Creation</strong></li>
+                        <li>Understand <strong>AR/AP Invoice Lifecycles</strong></li>
+                        <li>Learn <strong>Payment Mapping</strong></li>
+                        <li>Finally <strong>Embedded Product</strong> specifics</li>
+                    </ol>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">🎯 Quick Reference</h4>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em;">
+                        <li>Each page has breadcrumb navigation</li>
+                        <li>Code examples are implementation-verified</li>
+                        <li>Visual diagrams show process flows</li>
+                        <li>Info cards highlight key concepts</li>
+                        <li>Tables show step-by-step breakdowns</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">⚠️ Critical Notes</h4>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95em;">
+                        <li>AP receipt disabled for EP (4-step workflow)</li>
+                        <li>ECB uses issuePolicy API method</li>
+                        <li>Zero price requires CreditApproval</li>
+                        <li>Sage conflicts revert to PENDING</li>
+                        <li>WithoutOverlapping uses time-based locks</li>
+                    </ul>
+                </div>
             </div>
         </div>
 

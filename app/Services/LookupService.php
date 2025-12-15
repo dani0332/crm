@@ -201,14 +201,21 @@ class LookupService extends BaseService
 
     public function getSendUpdateOptions($quoteTypeId)
     {
-        return Cache::remember("send_update_options_{$quoteTypeId}", now()->addHour(), function () use ($quoteTypeId) {
-            return Lookup::where([
-                'code' => LookupsEnum::SEND_UPDATE_CODE,
-                'parent_id' => null,
-            ])
-                ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
-                ->get();
-        });
+        $permissions = app(SendUpdateLogService::class)->checkSendUpdatePermissions();
+        $permissionHash = md5(json_encode($permissions));
+
+        return Cache::remember(
+            "send_update_options_{$quoteTypeId}_{$permissionHash}",
+            now()->addHour(),
+            function () use ($quoteTypeId, $permissions) {
+                return Lookup::where([
+                    'code' => LookupsEnum::SEND_UPDATE_CODE,
+                    'parent_id' => null,
+                ])
+                    ->withChildTree($quoteTypeId, $permissions)
+                    ->get();
+            }
+        );
     }
 
     public function getCompanyTypes()
@@ -239,6 +246,44 @@ class LookupService extends BaseService
     {
         return CacheManager::remember(CacheKeyEnum::SAVINGS_QUOTE_LOOKUPS, function () {
             return Capi::request('/api/v1-get-all-savings-lookups', 'post');
+        });
+    }
+
+    public function getRmCategories()
+    {
+        return Lookup::where('key', LookupsEnum::RM_CATEGORY)
+            ->where('is_active', true)
+            ->orderBy('text')
+            ->get(['id', 'code', 'text']);
+    }
+
+    public function getVehicleColors($quoteTypeId, $providerId)
+    {
+        return Lookup::where('key', LookupsEnum::VEHICLE_COLOR)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider_id', $providerId)
+            ->where('is_active', true)
+            ->select('id', 'code', 'text')
+            ->get();
+    }
+
+    public function getBankNames($quoteTypeId, $providerId)
+    {
+        return Lookup::where('key', LookupsEnum::BANK_NAME)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider_id', $providerId)
+            ->where('is_active', true)
+            ->select('id', 'code', 'text')
+            ->get();
+    }
+
+    public function getSubSource()
+    {
+        return CacheManager::remember(CacheKeyEnum::SUB_SOURCES, function () {
+            return Lookup::with(['childs'])->where([
+                'key' => LookupsEnum::SUB_SOURCE,
+                'is_active' => 1,
+            ])->get();
         });
     }
 }

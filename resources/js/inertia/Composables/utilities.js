@@ -221,8 +221,23 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
 
 export const setQueryStringFilters = (params, filters) => {
   for (const [key] of Object.entries(params)) {
+    const val = params[key];
+    // Only convert to integer if it's a valid number, not an empty string,
+    // and converting it back to string matches original (preserves leading zeros, floats, etc)
+    params[key] =
+      val !== '' && !isNaN(val) && String(parseInt(val, 10)) === String(val)
+        ? parseInt(val, 10)
+        : val;
+
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
+    } else if (key.includes('[') && key.includes(']')) {
+      const baseKey = key.substring(0, key.indexOf('['));
+      if (!filters[baseKey]) {
+        filters[baseKey] = [];
+      }
+      const index = key.substring(key.indexOf('[') + 1, key.indexOf(']'));
+      filters[baseKey][index] = params[key];
     } else {
       filters[key] = params[key];
     }
@@ -344,6 +359,51 @@ export const parseDate = dateString => {
   }
 
   throw new Error('Invalid date format');
+};
+
+// Helper function to format date for input
+export const formatDateForInput = date => {
+  if (!date || date === '' || date === 'null' || date === 'undefined')
+    return null;
+
+  try {
+    // If date is already in YYYY-MM-DD format, return as is
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+
+    // Handle DD-MM-YYYY format (common in the system)
+    if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
+      const [day, month, year] = date.split('-');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Handle DD/MM/YYYY format
+    if (typeof date === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+      const [day, month, year] = date.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Handle YYYY/MM/DD format
+    if (typeof date === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(date)) {
+      return date.replace(/\//g, '-');
+    }
+
+    // Try to parse as Date object for other formats
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return null;
+    }
+
+    // Convert to YYYY-MM-DD format
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    return null;
+  }
 };
 
 export function getQuoteType(id, returnType = 'code') {
@@ -554,6 +614,38 @@ export const applyEmiratesNumberMasking = emiratesId => {
   }
 
   return emiratesIDNumber;
+};
+
+export const applyScreeningIdNumberMasking = screeningId => {
+  // Handle null, undefined, or empty values
+  if (!screeningId || typeof screeningId !== 'string') {
+    return screeningId ?? null;
+  }
+
+  let screeningIdNumber = screeningId.replace(/\D/g, '');
+  if (screeningIdNumber?.length > 15) {
+    screeningIdNumber = screeningIdNumber.substring(0, 15); // Limit to 15 characters
+  }
+  if (screeningIdNumber?.length <= 3) {
+    screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
+  } else if (screeningIdNumber?.length <= 7) {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{0,})/,
+      '$1-$2-$3',
+    );
+  } else if (screeningIdNumber?.length <= 13) {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{7})(\d{0,})/,
+      '$1-$2-$3-$4',
+    );
+  } else {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{7})(\d{1,})/,
+      '$1-$2-$3-$4',
+    );
+  }
+
+  return screeningIdNumber;
 };
 
 export const useGenerateOptions = (items, valueKey, labelKey) => {

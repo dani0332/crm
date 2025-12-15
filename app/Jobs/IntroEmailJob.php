@@ -3,8 +3,10 @@
 namespace App\Jobs;
 
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
 
 class IntroEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
     public $timeout = 15;
@@ -54,8 +56,14 @@ class IntroEmailJob implements ShouldQueue
         }
         switch ($this->quoteType) {
             case quoteTypeCode::Car:
-                info('Inside car check for sending email');
-                $sendEmailCustomerService->sendLMSIntroEmail($this->emailTemplateId, $this->emailData, 'lms-intro-email', QuoteTypes::CAR);
+                $quote = CarQuote::where('uuid', $this->emailData)->first();
+                if ($quote->advisor_id) {
+                    LoggerService::info("IntroEmailJob - Sending car intro email with advisor for quote: {$quote->uuid}");
+                    $sendEmailCustomerService->sendCarIntroEmailWithAdvisor($quote);
+                } else {
+                    LoggerService::info("IntroEmailJob - Sending car intro email without advisor for quote: {$quote->uuid}");
+                    $sendEmailCustomerService->sendCarIntroEmailWithoutAdvisor($quote);
+                }
                 break;
             case quoteTypeCode::Health:
                 $sendEmailCustomerService->sendRMIntroEmail($this->emailData, $this->previousAdvisorId, $this->isReassignment);

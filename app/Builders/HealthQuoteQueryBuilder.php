@@ -26,9 +26,11 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'first_name',
             'last_name',
             'source',
+            'sub_source_id',
             'health_team_type',
             'premium',
             'policy_number',
+            'support_user_id',
             'marital_status_id',
             'quote_status_id',
             'advisor_id',
@@ -94,9 +96,10 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insuranceProvider:id,text,code',
             'quoteStatus:id,text',
             'wcAdvisor:id,name',
+            'supportUser:id,name',
             'memberCategory:id,text',
-            'insuranceProvider:id,text',
             'plan:id,text',
+            'subSource:id,text',
         ]);
     }
 
@@ -234,6 +237,12 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 fn ($q) => $q->orderBy($this->getOrderByColumn(), $this->getFilterValue('sortType', $requestParams)),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
             );
+
+        // Filter by support user (OE/AE)
+        if ($this->hasFilterValue('support_user_id', $requestParams) && is_array($this->getFilterValue('support_user_id', $requestParams))) {
+            $ids = $this->getFilterValue('support_user_id', $requestParams);
+            $query->whereIn('support_user_id', $ids);
+        }
     }
 
     /**

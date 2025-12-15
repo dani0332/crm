@@ -10,6 +10,8 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\QuoteTag;
+use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -236,15 +238,19 @@ trait QuoteAllocatable
             ->where('quote_tags.quote_type_id', $quoteType->id())->exists();
     }
 
+    public function isAIAdviserRequired(): bool
+    {
+        return (bool) $this->ai_advisor_required;
+    }
     public function markLeadAllocationFailedForClaim()
     {
 
         if ($this->manager_id) {
             // if manager is already assigned then we don't need to mark it as failed
-
             return;
         }
 
+       
         if ($this->lead_allocation_failed_at) {
             self::withoutEvents(function () {
                 $this->update([
@@ -262,6 +268,36 @@ trait QuoteAllocatable
             ]);
         });
     }
+    public function assignToAIAdvisor()
+    {
+        if ($this->isAIAdvisorAssigned()) {
+            return;
+        }
+
+        $aiAdvisor = User::getAiAdvisor();
+
+        if (! $aiAdvisor) {
+            LoggerService::warning('AI Advisor Not Found');
+
+            return;
+        }
+
+        $this->update([
+            'ai_advisor_assigned_at' => now(),
+            'advisor_id' => $aiAdvisor->id,
+        ]);
+    }
+
+    public function isAIAdvisorAssigned(): bool
+    {
+        return ! empty($this->advisor) && $this->advisor->isAi() && ! empty($this->ai_advisor_assigned_at);
+    }
+
+    public function isAIAdvisorEverAssigned(): bool
+    {
+        return ! empty($this->ai_advisor_assigned_at);
+    }
+
     public function isReAssignment()
     {
         return in_array($this->assignment_type, [AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]);

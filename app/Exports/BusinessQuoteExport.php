@@ -39,6 +39,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             'POLICY NUMBER',
             'LOST REASON',
             'ADVISOR',
+            'OE/AE',
             'LEAD STATUS',
             'CREATED DATE',
             'ADVISOR ASSIGNED DATE',
@@ -53,6 +54,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'IMCRM SUB-SOURCE',
         ];
     }
 
@@ -68,6 +70,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             optional($quote->advisor)->name,
+            $quote->supportUser?->name,
             optional($quote->quoteStatus)->text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
@@ -82,6 +85,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            optional($quote->subSource)->text,
         ];
     }
 

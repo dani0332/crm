@@ -35,6 +35,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
     Route::post('/imcrm/trigger-sic-whatsapp', [ApiController::class, 'triggerSICWhatsapp'])->name('triggerSICWhatsapp');
+    Route::post('/imcrm/run-cqf-jobs', [ApiController::class, 'runCQFJobs']);
 
     // FTC email tracking routes
     Route::post('ftc/{quoteType}/{uuid}', [FtcEmailLogController::class, 'store']);
@@ -49,6 +50,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/trigger-travel-aig-workflow', [ApiController::class, 'triggerTravelAIGWorkflow'])->name('triggerTravelAIGWorkflow');
 
     Route::get('/home/renewal-ocb-attachment', [ApiController::class, 'homeRenewalOCBAttachment'])->name('homeRenewalOCBAttachment');
+    Route::get('/quotes/{quoteType}/get-plans-pdf-url', [GenericLobController::class, 'getPlansPdfUrl'])->name('getPlansPdfUrl');
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
     Route::post('send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);
 
@@ -66,6 +68,15 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
     Route::post('/imcrm/claim/assign-quote', [ApiController::class, 'assignClaim'])->name('assignClaim');
+
+    // Missing docs reminder and verify missing docs routes
+    Route::prefix('imcrm')->group(function () {
+        Route::post('/missing-docs-reminder/{quoteUuid}', [ApiController::class, 'missingDocsReminder'])->name('missingDocsReminder');
+        Route::get('/verify-missing-docs/{quoteUuid}/{quoteType}', [ApiController::class, 'verifyMissingDocs'])->name('verifyMissingDocs');
+    });
+
+    Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
+
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
@@ -79,6 +90,7 @@ Route::post('/bird-outbound-emails-status', [ApiController::class, 'birdOutbound
 Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
 Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
+Route::post('/email-status/update-customer-replied', [ApiController::class, 'updateCustomerRepliedStatus'])->name('updateCustomerRepliedStatus');
 
 Route::prefix('v1')->group(function () {
 
@@ -113,6 +125,9 @@ Route::prefix('v1')->group(function () {
 
     // User management routes
     Route::get('users/first-manager/{email}', [UserController::class, 'getFirstManager'])->name('getFirstManager');
+
+    // upload to metlife API route
+    Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
 
 });
 

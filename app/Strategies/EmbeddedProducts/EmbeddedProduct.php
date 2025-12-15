@@ -4,9 +4,9 @@ namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -38,6 +38,9 @@ class EmbeddedProduct
             'VEHICLE',
             'CONTRIBUTION AMOUNT',
             'POLICY ISSUE STATUS',
+            'EP Payment Status',
+            'EP API Status',
+            'EP Sage Status',
             'CERTIFICATE NUMBER',
         ];
     }
@@ -57,6 +60,9 @@ class EmbeddedProduct
             $certificate->vehicle,
             $certificate->contribution_amount,
             $certificate->status,
+            $certificate->ep_payment_status,
+            $certificate->ep_api_status,
+            $certificate->ep_sage_status,
             $certificate->certificate_number,
         ];
     }
@@ -78,12 +84,7 @@ class EmbeddedProduct
                 ->where('quote_type_id', $item->quote_type_id)
                 ->latest('updated_at')
                 ->first() ?? null;
-            $advisorName = $quoteObject->advisor->name ?? '';
-            $nationality = $quoteObject->customer->nationality->text ?? '';
 
-            $age = isset($quoteObject->dob) ?
-                floor(Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now())).' Years'
-                : '';
             $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
             if (! empty($planStartDate)) {
@@ -102,20 +103,18 @@ class EmbeddedProduct
 
             $item->id = $item->id;
             $item->ref_id = $item->code;
-            $item->advisor_name = $advisorName;
             $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;
             $item->certificate_number = $item->certificate_number ?? '';
             $item->name = $firstName.' '.$lastName;
-            $item->dob = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '';
-            $item->age = $age;
-            $item->contact_number = $quoteObject->mobile_no ?? '';
-            $item->nationality = $nationality ?? '';
-            $item->email = $quoteObject->email ?? '';
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
-            $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
+            $item->ep_payment_status = $item->paymentStatus?->text ?? '';
+            $item->ep_api_status = $item->policy_status ?? '';
+            $item->ep_sage_status = $item->sage_status instanceof SageEmbeddedProductEnum
+                ? $item->sage_status->value
+                : ($item->sage_status ?? '');
             $item->emirates_id_number = $emiratesIdNumber;
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
@@ -147,6 +146,15 @@ class EmbeddedProduct
         $carModel = $quoteObject->carModel->text ?? '';
         $item->vehicle = $carMake.' '.$carModel;
 
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+        $item->advisor_name = $quoteObject?->advisor?->name ?? '';
+        $item->dob = isset($quoteObject?->dob) ? Carbon::parse($quoteObject?->dob)->format($dateFormat) : '';
+        $item->nationality = $quoteObject?->customer?->nationality?->text ?? '';
+        $item->policy_issuance_date = $quoteObject?->policy_issuance_date ?? '';
+        $item->age = isset($quoteObject?->dob) ?
+            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())).' Years'
+            : '';
+
         return $item;
     }
 
@@ -163,6 +171,7 @@ class EmbeddedProduct
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
+            'paymentStatus',
         ];
     }
 
@@ -171,15 +180,21 @@ class EmbeddedProduct
         $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
             $query->where('id', $ep->id);
         });
+
         $dataset = $productTransaction->with($this->getReportRelations())
             ->join('payments', function ($join) {
                 $join->on('embedded_transactions.id', '=', 'payments.paymentable_id')
                     ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
             })
             ->where('embedded_transactions.is_selected', true)
-            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->when(! empty($filters['ep_payment_status'] ?? null), function ($query) use ($filters) {
+                $query->whereIn('embedded_transactions.payment_status_id', (array) $filters['ep_payment_status']);
+            })
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
+            })
+            ->when(isset($filters['certificate_number']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.certificate_number', 'like', "%{$filters['certificate_number']}%");
             })
             ->when(isset($filters['months']), function ($query) use ($filters) {
                 $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
@@ -213,7 +228,19 @@ class EmbeddedProduct
             })
             ->when(isset($filters['sync_status']), function ($query) use ($filters) {
                 $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
+            })
+            ->when(! empty($filters['ep_api_status'] ?? null), function ($query) use ($filters) {
+                $query->whereIn('embedded_transactions.policy_status', (array) $filters['ep_api_status']);
+            })
+            ->when(! empty($filters['ep_sage_status'] ?? null), function ($query) use ($filters) {
+                $sageStatusIds = SageEmbeddedProductEnum::idsFromValues((array) $filters['ep_sage_status']);
+
+                if (! empty($sageStatusIds)) {
+                    $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
+                }
             });
+
+        $dataset = $this->updateQuery($dataset, $filters);
 
         $sortBy = 'embedded_transactions.id';
         $sortOrder = 'desc';
@@ -244,6 +271,11 @@ class EmbeddedProduct
         return $dataset;
     }
 
+    protected function updateQuery($query, $filters)
+    {
+        return $query;
+    }
+
     public static function checkAlfredProtect($product)
     {
         $product = strtoupper(trim($product));
@@ -261,7 +293,7 @@ class EmbeddedProduct
     public function getDocumentList($ep, $transaction)
     {
         $isSalama = false;
-        if (! $transaction->isEmpty()) {
+        if (! $transaction->isEmpty() && in_array($ep->short_code, EmbeddedProductEnum::getSukoonMedexCodes())) {
             $paidAt = $transaction->first()->paid_at ?? null;
             $isSalama = $paidAt && Carbon::parse($paidAt)->lt(Carbon::parse(EmbeddedProductRepository::SALAMA_DATE));
         }
@@ -320,8 +352,10 @@ class EmbeddedProduct
 
         $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $documentNumbers = [
+            QuoteDocumentsEnum::POLICY_SCHEDULE => $transaction['certificate_number'] ?? '',
             QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER => $transaction['tax_invoice_buyer_no'] ?? '',
             QuoteDocumentsEnum::CAR_TAX_INVOICE => $transaction['tax_invoice_no'] ?? '',
+            QuoteDocumentsEnum::CAR_EP_TAX_INVOICE => $transaction['tax_invoice_no'] ?? '',
             QuoteDocumentsEnum::CAR_TAX_CREDIT_RAISE_BY_BUYER => $transaction['credit_note_buyer_no'] ?? '',
             QuoteDocumentsEnum::CAR_TAX_CREDIT => $transaction['credit_note_no'] ?? '',
             QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE => $transaction['certificate_number'] ?? '',
