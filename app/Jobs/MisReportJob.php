@@ -150,7 +150,7 @@ class MisReportJob implements ShouldQueue
      */
     private function triggerBirdWorkflow(array $birdEmailData)
     {
-        $birdWorkflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_MISREPORT_JOB_WORKFLOW)->first()->value ?? '';
+        $birdWorkflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_MISREPORT_JOB_WORKFLOW)->first()?->value ?? '';
         app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 }
