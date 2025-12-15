@@ -19,6 +19,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteType;
 use App\Models\Team;
+use App\Services\Logger\LoggerService;
 use App\Services\Reports\Reportable;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
