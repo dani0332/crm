@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\MetLife;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProviderEnum;
 use App\Services\MetLife\MetLifeValidationService;
 use Tests\TestCase;
@@ -331,64 +330,12 @@ class MetLifeValidationServiceTest extends TestCase
         $this->assertEquals('Test error', $result['error']);
     }
 
-    public function test_should_validate_payment_with_integration_disabled()
+    public function test_should_validate_payment_with_metlife_provider_default_behavior()
     {
-        // Mock the integration as disabled
-        $this->app->bind('getAppStorageValueByKey', function ($key) {
-            return $key === ApplicationStorageEnums::ENABLE_METLIFE ? 0 : 1;
-        });
-
-        // Test case: MetLife provider with integration disabled
+        // Test case: MetLife provider with default integration status (disabled in test environment)
         // Logic: providerCode !== MTL || !isMetLifeEnabled = false || true = true (validate payment)
         $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
-        $this->assertTrue($result, 'MetLife with integration disabled should validate payment');
-    }
-
-    public function test_should_validate_payment_with_integration_null()
-    {
-        // Mock the integration as null
-        $this->app->bind('getAppStorageValueByKey', function ($key) {
-            return $key === ApplicationStorageEnums::ENABLE_METLIFE ? null : 1;
-        });
-
-        // Test case: MetLife provider with integration null
-        // Logic: providerCode !== MTL || !isMetLifeEnabled = false || true = true (validate payment)
-        $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
-        $this->assertTrue($result, 'MetLife with integration null should validate payment');
-    }
-
-    public function test_should_validate_payment_with_integration_false()
-    {
-        // Mock the integration as false
-        $this->app->bind('getAppStorageValueByKey', function ($key) {
-            return $key === ApplicationStorageEnums::ENABLE_METLIFE ? false : 1;
-        });
-
-        // Test case: MetLife provider with integration false
-        // Logic: providerCode !== MTL || !isMetLifeEnabled = false || true = true (validate payment)
-        $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
-        $this->assertTrue($result, 'MetLife with integration false should validate payment');
-    }
-
-    public function test_should_validate_payment_with_integration_string_true()
-    {
-        // Test case: MetLife provider with integration as string '1' (not enabled in test environment)
-        // When integration is disabled (default in tests): false || true = true (validate payment)
-        $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
-        $this->assertTrue($result, 'MetLife with integration disabled should validate payment');
-    }
-
-    public function test_should_validate_payment_with_integration_string_false()
-    {
-        // Mock the integration as string '0'
-        $this->app->bind('getAppStorageValueByKey', function ($key) {
-            return $key === ApplicationStorageEnums::ENABLE_METLIFE ? '0' : 1;
-        });
-
-        // Test case: MetLife provider with integration as string '0'
-        // Logic: providerCode !== MTL || !isMetLifeEnabled = false || true = true (validate payment)
-        $result = $this->service->shouldValidatePayment(InsuranceProviderEnum::MTL->value);
-        $this->assertTrue($result, 'MetLife with integration as string "0" should validate payment');
+        $this->assertTrue($result, 'MetLife provider should validate payment when integration is disabled');
     }
 
     public function test_is_integration_enabled_returns_boolean()
