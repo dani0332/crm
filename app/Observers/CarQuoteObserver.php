@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -12,6 +13,7 @@ use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
+use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendFailedPaymentEmailJob;
@@ -92,7 +94,6 @@ class CarQuoteObserver
         if (isset($dirty['quote_status_id'])) {
             if ($lead->quote_status_id === QuoteStatusEnum::Quoted && $lead->registration_type === CarRegistrationType::COMPANY && $lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
                 app(CarEmailService::class)->sendFollowUpEmailForCQF($lead);
-
             }
             if ($lead->quote_status_id === QuoteStatusEnum::TransactionApproved) {
                 CarQuote::withoutEvents(function () use ($lead) {
@@ -181,8 +182,17 @@ class CarQuoteObserver
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
+        if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PaymentPending) {
 
-        if (isset($dirty['car_make_id'])
+            if ($lead->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                CarMissingDocReminderJob::dispatch($lead->uuid)->delay(now()->addSeconds(15));
+                LoggerService::info(self::class.' - dispatching CarMissingDocReminderJob', ['uuid' => $lead->uuid]);
+            }
+
+        }
+
+        if (
+            isset($dirty['car_make_id'])
             || isset($dirty['car_model_id'])
             || isset($dirty['registration_type'])
             || isset($dirty['vehicle_use'])

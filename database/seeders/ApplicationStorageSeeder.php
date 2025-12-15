@@ -69,6 +69,10 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedEpEcbConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
+        $this->seedEnableMetLife();
+        $this->seedTempDisableSageBooking();
+        $this->seedMrIncludeFailedBookings();
+        $this->seedLegacyPolicyKeys();
         $this->seedMisreportData();
     }
 
@@ -1042,6 +1046,98 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_DURATION],
             [
                 'value' => 'Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedEnableMetLife()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_METLIFE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTempDisableSageBooking()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TEMP_DISABLE_SAGE_BOOKING],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedMrIncludeFailedBookings()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MR_FAILED_BOOKING_DATE_FROM],
+            [
+                'value' => '2025-11-27 12:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedLegacyPolicyKeys()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_TEMP_SALES_PERSON_ID],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_TEMP_POLICY_OID],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_EMAIL],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_POLICY_OID],
+            [
+                'value' => '2025-11-27 12:00:00',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

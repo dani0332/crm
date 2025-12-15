@@ -31,6 +31,8 @@ class RegistrationCertificate extends Model
         'doc_type',
         'provider_id',
         'traffic_code_number',
+        'policy_expiry_date',
+        'chassis_number',
     ];
     protected $casts = [
         'expiry_date' => 'date',

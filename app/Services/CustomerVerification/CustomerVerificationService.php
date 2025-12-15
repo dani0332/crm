@@ -10,9 +10,14 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Events\CustomerVerificationUpdated;
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CustomerVerificationDetail;
+use App\Models\Emirate;
+use App\Models\PersonalQuote;
 use App\Models\RegistrationCertificate;
+use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleDriverDetail;
 use App\Services\CapiService;
 use App\Services\CarQuoteService;
@@ -29,6 +34,12 @@ class CustomerVerificationService
 
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
+
+    public const MONTHS_RULES = [
+        0 => 'less than 6 months',
+        1 => 'less than 6 months',
+        2 => 'less than 1 year',
+    ];
 
     public function __construct(
         private CapiService $capiService,
@@ -279,31 +290,40 @@ class CustomerVerificationService
                     'value' => array_key_exists('name', $customerVerifiedData)
                     ? $customerVerifiedData['name']
                     : '',
-                    'error' => $this->verifyWithWebForm($customerVerifiedData['name'], "{$record->first_name} {$record->last_name}"),
+                    'error' => isset($customerVerifiedData['name'])
+                    ? $this->verifyWithWebForm($customerVerifiedData['name'], "{$record->first_name} {$record->last_name}")
+                    : false,
                 ],
                 'nationality' => [
                     'value' => array_key_exists('nationality_id', $customerVerifiedData)
                     ? $this->getNationalityById($customerVerifiedData['nationality_id'])
                     : '',
-                    'error' => $this->verifyWithWebForm((int) $customerVerifiedData['nationality_id'], $record->nationality_id),
+                    'error' => isset($customerVerifiedData['nationality_id'])
+                    ? $this->verifyWithWebForm((int) $customerVerifiedData['nationality_id'], $record->nationality_id) : false,
                 ],
                 'carMakeAndModel' => [
                     'value' => array_key_exists('carMakeAndModel', $customerVerifiedData)
                     ? trim($customerVerifiedData['carMakeAndModel'] ?? '')
                     : '',
-                    'error' => $this->verifyWithWebForm($customerVerifiedData['carMakeAndModel'], "{$record->car_make_id_text} {$record->car_model_id_text}"),
+                    'error' => isset($customerVerifiedData['carMakeAndModel'])
+                    ? $this->verifyWithWebForm($customerVerifiedData['carMakeAndModel'], "{$record->car_make_id_text} {$record->car_model_id_text}")
+                    : false,
                 ],
                 'carModelYear' => [
                     'value' => array_key_exists('carModelYear', $customerVerifiedData)
                     ? $customerVerifiedData['carModelYear']
                     : '',
-                    'error' => $this->verifyWithWebForm($customerVerifiedData['carModelYear'], $record->year_of_manufacture),
+                    'error' => isset($customerVerifiedData['carModelYear'])
+                    ? $this->verifyWithWebForm($customerVerifiedData['carModelYear'], $record->year_of_manufacture)
+                    : false,
                 ],
                 'dob' => [
                     'value' => array_key_exists('date_of_birth', $customerVerifiedData)
                     ? $this->formatDateToDisplay($customerVerifiedData['date_of_birth'])
                     : '',
-                    'error' => $this->verifyWithWebForm(Carbon::parse($customerVerifiedData['date_of_birth'])->format('d-m-Y'), $record->dob),
+                    'error' => isset($customerVerifiedData['date_of_birth'])
+                    ? $this->verifyWithWebForm(Carbon::parse($customerVerifiedData['date_of_birth'])->format('d-m-Y'), $record->dob)
+                    : false,
                 ],
             ];
 
@@ -319,7 +339,7 @@ class CustomerVerificationService
     private function verifyWithWebForm(string|int|null $ocrValue, string|int|null $webFormValue): bool
     {
         // Convert to lower case for case insensitive comparison
-        return strtolower((string) $ocrValue) !== strtolower((string) $webFormValue);
+        return strtolower((string) $ocrValue) !== trim(strtolower((string) $webFormValue));
     }
 
     private function verifyLicenseHeldFor($ocrLicenseHeldFor, $webFormLicenseHeldFor): bool
@@ -439,6 +459,15 @@ class CustomerVerificationService
             }
         }
 
+        // Additional fields for separate make and model
+        if ($this->hasOcrKey($ocrData, 'vehicleMake')) {
+            $verificationData['carMake'] = $this->extractOcrValue($ocrData, 'vehicleMake');
+        }
+
+        if ($this->hasOcrKey($ocrData, 'vehicleMakeModel')) {
+            $verificationData['carMakeModel'] = $this->extractOcrValue($ocrData, 'vehicleMakeModel');
+        }
+
         if (empty($verificationData)) {
             LoggerService::info('No valid customer verification data to update from RC OCR', extra: [
                 'document_type' => $documentType,
@@ -509,7 +538,7 @@ class CustomerVerificationService
     private function updateCustomerVerificationStatus(Model $quote): void
     {
         $requestData = ['quoteUuid' => $quote->uuid,
-            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::CAR),
+            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::from($this->getQuoteType($quote))),
             'callSource' => LeadSourceEnum::IMCRM,
         ];
 
@@ -539,6 +568,21 @@ class CustomerVerificationService
             'document_type' => $documentType,
             'quote_type' => $quoteType->value,
         ]);
+    }
+
+    private function getQuoteType($quote): ?string
+    {
+        return match (true) {
+            $quote instanceof CarQuote => QuoteTypes::CAR->value,
+            $quote instanceof PersonalQuote => QuoteTypes::PERSONAL->value,
+            // Add other quote types here as needed
+            default => null,
+        };
+    }
+
+    private function getQuoteTypeId($quote)
+    {
+        return ($quote instanceof CarQuote) ? QuoteTypes::CAR->id() : $quote->quote_type_id;
     }
 
     public function isCustomerVerificationEnabled(): bool
@@ -587,5 +631,106 @@ class CustomerVerificationService
                 'document_type' => $this->documentTypeCode,
             ]);
         }
+    }
+
+    public function updateCarOcrWebformData(int $quoteId): void
+    {
+        $webFormData = [];
+        $customerVerificationDetails = $this->getCustomerVerificationData($quoteId);
+        $registrationCertificateDetails = $this->getRegistrationCertificateData($quoteId);
+        $vehicleDriverDetailData = $this->getVehicleDriverDetailData($quoteId);
+
+        // Add customer verification data if exists
+        if ($customerVerificationDetails && $customerVerificationDetails->customer_verified_data) {
+            $customerVerificationData = json_decode($customerVerificationDetails->customer_verified_data, true);
+            $name = explode(' ', $customerVerificationData['name'] ?? '');
+
+            $webFormData = array_filter([
+                'first_name' => $name[0] ?? null,
+                'last_name' => isset($name[1]) ? implode(' ', array_slice($name, 1)) : null,
+                'nationality_id' => $customerVerificationData['nationality_id'] ?? null,
+                'dob' => $customerVerificationData['date_of_birth'] ?? null,
+                'year_of_manufacture' => $customerVerificationData['carModelYear'] ?? null,
+            ], fn ($value) => ! empty($value));
+
+            // Get car make id
+            if (array_key_exists('carMake', $customerVerificationData)) {
+                $webFormData['car_make_id'] = CarMake::where('text', $customerVerificationData['carMake'])->first()?->id;
+            }
+
+            // Get car make model id
+            if (array_key_exists('carMakeModel', $customerVerificationData)) {
+                $webFormData['car_model_id'] = CarModel::where('text', $customerVerificationData['carMakeModel'])->first()?->id;
+            }
+        }
+
+        // Add registration certificate data if exists
+        if ($registrationCertificateDetails && $registrationCertificateDetails->place_of_issue) {
+            $emirate = Emirate::where('text', $registrationCertificateDetails->place_of_issue)->first();
+
+            if ($emirate) {
+                $webFormData['emirate_of_registration_id'] = $emirate->id;
+            }
+        }
+
+        // Add vehicle driver details data if exists
+        if ($vehicleDriverDetailData && $vehicleDriverDetailData->driver_license_issue_date) {
+            $driverLicenseIssueDate = Carbon::parse($vehicleDriverDetailData->driver_license_issue_date);
+            $yearsDifference = (int) $driverLicenseIssueDate->diffInYears(Carbon::now());
+
+            // If its in year
+            if ($yearsDifference >= 1) {
+                // Restrict to 5 years as per our policy
+                $yearsDifference = min($yearsDifference, 5);
+
+                if ($id = UAELicenseHeldFor::where('code', 'like', "{$yearsDifference} year%")->value('id')) {
+                    $webFormData['uae_license_held_for_id'] = $id;
+                }
+            }
+
+            // If in months
+            if ($yearsDifference < 1) {
+                $monthsDifference = (int) $driverLicenseIssueDate->diffInMonths(Carbon::now());
+                $monthsDifference = ceil($monthsDifference / 5);
+
+                if ($id = UAELicenseHeldFor::where('code', self::MONTHS_RULES[$monthsDifference])->value('id')) {
+                    $webFormData['uae_license_held_for_id'] = $id;
+                }
+            }
+        }
+
+        // Update webform data
+        CarQuote::where('id', $quoteId)->update($webFormData);
+
+        // Verify OCR data (to update flag in database)
+        $this->carQuoteService->verifyOCRData(CarQuote::find($quoteId));
+    }
+
+    private function getCustomerVerificationData(int $quoteId): ?CustomerVerificationDetail
+    {
+        $data = CustomerVerificationDetail::where('quotable_type', QuoteTypes::CAR->modelClass())
+            ->where('quotable_id', $quoteId)
+            ->select('customer_verified_data')
+            ->first();
+
+        return $data;
+    }
+
+    private function getRegistrationCertificateData(int $quoteId): ?RegistrationCertificate
+    {
+        $data = RegistrationCertificate::forQuotable(QuoteTypes::CAR->modelClass(), $quoteId)
+            ->select('place_of_issue')
+            ->first();
+
+        return $data;
+    }
+
+    private function getVehicleDriverDetailData(int $quoteId): ?VehicleDriverDetail
+    {
+        $data = VehicleDriverDetail::forQuotable(QuoteTypes::CAR->modelClass(), $quoteId)
+            ->select('driver_license_issue_date')
+            ->first();
+
+        return $data;
     }
 }
