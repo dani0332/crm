@@ -89,7 +89,7 @@ class BuyLeadService
 
         // For Car Revival, ensure only configs with at least one nationality are considered.
         if ($isCarRevival) {
-            $query->whereHas('nationalities');
+            $query->where('source', LeadSourceEnum::REVIVAL);
         }
 
         return $query->first();
