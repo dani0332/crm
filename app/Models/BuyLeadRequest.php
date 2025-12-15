@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BuyLeadSegment;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Traits\Filterable;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,7 @@ class BuyLeadRequest extends Model
         'expires_at',
         'status',
         'segment',
+        'source',
     ];
     protected $casts = [
         'requested_count' => 'integer',
@@ -29,6 +31,7 @@ class BuyLeadRequest extends Model
         'cost_per_lead' => 'float',
         'expires_at' => 'datetime',
         'segment' => BuyLeadSegment::class,
+        'source' => LeadSourceEnum::class,
     ];
 
     public function scopeIsSIC($query)
@@ -103,16 +106,33 @@ class BuyLeadRequest extends Model
         });
     }
 
+    public function scopeCatA($query)
+    {
+        $query->where('source', LeadSourceEnum::REVIVAL);
+    }
+
+    public function scopeNonCatA($query)
+    {
+        $query->whereNull('source');
+    }
+
     public static function getRequestedUserIds(QuoteTypes $quoteType, bool $isSIC, bool $isValue): array
     {
-        $userIds = self::byValueOrVolume($quoteType, $isValue)->bySegment($isSIC)->where('quote_type_id', $quoteType->id())->active()->unfulfilled()->pluck('user_id')->toArray();
+        $userIds = self::byValueOrVolume($quoteType, $isValue)->nonCatA()->bySegment($isSIC)->where('quote_type_id', $quoteType->id())->active()->unfulfilled()->pluck('user_id')->toArray();
 
         return array_values(array_unique($userIds));
     }
 
     public static function getRequest(QuoteTypes $quoteType, bool $isSIC, int $userId, bool $isValue): ?BuyLeadRequest
     {
-        return self::byValueOrVolume($quoteType, $isValue)->bySegment($isSIC)->where('quote_type_id', $quoteType->id())->where('user_id', $userId)->active()->unfulfilled()->first();
+        return self::byValueOrVolume($quoteType, $isValue)
+            ->nonCatA()
+            ->bySegment($isSIC)
+            ->where('quote_type_id', $quoteType->id())
+            ->where('user_id', $userId)
+            ->active()
+            ->unfulfilled()
+            ->first();
     }
 
     public function buyLead($lead, QuoteTypes $quoteType)
@@ -150,5 +170,20 @@ class BuyLeadRequest extends Model
         } else {
             $this->update(['status' => 'active']);
         }
+    }
+
+    public static function getCatAUserIds(bool $isSIC)
+    {
+        return self::catA()->active()->unfulfilled()->pluck('user_id')->toArray();
+    }
+
+    public static function getCatARequest(QuoteTypes $quoteType, bool $isSIC, int $userId): ?BuyLeadRequest
+    {
+        return self::catA()
+            ->where('quote_type_id', $quoteType->id())
+            ->where('user_id', $userId)
+            ->active()
+            ->unfulfilled()
+            ->first();
     }
 }
