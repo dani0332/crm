@@ -133,7 +133,7 @@ class BusinessQuoteExport implements FromCollection, ShouldAutoSize, WithHeading
             $quote->branchOverride?->branchOverrideConfig?->targetBranch?->name ?? '',
             date(config('constants.DATE_FORMAT'), strtotime($quote->branchOverride?->created_at)),
             $quote->payments?->first()?->commission ?? '0',
-            $quote->payments?->first()?->commmission_percentage . '%' ?? '0%',
+            ($quote->payments?->first()?->commmission_percentage ?? '0') . '%',
         ];
     }
 

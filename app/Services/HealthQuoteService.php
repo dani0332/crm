@@ -264,7 +264,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('user_branches as ub', function ($join) {
                 $join->on('ub.user_id', '=', 'hqr.advisor_id')
-                    ->where('ub.is_primary', '=', 1);
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'hqr.branch_id');
     }

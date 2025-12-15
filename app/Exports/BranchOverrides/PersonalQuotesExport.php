@@ -392,7 +392,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             'target_branch' => $quote->branchOverride?->branchOverrideConfig?->targetBranch?->name ?? '',
             'override_applied_date' => date(config('constants.datetime_format'), strtotime($quote->branchOverride?->created_at)),
             'total_commission' => $quote->payments?->first()?->commission ?? '0',
-            'commission_percent' => $quote->payments?->first()?->commmission_percentage . '%' ?? '0%',
+            'commission_percent' => ($quote->payments?->first()?->commmission_percentage ?? '0') . '%',
         ];
 
         return match (ucfirst($quoteType)) {

@@ -122,9 +122,9 @@ class BusinessQuoteObserver
                     }
                     $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirateOfRegistrationId);
                     $businessQuote->update([
-                        'branch_id' => $branch->id,
+                        'branch_id' => $branch?->id,
                     ]);
-                    $dirty = [...$dirty, 'branch_id' => $branch->id];
+                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
                 });
             } catch (Exception $e) {
                 LoggerService::error('BusinessQuoteObserver - save branch data failed', [
