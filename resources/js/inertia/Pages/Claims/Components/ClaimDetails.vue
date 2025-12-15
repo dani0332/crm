@@ -457,7 +457,7 @@ watch(
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CODE</dt>
+                <dt class="font-medium">REF ID</dt>
                 <dd class="font-mono">{{ claim.code }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
