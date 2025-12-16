@@ -1052,7 +1052,7 @@ class SplitPaymentService
             if ($payment->paymentable_type == PersonalQuote::class) {
                 $quoteTypeId = $quoteModel->quote_type_id;
             }
-            if ((in_array($payment->paymentable_type, $ecommQuotes) || $quoteTypeId === QuoteTypeId::Life) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            if ((in_array($payment->paymentable_type, $ecommQuotes) ||  in_array($quoteTypeId, [QuoteTypeId::Life, QuoteTypeId::Cyber])) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
                 LoggerService::info("Master payment code: {$payment->code} - Quote type: {$payment->paymentable_type}");
 
