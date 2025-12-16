@@ -74,6 +74,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'emirate_of_your_visa_id',
             'pec_marked_at',
             'branch_id',
+            'is_branch_applicable',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',

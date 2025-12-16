@@ -153,7 +153,7 @@ class HomeQuoteRepository extends BaseRepository
     private function postProcessHomeQuote($query)
     {
         return $query->map(function ($item) {
-            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home);
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home));
             return $item;
         });
     }

@@ -73,7 +73,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
         $this->seedLegacyPolicyKeys();
-        $this->seedMisreportData();
+        $this->seedBranchData();
     }
 
     private function livaCarAutomationSeed()
@@ -1145,7 +1145,7 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedMisreportData()
+    private function seedBranchData()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_MISREPORT_JOB],

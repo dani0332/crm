@@ -223,7 +223,7 @@ class BikeQuoteRepository extends BaseRepository
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
         }
 
-        $quote->branch_name = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Bike);
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Bike));
 
         return $quote;
     }
@@ -310,7 +310,7 @@ class BikeQuoteRepository extends BaseRepository
     public function fetchPostProcessBikeQuote($quotes)
     {
         return $quotes->map(function ($item) {
-            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Bike);
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Bike));
             return $item;
         });
     }

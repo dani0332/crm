@@ -56,7 +56,7 @@ class HealthQuoteObserver
         ) {
             // Trigger the event for transaction approval
             HealthTransactionApproved::dispatch($healthQuote);
-            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
+            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at, 'is_quote_locked' => true];
         }
 
         if (isset($dirty['advisor_id'])) {
@@ -122,7 +122,7 @@ class HealthQuoteObserver
 
             try {
                 HealthQuote::withoutEvents(function () use ($healthQuote, &$dirty) {
-                    $branch = app(BranchAssignmentService::class)->getBranch($healthQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $healthQuote->emirate_of_your_visa_id, $healthQuote->policyIssuedLogs()->first());
+                    $branch = app(BranchAssignmentService::class)->getBranch($healthQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $healthQuote->emirate_of_your_visa_id);
                     $healthQuote->update([
                         'branch_id' => $branch?->id,
                     ]);

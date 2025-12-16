@@ -63,7 +63,7 @@ class BusinessQuoteExport implements CsvExportableInterface
 
     public function map($quote): array
     {
-        $branch = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Business);
+        $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Business));
         return [
             $quote->code,
             $quote->first_name,

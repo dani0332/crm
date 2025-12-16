@@ -754,19 +754,17 @@ class SageApiService
         }
 
         $emirate = null;
-        $policyIssuedLog = null;
         $quoteTypeIdForBranch = $quoteTypeId;
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emirate = $quote?->emirate_of_your_visa_id ?? null;
-            $policyIssuedLog = $quote?->policyIssuedLogs()->first();
         } else if (
-            $quoteTypeId == QuoteTypeId::Business 
+            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical]) 
             && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
             $emirate = $quote?->latestInsured?->entity?->emirate_of_registration_id ?? null;
             $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
         }
-        $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate, $policyIssuedLog);
+        $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
         
         if ($branch?->id == BranchEnum::ABU_DHABI->value) {
             LoggerService::info('Sage posting is not allowed for Abu Dhabi branch', extra: ['ref_id' => $quote->code, 'branch_id' => $branch?->id]);

@@ -840,18 +840,25 @@ trait GenericQueriesAllLobs
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $advisor = User::with('primaryBranch')->find($record?->advisor_id);
         $emirate = null;
-        $policyIssuedLog = null;
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emirate = $record?->emirate_of_your_visa_id ?? null;
-            $policyIssuedLog = $record?->policyIssuedLogs()->first();
         } else if (
-            $quoteTypeId == QuoteTypeId::Business 
+            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical]) 
             && $record->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
             $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
-        $branch = app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate, $policyIssuedLog);
+
+        if($record->is_branch_applicable == 0) {
+            return false;
+        }
+
+        if(isset($record->lead_branch_id) && $record->lead_branch_id) {
+            return $record->lead_branch_id == BranchEnum::ABU_DHABI->value;
+        }
+
+        $branch = $record->branch ?? app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
 
         LoggerService::info('Branch check for Quote', extra: [
             'ref_id' => $record->code,

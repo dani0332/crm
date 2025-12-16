@@ -73,6 +73,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'lead_assignment_trigger',
             'parent_id',
             'branch_id',
+            'is_branch_applicable',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',

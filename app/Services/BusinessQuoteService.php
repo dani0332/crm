@@ -146,6 +146,8 @@ class BusinessQuoteService extends BaseService
                 '),
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
+                'b.id as lead_branch_id',
+                'bqr.is_branch_applicable',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -186,7 +188,7 @@ class BusinessQuoteService extends BaseService
     public function postProcessBusinessQuotes($quotes)
     {
         return $quotes->map(function ($quote) {
-            $quote->branch_name = $quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::Business);
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::Business));
 
             return $quote;
         });

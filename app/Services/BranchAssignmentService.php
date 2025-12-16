@@ -10,8 +10,6 @@ use App\Models\Branch;
 use App\Models\BranchOverrideConfig;
 use App\Enums\EmirateEnum;
 use App\Enums\BranchEnum;
-use App\Enums\QuoteTypes;
-use Override;
 use App\Models\BranchOverride;
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
@@ -123,9 +121,13 @@ class BranchAssignmentService extends BaseService
      */
     public function hasBranchAssignment($quote, $quoteTypeId): bool
     {
-        $hasBranch = $quoteTypeId == QuoteTypeId::Health
-            ? ($quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null)
-            : $quote->advisor?->primaryBranch()->exists();
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null;
+        } else if ($quoteTypeId == QuoteTypeId::GroupMedical) {
+            $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->latestInsured?->entity?->emirate_of_registration_id !== null;
+        } else {
+            $hasBranch = $quote->advisor?->primaryBranch()->exists();
+        }
 
         if (!$hasBranch) {
             LoggerService::warning('Branch missing for quote: ' . $quote->code);
@@ -171,9 +173,9 @@ class BranchAssignmentService extends BaseService
      * @param int|null $emirateOfYourVisaId      (Optional) Visa emirate ID, used for Health quotes
      * @return string                            The branch's display name, or empty string if not found
      */
-    public function getBranchName($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null, $policyIssuedLog = null): string
+    public function getBranchName($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null): string
     {
-        $branch = $this->getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId, $policyIssuedLog);
+        $branch = $this->getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId);
 
         return $branch->name ?? '';
     }
@@ -188,10 +190,10 @@ class BranchAssignmentService extends BaseService
      * @param int|null $emirateOfYourVisaId     (Optional) Visa emirate ID, required only for Health quotes
      * @return mixed|null                       The resolved branch model instance, or null if not found
      */
-    public function getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null, $policyIssuedLog = null)
+    public function getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null)
     {
-        if ($quoteTypeId == QuoteTypeId::Health) {
-            return $this->getHealthBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $policyIssuedLog);
+        if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
+            return $this->getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $quoteTypeId);
         }
 
         return $this->getBranchWithOverride($primaryAdvisorBranchId, $quoteTypeId);
@@ -203,21 +205,10 @@ class BranchAssignmentService extends BaseService
      * @param int|null $primaryAdvisorBranchId
      * @param int|null $emirateOfYourVisaId
      */
-    private function getHealthBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $policyIssuedLog)
+    private function getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $quoteTypeId)
     {
         if (empty($emirateOfYourVisaId)) {
             return null;
-        }
-        
-        // AUH V1 Logic for branch
-        if($policyIssuedLog) {
-            $createdAt = Carbon::parse($policyIssuedLog->created_at);
-            $auhV1Date = Carbon::parse(ApplicationStorage::where('key_name', ApplicationStorageEnums::BRANCH_LIVE_DATE_V1)->first()->value);
-            $auhV2Date = Carbon::parse(ApplicationStorage::where('key_name', ApplicationStorageEnums::BRANCH_LIVE_DATE_V2)->first()->value);
-            if($createdAt->gte($auhV1Date) && $createdAt->lt($auhV2Date)) {
-                $emirateId = EmirateEnum::getBranchId($emirateOfYourVisaId);
-                return self::$branches->find($emirateId);
-            }
         }
 
         if (empty($primaryAdvisorBranchId)) {
@@ -239,7 +230,6 @@ class BranchAssignmentService extends BaseService
      *
      * @param int|null $primaryAdvisorBranchId
      * @param int $quoteTypeId
-     
      */
     private function getBranchWithOverride($primaryAdvisorBranchId, $quoteTypeId)
     {
@@ -249,8 +239,8 @@ class BranchAssignmentService extends BaseService
 
         // Check if there's an active override configuration for this branch and quote type
         $overrideConfig = $this->getBranchOverrideConfig($primaryAdvisorBranchId, $quoteTypeId);
-
         $targetBranchId = $overrideConfig?->target_branch_id ?? $primaryAdvisorBranchId;
+        
         $branch = self::$branches->find($targetBranchId);
 
         return $branch;
@@ -266,7 +256,7 @@ class BranchAssignmentService extends BaseService
 
     public function saveBranchOverride($quote, $quoteTypeId)
     {
-        if($quoteTypeId == QuoteTypeId::Health) {
+        if(in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
             return;
         }
 

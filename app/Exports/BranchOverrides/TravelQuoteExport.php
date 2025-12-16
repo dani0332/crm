@@ -124,7 +124,7 @@ class TravelQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings,
     public function map($quote): array
     {
         $ageGroup = $this->getAgeGroup($quote);
-        $branchName = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+        $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel));
 
         return [
             $quote->code,

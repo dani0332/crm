@@ -81,6 +81,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insurer_api_status_id',
             'plan_id',
             'branch_id',
+            'is_branch_applicable'
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',

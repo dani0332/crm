@@ -132,6 +132,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use App\Services\BranchAssignmentService;
+use App\Models\QuoteStatusLog;
 
 class CRUDController extends Controller
 {
@@ -482,7 +483,6 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
-                'branchOptions' => EmirateEnum::getBranchMapping(),
                 'emirateEnum' => EmirateEnum::asArray(),
                 'subSources' => $subSources,
                 'leadSourceParams' => [
@@ -906,7 +906,7 @@ class CRUDController extends Controller
 
                 $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
                 $carTypeofInsurance = CarTypeInsurance::select('id', 'text')->find($record->car_type_insurance_id) ?? null;
-                $record->branch_name = $record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Car);
+                $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Car));
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -1254,7 +1254,8 @@ class CRUDController extends Controller
                 $lead = $this->healthQuoteService->getLead($record->id);
                 $isAUHLead = $lead->isAUHLead(false);
                 $hasPecTag = $lead->has_pec_tag;
-                $record->branch_name = $record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id);
+
+                $record->branch_name = !$record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
@@ -1423,7 +1424,6 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
-                'branchOptions' => EmirateEnum::getBranchMapping(),
                 'emirateEnum' => EmirateEnum::asArray(),
                 'subSources' => $subSources,
             ]);

@@ -11,6 +11,8 @@ use App\Models\BusinessQuote;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class BusinessQuoteRepository extends BaseRepository
 {
@@ -50,6 +52,7 @@ class BusinessQuoteRepository extends BaseRepository
             'businessTypeOfInsurance',
             'subSource',
             'branch:id,name',
+            'latestInsured.entity',
         ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
@@ -98,7 +101,7 @@ class BusinessQuoteRepository extends BaseRepository
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
-                'advisor.primaryBranch.branch:id,name',
+                'advisor.primaryBranch',
                 'supportUser',
                 'previousAdvisor',
                 'businessQuoteRequestDetail.lostReason',
@@ -109,6 +112,7 @@ class BusinessQuoteRepository extends BaseRepository
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
                 'latestInsured.insuredKyc:id,insured_id',
+                'latestInsured.entity',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
@@ -126,6 +130,7 @@ class BusinessQuoteRepository extends BaseRepository
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
                 'nationality',
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -137,6 +142,9 @@ class BusinessQuoteRepository extends BaseRepository
         if (isset($quote->latestInsured)) {
             $quote->emirates_id_number = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
         }
+
+        $emirateOfRegistrationId = $quote->latestInsured?->entity?->emirate_of_registration_id ?? null;
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
         return $quote;
     }
