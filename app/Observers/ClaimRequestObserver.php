@@ -67,7 +67,7 @@ class ClaimRequestObserver
             $newClaimStatusId = $claimRequest->claim_status_id;
 
             // Check if the claim is now closed
-            if ($claimService->isClaimStatusClosed($newClaimStatusId) && !$claimService->isClaimStatusClosed($originalClaimStatusId)) {
+            if ($claimService->isClaimStatusClosed($newClaimStatusId) && ! $claimService->isClaimStatusClosed($originalClaimStatusId)) {
                 $claimService->dispatchClaimGoogleReviewEmail($claimRequest);
             }
         }

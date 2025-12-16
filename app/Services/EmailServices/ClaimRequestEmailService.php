@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\ClaimRequest;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use App\Enums\QuoteTypeId;
 use Exception;
 
 /**
@@ -39,7 +39,7 @@ class ClaimRequestEmailService extends BaseService
             ]);
 
             // Build email data
-            $emailData = $this->buildClaimGoogleReviewEmailData($claimRequest); 
+            $emailData = $this->buildClaimGoogleReviewEmailData($claimRequest);
 
             // Get Bird webhook URL from application storage
             $googleReviewEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL)->first();
@@ -86,7 +86,7 @@ class ClaimRequestEmailService extends BaseService
 
         $isHealthClaim = $claimRequest->quote_type_id == QuoteTypeId::Health;
         $workflowType = $isHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
-        
+
         return (object) [
             'customerName' => $claimRequest->full_name ?? '',
             'customerEmail' => $claimRequest->email ?? '',
@@ -114,6 +114,7 @@ class ClaimRequestEmailService extends BaseService
 
             return false;
         }
+
         return true;
     }
 }

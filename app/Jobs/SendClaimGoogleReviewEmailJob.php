@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\ClaimRequest;
 use App\Services\EmailServices\ClaimRequestEmailService;
 use App\Services\Logger\LoggerService;
-use App\Enums\Logger\LoggerFeatureEnum;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
