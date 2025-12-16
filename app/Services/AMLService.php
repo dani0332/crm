@@ -800,11 +800,11 @@ class AMLService
             return false;
         }
 
-        $insuredPersonDetails = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteDetails->id,
-            'customer_id' => $quoteDetails->customer_id,
-        ])->with(['customer', 'insured'])->latest('updated_at')->first();
+        $insuredPersonDetails = CustomerInsured::active()
+            ->forQuote($quoteTypeId, $quoteDetails->id)
+            ->where('customer_id', $quoteDetails->customer_id)
+            ->with(['customer', 'insured'])
+            ->first();
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$providerCode);
 
@@ -1381,17 +1381,14 @@ class AMLService
     {
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
-        $customerInsured = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId,
-            'customer_id' => $customerId,
-        ])
+        $customerInsured = CustomerInsured::active()
+            ->forQuote($quoteTypeId, $quoteRequestId)
+            ->where('customer_id', $customerId)
             ->with(['customer', 'insured', 'insured.insuredKyc'])
-            ->latest('updated_at')
             ->first();
 
         if (! $customerInsured) {
-            LoggerService::info('No CustomerInsured record found', [
+            LoggerService::info('No active CustomerInsured record found', [
                 'customer_id' => $customerId,
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quoteRequestId,
@@ -1736,7 +1733,7 @@ class AMLService
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
         } else {
-            // todo: remove get insured details after id_number format is consistent
+            // TODO:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', $request->screening_id_type)
                 ->when($request->screening_id_type == 'emiratesId', function ($query) use ($request) {

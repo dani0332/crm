@@ -690,26 +690,32 @@ class AMLController extends Controller
         $insured = Insured::where('id', $request->entity_id)->first();
         app(AMLService::class)->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
 
-        $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)
+        // Check for orphaned record (without quote mapping) first
+        $orphanedRecord = CustomerInsured::where('customer_id', $quoteObject->customer_id)
             ->where('insured_id', $insured->id)
             ->whereNull('quote_type_id')
             ->whereNull('quote_request_id')
             ->first();
 
-        if ($customerInsured) {
-            $customerInsured->update([
+        if ($orphanedRecord) {
+            // Deactivate existing records for this quote first
+            CustomerInsured::forQuote($request->quote_type_id, $request->quote_request_id)
+                ->update(['is_active' => false]);
+
+            // Activate the orphaned record
+            $orphanedRecord->update([
                 'quote_type_id' => $request->quote_type_id,
                 'quote_request_id' => $request->quote_request_id,
+                'is_active' => true,
                 'updated_at' => now(),
             ]);
         } else {
-            CustomerInsured::updateOrCreate([
-                'quote_type_id' => $request->quote_type_id,
-                'quote_request_id' => $request->quote_request_id,
-            ], [
+            // Use createOrUpdateActive for new or existing records
+            CustomerInsured::createOrUpdateActive([
                 'customer_id' => $quoteObject->customer_id,
                 'insured_id' => $insured->id,
-                'updated_at' => now(),
+                'quote_type_id' => $request->quote_type_id,
+                'quote_request_id' => $request->quote_request_id,
             ]);
         }
 

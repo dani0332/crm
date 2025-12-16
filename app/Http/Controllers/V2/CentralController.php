@@ -223,7 +223,7 @@ class CentralController extends Controller
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);
 
-            // todo: remove get insured details after id_number format is consistent
+            // TODO:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', 'emiratesId')
                 ->emiratesIdNumber($customerProfileRequest->emirates_id_number)
