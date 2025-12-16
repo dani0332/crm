@@ -274,7 +274,7 @@ final class ApplicationStorageEnums extends Enum
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 
     /* Google Review Email */
-    public const GOOGLE_REVIEW_EMAIL = 'google_review_email';
+    public const CLAIM_GOOGLE_REVIEW_EMAIL = 'claim_google_review_email';
 
     /* CPA Australia Home CC Emails */
     public const CPA_AUSTRALIA_HOME_BCC_EMAILS = 'CPA_AUSTRALIA_HOME_BCC_EMAILS';

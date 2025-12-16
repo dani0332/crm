@@ -10,7 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Facades\CustomerPortalApiFacade;
 use App\Facades\InstantWriterAIFacade;
-use App\Jobs\SendGoogleReviewEmailJob;
+use App\Jobs\SendClaimGoogleReviewEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\ClaimActivity;
@@ -424,10 +424,6 @@ class ClaimsService extends BaseService
             });
             // Make API call to create claim
             $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
-
-            if ($response->data['success']) {
-                // Send Claim Intimation Email
-            }
 
             return $response->data;
 
@@ -1089,7 +1085,7 @@ class ClaimsService extends BaseService
     /**
      * Dispatch Google review email job for the claim request
      */
-    public function dispatchGoogleReviewEmail(ClaimRequest $claimRequest): void
+    public function dispatchClaimGoogleReviewEmail(ClaimRequest $claimRequest): void
     {
         try {
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -1099,7 +1095,7 @@ class ClaimsService extends BaseService
             ]);
 
             // Dispatch the job to send Google review email
-            SendGoogleReviewEmailJob::dispatch($claimRequest->uuid);
+            SendClaimGoogleReviewEmailJob::dispatch($claimRequest->uuid);
 
         } catch (\Exception $e) {
             LoggerService::error(self::class.'::'.__FUNCTION__.' - Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [

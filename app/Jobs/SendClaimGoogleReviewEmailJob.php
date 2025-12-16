@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Models\ClaimRequest;
 use App\Services\EmailServices\ClaimRequestEmailService;
 use App\Services\Logger\LoggerService;
+use App\Enums\Logger\LoggerFeatureEnum;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,7 +21,7 @@ use Illuminate\Queue\SerializesModels;
  * Queued job to send Google review emails to customers when their claims are closed.
  * Uses the existing Bird integration for email delivery.
  */
-class SendGoogleReviewEmailJob implements ShouldQueue
+class SendClaimGoogleReviewEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -55,7 +56,7 @@ class SendGoogleReviewEmailJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(ClaimRequestEmailService $googleReviewEmailService): void
+    public function handle(ClaimRequestEmailService $claimRequestEmailService): void
     {
         try {
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Job started - Claim UUID: '.$this->claimRequestUuid, [
@@ -65,6 +66,7 @@ class SendGoogleReviewEmailJob implements ShouldQueue
 
             // Find the claim request
             $claimRequest = ClaimRequest::where('uuid', $this->claimRequestUuid)->first();
+            LoggerService::startQuoteLogging($claimRequest, LoggerFeatureEnum::CLAIM_GOOGLE_REVIEW_EMAIL);
 
             if (! $claimRequest) {
                 LoggerService::warning(self::class.'::'.__FUNCTION__.' - Claim request not found - Claim UUID: '.$this->claimRequestUuid, [
@@ -75,7 +77,7 @@ class SendGoogleReviewEmailJob implements ShouldQueue
             }
 
             // Check if customer is eligible for review email
-            if (! $googleReviewEmailService->isEligibleForReviewEmail($claimRequest)) {
+            if (! $claimRequestEmailService->isEligibleForReviewEmail($claimRequest)) {
                 LoggerService::info(self::class.'::'.__FUNCTION__.' - Customer not eligible for Google review email - Claim UUID: '.$claimRequest->uuid, [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
@@ -86,7 +88,7 @@ class SendGoogleReviewEmailJob implements ShouldQueue
             }
 
             // Send the Google review email
-            $responseCode = $googleReviewEmailService->sendGoogleReviewEmail($claimRequest);
+            $responseCode = $claimRequestEmailService->sendClaimGoogleReviewEmail($claimRequest);
 
             // Log success or failure based on response code
             if (in_array($responseCode, [200, 201])) {

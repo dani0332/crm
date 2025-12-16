@@ -44,7 +44,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         $this->seedBirdWorkflowUrls();
-        $this->googleReviewEmail();
+        $this->claimGoogleReviewEmail();
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
         //     [
@@ -749,12 +749,12 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function googleReviewEmail()
+    private function claimGoogleReviewEmail()
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::GOOGLE_REVIEW_EMAIL],
+            ['key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/bb88d699-342a-47d5-b618-6997ab2fe7f1/invoke-sync',
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f440f3b1-7c43-445c-a229-2b694e71179c/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

@@ -64,7 +64,8 @@ final class WorkflowTypeEnum extends Enum
     public const BOR_INSURER_NOTIFICATION = 'bor_insurer_notification';
     public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
     public const OE_ASSIGNMENT = 'oe_assignment';
-    public const GOOGLE_REVIEW_EMAIL = 'google_review_email';
+    public const CLAIM_GOOGLE_REVIEW_EMAIL = 'claim_google_review_email';
+    public const CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL = 'claim_health_google_review_email';
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
     public const CAR_MISSING_DOC_REMINDER = 'car_missing_doc_reminder';
     public const TRAVEL_AUTOMATED_FOLLOWUPS = 'travel_automated_followups';

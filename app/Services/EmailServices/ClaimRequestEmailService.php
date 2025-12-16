@@ -11,6 +11,7 @@ use App\Models\ClaimRequest;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use App\Enums\QuoteTypeId;
 use Exception;
 
 /**
@@ -27,7 +28,7 @@ class ClaimRequestEmailService extends BaseService
      * @param  ClaimRequest  $claimRequest  The claim request that was closed
      * @return int|null HTTP status code or null if failed
      */
-    public function sendGoogleReviewEmail(ClaimRequest $claimRequest): ?int
+    public function sendClaimGoogleReviewEmail(ClaimRequest $claimRequest): ?int
     {
         try {
             LoggerService::info(self::class.'::'.__FUNCTION__.' - Sending Google review email - Claim UUID: '.$claimRequest->uuid, [
@@ -38,10 +39,10 @@ class ClaimRequestEmailService extends BaseService
             ]);
 
             // Build email data
-            $emailData = $this->buildGoogleReviewEmailData($claimRequest);
+            $emailData = $this->buildClaimGoogleReviewEmailData($claimRequest); 
 
             // Get Bird webhook URL from application storage
-            $googleReviewEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::GOOGLE_REVIEW_EMAIL)->first();
+            $googleReviewEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL)->first();
 
             if (! $googleReviewEvent) {
                 LoggerService::warning(self::class.'::'.__FUNCTION__.' - Google review email workflow key not found - Claim UUID: '.$claimRequest->uuid, [
@@ -79,26 +80,23 @@ class ClaimRequestEmailService extends BaseService
     /**
      * Build email data for Google review email
      */
-    private function buildGoogleReviewEmailData(ClaimRequest $claimRequest): object
+    private function buildClaimGoogleReviewEmailData(ClaimRequest $claimRequest): object
     {
+        $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
+
+        $isHealthClaim = $claimRequest->quote_type_id == QuoteTypeId::Health;
+        $workflowType = $isHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
+        
         return (object) [
-            'uuid' => $claimRequest->uuid,
-            'claimRequestId' => $claimRequest->id,
-            'claimCode' => $claimRequest->code,
-            'customerEmail' => $claimRequest->email,
-            'customerFullName' => $claimRequest->full_name,
-            'customerFirstName' => $claimRequest->first_name,
-            'customerLastName' => $claimRequest->last_name,
-            'customerMobile' => $claimRequest->mobile_no,
-            'policyNumber' => $claimRequest->policy_number,
-            'claimNumber' => $claimRequest->claim_number,
-            'quoteTypeId' => $claimRequest->quote_type_id,
-            'quoteTypeName' => $claimRequest->quoteType?->name ?? 'N/A',
-            'insuranceProviderName' => $claimRequest->insuranceProvider?->name ?? 'N/A',
-            'workflowType' => WorkflowTypeEnum::GOOGLE_REVIEW_EMAIL,
-            'createdAt' => $claimRequest->created_at,
-            'updatedAt' => $claimRequest->updated_at,
-            'whatsappConsent' => $claimRequest->whatsapp_consent,
+            'customerName' => $claimRequest->full_name ?? '',
+            'customerEmail' => $claimRequest->email ?? '',
+            'advisorName' => $claimRequest->manager?->name ?? '',
+            'advisorEmail' => $claimRequest->manager?->email ?? '',
+            'advisorLandLine' => $claimRequest->manager?->landline_no ?? '',
+            'advisorMobileNoWithoutSpaces' => $phoneNumber,
+            'advisorMobilePhone' => $phoneNumber,
+            'advisorProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
+            'workflowType' => $workflowType,
         ];
     }
 
@@ -116,20 +114,6 @@ class ClaimRequestEmailService extends BaseService
 
             return false;
         }
-
-        // Check if claim has policy number (indicates it's a valid claim)
-        if (empty($claimRequest->policy_number)) {
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Customer not eligible for Google review email - no policy number - Claim UUID: '.$claimRequest->uuid, [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-            ]);
-
-            return false;
-        }
-
-        // Additional eligibility checks can be added here
-        // For example: checking if customer has already received a review email recently
-
         return true;
     }
 }
