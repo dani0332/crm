@@ -140,18 +140,31 @@ class NgiQuoteUpdaterService
         if (isset($policyDocumentsResult->premium_inv_no)) { // required for book policy
             $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no;
         } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
-            $updateData['insurer_tax_number'] = 'P/INV/NN100TS10344';
+            $updateData['insurer_tax_number'] = 'P/INV/NN100TS10344' . rand(9999, 99999999) . rand(9999, 99999999);
         }
 
         if (isset($policyDocumentsResult->commision_inv_no)) { // required for book policy
             $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no;
         } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
-            $updateData['insurer_commmission_invoice_number'] = 'INV/NN100TS10344';
+            $updateData['insurer_commmission_invoice_number'] = 'INV/NN100TS10344' . rand(9999, 99999999) . rand(9999, 99999999);
         }
 
         if (! empty($updateData)) {
             Payment::where('code', $quoteCode)->update($updateData);
+            if (isset($updateData['commission'])) {
+                unset($updateData['commission']);
+            }
+            if (isset($updateData['insurer_invoice_date'])) {
+                unset($updateData['insurer_invoice_date']);
+            }
+            if (isset($updateData['insurer_tax_number'])) {
+                unset($updateData['insurer_tax_number']);
+            }
+            if (isset($updateData['insurer_commmission_invoice_number'])) {
+                unset($updateData['insurer_commmission_invoice_number']);
+            }
             PaymentSplits::where('code', $quoteCode)->update($updateData);
         }
+
     }
 }

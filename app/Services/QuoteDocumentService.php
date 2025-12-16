@@ -160,7 +160,6 @@ class QuoteDocumentService extends BaseService
             //     'quote_uuid' => $data['quote_uuid'],
             //     'doc_name' => $data['doc_name']
             // ]);
-
             return response()->json(['message' => 'document deleted successfully']);
         }
 
