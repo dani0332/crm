@@ -74,6 +74,18 @@ function onReset() {
 onMounted(() => {
   setQueryStringFilters(params, filters);
 });
+
+const updatedLobs = computed(() => {
+  return props.lobs.map(lob => {
+    if (lob.value === 'CAR_CAT_A') {
+      return {
+        ...lob,
+        label: 'Car Revival Cat A',
+      };
+    }
+    return lob;
+  });
+});
 </script>
 <template>
   <Head title="My Lead Request" />
@@ -87,7 +99,7 @@ onMounted(() => {
         label="Line of Business"
         required
         placeholder="Select LOB"
-        :options="props.lobs || []"
+        :options="updatedLobs || []"
         filterable
         v-model="filters.quote_type"
         :rules="[isRequired]"
