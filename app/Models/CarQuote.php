@@ -268,6 +268,11 @@ class CarQuote extends BaseModel
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
+    public function ocrLogs()
+    {
+        return $this->morphMany(OcrLog::class, 'ocrLoggable');
+    }
+
     public function embeddedTransactions()
     {
         return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
