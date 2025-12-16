@@ -93,6 +93,11 @@ const tableHeader = ref([
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
+    text: 'BRANCH',
+    value: 'branch_name',
+    is_active: true,
+  },
+  {
     text: 'Investment Frequency',
     value: 'savings_quote.investment_frequency.text',
     is_active: true,

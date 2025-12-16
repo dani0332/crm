@@ -193,6 +193,7 @@ const tableHeader = ref([
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'OE / AE', value: 'support_user_name', is_active: true },
+  { text: 'BRANCH', value: 'branch_name' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
   {
     text: 'INSURER AML STATUS',

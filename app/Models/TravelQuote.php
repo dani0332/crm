@@ -432,4 +432,14 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasMany(CustomerAcceptanceLog::class, 'quote_uuid', 'uuid')
             ->where('quote_type_id', QuoteTypeId::Travel);
     }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function branchOverride()
+    {
+        return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
 }

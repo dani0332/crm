@@ -3,6 +3,8 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
+use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Traits\ModernCsvExportable;
@@ -48,6 +50,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'LEAD STATUS',
             'ADVISOR',
             'OE/AE',
+            'BRANCH',
             'ADVISOR EMAIL',
             'WC ADVISOR',
             'CREATED DATE',
@@ -87,6 +90,8 @@ class HealthQuotesExport implements CsvExportableInterface
 
     public function map($quote): array
     {
+        $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id));
+
         return [
             $quote->code,
             $quote->first_name,
@@ -96,6 +101,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->quoteStatus?->text,
             $quote->advisor?->name,
             $quote->supportUser?->name ?? '',
+            $branchName,
             $quote->advisor?->email,
             $quote->wcAdvisor?->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),

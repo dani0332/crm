@@ -29,7 +29,7 @@ const props = defineProps({
   quoteRequest: Object,
   paymentMethodsForm: Object,
   quoteType: String,
-  isHealthAUHLead: {
+  isAbuDhabiBranch: {
     type: Boolean,
     default: false,
   },
@@ -190,7 +190,7 @@ const enablePostPrepaymentButton = computed(() => {
 });
 
 const showRetryButton = computed(() => {
-  if (props.isHealthAUHLead) {
+  if (props.isAbuDhabiBranch) {
     return false;
   }
   return (
