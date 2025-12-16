@@ -52,6 +52,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -674,7 +675,12 @@ class SendUpdateLogService
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $quote = $repository::getBy('uuid', $quoteUuid);
+            if ($quoteType == quoteTypeCode::Device) {
+                $deviceQuoteService = new DeviceQuoteService;
+                $quote = $deviceQuoteService->getOne($quoteUuid);
+            } else {
+                $quote = $repository::getBy('uuid', $quoteUuid);
+            }
             $payments = $quote?->payments ?? null;
             if ($payments === null || $payments->isEmpty()) {
                 $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
