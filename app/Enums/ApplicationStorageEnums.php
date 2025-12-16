@@ -318,4 +318,8 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_METLIFE = 'ENABLE_METLIFE';
     public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
     public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
+    
+    // Branch Enum
+    public const BRANCH_LIVE_DATE_V1 = 'BRANCH_LIVE_DATE_V1';
+    public const BRANCH_LIVE_DATE_V2 = 'BRANCH_LIVE_DATE_V2';
 }

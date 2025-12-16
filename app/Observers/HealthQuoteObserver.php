@@ -122,7 +122,7 @@ class HealthQuoteObserver
 
             try {
                 HealthQuote::withoutEvents(function () use ($healthQuote, &$dirty) {
-                    $branch = app(BranchAssignmentService::class)->getBranch($healthQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $healthQuote->emirate_of_your_visa_id);
+                    $branch = app(BranchAssignmentService::class)->getBranch($healthQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $healthQuote->emirate_of_your_visa_id, $healthQuote->policyIssuedLogs()->first());
                     $healthQuote->update([
                         'branch_id' => $branch?->id,
                     ]);

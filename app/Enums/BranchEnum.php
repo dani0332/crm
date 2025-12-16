@@ -10,7 +10,7 @@ enum BranchEnum: int
     public function name(): string
     {
         return match ($this) {
-            self::DUBAI => 'Dubai',
+            self::DUBAI => 'Dubai & Northern Emirates',
             self::ABU_DHABI => 'Abu Dhabi',
         };
     }
