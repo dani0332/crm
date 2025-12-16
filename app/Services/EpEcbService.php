@@ -1063,10 +1063,8 @@ class EpEcbService extends EpBookingService
 
     private function getEmirateIdNumber(): string
     {
-        $latestInsuredData = $this->quote?->latestInsured;
-        $insuredKyc = $latestInsuredData?->insuredKyc;
-
-        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
+        $latestInsuredData = $this->quote?->latestInsured;        
+        $emirateIdNumber = str_replace('-', '', $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '');
 
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
             $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
