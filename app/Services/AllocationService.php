@@ -332,16 +332,17 @@ class AllocationService extends BaseService
         $isAlreadyAssigned = ! empty($lead?->advisor_id);
 
         if ($isAllocated || $isSameAdvisor || $isAlreadyAssigned) {
+            $advisor = $request->getAdvisor() ?? $lead?->advisor;
+
             // priority order - isAllocated (new assignment) > isSameAdvisor > already assigned
             if ($isAllocated) {
                 $message = 'Advisor assigned successfully!';
             } elseif ($isSameAdvisor) {
                 $message = 'Found same advisor as previous advisor so further allocation is skipped';
             } else {
-                $message = 'Advisor already assigned';
+                $message = $advisor?->isAi() ? 'Advisor Assignment in progress' : 'Advisor already assigned';
             }
 
-            $advisor = $request->getAdvisor() ?? $lead?->advisor;
             $landLine = (! empty($advisor?->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '');
             $whatsAppNumber = ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
 
