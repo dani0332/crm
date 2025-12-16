@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Stringable;
+use App\Jobs\MisReportJob;
 
 class Kernel extends ConsoleKernel
 {
@@ -160,6 +161,12 @@ class Kernel extends ConsoleKernel
                 ]);
             });
         $schedule->job(new SLAMonitoringJob)->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+
+        $schedule->job(new MisReportJob)
+            ->mondays()
+            ->at('08:00')
+            ->onOneServer()
+            ->withoutOverlapping();
     }
 
     /**
