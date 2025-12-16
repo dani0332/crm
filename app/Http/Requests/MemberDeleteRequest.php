@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PermissionsEnum;
-use App\Enums\quoteTypeCode;
-use Illuminate\Foundation\Http\FormRequest;
 use App\Models\HealthQuote;
+use Illuminate\Foundation\Http\FormRequest;
 
 class MemberDeleteRequest extends FormRequest
 {
@@ -18,7 +16,6 @@ class MemberDeleteRequest extends FormRequest
     {
         return true;
     }
-
 
     public function withValidator($validator): void
     {

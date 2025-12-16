@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\BranchEnum;
+use App\Enums\QuoteTypes;
 use App\Models\BranchOverrideConfig;
 use Illuminate\Database\Seeder;
-use App\Enums\QuoteTypes;
-use App\Enums\BranchEnum;
 
 class BranchOverrideConfigSeeder extends Seeder
 {
@@ -32,12 +32,12 @@ class BranchOverrideConfigSeeder extends Seeder
             QuoteTypes::SAVINGS,
         ];
 
-        foreach($quoteTypes as $quoteType) {
+        foreach ($quoteTypes as $quoteType) {
             BranchOverrideConfig::firstOrCreate(
                 [
                     'source_branch_id' => BranchEnum::ABU_DHABI->value,
                     'target_branch_id' => BranchEnum::DUBAI->value,
-                    'quote_type_id' => $quoteType->id()
+                    'quote_type_id' => $quoteType->id(),
                 ],
                 [
                     'start_date' => now(),

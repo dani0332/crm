@@ -2,13 +2,13 @@
 
 namespace App\Exports\BranchOverrides\Sheets;
 
+use App\Exports\BranchOverrides\BusinessQuoteExport;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use App\Exports\BranchOverrides\BusinessQuoteExport;
 
 /**
  * Sheet wrapper for TravelQuoteExport
@@ -20,7 +20,7 @@ class BusinessQuoteExportSheet implements FromCollection, ShouldAutoSize, WithHe
 
     public function __construct()
     {
-        $this->export = new BusinessQuoteExport();
+        $this->export = new BusinessQuoteExport;
     }
 
     /**
@@ -55,4 +55,3 @@ class BusinessQuoteExportSheet implements FromCollection, ShouldAutoSize, WithHe
         return $this->export->map($quote);
     }
 }
-

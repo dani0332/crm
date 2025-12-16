@@ -2,13 +2,13 @@
 
 namespace App\Exports\BranchOverrides\Sheets;
 
+use App\Exports\BranchOverrides\PersonalQuotesExport;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use App\Exports\BranchOverrides\PersonalQuotesExport;
 
 /**
  * Sheet wrapper for TravelQuoteExport
@@ -18,7 +18,7 @@ class PersonalQuoteExportSheet implements FromCollection, ShouldAutoSize, WithHe
 {
     private PersonalQuotesExport $export;
     private string $title;
-    
+
     public function __construct(string $title, string $quoteType)
     {
         $this->title = $title;
@@ -57,4 +57,3 @@ class PersonalQuoteExportSheet implements FromCollection, ShouldAutoSize, WithHe
         return $this->export->map($quote);
     }
 }
-

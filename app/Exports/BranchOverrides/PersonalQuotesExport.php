@@ -4,23 +4,23 @@ namespace App\Exports\BranchOverrides;
 
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\UserNameEnum;
+use App\Models\User;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\HomeQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
+use App\Traits\ExcelExportable;
 use Illuminate\Database\Eloquent\Builder;
-use App\Services\BranchAssignmentService;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
-use App\Traits\ExcelExportable;
-use App\Models\User;
-use App\Enums\UserNameEnum;
 
 class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStrictNullComparison
 {
@@ -76,7 +76,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
     private string $quoteType = '';
     private array $quoteTypes = [];
 
-    public function __construct(string $quoteType) 
+    public function __construct(string $quoteType)
     {
         $this->quoteType = $quoteType;
         $this->quoteTypes = [
@@ -98,7 +98,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             'booking_date' => [
                 now()->subDays(7)->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
                 now()->subDays(1)->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
-            ]
+            ],
         ];
         if (ucfirst($this->quoteType) == QuoteTypes::SAVINGS->value) {
             foreach ($requestParams as $key => $value) {
@@ -118,13 +118,13 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
         };
 
         $query = $query->with(
-                'branchOverride',
-                'branchOverride.branchOverrideConfig',
-                'branchOverride.branchOverrideConfig.sourceBranch',
-                'branchOverride.branchOverrideConfig.targetBranch',
-                'branchOverride.branchOverrideConfig.quoteType',
-                'payments'
-            )
+            'branchOverride',
+            'branchOverride.branchOverrideConfig',
+            'branchOverride.branchOverrideConfig.sourceBranch',
+            'branchOverride.branchOverrideConfig.targetBranch',
+            'branchOverride.branchOverrideConfig.quoteType',
+            'payments'
+        )
             ->whereHas('branchOverride');
 
         return $query;
@@ -362,7 +362,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
     protected function getValues(string $quoteType, $quote): array
     {
         $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypes::getIdFromValue($quoteType)));
-        
+
         $baseFields = [
             'code' => $quote->code,
             'first_name' => $quote->first_name,
@@ -392,7 +392,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             'target_branch' => $quote->branchOverride?->branchOverrideConfig?->targetBranch?->name ?? '',
             'override_applied_date' => date(config('constants.datetime_format'), strtotime($quote->branchOverride?->created_at)),
             'total_commission' => $quote->payments?->first()?->commission ?? '0',
-            'commission_percent' => ($quote->payments?->first()?->commmission_percentage ?? '0') . '%',
+            'commission_percent' => ($quote->payments?->first()?->commmission_percentage ?? '0').'%',
         ];
 
         return match (ucfirst($quoteType)) {

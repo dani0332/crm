@@ -7,6 +7,7 @@ use App\Enums\GenderEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -14,6 +15,7 @@ use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\SavingsQuote;
+use App\Services\BranchAssignmentService;
 use App\Services\HttpRequestService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
@@ -21,8 +23,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\BranchAssignmentService;
-use App\Enums\QuoteTypeId;
 
 class SavingsQuoteService extends BaseQuoteService
 {

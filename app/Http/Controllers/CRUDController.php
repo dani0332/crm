@@ -88,6 +88,7 @@ use App\Services\ActivitiesService;
 use App\Services\AllocationService;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
+use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
@@ -131,8 +132,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use App\Services\BranchAssignmentService;
-use App\Models\QuoteStatusLog;
 
 class CRUDController extends Controller
 {
@@ -384,7 +383,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
             $this->carQuoteService->postProcessCarQuotes($gridData);
-            
+
             $userMaxCap = 0;
             $todayAutoCount = 0;
             $todayManualCount = 0;
@@ -1255,7 +1254,7 @@ class CRUDController extends Controller
                 $isAUHLead = $lead->isAUHLead(false);
                 $hasPecTag = $lead->has_pec_tag;
 
-                $record->branch_name = !$record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
+                $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,

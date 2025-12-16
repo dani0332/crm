@@ -21,6 +21,7 @@ use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\CarQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
@@ -28,7 +29,6 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use App\Services\BranchAssignmentService;
 
 class CarQuoteObserver
 {

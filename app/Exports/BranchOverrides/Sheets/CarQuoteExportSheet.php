@@ -56,4 +56,3 @@ class CarQuoteExportSheet implements FromCollection, ShouldAutoSize, WithHeading
         return $this->export->map($quote);
     }
 }
-

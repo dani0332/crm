@@ -5,18 +5,18 @@ namespace App\Exports\BranchOverrides;
 use App\Enums\AMLStatusCode;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\UserNameEnum;
+use App\Models\User;
+use App\Services\BranchAssignmentService;
 use App\Services\TravelQuoteService;
 use App\Traits\ExcelExportable;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
-use App\Services\BranchAssignmentService;
-use App\Models\User;
-use App\Enums\UserNameEnum;
 
 class TravelQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStrictNullComparison
 {
@@ -34,20 +34,20 @@ class TravelQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings,
             'booking_date' => [
                 now()->subDays(7)->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
                 now()->subDays(1)->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
-            ]
+            ],
         ];
 
         $query = $this->travelQuoteService->getGridData(requestParams: $requestParams)
-        ->with(
-            'branchOverride',
-            'branchOverride.branchOverrideConfig',
-            'branchOverride.branchOverrideConfig.sourceBranch',
-            'branchOverride.branchOverrideConfig.targetBranch',
-            'branchOverride.branchOverrideConfig.quoteType',
-            'payments'
-        )
-        ->whereHas('branchOverride');
-        
+            ->with(
+                'branchOverride',
+                'branchOverride.branchOverrideConfig',
+                'branchOverride.branchOverrideConfig.sourceBranch',
+                'branchOverride.branchOverrideConfig.targetBranch',
+                'branchOverride.branchOverrideConfig.quoteType',
+                'payments'
+            )
+            ->whereHas('branchOverride');
+
         return $query;
     }
     public function collection($requestParams = [])
@@ -177,7 +177,7 @@ class TravelQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings,
             $quote->branchOverride?->branchOverrideConfig?->targetBranch?->name ?? '',
             date(config('constants.DATE_FORMAT'), strtotime($quote->branchOverride?->created_at)),
             $quote->payments?->first()?->commission ?? '0',
-            ($quote->payments?->first()?->commmission_percentage ?? '0') . '%',
+            ($quote->payments?->first()?->commmission_percentage ?? '0').'%',
         ];
     }
 

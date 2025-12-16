@@ -6,7 +6,6 @@ use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadAssignmentTriggerEnum;
@@ -456,7 +455,7 @@ class HealthQuoteService extends BaseService
     {
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         if ($healthQuote?->is_quote_locked) {
-            return redirect('quote/health/' . $id)->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+            return redirect('quote/health/'.$id)->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
         }
 
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;

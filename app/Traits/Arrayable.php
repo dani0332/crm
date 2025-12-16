@@ -14,4 +14,3 @@ trait Arrayable
         return $result;
     }
 }
-

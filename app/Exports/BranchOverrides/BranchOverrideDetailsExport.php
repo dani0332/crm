@@ -2,15 +2,15 @@
 
 namespace App\Exports\BranchOverrides;
 
+use App\Enums\QuoteTypes;
 use App\Exports\BranchOverrides\Sheets\BusinessQuoteExportSheet;
 use App\Exports\BranchOverrides\Sheets\CarQuoteExportSheet;
+use App\Exports\BranchOverrides\Sheets\PersonalQuoteExportSheet;
 use App\Exports\BranchOverrides\Sheets\TravelQuoteExportSheet;
 use App\Services\CarQuoteService;
 use App\Services\TravelQuoteService;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use App\Exports\BranchOverrides\Sheets\PersonalQuoteExportSheet;
-use App\Enums\QuoteTypes;
 
 /**
  * Multi-sheet Excel export for Branch Override Details
@@ -26,8 +26,6 @@ class BranchOverrideDetailsExport implements WithMultipleSheets
     /**
      * Define the sheets to be included in the export
      * Each sheet will appear as a separate tab in the Excel file
-     * 
-     * @return array
      */
     public function sheets(): array
     {
@@ -41,8 +39,7 @@ class BranchOverrideDetailsExport implements WithMultipleSheets
             new PersonalQuoteExportSheet('Bike Quote', QuoteTypes::BIKE->value),
             new PersonalQuoteExportSheet('Cycle Quote', QuoteTypes::CYCLE->value),
             new PersonalQuoteExportSheet('Yacht Quote', QuoteTypes::YACHT->value),
-            new BusinessQuoteExportSheet(),
+            new BusinessQuoteExportSheet,
         ];
     }
 }
-

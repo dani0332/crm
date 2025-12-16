@@ -29,6 +29,7 @@ use App\Models\HomePlan;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use App\Models\SubArea;
+use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -50,7 +51,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
-use App\Services\BranchAssignmentService;
 
 class HomeQuoteRepository extends BaseRepository
 {
@@ -142,7 +142,7 @@ class HomeQuoteRepository extends BaseRepository
                 })
             );
 
-        if (!$forTotalLeadsCount && !$forExport) {
+        if (! $forTotalLeadsCount && ! $forExport) {
             $this->postProcessHomeQuote($query);
         }
 
@@ -154,6 +154,7 @@ class HomeQuoteRepository extends BaseRepository
     {
         return $query->map(function ($item) {
             $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home));
+
             return $item;
         });
     }

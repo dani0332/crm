@@ -3,13 +3,13 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
+use App\Services\BranchAssignmentService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use App\Services\BranchAssignmentService;
-use App\Enums\QuoteTypeId;
 
 class GroupMedicalExport implements CsvExportableInterface
 {
@@ -61,6 +61,7 @@ class GroupMedicalExport implements CsvExportableInterface
     {
         $emirateOfRegistrationId = $quote->latestInsured?->entity?->emirate_of_registration_id ?? null;
         $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
+
         return [
             $quote->code,
             $quote->first_name,

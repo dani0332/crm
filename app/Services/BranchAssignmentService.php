@@ -2,18 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\BranchEnum;
+use App\Enums\EmirateEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\Branch;
+use App\Models\BranchOverride;
+use App\Models\BranchOverrideConfig;
 use App\Models\UserBranch;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\DB;
-use App\Enums\QuoteTypeId;
-use App\Models\Branch;
-use App\Models\BranchOverrideConfig;
-use App\Enums\EmirateEnum;
-use App\Enums\BranchEnum;
-use App\Models\BranchOverride;
-use App\Enums\ApplicationStorageEnums;
-use App\Models\ApplicationStorage;
-use Carbon\Carbon;
 
 class BranchAssignmentService extends BaseService
 {
@@ -27,11 +24,11 @@ class BranchAssignmentService extends BaseService
 
     private function loadBranchData()
     {
-        if(empty(self::$branches)) {
+        if (empty(self::$branches)) {
             self::$branches = Branch::all();
         }
 
-        if(empty(self::$branchOverrideConfigs)) {
+        if (empty(self::$branchOverrideConfigs)) {
             self::$branchOverrideConfigs = BranchOverrideConfig::active()->get();
         }
     }
@@ -39,20 +36,20 @@ class BranchAssignmentService extends BaseService
     public function getGridData($request)
     {
         $dataset = UserBranch::with('user', 'user.usersroles', 'branch')
-        ->whereHas('user', function ($query) {
-            $query->whereHas('usersroles', function ($query) {
-                $query->where('name', 'like', '%advisor%');
-            });
-        })
-        ->when(! empty($request['advisors']), function ($query) use ($request) {
-            $query->whereIn('user_id', $request['advisors']);
-        })
-        ->when(! empty($request['primary_branch']), function ($query) use ($request) {
-            $query->where('branch_id', $request['primary_branch'])
-                ->where('is_primary', 1);
-        })
-        ->where('status', 1)
-        ->paginate();
+            ->whereHas('user', function ($query) {
+                $query->whereHas('usersroles', function ($query) {
+                    $query->where('name', 'like', '%advisor%');
+                });
+            })
+            ->when(! empty($request['advisors']), function ($query) use ($request) {
+                $query->whereIn('user_id', $request['advisors']);
+            })
+            ->when(! empty($request['primary_branch']), function ($query) use ($request) {
+                $query->where('branch_id', $request['primary_branch'])
+                    ->where('is_primary', 1);
+            })
+            ->where('status', 1)
+            ->paginate();
 
         $dataset->map(function ($item) {
 
@@ -104,10 +101,12 @@ class BranchAssignmentService extends BaseService
             $newPrimary->save();
 
             DB::commit();
+
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
             LoggerService::warning('Failed to make primary branch for user '.$userId.' and branch '.$branchId.' - Error: '.$e->getMessage());
+
             return false;
         }
     }
@@ -123,14 +122,15 @@ class BranchAssignmentService extends BaseService
     {
         if ($quoteTypeId == QuoteTypeId::Health) {
             $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null;
-        } else if ($quoteTypeId == QuoteTypeId::GroupMedical) {
+        } elseif ($quoteTypeId == QuoteTypeId::GroupMedical) {
             $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->latestInsured?->entity?->emirate_of_registration_id !== null;
         } else {
             $hasBranch = $quote->advisor?->primaryBranch()->exists();
         }
 
-        if (!$hasBranch) {
-            LoggerService::warning('Branch missing for quote: ' . $quote->code);
+        if (! $hasBranch) {
+            LoggerService::warning('Branch missing for quote: '.$quote->code);
+
             return false;
         }
 
@@ -144,7 +144,7 @@ class BranchAssignmentService extends BaseService
             return false;
         }
 
-        $assignment->assignment_id = "BA" . str_pad($assignment->id, 3, '0', STR_PAD_LEFT);
+        $assignment->assignment_id = 'BA'.str_pad($assignment->id, 3, '0', STR_PAD_LEFT);
         $assignment->save();
 
         return $assignment;
@@ -168,10 +168,10 @@ class BranchAssignmentService extends BaseService
      * the quote type, and optionally the visa emirate ID (for Health quotes), then returns
      * its human-readable name. If no branch is found, it returns an empty string.
      *
-     * @param int|null $primaryAdvisorBranchId   The advisor's primary branch ID
-     * @param int      $quoteTypeId              The QuoteTypeId value
-     * @param int|null $emirateOfYourVisaId      (Optional) Visa emirate ID, used for Health quotes
-     * @return string                            The branch's display name, or empty string if not found
+     * @param  int|null  $primaryAdvisorBranchId  The advisor's primary branch ID
+     * @param  int  $quoteTypeId  The QuoteTypeId value
+     * @param  int|null  $emirateOfYourVisaId  (Optional) Visa emirate ID, used for Health quotes
+     * @return string The branch's display name, or empty string if not found
      */
     public function getBranchName($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null): string
     {
@@ -185,10 +185,10 @@ class BranchAssignmentService extends BaseService
      * applying Health-specific logic based on the emirate if necessary,
      * or branch override configuration for other quote types.
      *
-     * @param int|null $primaryAdvisorBranchId  The advisor's primary branch ID
-     * @param int $quoteTypeId                  The QuoteTypeId value
-     * @param int|null $emirateOfYourVisaId     (Optional) Visa emirate ID, required only for Health quotes
-     * @return mixed|null                       The resolved branch model instance, or null if not found
+     * @param  int|null  $primaryAdvisorBranchId  The advisor's primary branch ID
+     * @param  int  $quoteTypeId  The QuoteTypeId value
+     * @param  int|null  $emirateOfYourVisaId  (Optional) Visa emirate ID, required only for Health quotes
+     * @return mixed|null The resolved branch model instance, or null if not found
      */
     public function getBranch($primaryAdvisorBranchId, $quoteTypeId, $emirateOfYourVisaId = null)
     {
@@ -202,8 +202,8 @@ class BranchAssignmentService extends BaseService
     /**
      * Get branch for Health quotes based on emirate and advisor branch.
      *
-     * @param int|null $primaryAdvisorBranchId
-     * @param int|null $emirateOfYourVisaId
+     * @param  int|null  $primaryAdvisorBranchId
+     * @param  int|null  $emirateOfYourVisaId
      */
     private function getHealthOrGroupMedicalBranch($primaryAdvisorBranchId, $emirateOfYourVisaId, $quoteTypeId)
     {
@@ -221,15 +221,15 @@ class BranchAssignmentService extends BaseService
         }
 
         $branch = self::$branches->find($primaryAdvisorBranchId);
-        
+
         return $branch;
     }
 
     /**
      * Get branch with override configuration applied.
      *
-     * @param int|null $primaryAdvisorBranchId
-     * @param int $quoteTypeId
+     * @param  int|null  $primaryAdvisorBranchId
+     * @param  int  $quoteTypeId
      */
     private function getBranchWithOverride($primaryAdvisorBranchId, $quoteTypeId)
     {
@@ -240,7 +240,7 @@ class BranchAssignmentService extends BaseService
         // Check if there's an active override configuration for this branch and quote type
         $overrideConfig = $this->getBranchOverrideConfig($primaryAdvisorBranchId, $quoteTypeId);
         $targetBranchId = $overrideConfig?->target_branch_id ?? $primaryAdvisorBranchId;
-        
+
         $branch = self::$branches->find($targetBranchId);
 
         return $branch;
@@ -256,7 +256,7 @@ class BranchAssignmentService extends BaseService
 
     public function saveBranchOverride($quote, $quoteTypeId)
     {
-        if(in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
             return;
         }
 

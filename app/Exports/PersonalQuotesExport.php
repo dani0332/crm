@@ -11,12 +11,12 @@ use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use App\Services\BranchAssignmentService;
 
 class PersonalQuotesExport implements CsvExportableInterface
 {
@@ -354,7 +354,7 @@ class PersonalQuotesExport implements CsvExportableInterface
     protected function getValues(string $quoteType, $quote): array
     {
         $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypes::getIdFromValue($quoteType)));
-        
+
         $baseFields = [
             'code' => $quote->code,
             'first_name' => $quote->first_name,

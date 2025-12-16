@@ -346,13 +346,13 @@ class CentralController extends Controller
 
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
-            if(!$response['status']) {
+            if (! $response['status']) {
                 return response()->json([
                     'errors' => [
                         'message' => [
-                            $response['message']
+                            $response['message'],
                         ],
-                    ]
+                    ],
                 ], 422);
             }
 

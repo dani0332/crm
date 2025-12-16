@@ -92,6 +92,6 @@ class HandleHealthTransactionApproved
      */
     protected function updateIsQuoteLocked(HealthQuote $healthQuote): void
     {
-        $healthQuote->withoutEvents(fn() => $healthQuote->update(['is_quote_locked' => true]));
+        $healthQuote->withoutEvents(fn () => $healthQuote->update(['is_quote_locked' => true]));
     }
 }

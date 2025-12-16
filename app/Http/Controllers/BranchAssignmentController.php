@@ -74,7 +74,7 @@ class BranchAssignmentController extends Controller
     {
         $result = $this->branchAssignmentService->makePrimary($userId, $branchId);
 
-        if (!$result) {
+        if (! $result) {
             return redirect()->back()->with('error', 'Failed to update primary branch. Please ensure the branch assignment exists and is active.');
         }
 

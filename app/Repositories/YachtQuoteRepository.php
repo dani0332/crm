@@ -4,11 +4,13 @@ namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -16,8 +18,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
-use App\Services\BranchAssignmentService;
-use App\Enums\QuoteTypeId;
 
 class YachtQuoteRepository extends BaseRepository
 {
@@ -184,7 +184,7 @@ class YachtQuoteRepository extends BaseRepository
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
         $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht));
-        
+
         return $quote;
     }
 
@@ -279,7 +279,7 @@ class YachtQuoteRepository extends BaseRepository
         }
 
         $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
-        if (!$forTotalLeadsCount && !$forExport) {
+        if (! $forTotalLeadsCount && ! $forExport) {
             $this->postProcessYachtQuotes($result);
         }
 
@@ -290,6 +290,7 @@ class YachtQuoteRepository extends BaseRepository
     {
         return $quotes->map(function ($item) {
             $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht));
+
             return $item;
         });
     }

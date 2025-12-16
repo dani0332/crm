@@ -21,13 +21,13 @@ use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BirdService;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Services\BranchAssignmentService;
 
 trait PersonalQuoteObservable
 {
@@ -181,7 +181,7 @@ trait PersonalQuoteObservable
             }
         }
 
-        if($personalQuote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+        if ($personalQuote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             try {
                 app(BranchAssignmentService::class)->saveBranchOverride($personalQuote, $personalQuote->quote_type_id);
                 PersonalQuote::withoutEvents(function () use ($personalQuote) {

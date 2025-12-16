@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BranchEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
@@ -48,8 +49,6 @@ use Cache;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
-use App\Services\BranchAssignmentService;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 class SageApiService
 {
@@ -666,9 +665,9 @@ class SageApiService
         $quoteTypeId = QuoteTypes::getIdFromValue($request->model_type) ?? $quote->quote_type_id;
 
         $hasBranchAssignment = app(BranchAssignmentService::class)->hasBranchAssignment($quote, $quoteTypeId);
-        if (!$hasBranchAssignment) {
-            return ['status' => false, 'message' => 'Branch assignment missing. Please ensure ' .
-                ($quoteTypeId === QuoteTypeId::Health ? 'Emirate of visa or advisor branch' : 'advisor branch') .
+        if (! $hasBranchAssignment) {
+            return ['status' => false, 'message' => 'Branch assignment missing. Please ensure '.
+                ($quoteTypeId === QuoteTypeId::Health ? 'Emirate of visa or advisor branch' : 'advisor branch').
                 ' is configured OR contact admin.'];
         }
 
@@ -757,18 +756,18 @@ class SageApiService
         $quoteTypeIdForBranch = $quoteTypeId;
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emirate = $quote?->emirate_of_your_visa_id ?? null;
-        } else if (
-            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical]) 
+        } elseif (
+            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
             $emirate = $quote?->latestInsured?->entity?->emirate_of_registration_id ?? null;
             $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
         }
         $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
-        
+
         if ($branch?->id == BranchEnum::ABU_DHABI->value) {
             LoggerService::info('Sage posting is not allowed for Abu Dhabi branch', extra: ['ref_id' => $quote->code, 'branch_id' => $branch?->id]);
-            
+
             if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
                 // dispath job to send email

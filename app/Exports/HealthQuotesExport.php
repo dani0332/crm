@@ -3,14 +3,14 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
+use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use App\Services\BranchAssignmentService;
-use App\Enums\QuoteTypeId;
 
 class HealthQuotesExport implements CsvExportableInterface
 {
@@ -91,6 +91,7 @@ class HealthQuotesExport implements CsvExportableInterface
     public function map($quote): array
     {
         $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id));
+
         return [
             $quote->code,
             $quote->first_name,

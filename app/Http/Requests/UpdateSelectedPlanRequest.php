@@ -3,9 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
+use App\Models\HealthQuote;
 use App\Rules\ValidateAuthorizedPayment;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\HealthQuote;
 
 class UpdateSelectedPlanRequest extends FormRequest
 {

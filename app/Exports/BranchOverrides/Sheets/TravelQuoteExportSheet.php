@@ -3,13 +3,13 @@
 namespace App\Exports\BranchOverrides\Sheets;
 
 use App\Exports\BranchOverrides\TravelQuoteExport;
+use App\Services\TravelQuoteService;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use App\Services\TravelQuoteService;
 
 /**
  * Sheet wrapper for TravelQuoteExport
@@ -56,4 +56,3 @@ class TravelQuoteExportSheet implements FromCollection, ShouldAutoSize, WithHead
         return $this->export->map($quote);
     }
 }
-

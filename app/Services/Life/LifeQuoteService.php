@@ -37,6 +37,7 @@ use App\Models\QuoteBatches;
 use App\Repositories\CurrencyTypeRepository;
 use App\Repositories\UserRepository;
 use App\Services\BaseService;
+use App\Services\BranchAssignmentService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -53,7 +54,6 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
 use PDF;
-use App\Services\BranchAssignmentService;
 
 class LifeQuoteService extends BaseService
 {

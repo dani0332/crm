@@ -22,6 +22,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GroupMedicalType;
@@ -38,6 +39,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -57,8 +59,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
-use App\Services\BranchAssignmentService;
-use App\Models\CustomerInsured;
 
 class AmtController extends Controller
 {
@@ -326,7 +326,7 @@ class AmtController extends Controller
      * Post-process AMT quotes to add branch name information.
      * Uses eager loading to avoid N+1 query issues.
      *
-     * @param \Illuminate\Contracts\Pagination\Paginator $quotes
+     * @param  \Illuminate\Contracts\Pagination\Paginator  $quotes
      * @return \Illuminate\Contracts\Pagination\Paginator
      */
     private function postProcessAmtQuotes($quotes)

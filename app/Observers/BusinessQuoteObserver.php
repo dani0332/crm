@@ -13,6 +13,7 @@ use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
@@ -20,7 +21,6 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Services\BranchAssignmentService;
 
 class BusinessQuoteObserver
 {

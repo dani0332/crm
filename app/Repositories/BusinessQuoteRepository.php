@@ -5,14 +5,14 @@ namespace App\Repositories;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
+use App\Services\BranchAssignmentService;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\BranchAssignmentService;
-use App\Enums\QuoteTypeId;
 
 class BusinessQuoteRepository extends BaseRepository
 {

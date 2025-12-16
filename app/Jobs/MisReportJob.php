@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\WorkflowTypeEnum;
+use App\Exports\BranchOverrides\BranchOverrideDetailsExport;
 use App\Models\ApplicationStorage;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
@@ -11,11 +12,9 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Throwable;
-use App\Exports\BranchOverrides\BranchOverrideDetailsExport;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\DeleteTempOCBPDFFileJob;
+use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class MisReportJob implements ShouldQueue
 {
@@ -35,20 +34,21 @@ class MisReportJob implements ShouldQueue
     {
         $enableMisreportJob = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_MISREPORT_JOB)->first();
         if (! $enableMisreportJob || $enableMisreportJob->value == 0) {
-            LoggerService::info("MisReportJob - Misreport job is disabled");
+            LoggerService::info('MisReportJob - Misreport job is disabled');
+
             return;
         }
         $startDateFormatted = $this->startDate->format(config('constants.DB_DATE_FORMAT_MATCH'));
         $endDateFormatted = $this->endDate->format(config('constants.DB_DATE_FORMAT_MATCH'));
 
-        LoggerService::info("MisReportJob - Starting", extra: [
+        LoggerService::info('MisReportJob - Starting', extra: [
             'startDate' => $startDateFormatted,
             'endDate' => $endDateFormatted,
         ]);
 
         $this->sendEmail();
 
-        LoggerService::info("MisReportJob - Completed", extra: [
+        LoggerService::info('MisReportJob - Completed', extra: [
             'startDate' => $startDateFormatted,
             'endDate' => $endDateFormatted,
         ]);
@@ -56,7 +56,7 @@ class MisReportJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        LoggerService::error("MisReportJob - Failed", exception: $exception, extra: [
+        LoggerService::error('MisReportJob - Failed', exception: $exception, extra: [
             'startDate' => $this->startDate->format(config('constants.DB_DATE_FORMAT_MATCH')),
             'endDate' => $this->endDate->format(config('constants.DB_DATE_FORMAT_MATCH')),
         ]);
@@ -67,7 +67,7 @@ class MisReportJob implements ShouldQueue
      */
     public function middleware(): array
     {
-        $lockKey = "misreport-job";
+        $lockKey = 'misreport-job';
 
         return [
             (new WithoutOverlapping($lockKey))
@@ -100,24 +100,24 @@ class MisReportJob implements ShouldQueue
 
     /**
      * Generate and prepare Excel attachment for Bird email
-     * 
-     * @param string $fileDate Formatted date for the filename
+     *
+     * @param  string  $fileDate  Formatted date for the filename
      * @return array Array of attachments with Azure temporary URL
      */
     private function getAttachment(string $fileDate): array
     {
         $fileName = "Interim_AUH_DXB_Override_MIS_{$fileDate}.xlsx";
-        
+
         // Generate Excel file content in memory
-        $excelContent = Excel::raw(new BranchOverrideDetailsExport(), \Maatwebsite\Excel\Excel::XLSX);
-        
-        LoggerService::info("MisReportJob - Excel file generated successfully");
+        $excelContent = Excel::raw(new BranchOverrideDetailsExport, \Maatwebsite\Excel\Excel::XLSX);
+
+        LoggerService::info('MisReportJob - Excel file generated successfully');
 
         // Generate a unique temporary file path
-        $tempFilePath = 'temp/misreport/' . uniqid() . '_' . $fileName;
+        $tempFilePath = 'temp/misreport/'.uniqid().'_'.$fileName;
         Storage::disk('azureIM')->put($tempFilePath, $excelContent);
 
-        LoggerService::info("MisReportJob - Excel file uploaded to Azure storage", extra: [
+        LoggerService::info('MisReportJob - Excel file uploaded to Azure storage', extra: [
             'filePath' => $tempFilePath,
             'contentSize' => strlen($excelContent),
         ]);
@@ -134,7 +134,7 @@ class MisReportJob implements ShouldQueue
             'fileName' => $fileName,
         ];
 
-        LoggerService::info("MisReportJob - Temporary URL generated for attachment", extra: [
+        LoggerService::info('MisReportJob - Temporary URL generated for attachment', extra: [
             'fileName' => $fileName,
             'url' => $publicUrl,
         ]);

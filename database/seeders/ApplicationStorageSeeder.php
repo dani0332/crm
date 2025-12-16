@@ -1158,10 +1158,10 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync';
-        if(env('APP_ENV') === 'production') {
+        if (env('APP_ENV') === 'production') {
             $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync';
         }
-        
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_MISREPORT_JOB_WORKFLOW],
             [

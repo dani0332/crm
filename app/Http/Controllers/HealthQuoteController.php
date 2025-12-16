@@ -12,6 +12,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SLAActionTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
+use App\Http\Requests\MemberDeleteRequest;
 use App\Http\Requests\MemberDetailRequest;
 use App\Models\HealthQuote;
 use App\Repositories\HealthQuoteRepository;
@@ -23,7 +24,6 @@ use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\SLA\SLAService;
 use Illuminate\Http\Request;
-use App\Http\Requests\MemberDeleteRequest;
 
 class HealthQuoteController extends Controller
 {
@@ -174,7 +174,7 @@ class HealthQuoteController extends Controller
     public function healthQuoteAddMember(MemberDetailRequest $request)
     {
         $request->validated();
-        
+
         $quote = HealthQuote::where('uuid', $request->quoteId)->first();
         if ($quote?->is_quote_locked) {
             return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');

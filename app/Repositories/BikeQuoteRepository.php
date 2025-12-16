@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -11,6 +12,7 @@ use App\Facades\Ken;
 use App\Models\BikeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
+use App\Services\BranchAssignmentService;
 use App\Services\DropdownSourceService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -19,8 +21,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
-use App\Services\BranchAssignmentService;
-use App\Enums\QuoteTypeId;
 
 class BikeQuoteRepository extends BaseRepository
 {
@@ -311,6 +311,7 @@ class BikeQuoteRepository extends BaseRepository
     {
         return $quotes->map(function ($item) {
             $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Bike));
+
             return $item;
         });
     }

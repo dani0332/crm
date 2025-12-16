@@ -5,9 +5,9 @@ namespace App\Traits;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BranchEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
@@ -41,7 +41,6 @@ use App\Services\Reports\RenewalBatchReportService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 trait GenericQueriesAllLobs
 {
@@ -277,7 +276,7 @@ trait GenericQueriesAllLobs
             $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
-        
+
         $isAbuDhabiBranch = $this->isAbuDhabiBranch($quoteType, $record);
 
         $bookPolicyDetails = [];
@@ -842,19 +841,19 @@ trait GenericQueriesAllLobs
         $emirate = null;
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emirate = $record?->emirate_of_your_visa_id ?? null;
-        } else if (
-            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical]) 
+        } elseif (
+            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $record->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
             $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
 
-        if($record->is_branch_applicable == 0) {
+        if ($record->is_branch_applicable == 0) {
             return false;
         }
 
-        if(isset($record->lead_branch_id) && $record->lead_branch_id) {
+        if (isset($record->lead_branch_id) && $record->lead_branch_id) {
             return $record->lead_branch_id == BranchEnum::ABU_DHABI->value;
         }
 

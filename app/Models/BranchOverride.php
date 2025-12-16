@@ -4,18 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * Branch Override Model
  *
  * Tracks individual instances where a quote was overridden from
  * one branch to another based on branch override configurations.
- *
  */
 class BranchOverride extends Model
 {
-
     /**
      * The table associated with the model.
      *
@@ -43,4 +40,3 @@ class BranchOverride extends Model
     }
 
 }
-

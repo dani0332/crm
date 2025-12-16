@@ -41,6 +41,7 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
@@ -64,7 +65,6 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
-use App\Services\BranchAssignmentService;
 
 class TravelController extends Controller
 {
@@ -106,7 +106,7 @@ class TravelController extends Controller
         $gridData = $this->travelQuoteService->getGridData();
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $this->travelQuoteService->postProcessTravelQuotes($quotes);
-        
+
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;

@@ -399,8 +399,6 @@ class HealthQuote extends Model implements AuditableContract
     /******************************* Quote Status Logs Related Methods Below *******************************/
     /**
      * Get all quote status logs for this model
-     *
-     * @return HasMany
      */
     public function quoteStatusLogs(): HasMany
     {

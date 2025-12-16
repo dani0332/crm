@@ -6,12 +6,12 @@ use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteTypeId;
+use App\Services\BranchAssignmentService;
 use App\Services\TravelQuoteService;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use App\Services\BranchAssignmentService;
 
 class TravelQuoteExport implements CsvExportableInterface
 {

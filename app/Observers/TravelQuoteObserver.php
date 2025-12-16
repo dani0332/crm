@@ -18,12 +18,12 @@ use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Services\BranchAssignmentService;
 
 class TravelQuoteObserver
 {

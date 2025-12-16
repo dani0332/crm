@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Manages branch override configurations from
  * a source branch to a target branch for specific quote types.
- *
  */
 class BranchOverrideConfig extends Model
 {
@@ -76,7 +75,7 @@ class BranchOverrideConfig extends Model
     /**
      * Scope a query to only include active overrides.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
@@ -90,8 +89,6 @@ class BranchOverrideConfig extends Model
 
     /**
      * Check if the override is currently active.
-     *
-     * @return bool
      */
     public function isActive(): bool
     {
@@ -99,4 +96,3 @@ class BranchOverrideConfig extends Model
             ($this->end_date === null || $this->end_date->isFuture());
     }
 }
-

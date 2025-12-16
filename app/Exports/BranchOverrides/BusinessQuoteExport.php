@@ -2,20 +2,20 @@
 
 namespace App\Exports\BranchOverrides;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\UserNameEnum;
+use App\Models\User;
 use App\Repositories\BusinessQuoteRepository;
+use App\Services\BranchAssignmentService;
+use App\Traits\ExcelExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use App\Services\BranchAssignmentService;
-use App\Enums\QuoteTypeId;
-use App\Traits\ExcelExportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
-use App\Models\User;
-use App\Enums\UserNameEnum;
 
 class BusinessQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStrictNullComparison
 {
@@ -29,7 +29,7 @@ class BusinessQuoteExport implements FromCollection, ShouldAutoSize, WithHeading
             'booking_date' => [
                 now()->subDays(7)->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
                 now()->subDays(1)->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
-            ]
+            ],
         ];
 
         $query = BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true, requestParams: $requestParams)
@@ -94,13 +94,14 @@ class BusinessQuoteExport implements FromCollection, ShouldAutoSize, WithHeading
             'Target Branch',
             'Override Applied Date',
             'Total Commission',
-            'Commission %',            
+            'Commission %',
         ];
     }
 
     public function map($quote): array
     {
         $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Business));
+
         return [
             $quote->code,
             $quote->first_name,
@@ -133,7 +134,7 @@ class BusinessQuoteExport implements FromCollection, ShouldAutoSize, WithHeading
             $quote->branchOverride?->branchOverrideConfig?->targetBranch?->name ?? '',
             date(config('constants.DATE_FORMAT'), strtotime($quote->branchOverride?->created_at)),
             $quote->payments?->first()?->commission ?? '0',
-            ($quote->payments?->first()?->commmission_percentage ?? '0') . '%',
+            ($quote->payments?->first()?->commmission_percentage ?? '0').'%',
         ];
     }
 
