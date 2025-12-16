@@ -111,7 +111,7 @@ const onBranchAssignmentSubmit = isValid => {
   let method = 'post';
   let url = route('branch-assignments.store', { user: assignmentForm.user_id });
   assignmentForm.submit(method, url, {
-    onSuccess: (page) => {
+    onSuccess: page => {
       if (page.props.flash?.success) {
         modals.branchAssignment = false;
       }
@@ -133,7 +133,7 @@ const openModal = () => {
 
 watch(
   () => assignmentForm.user_id,
-  (newUserId) => {
+  newUserId => {
     // Only check when a user_id is selected/set (not null/empty)
     if (newUserId) {
       const alreadyAssigned = props.assignedUsers?.includes(newUserId);
@@ -145,29 +145,37 @@ watch(
         assignmentForm.force_primary = false;
       }
     }
-  }
+  },
 );
 
 const handleMakePrimary = (userId, branchId) => {
-  router.visit(route('branch-assignments.make-primary', { user_id: userId, branch_id: branchId }), {
-    method: 'patch',
-    preserveState: true,
-    preserveScroll: true,
-    onBefore: () => (loader.table = true),
-    onSuccess: () => (loader.table = false),
-  });
+  router.visit(
+    route('branch-assignments.make-primary', {
+      user_id: userId,
+      branch_id: branchId,
+    }),
+    {
+      method: 'patch',
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.table = true),
+      onSuccess: () => (loader.table = false),
+    },
+  );
 };
 
 const handleRemoveBranch = (userId, branchId) => {
-  router.visit(route('branch-assignments.delete', { user: userId, branch_id: branchId }), {
-    method: 'patch',
-    preserveState: true,
-    preserveScroll: true,
-    onBefore: () => (loader.table = true),
-    onSuccess: () => (loader.table = false),
-  });
+  router.visit(
+    route('branch-assignments.delete', { user: userId, branch_id: branchId }),
+    {
+      method: 'patch',
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.table = true),
+      onSuccess: () => (loader.table = false),
+    },
+  );
 };
-
 </script>
 <template>
   <Head title="Advisor Branch Assignments" />
@@ -200,7 +208,9 @@ const handleRemoveBranch = (userId, branchId) => {
       </div>
     </div>
     <div class="flex justify-end gap-3">
-      <x-button size="sm" color="emerald" @click.prevent="openModal">Add Assignment</x-button>
+      <x-button size="sm" color="emerald" @click.prevent="openModal"
+        >Add Assignment</x-button
+      >
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset
@@ -232,15 +242,8 @@ const handleRemoveBranch = (userId, branchId) => {
     </template>
     <template #item-actions="{ user_id, branch_id, status, is_primary }">
       <div class="flex gap-2">
-        <Link
-          method="get"
-          :href="
-            route('branch-assignments.show', user_id)
-          "
-        >
-          <x-button size="sm" color="emerald" tag="div">
-            View
-          </x-button>
+        <Link method="get" :href="route('branch-assignments.show', user_id)">
+          <x-button size="sm" color="emerald" tag="div"> View </x-button>
         </Link>
         <x-button
           v-if="status == 1 && !is_primary"
@@ -282,7 +285,6 @@ const handleRemoveBranch = (userId, branchId) => {
     @submit="onBranchAssignmentSubmit"
   >
     <div class="grid sm:grid-cols-2 gap-4">
-
       <x-select
         v-model="assignmentForm.user_id"
         :options="advisorOptions"
@@ -328,7 +330,6 @@ const handleRemoveBranch = (userId, branchId) => {
         disabled
       />
 
-
       <div>
         <x-label>Is Primary</x-label>
         <x-checkbox
@@ -362,5 +363,4 @@ const handleRemoveBranch = (userId, branchId) => {
       </x-button>
     </template>
   </x-modal>
-
 </template>

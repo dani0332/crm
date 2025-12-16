@@ -601,7 +601,7 @@ const onMemberSubmit = isValid => {
       preserveScroll: true,
       onSuccess: response => {
         const flash_messages = response.props.flash;
-        if(!flash_messages.error) { 
+        if (!flash_messages.error) {
           notification.success({
             title: 'Member Updated',
             position: 'top',
@@ -628,7 +628,7 @@ const onMemberSubmit = isValid => {
       preserveScroll: true,
       onSuccess: response => {
         const flash_messages = response.props.flash;
-        if(!flash_messages.error) { 
+        if (!flash_messages.error) {
           notification.success({
             title: 'Member Added',
             position: 'top',
@@ -700,7 +700,7 @@ const memberPrincipalConfirmed = () => {
     preserveScroll: true,
     onSuccess: response => {
       const flash_messages = response.props.flash;
-      if(!flash_messages.error) {
+      if (!flash_messages.error) {
         notification.success({
           title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
           position: 'top',
@@ -2014,10 +2014,18 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled && !isLocked" :href="route('health.edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled && !isLocked"
+            :href="route('health.edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled || isLocked" size="sm" tag="div">
+          <x-button
+            v-else
+            :disabled="isDisabled || isLocked"
+            size="sm"
+            tag="div"
+          >
             Edit
           </x-button>
         </LeadEditBtnTemplate>
