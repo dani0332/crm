@@ -13,8 +13,7 @@ class RetryOcrDocumentsCommand extends Command
 {
     protected $signature = 'ocr:retry-documents
                             {--start-date= : Inclusive start date (YYYY-MM-DD)}
-                            {--end-date= : Inclusive end date (YYYY-MM-DD)}
-                            {--force : Re-dispatch even if document is already marked as OCR processed}';
+                            {--end-date= : Inclusive end date (YYYY-MM-DD)}';
 
     protected $description = 'Retry OCR processing for car documents within a date range.';
 
@@ -48,16 +47,13 @@ class RetryOcrDocumentsCommand extends Command
             return Command::FAILURE;
         }
 
-        $force = (bool) $this->option('force');
-
         $this->info(sprintf(
             'Dispatching OCR retry jobs for car documents from %s to %s%s',
             $startDate->toDateString(),
-            $endDate->toDateString(),
-            $force ? ' (force reprocess)' : ''
+            $endDate->toDateString()
         ));
 
-        $stats = $this->ocrDocumentRetryService->retryCarDocuments($startDate, $endDate, $force);
+        $stats = $this->ocrDocumentRetryService->retryCarDocuments($startDate, $endDate);
 
         $this->table(
             ['Metric', 'Count'],
@@ -69,7 +65,6 @@ class RetryOcrDocumentsCommand extends Command
         LoggerService::info(self::class.' - Command finished', [
             'start_date' => $startDate->toDateString(),
             'end_date' => $endDate->toDateString(),
-            'force' => $force,
             'stats' => $stats,
         ]);
 

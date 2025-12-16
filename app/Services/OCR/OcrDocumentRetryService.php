@@ -29,7 +29,7 @@ class OcrDocumentRetryService
     /**
      * Re-dispatch OCR processing for car quote documents in the given date window.
      */
-    public function retryCarDocuments(Carbon $startDate, Carbon $endDate, bool $force): array
+    public function retryCarDocuments(Carbon $startDate, Carbon $endDate): array
     {
         $documentTypeCodes = collect(OCRDocumentTypeEnum::cases())
             ->map(static fn (OCRDocumentTypeEnum $enum) => $enum->value)
@@ -77,7 +77,7 @@ class OcrDocumentRetryService
                 ])
                 ->orderBy('transaction_approved_at')
                 ->orderBy('id')
-                ->chunk(self::CHUNK_SIZE, function (Collection $carQuotes) use (&$stats, $force) {
+                ->chunk(self::CHUNK_SIZE, function (Collection $carQuotes) use (&$stats) {
                     foreach ($carQuotes as $carQuote) {
                         $stats['quotes_considered']++;
 
@@ -124,8 +124,7 @@ class OcrDocumentRetryService
 
         LoggerService::info(self::class.'::retryCarDocuments - Summary', [
             'date_range' => [$start->toDateTimeString(), $end->toDateTimeString()],
-            'stats' => $stats,
-            'force' => $force,
+            'stats' => $stats
         ]);
 
         return $stats;
