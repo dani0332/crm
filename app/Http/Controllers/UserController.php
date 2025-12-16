@@ -225,8 +225,6 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        $this->getCarDocuments();
-
         $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
         $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->updated_at)->format('Y-m-d H:i:s');
 
@@ -269,65 +267,6 @@ class UserController extends Controller
         ]);
     }
 
-
-    /**
-     * Fetch car quotes with OCR-processed documents of valid document types.
-     *
-     * @return void
-     */
-    public function getCarDocuments(): void
-    {
-        // Define the start and end dates for filtering, if/when applied.
-        $startDate = Carbon::parse('2025-11-01')->startOfMonth();
-        $endDate = Carbon::parse('2025-11-30')->endOfMonth();
-
-        // Collect all valid document type values from the OCRDocumentTypeEnum.
-        $validDocumentTypeCodes = collect(OCRDocumentTypeEnum::cases())
-            ->pluck('value')
-            ->all();
-
-        // Query car quotes where a related document is OCR-processed and has a valid document type code.
-        $carQuotes = CarQuote::query()
-            ->select([
-                'id',
-                'uuid',
-                'code',
-                'quote_status_id',
-                'policy_booking_date',
-                'insurance_provider_id',
-            ])
-            ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
-            ->whereBetween('transaction_approved_at', [$startDate, $endDate])
-            ->whereHas('documents', function ($q) use ($validDocumentTypeCodes) {
-                $q
-                    ->whereIn('document_type_code', $validDocumentTypeCodes);
-            })
-            ->with([
-                'documents' => function ($q) use ($validDocumentTypeCodes) {
-                    $q
-                        ->whereIn('document_type_code', $validDocumentTypeCodes)
-                        ->select('id', 'quote_documentable_id', 'doc_name', 'doc_url', 'document_type_code', 'is_ocr_processed');
-                },
-                'payments' => function ($q) {
-                    $q->latest('created_at')
-                        ->take(1)
-                        ->select('id', 'paymentable_id', 'paymentable_type', 'insurance_provider_id', 'created_at')
-                        ->with(['insuranceProvider:id,code']);
-                },
-                'insuranceProvider:id,code',
-            ])
-            ->get();
-
-        $carQuoteIds = $carQuotes->filter(fn($quote) => $quote->documents->isNotEmpty())->pluck('id');
-
-        info("getCarDocuments: " . print_r([
-            '$validDocumentTypeCodes'   => $validDocumentTypeCodes,
-            '$startDate'   => $startDate,
-            '$endDate'     => $endDate,
-            '$carQuotes'   => $carQuotes->toArray(),
-            '$carQuoteIds' => $carQuoteIds->toArray(),
-        ], 1));
-    }
 
     /**
      * Show the form for editing the specified resource.
