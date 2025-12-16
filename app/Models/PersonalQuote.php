@@ -597,7 +597,7 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function branch()
     {
-        return $this->hasOne(Branch::class, 'branch_id');
+        return $this->hasOne(Branch::class, 'id', 'branch_id');
     }
 
     public function branchOverride()
