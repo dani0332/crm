@@ -42,6 +42,7 @@ class RolePermissionSeeder extends Seeder
         $this->addExportHomePuaUpdatesPermission();
         $this->addUtmReportExportPermission();
         $this->addEditLastYearDetailsPermission();
+        $this->addBranchesPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -467,5 +468,44 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addBranchesPermission(): void
+    {
+        $branchesPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::BRANCHES,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $branchAssignmentsPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::BRANCH_ASSIGNMENTS,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($branchesPermission)) {
+                    $role->givePermissionTo($branchesPermission);
+                }
+
+                if (! $role->hasPermissionTo($branchAssignmentsPermission)) {
+                    $role->givePermissionTo($branchAssignmentsPermission);
+                }
+            }
+        }
     }
 }
