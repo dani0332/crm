@@ -80,10 +80,10 @@ class BranchOverrideConfig extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('start_date', '<=', now()->format(config('constants.DATE_FORMAT_ONLY')))
+        return $query->where('start_date', '<=', now())
             ->where(function ($q) {
                 $q->whereNull('end_date')
-                    ->orWhere('end_date', '>=', now()->format(config('constants.DATE_FORMAT_ONLY')));
+                    ->orWhere('end_date', '>=', now());
             });
     }
 
