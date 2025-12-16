@@ -349,21 +349,21 @@ class EmiratesIdDataProcessor
         try {
             $quoteTypeId = $this->getQuoteTypeId();
 
-            $existingLink = CustomerInsured::where([
-                'customer_id' => $this->quote->customer_id,
-                'insured_id' => $insured->id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $this->quote->id,
-            ])->first();
-
-            if (! $existingLink) {
-                CustomerInsured::create([
+            $existingLink = CustomerInsured::active()
+                ->where([
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $this->quote->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                ])
+                ->first();
+
+            if (! $existingLink) {
+                CustomerInsured::createOrUpdateActive([
+                    'customer_id' => $this->quote->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $this->quote->id,
                 ]);
 
                 LoggerService::info('CustomerInsured relationship created');

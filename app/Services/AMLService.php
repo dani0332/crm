@@ -1793,9 +1793,16 @@ class AMLService
         if ($orphanedRecord) {
             // Update the existing orphaned record instead of deleting and creating new
             $isCustomerInsuredAssociationUpdated = true;
+
+            // Deactivate existing records for this quote first
+            CustomerInsured::forQuote($quoteTypeId, $quote->id)
+                ->update(['is_active' => false]);
+
+            // Activate the orphaned record
             $orphanedRecord->update([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quote->id,
+                'is_active' => true,
                 'updated_at' => now(),
             ]);
 
@@ -1808,21 +1815,23 @@ class AMLService
             ]);
         } else {
             // Check existing quote mapping
-            $existingQuoteMapping = CustomerInsured::where([
-                'customer_id' => $request->customer_id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-            ])->orderBy('updated_at', 'desc')->first();
+            $existingQuoteMapping = CustomerInsured::active()
+                ->where([
+                    'customer_id' => $request->customer_id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                ])->first();
 
             if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
                 // Create new record or update existing quote mapping
                 $isCustomerInsuredAssociationUpdated = true;
-                CustomerInsured::updateOrCreate([
+
+                CustomerInsured::createOrUpdateActive([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ], ['updated_at' => now()]);
+                ]);
 
                 // Update quote status
                 $quote->update(['kyc_decision' => Kyc::PENDING]);
@@ -1836,12 +1845,13 @@ class AMLService
             } elseif (! $existingQuoteMapping) {
                 // This is a completely new quote-insured association
                 $isCustomerInsuredAssociationUpdated = true;
-                CustomerInsured::updateOrCreate([
+
+                CustomerInsured::createOrUpdateActive([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ], ['updated_at' => now()]);
+                ]);
 
                 LoggerService::info('AML Screening Bridger - New insured association created for quote', [
                     'insured_id' => $insured->id,

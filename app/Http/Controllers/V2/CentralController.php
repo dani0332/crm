@@ -242,13 +242,11 @@ class CentralController extends Controller
                 'gender' => $customer->screening_gender,
             ]);
 
-            CustomerInsured::updateOrCreate([
-                'quote_type_id' => $customerProfileRequest->quote_type_id,
-                'quote_request_id' => $customerProfileRequest->quote_request_id,
-            ], [
+            CustomerInsured::createOrUpdateActive([
                 'customer_id' => $customerProfileRequest->customer_id,
                 'insured_id' => $insuredPersonDetails->id,
-                'updated_at' => now(),
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
             ]);
         }
 
