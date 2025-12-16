@@ -24,6 +24,7 @@ class NgiRequestBuilder
     {
         $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
 
+        // TODO:: NGI:: will uncomment this after fixed from provider side
         // $paymentReferenceNumber = match (true) {
         //     $payment instanceof \App\Models\Payment => $payment?->paymentSplits?->first()?->paymentCharges?->transaction_id ?? null,
         //     $payment instanceof \App\Models\PaymentSplits => $payment?->paymentCharges?->transaction_id ?? null,

@@ -88,10 +88,11 @@ class NgiQuoteUpdaterService
      */
     public function updatePaymentFromPolicyDocumentsResponse(string $quoteCode, $policyDocumentsResult): void
     {
-        // TODO:: NGI:: missing from FRD ask and map it according to FRD
+        // TODO:: NGI:: need to confirm these mappings with Waris manually
         $updateData = [];
 
         // Commission details
+
         if (isset($policyDocumentsResult->policy_commision_with_tax)) {
             $updateData['commission_vat_applicable'] = $policyDocumentsResult->policy_commision_with_tax;
         }
@@ -105,15 +106,18 @@ class NgiQuoteUpdaterService
         }
 
         // Invoice details
-        if (isset($policyDocumentsResult->premium_inv_no)) {
-            $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no;
-        }
 
         if (isset($policyDocumentsResult->premium_inv_dt)) {
             $updateData['insurer_invoice_date'] = Carbon::parse($policyDocumentsResult->premium_inv_dt)->format('Y-m-d');
         }
 
-        if (isset($policyDocumentsResult->commision_inv_no)) {
+        // TODO:: NGI:: premium_inv_no & commision_inv_no are required for book policy while missed from provider in case of missing payment_refrence in issue policy API call and if we pass API does not respond at all
+
+        if (isset($policyDocumentsResult->premium_inv_no)) { // required for book policy
+            $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no;
+        }
+
+        if (isset($policyDocumentsResult->commision_inv_no)) { // required for book policy
             $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no;
         }
 

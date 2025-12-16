@@ -7,7 +7,6 @@ namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGenera
 use App\Enums\NgiEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\PolicyIssuanceEnum;
-use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 

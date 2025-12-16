@@ -204,7 +204,6 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
         // Document URLs stored by NgiQuoteUpdaterService during GetPolicyDocuments API call
         $documentUrls = [
             DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $quote->insurer_policy_doc_id,
-            // TODO:: NGI:: when all docs available in response make it uncomment these lines and remove the count check from below code.
             DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $quote->insurer_tax_invoice_doc_id,
             DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $quote->insurer_debit_note_doc_id,
         ];
@@ -212,7 +211,7 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
         // Validate document URLs exist
         $validationService = app(NgiValidationService::class);
         $validationResult = $validationService->validateDownloadDocuments($documentUrls);
-        if (!$validationResult['status']) { // TODO:: NGI:: please revert this false after testign as currently i have only one document URL in response.
+        if (!$validationResult['status']) {
             return $validationResult;
         }
 
@@ -290,7 +289,7 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
         }
 
         // Check if all 3 required documents were downloaded
-        $allDocsDownloaded = $downloadedDocuments->count() === 3; // TODO:: NGI:: when all docs available in response make it 3 again
+        $allDocsDownloaded = $downloadedDocuments->count() === 3;
 
         if (!$allDocsDownloaded) {
             return [

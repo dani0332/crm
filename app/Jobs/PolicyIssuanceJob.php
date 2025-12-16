@@ -273,7 +273,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                     'quote_code' => $quoteCode,
                     'provider' => $insuranceProvider->text,
                 ]);
-                $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
+                $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS, 'message' => null]);
             }
         }
     }

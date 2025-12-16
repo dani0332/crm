@@ -23,5 +23,5 @@ class NgiEnum
     // API retry configuration
     public const MAX_RETRY_ATTEMPTS = 3;
     public const RETRY_DELAY_MINUTES = 5;
-    public const DOCUMENT_FETCH_DELAY_MINUTES = 0.25; // TODO:: NGI:: Revert it 3 after testing for testing it is 15 seconds
+    public const DOCUMENT_FETCH_DELAY_MINUTES = 3;
 }
