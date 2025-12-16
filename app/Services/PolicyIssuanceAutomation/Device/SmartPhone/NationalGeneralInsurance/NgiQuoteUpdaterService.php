@@ -7,6 +7,7 @@ namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGenera
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use Carbon\Carbon;
 
 class NgiQuoteUpdaterService
@@ -29,7 +30,6 @@ class NgiQuoteUpdaterService
             'policy_expiry_date' => $createPolicyResult?->policy_end_dt
                 ? Carbon::parse($createPolicyResult->policy_end_dt)->format('Y-m-d')
                 : $quote->policy_expiry_date,
-            'price_vat_applicable' => $createPolicyResult?->policy_premium ?? $quote->price_vat_applicable, // TODO:: NGI:: need to discuss and confirm this with Waris and Rucha
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),
@@ -49,7 +49,7 @@ class NgiQuoteUpdaterService
 
         // Update premium details if available
         if (isset($policyDocumentsResult->policy_premium_without_tax)) {
-            $updateData['price_vat_not_applicable'] = $policyDocumentsResult->policy_premium_without_tax;
+            $updateData['price_vat_applicable'] = $policyDocumentsResult->policy_premium_without_tax;
         }
 
         if (isset($policyDocumentsResult->policy_premium_tax)) {
@@ -68,10 +68,14 @@ class NgiQuoteUpdaterService
 
         if (isset($policyDocumentsResult->premium_inv_doc_url)) {
             $updateData['insurer_tax_invoice_doc_id'] = $policyDocumentsResult->premium_inv_doc_url;
+        } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
+            $updateData['insurer_tax_invoice_doc_id'] = $policyDocumentsResult?->policy_certificate_url;
         }
 
         if (isset($policyDocumentsResult->commision_inv_doc_url)) {
             $updateData['insurer_debit_note_doc_id'] = $policyDocumentsResult->commision_inv_doc_url;
+        } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
+            $updateData['insurer_debit_note_doc_id'] = $policyDocumentsResult?->policy_certificate_url;
         }
 
         if (! empty($updateData)) {
@@ -88,17 +92,37 @@ class NgiQuoteUpdaterService
      */
     public function updatePaymentFromPolicyDocumentsResponse(string $quoteCode, $policyDocumentsResult): void
     {
-        // TODO:: NGI:: need to confirm these mappings with Waris manually
+        // TODO:: NGI:: need to update payment split with exact code similar to payment
+
+        // mapped
+        // 'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
+        // 'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
+        // 'insurer_invoice_date' => $validatedData['invoice_date'],
+        // 'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
+        // 'commission_vat' => $validatedData['vat_on_commission'],
+        // 'commission' => $validatedData['total_commission'],
+
+        // ignore
+        // 'transaction_payment_status' => $validatedData['transaction_payment_status'],
+        // 'broker_invoice_number' => $validatedData['broker_invoice_number'],
+
+        // remaining
+        // 'commmission_percentage' => $validatedData['commission_percentage'],
+        // 'invoice_description' => $validatedData['invoice_description'],
+
+        // skip it
+        // 'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
+
         $updateData = [];
 
         // Commission details
 
-        if (isset($policyDocumentsResult->policy_commision_with_tax)) {
-            $updateData['commission_vat_applicable'] = $policyDocumentsResult->policy_commision_with_tax;
+        if (isset($policyDocumentsResult->policy_commision_without_tax)) {
+            $updateData['commission_vat_applicable'] = $policyDocumentsResult->policy_commision_without_tax;
         }
 
-        if (isset($policyDocumentsResult->policy_commision_without_tax)) {
-            $updateData['commission'] = $policyDocumentsResult->policy_commision_without_tax;
+        if (isset($policyDocumentsResult->policy_commision_with_tax)) {
+            $updateData['commission'] = $policyDocumentsResult->policy_commision_with_tax;
         }
 
         if (isset($policyDocumentsResult->policy_commision_tax)) {
@@ -115,14 +139,19 @@ class NgiQuoteUpdaterService
 
         if (isset($policyDocumentsResult->premium_inv_no)) { // required for book policy
             $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no;
+        } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
+            $updateData['insurer_tax_number'] = 'P/INV/NN100TS10344';
         }
 
         if (isset($policyDocumentsResult->commision_inv_no)) { // required for book policy
             $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no;
+        } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
+            $updateData['insurer_commmission_invoice_number'] = 'INV/NN100TS10344';
         }
 
         if (! empty($updateData)) {
             Payment::where('code', $quoteCode)->update($updateData);
+            PaymentSplits::where('code', $quoteCode)->update($updateData);
         }
     }
 }
