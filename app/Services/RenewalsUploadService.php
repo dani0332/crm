@@ -1680,14 +1680,12 @@ class RenewalsUploadService
         $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
         LoggerService::info($logPrefix.' Create Plan Started');
 
-        $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
-
         $leadValidationErrors = collect();
         $leadData = (object) $data;
-        $isGenesisLead = $this->isGenesisLead($leadData, $provider, $leadValidationErrors);
+        $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
 
         // If the lead is a Genesis lead, then use the GIG(AXA) insurance provider
-        $provider = $isGenesisLead['status'] ? $isGenesisLead['gigInsuranceProvider'] : $provider;
+        $provider = $isGenesisLead['insuranceProvider'];
 
         // This is added for production error where sometime user change the plan name or repair type after the batch upload
         if (! $provider) {
@@ -2268,9 +2266,8 @@ class RenewalsUploadService
                                     }
                                 }
 
-                                $insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->where('code', $leadData->insurer)->first();
                                 // check if the lead is a Genesis lead
-                                $isGenesisLead = $this->isGenesisLead($leadData, $insuranceProvider, $leadValidationErrors);
+                                $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
 
                                 // if the lead is a Genesis lead, then the Insurer Quote No is not required
                                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no && ! $isGenesisLead['status']) {
@@ -2286,9 +2283,9 @@ class RenewalsUploadService
                                 if (! empty($leadData->provider_name) && ! $leadData->plan_name) {
                                     $leadValidationErrors->push('Plan Name is required');
                                 }
-                                if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $insuranceProvider) {
+                                if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $isGenesisLead['insuranceProvider'] != null) {
                                     // if the lead is a Genesis lead then plan type and plan name validation done on isGenesisLead function
-                                    $carPlan = $isGenesisLead['status'] ? $isGenesisLead['carPlan'] : CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first();
+                                    $carPlan = $isGenesisLead['carPlan'];
                                     if (! $carPlan) {
                                         $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
                                     }
@@ -2302,7 +2299,7 @@ class RenewalsUploadService
                                     info('currentlyInsuredWith:'.$currentlyInsuredWith);
                                     $providerName = trim($leadData->provider_name ?? '');
                                     info('providerName:'.$providerName);
-                                    if ($currentlyInsuredWith !== '' && $providerName !== '' && strcasecmp($currentlyInsuredWith, $providerName) !== 0) {
+                                    if ($currentlyInsuredWith !== '' && $providerName !== '' && strcasecmp($currentlyInsuredWith, $providerName) !== 0 && !$isGenesisLead['status']) {
                                         $leadValidationErrors->push('Provider Name must match Currently Insured With');
                                     }
                                 }
@@ -3467,15 +3464,17 @@ class RenewalsUploadService
      * @param [type] $currentInsuranceProvider
      * @param [type] $leadValidationErrors
      */
-    private function isGenesisLead($leadData, $currentInsuranceProvider, &$leadValidationErrors): array
+    private function isGenesisLead($leadData, &$leadValidationErrors): array
     {
-        LoggerService::info('isGenesisLead - currentInsuranceProvider: '.$currentInsuranceProvider->code);
+        $currentInsuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->where('code', $leadData->insurer)->first();
+        LoggerService::info('isGenesisLead - currentInsuranceProvider: '.json_encode($currentInsuranceProvider));
         $status = false;
         $carPlan = null;
         $gigInsuranceProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
+        $insuranceProvider = $currentInsuranceProvider ?? $gigInsuranceProvider;
 
         // if current insurance provider is LIVA(RSA) then check if the plan is related to GIG(AXA)
-        if ($currentInsuranceProvider != null && $currentInsuranceProvider->code == InsuranceProvidersEnum::RSA && $gigInsuranceProvider) {
+        if ($currentInsuranceProvider == null && $leadData->insurer == InsuranceProvidersEnum::RSA && $gigInsuranceProvider) {
             // check if the plan is related to GIG(AXA)
             $isGigPlan = CarPlan::where('text', $leadData->plan_name)->where('repair_type', $leadData->plan_type)->where('provider_id', $gigInsuranceProvider->id)->first();
             if (! $isGigPlan) {
@@ -3484,12 +3483,17 @@ class RenewalsUploadService
             LoggerService::info('isGenesisLead - isGigPlan: '.($isGigPlan ? 'true' : 'false'));
             $status = $isGigPlan ? true : false;
             $carPlan = $isGigPlan ? $isGigPlan : null;
+        } else {
+            if($currentInsuranceProvider != null) {
+                $carPlan = CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $currentInsuranceProvider->id)->first();
+            }
         }
+
 
         LoggerService::info('fn: isGenesisLead - status: '.$status);
 
         // return the status
-        return ['status' => $status, 'carPlan' => $carPlan, 'gigInsuranceProvider' => $gigInsuranceProvider];
+        return ['status' => $status, 'carPlan' => $carPlan, 'insuranceProvider' => $insuranceProvider];
     }
 
 }
