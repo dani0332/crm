@@ -629,4 +629,8 @@ class CarQuote extends BaseModel
             ->with('payments');
     }
 
+    public function branch()
+    {
+        return $this->hasOne(Branch::class, 'id', 'branch_id');
+    }
 }

@@ -16,6 +16,7 @@ use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use App\Services\BranchAssignmentService;
 
 class PersonalQuotesExport implements CsvExportableInterface
 {
@@ -352,13 +353,15 @@ class PersonalQuotesExport implements CsvExportableInterface
 
     protected function getValues(string $quoteType, $quote): array
     {
+        $branchName = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypes::getIdFromValue($quoteType));
+        
         $baseFields = [
             'code' => $quote->code,
             'first_name' => $quote->first_name,
             'last_name' => $quote->last_name,
             'lead_status' => optional($quote->quoteStatus)->text,
             'advisor' => optional($quote->advisor)->name,
-            'branch' => $quote->advisor?->primaryBranch?->branch?->name,
+            'branch' => $branchName,
             'created_date' => date(config('constants.datetime_format'), strtotime($quote->created_at)),
             'advisor_assigned_date' => isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
             'last_modified_date' => date(config('constants.datetime_format'), strtotime($quote->updated_at)),

@@ -131,6 +131,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Services\BranchAssignmentService;
 
 class CRUDController extends Controller
 {
@@ -308,11 +309,7 @@ class CRUDController extends Controller
             });
 
             $gridData = $gridData->simplePaginate(10)->withQueryString();
-            $gridData->getCollection()->transform(function ($item) {
-                $item->branch_name = app(HealthQuoteService::class)->getBranchName($item->emirate_of_your_visa_id, $item->advisor?->primaryBranch?->branch?->name);
-
-                return $item;
-            });
+            $this->healthQuoteService->postProcessHealthQuotes($gridData);
 
             $quote_status = $dropdownSource['quote_status_id'];
             $emirates = Emirate::getOptions();
@@ -385,7 +382,8 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
-
+            $this->carQuoteService->postProcessCarQuotes($gridData);
+            
             $userMaxCap = 0;
             $todayAutoCount = 0;
             $todayManualCount = 0;
@@ -908,6 +906,7 @@ class CRUDController extends Controller
 
                 $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
                 $carTypeofInsurance = CarTypeInsurance::select('id', 'text')->find($record->car_type_insurance_id) ?? null;
+                $record->branch_name = $record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Car);
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -1250,12 +1249,12 @@ class CRUDController extends Controller
                 $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
                 $teams = $this->crudService->getUserTeams(Auth::user()->id);
 
-                $record->branch_name = $this->healthQuoteService->getBranchName($record->emirate_of_your_visa_id, $record->branch_name);
                 $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
                 $amlStatusName = AMLStatusCode::getName($record->aml_status);
                 $lead = $this->healthQuoteService->getLead($record->id);
                 $isAUHLead = $lead->isAUHLead(false);
                 $hasPecTag = $lead->has_pec_tag;
+                $record->branch_name = $record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id);
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,

@@ -21,6 +21,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -38,7 +40,7 @@ class SavingsQuoteService extends BaseQuoteService
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
-            'advisor.primaryBranch.branch:id,name',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
@@ -49,6 +51,7 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.tenure',
             'nationality',
             'subSource:id,text',
+            'branch:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -69,6 +72,15 @@ class SavingsQuoteService extends BaseQuoteService
         }
 
         return $query->resolveData($paginted, $forExport, $getTotalCount);
+    }
+
+    public function postProcessSavingsQuote($quotes)
+    {
+        return $quotes->map(function ($item) {
+            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Savings);
+
+            return $item;
+        });
     }
 
     public function getFormOptions()
@@ -141,6 +153,7 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.tenure',
             'subSource',
             'subSourceOption',
+            'branch:id,name',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -152,7 +165,7 @@ class SavingsQuoteService extends BaseQuoteService
                     'quoteStatus',
                     'currentlyInsuredWith',
                     'advisor',
-                    'advisor.primaryBranch.branch:id,name',
+                    'advisor.primaryBranch',
                     'paymentStatus',
                     'quoteDetail',
                     'quoteDetail.lostReason',
@@ -229,6 +242,7 @@ class SavingsQuoteService extends BaseQuoteService
     public function getShowData(string $uuid)
     {
         $quote = $this->getOne($uuid, true);
+        $quote->branch_name = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Savings);
         $data = $this->getShowCommonData($quote);
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::SAVINGS_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::SAVINGS) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));

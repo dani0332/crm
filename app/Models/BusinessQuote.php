@@ -343,4 +343,9 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
 }

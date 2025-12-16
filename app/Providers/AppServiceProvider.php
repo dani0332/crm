@@ -48,6 +48,7 @@ use App\Services\LeadsCountService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use App\Services\BranchAssignmentService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -65,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
         // Register new CSV export services
         $this->app->singleton(CsvExportService::class);
         $this->app->singleton(EmailExportService::class);
+
+        // Register Branch Assignment Service
+        $this->app->singleton(BranchAssignmentService::class);
     }
 
     /**

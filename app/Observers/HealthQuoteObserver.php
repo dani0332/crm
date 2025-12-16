@@ -28,6 +28,7 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\BranchAssignmentService;
 
 class HealthQuoteObserver
 {
@@ -109,8 +110,6 @@ class HealthQuoteObserver
             $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
         }
 
-        $this->syncQuote($healthQuote, $dirty);
-
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($healthQuote->uuid, QuoteTypeId::Health, $dirty);
@@ -120,7 +119,23 @@ class HealthQuoteObserver
                     'uuid' => $healthQuote->uuid,
                 ]);
             }
+
+            try {
+                HealthQuote::withoutEvents(function () use ($healthQuote, &$dirty) {
+                    $branch = app(BranchAssignmentService::class)->getBranch($healthQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $healthQuote->emirate_of_your_visa_id);
+                    $healthQuote->update([
+                        'branch_id' => $branch?->id,
+                    ]);
+                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                });
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - save branch data failed', [
+                    'uuid' => $healthQuote->uuid,
+                ], exception: $e);
+            }
         }
+
+        $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
             info("Quote status changed to {$healthQuote->quote_status_id} | Ref-ID: {$healthQuote->uuid} | Time: ".now());

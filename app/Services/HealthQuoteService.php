@@ -220,8 +220,8 @@ class HealthQuoteService extends BaseService
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
             'sso.description as sub_source_option_description',
-            'b.id as branch_id',
-            'b.name as branch_name',
+            'ub.branch_id as advisor_primary_branch_id',
+            'b.name as lead_branch_name',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -264,27 +264,12 @@ class HealthQuoteService extends BaseService
                     ->where('ub.is_primary', '=', 1)
                     ->where('ub.status', '=', 1);
             })
-            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id');
+            ->leftJoin('branches as b', 'b.id', '=', 'hqr.branch_id');
     }
 
     public function getEntity($id)
     {
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
-    }
-
-    public function getBranchName($emirateOfYourVisaId, $advisorBranchName): string
-    {
-        if (empty($emirateOfYourVisaId) || empty($advisorBranchName)) {
-            return '';
-        }
-
-        if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI || $advisorBranchName == 'Abu Dhabi') {
-            $branchName = 'Abu Dhabi';
-        } else {
-            $branchName = 'Dubai';
-        }
-
-        return $branchName;
     }
 
     public function getLead($id): HealthQuote
@@ -414,6 +399,15 @@ class HealthQuoteService extends BaseService
         $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
         return $query;
+    }
+
+    public function postProcessHealthQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = $quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id);
+
+            return $quote;
+        });
     }
 
     private function parseDate($date, $isStartOfDay)

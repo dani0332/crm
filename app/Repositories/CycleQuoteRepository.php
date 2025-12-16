@@ -16,6 +16,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class CycleQuoteRepository extends BaseRepository
 {
@@ -91,7 +93,7 @@ class CycleQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
-            'advisor.primaryBranch.branch:id,name',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
@@ -101,6 +103,7 @@ class CycleQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::CYCLE->id());
             },
             'customer',
+            'branch:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -168,7 +171,20 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        if (!$forTotalLeadsCount && !$forExport) {
+            $this->postProcessCycleQuote($result);
+        }
+
+        return $result;
+    }
+
+    private function postProcessCycleQuote($query)
+    {
+        return $query->map(function ($item) {
+            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Cycle);
+            return $item;
+        });
     }
 
     /**
@@ -279,7 +295,7 @@ class CycleQuoteRepository extends BaseRepository
                 'cycleQuote',
                 'cycleQuote.yearOfManufacture',
                 'advisor',
-                'advisor.primaryBranch.branch:id,name',
+                'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
@@ -313,6 +329,7 @@ class CycleQuoteRepository extends BaseRepository
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -332,6 +349,7 @@ class CycleQuoteRepository extends BaseRepository
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
         }
+        $quote->branch_name = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Cycle);
 
         return $quote;
     }

@@ -19,6 +19,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class BikeQuoteRepository extends BaseRepository
 {
@@ -159,7 +161,7 @@ class BikeQuoteRepository extends BaseRepository
                     $q->with(['uaeLicenseHeldFor', 'bikeQuoteRequestDetail', 'backHomeLicenseHeldFor', 'bikeMake', 'bikeModel', 'carTypeInsurance', 'claimHistory', 'emirates']);
                 },
                 'advisor',
-                'advisor.primaryBranch.branch:id,name',
+                'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
@@ -199,6 +201,7 @@ class BikeQuoteRepository extends BaseRepository
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -220,6 +223,8 @@ class BikeQuoteRepository extends BaseRepository
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
         }
 
+        $quote->branch_name = $quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Bike);
+
         return $quote;
     }
 
@@ -240,7 +245,7 @@ class BikeQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
-            'advisor.primaryBranch.branch:id,name',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'renewalBatchModel',
@@ -249,6 +254,7 @@ class BikeQuoteRepository extends BaseRepository
             },
             'customer',
             'subSource',
+            'branch:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -299,6 +305,14 @@ class BikeQuoteRepository extends BaseRepository
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         return $query;
+    }
+
+    public function fetchPostProcessBikeQuote($quotes)
+    {
+        return $quotes->map(function ($item) {
+            $item->branch_name = $item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Bike);
+            return $item;
+        });
     }
 
     /**

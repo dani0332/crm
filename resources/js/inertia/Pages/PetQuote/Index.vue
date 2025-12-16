@@ -115,7 +115,7 @@ const tableHeader = ref([
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'BRANCH',
-    value: 'advisor.primary_branch.branch.name',
+    value: 'branch_name',
     is_active: true,
   },
   {

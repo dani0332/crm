@@ -129,7 +129,7 @@ const tableHeader = [
   { text: 'AML Status', value: 'aml_status' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_text' },
   { text: 'ADVISOR', value: 'advisor.name' },
-  { text: 'BRANCH', value: 'advisor.primary_branch.branch.name' },
+  { text: 'BRANCH', value: 'branch_name' },
   {
     text: 'ADVISOR REQUESTED',
     value: 'sic_advisor_requested',

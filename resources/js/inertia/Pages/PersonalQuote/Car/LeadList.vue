@@ -99,7 +99,7 @@ const tableHeader = [
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
   { text: 'ADVISOR', value: 'advisor.name' },
-  { text: 'BRANCH', value: 'advisor.primary_branch.branch.name' },
+  { text: 'BRANCH', value: 'branch_name' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },

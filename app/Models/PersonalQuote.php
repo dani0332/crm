@@ -594,4 +594,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Lookup::class, 'sub_source_options_id');
     }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
 }

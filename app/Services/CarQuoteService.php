@@ -584,7 +584,8 @@ class CarQuoteService extends BaseService
                 'ss.description as sub_source_description',
                 'sso.text as sub_source_option_text',
                 'sso.description as sub_source_option_description',
-                'b.name as branch_name',
+                'ub.branch_id as advisor_primary_branch_id',
+                'b.name as lead_branch_name',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -639,7 +640,7 @@ class CarQuoteService extends BaseService
                     ->where('ub.is_primary', '=', 1)
                     ->where('ub.status', '=', 1);
             })
-            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id')
+            ->leftJoin('branches as b', 'b.id', '=', 'cqr.branch_id')
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
             ->first();
@@ -1074,6 +1075,15 @@ class CarQuoteService extends BaseService
                     $query->where('advisor_id', $user->id);
                 }
             });
+    }
+
+    public function postProcessCarQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = $quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+
+            return $quote;
+        });
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
