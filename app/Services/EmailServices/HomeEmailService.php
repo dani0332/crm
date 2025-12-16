@@ -278,7 +278,7 @@ class HomeEmailService extends BaseService
             Storage::disk('azureIMPrivate')->put($tempFilePath, $pdfContent);
 
             // Generate a public URL using generic method
-            $publicUrl = app(QuoteDocumentService::class)->getDocumentUrl(
+            $url = app(QuoteDocumentService::class)->getDocumentUrl(
                 $tempFilePath,
                 'azureIMPrivate',
                 $pdfExpiry
