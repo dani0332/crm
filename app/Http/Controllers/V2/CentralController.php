@@ -346,6 +346,16 @@ class CentralController extends Controller
 
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
+            if(!$response['status']) {
+                return response()->json([
+                    'errors' => [
+                        'message' => [
+                            $response['message']
+                        ],
+                    ]
+                ], 422);
+            }
+
             return response()->json(['message' => $response['message']], 200);
         }
     }

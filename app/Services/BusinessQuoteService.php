@@ -143,7 +143,8 @@ class BusinessQuoteService extends BaseService
                         WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                         ELSE insurer_aml_status
                     END AS insurer_aml_status_display
-                ')
+                '),
+                'b.name as branch_name',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -172,7 +173,13 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
             // Sub-source lookup joins
             ->leftJoin('lookups as ss', 'ss.id', '=', 'bqr.sub_source_id')
-            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id');
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'bqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id');
     }
 
     public function getEntity($id)

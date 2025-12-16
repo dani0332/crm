@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use App\Models\UserBranch;
+use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\DB;
+use App\Enums\QuoteTypeId;
+
+class BranchAssignmentService extends BaseService
+{
+    public function getGridData($request)
+    {
+        $dataset = UserBranch::with('user', 'user.usersroles', 'branch')
+        ->whereHas('user', function ($query) {
+            $query->whereHas('usersroles', function ($query) {
+                $query->where('name', 'like', '%advisor%');
+            });
+        })
+        ->when(! empty($request['advisors']), function ($query) use ($request) {
+            $query->whereIn('user_id', $request['advisors']);
+        })
+        ->when(! empty($request['primary_branch']), function ($query) use ($request) {
+            $query->where('branch_id', $request['primary_branch'])
+                ->where('is_primary', 1);
+        })
+        ->where('status', 1)
+        ->paginate();
+
+        $dataset->map(function ($item) {
+
+            $item->roles = $item->user->usersroles
+                ->pluck('name')
+                ->implode(', ');
+
+            return $item;
+        });
+
+        return $dataset;
+    }
+
+    public function disableAssignment($userId, $branchId)
+    {
+        $userBranch = UserBranch::where('user_id', $userId)
+            ->where('branch_id', $branchId)
+            ->where('status', 1)
+            ->first();
+
+        if ($userBranch) {
+            $userBranch->status = 0;
+            $userBranch->effective_to = now();
+            $userBranch->save();
+
+            return $userBranch;
+        }
+
+        return false;
+    }
+
+    public function makePrimary($userId, $branchId)
+    {
+        DB::beginTransaction();
+        try {
+            $currentPrimary = UserBranch::where('user_id', $userId)
+                ->where('is_primary', 1)
+                ->where('status', 1)
+                ->first();
+
+            $newPrimary = UserBranch::where('user_id', $userId)
+                ->where('branch_id', $branchId)
+                ->where('status', 1)
+                ->first();
+
+            $currentPrimary->is_primary = 0;
+            $currentPrimary->save();
+            $newPrimary->is_primary = 1;
+            $newPrimary->save();
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LoggerService::warning('Failed to make primary branch for user '.$userId.' and branch '.$branchId.' - Error: '.$e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Validates branch assignment for a given quote
+     *
+     * @param  mixed  $quote  The quote object to validate
+     * @param  QuoteTypeId  $quoteTypeId  The type of quote
+     * @return bool Returns false if validation fails, true otherwise
+     */
+    public function hasBranchAssignment($quote, $quoteTypeId): bool
+    {
+        $hasBranch = $quoteTypeId == QuoteTypeId::Health
+            ? ($quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null)
+            : $quote->advisor?->primaryBranch()->exists();
+
+        if (!$hasBranch) {
+            LoggerService::warning('Branch missing for quote: ' . $quote->code);
+            return false;
+        }
+
+        return true;
+    }
+
+    public function createAssignment($user, $data)
+    {
+        $assignment = $user->userBranches()->create($data);
+        if (! $assignment) {
+            return false;
+        }
+
+        $assignment->assignment_id = "BA" . str_pad($assignment->id, 3, '0', STR_PAD_LEFT);
+        $assignment->save();
+
+        return $assignment;
+    }
+
+    public function getAssignedUsers()
+    {
+        $assignments = UserBranch::select('user_id')
+            ->where('status', 1)
+            ->groupBy('user_id')
+            ->pluck('user_id')
+            ->toArray();
+
+        return $assignments;
+    }
+}

@@ -159,6 +159,7 @@ class BikeQuoteRepository extends BaseRepository
                     $q->with(['uaeLicenseHeldFor', 'bikeQuoteRequestDetail', 'backHomeLicenseHeldFor', 'bikeMake', 'bikeModel', 'carTypeInsurance', 'claimHistory', 'emirates']);
                 },
                 'advisor',
+                'advisor.primaryBranch.branch:id,name',
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
@@ -239,6 +240,7 @@ class BikeQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch.branch:id,name',
             'paymentStatus',
             'payments',
             'renewalBatchModel',

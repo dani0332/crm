@@ -134,6 +134,7 @@ class YachtQuoteRepository extends BaseRepository
             ->with([
                 'yachtQuote',
                 'advisor',
+                'advisor.primaryBranch.branch:id,name',
                 'transactionType',
                 'nationality',
                 'quoteDetail.lostReason',
@@ -200,6 +201,7 @@ class YachtQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch.branch:id,name',
             'paymentStatus',
             'payments',
             'quoteDetail',

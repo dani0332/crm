@@ -6,6 +6,7 @@ use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadAssignmentTriggerEnum;
@@ -219,6 +220,8 @@ class HealthQuoteService extends BaseService
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
             'sso.description as sub_source_option_description',
+            'b.id as branch_id',
+            'b.name as branch_name',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -255,12 +258,33 @@ class HealthQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id');
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'hqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id');
     }
 
     public function getEntity($id)
     {
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
+    }
+
+    public function getBranchName($emirateOfYourVisaId, $advisorBranchName): string
+    {
+        if (empty($emirateOfYourVisaId) || empty($advisorBranchName)) {
+            return '';
+        }
+
+        if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI || $advisorBranchName == 'Abu Dhabi') {
+            $branchName = 'Abu Dhabi';
+        } else {
+            $branchName = 'Dubai';
+        }
+
+        return $branchName;
     }
 
     public function getLead($id): HealthQuote

@@ -584,6 +584,7 @@ class CarQuoteService extends BaseService
                 'ss.description as sub_source_description',
                 'sso.text as sub_source_option_text',
                 'sso.description as sub_source_option_description',
+                'b.name as branch_name',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -633,6 +634,12 @@ class CarQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'cqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id')
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
             ->first();

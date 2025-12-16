@@ -97,6 +97,7 @@ const tableHeader = ref([
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
+  { text: 'BRANCH', value: 'branch_name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   {
     text: 'ADVISOR REQUESTED',

@@ -200,6 +200,7 @@ class TravelQuoteService extends BaseService
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
             'sso.description as sub_source_option_description',
+            'b.name as branch_name',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -232,7 +233,13 @@ class TravelQuoteService extends BaseService
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
             ->leftJoin('lookups as ss', 'ss.id', '=', 'tqr.sub_source_id')
-            ->leftJoin('lookups as sso', 'sso.id', '=', 'tqr.sub_source_options_id');
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'tqr.sub_source_options_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'tqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'ub.branch_id');
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
