@@ -31,8 +31,30 @@ class OcrDocumentRetryService
      */
     public function retryCarDocuments(Carbon $startDate, Carbon $endDate): array
     {
-        $documentTypeCodes = collect(OCRDocumentTypeEnum::cases())
+        /** Intially Put this */
+        /*$documentTypeCodes = collect(OCRDocumentTypeEnum::cases())
             ->map(static fn (OCRDocumentTypeEnum $enum) => $enum->value)
+            ->all();*/
+
+        /** THen cursor commented below
+         *
+         * Bug: Wrong document type codes used for filtering
+         * The code uses OCRDocumentTypeEnum values (like 'IDC', 'RC', 'PC', 'MPS') to filter documents via
+         * whereIn('document_type_code', $documentTypeCodes). However, the database stores DocumentType codes like
+         * 'CEID', 'CAR_MULKIY', 'CPC', 'CPS' in the document_type_code column,
+         * as evidenced by DocumentTypeCode enum and usage in CarMissingDocReminderJob.
+         * This mismatch will cause the query to miss most OCR-eligible documents since only 'DL' and 'TI' overlap between the two code sets.
+         *  */
+
+
+        /** So updated to this haven't verfied if its correct business-wise or not*/
+        $documentTypeCodes = DocumentType::query()
+            ->active()
+            ->byQuoteTypeId(QuoteTypes::CAR->id())
+            ->get()
+            ->filter(fn (DocumentType $documentType) => OCRDocumentTypeEnum::getDocumentType($documentType) !== null)
+            ->pluck('code')
+            ->values()
             ->all();
 
         $start = $startDate->copy()->startOfDay();
