@@ -48,7 +48,7 @@ class RetryOcrDocumentsCommand extends Command
         }
 
         $this->info(sprintf(
-            'Dispatching OCR retry jobs for car documents from %s to %s%s',
+            'Dispatching OCR retry jobs for car documents from %s to %s',
             $startDate->toDateString(),
             $endDate->toDateString()
         ));
