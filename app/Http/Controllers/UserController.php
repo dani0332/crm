@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\EnvEnum;
-use App\Enums\OCRDocumentTypeEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -12,7 +10,6 @@ use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Http\Requests\InslyAdvisorRequest;
 use App\Models\BusinessTypeOfInsurance;
-use App\Models\CarQuote;
 use App\Models\InslyAdvisor;
 use App\Models\Team;
 use App\Models\User;
