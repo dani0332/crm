@@ -29,7 +29,7 @@ class NgiQuoteUpdaterService
             'policy_expiry_date' => $createPolicyResult?->policy_end_dt
                 ? Carbon::parse($createPolicyResult->policy_end_dt)->format('Y-m-d')
                 : $quote->policy_expiry_date,
-            'price_vat_applicable' => $createPolicyResult?->policy_premium ?? $quote->price_vat_applicable,
+            'price_vat_applicable' => $createPolicyResult?->policy_premium ?? $quote->price_vat_applicable, // TODO:: NGI:: need to discuss and confirm this with Waris and Rucha
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),
@@ -88,10 +88,11 @@ class NgiQuoteUpdaterService
      */
     public function updatePaymentFromPolicyDocumentsResponse(string $quoteCode, $policyDocumentsResult): void
     {
-        // TODO:: NGI:: missing from FRD ask and map it according to FRD
+        // TODO:: NGI:: need to confirm these mappings with Waris manually
         $updateData = [];
 
         // Commission details
+
         if (isset($policyDocumentsResult->policy_commision_with_tax)) {
             $updateData['commission_vat_applicable'] = $policyDocumentsResult->policy_commision_with_tax;
         }
@@ -105,15 +106,18 @@ class NgiQuoteUpdaterService
         }
 
         // Invoice details
-        if (isset($policyDocumentsResult->premium_inv_no)) {
-            $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no;
-        }
 
         if (isset($policyDocumentsResult->premium_inv_dt)) {
             $updateData['insurer_invoice_date'] = Carbon::parse($policyDocumentsResult->premium_inv_dt)->format('Y-m-d');
         }
 
-        if (isset($policyDocumentsResult->commision_inv_no)) {
+        // TODO:: NGI:: premium_inv_no & commision_inv_no are required for book policy while missed from provider in case of missing payment_refrence in issue policy API call and if we pass API does not respond at all
+
+        if (isset($policyDocumentsResult->premium_inv_no)) { // required for book policy
+            $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no;
+        }
+
+        if (isset($policyDocumentsResult->commision_inv_no)) { // required for book policy
             $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no;
         }
 

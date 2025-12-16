@@ -13,6 +13,7 @@ use App\Services\QuoteDocumentService;
 class NgiDocumentHandler
 {
     private const ALLOWED_DOCUMENT_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+    private const ERROR_MESSAGE_DOCUMENT_FETCH_FAILED = 'Document fetch failed';
 
     public function __construct(
         private NgiHttpClient $httpClient,
@@ -26,30 +27,30 @@ class NgiDocumentHandler
      */
     public function fetchDocumentFromUrl(string $documentUrl): array
     {
+        $result = ['status' => false, 'message' => ''];
+
         try {
             $response = $this->httpClient->downloadDocument($documentUrl);
 
             if ($response->failed()) {
-                $message = 'Failed to download document from URL';
-                LoggerService::error('Document fetch failed', extra: [
+                $result['message'] = 'Failed to download document from URL';
+                LoggerService::error(self::ERROR_MESSAGE_DOCUMENT_FETCH_FAILED, extra: [
                     'url' => $documentUrl,
                     'status_code' => $response->status(),
-                    'error' => $message,
+                    'error' => $result['message'],
                 ]);
-
-                return ['status' => false, 'message' => $message];
+                return $result;
             }
 
             $fileContent = $response->body();
 
             if (empty($fileContent)) {
-                $message = 'Invalid or empty document content';
-                LoggerService::error('Document fetch failed', extra: [
+                $result['message'] = 'Invalid or empty document content';
+                LoggerService::error(self::ERROR_MESSAGE_DOCUMENT_FETCH_FAILED, extra: [
                     'url' => $documentUrl,
-                    'error' => $message,
+                    'error' => $result['message'],
                 ]);
-
-                return ['status' => false, 'message' => $message];
+                return $result;
             }
 
             return ['status' => true, 'content' => $fileContent];
@@ -58,7 +59,8 @@ class NgiDocumentHandler
                 'url' => $documentUrl,
             ], exception: $e);
 
-            return ['status' => false, 'message' => $e->getMessage()];
+            $result['message'] = $e->getMessage();
+            return $result;
         }
     }
 
@@ -75,7 +77,7 @@ class NgiDocumentHandler
 
         if ($fileContent === false || $fileContent === '') {
             $message = 'Invalid or empty document content';
-            LoggerService::error('Document fetch failed', extra: [
+            LoggerService::error(self::ERROR_MESSAGE_DOCUMENT_FETCH_FAILED, extra: [
                 'file_path' => $filePath,
                 'relative_path' => $relativePath,
                 'error' => $message,

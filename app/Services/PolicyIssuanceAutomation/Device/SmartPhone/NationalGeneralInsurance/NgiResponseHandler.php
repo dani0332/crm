@@ -89,21 +89,21 @@ class NgiResponseHandler
      */
     private function hasApiErrors($responseObject): bool
     {
+        $hasErrors = false;
+
         if ($responseObject === null) {
-            return true;
+            $hasErrors = true;
         }
 
-        // NGI uses isSuccess boolean field
         if (isset($responseObject->isSuccess) && $responseObject->isSuccess === false) {
-            return true;
+            $hasErrors = true;
         }
 
-        // Check for error code
         if (isset($responseObject->errorCode) && ! empty($responseObject->errorCode)) {
-            return true;
+            $hasErrors = true;
         }
 
-        return false;
+        return $hasErrors;
     }
 
     /**
@@ -115,18 +115,20 @@ class NgiResponseHandler
      */
     private function extractErrorMessage($responseObject, string $apiKey): string
     {
+        $errorMessage = $apiKey . ' ' . self::API_FAILED;
+
         if (isset($responseObject?->statusMessage) && ! empty($responseObject->statusMessage)) {
-            return $responseObject->statusMessage;
+            $errorMessage = $responseObject->statusMessage;
         }
 
         if (isset($responseObject?->errorCode) && ! empty($responseObject->errorCode)) {
-            return $responseObject->errorCode;
+            $errorMessage = $responseObject->errorCode;
         }
 
         if (isset($responseObject?->message)) {
-            return $responseObject->message;
+            $errorMessage = $responseObject->message;
         }
 
-        return $apiKey . ' ' . self::API_FAILED;
+        return $errorMessage;
     }
 }

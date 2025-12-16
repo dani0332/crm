@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\Validator;
 
 class NgiValidationService
 {
-    public function __construct(
-        private NgiDocumentHandler $documentHandler,
-    ) {}
+    public function __construct() {}
 
     /**
      * Validate book policy prerequisites
@@ -153,7 +151,7 @@ class NgiValidationService
      * @param array $documentUrls
      * @return array
      */
-    public function validateDownloadDocuments($quote, array $documentUrls): array
+    public function validateDownloadDocuments(array $documentUrls): array
     {
         $missingDocs = array_keys(array_filter($documentUrls, fn($url) => $url === null || empty($url)));
 

@@ -7,7 +7,6 @@ namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGenera
 use App\Enums\NgiEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\PolicyIssuanceEnum;
-use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
@@ -118,7 +117,7 @@ class NgiStepExecutor
             'policy_number' => $quote->policy_number,
         ]);
 
-        $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process, $customer, $deviceQuote, $latestInsured);
+        $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process);
 
         if (! $triggerBookPolicyResponse['status']) {
             LoggerService::error('Book policy failed', extra: [

@@ -37,16 +37,13 @@ class NgiServiceProvider extends ServiceProvider
         });
 
         App::bind(NgiValidationService::class, function ($app) {
-            return new NgiValidationService(
-                $app->make(NgiDocumentHandler::class)
-            );
+            return new NgiValidationService();
         });
 
         App::bind(NgiApiService::class, function ($app) {
             return new NgiApiService(
                 $app->make(NgiRequestBuilder::class),
                 $app->make(NgiResponseHandler::class),
-                $app->make(NgiDocumentHandler::class),
                 $app->make(NgiQuoteUpdaterService::class),
                 $app->make(NgiValidationService::class)
             );

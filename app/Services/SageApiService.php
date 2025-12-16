@@ -3516,7 +3516,7 @@ class SageApiService
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
-            $quoteData['stale_at'] = null;
+            $quoteData['stale_at'] = null; // TODO:: NGI:: need to ask ali or bilal about stale_at should we pass device here in above in_array condition ?
         }
         if ($newQuoteStatusId == QuoteStatusEnum::PolicyBooked) {
             $quoteData['policy_booking_date'] = Carbon::now();

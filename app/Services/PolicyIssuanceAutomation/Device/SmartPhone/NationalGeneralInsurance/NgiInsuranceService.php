@@ -8,8 +8,10 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -127,6 +129,8 @@ class NgiInsuranceService implements PolicyIssuanceInterface
      */
     public function executeSteps($process)
     {
+        $response = ['status' => false, 'error' => null, 'message' => null];
+
         if (! $this->isPolicyIssuanceAutomationEnabled()) {
             LoggerService::warning('Automation is disabled', extra: [
                 'process_id' => $process->id ?? null,
@@ -134,65 +138,60 @@ class NgiInsuranceService implements PolicyIssuanceInterface
             ]);
             $response['error'] = 'NGI Smartphone Automation is disabled';
             $response['message'] = 'NGI Smartphone Automation is disabled';
+        } else {
+            $quote = $process->model;
 
-            return $response;
-        }
-
-        $response = ['status' => false, 'error' => null, 'message' => null];
-
-        $quote = $process->model;
-
-        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::NGI_SMARTPHONE_POLICY_AUTOMATION);
-        LoggerService::info('Execution started for Device/Smartphone', extra: [
-            'process_id' => $process->id,
-            'plan_id' => $quote->plan_id,
-            'insurer_quote_number' => $quote->insurer_quote_number,
-            'current_status' => $process->status,
-            'completed_step' => $process->completed_step,
-        ]);
-
-        try {
-            $customer = $quote->customer ?? null;
-            $deviceQuote = $quote->deviceQuote ?? null;
-            $latestInsured = $quote?->latestInsured ?? null;
-            $validationResult = $this->validationService->validateRequiredData($quote, $customer, $deviceQuote, $latestInsured);
-            if (! $validationResult['status']) {
-                return $validationResult;
-            }
-
-            $lastCompletedStep = $process->completed_step;
-            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : $this->getAPISteps()[0];
-
-            LoggerService::info('Starting step sequence execution', extra: [
+            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::NGI_SMARTPHONE_POLICY_AUTOMATION);
+            LoggerService::info('Execution started for Device/Smartphone', extra: [
                 'process_id' => $process->id,
-                'last_completed_step' => $lastCompletedStep,
-                'next_step' => $nextStepToBeExecuted,
+                'plan_id' => $quote->plan_id,
+                'insurer_quote_number' => $quote->insurer_quote_number,
+                'current_status' => $process->status,
+                'completed_step' => $process->completed_step,
             ]);
 
-            $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted, $customer, $deviceQuote, $latestInsured);
-            if (isset($executeStepSequence['documents_pending']) && $executeStepSequence['documents_pending']) {
-                $response['documents_pending'] = $executeStepSequence['documents_pending'];
+            try {
+                $customer = $quote->customer ?? null;
+                $deviceQuote = $quote->deviceQuote ?? null;
+                $latestInsured = $quote?->latestInsured ?? null;
+                $validationResult = $this->validationService->validateRequiredData($quote, $customer, $deviceQuote, $latestInsured);
+
+                if ($validationResult['status']) {
+                    $lastCompletedStep = $process->completed_step;
+                    $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : $this->getAPISteps()[0];
+
+                    LoggerService::info('Starting step sequence execution', extra: [
+                        'process_id' => $process->id,
+                        'last_completed_step' => $lastCompletedStep,
+                        'next_step' => $nextStepToBeExecuted,
+                    ]);
+
+                    $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted, $customer, $deviceQuote, $latestInsured);
+                    if (isset($executeStepSequence['documents_pending']) && $executeStepSequence['documents_pending']) {
+                        $response['documents_pending'] = $executeStepSequence['documents_pending'];
+                    }
+                    $response['status'] = $executeStepSequence['status'];
+                    $response['message'] = $executeStepSequence['message'];
+                    $response['error'] = $executeStepSequence['error'];
+                } else {
+                    $response = $validationResult;
+                }
+            } catch (Exception $e) {
+                $response['error'] = $e->getMessage();
+                LoggerService::error('Exception occurred during execution', extra: [
+                    'process_id' => $process->id,
+                    'quote_id' => $quote->id,
+                    'quote_type' => QuoteTypes::DEVICE->value,
+                    'quote_code' => $quote->code,
+                ], exception: $e);
             }
-            $response['status'] = $executeStepSequence['status'];
-            $response['message'] = $executeStepSequence['message'];
-            $response['error'] = $executeStepSequence['error'];
-        } catch (Exception $e) {
-            $response['error'] = $e->getMessage();
-            LoggerService::error('Exception occurred during execution', extra: [
+
+            LoggerService::info('Execution completed', extra: [
                 'process_id' => $process->id,
-                'quote_id' => $quote->id,
-                'quote_type' => QuoteTypes::DEVICE->value,
-                'quote_code' => $quote->code,
-            ], exception: $e);
-
-            return $response;
+                'final_status' => $response['status'],
+                'message' => $response['message'],
+            ]);
         }
-
-        LoggerService::info('Execution completed', extra: [
-            'process_id' => $process->id,
-            'final_status' => $response['status'],
-            'message' => $response['message'],
-        ]);
 
         return $response;
     }
@@ -210,6 +209,12 @@ class NgiInsuranceService implements PolicyIssuanceInterface
         $currentStep = $nextStepToBeExecuted;
         $allSteps = $this->getAPISteps();
         $stepsExecuted = [];
+        $result = [
+            'status' => true,
+            'message' => 'All policy issuance steps completed successfully',
+            'completed_step' => null,
+            'error' => null,
+        ];
 
         while ($currentStep !== null) {
             if (! in_array($currentStep, $allSteps, true)) {
@@ -220,8 +225,8 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                     'valid_steps' => $allSteps,
                     'steps_executed' => $stepsExecuted,
                 ]);
-
-                return $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                $result = $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                break;
             }
 
             $handler = $this->getStepHandler($currentStep);
@@ -233,8 +238,8 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                     'expected_handler' => $handler,
                     'steps_executed' => $stepsExecuted,
                 ]);
-
-                return $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                $result = $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                break;
             }
 
             LoggerService::info('Executing step', extra: [
@@ -252,14 +257,14 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                     'current_step' => $currentStep,
                     'steps_executed' => $stepsExecuted,
                 ]);
-
-                return [
+                $result = [
                     'status' => true,
                     'documents_pending' => true,
                     'message' => $response['message'] ?? 'Document retrieval job dispatched',
                     'completed_step' => $response['completed_step'] ?? $currentStep,
                     'error' => null,
                 ];
+                break;
             }
 
             if (isset($response['status']) && ! $response['status']) {
@@ -269,25 +274,24 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                     'steps_executed' => $stepsExecuted,
                     'error' => $response['error'] ?? NgiEnum::UNKNOWN_ERROR,
                 ]);
-                return $response;
+                $result = $response;
+                break;
             }
 
             $this->updateProcessWithStep($process, $response);
             $currentStep = $this->getNextStep($process->completed_step);
         }
 
-        LoggerService::info('All steps completed successfully', extra: [
-            'process_id' => $process->id,
-            'steps_executed' => $stepsExecuted,
-            'total_steps' => count($stepsExecuted),
-        ]);
+        if ($result['status'] && !isset($result['documents_pending'])) {
+            LoggerService::info('All steps completed successfully', extra: [
+                'process_id' => $process->id,
+                'steps_executed' => $stepsExecuted,
+                'total_steps' => count($stepsExecuted),
+            ]);
+            $result['completed_step'] = $currentStep;
+        }
 
-        return [
-            'status' => true,
-            'message' => 'All policy issuance steps completed successfully',
-            'completed_step' => $currentStep,
-            'error' => null,
-        ];
+        return $result;
     }
 
     /**
@@ -299,39 +303,34 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     public function getNextStep($completedStep = null): ?string
     {
         $allSteps = $this->getAPISteps();
+        $nextStep = null;
 
         if (! $completedStep) {
             $nextStep = $allSteps[0];
             LoggerService::info('No previous step, starting from beginning', extra: [
                 'next_step' => $nextStep,
             ]);
-
-            return $nextStep;
+        } else {
+            $completedStepIndex = array_search($completedStep, $allSteps);
+            if ($completedStepIndex === false) {
+                LoggerService::warning('Completed step not found in valid steps', extra: [
+                    'completed_step' => $completedStep,
+                    'valid_steps' => $allSteps,
+                ]);
+                $nextStep = null;
+            } elseif ($completedStepIndex === count($allSteps) - 1) {
+                LoggerService::info('All steps completed', extra: [
+                    'last_completed_step' => $completedStep,
+                ]);
+                $nextStep = null;
+            } else {
+                $nextStep = $allSteps[$completedStepIndex + 1];
+                LoggerService::info('Next step determined', extra: [
+                    'completed_step' => $completedStep,
+                    'next_step' => $nextStep,
+                ]);
+            }
         }
-
-        $completedStepIndex = array_search($completedStep, $allSteps);
-        if ($completedStepIndex === false) {
-            LoggerService::warning('Completed step not found in valid steps', extra: [
-                'completed_step' => $completedStep,
-                'valid_steps' => $allSteps,
-            ]);
-
-            return null;
-        }
-
-        if ($completedStepIndex === count($allSteps) - 1) {
-            LoggerService::info('All steps completed', extra: [
-                'last_completed_step' => $completedStep,
-            ]);
-
-            return null;
-        }
-
-        $nextStep = $allSteps[$completedStepIndex + 1];
-        LoggerService::info('Next step determined', extra: [
-            'completed_step' => $completedStep,
-            'next_step' => $nextStep,
-        ]);
 
         return $nextStep;
     }
@@ -347,4 +346,186 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     {
         return $this->bookPolicyService->getStepsLockingStatus($quote, $throughAutomation);
     }
+
+    /**
+     * Get insurer API status by step (required for markPolicyIssuanceFailed)
+     *
+     * @param mixed $policyIssuance
+     * @return int|null
+     */
+    public function getInsurerAPIStatusByStep($policyIssuance): ?int
+    {
+        $lastCompletedStep = $policyIssuance->completed_step;
+        $step = $this->getNextStep($lastCompletedStep);
+
+        $insurerApiStatus = [
+            NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE => PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
+            NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM => PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
+            NgiEnum::STEP_BOOK_POLICY => PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID,
+        ];
+
+        return $insurerApiStatus[$step] ?? null;
+    }
+
+    /**
+     * Update quote API issuance status and allocate lead
+     * Called by SageApiService after book policy completes
+     *
+     * @param mixed $quote
+     * @param int|null $newInsurerApiStatus
+     * @param int|null $newApiIssuanceStatus
+     * @return void
+     */
+    public function updateQuoteApiIssuanceStatusAndAllocate($quote, $newInsurerApiStatus = null, $newApiIssuanceStatus = null): void
+    {
+        // TODO:: NGI:: need to confirm this function with Bilal we might need some changes in this function or sub function calls made from here written in this file.
+        LoggerService::info('Starting updateQuoteApiIssuanceStatusAndAllocate for Device/Smartphone', extra: [
+            'quote_code' => $quote->code,
+        ]);
+
+        $policyIssuanceAutomation = $quote->policyIssuance;
+        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+        $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
+
+        $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
+        $insurerApiStatus = $quote?->insurer_api_status;
+        $apiIssuanceStatus = $quote?->api_issuance_status;
+
+        $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
+
+        LoggerService::info('Current status check', extra: [
+            'quote_code' => $quote->code,
+            'isInsurerApiStatusAlreadyFailed' => $isInsurerApiStatusAlreadyFailed,
+        ]);
+
+        // If Quote API issuance status is not already set, then set insurer api and api issuance status
+        if (! $apiIssuanceStatus) {
+            if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
+                $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+            } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
+                if (! $insurerApiStatus) {
+                    $newInsurerApiStatus = PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+                }
+                $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
+            }
+        }
+
+        LoggerService::info('Status determination complete', extra: [
+            'quote_code' => $quote->code,
+            'insurerApiStatus' => $insurerApiStatus,
+            'apiIssuanceStatus' => $apiIssuanceStatus,
+            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
+            'isPolicyBooked' => $isPolicyBooked,
+            'isPolicyBookingFailed' => $isPolicyBookingFailed,
+            'newInsurerApiStatus' => $newInsurerApiStatus,
+            'newApiIssuanceStatus' => $newApiIssuanceStatus,
+        ]);
+
+        // Update statuses
+        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
+        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+
+        // Allocate lead and send notifications
+        $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
+
+        LoggerService::info('updateQuoteApiIssuanceStatusAndAllocate completed', extra: [
+            'quote_code' => $quote->code,
+        ]);
+    }
+
+    /**
+     * Update quote insurer API status
+     *
+     * @param mixed $quote
+     * @param int|null $newInsurerApiStatus
+     * @return void
+     */
+    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus): void
+    {
+        LoggerService::info('Updating quote insurer API status', extra: [
+            'quote_code' => $quote->code,
+            'new_status' => $newInsurerApiStatus,
+        ]);
+
+        if ($newInsurerApiStatus) {
+            $quote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
+        }
+    }
+
+    /**
+     * Update quote API issuance status
+     *
+     * @param mixed $quote
+     * @param int|null $newApiIssuanceStatus
+     * @return void
+     */
+    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus): void
+    {
+        LoggerService::info('Updating quote API issuance status', extra: [
+            'quote_code' => $quote->code,
+            'new_status' => $newApiIssuanceStatus,
+        ]);
+
+        if ($newApiIssuanceStatus) {
+            $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
+        }
+    }
+
+    /**
+     * Allocate lead and send notifications after policy booking
+     *
+     * @param mixed $quote
+     * @param bool $isInsurerApiStatusAlreadyFailed
+     * @return void
+     */
+    private function allocateLead($quote, $isInsurerApiStatusAlreadyFailed): void
+    {
+        LoggerService::info('Allocating lead for Device/Smartphone', extra: [
+            'quote_code' => $quote->code,
+        ]);
+
+        $advisorId = $quote?->advisor_id;
+        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+
+        LoggerService::info('Advisor assignment check', extra: [
+            'quote_code' => $quote->code,
+            'advisorId' => $advisorId,
+        ]);
+
+        // TODO:: NGI:: Add lead allocation logic if needed for Device/NGI ask BILAL
+        // Similar to Alliance which allocates to unassisted team:
+        // if (! $advisorId) {
+        //     $unassistedTeamId = getTeamId(TeamNameEnum::DEVICE_UNASSISTED); // or appropriate team
+        //     $response = QuoteTypes::DEVICE->allocate($quote->uuid, $unassistedTeamId);
+        //     if ($response && $response['advisorId']) {
+        //         $advisorId = $response['advisorId'];
+        //     }
+        // }
+
+        if ($advisorId) {
+            // Send failure notification if not already failed
+            if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
+                // TODO:: NGI:: Create and dispatch a failure notification job for Device/NGI similar to:
+                // SendDeviceNgiFailedAllocationEmailJob::dispatch($quote->uuid)->delay(now()->addSeconds(30));
+                LoggerService::info('Automation failed - notification should be sent', extra: [
+                    'quote_code' => $quote->code,
+                ]);
+            }
+
+            // Send policy documents if policy is booked
+            if ($isPolicyBooked) {
+                $data = new \stdClass;
+                $data->model_type = QuoteTypes::DEVICE->value;
+                $data->quote_id = $quote->id;
+
+                LoggerService::info('Dispatching SendBookPolicyDocumentsJob', extra: [
+                    'quote_code' => $quote->code,
+                    'advisor_id' => $advisorId,
+                ]);
+
+                SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
+            }
+        }
+    }
+
 }
