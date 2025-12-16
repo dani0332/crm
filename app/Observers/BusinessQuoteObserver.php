@@ -112,14 +112,16 @@ class BusinessQuoteObserver
             }
 
             try {
-                app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, QuoteTypeId::Business);
-                BusinessQuote::withoutEvents(function () use ($businessQuote, &$dirty) {
-                    $quoteTypeId = QuoteTypeId::Business;
-                    $emirateOfRegistrationId = null;
-                    if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
-                        $quoteTypeId = QuoteTypeId::GroupMedical;
-                        $emirateOfRegistrationId = $businessQuote->latestInsured?->entity?->emirate_of_registration_id ?? null;
-                    }
+                // Determine the correct quote type based on business type of insurance
+                $quoteTypeId = QuoteTypeId::Business;
+                $emirateOfRegistrationId = null;
+                if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                    $quoteTypeId = QuoteTypeId::GroupMedical;
+                    $emirateOfRegistrationId = $businessQuote->latestInsured?->entity?->emirate_of_registration_id ?? null;
+                }
+                
+                app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, $quoteTypeId);
+                BusinessQuote::withoutEvents(function () use ($businessQuote, $quoteTypeId, $emirateOfRegistrationId, &$dirty) {
                     $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirateOfRegistrationId);
                     $businessQuote->update([
                         'branch_id' => $branch?->id,
