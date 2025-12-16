@@ -16,13 +16,12 @@ use App\Services\Life\LifeQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\ExcelExportable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStrictNullComparison
 {
@@ -107,7 +106,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
                 request()->merge([$key => $value]);
             }
 
-            if (ucfirst($this->quoteType) == QuoteTypes::LIFE->value && !Auth::check()) {
+            if (ucfirst($this->quoteType) == QuoteTypes::LIFE->value && ! Auth::check()) {
                 Auth::login($user);
             }
         }

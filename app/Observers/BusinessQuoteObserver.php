@@ -119,7 +119,7 @@ class BusinessQuoteObserver
                     $quoteTypeId = QuoteTypeId::GroupMedical;
                     $emirateOfRegistrationId = $businessQuote->latestInsured?->entity?->emirate_of_registration_id ?? null;
                 }
-                
+
                 app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, $quoteTypeId);
                 BusinessQuote::withoutEvents(function () use ($businessQuote, $quoteTypeId, $emirateOfRegistrationId, &$dirty) {
                     $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirateOfRegistrationId);
