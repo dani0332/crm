@@ -653,6 +653,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::COMMERCIAL_KEYWORDS,
             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
             PermissionsEnum::QUOTE_SYNC_LOGS,
+            PermissionsEnum::ILA_CONFIG_ALL_LOB,
         ];
         if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
@@ -761,6 +762,7 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::TeamThresholdView,
                             PermissionsEnum::COMMERCIAL_KEYWORDS,
                             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+                            PermissionsEnum::ILA_CONFIG_ALL_LOB,
                         ]),
                         'Allocation Config',
                         route('tiers.index'),

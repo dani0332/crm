@@ -146,7 +146,7 @@ trait OcrFillable
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new EmiratesIdDataProcessor($quote, $data);
+            $processor = new EmiratesIdDataProcessor($quote, $data, $this->documentTypeCode);
 
             $success = $processor->processEmiratesIdData();
 
@@ -177,7 +177,7 @@ trait OcrFillable
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new MulkiyaDataProcessor($quote, $data);
+            $processor = new MulkiyaDataProcessor($quote, $data, $this->documentTypeCode);
 
             $success = $processor->processMulkiyaData();
 
@@ -208,7 +208,7 @@ trait OcrFillable
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new DrivingLicenseDataProcessor($quote, $data);
+            $processor = new DrivingLicenseDataProcessor($quote, $data, $this->documentTypeCode);
 
             $success = $processor->processDrivingLicenseData();
 

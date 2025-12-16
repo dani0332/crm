@@ -50,7 +50,9 @@
     "laravel/ui": "^4.2.2",
     "mockery/mockery": "^1.4.2",
     "nunomaduro/collision": "^8.1",
-    "phpunit/phpunit": "^11.0"
+    "pestphp/pest": "^3.8.2",
+    "pestphp/pest-plugin-laravel": "^3.0",
+    "phpunit/phpunit": "^11.5.15"
   },
   "autoload": {
     "files": [
@@ -99,7 +101,8 @@
     "preferred-install": "dist",
     "sort-packages": true,
     "allow-plugins": {
-      "php-http/discovery": true
+      "php-http/discovery": true,
+      "pestphp/pest-plugin": true
     },
     "platform": {
       "ext-mongodb": "2.1.0"

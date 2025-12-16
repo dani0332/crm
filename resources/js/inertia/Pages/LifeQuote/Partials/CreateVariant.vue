@@ -80,14 +80,67 @@ watch(
   () => shown.value,
   newVal => {
     if (newVal && props.plan?.planId) {
+      isInitializing.value = true;
+
+      // Initialize form values from plan
+      createForm.providerId = props.plan.providerId;
+      createForm.planId = props.plan.planId;
+      createForm.currency = props.plan.currency;
+      createForm.sumAssured = props.plan.sumInsured
+        ? Math.max(0, Number(props.plan.sumInsured))
+        : null;
+      createForm.policyTerm = props.plan.policyTerm
+        ? Math.max(0, Number(props.plan.policyTerm))
+        : null;
+      createForm.paymentTerm = props.plan.paymentTerm;
+      createForm.actualPremium = null;
+      if (!props.plan.isApi) {
+        createForm.actualPremium = props.plan.actualPremium
+          ? Math.max(0, Number(props.plan.actualPremium))
+          : null;
+      }
+      createForm.discountPremium = props.plan?.discountPremium
+        ? Math.max(0, Number(props.plan.discountPremium))
+        : null;
+      createForm.isInstantPolicy =
+        props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
+      createForm.insurerQuoteNo = null;
+      errorMessage.value = null;
+
+      // Handle rider data initialization
+      if (
+        props.plan.riders &&
+        Array.isArray(props.plan.riders) &&
+        props.plan.riders.length > 0
+      ) {
+        ridersData.value = props.plan.riders.map(rider => {
+          const mappedRider = {
+            riderId: rider.id,
+            active: rider.active ?? 0,
+            price: Math.max(0, parseFloat(rider.price) || 0),
+            coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
+            text: rider.text || rider.name,
+            inputRequired: rider?.inputRequired ?? false,
+          };
+          return mappedRider;
+        });
+      } else {
+        ridersData.value = [];
+      }
+
       getRiderDetails(props.plan.planId);
       getCurrencyCoverages(props.plan.planId);
       submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
       exitAge.value = props.plan?.exitAge;
 
       quoteFetched.value = false;
+
+      setTimeout(() => {
+        isInitializing.value = false;
+      }, 100);
     } else {
       quoteFetched.value = false;
+      isInitializing.value = false;
     }
   },
 );
@@ -151,6 +204,7 @@ const availableInsuranceProviders = computed(() => {
 
 const errorMessage = ref(null);
 let alreadyQuoted = ref(null);
+const isInitializing = ref(false);
 
 const createForm = reactive({
   providerId: null,
@@ -211,45 +265,45 @@ watch(
 );
 
 watch(
-  () => props.plan,
-  newVal => {
-    createForm.providerId = props.plan?.providerId;
-    createForm.planId = props.plan?.planId;
-    createForm.currency = props.plan?.currency;
-    createForm.sumAssured = props.plan?.sumInsured
-      ? Math.max(0, Number(props.plan.sumInsured))
-      : null;
-    createForm.policyTerm = props.plan?.policyTerm
-      ? Math.max(0, Number(props.plan.policyTerm))
-      : null;
-    createForm.paymentTerm = props.plan?.paymentTerm;
-    createForm.actualPremium = null;
-    if (!props.plan?.isApi) {
-      createForm.actualPremium = props.plan?.actualPremium
-        ? Math.max(0, Number(props.plan.actualPremium))
+  () => props.plan?.planId,
+  (newPlanId, oldPlanId) => {
+    if (newPlanId && newPlanId !== oldPlanId && isInitializing.value) {
+      createForm.providerId = props.plan?.providerId;
+      createForm.planId = props.plan?.planId;
+      createForm.currency = props.plan?.currency;
+      createForm.sumAssured = props.plan?.sumInsured
+        ? Math.max(0, Number(props.plan.sumInsured))
         : null;
-    }
-    createForm.insurerQuoteNo = null;
-    errorMessage.value = null;
+      createForm.policyTerm = props.plan?.policyTerm
+        ? Math.max(0, Number(props.plan.policyTerm))
+        : null;
+      createForm.paymentTerm = props.plan?.paymentTerm;
+      createForm.actualPremium = null;
+      if (!props.plan?.isApi) {
+        createForm.actualPremium = props.plan?.actualPremium
+          ? Math.max(0, Number(props.plan.actualPremium))
+          : null;
+      }
+      createForm.insurerQuoteNo = null;
+      errorMessage.value = null;
 
-    // Handle rider data on plan change
-    if (props.plan?.riders && props.plan.riders.length > 0) {
-      ridersData.value = props.plan.riders.map(rider => ({
-        riderId: rider.id,
-        active: rider.active ?? 0,
-        price: Math.max(0, parseFloat(rider.price) || 0),
-        coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
-        text: rider.text,
-        inputRequired: rider?.inputRequired ?? false,
-      }));
-    } else {
-      ridersData.value = [];
+      if (props.plan?.riders && props.plan.riders.length > 0) {
+        ridersData.value = props.plan.riders.map(rider => ({
+          riderId: rider.id,
+          active: rider.active ?? 0,
+          price: Math.max(0, parseFloat(rider.price) || 0),
+          coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
+          text: rider.text,
+          inputRequired: rider?.inputRequired ?? false,
+        }));
+      } else {
+        ridersData.value = [];
+      }
+      createForm.discountPremium = props.plan?.discountPremium ?? 0;
+      createForm.isInstantPolicy =
+        props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
     }
-    createForm.discountPremium = props.plan?.discountPremium ?? 0;
-    createForm.isInstantPolicy =
-      props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
   },
-  { deep: true },
 );
 
 const getQuote = () => {
@@ -371,11 +425,13 @@ const handleSubmit = isValid => {
 };
 
 const onSubmit = () => {
-  const processedRiders = ridersData.value.map(rider => ({
-    ...rider,
-    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
-    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
-  }));
+  const processedRiders = isMetLife.value
+    ? []
+    : ridersData.value.map(rider => ({
+        ...rider,
+        price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+        coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+      }));
 
   createForm.loading = true;
   createForm.sumAssured =
@@ -559,14 +615,27 @@ const formattedActualPremium = useFormattedNumberField(
   'actualPremium',
 );
 
-const totalPrice = computed(() => {
-  const discountPremium =
-    cleanFormattedValueToFloat(formattedDiscountPremium.value) || 0;
-  return props.plan.isApi &&
-    createForm.isInstantPolicy &&
-    createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
-    ? discountPremium
-    : formattedActualPremium.value;
+const totalPrice = computed({
+  get() {
+    const discountPremium =
+      cleanFormattedValueToFloat(formattedDiscountPremium.value) || 0;
+    return props.plan.isApi &&
+      createForm.isInstantPolicy &&
+      createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+      ? discountPremium
+      : formattedActualPremium.value;
+  },
+  set(value) {
+    if (
+      props.plan.isApi &&
+      createForm.isInstantPolicy &&
+      createForm.paymentTerm === props.paymentTermEnum?.ANNUALLY
+    ) {
+      formattedDiscountPremium.value = value;
+    } else {
+      formattedActualPremium.value = value;
+    }
+  },
 });
 
 const isMetLife = computed(() => {

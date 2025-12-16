@@ -9,6 +9,7 @@ use App\Models\Nationality;
 use App\Models\RegistrationCertificate;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
+use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,7 @@ class MulkiyaDataProcessor
     public function __construct(
         private CarQuote $quote,
         private object $data,
+        private string $documentTypeCode,
     ) {
         $this->mulkiyaExtractor = new MulkiyaExtractor($this->data, $quote?->plan?->provider_id);
     }
@@ -67,6 +69,10 @@ class MulkiyaDataProcessor
                 LoggerService::info('Processing registration certificate fields');
                 $registrationCertificateUpdated = $this->updateRegistrationCertificate($this->quote, $processedData['registration_certificate_fields']);
             }
+
+            // Trigger OCR success validation
+            $isOCRSuccess = app(OCRDocumentValidator::class)->validateMulkiyaFields($this->quote->id);
+            LoggerService::info('Mulkiya data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
 
             DB::commit();
 

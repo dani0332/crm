@@ -154,6 +154,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(User::class, 'id', 'wcu_id');
     }
 
+    public function supportUser()
+    {
+        return $this->belongsTo(User::class, 'support_user_id');
+    }
+
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->last_name;
@@ -170,6 +175,11 @@ class HealthQuote extends Model implements AuditableContract
     public function members()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
+    public function activeMembers()
+    {
+        return $this->members()->whereNull('deleted_at');
     }
 
     public function plan()
