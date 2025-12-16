@@ -47,7 +47,7 @@ class UpdateAdditionalVehicleDriverDetailsRequest extends FormRequest
 
             if ($isLiva) {
                 $rules['policy_effective_date'] = 'required|after_or_equal:today';
-            } else if ($isGIG) {
+            } elseif ($isGIG) {
                 $rules['plate_color'] = 'required|string';
             }
         } else {
