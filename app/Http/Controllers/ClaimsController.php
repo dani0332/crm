@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PermissionsEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PermissionsEnum;
 use App\Exports\ClaimsExport;
 use App\Http\Requests\ClaimComplaintStatusUpdateRequest;
 use App\Http\Requests\ClaimDetailsUpdateRequest;
@@ -74,7 +74,7 @@ class ClaimsController extends Controller
      */
     public function index(ClaimSearchRequest $request): Response
     {
-        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_LIST);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_LIST);
         try {
             $claims = $this->claimsService->getClaimsData($request->safe());
 
@@ -124,7 +124,7 @@ class ClaimsController extends Controller
      */
     public function searchPolicies(SearchPoliciesRequest $request): JsonResponse
     {
-        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_SEARCH_POLICIES);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_SEARCH_POLICIES);
         try {
             $policies = $this->claimsService->searchActivePolicies($request->safe());
 
@@ -149,7 +149,7 @@ class ClaimsController extends Controller
      */
     public function store(ClaimStoreRequest $request)
     {
-        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_CREATION);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_CREATION);
         try {
             $claim = $this->claimsService->createClaim($request->safe());
 
@@ -304,7 +304,7 @@ class ClaimsController extends Controller
      */
     public function export(ClaimExportValidationRequest $request)
     {
-        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_EXPORT);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_EXPORT);
         try {
             $requestParams = $request->safe();
 
@@ -343,8 +343,8 @@ class ClaimsController extends Controller
      */
     public function optimizeMessage(ClaimOptimizeMessageRequest $request): JsonResponse
     {
-        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_OPTIMIZE_MESSAGE);
-        try { 
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_OPTIMIZE_MESSAGE);
+        try {
             $optimizedMessageResponse = $this->claimsService->optimizeMessageWithAI($request->safe());
 
             if (! $optimizedMessageResponse->success) {
@@ -483,7 +483,7 @@ class ClaimsController extends Controller
     public function getS3TempUrl(ClaimGetS3TempUrlRequest $request): JsonResponse
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_DOCUMENT_S3_URL);
-        
+
         try {
             // Use the same logic as quote documents for S3 temp URLs
             return $this->quoteDocumentService->getDocumentTempURL($request->safe()->docURL);
@@ -618,7 +618,7 @@ class ClaimsController extends Controller
         LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_NEXT_FOLLOW_UP_UPDATE);
         try {
             // Update next follow-up using service
-            $this->claimsService->updateNextFollowUp($claim,$request->safe());
+            $this->claimsService->updateNextFollowUp($claim, $request->safe());
 
             LoggerService::info(' Next follow-up updated successfully', extra: [
                 'claim_uuid' => $claim->uuid,

@@ -2,16 +2,16 @@
 
 namespace App\Services;
 
-use App\Enums\ClaimsEnum;
 use App\Enums\CacheKeyEnum;
+use App\Enums\ClaimsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
+use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\Cache\CacheManager;
 
 class ClaimStatusesService extends BaseService
 {
@@ -31,7 +31,6 @@ class ClaimStatusesService extends BaseService
                     ->toArray();
             }
         );
-
     }
 
     /**

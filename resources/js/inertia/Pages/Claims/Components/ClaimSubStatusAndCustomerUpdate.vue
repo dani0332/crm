@@ -134,13 +134,10 @@ const optimizeMessage = async () => {
     NProgress.start();
     processing.value = true;
 
-    const response = await axios.post(
-      route('claims.optimize-message'),
-      {
-        message: claimSubStatusAndCustomerForm.customer_message,
-        claim_uuid: props.claim?.uuid,
-      },
-    );
+    const response = await axios.post(route('claims.optimize-message'), {
+      message: claimSubStatusAndCustomerForm.customer_message,
+      claim_uuid: props.claim?.uuid,
+    });
 
     if (response.data.status) {
       claimSubStatusAndCustomerForm.ai_optimized_message =

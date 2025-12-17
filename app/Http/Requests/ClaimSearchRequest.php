@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
 
 class ClaimSearchRequest extends FormRequest
 {
@@ -139,4 +137,3 @@ class ClaimSearchRequest extends FormRequest
         ];
     }
 }
-
