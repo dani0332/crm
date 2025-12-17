@@ -24,9 +24,11 @@ enum CacheKeyEnum: string
     public function expiry()
     {
         return match ($this) {
+            self::CLAIM_MANAGERS_KEY,
             self::CAR_MAKE_KEY,
             self::CLAIM_COMPLAINT_STATUSES_KEY,
             self::CLAIM_STATUSES_KEY,
+            self::CLAIM_SUB_STATUSES_KEY,
             self::QUOTE_TYPE_KEY,
             self::CLAIM_REQUEST_TYPE_KEY,
             self::CLAIM_SERVICE_TYPE_KEY,
