@@ -293,14 +293,25 @@ class LookupService extends BaseService
      */
     public function getClaimRequestTypes(): array
     {
-        return Lookup::where('key', ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('sort_order')->get()->toArray();
+        return Lookup::byKey(ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)
+            ->active()
+            ->select('id', 'text', 'code')
+            ->orderBySortOrder()
+            ->get()
+            ->toArray();
     }
+
     /**
-     * Get claim request types
+     * Get claim service types
      */
     public function getClaimServiceTypes(): array
     {
-        return Lookup::where('key', ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('sort_order')->get()->toArray();
+        return Lookup::byKey(ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)
+            ->active()
+            ->select('id', 'text', 'code')
+            ->orderBySortOrder()
+            ->get()
+            ->toArray();
     }
 
     /**
@@ -308,6 +319,11 @@ class LookupService extends BaseService
      */
     public function getClaimTypes(): array
     {
-        return Lookup::where('key', LookupsEnum::CLAIM_TYPES)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('text')->get()->toArray();
+        return Lookup::byKey(LookupsEnum::CLAIM_TYPES)
+            ->active()
+            ->select('id', 'text', 'code')
+            ->orderBy('text')
+            ->get()
+            ->toArray();
     }
 }
