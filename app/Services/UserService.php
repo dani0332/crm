@@ -426,4 +426,18 @@ class UserService extends BaseService
             ->activeUser()
             ->get();
     }
+
+
+
+    /**
+     * Get claims managers (users with appropriate roles)
+     */
+    public function getClaimsManagers(): array
+    {
+        return User::whereHas('roles', function ($query) {
+            $query->where('name', RolesEnum::CLAIM_MANAGER);
+        })->select('id', 'name', 'email')->where('is_active', 1)->orderBy('name')->get()->toArray();
+    }
+
+
 }

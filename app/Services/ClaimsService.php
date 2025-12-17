@@ -4,13 +4,10 @@ namespace App\Services;
 
 use App\Enums\ClaimsEnum;
 use App\Enums\DocumentTypeCode;
-use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
 use App\Facades\CustomerPortalApiFacade;
 use App\Facades\InstantWriterAIFacade;
-use App\Jobs\SendClaimGoogleReviewEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\ClaimActivity;
@@ -18,10 +15,8 @@ use App\Models\ClaimRequest;
 use App\Models\ClaimRequestDetail;
 use App\Models\ClaimStatus;
 use App\Models\DocumentType;
-use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
-use App\Models\User;
 use App\Models\YearOfManufacture;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
@@ -36,14 +31,16 @@ class ClaimsService extends BaseService
 {
     use CentralTrait;
 
+    protected ClaimStatusesService $claimsStatusesService;
     protected $searchPrefix = 'claims.';
     protected $query;
     protected $claimListQuery;
     protected $perPage = 15;
 
-    public function __construct()
+    public function __construct(ClaimStatusesService $claimsStatusesService)
     {
         parent::__construct();
+        $this->claimsStatusesService = $claimsStatusesService;
 
         $this->claimListQuery = ClaimRequest::select([
             'id',
@@ -553,7 +550,7 @@ class ClaimsService extends BaseService
                 $claimRequest->update($claimRequestData);
 
                 if ($isClaimDeclineReasonUpdated) {
-                    $this->markClaimAsClosed($claimRequest);
+                    $this->claimsStatusesService->markClaimAsClosed($claimRequest);
                 }
 
                 LoggerService::info(' Claim request main table updated - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -608,14 +605,17 @@ class ClaimsService extends BaseService
      */
     public function getDropdownData(?string $carMake = null): array
     {
+        $lookupService = new LookupService;
+        $userService = app(UserService::class);
+
         return [
             'lineOfBusiness' => $this->getLineOfBusinessOptions(),
-            'claimTypes' => $this->getClaimTypes(),
-            'claimStatuses' => $this->getClaimStatuses(),
-            'claimSubStatuses' => $this->getClaimSubStatuses(),
-            'claimsManagers' => $this->getClaimsManagers(),
-            'claimRequestTypes' => $this->getClaimRequestTypes(),
-            'claimServiceTypes' => $this->getClaimServiceTypes(),
+            'claimTypes' => $lookupService->getClaimTypes(),
+            'claimStatuses' => $this->claimsStatusesService->getClaimStatuses(),
+            'claimSubStatuses' => $this->claimsStatusesService->getClaimSubStatuses(),
+            'claimsManagers' => $userService->getClaimsManagers(),
+            'claimRequestTypes' => $lookupService->getClaimRequestTypes(),
+            'claimServiceTypes' => $lookupService->getClaimServiceTypes(),
             'carMake' => $this->getCarMake(),
             'carModel' => $carMake ? $this->getCarModelByMake($carMake) : [],
             'carModelYear' => $this->getCarModelYear(),
@@ -633,63 +633,6 @@ class ClaimsService extends BaseService
                 QuoteTypeId::Health, QuoteTypeId::Life,
             ])
             ->where('is_active', 1)->orderBy('text')->get()->toArray();
-    }
-
-    /**
-     * Get claim types from lookup
-     */
-    public function getClaimTypes(): array
-    {
-        return Lookup::where('key', LookupsEnum::CLAIM_TYPES)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('text')->get()->toArray();
-    }
-
-    /**
-     * Get claim sub-statuses from ClaimStatus
-     */
-    public function getClaimSubStatuses(): array
-    {
-        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text', 'quote_type_id')->orderBy('sort_order')->get()->toArray();
-    }
-
-    /**
-     * Get claim complaint statuses from ClaimStatus
-     */
-    public function getClaimComplaintStatuses(): array
-    {
-        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text')->orderBy('sort_order')->get()->toArray();
-    }
-
-    /**
-     * Get claim statuses from ClaimStatus
-     */
-    public function getClaimStatuses(): array
-    {
-        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text', 'quote_type_id')->orderBy('sort_order')->get()->toArray();
-    }
-
-    /**
-     * Get claims managers (users with appropriate roles)
-     */
-    public function getClaimsManagers(): array
-    {
-        return User::whereHas('roles', function ($query) {
-            $query->where('name', RolesEnum::CLAIM_MANAGER);
-        })->select('id', 'name', 'email')->where('is_active', 1)->orderBy('name')->get()->toArray();
-    }
-
-    /**
-     * Get claim request types
-     */
-    public function getClaimRequestTypes(): array
-    {
-        return Lookup::where('key', ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('sort_order')->get()->toArray();
-    }
-    /**
-     * Get claim request types
-     */
-    public function getClaimServiceTypes(): array
-    {
-        return Lookup::where('key', ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('sort_order')->get()->toArray();
     }
 
     public function getCarMake(): array
@@ -721,121 +664,6 @@ class ClaimsService extends BaseService
             ->toArray();
     }
 
-    public function updateClaimSubStatusToClaimRegistered(ClaimRequest $claimRequest): void
-    {
-        try {
-            $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
-            $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED->value;
-            if ($isCarQuoteType) {
-                $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION->value;
-            }
-            // Find the "Claim initiated" status for the specific quote type
-            $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->where('quote_type_id', $claimRequest->quote_type_id)->where('is_active', 1)->where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->first();
-
-            // If no specific status found for the quote type, try to find a general one
-            if (! $claimInitiatedStatus) {
-                $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->whereNull('quote_type_id')->where('is_active', 1)->where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->first();
-            }
-
-            if ($claimInitiatedStatus) {
-                // Update the claim sub status without triggering another observer event
-                $claimRequest->claim_sub_status_id = $claimInitiatedStatus->id;
-                $claimRequest->saveQuietly();
-
-                LoggerService::info(' Claim sub status updated to "Claim registered" - Claim UUID: '.$claimRequest->uuid, extra: [
-                    'claim_request_id' => $claimRequest->id,
-                    'claim_uuid' => $claimRequest->uuid,
-                    'claim_sub_status_id' => $claimInitiatedStatus->id,
-                    'quote_type_id' => $claimRequest->quote_type_id,
-                    'trigger' => 'claim_number_entered',
-                    'updated_by' => Auth::id(),
-                ]);
-            } else {
-                LoggerService::warning(' Could not find "Claim registered" status - Claim UUID: '.$claimRequest->uuid, extra: [
-                    'claim_request_id' => $claimRequest->id,
-                    'claim_uuid' => $claimRequest->uuid,
-                    'quote_type_id' => $claimRequest->quote_type_id,
-                ]);
-            }
-        } catch (\Exception $e) {
-            LoggerService::error(' Error updating claim sub status to "Claim registered" - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-    }
-
-    public function checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusId): bool
-    {
-        $newClaimStatus = ClaimStatus::find($newClaimSubStatusId);
-
-        $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
-        $isHealthQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Health;
-        $isLifeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Life;
-
-        $subStatusListForClaimClosed = [
-            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID->value,
-            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN->value,
-            ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
-        ];
-
-        if ($isCarQuoteType) {
-            $subStatusListForClaimClosed = [
-                ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED->value,
-                ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED->value,
-                ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED->value,
-                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_WITHDRAWN->value,
-                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
-            ];
-        }
-
-        if ($isHealthQuoteType) {
-            $subStatusListForClaimClosed = array_merge($subStatusListForClaimClosed, [
-                ClaimsEnum::CLAIM_SUB_STATUS_REQUEST_APPROVED->value,
-                ClaimsEnum::CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED->value,
-            ]);
-        }
-
-        if ($isLifeQuoteType) {
-            $subStatusListForClaimClosed = [
-                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_PAID->value,
-                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
-            ];
-        }
-
-        return in_array($newClaimStatus?->text, $subStatusListForClaimClosed);
-    }
-
-    public function markClaimAsOpen(ClaimRequest $claimRequest): void
-    {
-        $claimStatusOpen = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_OPEN->value)->where('is_active', 1)->first();
-        if ($claimStatusOpen) {
-            $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
-            LoggerService::info(' Claim status updated to "Open" - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'claim_status_id' => $claimStatusOpen->id,
-                'updated_by' => Auth::id(),
-            ]);
-        }
-    }
-
-    public function markClaimAsClosed(ClaimRequest $claimRequest): void
-    {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED->value)->where('is_active', 1)->first();
-        if ($claimStatusClosed) {
-            $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
-            LoggerService::info(' Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'claim_status_id' => $claimStatusClosed->id,
-                'updated_by' => Auth::id(),
-            ]);
-        }
-    }
-
     public function isRequiredFieldsFilled(ClaimRequest $claimRequest): bool
     {
 
@@ -857,48 +685,6 @@ class ClaimsService extends BaseService
         return $isRequiredFieldsFilled;
     }
 
-    /**
-     * Update claim status and sub status
-     */
-    public function updateClaimStatus($claimRequest, $request): ClaimRequest
-    {
-        try {
-            // Prepare the status update data
-            $statusUpdateData['claim_status_id'] = $request->claim_status_id;
-            $notes = $request->notes;
-
-            ClaimActivity::createForClaim($claimRequest->id, $claimRequest->uuid, $request->claim_status_id, $notes);
-
-            // Update the claim request
-            $claimRequest->update($statusUpdateData);
-
-            LoggerService::info(' Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'code' => $claimRequest->code,
-                'updated_fields' => array_keys($statusUpdateData),
-                'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
-                'new_claim_status_id' => $claimRequest->claim_status_id,
-                'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
-                'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
-                'updated_by' => Auth::id(),
-            ]);
-
-            return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
-
-        } catch (\Exception $e) {
-            LoggerService::error(' Error updating claim status - Claim UUID: '.$claimRequest->uuid, extra: [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'claim_request_id' => $claimRequest->uuid,
-                'data' => $request,
-                'updated_by' => Auth::id(),
-            ]);
-
-            throw $e;
-        }
-    }
-
     public function getClaimDocumentTypes($quoteTypeId)
     {
         $claimDocumentTypes = DocumentType::active()->whereIn('category', [DocumentTypeCode::CLAIM])->where('quote_type_id', $quoteTypeId)->sortDocumentType()->get();
@@ -917,7 +703,7 @@ class ClaimsService extends BaseService
     {
         $updateClaimData['claim_sub_status_id'] = $request->claim_sub_status_id;
         $subStatus = ClaimStatus::find($request->claim_sub_status_id);
-        $targetStatus = $this->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
+        $targetStatus = $this->claimsStatusesService->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
         if ($targetStatus) {
             $updateClaimData['claim_status_id'] = ClaimStatus::where('text', $targetStatus)->where('status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)->where('is_active', 1)->first()?->id;
         }
@@ -930,355 +716,6 @@ class ClaimsService extends BaseService
         );
 
         return $claimActivity;
-    }
-
-    /**
-     * Upload multiple documents for a claim
-     */
-    public function uploadClaimDocuments(ClaimRequest $claim, array $files, array $documentData): array
-    {
-        $uploadedDocuments = [];
-        $errors = [];
-
-        foreach ($files as $file) {
-            try {
-                $document = app(QuoteDocumentService::class)->uploadQuoteDocument(
-                    $file,
-                    array_merge($documentData, [
-                        'claim_id' => $claim->id,
-                        'quote_id' => $claim->id,
-                        'claim_uuid' => $claim->uuid,
-                        'quote_uuid' => $claim->uuid,
-                    ]),
-                    $claim
-                );
-
-                if ($document) {
-                    $uploadedDocuments[] = $document;
-
-                    LoggerService::info(' Document uploaded successfully', extra: [
-                        'claim_uuid' => $claim->uuid,
-                        'document_id' => $document->id ?? null,
-                        'document_name' => $document->original_name ?? 'Unknown',
-                        'document_type' => $documentData['document_type_code'],
-                        'user_id' => Auth::id(),
-                    ]);
-                } else {
-                    $errors[] = "Failed to upload document: {$file->getClientOriginalName()}";
-                }
-            } catch (\Exception $e) {
-                $errors[] = "Error uploading {$file->getClientOriginalName()}: {$e->getMessage()}";
-
-                LoggerService::error(' Document upload failed', extra: [
-                    'claim_uuid' => $claim->uuid,
-                    'file_name' => $file->getClientOriginalName(),
-                    'error' => $e->getMessage(),
-                    'user_id' => Auth::id(),
-                ], exception: $e);
-            }
-        }
-
-        return [
-            'uploaded_documents' => $uploadedDocuments,
-            'errors' => $errors,
-            'success_count' => count($uploadedDocuments),
-            'error_count' => count($errors),
-        ];
-    }
-
-    /**
-     * Delete a claim document with validation
-     */
-    public function deleteClaimDocument(ClaimRequest $claim, $documentId): bool
-    {
-        $document = $claim->documents()->where('id', $documentId)->first();
-
-        if (! $document) {
-            LoggerService::warning(' Document not found', extra: [
-                'claim_uuid' => $claim->uuid,
-                'document_id' => $documentId,
-                'user_id' => Auth::id(),
-            ]);
-
-            return false;
-        }
-
-        return $document->delete();
-    }
-
-    public function updateClaimSubStatus(ClaimRequest $claimRequest, $claimStatus): void
-    {
-        if ($claimStatus) {
-            $claimRequest->claim_sub_status_id = $claimStatus->id;
-            $claimRequest->saveQuietly();
-            LoggerService::info(' Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'claim_sub_status_id' => $claimStatus->id,
-                'updated_by' => Auth::id(),
-            ]);
-        }
-    }
-
-    /**
-     * Check if the given claim status ID represents a closed status
-     */
-    public function isClaimStatusClosed(?int $statusId): bool
-    {
-        if (! $statusId) {
-            return false;
-        }
-
-        $closedStatus = ClaimStatus::where('id', $statusId)->where('is_active', 1)->first();
-
-        return $closedStatus?->text === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
-    }
-
-    /**
-     * Dispatch Google review email job for the claim request
-     */
-    public function dispatchClaimGoogleReviewEmail(ClaimRequest $claimRequest): void
-    {
-        try {
-            LoggerService::info(' Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'customer_email' => $claimRequest->email,
-            ]);
-
-            // Dispatch the job to send Google review email
-            SendClaimGoogleReviewEmailJob::dispatch($claimRequest->uuid);
-
-        } catch (\Exception $e) {
-            LoggerService::error(' Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-    }
-
-    /**
-     * Create and download ZIP file containing all claim documents
-     *
-     * @throws Exception
-     */
-    public function createDocumentsZip(ClaimRequest $claim): array
-    {
-        $documents = $claim->documents;
-
-        $this->validateDocumentsForZip($documents);
-
-        $zipFileName = $this->generateZipFileName($claim);
-        $zipFilePath = storage_path('temp/'.$zipFileName);
-
-        $result = [
-            'success' => false,
-            'file_path' => null,
-            'file_name' => $zipFileName,
-            'processed_count' => 0,
-            'total_count' => count($documents),
-            'errors' => [],
-        ];
-
-        try {
-            $zip = new ZipArchive;
-
-            if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-                throw new Exception('Could not create ZIP file at: '.$zipFilePath);
-            }
-
-            $processedDocuments = $this->addDocumentsToZip($zip, $documents, $claim);
-            $zip->close();
-
-            if (empty($processedDocuments)) {
-                $this->cleanupZipFile($zipFilePath);
-                throw new Exception('No documents were successfully added to the ZIP file');
-            }
-
-            $result['success'] = true;
-            $result['file_path'] = $zipFilePath;
-            $result['processed_count'] = count($processedDocuments);
-
-            LoggerService::info(' ZIP file created successfully', extra: [
-                'claim_uuid' => $claim->uuid,
-                'processed_documents_count' => count($processedDocuments),
-                'zip_file_name' => $zipFileName,
-                'user_id' => Auth::id(),
-            ]);
-
-            return $result;
-
-        } catch (Exception $e) {
-            $this->cleanupZipFile($zipFilePath);
-
-            LoggerService::error(' Error creating ZIP file', extra: [
-                'claim_uuid' => $claim->uuid,
-                'error' => $e->getMessage(),
-                'zip_file_path' => $zipFilePath,
-                'user_id' => Auth::id(),
-            ]);
-
-            throw $e;
-        }
-    }
-
-    /**
-     * Validate documents for ZIP creation
-     *
-     * @throws Exception
-     */
-    private function validateDocumentsForZip($documents): void
-    {
-        if (! $documents || (is_countable($documents) && count($documents) === 0)) {
-            throw new Exception('No documents available for this claim');
-        }
-
-        // If it's a collection, convert to array for processing
-        if ($documents instanceof \Illuminate\Support\Collection) {
-            $documents = $documents->toArray();
-        }
-
-        // Validate document structure
-        foreach ($documents as $document) {
-            $docUrl = is_array($document) ? ($document['doc_url'] ?? null) : $document->doc_url ?? null;
-            $originalName = is_array($document) ? ($document['original_name'] ?? null) : $document->original_name ?? null;
-
-            if (! $docUrl || ! $originalName) {
-                throw new Exception('Invalid document structure: missing required fields (doc_url or original_name)');
-            }
-        }
-    }
-
-    /**
-     * Generate ZIP file name for claim documents
-     */
-    private function generateZipFileName(ClaimRequest $claim): string
-    {
-        $firstName = $this->sanitizeFileName($claim->first_name ?? 'Customer');
-        $lastName = $this->sanitizeFileName($claim->last_name ?? 'Docs');
-        $claimCode = $this->sanitizeFileName($claim->uuid);
-
-        return "Claim_{$claimCode}_{$firstName}_{$lastName}_".date('Y-m-d_H-i-s').'.zip';
-    }
-
-    /**
-     * Sanitize filename to remove invalid characters
-     */
-    private function sanitizeFileName(string $filename): string
-    {
-        // Remove or replace invalid filename characters
-        $filename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $filename);
-
-        return substr($filename, 0, 50); // Limit length
-    }
-
-    /**
-     * Add documents to ZIP archive
-     */
-    private function addDocumentsToZip(ZipArchive $zip, $documents, ClaimRequest $claim): array
-    {
-        $disk = Storage::disk('azureIM');
-        $processedDocuments = [];
-        $documentCounts = []; // Track duplicate names
-
-        // Convert collection to array if needed
-        if ($documents instanceof \Illuminate\Support\Collection) {
-            $documents = $documents->toArray();
-        }
-
-        foreach ($documents as $document) {
-            try {
-                // Handle both array and object formats
-                $docUrl = is_array($document) ? $document['doc_url'] : $document->doc_url;
-                $originalName = is_array($document) ? $document['original_name'] : $document->original_name;
-                $documentId = is_array($document) ? ($document['id'] ?? null) : $document->id ?? null;
-
-                if (! $disk->exists($docUrl)) {
-                    LoggerService::warning(' Document does not exist', extra: [
-                        'doc_url' => $docUrl,
-                        'document_name' => $originalName,
-                        'document_id' => $documentId,
-                        'claim_uuid' => $claim->uuid,
-                    ]);
-
-                    continue;
-                }
-
-                // Handle duplicate filenames
-                $finalName = $this->getUniqueFileName($originalName, $documentCounts);
-
-                $contents = $disk->get($docUrl);
-
-                if ($zip->addFromString($finalName, $contents)) {
-                    $processedDocuments[] = [
-                        'name' => $finalName,
-                        'original_name' => $originalName,
-                        'id' => $documentId,
-                    ];
-                } else {
-                    LoggerService::warning(' Failed to add document to ZIP', extra: [
-                        'document_name' => $originalName,
-                        'final_name' => $finalName,
-                        'document_id' => $documentId,
-                        'claim_uuid' => $claim->uuid,
-                    ]);
-                }
-
-            } catch (Exception $e) {
-                $documentName = 'unknown';
-                try {
-                    $documentName = is_array($document) ? ($document['original_name'] ?? 'unknown') : $document->original_name ?? 'unknown';
-                } catch (Exception $nameEx) {
-                    // Fallback if we can't get the name
-                }
-
-                LoggerService::warning(' Error processing document', extra: [
-                    'document_name' => $documentName,
-                    'error' => $e->getMessage(),
-                    'claim_uuid' => $claim->uuid,
-                ]);
-            }
-        }
-
-        return $processedDocuments;
-    }
-
-    /**
-     * Get unique filename to handle duplicates
-     */
-    private function getUniqueFileName(string $originalName, array &$documentCounts): string
-    {
-        if (! isset($documentCounts[$originalName])) {
-            $documentCounts[$originalName] = 1;
-
-            return $originalName;
-        }
-
-        $documentCounts[$originalName]++;
-        $pathInfo = pathinfo($originalName);
-        $name = $pathInfo['filename'] ?? $originalName;
-        $extension = isset($pathInfo['extension']) ? '.'.$pathInfo['extension'] : '';
-
-        return $name.'_('.$documentCounts[$originalName].')'.$extension;
-    }
-
-    /**
-     * Clean up ZIP file if it exists
-     */
-    private function cleanupZipFile(string $zipFilePath): void
-    {
-        if (file_exists($zipFilePath)) {
-            try {
-                unlink($zipFilePath);
-            } catch (Exception $e) {
-                LoggerService::warning(' Failed to cleanup ZIP file', extra: [
-                    'file_path' => $zipFilePath,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
     }
 
     /**
@@ -1319,85 +756,6 @@ class ClaimsService extends BaseService
     }
 
     /**
-     * Get claim sub-status logs (sub-status changes by claims manager) - all data for client-side pagination
-     * Frontend will process old sub-status from chronological data
-     *
-     * @return array
-     */
-    public function getClaimSubStatusLogs(int $claimId)
-    {
-        try {
-            // Simple query - frontend will process old sub-status from chronological order
-            $claimSubStatusLogs = DB::table('claim_activities as ca')
-                ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
-                ->join('users as u', 'ca.created_by_id', '=', 'u.id')
-                ->select(
-                    'ca.created_at as ModifiedAt',
-                    'u.name as ModifiedBy',
-                    'cs.text as NewSubStatus',
-                    'ca.comment as Notes',
-                    'ca.created_at as created_at' // Include for frontend sorting
-                )
-                ->where('ca.claim_request_id', $claimId)
-                ->where('cs.status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value) // Only get sub-statuses (not status_type statuses)
-                ->whereNotNull('ca.status_id')
-                ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
-                ->get();
-
-            return $claimSubStatusLogs;
-
-        } catch (\Exception $e) {
-            LoggerService::error(' Error fetching claim sub-status logs', extra: [
-                'error' => $e->getMessage(),
-                'claim_id' => $claimId,
-                'user_id' => Auth::id(),
-            ]);
-
-            throw $e;
-        }
-    }
-
-    /**
-     * Update complaint status for a claim
-     */
-    public function updateComplaintStatus(ClaimRequest $claim, ?int $complaintStatusId, ?string $complaintDatetime = null, ?string $notes = null): ClaimRequest
-    {
-        try {
-            // Update the claim with complaint status
-            $claim->updateComplaintStatus($complaintStatusId, $complaintDatetime, $notes);
-
-            // Check if complaint status has changed to open complaint status
-            $newComplaintStatus = ClaimStatus::where('id', $complaintStatusId)->where('is_active', 1)->first();
-
-            $isNewStatusComplaintOpen = $newComplaintStatus?->text === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
-
-            if ($isNewStatusComplaintOpen) {
-                $this->markClaimAsOpen($claim);
-            }
-
-            LoggerService::info(' Complaint status updated successfully', extra: [
-                'claim_id' => $claim->id,
-                'complaint_status_id' => $complaintStatusId,
-                'complaint_datetime' => $complaintDatetime,
-                'is_new_status_complaint_open' => $isNewStatusComplaintOpen,
-                'user_id' => Auth::id(),
-            ]);
-
-            return $claim->fresh();
-
-        } catch (\Exception $e) {
-            LoggerService::error(' Error updating complaint status', extra: [
-                'error' => $e->getMessage(),
-                'claim_id' => $claim->id,
-                'complaint_status_id' => $complaintStatusId,
-                'user_id' => Auth::id(),
-            ]);
-
-            throw $e;
-        }
-    }
-
-    /**
      * Update next follow-up for a claim
      */
     public function updateNextFollowUp(ClaimRequest $claim, ?string $nextFollowUpDatetime, ?string $notes = null): ClaimRequest
@@ -1424,50 +782,6 @@ class ClaimsService extends BaseService
 
             throw $e;
         }
-    }
-
-    /**
-     * Get complaint status logs for a claim from audit trail
-     *
-     * @return array
-     */
-    public function getComplaintStatusLogs(int $claimId)
-    {
-        $audits = DB::table('audits as a')
-            ->select(
-                'a.created_at as logged_at',
-                DB::raw('(SELECT name from users where id = a.user_id) as logged_by'),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_status_id')) AS old_complaint_status_id"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_status_id')) AS new_complaint_status_id"),
-                DB::raw("(SELECT text FROM claim_statuses WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_status_id'))) AS old_complaint_status"),
-                DB::raw("(SELECT text FROM claim_statuses WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_status_id'))) AS new_complaint_status"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_datetime')) AS old_complaint_datetime"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_datetime')) AS new_complaint_datetime"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_notes')) AS old_complaint_notes"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_notes')) AS new_complaint_notes")
-            )
-            ->where(function ($query) {
-                // Only get records where complaint fields were changed
-                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_status_id')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_datetime')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_notes')"));
-            })
-            ->where(function ($query) use ($claimId) {
-                $query->where('a.auditable_type', 'App\Models\\ClaimRequest')
-                    ->where('a.auditable_id', $claimId);
-            })
-            ->orderBy('a.created_at', 'DESC')
-            ->get()
-            ->filter(function ($item) {
-                // Filter out records where no complaint fields changed
-                return ! is_null($item->new_complaint_status_id) ||
-                       ! is_null($item->new_complaint_datetime) ||
-                       ! is_null($item->new_complaint_notes);
-            })
-            ->values()
-            ->toArray();
-
-        return $audits;
     }
 
     /**
@@ -1526,5 +840,4 @@ class ClaimsService extends BaseService
             throw $e;
         }
     }
-
 }

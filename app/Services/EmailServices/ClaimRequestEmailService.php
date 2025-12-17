@@ -7,6 +7,7 @@ namespace App\Services\EmailServices;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
+use App\Jobs\SendClaimGoogleReviewEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\ClaimRequest;
 use App\Services\BaseService;
@@ -22,6 +23,32 @@ use Exception;
  */
 class ClaimRequestEmailService extends BaseService
 {
+
+    /**
+     * Dispatch Google review email job for the claim request
+     */
+    public function dispatchClaimGoogleReviewEmail(ClaimRequest $claimRequest): void
+    {
+        try {
+            LoggerService::info(' Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'customer_email' => $claimRequest->email,
+            ]);
+
+            // Dispatch the job to send Google review email
+            SendClaimGoogleReviewEmailJob::dispatch($claimRequest->uuid);
+
+        } catch (\Exception $e) {
+            LoggerService::error(' Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
     /**
      * Send Google review email to customer
      *

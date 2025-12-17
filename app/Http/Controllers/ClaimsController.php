@@ -19,6 +19,8 @@ use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
 use App\Models\QuoteDocument;
 use App\Services\ClaimsService;
+use App\Services\ClaimStatusesService;
+use App\Services\ClaimDocumentService;
 use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
@@ -33,15 +35,19 @@ use Inertia\Response;
 class ClaimsController extends Controller
 {
     protected ClaimsService $claimsService;
+    protected ClaimDocumentService $claimDocumentService;
+    protected ClaimStatusesService $claimsStatusesService;
     protected QuoteDocumentService $quoteDocumentService;
     protected CustomerService $customerService;
 
     public function __construct(
         ClaimsService $claimsService,
+        ClaimStatusesService $claimsStatusesService,
         QuoteDocumentService $quoteDocumentService,
         CustomerService $customerService,
     ) {
         $this->claimsService = $claimsService;
+        $this->claimsStatusesService = $claimsStatusesService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->customerService = $customerService;
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
@@ -67,7 +73,7 @@ class ClaimsController extends Controller
             // Get dropdown data for filters, pass car_make if present
             $carMake = $request->input('car_make');
             $claimDropdownOptions = $this->claimsService->getDropdownData($carMake);
-            $complaintStatuses = $this->claimsService->getClaimComplaintStatuses();
+            $complaintStatuses = $this->claimsStatusesService->getClaimComplaintStatuses();
 
             return Inertia::render('Claims/Index', [
                 'claims' => $claims,
@@ -183,7 +189,7 @@ class ClaimsController extends Controller
 
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
-            $complaintStatuses = $this->claimsService->getClaimComplaintStatuses();
+            $complaintStatuses = $this->$this->claimsStatusesService->getClaimComplaintStatuses();
             // dd($complaintStatuses);
             $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
@@ -289,7 +295,7 @@ class ClaimsController extends Controller
     public function updateClaimStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): RedirectResponse
     {
         try {
-            $updatedClaimRequest = $this->claimsService->updateClaimStatus($claim, $request->safe());
+            $updatedClaimRequest = $this->claimsStatusesService->updateClaimStatus($claim, $request->safe());
 
             return redirect()->back()->with('success', 'Claim status updated successfully.');
 
@@ -405,7 +411,7 @@ class ClaimsController extends Controller
             $documentData = ['document_type_code' => $request->document_type_code, 'folder_path' => $request->folder_path ?? 'claims'];
 
             // Use the enhanced service method
-            $result = $this->claimsService->uploadClaimDocuments($claim, $files, $documentData);
+            $result = $this->claimDocumentService->uploadClaimDocuments($claim, $files, $documentData);
 
             LoggerService::info(' Document upload process completed', extra: [
                 'claim_uuid' => $claim->uuid,
@@ -463,7 +469,7 @@ class ClaimsController extends Controller
     {
         try {
             // Use service method with business logic validation
-            $deleted = $this->claimsService->deleteClaimDocument($claim, $document->id);
+            $deleted = $this->claimDocumentService->deleteClaimDocument($claim, $document->id);
 
             if (! $deleted) {
                 return response()->json(['success' => false, 'message' => 'Document could not be deleted. It may be required for claim processing or the claim is in a finalized state.'], 422);
@@ -514,7 +520,7 @@ class ClaimsController extends Controller
     {
         try {
             // Use service to create ZIP
-            $result = $this->claimsService->createDocumentsZip($claim);
+            $result = $this->claimDocumentService->createDocumentsZip($claim);
 
             if (! $result['success']) {
                 return response()->json([
@@ -564,7 +570,7 @@ class ClaimsController extends Controller
     public function getClaimSubStatusLogs(Request $request, ClaimRequest $claim): JsonResponse
     {
         try {
-            $logs = $this->claimsService->getClaimSubStatusLogs($claim->id);
+            $logs = $this->claimsStatusesService->getClaimSubStatusLogs($claim->id);
 
             return response()->json($logs);
 
@@ -589,7 +595,7 @@ class ClaimsController extends Controller
             $validated = $request->safe();
 
             // Update complaint status using service
-            $this->claimsService->updateComplaintStatus(
+            $this->claimsStatusesService->updateComplaintStatus(
                 $claim,
                 $validated->complaint_status_id,
                 $validated->complaint_datetime,
@@ -657,7 +663,7 @@ class ClaimsController extends Controller
     public function getComplaintStatusLogs(Request $request, ClaimRequest $claim): JsonResponse
     {
         try {
-            $complaintStatusLogs = $this->claimsService->getComplaintStatusLogs($claim->id);
+            $complaintStatusLogs = $this->claimsStatusesService->getComplaintStatusLogs($claim->id);
 
             LoggerService::info(' Complaint status logs retrieved successfully', extra: [
                 'claim_uuid' => $claim->uuid,

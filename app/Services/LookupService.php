@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CacheKeyEnum;
+use App\Enums\ClaimsEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
@@ -285,5 +286,28 @@ class LookupService extends BaseService
                 'is_active' => 1,
             ])->get();
         });
+    }
+
+    /**
+     * Get claim request types
+     */
+    public function getClaimRequestTypes(): array
+    {
+        return Lookup::where('key', ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('sort_order')->get()->toArray();
+    }
+    /**
+     * Get claim request types
+     */
+    public function getClaimServiceTypes(): array
+    {
+        return Lookup::where('key', ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('sort_order')->get()->toArray();
+    }
+
+    /**
+     * Get claim types from lookup
+     */
+    public function getClaimTypes(): array
+    {
+        return Lookup::where('key', LookupsEnum::CLAIM_TYPES)->where('is_active', 1)->select('id', 'text', 'code')->orderBy('text')->get()->toArray();
     }
 }
