@@ -129,8 +129,6 @@ const maxLeadsOptions = computed(() => {
     value: i,
   }));
 });
-
-
 </script>
 <template>
   <Head title="Buy Lead" />
