@@ -20,12 +20,18 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimSubStatuses(): array
     {
-        return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
-            ->active()
-            ->select('id', 'text', 'quote_type_id')
-            ->orderBySortOrder()
-            ->get()
-            ->toArray();
+        return CacheManager::remember(
+            CacheKeyEnum::CLAIM_SUB_STATUSES_KEY,
+            function () {
+                return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
+                    ->active()
+                    ->select('id', 'text', 'quote_type_id')
+                    ->orderBySortOrder()
+                    ->get()
+                    ->toArray();
+            }
+        );
+
     }
 
     /**
@@ -34,7 +40,7 @@ class ClaimStatusesService extends BaseService
     public function getClaimComplaintStatuses(): array
     {
         return CacheManager::remember(
-            CacheKeyEnum::CLAIM_CACHE_COMPLAINT_STATUSES_KEY,
+            CacheKeyEnum::CLAIM_COMPLAINT_STATUSES_KEY,
             function () {
                 return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value)
                     ->active()
@@ -51,12 +57,18 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimStatuses(): array
     {
-        return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
-            ->active()
-            ->select('id', 'text', 'quote_type_id')
-            ->orderBySortOrder()
-            ->get()
-            ->toArray();
+        return CacheManager::remember(
+            CacheKeyEnum::CLAIM_STATUSES_KEY,
+            function () {
+                return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
+                    ->active()
+                    ->select('id', 'text', 'quote_type_id')
+                    ->orderBySortOrder()
+                    ->get()
+                    ->toArray();
+            }
+        );
+
     }
 
     public function updateClaimSubStatusToClaimRegistered(ClaimRequest $claimRequest): void

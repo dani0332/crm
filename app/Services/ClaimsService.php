@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\ClaimsEnum;
 use App\Enums\CacheKeyEnum;
+use App\Enums\ClaimsEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -19,11 +19,11 @@ use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\YearOfManufacture;
+use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\Cache\CacheManager;
 
 class ClaimsService extends BaseService
 {
@@ -608,31 +608,23 @@ class ClaimsService extends BaseService
     public function getDropdownData($request = null): array
     {
         $carMake = $request?->car_make;
-        $cachedData = CacheManager::remember(
-            CacheKeyEnum::CLAIM_CACHE_DROPDOWN_DATA_KEY,
-            function () {
-                $lookupService = new LookupService;
-                $userService = app(UserService::class);
 
-                return [
-                    'lineOfBusiness' => $this->getLineOfBusinessOptions(),
-                    'claimTypes' => $lookupService->getClaimTypes(),
-                    'claimStatuses' => $this->claimsStatusesService->getClaimStatuses(),
-                    'claimSubStatuses' => $this->claimsStatusesService->getClaimSubStatuses(),
-                    'complaintStatuses' => $this->claimsStatusesService->getClaimComplaintStatuses(),
-                    'claimsManagers' => $userService->getClaimsManagers(),
-                    'claimRequestTypes' => $lookupService->getClaimRequestTypes(),
-                    'claimServiceTypes' => $lookupService->getClaimServiceTypes(),
-                    'carMake' => $this->getCarMake(),
-                    'carModelYear' => $this->getCarModelYear(),
-                ];
-            }
-        );
+        $lookupService = new LookupService;
+        $userService = app(UserService::class);
 
-        // Add dynamic carModel based on parameter
-        $cachedData['carModel'] = $carMake ? $this->getCarModelByMake($carMake) : [];
-
-        return $cachedData;
+        return [
+            'lineOfBusiness' => $this->getLineOfBusinessOptions(),
+            'claimTypes' => $lookupService->getClaimTypes(),
+            'claimStatuses' => $this->claimsStatusesService->getClaimStatuses(),
+            'claimSubStatuses' => $this->claimsStatusesService->getClaimSubStatuses(),
+            'complaintStatuses' => $this->claimsStatusesService->getClaimComplaintStatuses(),
+            'claimsManagers' => $userService->getClaimsManagers(),
+            'claimRequestTypes' => $lookupService->getClaimRequestTypes(),
+            'claimServiceTypes' => $lookupService->getClaimServiceTypes(),
+            'carMake' => $this->getCarMake(),
+            'carModel' => $carMake ? $this->getCarModelByMake($carMake) : [],
+            'carModelYear' => $this->getCarModelYear(),
+        ];
     }
 
     /**
@@ -641,7 +633,7 @@ class ClaimsService extends BaseService
     public function getLineOfBusinessOptions(): array
     {
         return CacheManager::remember(
-            CacheKeyEnum::CLAIM_CACHE_QUOTE_TYPE_KEY,
+            CacheKeyEnum::QUOTE_TYPE_KEY,
             function () {
                 return QuoteType::select('id', 'text')
                     ->forClaims()
@@ -655,24 +647,30 @@ class ClaimsService extends BaseService
 
     public function getCarMake(): array
     {
-        return CarMake::select('code as id', 'text')
-            ->active()
-            ->get()
-            ->toArray();
+        return CacheManager::remember(CacheKeyEnum::CAR_MAKE_KEY, function () {
+            return CarMake::select('code as id', 'text')
+                ->active()
+                ->get()
+                ->toArray();
+        });
+
     }
 
     public function getCarModelYear(): array
     {
-        return YearOfManufacture::select('text')
-            ->orderedBySort()
-            ->get()
-            ->toArray();
+        return CacheManager::remember(CacheKeyEnum::CAR_MODEL_YEAR_KEY, function () {
+            return YearOfManufacture::select('text')
+                ->orderedBySort()
+                ->get()
+                ->toArray();
+        });
+
     }
 
     /**
      * Get car models by car make
      */
-    public function getCarModelByMake(string $carMake): array
+    public function getCarModelByMake(?string $carMake = null): array
     {
         $carMakeCode = CarMake::active()
             ->where('text', $carMake)

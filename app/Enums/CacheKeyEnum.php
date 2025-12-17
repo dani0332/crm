@@ -10,16 +10,28 @@ enum CacheKeyEnum: string
     case SUB_SOURCES = 'sub_sources';
     case HRM_API_ACCESS_TOKEN = 'hrm_api_access_token';
 
-    case CLAIM_CACHE_DROPDOWN_DATA_KEY = 'claim_dropdown_data_key';
-    case CLAIM_CACHE_COMPLAINT_STATUSES_KEY = 'claim_complaint_statuses_key';
-    case CLAIM_CACHE_QUOTE_TYPE_KEY = 'claim_quote_type_key';
+    case CLAIM_MANAGERS_KEY = 'claim_managers_key';
+    case CAR_MAKE_KEY = 'car_make_key';
+    case CLAIM_COMPLAINT_STATUSES_KEY = 'claim_complaint_statuses_key';
+    case CLAIM_STATUSES_KEY = 'claim_statuses_key';
+    case CLAIM_SUB_STATUSES_KEY = 'claim_sub_statuses_key';
+    case QUOTE_TYPE_KEY = 'quote_type_key';
+    case CLAIM_REQUEST_TYPE_KEY = 'claim_request_type_key';
+    case CLAIM_SERVICE_TYPE_KEY = 'claim_service_type_key';
+    case CLAIM_TYPE_KEY = 'claim_type_key';
+    case CAR_MODEL_YEAR_KEY = 'car_model_year_key';
 
     public function expiry()
     {
         return match ($this) {
-            self::CLAIM_CACHE_DROPDOWN_DATA_KEY,
-            self::CLAIM_CACHE_QUOTE_TYPE_KEY,
-            self::CLAIM_CACHE_COMPLAINT_STATUSES_KEY => now()->addHours(4),
+            self::CAR_MAKE_KEY,
+            self::CLAIM_COMPLAINT_STATUSES_KEY,
+            self::CLAIM_STATUSES_KEY,
+            self::QUOTE_TYPE_KEY,
+            self::CLAIM_REQUEST_TYPE_KEY,
+            self::CLAIM_SERVICE_TYPE_KEY,
+            self::CLAIM_TYPE_KEY,
+            self::CAR_MODEL_YEAR_KEY => now()->addHours(4),
             self::HOME_LOOKUPS => now()->endOfDay(),
             self::SAVINGS_QUOTE_LOOKUPS => now()->endOfDay(),
             self::CYBER_QUOTE_LOOKUPS => now()->endOfDay(),

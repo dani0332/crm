@@ -293,12 +293,15 @@ class LookupService extends BaseService
      */
     public function getClaimRequestTypes(): array
     {
-        return Lookup::byKey(ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)
-            ->active()
-            ->select('id', 'text', 'code')
-            ->orderBySortOrder()
-            ->get()
-            ->toArray();
+        return CacheManager::remember(CacheKeyEnum::CLAIM_REQUEST_TYPE_KEY, function () {
+            return Lookup::byKey(ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBySortOrder()
+                ->get()
+                ->toArray();
+        });
+
     }
 
     /**
@@ -306,12 +309,15 @@ class LookupService extends BaseService
      */
     public function getClaimServiceTypes(): array
     {
-        return Lookup::byKey(ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)
-            ->active()
-            ->select('id', 'text', 'code')
-            ->orderBySortOrder()
-            ->get()
-            ->toArray();
+        return CacheManager::remember(CacheKeyEnum::CLAIM_SERVICE_TYPE_KEY, function () {
+            return Lookup::byKey(ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBySortOrder()
+                ->get()
+                ->toArray();
+        });
+
     }
 
     /**
@@ -319,11 +325,14 @@ class LookupService extends BaseService
      */
     public function getClaimTypes(): array
     {
-        return Lookup::byKey(LookupsEnum::CLAIM_TYPES)
-            ->active()
-            ->select('id', 'text', 'code')
-            ->orderBy('text')
-            ->get()
-            ->toArray();
+        return CacheManager::remember(CacheKeyEnum::CLAIM_TYPE_KEY, function () {
+            return Lookup::byKey(LookupsEnum::CLAIM_TYPES)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBy('text')
+                ->get()
+                ->toArray();
+        });
+
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CacheKeyEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
@@ -12,6 +13,7 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Services\Cache\CacheManager;
 
 class UserService extends BaseService
 {
@@ -432,9 +434,14 @@ class UserService extends BaseService
      */
     public function getClaimsManagers(): array
     {
-        return User::whereHas('roles', function ($query) {
-            $query->where('name', RolesEnum::CLAIM_MANAGER);
-        })->select('id', 'name', 'email')->where('is_active', 1)->orderBy('name')->get()->toArray();
+        return CacheManager::remember(CacheKeyEnum::CLAIM_MANAGERS_KEY, function () {
+            return User::withRole(RolesEnum::CLAIM_MANAGER)
+                ->activeUser()
+                ->select('id', 'name', 'email')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        });
     }
 
 }
