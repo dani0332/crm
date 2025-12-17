@@ -83,9 +83,9 @@ class AuditRepository extends BaseRepository
                 $model = $relation['auditable_type'];
                 $auditRelation = $relation['relation'] ?? 'one';
                 if ($auditRelation == 'many') {
-                    $childRecords = $model::where($relation['key'], request()->auditable_id)->get();
+                    $childRecords = $model::where($relation['key'], $auditableId)->get();
                 } else {
-                    $record = $model::where($relation['key'], request()->auditable_id)->first();
+                    $record = $model::where($relation['key'], $auditableId)->first();
                     $childRecords = $record ? [$record] : [];
                 }
 
