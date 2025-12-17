@@ -509,17 +509,13 @@ const copyLink = () => {
     });
 };
 
-
 const confirmSendEmail = () => {
-
   processingOCBEmail.value = true;
   axios
-    .post(
-      `/quotes/cyber/${page.props.quote.uuid}/send-email-one-click-buy`,
-      {
-        responseType: 'json',
-      },
-    ) .then(response => {
+    .post(`/quotes/cyber/${page.props.quote.uuid}/send-email-one-click-buy`, {
+      responseType: 'json',
+    })
+    .then(response => {
       processingOCBEmail.value = false;
       notification.success({
         title: response.data.success,
@@ -1194,7 +1190,13 @@ const confirmSendEmail = () => {
             class="flex justify-end gap-3 mb-4"
             v-if="availablePlansTable.data.length > 0"
           >
-            <x-button size="sm" color="orange"  @click.prevent="modals.sendConfirm = true"> Send OCB Email </x-button>
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="modals.sendConfirm = true"
+            >
+              Send OCB Email
+            </x-button>
             <x-button size="sm" color="orange" @click.prevent="copyLink">
               Copy Link
             </x-button>
@@ -1687,7 +1689,7 @@ const confirmSendEmail = () => {
       :advisors="advisors"
       :quote-type="quoteType"
       :expanded="sectionExpanded"
-    />    
+    />
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
 
