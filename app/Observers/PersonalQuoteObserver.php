@@ -7,6 +7,10 @@ use App\Models\PersonalQuote;
 use App\Observers\Traits\Observable;
 use App\Observers\Traits\PersonalQuoteObservable;
 use App\Traits\GenericQueriesAllLobs;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Jobs\SendFTCEmailJob;
+use App\Services\Logger\LoggerService;
 
 class PersonalQuoteObserver
 {
@@ -40,6 +44,34 @@ class PersonalQuoteObserver
 
         if ($personalQuote->isDirty('quote_status_id')) {
             $this->handleQuoteStatusChange($personalQuote);
+        }
+
+        $this->sendFTCEmailOnPaymentAuthorised($personalQuote);
+    }
+
+    /**
+     * Handle the FTC email dispatch on payment authorised.
+     *
+     * @param PersonalQuote $quote
+     * @return void
+     */
+    public function sendFTCEmailOnPaymentAuthorised(PersonalQuote $quote): void
+    {
+        // Only handle Device quotes
+        if ($quote->quote_type_id !== QuoteTypes::DEVICE->id()) {
+            return;
+        }
+
+        // Check if payment status changed to AUTHORISED
+        if ($quote->wasChanged('payment_status_id') &&
+            $quote->payment_status_id === PaymentStatusEnum::AUTHORISED && $quote->quote_type_id == QuoteTypes::DEVICE->id()) {
+
+            LoggerService::info('DeviceQuoteObserver: Payment authorized, dispatching FTC email', [
+                'quote_uuid' => $quote->uuid,
+                'quote_code' => $quote->code,
+            ]);
+
+            SendFTCEmailJob::dispatch($quote->uuid, QuoteTypes::DEVICE);
         }
     }
 }

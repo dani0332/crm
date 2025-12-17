@@ -1344,6 +1344,11 @@ class SendUpdateLogService
                 DocumentTypeCode::PAYMENT_RECEIPT,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
             ])->toArray();
+        } elseif ($quoteTypeId == QuoteTypeId::Device) {
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
+                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE,
+                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE,
+            ])->toArray();
         }
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
