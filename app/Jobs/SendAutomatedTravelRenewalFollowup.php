@@ -65,4 +65,3 @@ class SendAutomatedTravelRenewalFollowup implements ShouldQueue
         }
     }
 }
-
