@@ -268,14 +268,17 @@ class ManagementReport
         }
 
         $query->when(! empty($request['branch']), function ($q) use ($request) {
-            if (in_array('not_applicable', $request['branch'])) {
+            // Normalize branch to array to handle both scalar and array inputs
+            $branches = is_array($request['branch']) ? $request['branch'] : [$request['branch']];
+            
+            if (in_array('not_applicable', $branches)) {
                 $q->where('personal_quotes.is_branch_applicable', 0);
-            } else if (in_array('not_assigned', $request['branch'])) {
+            } else if (in_array('not_assigned', $branches)) {
                 $q->where('personal_quotes.is_branch_applicable', 1)
                     ->whereNull('b.id');
             } else {
                 $q->where('personal_quotes.is_branch_applicable', 1)
-                    ->whereIn('b.id', $request['branch']);
+                    ->whereIn('b.id', $branches);
             }
             
         });
