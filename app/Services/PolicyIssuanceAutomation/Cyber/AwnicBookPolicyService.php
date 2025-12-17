@@ -27,9 +27,8 @@ class AwnicBookPolicyService
     /**
      * Execute book policy process
      *
-     * @param mixed $quote
-     * @param mixed $policyIssuance
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $policyIssuance
      */
     public function bookPolicy($quote, $policyIssuance = null): array
     {
@@ -55,7 +54,7 @@ class AwnicBookPolicyService
         }
 
         // Step 2: Pre-check validation (only if previous step succeeded)
-        if (!$processFailed) {
+        if (! $processFailed) {
             $quote->refresh();
             $preCheckResult = $this->validationService->validateBookPolicy($quote);
             if (! $preCheckResult['status']) {
@@ -70,7 +69,7 @@ class AwnicBookPolicyService
         }
 
         // Step 3: Create Sage process (only if previous steps succeeded)
-        if (!$processFailed) {
+        if (! $processFailed) {
             $request = new \stdClass;
             $request->quote_id = $quote->id;
             $request->modelType = QuoteTypes::CYBER->value;
@@ -114,8 +113,7 @@ class AwnicBookPolicyService
     /**
      * Update booking details
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function updateBookingDetails($quote): array
     {
@@ -156,7 +154,7 @@ class AwnicBookPolicyService
 
             request()->merge($updateBookingRequest);
 
-            $bookPolicyRequest = new BookPolicyRequest();
+            $bookPolicyRequest = new BookPolicyRequest;
             $validator = Validator::make($updateBookingRequest, $bookPolicyRequest->rules());
             $bookPolicyRequest->withValidator($validator);
 
@@ -189,8 +187,8 @@ class AwnicBookPolicyService
             }
         } catch (Exception $e) {
             $response['status'] = false;
-            $response['error'] = 'Booking update error: ' . $e->getMessage();
-            $response['message'] = 'An error occurred while updating booking details: ' . $e->getMessage();
+            $response['error'] = 'Booking update error: '.$e->getMessage();
+            $response['message'] = 'An error occurred while updating booking details: '.$e->getMessage();
 
             LoggerService::error('Exception during booking update', exception: $e);
         }
@@ -201,9 +199,8 @@ class AwnicBookPolicyService
     /**
      * Get steps locking status for UI
      *
-     * @param mixed $quote
-     * @param bool $throughAutomation
-     * @return array
+     * @param  mixed  $quote
+     * @param  bool  $throughAutomation
      */
     public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
@@ -227,6 +224,7 @@ class AwnicBookPolicyService
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = AwnicEnum::ALL_STEPS_ARE_EDITABLE;
+
             return $response;
         }
 
@@ -249,6 +247,7 @@ class AwnicBookPolicyService
                 $response['isEditBookingDetailsDisabled'] = false;
                 $response['message'] = 'Booking Details is editable';
             }
+
             // Single return for this group
             return $response;
         }
@@ -270,4 +269,3 @@ class AwnicBookPolicyService
         return $response;
     }
 }
-

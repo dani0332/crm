@@ -4,7 +4,6 @@ use App\Enums\EnvEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\RolesEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -105,8 +104,8 @@ use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\BorLog;
-use App\Models\PolicyIssuance;
 use App\Models\CcPaymentProcess;
+use App\Models\PolicyIssuance;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
@@ -1017,10 +1016,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance']);
 
-
     // Cyber Quote Policy Automation Routes for testing purposes
     // this route is only for testing purposes to trigger the policy issuance automation
-    Route::get('/trigger-policy-document-update', function () { 
+    Route::get('/trigger-policy-document-update', function () {
 
         // without plan id and payments
         // $policyIssuanceProcess = PolicyIssuance::where('id', 1682)->first();
@@ -1036,8 +1034,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 });
 
-
-Route::get('test', function(){
+Route::get('test', function () {
     $ccPayment = CcPaymentProcess::find(5088);
     $ccPayment->update(['status' => PaymentProcessJobEnum::PENDING]);
 

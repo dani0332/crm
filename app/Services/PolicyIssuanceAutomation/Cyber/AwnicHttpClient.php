@@ -33,7 +33,7 @@ class AwnicHttpClient
      */
     public function post(string $endPoint, array $payload = [], array $headers = []): Response
     {
-        $url = $this->baseUrl . $endPoint;
+        $url = $this->baseUrl.$endPoint;
         $request = $this->buildClient($headers);
 
         LoggerService::info('Initiating AWNIC API call', extra: [
@@ -82,4 +82,3 @@ class AwnicHttpClient
         return $this->baseUrl;
     }
 }
-

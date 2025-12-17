@@ -75,6 +75,7 @@ final class WorkflowTypeEnum extends Enum
     public const CYBER_OCB_INTRO_EMAIL = 'cyber_ocb_intro_email';
     public const CYBER_OCB_INTRO_WHATSAPP = 'sendOcbCyberWhatsapp';
     public const CYBER_AUTOMATED_FOLLOWUPS = 'cyber_automated_followups';
+
     // Misreport Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
 }

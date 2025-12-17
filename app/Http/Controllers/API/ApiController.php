@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -21,6 +20,7 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -30,7 +30,6 @@ use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
-use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\CheckDocumentUploadAfterPaymentJob;
@@ -172,7 +171,7 @@ class ApiController extends Controller
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
         $response = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
-   
+
         return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }
 
@@ -663,18 +662,18 @@ class ApiController extends Controller
             // Dispatch job with 24 hours delay
             CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode)
                 ->delay(now()->addHours(24));
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Job dispatched successfully. Will check document upload after 24 hours.',
                 'payment_code' => $paymentCode,
             ], Response::HTTP_OK);
-            
+
         } catch (\Exception $e) {
             $paymentCodeForError = $request->input('payment_code', 'unknown');
 
             LoggerService::error("CheckDocumentUploadAfterPayment: Failed to dispatch job for payment code: {$paymentCodeForError}", exception: $e);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while dispatching the job',
@@ -682,7 +681,7 @@ class ApiController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     public function lifeSyncHealthQuestionnaire(LifeSyncHealthQuestionnaireRequest $request)
     {
         $metLifeApiService = new MetLifeApiService;

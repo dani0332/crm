@@ -161,15 +161,15 @@ class CyberQuoteService extends BaseQuoteService
     public function getShowData(string $uuid)
     {
         $quote = $this->getOne($uuid, true);
-        
+
         // Map payment status text similar to other LOBs
         $quote->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus(
             $quote->payment_status_id,
             $quote->payment_status_id_text ?? $quote->paymentStatus?->text ?? null
         );
-        
+
         $data = $this->getShowCommonData($quote);
-        
+
         // Generate plan-specific URL if plan and provider are available
         $planURL = $this->generatePlanURL($quote);
         if ($planURL) {
@@ -353,16 +353,16 @@ class CyberQuoteService extends BaseQuoteService
     {
         $plan = $quote->plan_id ? $quote->insuranceProviderPlan : null;
         $insuranceProvider = $quote->insurance_provider_id ? $quote->insuranceProvider : null;
-        
+
         if ($plan && $insuranceProvider && $insuranceProvider->code) {
             $planForLink = (object) [
                 'id' => $plan->id,
                 'providerCode' => $insuranceProvider->code,
             ];
-            
+
             return $this->getEcomQuoteLink($this->quoteType, $quote->uuid, $planForLink);
         }
-        
+
         // Return null - base URL from getShowCommonData will be used
         return null;
     }

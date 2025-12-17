@@ -63,7 +63,7 @@ class BirdService extends BaseService
     public function stopWorkFlow($workflow, $workflowId)
     {
         $birdWorkSpaceId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_WORKSPACE_ID)->first();
-        if (! $birdWorkSpaceId ) {
+        if (! $birdWorkSpaceId) {
             LoggerService::warning("Bird Workspace Id or Channel Id not found for lead : Ref-ID: {$workflow->quote_uuid} |Time: ".now());
 
             return false;

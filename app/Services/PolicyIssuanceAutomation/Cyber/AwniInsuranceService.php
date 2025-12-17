@@ -14,7 +14,6 @@ use Exception;
 
 class AwniInsuranceService implements PolicyIssuanceInterface
 {
-
     private array $stepHandlers = [
         AwnicEnum::STEP_ISSUE_POLICY => 'executeIssuePolicyStep',
         AwnicEnum::STEP_UPLOAD_DOCUMENTS => 'executeUploadDocumentsStep',
@@ -27,13 +26,10 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         private AwnicValidationService $validationService,
         private AwnicBookPolicyService $bookPolicyService,
         private AwnicResponseHandler $responseHandler,
-    ) {
-    }
+    ) {}
 
     /**
      * Get API steps in order
-     *
-     * @return array
      */
     private function getAPISteps(): array
     {
@@ -48,9 +44,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     /**
      * Update process with completed step
      *
-     * @param mixed $process
-     * @param array $response
-     * @return void
+     * @param  mixed  $process
      */
     private function updateProcessWithStep($process, array $response): void
     {
@@ -66,9 +60,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Get step handler method name
-     *
-     * @param string $step
-     * @return string|null
      */
     private function getStepHandler(string $step): ?string
     {
@@ -77,8 +68,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Check if policy issuance automation is enabled
-     *
-     * @return bool
      */
     public function isPolicyIssuanceAutomationEnabled(): bool
     {
@@ -87,8 +76,6 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Check if policy issuance automation retry is enabled for timeout
-     *
-     * @return bool
      */
     public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
     {
@@ -98,8 +85,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     /**
      * Create policy issuance schedule
      *
-     * @param mixed $quote
-     * @param mixed $insurer
+     * @param  mixed  $quote
+     * @param  mixed  $insurer
      * @return void
      */
     public function createPolicyIssuanceSchedule($quote, $insurer)
@@ -123,7 +110,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     /**
      * Execute automation steps
      *
-     * @param mixed $process
+     * @param  mixed  $process
      * @return array
      */
     public function executeSteps($process)
@@ -138,7 +125,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
             return $response;
         }
-        
+
         $response = ['status' => false, 'error' => null, 'message' => null];
 
         $quote = $process->model;
@@ -153,13 +140,13 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         try {
             $validationResult = $this->validationService->validateRequiredData($quote);
-            if (!$validationResult['status']) {
+            if (! $validationResult['status']) {
                 return $validationResult;
             }
 
             $lastCompletedStep = $process->completed_step;
             $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : $this->getAPISteps()[0];
-            
+
             LoggerService::info('Starting step sequence execution', extra: [
                 'process_id' => $process->id,
                 'last_completed_step' => $lastCompletedStep,
@@ -195,9 +182,9 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     /**
      * Execute step sequence
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @param string $nextStepToBeExecuted
+     * @param  mixed  $quote
+     * @param  mixed  $process
+     * @param  string  $nextStepToBeExecuted
      * @return array
      */
     private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
@@ -208,7 +195,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
         while ($currentStep !== null) {
             if (! in_array($currentStep, $allSteps, true)) {
-                $error = 'Unknown step encountered: ' . $currentStep;
+                $error = 'Unknown step encountered: '.$currentStep;
                 LoggerService::error('Invalid step', extra: [
                     'process_id' => $process->id,
                     'current_step' => $currentStep,
@@ -221,7 +208,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
 
             $handler = $this->getStepHandler($currentStep);
             if (! $handler || ! method_exists($this->stepExecutor, $handler)) {
-                $error = 'Missing handler for step: ' . $currentStep;
+                $error = 'Missing handler for step: '.$currentStep;
                 LoggerService::error('Handler not found for step', extra: [
                     'process_id' => $process->id,
                     'current_step' => $currentStep,
@@ -248,6 +235,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
                     'steps_executed' => $stepsExecuted,
                     'error' => $response['error'] ?? AwnicEnum::UNKNOWN_ERROR,
                 ]);
+
                 return $response;
             }
 
@@ -272,8 +260,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     /**
      * Get next step to execute
      *
-     * @param string|null $completedStep
-     * @return string|null
+     * @param  string|null  $completedStep
      */
     public function getNextStep($completedStep = null): ?string
     {
@@ -284,6 +271,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             LoggerService::info('No previous step, starting from beginning', extra: [
                 'next_step' => $nextStep,
             ]);
+
             return $nextStep;
         }
 
@@ -293,6 +281,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
                 'completed_step' => $completedStep,
                 'valid_steps' => $allSteps,
             ]);
+
             return null;
         }
 
@@ -300,6 +289,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             LoggerService::info('All steps completed', extra: [
                 'last_completed_step' => $completedStep,
             ]);
+
             return null;
         }
 
@@ -315,9 +305,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     /**
      * Get steps locking status
      *
-     * @param mixed $quote
-     * @param bool $throughAutomation
-     * @return array
+     * @param  mixed  $quote
+     * @param  bool  $throughAutomation
      */
     public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {

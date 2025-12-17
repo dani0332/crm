@@ -10,7 +10,6 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class AwnicStepExecutor
 {
-
     public function __construct(
         private AwnicApiService $apiService,
         private AwnicBookPolicyService $bookPolicyService,
@@ -19,9 +18,8 @@ class AwnicStepExecutor
     /**
      * Execute issue policy step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeIssuePolicyStep($quote, $process): array
     {
@@ -55,9 +53,8 @@ class AwnicStepExecutor
     /**
      * Execute upload documents step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeUploadDocumentsStep($quote, $process): array
     {
@@ -90,9 +87,8 @@ class AwnicStepExecutor
     /**
      * Execute upload policy documents step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeUploadPolicyDocumentsStep($quote, $process): array
     {
@@ -124,9 +120,8 @@ class AwnicStepExecutor
     /**
      * Execute book policy step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeBookPolicyStep($quote, $process): array
     {
@@ -156,4 +151,3 @@ class AwnicStepExecutor
         return $triggerBookPolicyResponse;
     }
 }
-

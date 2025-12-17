@@ -190,7 +190,7 @@ class QuoteDocumentService extends BaseService
                 $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
-                if($fileMimeType == null || $extension == null ) {
+                if ($fileMimeType == null || $extension == null) {
                     $fileName = $data['file_name'] ?? '';
                     $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                     $fileMimeType = mimeContentType($extension) ?? 'application/octet-stream';

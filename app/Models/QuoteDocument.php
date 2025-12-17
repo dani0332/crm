@@ -80,7 +80,7 @@ class QuoteDocument extends Model implements AuditableContract
     public function watermarkedDocumentUrl(): Attribute
     {
         return Attribute::make(
-            get: fn() => ! empty($this->watermarked_doc_url) ? storageUrl() . $this->watermarked_doc_url : '',
+            get: fn () => ! empty($this->watermarked_doc_url) ? storageUrl().$this->watermarked_doc_url : '',
         );
     }
 }

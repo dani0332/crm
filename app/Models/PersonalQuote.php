@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
-use App\Enums\InsuranceProviderEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;

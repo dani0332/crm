@@ -6,7 +6,6 @@ use App\Enums\AwnicEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteTypes;
 use App\Facades\Awnic;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -24,9 +23,8 @@ class AwnicApiService
     /**
      * Issue policy API call
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function issuePolicy($quote, $process): array
     {
@@ -38,7 +36,7 @@ class AwnicApiService
 
         $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_ISSUE_POLICY);
         $endPoint = '/cyber/generatePolicy';
-        
+
         $customer = $quote->customer;
         $nationality = $quote->nationality;
         $emirateOfRegistration = $quote->cyberQuote->emirateOfRegistration;
@@ -52,8 +50,8 @@ class AwnicApiService
 
         $httpResponse = Awnic::post($endPoint, $payload, $headers);
         $issuePolicyResponse = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_POLICY);
-        
-        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_ISSUE_POLICY, $issuePolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+
+        app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, Awnic::getBaseUrl().$endPoint, AwnicEnum::STEP_ISSUE_POLICY, $issuePolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
         if (! $issuePolicyResponse['status']) {
             LoggerService::error('API call failed', extra: [
@@ -78,7 +76,7 @@ class AwnicApiService
 
         $this->quoteUpdater->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
         $this->quoteUpdater->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
-        
+
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';
         $response['completed_step'] = AwnicEnum::STEP_ISSUE_POLICY;
@@ -90,22 +88,21 @@ class AwnicApiService
     /**
      * Upload documents API call
      *
-     * @param mixed $quote
-     * @param mixed $policyIssuance
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $policyIssuance
      */
     public function uploadDocuments($quote, $process): array
     {
         // Validate required documents and insurer quote number added before hitting api
         $requiredDocuments = $this->documentHandler->getDocumentByType($quote, DocumentTypeCode::CYB_EID);
         $validationResult = $this->validationService->validateUploadDocuments($quote, $requiredDocuments);
-        if (!$validationResult['status']) {
+        if (! $validationResult['status']) {
             return $validationResult;
         }
 
         $endPoint = '/cyber/uploadDocument';
         $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_UPLOAD_DOCUMENTS);
-        
+
         LoggerService::info('Starting document upload process', extra: [
             'endpoint' => $endPoint,
             'insurer_quote_number' => $quote->insurer_quote_number,
@@ -135,7 +132,7 @@ class AwnicApiService
             $httpResponse = Awnic::post($endPoint, $payload);
             $uploadResponse = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_UPLOAD_DOCUMENTS);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, Awnic::getBaseUrl().$endPoint, AwnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
             if (! $uploadResponse['status']) {
                 $allDocsDownloaded = false;
@@ -163,9 +160,8 @@ class AwnicApiService
     /**
      * Upload policy documents to IMCRM
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function uploadPolicyDocumentsToIMCRM($quote, $process): array
     {
@@ -183,7 +179,7 @@ class AwnicApiService
 
         // validation added before hitting api to awnic for downloading document
         $validationResult = $this->validationService->validateDownloadDocuments($quote, $docTypeCodeForIMCRM);
-        if (!$validationResult['status']) {
+        if (! $validationResult['status']) {
             return $validationResult;
         }
 
@@ -193,9 +189,9 @@ class AwnicApiService
             $httpResponse = Awnic::post($endPoint, $payload);
             $downloadRequest = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_DOWNLOAD_DOCUMENT);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_UPLOAD_POLICY_DOCS, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
-            
-            if(isset($downloadRequest['status'])) {
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, Awnic::getBaseUrl().$endPoint, AwnicEnum::STEP_UPLOAD_POLICY_DOCS, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+
+            if (isset($downloadRequest['status'])) {
                 $docCode = $imCrmDocKey;
 
                 $documentContent = $downloadRequest['data'];
@@ -230,7 +226,7 @@ class AwnicApiService
                 'upload_summary' => $uploadedDocumentsToIMCRM->toArray(),
             ]);
 
-            $error = 'Policy Issuance is pending as ' . implode(',', $docsUploadToIMCRMFailed) . ' documents are not uploaded';
+            $error = 'Policy Issuance is pending as '.implode(',', $docsUploadToIMCRMFailed).' documents are not uploaded';
             $response['error'] = $error;
             $response['message'] = $error;
             $response['status'] = false;
@@ -249,4 +245,3 @@ class AwnicApiService
         return $response;
     }
 }
-

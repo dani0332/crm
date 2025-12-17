@@ -1674,10 +1674,10 @@ class CentralService extends BaseService
             $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) ? (string) $quote->cyberPlanDetail->coverage : '-';
             $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
             $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
-            $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL') . $quote?->cyberPolicyWording?->link : '';
+            $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '';
             $emailData->taxInvoice = $quoteDocuments->filter(function ($document) {
                 return $document['document_type_code'] == DocumentTypeCode::CYB_TI;
-            })->first()?->watermarkedDocumentUrl ?? '';;
+            })->first()?->watermarkedDocumentUrl ?? '';
         }
 
         if (

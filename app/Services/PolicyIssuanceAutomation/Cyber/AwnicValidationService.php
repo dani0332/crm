@@ -2,18 +2,15 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Cyber;
 
-use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\SendBookPolicyRequest;
-use App\Services\CustomerInsuredService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 
 class AwnicValidationService
 {
-
     public function __construct(
         private AwnicDocumentHandler $documentHandler,
     ) {}
@@ -21,8 +18,7 @@ class AwnicValidationService
     /**
      * Validate book policy prerequisites
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function validateBookPolicy($quote): array
     {
@@ -40,7 +36,7 @@ class AwnicValidationService
             ];
             request()->merge($requestData);
 
-            $sendBookPolicyRequest = new SendBookPolicyRequest();
+            $sendBookPolicyRequest = new SendBookPolicyRequest;
             $validator = Validator::make($requestData, $sendBookPolicyRequest->rules());
             $sendBookPolicyRequest->withValidator($validator);
 
@@ -49,10 +45,10 @@ class AwnicValidationService
                 $response['error'] = $validator->errors()->first() ?? 'SendBookPolicyRequest validation failed';
                 $response['message'] = $validator->errors()->first();
 
-            LoggerService::error('Validation failed', extra: [
-                'validation_errors' => $validator->errors()->toArray(),
-                'first_error' => $response['message'],
-            ]);
+                LoggerService::error('Validation failed', extra: [
+                    'validation_errors' => $validator->errors()->toArray(),
+                    'first_error' => $response['message'],
+                ]);
 
                 return $response;
             }
@@ -61,8 +57,8 @@ class AwnicValidationService
             $response['message'] = 'All book policy prerequisites validated successfully';
         } catch (Exception $e) {
             $response['status'] = false;
-            $response['error'] = 'Validation error: ' . $e->getMessage();
-            $response['message'] = 'An error occurred during validation: ' . $e->getMessage();
+            $response['error'] = 'Validation error: '.$e->getMessage();
+            $response['message'] = 'An error occurred during validation: '.$e->getMessage();
 
             LoggerService::error('Exception during validation', exception: $e);
         }
@@ -73,8 +69,7 @@ class AwnicValidationService
     /**
      * Validate required data for policy issuance
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function validateRequiredData($quote): array
     {
@@ -85,14 +80,14 @@ class AwnicValidationService
         }
         $nationality = $quote->nationality ?? null;
         $emirateOfRegistration = $quote?->cyberQuote?->emirateOfRegistration ?? null;
-        
+
         $missing = [];
 
-        if (!$quote->payments) {
+        if (! $quote->payments) {
             $missing[] = 'payments';
         }
 
-        if (!$quote->cyberPlanDetail) {
+        if (! $quote->cyberPlanDetail) {
             $missing[] = 'cyber plan detail';
         }
 
@@ -107,8 +102,7 @@ class AwnicValidationService
             $customer->dob === null && $missing[] = 'dob';
         }
 
-
-        if (!empty($missing)) {
+        if (! empty($missing)) {
             LoggerService::error('Missing required data', extra: [
                 'has_payments' => (bool) $quote->payments,
                 'has_plan_detail' => (bool) $quote->cyberPlanDetail,
@@ -153,14 +147,15 @@ class AwnicValidationService
 
     public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array
     {
-        $missingDocs = array_keys(array_filter($docTypeCodeForIMCRM, fn($docId) => $docId === null));
-        if (!empty($missingDocs)) {
+        $missingDocs = array_keys(array_filter($docTypeCodeForIMCRM, fn ($docId) => $docId === null));
+        if (! empty($missingDocs)) {
             return [
                 'status' => false,
-                'error' => 'Missing documents: ' . implode(', ', $missingDocs),
-                'message' => 'Missing documents: ' . implode(', ', $missingDocs),
+                'error' => 'Missing documents: '.implode(', ', $missingDocs),
+                'message' => 'Missing documents: '.implode(', ', $missingDocs),
             ];
         }
+
         return [
             'status' => true,
             'error' => null,

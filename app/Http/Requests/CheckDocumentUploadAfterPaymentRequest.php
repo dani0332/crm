@@ -9,7 +9,6 @@ use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class CheckDocumentUploadAfterPaymentRequest extends FormRequest
 {
@@ -53,21 +52,24 @@ class CheckDocumentUploadAfterPaymentRequest extends FormRequest
                 ->with('paymentable')
                 ->first();
 
-            if (!$payment) {
+            if (! $payment) {
                 $validator->errors()->add('payment_code', 'Payment not found or not authorized');
+
                 return;
             }
 
             // Check if payment belongs to any quote
-            if (!$payment->paymentable) {
+            if (! $payment->paymentable) {
                 $validator->errors()->add('payment_code', 'Payment does not belong to any quote');
+
                 return;
             }
 
             $quote = $payment->paymentable;
-            
+
             if ($quote?->quote_type_id != QuoteTypes::CYBER->id()) {
                 $validator->errors()->add('payment_code', 'Payment does not belong to a Cyber quote');
+
                 return;
             }
 
@@ -89,4 +91,3 @@ class CheckDocumentUploadAfterPaymentRequest extends FormRequest
         ];
     }
 }
-

@@ -181,7 +181,6 @@ return [
     'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID'),
     'GIG_API_AUTH_CLIENT_SECRET' => env('GIG_API_AUTH_CLIENT_SECRET'),
 
-
     // AWNI Policy ISsuance API Credentials
     'AWNIC_API_BASE_URL' => env('AWNIC_API_BASE_URL'),
     'AWNIC_API_PARTNER_ID' => env('AWNIC_API_PARTNER_ID'),

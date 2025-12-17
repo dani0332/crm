@@ -15,4 +15,3 @@ class CyberInsurerRequestResponses extends Model
         return $this->belongsTo(InsuranceProvider::class, 'provider_id', 'id');
     }
 }
-
