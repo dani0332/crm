@@ -342,7 +342,7 @@ class TravelEmailService extends BaseService
         if ($travelRenewalEvent) {
             $response = app(BirdService::class)->triggerWebHookRequest($travelRenewalEvent->value, $emailData);
             info("SendOCBTravelRenewalIntroEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-            
+
             // Update lead status to Quoted
             $lead->quote_status_id = QuoteStatusEnum::Quoted;
             $lead->save();
@@ -395,7 +395,6 @@ class TravelEmailService extends BaseService
         }
     }
 
-    
     public function sendTravelAllianceFailedAllocationEmail($lead)
     {
         $advisor = User::where('id', $lead->advisor_id)->first();
