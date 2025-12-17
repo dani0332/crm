@@ -23,7 +23,6 @@ use Exception;
  */
 class ClaimRequestEmailService extends BaseService
 {
-
     /**
      * Dispatch Google review email job for the claim request
      */

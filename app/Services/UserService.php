@@ -427,8 +427,6 @@ class UserService extends BaseService
             ->get();
     }
 
-
-
     /**
      * Get claims managers (users with appropriate roles)
      */
@@ -438,6 +436,5 @@ class UserService extends BaseService
             $query->where('name', RolesEnum::CLAIM_MANAGER);
         })->select('id', 'name', 'email')->where('is_active', 1)->orderBy('name')->get()->toArray();
     }
-
 
 }

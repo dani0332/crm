@@ -3,31 +3,14 @@
 namespace App\Services;
 
 use App\Enums\ClaimsEnum;
-use App\Enums\DocumentTypeCode;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
-use App\Facades\CustomerPortalApiFacade;
-use App\Facades\InstantWriterAIFacade;
-use App\Models\CarMake;
-use App\Models\CarModel;
 use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
-use App\Models\ClaimRequestDetail;
 use App\Models\ClaimStatus;
-use App\Models\DocumentType;
-use App\Models\PersonalQuote;
-use App\Models\QuoteType;
-use App\Models\User;
-use App\Models\YearOfManufacture;
 use App\Services\Logger\LoggerService;
-use App\Traits\CentralTrait;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use ZipArchive;
 
 class ClaimStatusesService extends BaseService
 {

@@ -20,12 +20,9 @@ use App\Models\QuoteType;
 use App\Models\YearOfManufacture;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use ZipArchive;
 
 class ClaimsService extends BaseService
 {
