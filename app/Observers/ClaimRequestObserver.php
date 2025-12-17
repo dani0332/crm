@@ -7,24 +7,34 @@ namespace App\Observers;
 use App\Enums\ClaimsEnum;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
-use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
 use App\Services\EmailServices\ClaimRequestEmailService;
 
 class ClaimRequestObserver
 {
+    protected ClaimStatusesService $claimStatusesService;
+    protected ClaimRequestEmailService $claimRequestEmailService;
+
+    /**
+     * Create a new observer instance.
+     */
+    public function __construct(
+        ClaimStatusesService $claimStatusesService,
+        ClaimRequestEmailService $claimRequestEmailService
+    ) {
+        $this->claimStatusesService = $claimStatusesService;
+        $this->claimRequestEmailService = $claimRequestEmailService;
+    }
+
     public function updating(ClaimRequest $claimRequest): void
     {
-        $claimService = new ClaimsService;
-        $claimStatusesService = new ClaimStatusesService();
-        $claimRequestEmailService = new ClaimRequestEmailService();
 
         if ($claimRequest->isDirty('claim_number')) {
             $originalClaimNumber = $claimRequest->getOriginal('claim_number');
             $newClaimNumber = $claimRequest->claim_number;
 
             if (empty($originalClaimNumber) && ! empty($newClaimNumber)) {
-                $claimStatusesService->updateClaimSubStatusToClaimRegistered($claimRequest);
+                $this->claimStatusesService->updateClaimSubStatusToClaimRegistered($claimRequest);
             }
         }
 
@@ -32,9 +42,9 @@ class ClaimRequestObserver
             $originalClaimSubStatusId = $claimRequest->getOriginal('claim_sub_status_id');
             $newClaimSubStatusId = $claimRequest->claim_sub_status_id;
 
-            $shouldCloseTheClaim = $claimStatusesService->checkSubStatusForClaimClosure($claimRequest, $newClaimSubStatusId);
+            $shouldCloseTheClaim = $this->claimStatusesService->checkSubStatusForClaimClosure($claimRequest, $newClaimSubStatusId);
             if ($shouldCloseTheClaim) {
-                $claimStatusesService->markClaimAsClosed($claimRequest);
+                $this->claimStatusesService->markClaimAsClosed($claimRequest);
             }
 
         }
@@ -48,7 +58,7 @@ class ClaimRequestObserver
 
                 if (empty($originalApprovedRepairAmount) && ! empty($newApprovedRepairAmount)) {
                     $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS->value)->where('is_active', 1)->first();
-                    $claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusClosed);
+                    $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusClosed);
                 }
             }
             if ($claimRequest->isDirty('approved_total_loss_amount')) {
@@ -57,7 +67,7 @@ class ClaimRequestObserver
 
                 if (empty($originalApprovedTotalLossAmount) && ! empty($newApprovedTotalLossAmount)) {
                     $claimStatusTotalLossOfferShared = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED->value)->where('is_active', 1)->first();
-                    $claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusTotalLossOfferShared);
+                    $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusTotalLossOfferShared);
                 }
             }
             if ($claimRequest->isDirty('approved_cash_loss_amount')) {
@@ -66,7 +76,7 @@ class ClaimRequestObserver
 
                 if (empty($originalApprovedCashLossAmount) && ! empty($newApprovedCashLossAmount)) {
                     $claimStatusCashLossApproved = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED->value)->where('is_active', 1)->first();
-                    $claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusCashLossApproved);
+                    $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusCashLossApproved);
                 }
             }
         }
@@ -77,8 +87,8 @@ class ClaimRequestObserver
             $newClaimStatusId = $claimRequest->claim_status_id;
 
             // Check if the claim is now closed
-            if ($claimStatusesService->isClaimStatusClosed($newClaimStatusId) && ! $claimStatusesService->isClaimStatusClosed($originalClaimStatusId)) {
-                $claimRequestEmailService->dispatchClaimGoogleReviewEmail($claimRequest);
+            if ($this->claimStatusesService->isClaimStatusClosed($newClaimStatusId) && ! $this->claimStatusesService->isClaimStatusClosed($originalClaimStatusId)) {
+                $this->claimRequestEmailService->dispatchClaimGoogleReviewEmail($claimRequest);
             }
         }
     }
@@ -88,12 +98,9 @@ class ClaimRequestObserver
      */
     public function creating(ClaimRequest $claimRequest): void
     {
-        $claimService = new ClaimsService;
-        $claimStatusesService = new ClaimStatusesService;
-
         // If claim number is provided during creation, set status to "Claim registered"
         if (! empty($claimRequest->claim_number)) {
-            $claimStatusesService->updateClaimSubStatusToClaimRegistered($claimRequest);
+            $this->claimStatusesService->updateClaimSubStatusToClaimRegistered($claimRequest);
         }
     }
 
