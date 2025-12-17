@@ -43,11 +43,13 @@ class ClaimsController extends Controller
     public function __construct(
         ClaimsService $claimsService,
         ClaimStatusesService $claimsStatusesService,
+        ClaimDocumentService $claimDocumentService,
         QuoteDocumentService $quoteDocumentService,
         CustomerService $customerService,
     ) {
         $this->claimsService = $claimsService;
         $this->claimsStatusesService = $claimsStatusesService;
+        $this->claimDocumentService = $claimDocumentService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->customerService = $customerService;
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
@@ -189,7 +191,7 @@ class ClaimsController extends Controller
 
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
-            $complaintStatuses = $this->$this->claimsStatusesService->getClaimComplaintStatuses();
+            $complaintStatuses = $this->claimsStatusesService->getClaimComplaintStatuses();
             // dd($complaintStatuses);
             $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
