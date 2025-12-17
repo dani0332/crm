@@ -14,6 +14,8 @@ use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
+use App\Http\Controllers\BranchAssignmentController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CommercialKeywordsController;
@@ -509,6 +511,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
+        Route::resource('branches', BranchController::class);
+        Route::prefix('branch-assignments')->name('branch-assignments.')->group(function () {
+            Route::get('/', [BranchAssignmentController::class, 'index'])->name('index');
+            Route::get('/{user}', [BranchAssignmentController::class, 'show'])->name('show');
+            Route::post('/{user}', [BranchAssignmentController::class, 'store'])->name('store');
+            Route::patch('/{user}/branches/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('delete');
+            Route::patch('/{user_id}/branches/{branch_id}/make-primary', [BranchAssignmentController::class, 'makePrimary'])->name('make-primary');
+        });
 
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
@@ -554,6 +564,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::prefix('config')->group(function () {
                 Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
+                Route::post('fetch-nationalities', [BuyLeadConfigController::class, 'fetchNationalities'])->name('admin.buy-leads.config.fetch-nationalities');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
         });
@@ -619,7 +630,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
         Route::post('assignSupportUser', [CRUDController::class, 'assignSupportUser'])->name('assign-support-user');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
-
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
@@ -888,8 +898,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Command to bulk send policy documents
-    Route::get('/run-policy-bulk-send', function () {
-
+    Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {
         // Check if user has admin role
         if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
             return response()->json(['error' => 'Not authorized'], 403);
@@ -907,12 +916,33 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         try {
-            // Execute the command
-            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+            // Check if fetching from sage_process_type flag
+            $fromSageProcess = $request->query('from_sage_process', false);
+            $startDate = $request->query('start_date');
+            $sageProcessId = $request->query('sage_process_id');
+
+            // Build command parameters
+            $params = [];
+            if ($fromSageProcess) {
+                $params['--from-sage-process'] = true;
+
+                if ($startDate) {
+                    $params['--start-date'] = $startDate;
+                }
+
+                if ($sageProcessId) {
+                    $params['--sage-process-id'] = $sageProcessId;
+                }
+            }
+
+            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents', $params);
 
             return response()->json([
                 'message' => 'Command executed successfully!',
                 'status' => 'completed',
+                'from_sage_process' => (bool) $fromSageProcess,
+                'start_date' => $startDate,
+                'sage_process_id' => $sageProcessId,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -920,7 +950,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 'status' => 'failed',
             ], 500);
         } finally {
-            // Always release the lock
             $lock->release();
         }
     })->name('run-policy-bulk-send');

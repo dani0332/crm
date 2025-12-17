@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ApplicationStorageSeeder::class,
+            BuyLeadsRevivalPermissionSeeder::class,
             RolePermissionSeeder::class,
             // HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
@@ -46,6 +47,8 @@ class DatabaseSeeder extends Seeder
             CarAdditionalDetailsForSukoonSeeder::class,
             QICTokioLookupSeeder::class,
             DocRequiredForPolicySendSeeder::class,
+            BranchSeeder::class,
+            BranchOverrideConfigSeeder::class,
         ]);
     }
 }

@@ -108,6 +108,7 @@ class HealthQuoteService extends BaseService
             'e.TEXT AS emirate_of_your_visa_id_text',
             'hqr.advisor_id',
             'hqr.previous_advisor_id',
+            'su.name as support_user_name',
             'u.name as advisor_id_text',
             'u.email as advisor_email',
             'u.mobile_no as advisor_mobile_no',
@@ -218,6 +219,11 @@ class HealthQuoteService extends BaseService
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
             'sso.description as sub_source_option_description',
+            'ub.branch_id as advisor_primary_branch_id',
+            'b.name as lead_branch_name',
+            'b.id as lead_branch_id',
+            'is_quote_locked',
+            'is_branch_applicable',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -232,6 +238,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->leftJoin('users as su', 'su.id', '=', 'hqr.support_user_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'hqr.previous_advisor_id')
             ->leftJoin('users as wcu', 'wcu.id', '=', 'hqr.wcu_id')
             ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
@@ -253,7 +260,13 @@ class HealthQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id');
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'hqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'hqr.branch_id');
     }
 
     public function getEntity($id)
@@ -357,7 +370,12 @@ class HealthQuoteService extends BaseService
             'isPecMarked' => $request->pec == 1,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
+
+            if (Auth::user()->hasAnyRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
+                $dataArr['supportUserId'] = Auth::user()->id;
+            } else {
+                $dataArr['advisorId'] = Auth::user()->id;
+            }
         }
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
@@ -383,6 +401,15 @@ class HealthQuoteService extends BaseService
         $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
         return $query;
+    }
+
+    public function postProcessHealthQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id));
+
+            return $quote;
+        });
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -427,6 +454,10 @@ class HealthQuoteService extends BaseService
     public function updateHealthQuote(Request $request, $id)
     {
         $healthQuote = HealthQuote::where('uuid', $id)->first();
+        if ($healthQuote?->is_quote_locked) {
+            return redirect('quote/health/'.$id)->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
+
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;
@@ -1711,6 +1742,55 @@ class HealthQuoteService extends BaseService
             ->get()->toArray();
 
         return $copays;
+    }
+
+    /**
+     * Assign support user (OE/AE) to Health leads
+     */
+    public function assignSupportUser(array $leadIds, int $supportUserId, string $modelType): ?string
+    {
+        $updatedLeadIds = [];
+
+        foreach ($leadIds as $leadId) {
+            // Remove any type suffix if present (e.g., "123|health" -> "123")
+            $id = explode('|', $leadId)[0];
+
+            // Get the quote object using the trait method
+            $quote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $id);
+            if ($quote) {
+                // For Health, support user maps to WCU
+                $quote->support_user_id = $supportUserId;
+                $quote->save();
+                $updatedLeadIds[] = $id;
+            }
+        }
+
+        // Send a single email for all assigned leads
+        if (! empty($updatedLeadIds) && $supportUserId) {
+            try {
+                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
+                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
+                    \Illuminate\Support\Facades\Auth::id(),
+                    $supportUserId,
+                    $updatedLeadIds,
+                    $quoteType
+                )->delay(now()->addSeconds(5));
+            } catch (\Exception $e) {
+                LoggerService::error('Failed to dispatch support user assignment email job. Message: '.$e->getMessage(), [
+                    'support_user_id' => $supportUserId,
+                    'lead_ids' => $updatedLeadIds,
+                    'model_type' => $modelType,
+                ]);
+            }
+        }
+
+        if (! empty($updatedLeadIds)) {
+            $supportUserName = \App\Models\User::findOrFail($supportUserId)->name;
+
+            return $modelType.' Leads has been Assigned To '.$supportUserName;
+        }
+
+        return null;
     }
 
     public function updateNotifyAgentFlag($request)

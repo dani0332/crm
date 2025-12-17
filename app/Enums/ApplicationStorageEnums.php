@@ -67,6 +67,7 @@ final class ApplicationStorageEnums extends Enum
     public const DUBAI_NOW_CC_GROUP = 'DUBAI_NOW_CC_GROUP';
     public const SAGE_ENABLED = 'SAGE_ENABLED';
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
+    public const TEMP_DISABLE_SAGE_BOOKING = 'TEMP_DISABLE_SAGE_BOOKING';
     public const DTT_ENABLED = 'DTT_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
@@ -232,6 +233,8 @@ final class ApplicationStorageEnums extends Enum
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
     public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
     public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
+    public const INSLY_TEMP_CUSTOMER_EMAIL = 'INSLY_TEMP_CUSTOMER_EMAIL';
+    public const INSLY_TEMP_CUSTOMER_POLICY_OID = 'INSLY_TEMP_CUSTOMER_POLICY_OID';
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
 
     /* AIG Workflow Integration */
@@ -315,4 +318,10 @@ final class ApplicationStorageEnums extends Enum
 
     // MetLife Integration
     public const ENABLE_METLIFE = 'ENABLE_METLIFE';
+    public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
+    public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
+
+    // Branch Enum
+    public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
+    public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
 }
