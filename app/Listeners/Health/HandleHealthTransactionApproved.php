@@ -32,6 +32,9 @@ class HandleHealthTransactionApproved
         } else {
             info(self::class." - Non-Ecommerce/IMCRM source, no renewal batch assigned for quote uuid: {$healthQuote->uuid}");
         }
+
+        // Update is_quote_locked field
+        $this->updateIsQuoteLocked($healthQuote);
     }
 
     /**
@@ -80,5 +83,15 @@ class HandleHealthTransactionApproved
         } else {
             info(self::class." - No renewal batch found for the current date for quote uuid: {$healthQuote->uuid}");
         }
+    }
+
+    /**
+     * Updates the is_quote_locked field for the given health quote.
+     *
+     * @param  HealthQuote  $healthQuote  The health quote to update.
+     */
+    protected function updateIsQuoteLocked(HealthQuote $healthQuote): void
+    {
+        $healthQuote->withoutEvents(fn () => $healthQuote->update(['is_quote_locked' => true]));
     }
 }

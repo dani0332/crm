@@ -634,4 +634,13 @@ class CarQuote extends BaseModel
             ->with('payments');
     }
 
+    public function branch()
+    {
+        return $this->hasOne(Branch::class, 'id', 'branch_id');
+    }
+
+    public function branchOverride()
+    {
+        return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
 }
