@@ -113,7 +113,10 @@ const copyToClipboard = item => {
     <NextFollowUpUpdate :claim="claim" />
 
     <!-- Complaint Status Component -->
-    <ComplaintStatus :claim="claim" :complaint-statuses="dropdowns.complaintStatuses" />
+    <ComplaintStatus
+      :claim="claim"
+      :complaint-statuses="dropdowns.complaintStatuses"
+    />
 
     <!-- Claim Documents Component -->
     <ClaimDocuments
