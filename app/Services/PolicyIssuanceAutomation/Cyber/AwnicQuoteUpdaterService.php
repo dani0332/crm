@@ -26,15 +26,31 @@ class AwnicQuoteUpdaterService
             'insurer_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
             'insurer_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
         ]);
+        
+        $quote->cyberPlanDetail()->update([
+            'insurerQuoteNo' => $issuePolicyResult?->QuoteRefNo,
+        ]);
     }
 
     public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePolicyResult): void
     {
+        $policyInfo = $issuePolicyResult?->policyInfo;
+
+        // Calculate commission percentage
+        // commission_percentage = (commissionAmt / premiumAmount) * 100
+        $commissionAmt = isset($policyInfo?->commissionAmt) ? (float) $policyInfo->commissionAmt : 0.0;
+        $premiumAmount = isset($policyInfo?->premiumAmount) ? (float) $policyInfo->premiumAmount : 0.0;
+
+        $commissionPercentage = 0.0;
+        if ($premiumAmount > 0) {
+            $commissionPercentage = ($commissionAmt / $premiumAmount) * 100;
+        }
+
         Payment::where('code', $quoteCode)->update([
             'commission_vat_applicable' => $issuePolicyResult?->policyInfo?->commissionPayableAmt,
             'commission' => $issuePolicyResult?->policyInfo?->commissionAmt,
             'commission_vat' => $issuePolicyResult?->policyInfo?->commissionVatAmt,
-            'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage ?? 0,
+            'commmission_percentage' => $commissionPercentage,
             'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
             'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
             'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->creditNoteNo ?? null,

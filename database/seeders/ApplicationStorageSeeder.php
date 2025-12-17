@@ -1226,7 +1226,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_SEND_POLICY_TEMPLATE],
             [
-                'value' => 771,
+                'value' => 772,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
