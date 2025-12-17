@@ -141,17 +141,6 @@ watch(
   },
 );
 
-const updatedLobs = computed(() => {
-  return props.lobs.map(lob => {
-    if (lob.value === 'CAR_CAT_A') {
-      return {
-        ...lob,
-        label: 'Car Revival Cat A',
-      };
-    }
-    return lob;
-  });
-});
 </script>
 <template>
   <Head title="Buy Lead Configuration" />
@@ -163,7 +152,7 @@ const updatedLobs = computed(() => {
     <div class="grid sm:grid-cols-3 gap-4">
       <x-select
         placeholder="Select LOB"
-        :options="updatedLobs"
+        :options="props.lobs"
         filterable
         v-model="buyForm.quote_type"
         :rules="[isRequired]"
