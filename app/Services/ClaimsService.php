@@ -640,26 +640,33 @@ class ClaimsService extends BaseService
      */
     public function getLineOfBusinessOptions(): array
     {
-        return  CacheManager::remember(
+        return CacheManager::remember(
             CacheKeyEnum::CLAIM_CACHE_QUOTE_TYPE_KEY,
             function () {
                 return QuoteType::select('id', 'text')
-                        ->whereIn('id', [
-                            QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Yacht,
-                            QuoteTypeId::Health, QuoteTypeId::Life,
-                        ])->where('is_active', 1)->orderBy('text')->get()->toArray();
+                    ->forClaims()
+                    ->withActive()
+                    ->orderBy('text')
+                    ->get()
+                    ->toArray();
             }
         );
     }
 
     public function getCarMake(): array
     {
-        return CarMake::select('code as id', 'text')->where('is_active', true)->get()->toArray();
+        return CarMake::select('code as id', 'text')
+            ->active()
+            ->get()
+            ->toArray();
     }
 
     public function getCarModelYear(): array
     {
-        return YearOfManufacture::select('text')->orderBy('sort_order')->get()->toArray();
+        return YearOfManufacture::select('text')
+            ->orderedBySort()
+            ->get()
+            ->toArray();
     }
 
     /**
@@ -667,14 +674,15 @@ class ClaimsService extends BaseService
      */
     public function getCarModelByMake(string $carMake): array
     {
-        $carMakeCode = CarMake::where('text', $carMake)->where('is_active', true)->value('code');
+        $carMakeCode = CarMake::active()
+            ->where('text', $carMake)
+            ->value('code');
 
         if (! $carMakeCode) {
             return [];
         }
 
-        return CarModel::where('car_make_code', $carMakeCode)
-            ->where('is_active', true)
+        return CarModel::activeWithCode($carMakeCode)
             ->select('id', 'text', 'code')
             ->orderBy('text')
             ->get()
@@ -722,7 +730,10 @@ class ClaimsService extends BaseService
         $subStatus = ClaimStatus::find($request->claim_sub_status_id);
         $targetStatus = $this->claimsStatusesService->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
         if ($targetStatus) {
-            $updateClaimData['claim_status_id'] = ClaimStatus::where('text', $targetStatus)->where('status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)->where('is_active', 1)->first()?->id;
+            $updateClaimData['claim_status_id'] = ClaimStatus::byText($targetStatus)
+                ->byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
+                ->active()
+                ->first()?->id;
         }
 
         $claimRequest->update($updateClaimData);

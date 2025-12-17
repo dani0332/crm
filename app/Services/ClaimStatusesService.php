@@ -20,7 +20,12 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimSubStatuses(): array
     {
-        return  ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text', 'quote_type_id')->orderBy('sort_order')->get()->toArray();
+        return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
+            ->active()
+            ->select('id', 'text', 'quote_type_id')
+            ->orderBySortOrder()
+            ->get()
+            ->toArray();
     }
 
     /**
@@ -28,13 +33,17 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimComplaintStatuses(): array
     {
-        return  CacheManager::remember(
+        return CacheManager::remember(
             CacheKeyEnum::CLAIM_CACHE_COMPLAINT_STATUSES_KEY,
             function () {
-                return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text')->orderBy('sort_order')->get()->toArray();
+                return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value)
+                    ->active()
+                    ->select('id', 'text')
+                    ->orderBySortOrder()
+                    ->get()
+                    ->toArray();
             }
         );
-
     }
 
     /**
@@ -42,7 +51,12 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimStatuses(): array
     {
-        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text', 'quote_type_id')->orderBy('sort_order')->get()->toArray();
+        return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
+            ->active()
+            ->select('id', 'text', 'quote_type_id')
+            ->orderBySortOrder()
+            ->get()
+            ->toArray();
     }
 
     public function updateClaimSubStatusToClaimRegistered(ClaimRequest $claimRequest): void
@@ -54,12 +68,11 @@ class ClaimStatusesService extends BaseService
                 $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION->value;
             }
             // Find the "Claim initiated" status for the specific quote type
-            $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->where('quote_type_id', $claimRequest->quote_type_id)->where('is_active', 1)->where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->first();
-
-            // If no specific status found for the quote type, try to find a general one
-            if (! $claimInitiatedStatus) {
-                $claimInitiatedStatus = ClaimStatus::where('text', $claimRegisterStatusKey)->whereNull('quote_type_id')->where('is_active', 1)->where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->first();
-            }
+            $claimInitiatedStatus = ClaimStatus::byText($claimRegisterStatusKey)
+                ->byQuoteType($claimRequest->quote_type_id)
+                ->active()
+                ->byStatusType(ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
+                ->first();
 
             if ($claimInitiatedStatus) {
                 // Update the claim sub status without triggering another observer event
@@ -134,7 +147,10 @@ class ClaimStatusesService extends BaseService
 
     public function markClaimAsOpen(ClaimRequest $claimRequest): void
     {
-        $claimStatusOpen = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_OPEN->value)->where('is_active', 1)->first();
+        $claimStatusOpen = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_OPEN->value)
+            ->active()
+            ->first();
+
         if ($claimStatusOpen) {
             $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
             LoggerService::info(' Claim status updated to "Open" - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -148,7 +164,10 @@ class ClaimStatusesService extends BaseService
 
     public function markClaimAsClosed(ClaimRequest $claimRequest): void
     {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED->value)->where('is_active', 1)->first();
+        $claimStatusClosed = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_CLOSED->value)
+            ->active()
+            ->first();
+
         if ($claimStatusClosed) {
             $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
             LoggerService::info(' Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -225,7 +244,8 @@ class ClaimStatusesService extends BaseService
             return false;
         }
 
-        $closedStatus = ClaimStatus::where('id', $statusId)->where('is_active', 1)->first();
+        $closedStatus = ClaimStatus::active()
+            ->find($statusId);
 
         return $closedStatus?->text === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
     }
@@ -279,7 +299,8 @@ class ClaimStatusesService extends BaseService
             $claim->updateComplaintStatus($complaintStatusId, $complaintDatetime, $notes);
 
             // Check if complaint status has changed to open complaint status
-            $newComplaintStatus = ClaimStatus::where('id', $complaintStatusId)->where('is_active', 1)->first();
+            $newComplaintStatus = ClaimStatus::active()
+                ->find($complaintStatusId);
 
             $isNewStatusComplaintOpen = $newComplaintStatus?->text === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 

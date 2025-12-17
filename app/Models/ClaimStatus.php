@@ -16,6 +16,53 @@ class ClaimStatus extends Model implements AuditableContract
     protected $table = 'claim_statuses';
     protected $fillable = ['text', 'description', 'is_active',  'sort_order', 'claim_request_type_id', 'quote_type_id', 'access_type_id', 'status_type'];
 
+    /**
+     * Scope to filter active records
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
+    /**
+     * Scope to filter by status type
+     */
+    public function scopeByStatusType($query, string $statusType)
+    {
+        return $query->where('status_type', $statusType);
+    }
+
+    /**
+     * Scope to filter by text
+     */
+    public function scopeByText($query, string $text)
+    {
+        return $query->where('text', $text);
+    }
+
+    /**
+     * Scope to filter by quote type ID or null (general statuses)
+     */
+    public function scopeByQuoteType($query, ?int $quoteTypeId)
+    {
+        if ($quoteTypeId) {
+            return $query->where(function ($q) use ($quoteTypeId) {
+                $q->where('quote_type_id', $quoteTypeId)
+                    ->orWhereNull('quote_type_id');
+            });
+        }
+
+        return $query->whereNull('quote_type_id');
+    }
+
+    /**
+     * Scope to order by sort order
+     */
+    public function scopeOrderBySortOrder($query)
+    {
+        return $query->orderBy('sort_order');
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
