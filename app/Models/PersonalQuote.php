@@ -6,6 +6,7 @@ use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -54,7 +55,7 @@ class PersonalQuote extends Model implements AuditableContract
         'stale_at' => FilterTypes::NULL_CHECK,
         'previous_policy_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
-    protected $appends = ['age', 'gender_label', 'pc_qualified_formatted'];
+    protected $appends = ['age', 'gender_label', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -643,6 +644,26 @@ class PersonalQuote extends Model implements AuditableContract
     public function isPolicyIssuanceFailed()
     {
         return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+    }
+
+    /**
+     * Get the API issuance status for this quote
+     *
+     * @return string|null
+     */
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    /**
+     * Get the insurer API status for this quote
+     *
+     * @return string|null
+     */
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
 
     public function subSource()

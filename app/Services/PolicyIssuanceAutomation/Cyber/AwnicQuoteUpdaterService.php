@@ -26,6 +26,10 @@ class AwnicQuoteUpdaterService
             'insurer_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
             'insurer_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
         ]);
+        
+        $quote->cyberPlanDetail()->update([
+            'insurerQuoteNo' => $issuePolicyResult?->QuoteRefNo,
+        ]);
     }
 
     public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePolicyResult): void
