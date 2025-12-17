@@ -48,7 +48,7 @@ class ActivePoliciesReportService extends ManagementReport
                 $join->on('personal_quotes.quote_id', '=', 'hqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
             })
-            ->groupBy('ip.text', 'personal_quotes.quote_type_id');
+            ->groupBy('ip.text', 'personal_quotes.quote_type_id', 'branch_name');
 
         $this->branchJoin($query);
         $this->applyFilters($query, $request, isSSR: true);
