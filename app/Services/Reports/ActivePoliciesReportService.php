@@ -38,6 +38,7 @@ class ActivePoliciesReportService extends ManagementReport
                 'ip.text as insurer',
                 'quote_type.code as line_of_business',
                 DB::raw('SUM(CASE WHEN hqr.pec_marked_at IS NOT NULL THEN 1 ELSE 0 END) as pec_count'),
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
@@ -49,6 +50,7 @@ class ActivePoliciesReportService extends ManagementReport
             })
             ->groupBy('ip.text', 'personal_quotes.quote_type_id');
 
+        $this->branchJoin($query);
         $this->applyFilters($query, $request, isSSR: true);
 
         return $query;

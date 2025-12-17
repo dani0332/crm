@@ -52,6 +52,11 @@ const tableHeader = reactive([
     tooltip:
       'Non-vatable price. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
   },
+  {
+    text: 'Branch',
+    value: 'branch_name',
+    tooltip: 'The branch of the lead',
+  },
 ]);
 
 const isIntegerColumn = key => {

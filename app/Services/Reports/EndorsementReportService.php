@@ -150,7 +150,8 @@ class EndorsementReportService extends ManagementReport
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
                 'ls.text as sub_source',
-                'sso.text as sub_source_option'
+                'sso.text as sub_source_option',
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -189,6 +190,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
             ->whereIn('send_update_logs.status', $statues)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
+        $this->branchJoin($query);
         $this->getUtmGroup($request, $query);
         $this->applyFilters($query, $request);
 
@@ -270,7 +272,8 @@ class EndorsementReportService extends ManagementReport
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
                 'ls.text as sub_source',
-                'sso.text as sub_source_option'
+                'sso.text as sub_source_option',
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -308,6 +311,7 @@ class EndorsementReportService extends ManagementReport
             ->whereIn('send_update_logs.status', $statues)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
+        $this->branchJoin($reversalQuery);
         $this->getUtmGroup($request, $reversalQuery);
 
         if ($request['reportType'] == ManagementReportTypeEnum::APPROVED_TRANSACTIONS) {

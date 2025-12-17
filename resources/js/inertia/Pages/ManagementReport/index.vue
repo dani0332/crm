@@ -56,6 +56,7 @@ const filters = reactive({
   transactionType: props.defaultFilters.transactionType ?? [],
   teams: [],
   subTeams: [],
+  branch: [],
   leadSources: [],
   subSources: [],
   sub_source_options_id: [],
@@ -103,6 +104,7 @@ const filterkeys = () => {
     ),
     activePolicies: filters.reportCategory === 'Active Policies',
     lobs: !(filters.reportCategory !== 'Sales Summary'),
+    branch: !(filters.reportCategory !== 'Sales Summary'),
   };
 
   if (filterConditions.policyExpiredDate) delete filters.policyExpiredDate;
@@ -110,6 +112,7 @@ const filterkeys = () => {
   if (filterConditions.paymentDueDate) delete filters.paymentDueDate;
   if (filterConditions.paymentDate) delete filters.paymentDate;
   if (filterConditions.lobs) delete filters.lob;
+  if (filterConditions.branch) delete filters.branch;
 };
 
 const loaders = reactive({
@@ -147,6 +150,18 @@ const lobs = computed(() => {
   return props.filterOptions?.lobs?.map(item => {
     return { value: item, label: item };
   });
+});
+
+const branchOptions = computed(() => {
+  const branchList = props.filterOptions?.branches?.map(item => ({
+    value: item.id,
+    label: item.name,
+  })) ?? [];
+  return [
+    { value: 'not_applicable', label: 'Not Applicable' },
+    { value: 'not_assigned', label: 'Not Assigned' },
+    ...branchList,
+  ];
 });
 
 const teams = computed(() => {
@@ -226,6 +241,7 @@ const groupBy = reactive([
   { label: 'Insurer', value: 'insurer' },
   { label: 'Line of Business', value: 'line_of_business' },
   { label: 'Department', value: 'department' },
+  { label: 'Branch', value: 'branch' },
 ]);
 
 const umtGroup = reactive([
@@ -918,6 +934,35 @@ watch(
           deselect-all
         />
       </x-field>
+      
+      <div v-if="filters.reportCategory != 'Sales Summary'">
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
+            Branch
+          </label>
+          <template #tooltip> Branch assigned to the lead </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.branch"
+          placeholder="Filter by Branch"
+          :options="branchOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter Branch...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.branch = branchOptions.filter(item => item.value !== 'not_applicable' && item.value !== 'not_assigned').map(item => item.value)"
+              @clear="filters.branch = []"
+            />
+          </template>
+        </x-select>
+      </div>
     </div>
 
     <div class="flex gap-3 justify-end">
