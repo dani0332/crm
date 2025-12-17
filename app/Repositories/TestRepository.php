@@ -11,4 +11,8 @@ class TestRepository
     public function checkAge(int $age): bool {
         return $age > 18;
     }
+	
+	public function isPaymentExists($code){
+		return $code === 'CAR-ABC123';
+	}
 }
