@@ -60,18 +60,17 @@ class AuditRepository extends BaseRepository
             ->select('audits.*', 'users.name')
             ->leftJoin('users', 'audits.user_id', 'users.id')
             ->when($showParentAuditLogs, function ($q) use ($auditables, $payment, $auditableId, $quoteTypeId) {
-                if ($auditableId || $payment) {
-                    $q->where(function ($q) use ($auditables, $payment, $auditableId) {
-                        $q->when($auditableId, function ($q) use ($auditables, $auditableId) {
-                            if (isset($auditables['auditable_type'])) {
-                                $q->where('auditable_id', $auditableId)
-                                    ->where('auditable_type', $auditables['auditable_type']);
-                            }
-                        });
-                        $q->when($payment, function ($q) use ($payment) {
-                            $q->orWhere('auditable_id', $payment->id)
-                                ->where('auditable_type', Payment::class);
-                        });
+                if ($auditableId && isset($auditables['auditable_type'])) {
+                    $q->where(function ($q) use ($auditables, $auditableId) {
+                        $q->where('auditable_id', $auditableId)
+                            ->where('auditable_type', $auditables['auditable_type']);
+                    });
+                }
+                
+                if ($payment) {
+                    $q->orWhere(function ($q) use ($payment) {
+                        $q->where('auditable_id', $payment->id)
+                            ->where('auditable_type', Payment::class);
                     });
                 }
                 if ($quoteTypeId && isset($auditables['auditable_type'])) {
