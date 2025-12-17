@@ -29,8 +29,6 @@ Route::middleware(['basicAuth'])->group(function () {
 });
 
 Route::prefix('device')->group(function () {
-    // Route::post('/auto-capture-failed', [DeviceFailureController::class, 'autoCaptureFailure'])
-    //     ->name('device.auto-capture-failed');
     Route::post('/failure-email', [DeviceFailureController::class, 'failureEmail'])
         ->name('device.failure-email');
 });
