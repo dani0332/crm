@@ -26,7 +26,7 @@ class SearchPoliciesRequest extends FormRequest
         return [
             'email' => 'required|email|max:255',
             'quote_type_id' => 'required|integer|exists:quote_type,id',
-            'policy_number' => 'nullable|string|max:100',
+            'policy_number' => 'required|string|max:100',
             'page' => 'nullable|integer|min:1',
         ];
     }
@@ -58,64 +58,5 @@ class SearchPoliciesRequest extends FormRequest
             'quote_type_id' => 'line of business',
             'page' => 'page number',
         ];
-    }
-
-    /**
-     * Configure the validator instance.
-     */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function ($validator) {
-            // Check if at least one search criteria is provided
-            if (! $this->filled('email') && ! $this->filled('policy_number')) {
-                $validator->errors()->add('search_criteria', 'At least one search criteria (email or policy number) is required.');
-            }
-        });
-    }
-
-    /**
-     * Handle a failed validation attempt.
-     */
-    protected function failedValidation(Validator $validator): void
-    {
-        throw new HttpResponseException(
-            response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $validator->errors(),
-            ], 422)
-        );
-    }
-
-    /**
-     * Get the page number with default value.
-     */
-    public function getPage(): int
-    {
-        return $this->integer('page', 1);
-    }
-
-    /**
-     * Get the email if provided.
-     */
-    public function getEmail(): ?string
-    {
-        return $this->filled('email') ? $this->string('email')->toString() : null;
-    }
-
-    /**
-     * Get the policy number if provided.
-     */
-    public function getPolicyNumber(): ?string
-    {
-        return $this->filled('policy_number') ? $this->string('policy_number')->toString() : null;
-    }
-
-    /**
-     * Get the quote type ID if provided.
-     */
-    public function getQuoteTypeId(): ?int
-    {
-        return $this->filled('quote_type_id') ? $this->integer('quote_type_id') : null;
     }
 }
