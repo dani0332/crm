@@ -66,7 +66,7 @@ class AuditRepository extends BaseRepository
                             ->where('auditable_type', $auditables['auditable_type']);
                     });
                 }
-                
+
                 if ($payment) {
                     $q->orWhere(function ($q) use ($payment) {
                         $q->where('auditable_id', $payment->id)
