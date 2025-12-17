@@ -39,41 +39,41 @@ class AuditRepository extends BaseRepository
         $quoteType = request()->has('quote_type') && request()->quote_type ? request()->input('quote_type') : null;
         $quoteTypeId = request()->has('quote_type_id') && request()->quote_type_id ? request()->input('quote_type_id') : null;
         $isSendUpdate = $quoteType === GenericRequestEnum::SEND_UPDATE_LOG;
-
         $payment = null;
+        
         if ($auditableId) {
-            $query = Payment::select('id');
             if ($isSendUpdate) {
-                $query->where('send_update_log_id', $auditableId);
-            } else {
-                // Ensure auditable_type exists to prevent undefined array key errors
-                if (isset($auditables['auditable_type'])) {
-                    $query->where('paymentable_id', $auditableId)
-                        ->where('paymentable_type', $auditables['auditable_type']);
-                }
+                $payment = Payment::select('id')
+                    ->where('send_update_log_id', $auditableId)
+                    ->first();
+            } elseif (isset($auditables['auditable_type'])) {
+                $payment = Payment::select('id')
+                    ->where('paymentable_id', $auditableId)
+                    ->where('paymentable_type', $auditables['auditable_type'])
+                    ->first();
             }
-
-            $payment = $query->first();
         }
-
+            
         $showParentAuditLogs = $auditables['show_auditables'] ?? true;
 
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
             ->leftJoin('users', 'audits.user_id', 'users.id')
             ->when($showParentAuditLogs, function ($q) use ($auditables, $payment, $auditableId, $quoteTypeId) {
-                $q->where(function ($q) use ($auditables, $payment, $auditableId) {
-                    $q->when($auditableId, function ($q) use ($auditables, $auditableId) {
-                        if (isset($auditables['auditable_type'])) {
-                            $q->where('auditable_id', $auditableId)
-                                ->where('auditable_type', $auditables['auditable_type']);
-                        }
+                if ($auditableId || $payment) {
+                    $q->where(function ($q) use ($auditables, $payment, $auditableId) {
+                        $q->when($auditableId, function ($q) use ($auditables, $auditableId) {
+                            if (isset($auditables['auditable_type'])) {
+                                $q->where('auditable_id', $auditableId)
+                                  ->where('auditable_type', $auditables['auditable_type']);
+                            }
+                        });
+                        $q->when($payment, function ($q) use ($payment) {
+                            $q->orWhere('auditable_id', $payment->id)
+                              ->where('auditable_type', Payment::class);
+                        });
                     });
-                    $q->when($payment, function ($q) use ($payment) {
-                        $q->orWhere('auditable_id', $payment->id)
-                            ->where('auditable_type', Payment::class);
-                    });
-                });
+                }
                 if ($quoteTypeId && isset($auditables['auditable_type'])) {
                     $q->where('auditable_type', $auditables['auditable_type'])
                         ->where('new_values->quote_type_id', $quoteTypeId);
