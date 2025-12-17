@@ -1100,7 +1100,7 @@ audits:
 **Pattern**:
 
 ```php
-LoggerService::info(self::class.'::'.__FUNCTION__.' - Message', extra: [
+LoggerService::info(' Message', extra: [
     'claim_uuid' => $claim->uuid,
     'field' => 'value',
     'user_id' => Auth::id(),

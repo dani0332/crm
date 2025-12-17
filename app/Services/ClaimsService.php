@@ -428,7 +428,7 @@ class ClaimsService extends BaseService
             return $response->data;
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error creating claim request', extra: [
+            LoggerService::error(' Error creating claim request', extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'data' => $data,
@@ -516,7 +516,7 @@ class ClaimsService extends BaseService
             }
 
             // Log the update
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim request updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim request updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_uuid' => $claimRequest->uuid,
                 'code' => $claimRequest->code,
                 'updated_by' => Auth::id(),
@@ -524,7 +524,7 @@ class ClaimsService extends BaseService
 
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus']);
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim request - Claim UUID: '.$uuid, extra: [
+            LoggerService::error(' Error updating claim request - Claim UUID: '.$uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'data' => $data,
@@ -573,7 +573,7 @@ class ClaimsService extends BaseService
                     $this->markClaimAsClosed($claimRequest);
                 }
 
-                LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim request main table updated - Claim UUID: '.$claimRequest->uuid, extra: [
+                LoggerService::info(' Claim request main table updated - Claim UUID: '.$claimRequest->uuid, extra: [
                     'claim_uuid' => $claimRequest->uuid,
                     'updated_fields' => array_keys($claimRequestData),
                     'updated_by' => Auth::id(),
@@ -598,7 +598,7 @@ class ClaimsService extends BaseService
             }
 
             // Log the overall update
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim details updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim details updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_uuid' => $claimRequest->uuid,
                 'code' => $claimRequest->code,
                 'updated_by' => Auth::id(),
@@ -609,7 +609,7 @@ class ClaimsService extends BaseService
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus', 'claimType', 'claimRequestType']);
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim details - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::error(' Error updating claim details - Claim UUID: '.$claimRequest->uuid, extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'data' => $data,
@@ -759,7 +759,7 @@ class ClaimsService extends BaseService
                 $claimRequest->claim_sub_status_id = $claimInitiatedStatus->id;
                 $claimRequest->saveQuietly();
 
-                LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim sub status updated to "Claim registered" - Claim UUID: '.$claimRequest->uuid, extra: [
+                LoggerService::info(' Claim sub status updated to "Claim registered" - Claim UUID: '.$claimRequest->uuid, extra: [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                     'claim_sub_status_id' => $claimInitiatedStatus->id,
@@ -768,14 +768,14 @@ class ClaimsService extends BaseService
                     'updated_by' => Auth::id(),
                 ]);
             } else {
-                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Could not find "Claim registered" status - Claim UUID: '.$claimRequest->uuid, extra: [
+                LoggerService::warning(' Could not find "Claim registered" status - Claim UUID: '.$claimRequest->uuid, extra: [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                     'quote_type_id' => $claimRequest->quote_type_id,
                 ]);
             }
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim sub status to "Claim registered" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::error(' Error updating claim sub status to "Claim registered" - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'error' => $e->getMessage(),
@@ -830,7 +830,7 @@ class ClaimsService extends BaseService
         $claimStatusOpen = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_OPEN->value)->where('is_active', 1)->first();
         if ($claimStatusOpen) {
             $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Open" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated to "Open" - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusOpen->id,
@@ -844,7 +844,7 @@ class ClaimsService extends BaseService
         $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_STATUS_CLOSED->value)->where('is_active', 1)->first();
         if ($claimStatusClosed) {
             $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusClosed->id,
@@ -889,7 +889,7 @@ class ClaimsService extends BaseService
             // Update the claim request
             $claimRequest->update($statusUpdateData);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'code' => $claimRequest->code,
@@ -904,7 +904,7 @@ class ClaimsService extends BaseService
             return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim status - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::error(' Error updating claim status - Claim UUID: '.$claimRequest->uuid, extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'claim_request_id' => $claimRequest->uuid,
@@ -973,7 +973,7 @@ class ClaimsService extends BaseService
                 if ($document) {
                     $uploadedDocuments[] = $document;
 
-                    LoggerService::info(self::class.'::'.__FUNCTION__.' - Document uploaded successfully', extra: [
+                    LoggerService::info(' Document uploaded successfully', extra: [
                         'claim_uuid' => $claim->uuid,
                         'document_id' => $document->id ?? null,
                         'document_name' => $document->original_name ?? 'Unknown',
@@ -986,7 +986,7 @@ class ClaimsService extends BaseService
             } catch (\Exception $e) {
                 $errors[] = "Error uploading {$file->getClientOriginalName()}: {$e->getMessage()}";
 
-                LoggerService::error(self::class.'::'.__FUNCTION__.' - Document upload failed', extra: [
+                LoggerService::error(' Document upload failed', extra: [
                     'claim_uuid' => $claim->uuid,
                     'file_name' => $file->getClientOriginalName(),
                     'error' => $e->getMessage(),
@@ -1011,7 +1011,7 @@ class ClaimsService extends BaseService
         $document = $claim->documents()->where('id', $documentId)->first();
 
         if (! $document) {
-            LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document not found', extra: [
+            LoggerService::warning(' Document not found', extra: [
                 'claim_uuid' => $claim->uuid,
                 'document_id' => $documentId,
                 'user_id' => Auth::id(),
@@ -1029,7 +1029,7 @@ class ClaimsService extends BaseService
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->saveQuietly();
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_sub_status_id' => $claimStatusClosed->id,
@@ -1044,7 +1044,7 @@ class ClaimsService extends BaseService
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->saveQuietly();
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_sub_status_id' => $claimStatusClosed->id,
@@ -1059,7 +1059,7 @@ class ClaimsService extends BaseService
         if ($claimStatusClosed) {
             $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
             $claimRequest->saveQuietly();
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_sub_status_id' => $claimStatusClosed->id,
@@ -1088,7 +1088,7 @@ class ClaimsService extends BaseService
     public function dispatchClaimGoogleReviewEmail(ClaimRequest $claimRequest): void
     {
         try {
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'customer_email' => $claimRequest->email,
@@ -1098,7 +1098,7 @@ class ClaimsService extends BaseService
             SendClaimGoogleReviewEmailJob::dispatch($claimRequest->uuid);
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::error(' Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'error' => $e->getMessage(),
@@ -1149,7 +1149,7 @@ class ClaimsService extends BaseService
             $result['file_path'] = $zipFilePath;
             $result['processed_count'] = count($processedDocuments);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - ZIP file created successfully', extra: [
+            LoggerService::info(' ZIP file created successfully', extra: [
                 'claim_uuid' => $claim->uuid,
                 'processed_documents_count' => count($processedDocuments),
                 'zip_file_name' => $zipFileName,
@@ -1161,7 +1161,7 @@ class ClaimsService extends BaseService
         } catch (Exception $e) {
             $this->cleanupZipFile($zipFilePath);
 
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error creating ZIP file', extra: [
+            LoggerService::error(' Error creating ZIP file', extra: [
                 'claim_uuid' => $claim->uuid,
                 'error' => $e->getMessage(),
                 'zip_file_path' => $zipFilePath,
@@ -1244,7 +1244,7 @@ class ClaimsService extends BaseService
                 $documentId = is_array($document) ? ($document['id'] ?? null) : $document->id ?? null;
 
                 if (! $disk->exists($docUrl)) {
-                    LoggerService::warning(self::class.'::'.__FUNCTION__.' - Document does not exist', extra: [
+                    LoggerService::warning(' Document does not exist', extra: [
                         'doc_url' => $docUrl,
                         'document_name' => $originalName,
                         'document_id' => $documentId,
@@ -1266,7 +1266,7 @@ class ClaimsService extends BaseService
                         'id' => $documentId,
                     ];
                 } else {
-                    LoggerService::warning(self::class.'::'.__FUNCTION__.' - Failed to add document to ZIP', extra: [
+                    LoggerService::warning(' Failed to add document to ZIP', extra: [
                         'document_name' => $originalName,
                         'final_name' => $finalName,
                         'document_id' => $documentId,
@@ -1282,7 +1282,7 @@ class ClaimsService extends BaseService
                     // Fallback if we can't get the name
                 }
 
-                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Error processing document', extra: [
+                LoggerService::warning(' Error processing document', extra: [
                     'document_name' => $documentName,
                     'error' => $e->getMessage(),
                     'claim_uuid' => $claim->uuid,
@@ -1321,7 +1321,7 @@ class ClaimsService extends BaseService
             try {
                 unlink($zipFilePath);
             } catch (Exception $e) {
-                LoggerService::warning(self::class.'::'.__FUNCTION__.' - Failed to cleanup ZIP file', extra: [
+                LoggerService::warning(' Failed to cleanup ZIP file', extra: [
                     'file_path' => $zipFilePath,
                     'error' => $e->getMessage(),
                 ]);
@@ -1357,7 +1357,7 @@ class ClaimsService extends BaseService
             return $claimLeadHistory;
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim lead history', extra: [
+            LoggerService::error(' Error fetching claim lead history', extra: [
                 'error' => $e->getMessage(),
                 'claim_id' => $claimId,
                 'user_id' => Auth::id(),
@@ -1395,7 +1395,7 @@ class ClaimsService extends BaseService
             return $claimSubStatusLogs;
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim sub-status logs', extra: [
+            LoggerService::error(' Error fetching claim sub-status logs', extra: [
                 'error' => $e->getMessage(),
                 'claim_id' => $claimId,
                 'user_id' => Auth::id(),
@@ -1423,7 +1423,7 @@ class ClaimsService extends BaseService
                 $this->markClaimAsOpen($claim);
             }
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Complaint status updated successfully', extra: [
+            LoggerService::info(' Complaint status updated successfully', extra: [
                 'claim_id' => $claim->id,
                 'complaint_status_id' => $complaintStatusId,
                 'complaint_datetime' => $complaintDatetime,
@@ -1434,7 +1434,7 @@ class ClaimsService extends BaseService
             return $claim->fresh();
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating complaint status', extra: [
+            LoggerService::error(' Error updating complaint status', extra: [
                 'error' => $e->getMessage(),
                 'claim_id' => $claim->id,
                 'complaint_status_id' => $complaintStatusId,
@@ -1454,7 +1454,7 @@ class ClaimsService extends BaseService
             // Update the claim with next follow-up
             $claim->updateNextFollowUp($nextFollowUpDatetime, $notes);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Next follow-up updated successfully', extra: [
+            LoggerService::info(' Next follow-up updated successfully', extra: [
                 'claim_id' => $claim->id,
                 'next_followup_datetime' => $nextFollowUpDatetime,
                 'user_id' => Auth::id(),
@@ -1463,7 +1463,7 @@ class ClaimsService extends BaseService
             return $claim->fresh();
 
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating next follow-up', extra: [
+            LoggerService::error(' Error updating next follow-up', extra: [
                 'error' => $e->getMessage(),
                 'claim_id' => $claim->id,
                 'next_follow_up_datetime' => $nextFollowUpDatetime,
@@ -1566,7 +1566,7 @@ class ClaimsService extends BaseService
 
             return InstantWriterAIFacade::request('/message-optimizer/optimize', 'post', $apiData);
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error optimizing message', extra: [
+            LoggerService::error(' Error optimizing message', extra: [
                 'error' => $e->getMessage(),
                 'message' => $message,
             ]);

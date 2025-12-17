@@ -10,7 +10,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
@@ -18,13 +18,13 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-        
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
-        
+
         .breadcrumb {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -33,23 +33,23 @@
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .breadcrumb a {
             color: #fff;
             text-decoration: none;
             opacity: 0.8;
             transition: opacity 0.3s;
         }
-        
+
         .breadcrumb a:hover {
             opacity: 1;
         }
-        
+
         .breadcrumb span {
             color: #fff;
             margin: 0 10px;
         }
-        
+
         .header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -59,20 +59,20 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-        
+
         .header h1 {
             color: #2c3e50;
             font-size: 2.5em;
             margin-bottom: 10px;
             font-weight: 700;
         }
-        
+
         .header p {
             color: #7f8c8d;
             font-size: 1.2em;
             margin-bottom: 20px;
         }
-        
+
         .content-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -81,7 +81,7 @@
             margin-bottom: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
-        
+
         .content-section h2 {
             color: #2c3e50;
             font-size: 2em;
@@ -89,7 +89,7 @@
             border-bottom: 3px solid #3498db;
             padding-bottom: 10px;
         }
-        
+
         .content-section h3 {
             color: #34495e;
             font-size: 1.5em;
@@ -98,14 +98,14 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         .status-hierarchy {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
             margin: 25px 0;
         }
-        
+
         .status-column {
             background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             border-radius: 15px;
@@ -114,33 +114,33 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
-        
+
         .status-column:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
-        
+
         .status-column.main-status {
             border-left-color: #e74c3c;
         }
-        
+
         .status-column.sub-status {
             border-left-color: #27ae60;
         }
-        
+
         .status-column h4 {
             color: #2c3e50;
             margin-bottom: 15px;
             font-size: 1.3em;
         }
-        
+
         .status-flow {
             display: flex;
             flex-direction: column;
             gap: 15px;
             margin: 20px 0;
         }
-        
+
         .status-item {
             background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             border-radius: 12px;
@@ -150,65 +150,65 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-        
+
         .status-item:hover {
             transform: translateX(5px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         .status-item.open { border-left-color: #27ae60; }
         .status-item.closed { border-left-color: #e74c3c; }
         .status-item.processing { border-left-color: #f39c12; }
-        
+
         .status-item h5 {
             color: #2c3e50;
             margin-bottom: 8px;
             font-size: 1.1em;
         }
-        
+
         .status-item p {
             color: #7f8c8d;
             font-size: 0.9em;
         }
-        
+
         .lob-specific {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 25px;
             margin: 25px 0;
         }
-        
+
         .lob-card {
             background: #f8f9fa;
             border-radius: 10px;
             padding: 25px;
             border-left: 4px solid #e74c3c;
         }
-        
+
         .lob-card.motor { border-left-color: #e74c3c; }
         .lob-card.health { border-left-color: #27ae60; }
         .lob-card.life { border-left-color: #3498db; }
-        
+
         .lob-card h4 {
             color: #2c3e50;
             margin-bottom: 15px;
             font-size: 1.3em;
         }
-        
+
         .transition-flow {
             background: white;
             border-radius: 8px;
             padding: 15px;
             margin: 10px 0;
         }
-        
+
         .transition-arrow {
             text-align: center;
             color: #3498db;
             font-size: 1.2em;
             margin: 10px 0;
         }
-        
+
         .code-block {
             background: #2c3e50;
             color: #ecf0f1;
@@ -219,7 +219,7 @@
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
         }
-        
+
         .observer-section {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -227,32 +227,32 @@
             padding: 20px;
             margin: 15px 0;
         }
-        
+
         .observer-section h4 {
             color: #856404;
             margin-bottom: 10px;
         }
-        
+
         .trigger-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 15px;
             margin: 20px 0;
         }
-        
+
         .trigger-item {
             background: white;
             padding: 15px;
             border-radius: 8px;
             border-left: 4px solid #f39c12;
         }
-        
+
         .trigger-item strong {
             color: #2c3e50;
             display: block;
             margin-bottom: 8px;
         }
-        
+
         .ai-integration {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -260,12 +260,12 @@
             padding: 25px;
             margin: 20px 0;
         }
-        
+
         .ai-integration h4 {
             margin-bottom: 15px;
             font-size: 1.2em;
         }
-        
+
         .notification-flow {
             display: flex;
             justify-content: space-between;
@@ -274,7 +274,7 @@
             flex-wrap: wrap;
             gap: 15px;
         }
-        
+
         .notification-step {
             background: rgba(255, 255, 255, 0.2);
             color: white;
@@ -284,7 +284,7 @@
             min-width: 120px;
             position: relative;
         }
-        
+
         .notification-step:not(:last-child):after {
             content: "→";
             position: absolute;
@@ -293,7 +293,7 @@
             transform: translateY(-50%);
             font-size: 1.2em;
         }
-        
+
         .footer {
             text-align: center;
             margin-top: 50px;
@@ -303,28 +303,28 @@
             border-radius: 15px;
             color: white;
         }
-        
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
             }
-            
+
             .header h1 {
                 font-size: 2em;
             }
-            
+
             .status-hierarchy {
                 grid-template-columns: 1fr;
             }
-            
+
             .lob-specific {
                 grid-template-columns: 1fr;
             }
-            
+
             .notification-flow {
                 flex-direction: column;
             }
-            
+
             .notification-step:not(:last-child):after {
                 content: "↓";
                 right: 50%;
@@ -352,7 +352,7 @@
         <div class="content-section">
             <h2>📊 Status Hierarchy Overview</h2>
             <p>The Claims Management System uses a two-tier status system: <strong>Main Status</strong> for high-level claim state and <strong>Sub-Status</strong> for detailed workflow tracking.</p>
-            
+
             <div class="status-hierarchy">
                 <div class="status-column main-status">
                     <h4>🎯 Main Status (Team Lead Management)</h4>
@@ -369,7 +369,7 @@
                     <p><strong>Managed by:</strong> Team Leads with <code>CLAIMS_STATUS_UPDATE</code> permission</p>
                     <p><strong>Database Key:</strong> <code>status_type = 'statuses'</code></p>
                 </div>
-                
+
                 <div class="status-column sub-status">
                     <h4>🔄 Sub-Status (Detailed Workflow)</h4>
                     <div class="status-flow">
@@ -399,12 +399,12 @@
         <div class="content-section">
             <h2>🔄 Observer Pattern - Automatic Transitions</h2>
             <p>The ClaimRequestObserver automatically triggers status updates based on field changes, implementing sophisticated business logic for each Line of Business.</p>
-            
+
             <div class="observer-section">
                 <h4>🎯 Monitored Field Changes</h4>
                 <p>The observer monitors specific field changes and triggers appropriate business logic:</p>
             </div>
-            
+
             <div class="trigger-grid">
                 <div class="trigger-item">
                     <strong>claim_number</strong>
@@ -431,31 +431,31 @@
                     Prepared for Google review email dispatch when claim is closed (currently commented out)
                 </div>
             </div>
-            
+
             <div class="code-block">
 // ClaimRequestObserver::updating() method
 public function updating(ClaimRequest $claimRequest): void
 {
     $claimService = new ClaimsService;
-    
+
     // Monitor claim number changes
     if ($claimRequest->isDirty('claim_number')) {
         $originalClaimNumber = $claimRequest->getOriginal('claim_number');
         $newClaimNumber = $claimRequest->claim_number;
-        
+
         if (empty($originalClaimNumber) && !empty($newClaimNumber)) {
             $claimService->updateClaimSubStatusToClaimRegistered($claimRequest);
         }
     }
-    
+
     // Monitor sub-status changes for closure logic
     if ($claimRequest->isDirty('claim_sub_status_id')) {
         $newClaimSubStatusId = $claimRequest->claim_sub_status_id;
         $shouldCloseTheClaim = $claimService->checkSubStatusForClaimClosure(
-            $claimRequest, 
+            $claimRequest,
             $newClaimSubStatusId
         );
-        
+
         if ($shouldCloseTheClaim) {
             $claimService->markClaimAsClosed($claimRequest);
         }
@@ -467,7 +467,7 @@ public function updating(ClaimRequest $claimRequest): void
         <div class="content-section">
             <h2>🏢 LOB-Specific Closure Logic</h2>
             <p>Each Line of Business has unique closure criteria implemented in the <code>checkSubStatusForClaimClosure()</code> method.</p>
-            
+
             <div class="lob-specific">
                 <div class="lob-card motor">
                     <h4>🚗 Motor/Car & Bike Claims Closure States</h4>
@@ -494,7 +494,7 @@ if ($isCarQuoteType || $isBikeQuoteType) {
 }
                     </div>
                 </div>
-                
+
                 <div class="lob-card health">
                     <h4>🏥 Health & Group Medical Claims Closure States</h4>
                     <div class="transition-flow">
@@ -519,7 +519,7 @@ if ($isHealthQuoteType || $isGroupMedicalQuoteType) {
 }
                     </div>
                 </div>
-                
+
                 <div class="lob-card life">
                     <h4>💼 Life Claims Closure States</h4>
                     <div class="transition-flow">
@@ -564,11 +564,11 @@ $subStatusListForClaimClosed = [
 
         <div class="content-section">
             <h2>🤖 AI-Powered Customer Notifications</h2>
-            
+
             <div class="ai-integration">
                 <h4>🧠 InstantWriter AI Integration</h4>
                 <p>The Claims Management System integrates with InstantWriter AI to optimize customer communication messages before sending notifications.</p>
-                
+
                 <div class="notification-flow">
                     <div class="notification-step">
                         <strong>1. Draft Message</strong>
@@ -588,7 +588,7 @@ $subStatusListForClaimClosed = [
                     </div>
                 </div>
             </div>
-            
+
             <div class="code-block">
 // ClaimsService::optimizeMessageWithAI() method
 public function optimizeMessageWithAI(string $message, string $claimUuid)
@@ -597,11 +597,11 @@ public function optimizeMessageWithAI(string $message, string $claimUuid)
         'original_message' => $message,
         'claim_reference' => $claimUuid,
     ];
-    
+
     try {
         return InstantWriterAIFacade::request('/message-optimizer/optimize', 'post', $apiData);
     } catch (\Exception $e) {
-        LoggerService::error(self::class.'::'.__FUNCTION__.' - Error optimizing message', [
+        LoggerService::error(' Error optimizing message', [
             'error' => $e->getMessage(),
             'message' => $message,
         ]);
@@ -609,7 +609,7 @@ public function optimizeMessageWithAI(string $message, string $claimUuid)
     }
 }
             </div>
-            
+
             <div class="observer-section">
                 <h4>📧 Notification Workflow</h4>
                 <ol>
@@ -627,7 +627,7 @@ public function optimizeMessageWithAI(string $message, string $claimUuid)
             <h2>📈 Status History & Audit Logging</h2>
             <h3>🕒 Activity Tracking</h3>
             <p>All status changes are tracked through the ClaimActivity model with comprehensive audit logging.</p>
-            
+
             <div class="code-block">
 // ClaimActivity::createForClaim() static method
 public static function createForClaim(
@@ -648,7 +648,7 @@ public static function createForClaim(
     ]);
 }
             </div>
-            
+
             <h3>📊 History Retrieval Methods</h3>
             <div class="trigger-grid">
                 <div class="trigger-item">
@@ -674,7 +674,7 @@ public static function createForClaim(
             <h2>🎛️ Frontend Status Management</h2>
             <h3>🎨 Vue Component Architecture</h3>
             <p>Status management is handled through specialized Vue components with permission-based rendering and real-time updates.</p>
-            
+
             <div class="trigger-grid">
                 <div class="trigger-item">
                     <strong>ClaimStatus.vue</strong>
@@ -693,7 +693,7 @@ public static function createForClaim(
                     DataTable showing sub-status changes with comprehensive audit information
                 </div>
             </div>
-            
+
             <div class="code-block">
 // Vue component permission check example
 const can = permission => useCan(permission);

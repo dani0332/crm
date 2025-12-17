@@ -77,7 +77,7 @@ class ClaimsController extends Controller
                 'statistics' => [],
             ]);
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error loading claims index', extra: [
+            LoggerService::error(' Error loading claims index', extra: [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
@@ -107,7 +107,7 @@ class ClaimsController extends Controller
                 'claim' => null,
             ]);
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error loading claims create form', extra: [
+            LoggerService::error(' Error loading claims create form', extra: [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
@@ -135,7 +135,7 @@ class ClaimsController extends Controller
                 'message' => empty($policies) ? 'No available data' : 'Policies found successfully.',
             ]);
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error searching policies', extra: [
+            LoggerService::error(' Error searching policies', extra: [
                 'error' => $e->getMessage(),
                 'email' => $request->getEmail(),
                 'policy_number' => $request->getPolicyNumber(),
@@ -162,7 +162,7 @@ class ClaimsController extends Controller
 
             return redirect()->route('claims.show', $claim['claimUID'])->with('success', "Claim {$claim['claimUID']} has been created successfully.");
         } catch (Exception $e) {
-            LoggerService::warning(self::class.'::'.__FUNCTION__.' - Error creating claim', extra: [
+            LoggerService::warning(' Error creating claim', extra: [
                 'error' => $e->getMessage(),
                 'data' => $request->validated(),
                 'user_id' => Auth::id(),
@@ -205,7 +205,7 @@ class ClaimsController extends Controller
             ]);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error loading claim request details - Claim UUID: '.$uuid, extra: [
+            LoggerService::error(' Error loading claim request details - Claim UUID: '.$uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'user_id' => Auth::id(),
@@ -232,7 +232,7 @@ class ClaimsController extends Controller
                 'dropdowns' => $dropdownData,
             ]);
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error loading claim request edit form - Claim UUID: '.$uuid, extra: [
+            LoggerService::error(' Error loading claim request edit form - Claim UUID: '.$uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_uuid' => $uuid,
                 'user_id' => Auth::id(),
@@ -253,7 +253,7 @@ class ClaimsController extends Controller
             return redirect()->route('claims.show', $updatedClaimRequest->uuid)->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim request - Claim UUID: '.$uuid, extra: [
+            LoggerService::error(' Error updating claim request - Claim UUID: '.$uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
                 'data' => $request->validated(),
@@ -275,7 +275,7 @@ class ClaimsController extends Controller
             return redirect()->back()->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim details - Claim UUID: '.$claim->uuid, extra: [
+            LoggerService::error(' Error updating claim details - Claim UUID: '.$claim->uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $claim->uuid,
                 'data' => $request->validatedForUpdate(),
@@ -294,7 +294,7 @@ class ClaimsController extends Controller
             return redirect()->back()->with('success', 'Claim status updated successfully.');
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating claim status - Claim UUID: '.$claim->uuid, extra: [
+            LoggerService::error(' Error updating claim status - Claim UUID: '.$claim->uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $claim->uuid,
                 'data' => $request->validated(),
@@ -329,7 +329,7 @@ class ClaimsController extends Controller
             ])->download('Claims-List');
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error exporting claims data', extra: [
+            LoggerService::error(' Error exporting claims data', extra: [
                 'error' => $e->getMessage(),
                 'export_params' => $request->all(),
                 'user_id' => Auth::id(),
@@ -365,7 +365,7 @@ class ClaimsController extends Controller
                 'optimized_message' => $optimizedMessageResponse->optimized_message,
             ], 200);
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error optimizing message', extra: [
+            LoggerService::error(' Error optimizing message', extra: [
                 'error' => $e->getMessage(),
                 'message' => $request->message,
                 'user_id' => Auth::id(),
@@ -385,7 +385,7 @@ class ClaimsController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Notification sent successfully.']);
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error sending notification', extra: [
+            LoggerService::error(' Error sending notification', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'user_id' => Auth::id(),
@@ -407,7 +407,7 @@ class ClaimsController extends Controller
             // Use the enhanced service method
             $result = $this->claimsService->uploadClaimDocuments($claim, $files, $documentData);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Document upload process completed', extra: [
+            LoggerService::info(' Document upload process completed', extra: [
                 'claim_uuid' => $claim->uuid,
                 'success_count' => $result['success_count'],
                 'error_count' => $result['error_count'],
@@ -445,7 +445,7 @@ class ClaimsController extends Controller
             ]);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Unexpected error during document upload', extra: [
+            LoggerService::error(' Unexpected error during document upload', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'document_type' => $request->document_type_code ?? null,
@@ -472,7 +472,7 @@ class ClaimsController extends Controller
             return response()->json(['success' => true, 'message' => 'Document deleted successfully.']);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Unexpected error deleting document', extra: [
+            LoggerService::error(' Unexpected error deleting document', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'document_id' => $document->id ?? null,
@@ -497,7 +497,7 @@ class ClaimsController extends Controller
             return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error getting S3 temp URL', extra: [
+            LoggerService::error(' Error getting S3 temp URL', extra: [
                 'error' => $e->getMessage(),
                 'docURL' => $request->docURL,
                 'user_id' => Auth::id(),
@@ -526,7 +526,7 @@ class ClaimsController extends Controller
             return response()->download($result['file_path'])->deleteFileAfterSend(true);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Unexpected error', extra: [
+            LoggerService::error(' Unexpected error', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'user_id' => Auth::id(),
@@ -547,7 +547,7 @@ class ClaimsController extends Controller
             return response()->json($history);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim lead history', extra: [
+            LoggerService::error(' Error fetching claim lead history', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'claim_id' => $claim->id,
@@ -569,7 +569,7 @@ class ClaimsController extends Controller
             return response()->json($logs);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error fetching claim sub-status logs', extra: [
+            LoggerService::error(' Error fetching claim sub-status logs', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'claim_id' => $claim->id,
@@ -596,7 +596,7 @@ class ClaimsController extends Controller
                 $validated->notes
             );
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Complaint status updated successfully', extra: [
+            LoggerService::info(' Complaint status updated successfully', extra: [
                 'claim_uuid' => $claim->uuid,
                 'complaint_status_id' => $validated->complaint_status_id,
                 'user_id' => Auth::id(),
@@ -605,7 +605,7 @@ class ClaimsController extends Controller
             return redirect()->route('claims.show', $claim->uuid)->with('success', 'Complaint status updated successfully.');
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating complaint status', extra: [
+            LoggerService::error(' Error updating complaint status', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'request_data' => $request->safe(),
@@ -631,7 +631,7 @@ class ClaimsController extends Controller
                 $validated->notes
             );
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Next follow-up updated successfully', extra: [
+            LoggerService::info(' Next follow-up updated successfully', extra: [
                 'claim_uuid' => $claim->uuid,
                 'next_follow_up_date' => $validated->next_follow_up_date,
                 'user_id' => Auth::id(),
@@ -640,7 +640,7 @@ class ClaimsController extends Controller
             return redirect()->route('claims.show', $claim->uuid)->with('success', 'Next follow-up updated successfully.');
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error updating next follow-up', extra: [
+            LoggerService::error(' Error updating next follow-up', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'request_data' => $request->safe(),
@@ -659,7 +659,7 @@ class ClaimsController extends Controller
         try {
             $complaintStatusLogs = $this->claimsService->getComplaintStatusLogs($claim->id);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Complaint status logs retrieved successfully', extra: [
+            LoggerService::info(' Complaint status logs retrieved successfully', extra: [
                 'claim_uuid' => $claim->uuid,
                 'total_records' => count($complaintStatusLogs),
                 'user_id' => Auth::id(),
@@ -668,7 +668,7 @@ class ClaimsController extends Controller
             return response()->json($complaintStatusLogs);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error retrieving complaint status logs', extra: [
+            LoggerService::error(' Error retrieving complaint status logs', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'user_id' => Auth::id(),
@@ -686,7 +686,7 @@ class ClaimsController extends Controller
         try {
             $nextFollowUpLogs = $this->claimsService->getNextFollowUpLogs($claim->id);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Next follow-up logs retrieved successfully', extra: [
+            LoggerService::info(' Next follow-up logs retrieved successfully', extra: [
                 'claim_uuid' => $claim->uuid,
                 'total_records' => count($nextFollowUpLogs),
                 'user_id' => Auth::id(),
@@ -695,7 +695,7 @@ class ClaimsController extends Controller
             return response()->json($nextFollowUpLogs);
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error retrieving next follow-up logs', extra: [
+            LoggerService::error(' Error retrieving next follow-up logs', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'user_id' => Auth::id(),
@@ -716,7 +716,7 @@ class ClaimsController extends Controller
             // Use the CustomerService to make the contact primary
             $this->customerService->makeAdditionalContactPrimary($claim, $validated->key, $validated->value);
 
-            LoggerService::info(self::class.'::'.__FUNCTION__.' - Additional contact made primary for claim', extra: [
+            LoggerService::info(' Additional contact made primary for claim', extra: [
                 'claim_uuid' => $claim->uuid,
                 'key' => $validated->key,
                 'value' => $validated->value,
@@ -726,7 +726,7 @@ class ClaimsController extends Controller
             return redirect()->route('claims.show', $claim->uuid)->with('success', 'Primary contact updated successfully.');
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.'::'.__FUNCTION__.' - Error making additional contact primary', extra: [
+            LoggerService::error(' Error making additional contact primary', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
                 'request_data' => $request->safe(),
