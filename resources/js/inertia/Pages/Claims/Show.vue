@@ -17,7 +17,6 @@ const props = defineProps({
   dropdowns: Object,
   additionalContacts: Object,
   documents: Object,
-  complaintStatuses: Object,
   claimDocumentTypes: Object,
   requiredFieldsFilled: Boolean,
   storageUrl: String,
@@ -114,7 +113,7 @@ const copyToClipboard = item => {
     <NextFollowUpUpdate :claim="claim" />
 
     <!-- Complaint Status Component -->
-    <ComplaintStatus :claim="claim" :complaint-statuses="complaintStatuses" />
+    <ComplaintStatus :claim="claim" :complaint-statuses="dropdowns.complaintStatuses" />
 
     <!-- Claim Documents Component -->
     <ClaimDocuments

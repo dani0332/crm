@@ -135,10 +135,7 @@ const optimizeMessage = async () => {
     processing.value = true;
 
     const response = await axios.post(
-      route(
-        'claims.optimize-message',
-        claimSubStatusAndCustomerForm.claim_sub_status_id,
-      ),
+      route('claims.optimize-message'),
       {
         message: claimSubStatusAndCustomerForm.customer_message,
         claim_uuid: props.claim?.uuid,

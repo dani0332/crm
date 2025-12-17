@@ -327,7 +327,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('update.next-follow-up');
         Route::post('/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('send-notification');
         Route::post('/{claim:uuid}/make-additional-contact-primary', [ClaimsController::class, 'makeAdditionalContactPrimary'])->name('make-additional-contact-primary');
-        Route::post('/{claimStatus}/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('optimize-message');
+        Route::post('/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('optimize-message');
 
         // Documents
         Route::post('/{claim:uuid}/documents', [ClaimsController::class, 'storeDocument'])->name('documents.store');

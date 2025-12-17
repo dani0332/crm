@@ -3,20 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Exports\ClaimsExport;
 use App\Http\Requests\ClaimComplaintStatusUpdateRequest;
 use App\Http\Requests\ClaimDetailsUpdateRequest;
 use App\Http\Requests\ClaimDocumentRequest;
 use App\Http\Requests\ClaimExportValidationRequest;
+use App\Http\Requests\ClaimGetS3TempUrlRequest;
 use App\Http\Requests\ClaimMakeAdditionalContactPrimaryRequest;
 use App\Http\Requests\ClaimNextFollowUpUpdateRequest;
+use App\Http\Requests\ClaimOptimizeMessageRequest;
+use App\Http\Requests\ClaimSearchRequest;
 use App\Http\Requests\ClaimSendNotificationRequest;
 use App\Http\Requests\ClaimStatusUpdateRequest;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\ClaimRequest;
-use App\Models\ClaimStatus;
 use App\Models\QuoteDocument;
 use App\Services\ClaimDocumentService;
 use App\Services\ClaimsService;
@@ -27,13 +30,13 @@ use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ClaimsController extends Controller
 {
+    protected $cdnPath;
     protected ClaimsService $claimsService;
     protected ClaimDocumentService $claimDocumentService;
     protected ClaimStatusesService $claimsStatusesService;
@@ -52,6 +55,8 @@ class ClaimsController extends Controller
         $this->claimDocumentService = $claimDocumentService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->customerService = $customerService;
+        $this->cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails']]);
@@ -67,22 +72,18 @@ class ClaimsController extends Controller
     /**
      * Display a listing of claims
      */
-    public function index(Request $request): Response
+    public function index(ClaimSearchRequest $request): Response
     {
+        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_LIST);
         try {
-            $claims = $this->claimsService->getClaimsData($request);
+            $claims = $this->claimsService->getClaimsData($request->safe());
 
-            // Get dropdown data for filters, pass car_make if present
-            $carMake = $request->input('car_make');
-            $claimDropdownOptions = $this->claimsService->getDropdownData($carMake);
-            $complaintStatuses = $this->claimsStatusesService->getClaimComplaintStatuses();
+            $claimDropdownOptions = $this->claimsService->getDropdownData($request->safe());
 
             return Inertia::render('Claims/Index', [
                 'claims' => $claims,
                 'filters' => $this->claimsService->getFilters($request),
                 'claimDropdownOptions' => $claimDropdownOptions,
-                'complaintStatuses' => $complaintStatuses,
-                'statistics' => [],
             ]);
         } catch (Exception $e) {
             LoggerService::error(' Error loading claims index', extra: [
@@ -94,8 +95,6 @@ class ClaimsController extends Controller
                 'claims' => collect([]),
                 'filters' => [],
                 'claimDropdownOptions' => [],
-                'complaintStatuses' => [],
-                'statistics' => [],
                 'error' => $e->getMessage(),
             ]);
         }
@@ -107,12 +106,8 @@ class ClaimsController extends Controller
     public function create()
     {
         try {
-            // Get dropdown data for the form
-            $claimDropdownOptions = $this->claimsService->getDropdownData();
-
             return Inertia::render('Claims/Create', [
-                'dropdowns' => $claimDropdownOptions,
-                'claim' => null,
+                'dropdowns' => $this->claimsService->getDropdownData(null),
             ]);
         } catch (Exception $e) {
             LoggerService::error(' Error loading claims create form', extra: [
@@ -129,13 +124,9 @@ class ClaimsController extends Controller
      */
     public function searchPolicies(SearchPoliciesRequest $request): JsonResponse
     {
+        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_SEARCH_POLICIES);
         try {
-            $policies = $this->claimsService->searchActivePolicies(
-                $request->getEmail(),
-                $request->getPolicyNumber(),
-                $request->getQuoteTypeId(),
-                $request->getPage()
-            );
+            $policies = $this->claimsService->searchActivePolicies($request->safe());
 
             return response()->json([
                 'success' => true,
@@ -145,10 +136,7 @@ class ClaimsController extends Controller
         } catch (Exception $e) {
             LoggerService::error(' Error searching policies', extra: [
                 'error' => $e->getMessage(),
-                'email' => $request->getEmail(),
-                'policy_number' => $request->getPolicyNumber(),
-                'quote_type_id' => $request->getQuoteTypeId(),
-                'page' => $request->getPage(),
+                'data' => $request->safe(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -161,8 +149,9 @@ class ClaimsController extends Controller
      */
     public function store(ClaimStoreRequest $request)
     {
+        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_CREATION);
         try {
-            $claim = $this->claimsService->createClaim($request->validated());
+            $claim = $this->claimsService->createClaim($request->safe());
 
             if (! $claim['success']) {
                 vAbort($claim['errors']);
@@ -172,7 +161,7 @@ class ClaimsController extends Controller
         } catch (Exception $e) {
             LoggerService::warning(' Error creating claim', extra: [
                 'error' => $e->getMessage(),
-                'data' => $request->validated(),
+                'data' => $request->safe(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -191,11 +180,9 @@ class ClaimsController extends Controller
 
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
-            $complaintStatuses = $this->claimsStatusesService->getClaimComplaintStatuses();
-            // dd($complaintStatuses);
+
             $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
-            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $customerAdditionalContacts = $this->customerService->getAdditionalContacts($claimRequest->customer_id, $claimRequest->mobile_no);
 
             $documents = $claimRequest->documents->load('createdBy:id,name');
@@ -204,11 +191,10 @@ class ClaimsController extends Controller
                 'claim' => $claimRequest,
                 'documents' => $documents,
                 'dropdowns' => $dropdownData,
-                'complaintStatuses' => $complaintStatuses,
                 'additionalContacts' => $customerAdditionalContacts,
                 'requiredFieldsFilled' => $requiredFieldsFilled,
                 'claimDocumentTypes' => $claimDocumentTypes,
-                'cdnPath' => $cdnPath,
+                'cdnPath' => $this->cdnPath,
                 'storageUrl' => storageUrl(),
             ]);
 
@@ -255,8 +241,9 @@ class ClaimsController extends Controller
      */
     public function update(ClaimUpdateRequest $request, $uuid): RedirectResponse
     {
+        LoggerService::startQuoteLogging($uuid, LoggerFeatureEnum::CLAIM_UPDATE);
         try {
-            $updatedClaimRequest = $this->claimsService->updateClaim($uuid, $request->validated());
+            $updatedClaimRequest = $this->claimsService->updateClaim($uuid, $request->safe());
 
             return redirect()->route('claims.show', $updatedClaimRequest->uuid)->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
@@ -264,7 +251,7 @@ class ClaimsController extends Controller
             LoggerService::error(' Error updating claim request - Claim UUID: '.$uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
-                'data' => $request->validated(),
+                'data' => $request->safe(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -274,11 +261,9 @@ class ClaimsController extends Controller
 
     public function updateClaimDetails(ClaimDetailsUpdateRequest $request, ClaimRequest $claim): RedirectResponse
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_DETAILS_UPDATE);
         try {
-            // Get only the validated data that should be updated
-            $validatedData = $request->validatedForUpdate();
-
-            $updatedClaimRequest = $this->claimsService->updateClaimDetails($claim, $validatedData);
+            $updatedClaimRequest = $this->claimsService->updateClaimDetails($claim, $request->safe());
 
             return redirect()->back()->with('success', "Claim request {$updatedClaimRequest->code} has been updated successfully.");
 
@@ -286,7 +271,7 @@ class ClaimsController extends Controller
             LoggerService::error(' Error updating claim details - Claim UUID: '.$claim->uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $claim->uuid,
-                'data' => $request->validatedForUpdate(),
+                'data' => $request->safe(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -296,8 +281,9 @@ class ClaimsController extends Controller
 
     public function updateClaimStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): RedirectResponse
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_STATUS_UPDATE);
         try {
-            $updatedClaimRequest = $this->claimsStatusesService->updateClaimStatus($claim, $request->safe());
+            $this->claimsStatusesService->updateClaimStatus($claim, $request->safe());
 
             return redirect()->back()->with('success', 'Claim status updated successfully.');
 
@@ -305,7 +291,7 @@ class ClaimsController extends Controller
             LoggerService::error(' Error updating claim status - Claim UUID: '.$claim->uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $claim->uuid,
-                'data' => $request->validated(),
+                'data' => $request->safe(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -318,12 +304,13 @@ class ClaimsController extends Controller
      */
     public function export(ClaimExportValidationRequest $request)
     {
+        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_EXPORT);
         try {
-            $requestParams = $request->all();
+            $requestParams = $request->safe();
 
             // Check export type for email vs download
             if ($request->input('exportType') === 'email') {
-                $requestParams['recipientEmail'] = auth()->user()->email;
+                $requestParams->recipientEmail = auth()->user()->email;
 
                 return app(ClaimsExport::class, [
                     'claimsService' => app(ClaimsService::class),
@@ -354,15 +341,11 @@ class ClaimsController extends Controller
     /**
      * AI optimize message (AJAX endpoint)
      */
-    public function optimizeMessage(Request $request, ClaimStatus $claimStatus): JsonResponse
+    public function optimizeMessage(ClaimOptimizeMessageRequest $request): JsonResponse
     {
-        $request->validate([
-            'message' => 'required|string|max:1000',
-            'claim_uuid' => 'required|string|max:255',
-        ]);
-
-        try {
-            $optimizedMessageResponse = $this->claimsService->optimizeMessageWithAI($request->message, $request->claim_uuid);
+        LoggerService::startFeatureLogging( LoggerFeatureEnum::CLAIM_OPTIMIZE_MESSAGE);
+        try { 
+            $optimizedMessageResponse = $this->claimsService->optimizeMessageWithAI($request->safe());
 
             if (! $optimizedMessageResponse->success) {
                 return response()->json(['status' => false, 'message' => $optimizedMessageResponse->error], 500);
@@ -375,7 +358,7 @@ class ClaimsController extends Controller
         } catch (Exception $e) {
             LoggerService::error(' Error optimizing message', extra: [
                 'error' => $e->getMessage(),
-                'message' => $request->message,
+                'request' => $request->safe(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -388,6 +371,7 @@ class ClaimsController extends Controller
      */
     public function sendNotification(ClaimSendNotificationRequest $request, ClaimRequest $claim): JsonResponse
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_SEND_NOTIFICATION);
         try {
             $this->claimsService->sendNotification($claim, $request->safe());
 
@@ -408,6 +392,7 @@ class ClaimsController extends Controller
      */
     public function storeDocument(ClaimDocumentRequest $request, ClaimRequest $claim): JsonResponse
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_DOCUMENT_UPLOAD);
         try {
             $files = $request->file('files', []);
             $documentData = ['document_type_code' => $request->document_type_code, 'folder_path' => $request->folder_path ?? 'claims'];
@@ -469,6 +454,7 @@ class ClaimsController extends Controller
      */
     public function destroyDocument(ClaimRequest $claim, QuoteDocument $document): JsonResponse
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_DOCUMENT_DELETE);
         try {
             // Use service method with business logic validation
             $deleted = $this->claimDocumentService->deleteClaimDocument($claim, $document->id);
@@ -494,20 +480,18 @@ class ClaimsController extends Controller
     /**
      * Get S3 temporary URL for document access
      */
-    public function getS3TempUrl(Request $request): JsonResponse
+    public function getS3TempUrl(ClaimGetS3TempUrlRequest $request): JsonResponse
     {
-        $request->validate([
-            'docURL' => 'required|string',
-        ]);
-
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_DOCUMENT_S3_URL);
+        
         try {
             // Use the same logic as quote documents for S3 temp URLs
-            return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
+            return $this->quoteDocumentService->getDocumentTempURL($request->safe()->docURL);
 
         } catch (Exception $e) {
             LoggerService::error(' Error getting S3 temp URL', extra: [
                 'error' => $e->getMessage(),
-                'docURL' => $request->docURL,
+                'docURL' => $request->safe()->docURL,
                 'user_id' => Auth::id(),
             ]);
 
@@ -518,8 +502,9 @@ class ClaimsController extends Controller
     /**
      * Download all claim documents as a ZIP file
      */
-    public function downloadAllDocuments(Request $request, ClaimRequest $claim)
+    public function downloadAllDocuments(ClaimRequest $claim)
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_DOCUMENT_DOWNLOAD_ALL);
         try {
             // Use service to create ZIP
             $result = $this->claimDocumentService->createDocumentsZip($claim);
@@ -547,7 +532,7 @@ class ClaimsController extends Controller
     /**
      * Get claim lead history (AJAX endpoint)
      */
-    public function getClaimLeadHistory(Request $request, ClaimRequest $claim): JsonResponse
+    public function getClaimLeadHistory(ClaimRequest $claim): JsonResponse
     {
         try {
             $history = $this->claimsService->getClaimLeadHistory($claim->id);
@@ -569,7 +554,7 @@ class ClaimsController extends Controller
     /**
      * Get claim sub-status logs (AJAX endpoint)
      */
-    public function getClaimSubStatusLogs(Request $request, ClaimRequest $claim): JsonResponse
+    public function getClaimSubStatusLogs(ClaimRequest $claim): JsonResponse
     {
         try {
             $logs = $this->claimsStatusesService->getClaimSubStatusLogs($claim->id);
@@ -593,6 +578,7 @@ class ClaimsController extends Controller
      */
     public function updateComplaintStatus(ClaimComplaintStatusUpdateRequest $request, ClaimRequest $claim)
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_COMPLAINT_STATUS_UPDATE);
         try {
             $validated = $request->safe();
 
@@ -629,19 +615,14 @@ class ClaimsController extends Controller
      */
     public function updateNextFollowUp(ClaimNextFollowUpUpdateRequest $request, ClaimRequest $claim)
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_NEXT_FOLLOW_UP_UPDATE);
         try {
-            $validated = $request->safe();
-
             // Update next follow-up using service
-            $this->claimsService->updateNextFollowUp(
-                $claim,
-                $validated->next_follow_up_date,
-                $validated->notes
-            );
+            $this->claimsService->updateNextFollowUp($claim,$request->safe());
 
             LoggerService::info(' Next follow-up updated successfully', extra: [
                 'claim_uuid' => $claim->uuid,
-                'next_follow_up_date' => $validated->next_follow_up_date,
+                'data' => $request->safe(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -651,7 +632,7 @@ class ClaimsController extends Controller
             LoggerService::error(' Error updating next follow-up', extra: [
                 'error' => $e->getMessage(),
                 'claim_uuid' => $claim->uuid,
-                'request_data' => $request->safe(),
+                'data' => $request->safe(),
                 'user_id' => Auth::id(),
             ]);
 
@@ -662,7 +643,7 @@ class ClaimsController extends Controller
     /**
      * Get complaint status logs for a claim
      */
-    public function getComplaintStatusLogs(Request $request, ClaimRequest $claim): JsonResponse
+    public function getComplaintStatusLogs(ClaimRequest $claim): JsonResponse
     {
         try {
             $complaintStatusLogs = $this->claimsStatusesService->getComplaintStatusLogs($claim->id);
@@ -689,7 +670,7 @@ class ClaimsController extends Controller
     /**
      * Get next follow-up logs for a claim
      */
-    public function getNextFollowUpLogs(Request $request, ClaimRequest $claim): JsonResponse
+    public function getNextFollowUpLogs(ClaimRequest $claim): JsonResponse
     {
         try {
             $nextFollowUpLogs = $this->claimsService->getNextFollowUpLogs($claim->id);
@@ -718,6 +699,7 @@ class ClaimsController extends Controller
      */
     public function makeAdditionalContactPrimary(ClaimMakeAdditionalContactPrimaryRequest $request, ClaimRequest $claim)
     {
+        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_MAKE_ADDITIONAL_CONTACT_PRIMARY);
         try {
             $validated = $request->safe();
 

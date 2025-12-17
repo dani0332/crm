@@ -17,7 +17,7 @@ class ClaimsExport implements CsvExportableInterface
 
     public function __construct(
         private ClaimsService $claimsService,
-        private array $requestParams = []
+        private $requestParams = []
     ) {
         $this->requestParams = $requestParams;
     }
@@ -26,7 +26,7 @@ class ClaimsExport implements CsvExportableInterface
      * Get the data collection - this is used by the original implementation
      * and falls back when getQuery is not available
      */
-    public function collection(array $requestParams = []): Collection
+    public function collection($requestParams = null): Collection
     {
         // If request params were provided in constructor, use those
         // Otherwise use the params passed to this method

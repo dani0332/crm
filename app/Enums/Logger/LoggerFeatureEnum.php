@@ -48,5 +48,24 @@ enum LoggerFeatureEnum: string
     case CC_PAYMENT_PROCESS_COMMAND = 'cc-payment-process-command';
     case SEND_AND_BOOK_POLICY_FAILED_BULK_EMAIL_JOB = 'send-and-book-policy-failed-bulk-email-job';
     case INSURER_AML_SCREENING_WITH_KYC_DOCUMENT = 'insurer-aml-screening-with-kyc-document';
+
+    /* Claims Module */
+    case CLAIM_CREATION = 'claim-creation';
+    case CLAIM_UPDATE = 'claim-update';
+    case CLAIM_DETAILS_UPDATE = 'claim-details-update';
+    case CLAIM_STATUS_UPDATE = 'claim-status-update';
+    case CLAIM_NEXT_FOLLOW_UP_UPDATE = 'claim-next-follow-up-update';
+    case CLAIM_MAKE_ADDITIONAL_CONTACT_PRIMARY = 'claim-make-additional-contact-primary';
+    case CLAIM_LIST = 'claim-list';
+    case CLAIM_SEARCH_POLICIES = 'claim-search-policies';
+    case CLAIM_EXPORT = 'claim-export';
+    case CLAIM_OPTIMIZE_MESSAGE = 'claim-optimize-message';
+    case CLAIM_COMPLAINT_STATUS_UPDATE = 'claim-complaint-status-update';
+    case CLAIM_SEND_NOTIFICATION = 'claim-send-notification';
+    case CLAIM_DOCUMENT_UPLOAD = 'claim-document-upload';
+    case CLAIM_DOCUMENT_DELETE = 'claim-document-delete';
+    case CLAIM_DOCUMENT_S3_URL = 'claim-document-s3-url';
+    case CLAIM_DOCUMENT_DOWNLOAD = 'claim-document-download';
+    case CLAIM_DOCUMENT_DOWNLOAD_ALL = 'claim-document-download-all';
     case CLAIM_GOOGLE_REVIEW_EMAIL = 'claim-google-review-email';
 }

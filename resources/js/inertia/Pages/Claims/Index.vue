@@ -15,7 +15,6 @@ const props = defineProps({
   claimDropdownOptions: Object,
   statistics: Object,
   filters: Object,
-  complaintStatuses: Object,
 });
 
 const page = usePage();
@@ -111,7 +110,7 @@ const managersOptions = computed(() => {
 
 const complaintStatusOptions = computed(() => {
   return (
-    props.complaintStatuses?.map(status => ({
+    props.claimDropdownOptions?.complaintStatuses?.map(status => ({
       value: status.id,
       label: status.text,
     })) || []

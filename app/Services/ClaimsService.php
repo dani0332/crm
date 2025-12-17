@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ClaimsEnum;
+use App\Enums\CacheKeyEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -20,9 +21,9 @@ use App\Models\QuoteType;
 use App\Models\YearOfManufacture;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\Cache\CacheManager;
 
 class ClaimsService extends BaseService
 {
@@ -145,7 +146,7 @@ class ClaimsService extends BaseService
     /**
      * Get claims data with flexible filtering options
      */
-    public function getClaimsData(Request $request)
+    public function getClaimsData($request)
     {
         // Apply filters
         $filters = $this->getFilters($request);
@@ -157,7 +158,7 @@ class ClaimsService extends BaseService
     /**
      * Get claims data for export with all necessary relationships
      */
-    public function getClaimsDataForExport(array $requestParams = [])
+    public function getClaimsDataForExport($requestParams = [])
     {
         $query = $this->query;
 
@@ -276,7 +277,7 @@ class ClaimsService extends BaseService
         return $query;
     }
 
-    public function getFilters(Request $request)
+    public function getFilters($request)
     {
         return $request->only([
             'code',
@@ -316,8 +317,12 @@ class ClaimsService extends BaseService
     /**
      * Search active policies by email or policy number
      */
-    public function searchActivePolicies(?string $email = null, ?string $policyNumber = null, ?int $quoteTypeId = null, int $page = 1)
+    public function searchActivePolicies($request)
     {
+        $email = $request->email;
+        $policyNumber = $request->policy_number;
+        $quoteTypeId = $request->quote_type_id;
+
         $policies = PersonalQuote::query()
             ->select([
                 'personal_quotes.id',
@@ -385,31 +390,31 @@ class ClaimsService extends BaseService
     /**
      * Create a new claim request
      */
-    public function createClaim(array $data)
+    public function createClaim($request)
     {
         try {
             // Prepare data for API call
             $apiData = [
-                'firstName' => $data['first_name'] ?? null,
-                'lastName' => $data['last_name'] ?? null,
-                'email' => $data['email'] ?? null,
-                'mobileNo' => $data['mobile_no'] ?? null,
-                'incident' => $data['incident_story'] ?? null,
-                'incidentDate' => $data['incident_date'] ?? null,
-                'customerId' => $data['customer_id'] ?? null,
-                'policyNumber' => $data['policy_number'] ?? null,
-                'insuranceProviderId' => $data['insurance_provider_id'] ?? null,
-                'quoteTypeId' => $data['quote_type_id'] ?? null,
-                'source' => $data['source'] ?? config('constants.SOURCE_NAME', 'IMCRM'),
-                'quoteUID' => $data['selected_quote_uuid'] ?? null,
-                'claimTypeId' => $data['claim_type_id'] ?? null,
-                'carMake' => $data['car_make'] ?? null,
-                'carModel' => $data['car_model'] ?? null,
-                'modelYear' => $data['model_year'] ?? null,
-                'plateNumber' => $data['plate_number'] ?? null,
-                'claimRequestTypeId' => $data['claim_request_type_id'] ?? null,
-                'serviceTypeId' => $data['service_type_id'] ?? null,
-                'requestReferenceNumber' => $data['request_reference_number'] ?? null,
+                'firstName' => $request->first_name ?? null,
+                'lastName' => $request->last_name ?? null,
+                'email' => $request->email ?? null,
+                'mobileNo' => $request->mobile_no ?? null,
+                'incident' => $request->incident_story ?? null,
+                'incidentDate' => $request->incident_date ?? null,
+                'customerId' => $request->customer_id ?? null,
+                'policyNumber' => $request->policy_number ?? null,
+                'insuranceProviderId' => $request->insurance_provider_id ?? null,
+                'quoteTypeId' => $request->quote_type_id ?? null,
+                'source' => $request->source ?? config('constants.SOURCE_NAME', 'IMCRM'),
+                'quoteUID' => $request->selected_quote_uuid ?? null,
+                'claimTypeId' => $request->claim_type_id ?? null,
+                'carMake' => $request->car_make ?? null,
+                'carModel' => $request->car_model ?? null,
+                'modelYear' => $request->model_year ?? null,
+                'plateNumber' => $request->plate_number ?? null,
+                'claimRequestTypeId' => $request->claim_request_type_id ?? null,
+                'serviceTypeId' => $request->service_type_id ?? null,
+                'requestReferenceNumber' => $request->request_reference_number ?? null,
             ];
 
             // Remove null values from $apiData before sending request
@@ -425,7 +430,7 @@ class ClaimsService extends BaseService
             LoggerService::error(' Error creating claim request', extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'data' => $data,
+                'data' => $request,
                 'api_data' => $apiData ?? null,
             ]);
             throw $e;
@@ -435,7 +440,7 @@ class ClaimsService extends BaseService
     /**
      * Update an existing claim request
      */
-    public function updateClaim($uuid, array $data): ClaimRequest
+    public function updateClaim($uuid, $request): ClaimRequest
     {
         $claimRequest = $this->getClaimById($uuid);
 
@@ -447,7 +452,7 @@ class ClaimsService extends BaseService
             $allowedFields = array_merge($claimRequestFillable, $formSpecificFields);
 
             // Separate claim request data from detail data
-            $claimRequestData = collect($data)->only($allowedFields)->filter()->toArray();
+            $claimRequestData = collect($request)->only($allowedFields)->filter()->toArray();
 
             // Store incident_story as incident field
             if (isset($claimRequestData['incident_story'])) {
@@ -514,7 +519,7 @@ class ClaimsService extends BaseService
     /**
      * Update specific claim details (focused method for claim details form)
      */
-    public function updateClaimDetails(ClaimRequest $claimRequest, array $data): ClaimRequest
+    public function updateClaimDetails(ClaimRequest $claimRequest, $request): ClaimRequest
     {
         try {
 
@@ -539,7 +544,7 @@ class ClaimsService extends BaseService
             ]);
 
             // Separate data for claim request table
-            $claimRequestData = collect($data)->only($claimRequestFields)->toArray();
+            $claimRequestData = collect($request)->only($claimRequestFields)->toArray();
 
             // Update claim request if there's data
             if (! empty($claimRequestData)) {
@@ -558,7 +563,7 @@ class ClaimsService extends BaseService
             }
 
             // Separate data for claim request details table
-            $detailData = collect($data)->only($claimRequestDetailFields)->toArray();
+            $detailData = collect($request)->only($claimRequestDetailFields)->toArray();
 
             // Handle claim request details update/create
             if (! empty($detailData)) {
@@ -589,7 +594,7 @@ class ClaimsService extends BaseService
             LoggerService::error(' Error updating claim details - Claim UUID: '.$claimRequest->uuid, extra: [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'data' => $data,
+                'data' => $request,
                 'updated_by' => Auth::id(),
             ]);
 
@@ -600,23 +605,34 @@ class ClaimsService extends BaseService
     /**
      * Get dropdown data for forms
      */
-    public function getDropdownData(?string $carMake = null): array
+    public function getDropdownData($request = null): array
     {
-        $lookupService = new LookupService;
-        $userService = app(UserService::class);
+        $carMake = $request?->car_make;
+        $cachedData = CacheManager::remember(
+            CacheKeyEnum::CLAIM_CACHE_DROPDOWN_DATA_KEY,
+            function () {
+                $lookupService = new LookupService;
+                $userService = app(UserService::class);
 
-        return [
-            'lineOfBusiness' => $this->getLineOfBusinessOptions(),
-            'claimTypes' => $lookupService->getClaimTypes(),
-            'claimStatuses' => $this->claimsStatusesService->getClaimStatuses(),
-            'claimSubStatuses' => $this->claimsStatusesService->getClaimSubStatuses(),
-            'claimsManagers' => $userService->getClaimsManagers(),
-            'claimRequestTypes' => $lookupService->getClaimRequestTypes(),
-            'claimServiceTypes' => $lookupService->getClaimServiceTypes(),
-            'carMake' => $this->getCarMake(),
-            'carModel' => $carMake ? $this->getCarModelByMake($carMake) : [],
-            'carModelYear' => $this->getCarModelYear(),
-        ];
+                return [
+                    'lineOfBusiness' => $this->getLineOfBusinessOptions(),
+                    'claimTypes' => $lookupService->getClaimTypes(),
+                    'claimStatuses' => $this->claimsStatusesService->getClaimStatuses(),
+                    'claimSubStatuses' => $this->claimsStatusesService->getClaimSubStatuses(),
+                    'complaintStatuses' => $this->claimsStatusesService->getClaimComplaintStatuses(),
+                    'claimsManagers' => $userService->getClaimsManagers(),
+                    'claimRequestTypes' => $lookupService->getClaimRequestTypes(),
+                    'claimServiceTypes' => $lookupService->getClaimServiceTypes(),
+                    'carMake' => $this->getCarMake(),
+                    'carModelYear' => $this->getCarModelYear(),
+                ];
+            }
+        );
+
+        // Add dynamic carModel based on parameter
+        $cachedData['carModel'] = $carMake ? $this->getCarModelByMake($carMake) : [];
+
+        return $cachedData;
     }
 
     /**
@@ -624,12 +640,16 @@ class ClaimsService extends BaseService
      */
     public function getLineOfBusinessOptions(): array
     {
-        return QuoteType::select('id', 'text')
-            ->whereIn('id', [
-                QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Yacht,
-                QuoteTypeId::Health, QuoteTypeId::Life,
-            ])
-            ->where('is_active', 1)->orderBy('text')->get()->toArray();
+        return  CacheManager::remember(
+            CacheKeyEnum::CLAIM_CACHE_QUOTE_TYPE_KEY,
+            function () {
+                return QuoteType::select('id', 'text')
+                        ->whereIn('id', [
+                            QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Yacht,
+                            QuoteTypeId::Health, QuoteTypeId::Life,
+                        ])->where('is_active', 1)->orderBy('text')->get()->toArray();
+            }
+        );
     }
 
     public function getCarMake(): array
@@ -755,9 +775,11 @@ class ClaimsService extends BaseService
     /**
      * Update next follow-up for a claim
      */
-    public function updateNextFollowUp(ClaimRequest $claim, ?string $nextFollowUpDatetime, ?string $notes = null): ClaimRequest
+    public function updateNextFollowUp(ClaimRequest $claim, $requestData = null): ClaimRequest
     {
         try {
+            $nextFollowUpDatetime = $requestData?->next_follow_up_date;
+            $notes = $requestData?->notes;
             // Update the claim with next follow-up
             $claim->updateNextFollowUp($nextFollowUpDatetime, $notes);
 
@@ -818,20 +840,19 @@ class ClaimsService extends BaseService
         return $audits;
     }
 
-    public function optimizeMessageWithAI(string $message, string $claimUuid)
+    public function optimizeMessageWithAI($request)
     {
-        $apiData = [
-            'original_message' => $message,
-            'claim_reference' => $claimUuid,
-        ];
-
         try {
+            $apiData = [
+                'original_message' => $request->message,
+                'claim_reference' => $request->claim_uuid,
+            ];
 
             return InstantWriterAIFacade::request('/message-optimizer/optimize', 'post', $apiData);
         } catch (\Exception $e) {
             LoggerService::error(' Error optimizing message', extra: [
                 'error' => $e->getMessage(),
-                'message' => $message,
+                'message' => $request->message,
             ]);
 
             throw $e;

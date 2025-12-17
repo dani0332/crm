@@ -173,9 +173,6 @@ class ClaimDetailsUpdateRequest extends FormRequest
             if (! request()->claim_type_id) {
                 $validator->errors()->add('claim_type_id', 'Claim type is required.');
             }
-            if (! request()->incident_date) {
-                $validator->errors()->add('incident_date', 'Incident date is required.');
-            }
         });
     }
 
@@ -237,13 +234,5 @@ class ClaimDetailsUpdateRequest extends FormRequest
         ]);
 
         parent::failedValidation($validator);
-    }
-
-    /**
-     * Get the validated data from the request, filtering only the allowed fields.
-     */
-    public function validatedForUpdate(): array
-    {
-        return $this->validated();
     }
 }

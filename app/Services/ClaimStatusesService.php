@@ -3,14 +3,15 @@
 namespace App\Services;
 
 use App\Enums\ClaimsEnum;
+use App\Enums\CacheKeyEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
 use App\Services\Logger\LoggerService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\Cache\CacheManager;
 
 class ClaimStatusesService extends BaseService
 {
@@ -19,7 +20,7 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimSubStatuses(): array
     {
-        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text', 'quote_type_id')->orderBy('sort_order')->get()->toArray();
+        return  ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text', 'quote_type_id')->orderBy('sort_order')->get()->toArray();
     }
 
     /**
@@ -27,7 +28,13 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimComplaintStatuses(): array
     {
-        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text')->orderBy('sort_order')->get()->toArray();
+        return  CacheManager::remember(
+            CacheKeyEnum::CLAIM_CACHE_COMPLAINT_STATUSES_KEY,
+            function () {
+                return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text')->orderBy('sort_order')->get()->toArray();
+            }
+        );
+
     }
 
     /**
@@ -156,7 +163,7 @@ class ClaimStatusesService extends BaseService
     /**
      * Update claim status and sub status
      */
-    public function updateClaimStatus($claimRequest, $request): ClaimRequest
+    public function updateClaimStatus($claimRequest, $request)
     {
         try {
             // Prepare the status update data
@@ -180,7 +187,7 @@ class ClaimStatusesService extends BaseService
                 'updated_by' => Auth::id(),
             ]);
 
-            return $claimRequest->fresh(['claimStatus', 'claimSubStatus', 'manager']);
+            return true;
 
         } catch (\Exception $e) {
             LoggerService::error(' Error updating claim status - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -300,5 +307,49 @@ class ClaimStatusesService extends BaseService
 
             throw $e;
         }
+    }
+
+    /**
+     * Get complaint status logs for a claim from audit trail
+     *
+     * @return array
+     */
+    public function getComplaintStatusLogs(int $claimId)
+    {
+        $audits = DB::table('audits as a')
+            ->select(
+                'a.created_at as logged_at',
+                DB::raw('(SELECT name from users where id = a.user_id) as logged_by'),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_status_id')) AS old_complaint_status_id"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_status_id')) AS new_complaint_status_id"),
+                DB::raw("(SELECT text FROM claim_statuses WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_status_id'))) AS old_complaint_status"),
+                DB::raw("(SELECT text FROM claim_statuses WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_status_id'))) AS new_complaint_status"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_datetime')) AS old_complaint_datetime"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_datetime')) AS new_complaint_datetime"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.old_values, '$.complaint_notes')) AS old_complaint_notes"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.complaint_notes')) AS new_complaint_notes")
+            )
+            ->where(function ($query) {
+                // Only get records where complaint fields were changed
+                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_status_id')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_datetime')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.complaint_notes')"));
+            })
+            ->where(function ($query) use ($claimId) {
+                $query->where('a.auditable_type', 'App\Models\\ClaimRequest')
+                    ->where('a.auditable_id', $claimId);
+            })
+            ->orderBy('a.created_at', 'DESC')
+            ->get()
+            ->filter(function ($item) {
+                // Filter out records where no complaint fields changed
+                return ! is_null($item->new_complaint_status_id) ||
+                       ! is_null($item->new_complaint_datetime) ||
+                       ! is_null($item->new_complaint_notes);
+            })
+            ->values()
+            ->toArray();
+
+        return $audits;
     }
 }
