@@ -41,9 +41,9 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         $deviceQuote = $lead->deviceQuote;
         $sicAdvisorRequested = true;
 
-        // if ($deviceQuote && isset($deviceQuote->sic_advisor_requested)) {
-        //     $sicAdvisorRequested = (bool) $deviceQuote->sic_advisor_requested;
-        // }
+        if ($deviceQuote && isset($deviceQuote->sic_advisor_requested)) {
+            $sicAdvisorRequested = (bool) $deviceQuote->sic_advisor_requested;
+        }
 
         LoggerService::info(self::class.' - Device lead conditions evaluation', extra: [
             'isPaymentAuthorizedOrDeclined' => $isPaymentAuthorizedOrDeclined,

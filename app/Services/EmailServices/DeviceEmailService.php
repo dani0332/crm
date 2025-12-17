@@ -84,7 +84,7 @@ class DeviceEmailService extends BaseService
 
             return;
         }
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_DEVICE_AUTOMATED_FOLLOWUPS)->first();
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_DEVICE_OCB_INTRO_EMAIL)->first();
 
         LoggerService::info('| sendDeviceAutomatedFollowups - Initiating process');
 

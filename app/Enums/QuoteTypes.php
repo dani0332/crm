@@ -50,6 +50,7 @@ use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 use App\Strategies\Allocations\DeviceAllocation;
+use App\Jobs\OCB\SendDeviceOCBIntroEmailJob;
 
 enum QuoteTypes: string
 {
@@ -196,6 +197,7 @@ enum QuoteTypes: string
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
             self::HOME => SendHomeOCBIntroEmailJob::class,
+            self::DEVICE => SendDeviceOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
