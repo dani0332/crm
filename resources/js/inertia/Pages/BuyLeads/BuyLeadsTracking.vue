@@ -74,7 +74,6 @@ function onReset() {
 onMounted(() => {
   setQueryStringFilters(params, filters);
 });
-
 </script>
 <template>
   <Head title="My Lead Request" />

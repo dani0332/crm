@@ -140,7 +140,6 @@ watch(
     deep: true,
   },
 );
-
 </script>
 <template>
   <Head title="Buy Lead Configuration" />
