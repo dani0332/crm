@@ -220,7 +220,7 @@ class ClaimUpdateRequest extends FormRequest
             'plate_number' => 'plat number',
             'car_make' => 'vehicle make',
             'car_model' => 'vehicle model',
-            'car_model_year' => 'vehicle year',
+            'model_year' => 'vehicle year',
             'customer_id' => 'customer ID',
             'insurance_provider_id' => 'insurance provider',
             'claim_number' => 'claim number',

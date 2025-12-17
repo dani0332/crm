@@ -134,7 +134,7 @@ class ClaimExportValidationRequest extends FormRequest
      */
     private function validateDateRange($validator): void
     {
-        if ($this->has('created_at_start') && $this->has('created_at_end')) {
+        if ($this->filled('created_at_start') && $this->filled('created_at_end')) {
             $start = Carbon::parse($this->input('created_at_start'));
             $end = Carbon::parse($this->input('created_at_end'));
             $isEmailExport = $this->input('exportType') === 'email';

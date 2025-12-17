@@ -59,6 +59,9 @@ class SendClaimGoogleReviewEmailJob implements ShouldQueue
     public function handle(ClaimRequestEmailService $claimRequestEmailService): void
     {
         try {
+
+            LoggerService::startQuoteLogging($this->claimRequestUuid, LoggerFeatureEnum::CLAIM_GOOGLE_REVIEW_EMAIL);
+
             LoggerService::info(' Job started - Claim UUID: '.$this->claimRequestUuid, [
                 'claim_request_uuid' => $this->claimRequestUuid,
                 'time' => now(),
@@ -66,7 +69,6 @@ class SendClaimGoogleReviewEmailJob implements ShouldQueue
 
             // Find the claim request
             $claimRequest = ClaimRequest::where('uuid', $this->claimRequestUuid)->first();
-            LoggerService::startQuoteLogging($claimRequest, LoggerFeatureEnum::CLAIM_GOOGLE_REVIEW_EMAIL);
 
             if (! $claimRequest) {
                 LoggerService::warning(' Claim request not found - Claim UUID: '.$this->claimRequestUuid, [

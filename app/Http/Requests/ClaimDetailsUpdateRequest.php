@@ -64,7 +64,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
 
             // Common fields that can be updated
             'claim_type_id' => [
-                'nullable',
+                'required',
                 'integer',
                 'exists:lookups,id',
             ],

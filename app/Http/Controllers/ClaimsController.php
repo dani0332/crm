@@ -309,14 +309,14 @@ class ClaimsController extends Controller
             $requestParams = $request->safe();
 
             // Check export type for email vs download
-            if ($request->input('exportType') === 'email') {
+            /*if ($request->input('exportType') === 'email') {
                 $requestParams->recipientEmail = auth()->user()->email;
 
                 return app(ClaimsExport::class, [
                     'claimsService' => app(ClaimsService::class),
                     'requestParams' => $requestParams,
                 ])->emailCSV('Claims-List', $requestParams);
-            }
+            }*/
 
             return app(ClaimsExport::class, [
                 'claimsService' => app(ClaimsService::class),

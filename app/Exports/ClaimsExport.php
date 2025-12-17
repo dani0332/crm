@@ -17,7 +17,7 @@ class ClaimsExport implements CsvExportableInterface
 
     public function __construct(
         private ClaimsService $claimsService,
-        private $requestParams = []
+        private $requestParams = null
     ) {
         $this->requestParams = $requestParams;
     }

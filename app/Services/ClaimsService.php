@@ -463,10 +463,10 @@ class ClaimsService extends BaseService
 
             // Handle claim request detail updates with quote type logic
             $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
-            $detailData = collect($data)->only($claimRequestDetailFillable)->toArray();
+            $detailData = collect($request)->only($claimRequestDetailFillable)->toArray();
 
             // Handle quote type specific field clearing
-            $quoteTypeId = $data['quote_type_id'] ?? null;
+            $quoteTypeId = $request->quote_type_id ?? null;
             // Clear fields based on quote type (don't filter null values as we want to set them)
             if ($quoteTypeId == QuoteTypeId::Car) {
                 // Clear health-related detail fields
@@ -509,7 +509,7 @@ class ClaimsService extends BaseService
             LoggerService::error(' Error updating claim request - Claim UUID: '.$uuid, extra: [
                 'error' => $e->getMessage(),
                 'claim_request_id' => $uuid,
-                'data' => $data,
+                'data' => $request,
             ]);
 
             throw $e;
