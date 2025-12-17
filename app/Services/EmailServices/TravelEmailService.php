@@ -373,6 +373,8 @@ class TravelEmailService extends BaseService
             $advisor = User::find($travelQuote->advisor_id);
             if (! $advisor) {
                 LoggerService::info("sendAutomatedTravelRenewalFollowup - Advisor not found for travel renewal quote: {$travelQuote->uuid}");
+
+                return;
             }
 
             // Build email data for automated follow-ups using common email data builder
@@ -382,7 +384,7 @@ class TravelEmailService extends BaseService
 
             LoggerService::info('sendAutomatedTravelRenewalFollowup - Response: '.json_encode($response));
 
-            if ($response && $response->status_code === 200) {
+            if ($response && in_array($response->status_code, [200, 201])) {
                 app(BirdService::class)->createQuoteWorkFlowDetails($travelQuote, $response, QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::TRAVEL->id());
                 LoggerService::info('sendAutomatedTravelRenewalFollowup - Successfully triggered automated follow-up workflow');
             } else {
