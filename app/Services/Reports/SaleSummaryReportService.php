@@ -478,7 +478,7 @@ class SaleSummaryReportService extends ManagementReport
             $mapping['insurer'] = ['insurer', 'branch_name'];
         }
 
-        return $mapping[$groupBy] ?? $groupBy;
+        return $mapping[$groupBy] ?? [$groupBy];
     }
 
     public function getDefaultFilters()
