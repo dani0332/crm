@@ -143,7 +143,11 @@ class BusinessQuoteService extends BaseService
                         WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                         ELSE insurer_aml_status
                     END AS insurer_aml_status_display
-                ')
+                '),
+                'ub.branch_id as advisor_primary_branch_id',
+                'b.name as lead_branch_name',
+                'b.id as lead_branch_id',
+                'bqr.is_branch_applicable',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -172,7 +176,22 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
             // Sub-source lookup joins
             ->leftJoin('lookups as ss', 'ss.id', '=', 'bqr.sub_source_id')
-            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id');
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'bqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+    }
+
+    public function postProcessBusinessQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::Business));
+
+            return $quote;
+        });
     }
 
     public function getEntity($id)

@@ -86,11 +86,11 @@ class AllocationService extends BaseService
         }
     }
 
-    public function addAllocationCounts($userId, $quoteTypeId = null, bool $isBuyLead = false)
+    public function addAllocationCounts($userId, $quoteTypeId = null, bool $isBuyLead = false, bool $isCatABuyLead = false)
     {
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
         if (! empty($allocationRecord)) {
-            $allocationRecord->adjustAssignmentCounts($isBuyLead);
+            $allocationRecord->adjustAssignmentCounts($isBuyLead, isCatABuyLead: $isCatABuyLead);
         } else {
             LoggerService::info('Allocation record not found against advisor');
         }
@@ -107,7 +107,7 @@ class AllocationService extends BaseService
         );
     }
 
-    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null, bool $isBuyLead = false)
+    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null, bool $isBuyLead = false, bool $isCatABuyLead = false)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -128,7 +128,7 @@ class AllocationService extends BaseService
         $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor
-        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes, $isBuyLead);
+        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes, $isBuyLead, $isCatABuyLead);
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
@@ -136,7 +136,7 @@ class AllocationService extends BaseService
             $previousAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
-            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
+            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes, $isCatABuyLead);
         }
     }
 
@@ -332,16 +332,17 @@ class AllocationService extends BaseService
         $isAlreadyAssigned = ! empty($lead?->advisor_id);
 
         if ($isAllocated || $isSameAdvisor || $isAlreadyAssigned) {
+            $advisor = $request->getAdvisor() ?? $lead?->advisor;
+
             // priority order - isAllocated (new assignment) > isSameAdvisor > already assigned
             if ($isAllocated) {
                 $message = 'Advisor assigned successfully!';
             } elseif ($isSameAdvisor) {
                 $message = 'Found same advisor as previous advisor so further allocation is skipped';
             } else {
-                $message = 'Advisor already assigned';
+                $message = $advisor?->isAi() ? 'Advisor Assignment in progress' : 'Advisor already assigned';
             }
 
-            $advisor = $request->getAdvisor() ?? $lead?->advisor;
             $landLine = (! empty($advisor?->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '');
             $whatsAppNumber = ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
 

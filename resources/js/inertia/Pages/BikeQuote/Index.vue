@@ -172,6 +172,7 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor' },
+  { text: 'BRANCH', value: 'branch_name' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {

@@ -9,6 +9,7 @@ use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
+use App\Jobs\MisReportJob;
 use App\Jobs\SLAMonitoringJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -160,6 +161,12 @@ class Kernel extends ConsoleKernel
                 ]);
             });
         $schedule->job(new SLAMonitoringJob)->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+
+        $schedule->job(new MisReportJob)
+            ->mondays()
+            ->at('08:00')
+            ->onOneServer()
+            ->withoutOverlapping();
     }
 
     /**

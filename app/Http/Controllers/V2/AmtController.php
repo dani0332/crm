@@ -22,6 +22,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GroupMedicalType;
@@ -38,6 +39,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -79,6 +81,12 @@ class AmtController extends Controller
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('lookups as lss', 'lss.id', '=', 'bqr.sub_source_id')
+            ->leftJoin('renewal_batches as rb', 'rb.id', '=', 'bqr.renewal_batch_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'bqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -101,6 +109,8 @@ class AmtController extends Controller
                 DB::raw('DATE_FORMAT(bqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
                 'bqr.policy_number',
                 'bqr.renewal_batch',
+                'rb.name as renewal_batch_text',
+                'rb.id as renewal_batch_id',
                 'bqr.renewal_import_code',
                 'bqr.previous_quote_policy_number',
                 DB::raw('DATE_FORMAT(bqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
@@ -120,7 +130,10 @@ class AmtController extends Controller
                         WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                         ELSE insurer_aml_status
                     END AS insurer_aml_status_display
-                ')
+                '),
+                'ub.branch_id as advisor_primary_branch_id',
+                'b.name as lead_branch_name',
+                'bqr.is_branch_applicable',
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -238,7 +251,7 @@ class AmtController extends Controller
             });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $data->where('bqr.renewal_batch', $request->renewal_batch);
+            $data->where('rb.name', $request->renewal_batch);
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
@@ -302,10 +315,44 @@ class AmtController extends Controller
         $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
 
         $quotes = $data->simplePaginate(15)->withQueryString();
+        $this->postProcessAmtQuotes($quotes);
 
         $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
+    }
+
+    /**
+     * Post-process AMT quotes to add branch name information.
+     * Uses eager loading to avoid N+1 query issues.
+     *
+     * @param  \Illuminate\Contracts\Pagination\Paginator  $quotes
+     * @return \Illuminate\Contracts\Pagination\Paginator
+     */
+    private function postProcessAmtQuotes($quotes)
+    {
+        // Extract quote IDs from the paginated collection
+        $quoteIds = $quotes->pluck('id')->toArray();
+
+        // Eager load all CustomerInsured records in a single query
+        $customerInsuredRecords = CustomerInsured::whereIn('quote_request_id', $quoteIds)
+            ->where('quote_type_id', QuoteTypeId::Business)
+            ->with('insured.entity')
+            ->get()
+            ->groupBy('quote_request_id')
+            ->map(function ($records) {
+                // Get the latest record by updated_at for each quote_request_id
+                return $records->sortByDesc('updated_at')->first();
+            });
+
+        // Map through quotes and add branch_name using pre-loaded data
+        return $quotes->map(function ($quote) use ($customerInsuredRecords) {
+            $customerInsured = $customerInsuredRecords->get($quote->id);
+            $emirateOfRegistrationId = $customerInsured?->insured?->entity?->emirate_of_registration_id ?? null;
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
+
+            return $quote;
+        });
     }
 
     /**
@@ -370,7 +417,7 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description']);
+        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name']);
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data */

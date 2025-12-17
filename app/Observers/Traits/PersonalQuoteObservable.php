@@ -22,6 +22,7 @@ use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BirdService;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
@@ -187,6 +188,22 @@ trait PersonalQuoteObservable
                     'error' => $e->getMessage(),
                     'uuid' => $personalQuote->uuid,
                 ]);
+            }
+        }
+
+        if ($personalQuote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            try {
+                app(BranchAssignmentService::class)->saveBranchOverride($personalQuote, $personalQuote->quote_type_id);
+                PersonalQuote::withoutEvents(function () use ($personalQuote) {
+                    $branch = app(BranchAssignmentService::class)->getBranch($personalQuote?->advisor?->primaryBranch?->branch_id, $personalQuote->quote_type_id);
+                    $personalQuote->update([
+                        'branch_id' => $branch?->id,
+                    ]);
+                });
+            } catch (Exception $e) {
+                LoggerService::error('PersonalQuoteObserver - save branch data failed', [
+                    'uuid' => $personalQuote->uuid,
+                ], exception: $e);
             }
         }
     }
