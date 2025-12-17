@@ -72,6 +72,7 @@ class LeadAllocationService extends BaseService
                 'u.name as userName',
                 'lead_allocation.buy_lead_max_capacity as BLMaxCapacity',
                 'lead_allocation.buy_lead_allocation_count as BLAllocationCount',
+                'lead_allocation.buy_lead_cat_a_allocation_count as BLCATAAllocationCount',
                 'lead_allocation.buy_lead_status as BLStatus',
                 'lead_allocation.normal_allocation_enabled as normalAllocationEnabled',
                 'lead_allocation.buy_lead_reset_capacity as blResetCap'])

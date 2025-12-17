@@ -2,20 +2,20 @@
 
 namespace App\Http\Requests\BuyLeads;
 
-use App\Enums\BuyLeadSegment;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-class BuyLeadConfigUpsertRequest extends FormRequest
+class BuyLeadsNationalitiesFetchRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]);
+        return Auth::user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]);
     }
 
     /**
@@ -27,16 +27,6 @@ class BuyLeadConfigUpsertRequest extends FormRequest
     {
         return [
             'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
-            'department_id' => 'required|exists:departments,id',
-            'value' => 'required|numeric|min:0',
-            'volume' => 'required|numeric|min:0',
-            'nationalities' => 'sometimes|array',
-            'segment' => ['required', Rule::enum(BuyLeadSegment::class)],
         ];
-    }
-
-    public function getQuoteTypeId()
-    {
-        return QuoteTypes::from($this->quote_type)->id();
     }
 }
