@@ -53,53 +53,62 @@ const togglePolicyIssuance = () => {
     });
     return;
   }
-  axios.get(`/trigger-policy-issuance/${policyIssuanceId.value}`).then(res => {
-    notification.success({
-      title: res.data.message || 'Policy Issuance Triggered Successfully',
-      position: 'top',
+  axios
+    .get(`/trigger-policy-issuance/${policyIssuanceId.value}`)
+    .then(res => {
+      notification.success({
+        title: res.data.message || 'Policy Issuance Triggered Successfully',
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message || 'Failed to Trigger Policy Issuance',
+        position: 'top',
+      });
     });
-  }).catch(err => {
-    notification.error({
-      title: err.response.data.message || 'Failed to Trigger Policy Issuance',
-      position: 'top',
-    });
-  });
 };
 
 const manualTriggerPolicyIssuance = async () => {
-    await axios.get(`/trigger-policy-issuance`, {
+  await axios
+    .get(`/trigger-policy-issuance`, {
       params: {
         model_id: props.id,
         quote_type_Id: props.quoteTypeId,
       },
-    }).then(res => {
+    })
+    .then(res => {
       notification.success({
-        title: res.data.message || 'Manual Trigger Policy Issuance Successfully',
+        title:
+          res.data.message || 'Manual Trigger Policy Issuance Successfully',
         position: 'top',
       });
-    }).catch(err => {
+    })
+    .catch(err => {
       notification.error({
-        title: err.response.data.message || 'Failed to Manual Trigger Policy Issuance',
+        title:
+          err.response.data.message ||
+          'Failed to Manual Trigger Policy Issuance',
         position: 'top',
       });
     });
 };
 
 const policyIssuanceDetail = computed(() => {
-  if(!apiLogs.policyIssuance) {
+  if (!apiLogs.policyIssuance) {
     return null;
   }
-  if(apiLogs.policyIssuance == null) {
+  if (apiLogs.policyIssuance == null) {
     return null;
   }
   return apiLogs.policyIssuance;
 });
 
 const policyIssuanceId = computed(() => {
-  if(!apiLogs.policyIssuance) {
+  if (!apiLogs.policyIssuance) {
     return null;
   }
-  if(apiLogs.policyIssuance == null) {
+  if (apiLogs.policyIssuance == null) {
     return null;
   }
   return apiLogs.policyIssuance.id;
@@ -182,7 +191,7 @@ const onLoadAuditLogData = async () => {
             Policy Issuance API Logs
           </h3>
           <div
-          v-if="hasRole(rolesEnum.Engineering) && policyIssuanceId"
+            v-if="hasRole(rolesEnum.Engineering) && policyIssuanceId"
             class="flex gap-2"
             @click.stop
           >
@@ -196,7 +205,11 @@ const onLoadAuditLogData = async () => {
             </x-button>
           </div>
           <div
-            v-if="hasRole(rolesEnum.Engineering) && apiLogs.data?.length == 0 && apiLogs.policyIssuance == null"
+            v-if="
+              hasRole(rolesEnum.Engineering) &&
+              apiLogs.data?.length == 0 &&
+              apiLogs.policyIssuance == null
+            "
             class="flex gap-2"
             @click.stop
           >
@@ -228,24 +241,15 @@ const onLoadAuditLogData = async () => {
           <div class="flex items-center gap-4 my-3">
             <div v-if="policyIssuanceDetail && hasRole(rolesEnum.Engineering)">
               <p class="text-sm">
-                completed step: {{ policyIssuanceDetail.completed_step ?? 'N/A' }}
-                <x-tag
-                  size="xs"
-                  color="success"
-                  class="mt-0.5 text-[10px]"
-                >
+                completed step:
+                {{ policyIssuanceDetail.completed_step ?? 'N/A' }}
+                <x-tag size="xs" color="success" class="mt-0.5 text-[10px]">
                   {{ policyIssuanceDetail.status }}
                 </x-tag>
               </p>
-              <p class="text-sm">
-                message: {{ policyIssuanceDetail.message }}
-              </p>
-              <p class="text-sm">
-                data: {{ policyIssuanceDetail.data }}
-              </p>
-              <p class="text-sm">
-                request: {{ policyIssuanceDetail.request }}
-              </p>
+              <p class="text-sm">message: {{ policyIssuanceDetail.message }}</p>
+              <p class="text-sm">data: {{ policyIssuanceDetail.data }}</p>
+              <p class="text-sm">request: {{ policyIssuanceDetail.request }}</p>
             </div>
           </div>
           <div class="flex items-center gap-4 my-3">

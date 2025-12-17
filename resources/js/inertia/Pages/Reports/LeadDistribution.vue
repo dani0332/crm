@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   reportData: Object,
   filterOptions: Object,
