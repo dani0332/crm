@@ -172,7 +172,8 @@ class SaleSummaryReportExport implements CsvExportableInterface
     {
         $totalsRow = array_fill(0, count($this->map((object) [])), '');
         $totalsRow[0] = 'Totals';
-        $offset = in_array($this->groupByColumn, ['advisor', 'support_user']) ? 2 : 1; // Adjust for department column
+        // Adjust offset for: groupBy column (1) + optional department column (1) + branch column (1)
+        $offset = in_array($this->groupByColumn, ['advisor', 'support_user']) ? 3 : 2;
         foreach ($this->columnTotals->keys() as $index => $key) {
             $totalsRow[$index + $offset] = $this->resolveNumberFormat($this->columnTotals->get($key));
         }
