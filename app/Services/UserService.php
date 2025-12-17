@@ -9,11 +9,11 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Services\Cache\CacheManager;
 
 class UserService extends BaseService
 {
