@@ -76,6 +76,9 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
 
+    Route::get('/imcrm/debug/car-documents', [ApiController::class, 'getCarDocuments'])->name('debug.car-documents');
+    Route::get('/imcrm/debug/check-lead-documents', [ApiController::class, 'checkLeadDocuments'])->name('debug.check-lead-documents');
+
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);

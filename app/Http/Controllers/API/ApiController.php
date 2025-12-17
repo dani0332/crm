@@ -35,6 +35,11 @@ use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\RunCQFJobs;
+use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\OCRSourceEnum;
+use App\Models\CarQuote;
+use App\Models\DocumentType;
+use App\Models\QuoteDocument;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -49,6 +54,7 @@ use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
@@ -59,6 +65,7 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -72,13 +79,15 @@ class ApiController extends Controller
     public $inboundEmailsHookService;
     public $outboundEmailsHookService;
     protected $emailStatusService;
+    protected $quoteDocumentService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService, QuoteDocumentService $quoteDocumentService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
         $this->outboundEmailsHookService = $outboundEmailsHookService;
+        $this->quoteDocumentService = $quoteDocumentService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -683,5 +692,379 @@ class ApiController extends Controller
                 'quote_uuid' => $validatedData['quote_uuid'],
             ], 500);
         }
+    }
+
+    public function getCarDocuments()
+    {
+        $uuid = request('uuid');
+        $startDate = Carbon::parse('2025-11-01')->startOfMonth();
+        $endDate = Carbon::parse('2025-11-30')->endOfMonth();
+
+        $documentTypeCodes = DocumentType::query()
+            ->active()
+            ->byQuoteTypeId(QuoteTypes::CAR->id())
+            ->get()
+            ->filter(fn (DocumentType $documentType) => OCRDocumentTypeEnum::getDocumentType($documentType) !== null)
+            ->pluck('code')
+            ->values()
+            ->all();
+
+        $carQuotes = CarQuote::query()
+            ->select([
+                'id',
+                'uuid',
+                'code',
+                'quote_status_id',
+                'policy_booking_date',
+                'insurance_provider_id',
+            ])
+            ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->when($uuid, function ($q) use ($uuid) {
+                $q->where('uuid', $uuid);
+            }, function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('transaction_approved_at', [$startDate, $endDate]);
+            })
+            ->whereHas('documents', function ($q) use ($documentTypeCodes) {
+                $q->whereIn('document_type_code', $documentTypeCodes);
+            })
+            ->with([
+                'documents' => function ($q) use ($documentTypeCodes) {
+                    $q->whereIn('document_type_code', $documentTypeCodes)
+                        ->select('id', 'quote_documentable_id', 'doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'is_ocr_processed');
+                },
+                'payments' => function ($q) {
+                    $q->latest('created_at')
+                        ->take(1)
+                        ->select('id', 'paymentable_id', 'paymentable_type', 'insurance_provider_id', 'created_at')
+                        ->with(['insuranceProvider:id,code']);
+                },
+                'insuranceProvider:id,code',
+            ])
+            ->take(1)
+            ->get();
+
+        $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('id');
+
+        LoggerService::info('getCarDocuments - Car quotes with OCR documents fetched', extra: [
+            'uuid_filter' => $uuid,
+            'document_type_codes' => $documentTypeCodes,
+            'start_date' => $startDate->toDateString(),
+            'end_date' => $endDate->toDateString(),
+            'total_car_quotes' => $carQuotes->count(),
+            'car_quotes_with_documents' => $carQuoteIds->count(),
+            'car_quote_ids' => $carQuoteIds->toArray(),
+        ]);
+
+        $this->processOcrDocumentsForLeads($carQuotes, $documentTypeCodes);
+
+        return apiResponse(null, Response::HTTP_OK, 'OCR documents reprocessing job has been completed');
+    }
+
+    private function processOcrDocumentsForLeads($carQuotes, array $documentTypeCodes): void
+    {
+        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Starting to process OCR documents', extra: [
+            'total_quotes' => $carQuotes->count(),
+            'document_type_codes' => $documentTypeCodes,
+        ]);
+
+        foreach ($carQuotes as $quote) {
+            LoggerService::info(self::class.'::processOcrDocumentsForLeads - Processing quote', extra: [
+                'quote_id' => $quote->id,
+                'quote_uuid' => $quote->uuid,
+                'quote_code' => $quote->code,
+                'documents_count' => $quote->documents->count(),
+            ]);
+
+            $emiratesIdDocumentsFound = 0;
+            $emiratesIdDocumentsProcessed = 0;
+            $emiratesIdDocumentsFailed = 0;
+
+            foreach ($quote->documents as $document) {
+                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Checking document', extra: [
+                    'quote_id' => $quote->id,
+                    'document_id' => $document->id,
+                    'document_type_code' => $document->document_type_code,
+                    'doc_name' => $document->doc_name,
+                    'has_doc_url' => (bool) $document->doc_url,
+                    'has_doc_mime_type' => (bool) $document->doc_mime_type,
+                ]);
+
+                $documentType = DocumentType::where('code', $document->document_type_code)
+                    ->where('quote_type_id', QuoteTypes::CAR->id())
+                    ->first();
+
+                if ($documentType) {
+                    $ocrDocType = OCRDocumentTypeEnum::getDocumentType($documentType);
+                    
+                    if ($ocrDocType === OCRDocumentTypeEnum::ID_CARD) {
+                        $emiratesIdDocumentsFound++;
+                        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Found Emirates ID document', extra: [
+                            'quote_id' => $quote->id,
+                            'document_id' => $document->id,
+                            'document_type_code' => $document->document_type_code,
+                            'total_emirates_id_found' => $emiratesIdDocumentsFound,
+                        ]);
+                        if ($this->processOcrDocument($quote, $document)) {
+                            $emiratesIdDocumentsProcessed++;
+                        } else {
+                            $emiratesIdDocumentsFailed++;
+                        }
+                    } else {
+                        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Skipping non-Emirates ID document', extra: [
+                            'quote_id' => $quote->id,
+                            'document_id' => $document->id,
+                            'document_type_code' => $document->document_type_code,
+                            'ocr_doc_type' => $ocrDocType?->value,
+                        ]);
+                    }
+                } else {
+                    LoggerService::warning(self::class.'::processOcrDocumentsForLeads - DocumentType not found', extra: [
+                        'quote_id' => $quote->id,
+                        'document_id' => $document->id,
+                        'document_type_code' => $document->document_type_code,
+                    ]);
+                }
+            }
+
+            LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote processing summary', extra: [
+                'quote_id' => $quote->id,
+                'quote_uuid' => $quote->uuid,
+                'total_documents' => $quote->documents->count(),
+                'emirates_id_documents_found' => $emiratesIdDocumentsFound,
+                'emirates_id_documents_processed' => $emiratesIdDocumentsProcessed,
+                'emirates_id_documents_failed' => $emiratesIdDocumentsFailed,
+            ]);
+        }
+
+        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Completed processing all documents', extra: [
+            'total_quotes_processed' => $carQuotes->count(),
+        ]);
+    }
+
+    private function processOcrDocument(CarQuote $quote, QuoteDocument $document): bool
+    {
+        LoggerService::info(self::class.'::processOcrDocument - Processing OCR document', extra: [
+            'quote_id' => $quote->id,
+            'quote_uuid' => $quote->uuid,
+            'quote_code' => $quote->code,
+            'document_id' => $document->id,
+            'document_type_code' => $document->document_type_code,
+            'doc_name' => $document->doc_name,
+            'doc_url' => $document->doc_url,
+        ]);
+
+        if (!$document->doc_url || !$document->doc_mime_type) {
+            LoggerService::warning(self::class.'::processOcrDocument - Missing document payload', extra: [
+                'quote_id' => $quote->id,
+                'document_id' => $document->id,
+                'has_doc_url' => (bool) $document->doc_url,
+                'has_doc_mime_type' => (bool) $document->doc_mime_type,
+            ]);
+
+            return false;
+        }
+
+        $ocrData = $this->callOcrApi($quote, $document);
+
+        if ($ocrData) {
+            LoggerService::info(self::class.'::processOcrDocument - OCR API call successful', extra: [
+                'quote_id' => $quote->id,
+                'document_id' => $document->id,
+                'has_data' => !empty($ocrData),
+            ]);
+
+            return true;
+        }
+
+        LoggerService::warning(self::class.'::processOcrDocument - OCR API call failed', extra: [
+            'quote_id' => $quote->id,
+            'document_id' => $document->id,
+        ]);
+
+        return false;
+    }
+
+    private function callOcrApi(CarQuote $quote, QuoteDocument $document): ?object
+    {
+        $providerCode = $this->extractProviderCode($quote);
+        $refId = $this->getRefId($quote);
+        $docType = OCRDocumentTypeEnum::ID_CARD;
+        $isEcom = false;
+
+        $docUrl = $this->quoteDocumentService->getDocumentUrl($document->doc_url);
+
+        if (!$docUrl) {
+            LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
+                'quote_uuid' => $quote->uuid,
+                'document_id' => $document->id,
+                'doc_url' => $document->doc_url,
+            ]);
+
+            return null;
+        }
+
+        $requestData = [
+            'ref_id' => $refId,
+            'uuid' => $quote->uuid,
+            'quote_type_id' => QuoteTypes::CAR->id(),
+            'doc_url' => $docUrl,
+            'doc_type' => $docType->value,
+            'provider_code' => $providerCode,
+            'image' => false,
+        ];
+
+        LoggerService::info(self::class.'::callOcrApi - OCR API Request Details', extra: [
+            'request_data' => $requestData,
+        ]);
+
+        try {
+            $response = Http::baseUrl(config('constants.OCR_API_ENDPOINT'))
+                ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
+                ->withHeader('x-api-key', config('constants.OCR_API_KEY'))
+                ->withHeader('source', $isEcom ? OCRSourceEnum::ECOM->value : OCRSourceEnum::IMCRM->value)
+                ->timeout(config('constants.OCR_API_TIMEOUT'))
+                ->post('/process-document', $requestData);
+
+            $responseData = $response->json();
+            $responseBody = $response->body();
+
+            if ($response->successful()) {
+                LoggerService::info(self::class.'::callOcrApi - OCR API Response Success', extra: [
+                    'quote_uuid' => $quote->uuid,
+                    'document_id' => $document->id,
+                    'has_data' => !empty($responseData),
+                    'response_body' => $responseBody,
+                    'response_data' => $responseData,
+                ]);
+
+                return (object) $responseData;
+            }
+
+            LoggerService::warning(self::class.'::callOcrApi - OCR API Response Failed', extra: [
+                'quote_uuid' => $quote->uuid,
+                'document_id' => $document->id,
+                'response_status' => $response->status(),
+                'response_headers' => $response->headers(),
+                'response_body' => $responseBody,
+                'response_data' => $responseData,
+                'response_message' => $responseData['message'] ?? ($responseData['error'] ?? 'Unknown error'),
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::callOcrApi - Exception occurred during API call', exception: $e);
+
+            return null;
+        }
+    }
+
+    private function extractProviderCode(CarQuote $quote): ?string
+    {
+        if ($quote->payments && $quote->payments->isNotEmpty()) {
+            $latestPayment = $quote->payments->first();
+            if ($latestPayment && $latestPayment->insuranceProvider) {
+                return $latestPayment->insuranceProvider->code;
+            }
+        }
+
+        if ($quote->insuranceProvider) {
+            return $quote->insuranceProvider->code;
+        }
+
+        return null;
+    }
+
+    private function getRefId(CarQuote $quote): string
+    {
+        return $quote->code;
+    }
+
+    public function checkLeadDocuments()
+    {
+        $uuid = request('uuid', 'GWNRK7CH');
+
+        $carQuote = CarQuote::where('uuid', $uuid)
+            ->with([
+                'documents' => function ($q) {
+                    $q->select('id', 'quote_documentable_id', 'doc_name', 'doc_url', 'document_type_code', 'created_at')
+                        ->orderBy('created_at', 'desc');
+                },
+            ])
+            ->first();
+
+        if (!$carQuote) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Car quote not found');
+        }
+
+        $emiratesIdCodes = ['CEID', 'EID_CAR', 'IDC'];
+        $allDocuments = $carQuote->documents;
+        $emiratesIdDocuments = $allDocuments->filter(function ($doc) use ($emiratesIdCodes) {
+            return in_array($doc->document_type_code, $emiratesIdCodes);
+        });
+
+        $documentTypeCodes = DocumentType::query()
+            ->active()
+            ->byQuoteTypeId(QuoteTypes::CAR->id())
+            ->get()
+            ->filter(fn (DocumentType $documentType) => OCRDocumentTypeEnum::getDocumentType($documentType) !== null)
+            ->pluck('code')
+            ->values()
+            ->all();
+
+        $ocrEligibleDocuments = $allDocuments->filter(function ($doc) use ($documentTypeCodes) {
+            return in_array($doc->document_type_code, $documentTypeCodes);
+        });
+
+        LoggerService::info(self::class.'::checkLeadDocuments - Lead documents checked', extra: [
+            'quote_id' => $carQuote->id,
+            'quote_uuid' => $carQuote->uuid,
+            'quote_code' => $carQuote->code,
+            'total_documents' => $allDocuments->count(),
+            'emirates_id_documents_count' => $emiratesIdDocuments->count(),
+            'ocr_eligible_documents_count' => $ocrEligibleDocuments->count(),
+            'emirates_id_documents' => $emiratesIdDocuments->map(function ($doc) {
+                return [
+                    'id' => $doc->id,
+                    'doc_name' => $doc->doc_name,
+                    'document_type_code' => $doc->document_type_code,
+                    'doc_url' => $doc->doc_url,
+                    'created_at' => $doc->created_at,
+                ];
+            })->values()->all(),
+            'all_documents' => $allDocuments->map(function ($doc) {
+                return [
+                    'id' => $doc->id,
+                    'doc_name' => $doc->doc_name,
+                    'document_type_code' => $doc->document_type_code,
+                    'created_at' => $doc->created_at,
+                ];
+            })->values()->all(),
+        ]);
+
+        return apiResponse([
+            'quote_id' => $carQuote->id,
+            'quote_uuid' => $carQuote->uuid,
+            'quote_code' => $carQuote->code,
+            'total_documents' => $allDocuments->count(),
+            'emirates_id_documents_count' => $emiratesIdDocuments->count(),
+            'ocr_eligible_documents_count' => $ocrEligibleDocuments->count(),
+            'emirates_id_documents' => $emiratesIdDocuments->map(function ($doc) {
+                return [
+                    'id' => $doc->id,
+                    'doc_name' => $doc->doc_name,
+                    'document_type_code' => $doc->document_type_code,
+                    'doc_url' => $doc->doc_url,
+                    'created_at' => $doc->created_at instanceof \Carbon\Carbon ? $doc->created_at->toDateTimeString() : $doc->created_at,
+                ];
+            })->values()->all(),
+            'all_documents' => $allDocuments->map(function ($doc) {
+                return [
+                    'id' => $doc->id,
+                    'doc_name' => $doc->doc_name,
+                    'document_type_code' => $doc->document_type_code,
+                    'created_at' => $doc->created_at instanceof \Carbon\Carbon ? $doc->created_at->toDateTimeString() : $doc->created_at,
+                ];
+            })->values()->all(),
+        ], Response::HTTP_OK, 'Lead documents retrieved successfully');
     }
 }
