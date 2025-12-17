@@ -48,4 +48,3 @@ class ClaimGetS3TempUrlRequest extends FormRequest
         ];
     }
 }
-

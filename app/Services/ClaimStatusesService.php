@@ -2,16 +2,16 @@
 
 namespace App\Services;
 
-use App\Enums\ClaimsEnum;
 use App\Enums\CacheKeyEnum;
+use App\Enums\ClaimsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
+use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\Cache\CacheManager;
 
 class ClaimStatusesService extends BaseService
 {
@@ -20,7 +20,7 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimSubStatuses(): array
     {
-        return  ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text', 'quote_type_id')->orderBy('sort_order')->get()->toArray();
+        return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text', 'quote_type_id')->orderBy('sort_order')->get()->toArray();
     }
 
     /**
@@ -28,7 +28,7 @@ class ClaimStatusesService extends BaseService
      */
     public function getClaimComplaintStatuses(): array
     {
-        return  CacheManager::remember(
+        return CacheManager::remember(
             CacheKeyEnum::CLAIM_CACHE_COMPLAINT_STATUSES_KEY,
             function () {
                 return ClaimStatus::where('status_type', ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value)->where('is_active', 1)->select('id', 'text')->orderBy('sort_order')->get()->toArray();

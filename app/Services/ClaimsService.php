@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\ClaimsEnum;
 use App\Enums\CacheKeyEnum;
+use App\Enums\ClaimsEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -19,11 +19,11 @@ use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\YearOfManufacture;
+use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\Cache\CacheManager;
 
 class ClaimsService extends BaseService
 {
@@ -640,14 +640,14 @@ class ClaimsService extends BaseService
      */
     public function getLineOfBusinessOptions(): array
     {
-        return  CacheManager::remember(
+        return CacheManager::remember(
             CacheKeyEnum::CLAIM_CACHE_QUOTE_TYPE_KEY,
             function () {
                 return QuoteType::select('id', 'text')
-                        ->whereIn('id', [
-                            QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Yacht,
-                            QuoteTypeId::Health, QuoteTypeId::Life,
-                        ])->where('is_active', 1)->orderBy('text')->get()->toArray();
+                    ->whereIn('id', [
+                        QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Yacht,
+                        QuoteTypeId::Health, QuoteTypeId::Life,
+                    ])->where('is_active', 1)->orderBy('text')->get()->toArray();
             }
         );
     }
