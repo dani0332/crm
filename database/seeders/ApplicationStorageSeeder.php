@@ -73,6 +73,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
         $this->seedDeviceSmartphonePolicyIssuanceSettings();
+        $this->seedDeviceFailureEmailSettings();
         $this->seedLegacyPolicyKeys();
     }
 
@@ -1150,6 +1151,73 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 90,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDeviceFailureEmailSettings()
+    {
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO,
+                'value' => 'production.approval.team@insurancemarket.ae', // TODO:: NGI:: need to take it from Rucha
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC,
+                'value' => 'dt.system.notifications@insurancemarket.ae,sandeep.sharma@insurancemarket.ae,rucha.keluskar@myalfred.com,digital.transformation.support@myalfred.com', // TODO:: NGI:: need to take it from Rucha
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_REPLY_TO],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_REPLY_TO,
+                'value' => 'production.approval.team@insurancemarket.ae', // TODO:: NGI:: need to take it from Rucha
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK,
+                'value' => 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T',
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO,
+                'value' => '', // TODO:: NGI:: need to take it from Rucha
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL,
+                'value' => '', // TODO:: NGI:: need to take it from Rucha
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TEMPLATE_ID],
+            [
+                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TEMPLATE_ID,
+                'value' => '', // TODO:: NGI:: need to take it from Rucha
                 'is_active' => 1,
             ],
         );

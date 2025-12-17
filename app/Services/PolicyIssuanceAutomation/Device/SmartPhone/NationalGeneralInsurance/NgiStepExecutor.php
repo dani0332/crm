@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
+use App\Enums\DeviceFailureTypeEnum;
 use App\Enums\NgiEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\PolicyIssuanceEnum;
+use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
@@ -46,6 +48,12 @@ class NgiStepExecutor
                 PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                 'Policy Creation'
+            );
+
+            // Trigger failure email for Policy Issuance API failure
+            app(DeviceFailureEmailService::class)->sendFailureEmail(
+                $quote->id,
+                DeviceFailureTypeEnum::ISSUE_POLICY
             );
 
             return $createPolicyResponse;
@@ -128,9 +136,15 @@ class NgiStepExecutor
             app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
                 $quote,
                 QuoteTypes::DEVICE->value,
-                PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, // TODO::: NGI:: confirm it
-                PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, // TODO::: NGI:: confirm it
+                PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                 'Send And Book Policy'
+            );
+
+            // Trigger failure email for Booking Details API failure
+            app(DeviceFailureEmailService::class)->sendFailureEmail(
+                $quote->id,
+                DeviceFailureTypeEnum::BOOK_POLICY
             );
 
             return $triggerBookPolicyResponse;

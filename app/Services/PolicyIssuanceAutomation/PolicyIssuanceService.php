@@ -25,6 +25,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use App\Services\DeviceFailureEmailService;
 
 class PolicyIssuanceService
 {
@@ -271,6 +272,15 @@ class PolicyIssuanceService
         } else {
             // TODO:: This should be updated with the new function in PolicyIssuanceService
             $insurerPolicyAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+        }
+
+        // Trigger failure email for Device/NGI quotes (stuck for 15+ minutes)
+        if ($quoteType === QuoteTypes::DEVICE->value && $insuranceProvider->code === InsuranceProviderEnum::NGI->value) {
+            app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
+                $quote->id,
+                $insurerApiStatus,
+                $policyIssuance->completed_step
+            );
         }
 
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Completed processing for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
+use App\Enums\DeviceFailureTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\PolicyIssuance;
+use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiException;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiApiService;
@@ -356,6 +358,12 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
                     PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
                     PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                     NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
+                );
+
+                // Trigger failure email - uses DeviceFailureEmailService directly (no local wrapper)
+                app(DeviceFailureEmailService::class)->sendFailureEmail(
+                        $process->model->id,
+                    DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS
                 );
             }
         }

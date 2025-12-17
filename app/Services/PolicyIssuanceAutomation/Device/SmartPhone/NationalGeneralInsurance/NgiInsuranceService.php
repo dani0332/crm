@@ -13,6 +13,7 @@ use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Services\ApplicationStorageService;
+use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Exception;
@@ -492,25 +493,20 @@ class NgiInsuranceService implements PolicyIssuanceInterface
             'advisorId' => $advisorId,
         ]);
 
-        // TODO:: NGI:: Add lead allocation logic if needed for Device/NGI ask BILAL
-        // Similar to Alliance which allocates to unassisted team:
-        // if (! $advisorId) {
-        //     $unassistedTeamId = getTeamId(TeamNameEnum::DEVICE_UNASSISTED); // or appropriate team
-        //     $response = QuoteTypes::DEVICE->allocate($quote->uuid, $unassistedTeamId);
-        //     if ($response && $response['advisorId']) {
-        //         $advisorId = $response['advisorId'];
-        //     }
-        // }
-
         if ($advisorId) {
             // Send failure notification if not already failed
             if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
-                // TODO:: NGI:: Create and dispatch a failure notification job for Device/NGI similar to:
-                // SendDeviceNgiFailedAllocationEmailJob::dispatch($quote->uuid)->delay(now()->addSeconds(30));
-                LoggerService::info('Automation failed - notification should be sent', extra: [
-                    'quote_code' => $quote->code,
-                ]);
-            }
+                // Uses service method that handles failure type determination
+                app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
+                    $quote->id,
+                    $quote->insurer_api_status
+                );
+
+                    LoggerService::info('Automation failed - failure notification dispatched', extra: [
+                        'quote_code' => $quote->code,
+                        'insurer_api_status' => $quote->insurer_api_status,
+                    ]);
+                }
 
             // Send policy documents if policy is booked
             if ($isPolicyBooked) {
@@ -527,5 +523,4 @@ class NgiInsuranceService implements PolicyIssuanceInterface
             }
         }
     }
-
 }
