@@ -39,7 +39,7 @@ class AuditRepository extends BaseRepository
         $quoteType = request()->has('quote_type') && request()->quote_type ? request()->input('quote_type') : null;
         $quoteTypeId = request()->has('quote_type_id') && request()->quote_type_id ? request()->input('quote_type_id') : null;
         $isSendUpdate = $quoteType === GenericRequestEnum::SEND_UPDATE_LOG;
-        
+
         $payment = null;
         if ($auditableId) {
             $query = Payment::select('id');
@@ -49,13 +49,13 @@ class AuditRepository extends BaseRepository
                 // Ensure auditable_type exists to prevent undefined array key errors
                 if (isset($auditables['auditable_type'])) {
                     $query->where('paymentable_id', $auditableId)
-                          ->where('paymentable_type', $auditables['auditable_type']);
+                        ->where('paymentable_type', $auditables['auditable_type']);
                 }
             }
-            
+
             $payment = $query->first();
         }
-            
+
         $showParentAuditLogs = $auditables['show_auditables'] ?? true;
 
         $query = DB::table('audits')
@@ -66,12 +66,12 @@ class AuditRepository extends BaseRepository
                     $q->when($auditableId, function ($q) use ($auditables, $auditableId) {
                         if (isset($auditables['auditable_type'])) {
                             $q->where('auditable_id', $auditableId)
-                              ->where('auditable_type', $auditables['auditable_type']);
+                                ->where('auditable_type', $auditables['auditable_type']);
                         }
                     });
                     $q->when($payment, function ($q) use ($payment) {
                         $q->orWhere('auditable_id', $payment->id)
-                          ->where('auditable_type', Payment::class);
+                            ->where('auditable_type', Payment::class);
                     });
                 });
                 if ($quoteTypeId && isset($auditables['auditable_type'])) {
