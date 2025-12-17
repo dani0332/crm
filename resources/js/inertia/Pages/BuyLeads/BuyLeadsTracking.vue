@@ -74,18 +74,6 @@ function onReset() {
 onMounted(() => {
   setQueryStringFilters(params, filters);
 });
-
-const updatedLobs = computed(() => {
-  return props.lobs.map(lob => {
-    if (lob.value === 'CAR_CAT_A') {
-      return {
-        ...lob,
-        label: 'Car Revival Cat A',
-      };
-    }
-    return lob;
-  });
-});
 </script>
 <template>
   <Head title="My Lead Request" />
@@ -99,7 +87,7 @@ const updatedLobs = computed(() => {
         label="Line of Business"
         required
         placeholder="Select LOB"
-        :options="updatedLobs || []"
+        :options="props.lobs || []"
         filterable
         v-model="filters.quote_type"
         :rules="[isRequired]"
@@ -151,7 +139,7 @@ const updatedLobs = computed(() => {
   >
     <template #item-quote_type.code="{ quote_type, source }">
       <span v-if="source == 'REVIVAL'">
-        <x-tag color="primary"> Car Revival Cat A </x-tag>
+        <x-tag color="primary"> Car Cat A</x-tag>
       </span>
       <span v-else>
         <x-tag color="primary">
