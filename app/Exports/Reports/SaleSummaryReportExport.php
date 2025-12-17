@@ -143,7 +143,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
         }
 
         $numericValues = collect([
-            'branch_name' => $quote->branch_name,
+            'branch_name' => $quote->branch_name ?? 'N/A',
             'total_policies' => $this->resolveNumberFormat($quote->total_policies ?? 0),
             'total_endorsements' => $this->resolveNumberFormat($quote->total_endorsements ?? 0),
             'total_transaction' => $this->resolveNumberFormat($quote->total_transaction ?? 0),
