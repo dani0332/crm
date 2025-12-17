@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use App\Enums\ClaimsEnum;
 use App\Models\ClaimRequest;
+use App\Models\ClaimStatus;
 use App\Services\ClaimsService;
 
 class ClaimRequestObserver
@@ -40,7 +42,8 @@ class ClaimRequestObserver
                 $newApprovedRepairAmount = $claimRequest->approved_repair_amount;
 
                 if (empty($originalApprovedRepairAmount) && ! empty($newApprovedRepairAmount)) {
-                    $claimService->updateClaimSubStatusToRepairApprovedAndWIP($claimRequest);
+                    $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS->value)->where('is_active', 1)->first();
+                    $claimService->updateClaimSubStatus($claimRequest, $claimStatusClosed);
                 }
             }
             if ($claimRequest->isDirty('approved_total_loss_amount')) {
@@ -48,7 +51,8 @@ class ClaimRequestObserver
                 $newApprovedTotalLossAmount = $claimRequest->approved_total_loss_amount;
 
                 if (empty($originalApprovedTotalLossAmount) && ! empty($newApprovedTotalLossAmount)) {
-                    $claimService->updateClaimSubStatusToTotalLossOfferLetterShared($claimRequest);
+                    $claimStatusTotalLossOfferShared = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED->value)->where('is_active', 1)->first();
+                    $claimService->updateClaimSubStatus($claimRequest, $claimStatusTotalLossOfferShared);
                 }
             }
             if ($claimRequest->isDirty('approved_cash_loss_amount')) {
@@ -56,7 +60,8 @@ class ClaimRequestObserver
                 $newApprovedCashLossAmount = $claimRequest->approved_cash_loss_amount;
 
                 if (empty($originalApprovedCashLossAmount) && ! empty($newApprovedCashLossAmount)) {
-                    $claimService->updateClaimSubStatusToCashLossApproved($claimRequest);
+                    $claimStatusCashLossApproved = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED->value)->where('is_active', 1)->first();
+                    $claimService->updateClaimSubStatus($claimRequest, $claimStatusCashLossApproved);
                 }
             }
         }

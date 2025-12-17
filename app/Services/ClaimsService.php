@@ -438,23 +438,6 @@ class ClaimsService extends BaseService
         }
     }
 
-    private function addLineOfBusinessData(array $apiData, array $data): array
-    {
-        $quoteTypeId = $data['quote_type_id'] ?? null;
-        $isCarQuoteType = $quoteTypeId == QuoteTypeId::Car;
-        $isHealthQuoteType = $quoteTypeId == QuoteTypeId::Health;
-        if ($isCarQuoteType) {
-            $apiData['carMake'] = $data['car_make'];
-        }
-        if ($isHealthQuoteType) {
-            $apiData['claimRequestTypeId'] = $data['claim_request_type_id'];
-            $apiData['serviceTypeId'] = $data['service_type_id'];
-            $apiData['requestReferenceNumber'] = $data['request_reference_number'];
-        }
-
-        return $apiData;
-    }
-
     /**
      * Update an existing claim request
      */
@@ -1023,46 +1006,15 @@ class ClaimsService extends BaseService
         return $document->delete();
     }
 
-    public function updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claimRequest): void
+    public function updateClaimSubStatus(ClaimRequest $claimRequest, $claimStatus): void
     {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS->value)->where('is_active', 1)->first();
-        if ($claimStatusClosed) {
-            $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
+        if ($claimStatus) {
+            $claimRequest->claim_sub_status_id = $claimStatus->id;
             $claimRequest->saveQuietly();
             LoggerService::info(' Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
-                'claim_sub_status_id' => $claimStatusClosed->id,
-                'updated_by' => Auth::id(),
-            ]);
-        }
-    }
-
-    public function updateClaimSubStatusToTotalLossOfferLetterShared(ClaimRequest $claimRequest): void
-    {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED->value)->where('is_active', 1)->first();
-        if ($claimStatusClosed) {
-            $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
-            $claimRequest->saveQuietly();
-            LoggerService::info(' Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'claim_sub_status_id' => $claimStatusClosed->id,
-                'updated_by' => Auth::id(),
-            ]);
-        }
-    }
-
-    public function updateClaimSubStatusToCashLossApproved(ClaimRequest $claimRequest): void
-    {
-        $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED->value)->where('is_active', 1)->first();
-        if ($claimStatusClosed) {
-            $claimRequest->claim_sub_status_id = $claimStatusClosed->id;
-            $claimRequest->saveQuietly();
-            LoggerService::info(' Claim status updated - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'claim_sub_status_id' => $claimStatusClosed->id,
+                'claim_sub_status_id' => $claimStatus->id,
                 'updated_by' => Auth::id(),
             ]);
         }
