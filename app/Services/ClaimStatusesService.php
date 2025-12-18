@@ -272,9 +272,9 @@ class ClaimStatusesService extends BaseService
         try {
             // Simple query using Eloquent ORM - frontend will process old sub-status from chronological order
             $claimSubStatusLogs = ClaimActivity::with([
-                    'claimStatus:id,text,status_type',
-                    'createdBy:id,name'
-                ])
+                'claimStatus:id,text,status_type',
+                'createdBy:id,name',
+            ])
                 ->forClaimRequest($claimId)
                 ->whereNotNull('status_id')
                 ->whereHas('claimStatus', function ($query) {

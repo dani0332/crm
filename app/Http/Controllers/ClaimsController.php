@@ -445,7 +445,6 @@ class ClaimsController extends Controller
         }
     }
 
-
     /**
      * Make additional contact primary for claim request
      */

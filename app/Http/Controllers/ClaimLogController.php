@@ -2,26 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
-use App\Exports\ClaimsExport;
-use App\Http\Requests\ClaimComplaintStatusUpdateRequest;
-use App\Http\Requests\ClaimDetailsUpdateRequest;
-use App\Http\Requests\ClaimDocumentRequest;
-use App\Http\Requests\ClaimExportValidationRequest;
-use App\Http\Requests\ClaimGetS3TempUrlRequest;
-use App\Http\Requests\ClaimMakeAdditionalContactPrimaryRequest;
-use App\Http\Requests\ClaimNextFollowUpUpdateRequest;
-use App\Http\Requests\ClaimOptimizeMessageRequest;
-use App\Http\Requests\ClaimSearchRequest;
-use App\Http\Requests\ClaimSendNotificationRequest;
-use App\Http\Requests\ClaimStatusUpdateRequest;
-use App\Http\Requests\ClaimStoreRequest;
-use App\Http\Requests\ClaimUpdateRequest;
-use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\ClaimRequest;
-use App\Models\QuoteDocument;
-use App\Services\ClaimDocumentService;
 use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
 use App\Services\CustomerService;
@@ -29,10 +11,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ClaimLogController extends Controller
 {
@@ -93,7 +72,6 @@ class ClaimLogController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to load claim sub-status logs.'], 500);
         }
     }
-
 
     /**
      * Get complaint status logs for a claim
