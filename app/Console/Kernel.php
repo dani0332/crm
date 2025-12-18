@@ -162,11 +162,44 @@ class Kernel extends ConsoleKernel
             });
         $schedule->job(new SLAMonitoringJob)->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->job(new MisReportJob)
-            ->mondays()
-            ->at('08:00')
-            ->onOneServer()
-            ->withoutOverlapping();
+        $this->scheduleWithEnvironment(
+            $schedule,
+            new MisReportJob,
+            default: fn($event) => $event->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
+            environments: ['staging' => fn($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
+        );
+    }
+
+    /**
+     * Schedule a command or job with environment-specific configurations.
+     *
+     * @param  Schedule  $schedule
+     * @param  mixed  $schedulable  Command string, job instance, or closure
+     * @param  \Closure  $default  Default schedule configuration callback
+     * @param  array<string, \Closure>  $environments  Environment-specific schedule configurations
+     * @return \Illuminate\Console\Scheduling\Event
+     */
+    protected function scheduleWithEnvironment(
+        Schedule $schedule,
+        mixed $schedulable,
+        \Closure $default,
+        array $environments = []
+    ) {
+        $event = is_string($schedulable)
+            ? $schedule->command($schedulable)
+            : (is_object($schedulable) && !($schedulable instanceof \Closure)
+                ? $schedule->job($schedulable)
+                : $schedule->call($schedulable));
+
+        $currentEnvironment = app()->environment();
+
+        // Check if there's an environment-specific configuration
+        if (isset($environments[$currentEnvironment])) {
+            return $environments[$currentEnvironment]($event);
+        }
+
+        // Apply default configuration
+        return $default($event);
     }
 
     /**
