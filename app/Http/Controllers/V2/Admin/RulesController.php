@@ -8,7 +8,6 @@ use App\Models\Rule;
 use App\Models\RuleType;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class RulesController extends Controller
 {
