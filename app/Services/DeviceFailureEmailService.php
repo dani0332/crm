@@ -168,7 +168,7 @@ class DeviceFailureEmailService
         // Fallback: determine from completed step (next step that failed)
         if ($completedStep !== null) {
             return match ($completedStep) {
-                '', NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE => DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS,
+                NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE => DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS,
                 NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM => DeviceFailureTypeEnum::BOOK_POLICY,
                 default => DeviceFailureTypeEnum::ISSUE_POLICY,
             };

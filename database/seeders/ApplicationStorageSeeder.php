@@ -1196,15 +1196,6 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO],
-            [
-                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO,
-                'value' => '', // TODO:: NGI:: need to take it from Rucha
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL],
             [
                 'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL,
