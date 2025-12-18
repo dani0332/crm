@@ -2,7 +2,6 @@
 
 namespace App\Console;
 
-use App\Console\Commands\MisReportCommand;
 use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
@@ -167,15 +166,14 @@ class Kernel extends ConsoleKernel
         $this->scheduleWithEnvironment(
             $schedule,
             'mis-report:run',
-            default: fn($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
-            environments: ['staging' => fn($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
+            default: fn ($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
+            environments: ['staging' => fn ($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
         );
     }
 
     /**
      * Schedule a command with environment-specific configurations.
      *
-     * @param  Schedule  $schedule
      * @param  string|class-string  $command  Command string (e.g., 'command:name') or command class name
      * @param  \Closure  $default  Default schedule configuration callback
      * @param  array<string, \Closure>  $environments  Environment-specific schedule configurations
