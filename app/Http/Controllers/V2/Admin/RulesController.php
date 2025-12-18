@@ -109,7 +109,7 @@ class RulesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(RuleRequest $request, $id)
     {
         $rule = Rule::findOrFail($id);
         $rule->update($request->except('rule_users'));
