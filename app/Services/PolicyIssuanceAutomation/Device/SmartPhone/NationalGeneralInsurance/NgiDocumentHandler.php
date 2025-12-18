@@ -27,41 +27,65 @@ class NgiDocumentHandler
      */
     public function fetchDocumentFromUrl(string $documentUrl): array
     {
-        $result = ['status' => false, 'message' => ''];
-
         try {
             $response = $this->httpClient->downloadDocument($documentUrl);
 
-            if ($response->failed()) {
-                $result['message'] = 'Failed to download document from URL';
-                LoggerService::error(self::ERROR_MESSAGE_DOCUMENT_FETCH_FAILED, extra: [
-                    'url' => $documentUrl,
-                    'status_code' => $response->status(),
-                    'error' => $result['message'],
-                ]);
-                return $result;
+            // Handle download failure or empty content in one check
+            $errorMessage = $this->getDownloadErrorMessage($response);
+            if ($errorMessage !== null) {
+                $this->logDocumentFetchError($errorMessage, $documentUrl, $response->failed() ? $response->status() : null);
+                return ['status' => false, 'message' => $errorMessage];
             }
 
-            $fileContent = $response->body();
-
-            if (empty($fileContent)) {
-                $result['message'] = 'Invalid or empty document content';
-                LoggerService::error(self::ERROR_MESSAGE_DOCUMENT_FETCH_FAILED, extra: [
-                    'url' => $documentUrl,
-                    'error' => $result['message'],
-                ]);
-                return $result;
-            }
-
-            return ['status' => true, 'content' => $fileContent];
+            return ['status' => true, 'content' => $response->body()];
         } catch (\Exception $e) {
             LoggerService::error('Document fetch exception', extra: [
                 'url' => $documentUrl,
             ], exception: $e);
 
-            $result['message'] = $e->getMessage();
-            return $result;
+            return ['status' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Get error message for download response, or null if successful
+     *
+     * @param \Illuminate\Http\Client\Response $response
+     * @return string|null
+     */
+    private function getDownloadErrorMessage($response): ?string
+    {
+        if ($response->failed()) {
+            return 'Failed to download document from URL';
+        }
+
+        if (empty($response->body())) {
+            return 'Invalid or empty document content';
+        }
+
+        return null;
+    }
+
+    /**
+     * Log document fetch error with context
+     *
+     * @param string $message
+     * @param string $documentUrl
+     * @param int|null $statusCode
+     * @return void
+     */
+    private function logDocumentFetchError(string $message, string $documentUrl, ?int $statusCode = null): void
+    {
+        $extra = [
+            'url' => $documentUrl,
+            'error' => $message,
+        ];
+
+        if ($statusCode !== null) {
+            $extra['status_code'] = $statusCode;
+        }
+
+        LoggerService::error(self::ERROR_MESSAGE_DOCUMENT_FETCH_FAILED, extra: $extra);
     }
 
     /**

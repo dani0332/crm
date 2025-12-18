@@ -39,29 +39,8 @@ class DeviceFailureEmailService
 
         $quote = PersonalQuote::find($quoteId);
 
-        if (! $quote) {
-            LoggerService::error("{$this->logPrefix} Quote not found", extra: [
-                'quoteId' => $quoteId,
-            ]);
-            return false;
-        }
-
-        // Validate LOB is Device
-        if (! $this->isDeviceLob($quote)) {
-            LoggerService::warning("{$this->logPrefix} Not a Device LOB quote, skipping", extra: [
-                'quoteId' => $quoteId,
-                'quoteTypeId' => $quote->quote_type_id,
-            ]);
-            return false;
-        }
-
-        // Validate Provider is NGI
-        $effectiveProviderCode = $providerCode ?? $quote->insuranceProvider?->code;
-        if (! $this->isNgiProvider($effectiveProviderCode)) {
-            LoggerService::warning("{$this->logPrefix} Not an NGI provider quote, skipping", extra: [
-                'quoteId' => $quoteId,
-                'providerCode' => $effectiveProviderCode,
-            ]);
+        // Validate quote exists and is a valid Device/NGI quote - combined validation
+        if (! $this->isValidQuoteForFailureEmail($quote, $quoteId, $providerCode)) {
             return false;
         }
 
@@ -79,6 +58,60 @@ class DeviceFailureEmailService
         ]);
 
         return true;
+    }
+
+    /**
+     * Validate quote for failure email dispatch
+     * Checks: quote exists, is Device LOB, and is NGI provider
+     *
+     * @param PersonalQuote|null $quote
+     * @param int $quoteId
+     * @param string|null $providerCode
+     * @return bool
+     */
+    private function isValidQuoteForFailureEmail(?PersonalQuote $quote, int $quoteId, ?string $providerCode): bool
+    {
+        if (! $quote) {
+            LoggerService::error("{$this->logPrefix} Quote not found", extra: [
+                'quoteId' => $quoteId,
+            ]);
+            return false;
+        }
+
+        // Combined LOB and Provider validation using existing method
+        $effectiveProviderCode = $providerCode ?? $quote->insuranceProvider?->code;
+        if (! $this->isValidDeviceNgiQuote($quote, $effectiveProviderCode)) {
+            $this->logInvalidQuoteWarning($quote, $quoteId, $effectiveProviderCode);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Log warning for invalid Device/NGI quote
+     *
+     * @param PersonalQuote $quote
+     * @param int $quoteId
+     * @param string|null $providerCode
+     * @return void
+     */
+    private function logInvalidQuoteWarning(PersonalQuote $quote, int $quoteId, ?string $providerCode): void
+    {
+        $isDeviceLob = $this->isDeviceLob($quote);
+
+        if (! $isDeviceLob) {
+            LoggerService::warning("{$this->logPrefix} Not a Device LOB quote, skipping", extra: [
+                'quoteId' => $quoteId,
+                'quoteTypeId' => $quote->quote_type_id,
+            ]);
+            return;
+        }
+
+        LoggerService::warning("{$this->logPrefix} Not an NGI provider quote, skipping", extra: [
+            'quoteId' => $quoteId,
+            'providerCode' => $providerCode,
+        ]);
     }
 
     /**

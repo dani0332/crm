@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DeviceFailureTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Exceptions\BirdWebhookException;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Services\BirdService;
@@ -85,7 +86,11 @@ class SendDeviceFailureEmailJob implements ShouldQueue
                   'refId' => $quote->code,
               ]);
             } else {
-                throw new \Exception("Bird webhook returned status: {$response}");
+                throw new BirdWebhookException(
+                    "Bird webhook returned status: {$response}",
+                    BirdWebhookException::WEBHOOK_FAILED,
+                    $response
+                );
             }
 
         } catch (\Exception $e) {

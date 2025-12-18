@@ -92,8 +92,27 @@ class NgiQuoteUpdaterService
      */
     public function updatePaymentFromPolicyDocumentsResponse(string $quoteCode, $policyDocumentsResult): void
     {
-        // TODO:: NGI:: need to update payment split with exact code similar to payment
+        $updateData = $this->buildPaymentUpdateData($policyDocumentsResult);
 
+        if (empty($updateData)) {
+            return;
+        }
+
+        Payment::where('code', $quoteCode)->update($updateData);
+
+        // Build payment splits data by removing fields not applicable to splits
+        $paymentSplitsData = $this->buildPaymentSplitsData($updateData);
+        PaymentSplits::where('code', $quoteCode)->update($paymentSplitsData);
+    }
+
+    /**
+     * Build payment update data from policy documents response
+     *
+     * @param object $policyDocumentsResult
+     * @return array
+     */
+    private function buildPaymentUpdateData(object $policyDocumentsResult): array
+    {
         // mapped
         // 'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
         // 'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
@@ -112,59 +131,53 @@ class NgiQuoteUpdaterService
 
         // skip it
         // 'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
-
         $updateData = [];
 
-        // Commission details
+        // Commission details - direct mapping
+        $commissionMapping = [
+            'policy_commision_without_tax' => 'commission_vat_applicable',
+            'policy_commision_with_tax' => 'commission',
+            'policy_commision_tax' => 'commission_vat',
+        ];
 
-        if (isset($policyDocumentsResult->policy_commision_without_tax)) {
-            $updateData['commission_vat_applicable'] = $policyDocumentsResult->policy_commision_without_tax;
+        foreach ($commissionMapping as $sourceField => $targetField) {
+            if (isset($policyDocumentsResult->$sourceField)) {
+                $updateData[$targetField] = $policyDocumentsResult->$sourceField;
+        }
         }
 
-        if (isset($policyDocumentsResult->policy_commision_with_tax)) {
-            $updateData['commission'] = $policyDocumentsResult->policy_commision_with_tax;
-        }
-
-        if (isset($policyDocumentsResult->policy_commision_tax)) {
-            $updateData['commission_vat'] = $policyDocumentsResult->policy_commision_tax;
-        }
-
-        // Invoice details
-
+        // Invoice date
         if (isset($policyDocumentsResult->premium_inv_dt)) {
             $updateData['insurer_invoice_date'] = Carbon::parse($policyDocumentsResult->premium_inv_dt)->format('Y-m-d');
         }
 
-        // TODO:: NGI:: premium_inv_no & commision_inv_no are required for book policy while missed from provider in case of missing payment_refrence in issue policy API call and if we pass API does not respond at all
+        // Invoice numbers with fallback for testing
+        // TODO:: NGI:: premium_inv_no & commision_inv_no are required for book policy while missed from provider in case of missing payment_refrence in issue policy API call
+        $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no
+            ?? 'P/INV/NN100TS10344' . rand(9999, 99999999) . rand(9999, 99999999);
 
-        if (isset($policyDocumentsResult->premium_inv_no)) { // required for book policy
-            $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no;
-        } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
-            $updateData['insurer_tax_number'] = 'P/INV/NN100TS10344' . rand(9999, 99999999) . rand(9999, 99999999);
+        $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no
+            ?? 'INV/NN100TS10344' . rand(9999, 99999999) . rand(9999, 99999999);
+
+        return $updateData;
         }
 
-        if (isset($policyDocumentsResult->commision_inv_no)) { // required for book policy
-            $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no;
-        } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
-            $updateData['insurer_commmission_invoice_number'] = 'INV/NN100TS10344' . rand(9999, 99999999) . rand(9999, 99999999);
-        }
+    /**
+     * Build payment splits data by removing fields not applicable to splits
+     *
+     * @param array $paymentData
+     * @return array
+     */
+    private function buildPaymentSplitsData(array $paymentData): array
+    {
+        // Fields to exclude from payment splits update
+        $excludeFields = [
+            'commission',
+            'insurer_invoice_date',
+            'insurer_tax_number',
+            'insurer_commmission_invoice_number',
+        ];
 
-        if (! empty($updateData)) {
-            Payment::where('code', $quoteCode)->update($updateData);
-            if (isset($updateData['commission'])) {
-                unset($updateData['commission']);
-            }
-            if (isset($updateData['insurer_invoice_date'])) {
-                unset($updateData['insurer_invoice_date']);
-            }
-            if (isset($updateData['insurer_tax_number'])) {
-                unset($updateData['insurer_tax_number']);
-            }
-            if (isset($updateData['insurer_commmission_invoice_number'])) {
-                unset($updateData['insurer_commmission_invoice_number']);
-            }
-            PaymentSplits::where('code', $quoteCode)->update($updateData);
-        }
-
+        return array_diff_key($paymentData, array_flip($excludeFields));
     }
 }

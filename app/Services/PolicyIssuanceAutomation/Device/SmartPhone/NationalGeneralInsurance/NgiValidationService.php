@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Validator;
 
 class NgiValidationService
 {
-    public function __construct() {}
 
     /**
      * Validate book policy prerequisites

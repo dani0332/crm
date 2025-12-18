@@ -23,18 +23,15 @@ class NgiRequestBuilder
     public function buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $payment, $latestInsured): array
     {
         $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
-
-        // TODO:: NGI:: will uncomment this after fixed from provider side
-        // $paymentReferenceNumber = match (true) {
-        //     $payment instanceof \App\Models\Payment => $payment?->paymentSplits?->first()?->paymentCharges?->transaction_id ?? null,
-        //     $payment instanceof \App\Models\PaymentSplits => $payment?->paymentCharges?->transaction_id ?? null,
-        //     default => null,
-        // } ?? '';
-
-        return [
+        $paymentReferenceNumber = match (true) {
+            $payment instanceof \App\Models\Payment => $payment?->paymentSplits?->first()?->paymentCharges?->transaction_id ?? null,
+            $payment instanceof \App\Models\PaymentSplits => $payment?->paymentCharges?->transaction_id ?? null,
+            default => null,
+        } ?? '';
+        $payload = [
             'client_reference_number' => $quote->code ?? null,
             'quote_reference_number' => $quote->insurer_quote_number,
-            // 'payment_reference_number' => $paymentReferenceNumber, // TODO:: NGI:: Rucha ask to send payload without this field which is not according to the FRD or documentation discussion link is https://chat.google.com/room/AAQAZXb03Dc/a6vYYW81pkM/I_2Yfeqb1xc?cls=10
+            'payment_reference_number' => $paymentReferenceNumber,
             'transaction_country' => 'UAE',
             'sales_info' => [
                 'policy_sold_date' => Carbon::now()->format('Y-m-d'),
@@ -67,6 +64,8 @@ class NgiRequestBuilder
                     : Carbon::now()->addYear()->format('Y-m-d'),
             ],
         ];
+        unset($payload['payment_reference_number']); // TODO:: NGI:: Rucha ask to send payload without this field which is not according to the FRD or documentation discussion link is https://chat.google.com/room/AAQAZXb03Dc/a6vYYW81pkM/I_2Yfeqb1xc?cls=10
+        return $payload;
     }
 
     /**

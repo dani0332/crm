@@ -167,7 +167,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                         'next_step' => $nextStepToBeExecuted,
                     ]);
 
-                    $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted, $customer, $deviceQuote, $latestInsured);
+                    $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
                     if (isset($executeStepSequence['documents_pending']) && $executeStepSequence['documents_pending']) {
                         $response['documents_pending'] = $executeStepSequence['documents_pending'];
                     }
@@ -205,7 +205,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
      * @param string $nextStepToBeExecuted
      * @return array
      */
-    private function executeStepSequence($quote, $process, $nextStepToBeExecuted, $customer = null, $deviceQuote = null, $latestInsured = null)
+    private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
     {
         $currentStep = $nextStepToBeExecuted;
         $allSteps = $this->getAPISteps();
@@ -249,7 +249,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                 'process_id' => $process->id,
             ]);
 
-            $response = $this->stepExecutor->{$handler}($quote, $process, $customer, $deviceQuote, $latestInsured);
+            $response = $this->stepExecutor->{$handler}($quote, $process);
             $stepsExecuted[] = $currentStep;
 
             if (isset($response['documents_pending']) && $response['documents_pending']) {

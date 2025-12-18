@@ -26,7 +26,7 @@ class NgiStepExecutor
      * @param mixed $process
      * @return array
      */
-    public function executeCreatePolicyFromQuoteStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
+    public function executeCreatePolicyFromQuoteStep($quote, $process): array
     {
         LoggerService::info('Starting policy creation from quote', extra: [
             'step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
@@ -34,7 +34,7 @@ class NgiStepExecutor
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
-        $createPolicyResponse = $this->apiService->createPolicyFromQuote($quote, $process, $customer, $deviceQuote, $latestInsured);
+        $createPolicyResponse = $this->apiService->createPolicyFromQuote($quote, $process);
 
         if (! $createPolicyResponse['status']) {
             LoggerService::error('Policy creation failed', extra: [
@@ -79,7 +79,7 @@ class NgiStepExecutor
      * @param mixed $process
      * @return array
      */
-    public function executeGetPolicyDocumentsAndUploadToIMCRMStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
+    public function executeGetPolicyDocumentsAndUploadToIMCRMStep($quote, $process): array
     {
         LoggerService::info('Dispatching ' . NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM . ' job with 3-minute delay per FRD', extra: [
             'step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
@@ -117,7 +117,7 @@ class NgiStepExecutor
      * @param mixed $process
      * @return array
      */
-    public function executeBookPolicyStep($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
+    public function executeBookPolicyStep($quote, $process): array
     {
         LoggerService::info('Starting book policy execution', extra: [
             'step' => NgiEnum::STEP_BOOK_POLICY,

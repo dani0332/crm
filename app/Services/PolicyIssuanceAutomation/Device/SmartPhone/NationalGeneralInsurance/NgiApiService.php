@@ -27,7 +27,7 @@ class NgiApiService
      * @param mixed $process
      * @return array
      */
-    public function createPolicyFromQuote($quote, $process, $customer = null, $deviceQuote = null, $latestInsured = null): array
+    public function createPolicyFromQuote($quote, $process): array
     {
         LoggerService::info('Initiating CreatePolicyFromQuote API call', extra: [
             'process_id' => $process->id,
@@ -38,9 +38,9 @@ class NgiApiService
         $response = $this->responseHandler->buildStepResponse(NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE);
         $endPoint = '/api/Policy/CreatePolicyFromQuoteBW';
 
-        $customer = $customer??$quote?->customer;
-        $deviceQuote = $deviceQuote??$quote?->deviceQuote;
-        $latestInsured = $latestInsured??$quote?->latestInsured;
+        $customer = $quote?->customer;
+        $deviceQuote = $quote?->deviceQuote;
+        $latestInsured = $quote?->latestInsured;
 
         $payment = $quote?->payments()?->mainLeadPayment()?->first();
         $splitPayment = $payment?->paymentSplits()?->where('payment_method', PaymentMethodsEnum::CreditCard)?->first();

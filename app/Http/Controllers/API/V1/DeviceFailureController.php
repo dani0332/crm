@@ -58,39 +58,38 @@ class DeviceFailureController extends Controller
         $failureType = DeviceFailureTypeEnum::from($validated['failure_type']);
         $providerCode = $validated['provider_code'] ?? InsuranceProviderEnum::NGI->value;
 
-        // Find the quote
+        // Find and validate quote - single DB query
         $quote = PersonalQuote::where('uuid', $quoteUuid)->first();
 
-        if (! $quote) {
-            LoggerService::error("{$this->logPrefix} Quote not found", extra: [
-                'quote_uuid' => $quoteUuid,
-            ]);
-
+        // Validate quote, LOB, and provider in one check
+        $validationError = $this->getQuoteValidationError($quote, $quoteUuid, $providerCode);
+        if ($validationError !== null) {
             return response()->json([
                 'success' => false,
-                'message' => 'Quote not found',
-                'error_code' => 'QUOTE_NOT_FOUND',
-            ], 404);
+                'message' => $validationError['message'],
+                'error_code' => $validationError['error_code'],
+            ], $validationError['status_code']);
         }
 
-        // Validate LOB is Device and Provider is NGI
-        if ($quote->quote_type_id !== QuoteTypes::getId(QuoteTypes::DEVICE)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Quote is not a Device insurance quote',
-                'error_code' => 'INVALID_LOB',
-            ], 400);
-        }
+        // Send the failure email and return appropriate response
+        return $this->processFailureEmail($quote, $failureType, $providerCode, $quoteUuid);
+    }
 
-        if ($providerCode !== InsuranceProviderEnum::NGI->value) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Provider must be NGI for Device insurance',
-                'error_code' => 'INVALID_PROVIDER',
-            ], 400);
-        }
-
-        // Send the failure email
+    /**
+     * Process failure email and return response
+     *
+     * @param PersonalQuote $quote
+     * @param DeviceFailureTypeEnum $failureType
+     * @param string $providerCode
+     * @param string $quoteUuid
+     * @return JsonResponse
+     */
+    private function processFailureEmail(
+        PersonalQuote $quote,
+        DeviceFailureTypeEnum $failureType,
+        string $providerCode,
+        string $quoteUuid
+    ): JsonResponse {
         $emailSent = $this->failureEmailService->sendFailureEmail(
             $quote->id,
             $failureType,
@@ -118,5 +117,66 @@ class DeviceFailureController extends Controller
             'message' => 'Failed to queue failure notification email',
             'error_code' => 'EMAIL_DISPATCH_FAILED',
         ], 500);
+    }
+
+    /**
+     * Get validation error for quote, or null if valid
+     *
+     * @param PersonalQuote|null $quote
+     * @param string $quoteUuid
+     * @param string $providerCode
+     * @return array{message: string, error_code: string, status_code: int}|null
+     */
+    private function getQuoteValidationError(?PersonalQuote $quote, string $quoteUuid, string $providerCode): ?array
+    {
+        if (! $quote) {
+            LoggerService::error("{$this->logPrefix} Quote not found", extra: [
+                'quote_uuid' => $quoteUuid,
+            ]);
+
+            return [
+                'message' => 'Quote not found',
+                'error_code' => 'QUOTE_NOT_FOUND',
+                'status_code' => 404,
+            ];
+        }
+
+        // Check LOB and provider validation - return first error found or null if valid
+        $lobProviderError = $this->getLobOrProviderError($quote, $providerCode);
+        if ($lobProviderError !== null) {
+            return $lobProviderError;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get LOB or provider validation error, or null if valid
+     *
+     * @param PersonalQuote $quote
+     * @param string $providerCode
+     * @return array{message: string, error_code: string, status_code: int}|null
+     */
+    private function getLobOrProviderError(PersonalQuote $quote, string $providerCode): ?array
+    {
+        $isValidLob = $quote->quote_type_id === QuoteTypes::getId(QuoteTypes::DEVICE);
+        if (! $isValidLob) {
+            return [
+                'message' => 'Quote is not a Device insurance quote',
+                'error_code' => 'INVALID_LOB',
+                'status_code' => 400,
+            ];
+        }
+
+        $isValidProvider = $providerCode === InsuranceProviderEnum::NGI->value;
+        if (! $isValidProvider) {
+            return [
+                'message' => 'Provider must be NGI for Device insurance',
+                'error_code' => 'INVALID_PROVIDER',
+                'status_code' => 400,
+            ];
+        }
+
+        return null;
     }
 }
