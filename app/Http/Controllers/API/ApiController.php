@@ -68,7 +68,9 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-
+use Illuminate\Support\Facades\Storage;
+use App\Models\Nationality;
+use App\Services\LookupService;
 class ApiController extends Controller
 {
     use GenericQueriesAllLobs, PrivateClient;
@@ -717,13 +719,17 @@ class ApiController extends Controller
                 'quote_status_id',
                 'policy_booking_date',
                 'insurance_provider_id',
+                'price_with_vat',
+                'price_vat_applicable',
+                'vat',
+                'policy_issuance_date',
             ])
-            ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+            /*->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->when($uuid, function ($q) use ($uuid) {
                 $q->where('uuid', $uuid);
             }, function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('transaction_approved_at', [$startDate, $endDate]);
-            })
+            })*/
             ->whereHas('documents', function ($q) use ($documentTypeCodes) {
                 $q->whereIn('document_type_code', $documentTypeCodes);
             })
@@ -740,8 +746,11 @@ class ApiController extends Controller
                 },
                 'insuranceProvider:id,code',
             ])
+            ->where('uuid', '7M9V8B6Y')
             ->take(1)
             ->get();
+
+        //print_r($carQuotes[0]->uuid); exit;
 
         $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('id');
 
@@ -778,6 +787,8 @@ class ApiController extends Controller
             $emiratesIdDocumentsFound = 0;
             $emiratesIdDocumentsProcessed = 0;
             $emiratesIdDocumentsFailed = 0;
+            $leadDataStructure = [];
+            $ocrDataStructure = [];
 
             foreach ($quote->documents as $document) {
                 LoggerService::info(self::class.'::processOcrDocumentsForLeads - Checking document', extra: [
@@ -794,30 +805,35 @@ class ApiController extends Controller
                     ->first();
 
                 if ($documentType) {
-                    $ocrDocType = OCRDocumentTypeEnum::getDocumentType($documentType);
-                    
-                    // Process Emirates ID document
-                    if ($ocrDocType === OCRDocumentTypeEnum::ID_CARD) {
-                        $emiratesIdDocumentsFound++;
-                        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Found Emirates ID document', extra: [
-                            'quote_id' => $quote->id,
-                            'document_id' => $document->id,
-                            'document_type_code' => $document->document_type_code,
-                            'total_emirates_id_found' => $emiratesIdDocumentsFound,
-                        ]);
-                        if ($this->processOcrDocument($quote, $document, $ocrDocType->value)) {
-                            $emiratesIdDocumentsProcessed++;
-                        } else {
-                            $emiratesIdDocumentsFailed++;
-                        }
-                    } else {
-                        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Skipping non-Emirates ID document', extra: [
-                            'quote_id' => $quote->id,
-                            'document_id' => $document->id,
-                            'document_type_code' => $document->document_type_code,
-                            'ocr_doc_type' => $ocrDocType?->value,
-                        ]);
+                    // Check if the document type is enabled for OCR
+                    $isDocOCREnabled = OCRDocumentTypeEnum::isOCREnabled($documentType, QuoteTypes::CAR);
+
+                    // Skip if nto enabled for OCR
+                    if (!$isDocOCREnabled) {
+                       LoggerService::info(self::class.'::processOcrDocumentsForLeads - Document type is not enabled for OCR', extra: [
+                        'quote_id' => $quote->id,
+                        'quote_uuid' => $quote->uuid,
+                        'document_id' => $document->id,
+                        'document_type_code' => $document->document_type_code,
+                        'document_type_name' => $documentType->name,
+                       ]);
+
+                        continue;
                     }
+                    
+                    // Get the OCR document type
+                    $ocrDocType = OCRDocumentTypeEnum::getDocumentType($documentType);
+    
+                    LoggerService::info(self::class. "::processOcrDocumentsForLeads - Found {$documentType->name} document", extra: [
+                        'quote_id' => $quote->id,
+                        'quote_uuid' => $quote->uuid,
+                        'document_id' => $document->id,
+                        'document_type_code' => $document->document_type_code,
+                        'total_emirates_id_found' => $emiratesIdDocumentsFound,
+                    ]);
+
+                    $this->processOcrDocument($quote, $document, $ocrDocType->value, $leadDataStructure, $ocrDataStructure);
+                  
                 } else {
                     LoggerService::warning(self::class.'::processOcrDocumentsForLeads - DocumentType not found', extra: [
                         'quote_id' => $quote->id,
@@ -826,7 +842,8 @@ class ApiController extends Controller
                     ]);
                 }
             }
-
+            print_r($ocrDataStructure); exit;
+            print_r($leadDataStructure); exit;
             LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote processing summary', extra: [
                 'quote_id' => $quote->id,
                 'quote_uuid' => $quote->uuid,
@@ -842,10 +859,12 @@ class ApiController extends Controller
         ]);
     }
 
-    private function processOcrDocument(CarQuote $quote, QuoteDocument $document, string $ocrDocType): bool
+    private function processOcrDocument(CarQuote $quote, QuoteDocument $document, string $ocrDocType,
+        array &$leadDataStructure, array &$ocrDataStructure): bool
     {
-        $leadDataStructure = $this->getLeadDataStructure($ocrDocType, $quote);
-        print_r($leadDataStructure); exit;
+        // Get lead data structure for the document type
+        $leadDataStructure[$ocrDocType] = $this->getLeadDataStructure($ocrDocType, $quote);
+
         LoggerService::info(self::class.'::processOcrDocument - Processing OCR document', extra: [
             'quote_id' => $quote->id,
             'quote_uuid' => $quote->uuid,
@@ -868,7 +887,7 @@ class ApiController extends Controller
             return false;
         }
 
-        $ocrData = $this->callOcrApi($quote, $document);
+        $ocrData = $this->callOcrApi($quote, $document, $ocrDocType);
 
         if ($ocrData) {
             LoggerService::info(self::class.'::processOcrDocument - OCR API call successful', extra: [
@@ -877,7 +896,7 @@ class ApiController extends Controller
                 'has_data' => !empty($ocrData),
             ]);
 
-            //$ocrDataStucture = $this->getOcrDataStructure($ocrDocType, $ocrData);
+            $ocrDataStructure[$ocrDocType] = $this->getOcrDataStructure($ocrDocType, $ocrData, $quote->insurance_provider_id);
 
             return true;
         }
@@ -890,6 +909,7 @@ class ApiController extends Controller
         return false;
     }
 
+    // Lead data structures
     private function getLeadDataStructure(string $ocrDocType,  $quote)
     {
         switch ($ocrDocType) {
@@ -902,31 +922,121 @@ class ApiController extends Controller
             case OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE->value:
                 return $this->getVehicleRegistrationCertificateLeadDataStructure($quote);
                 break;
+            case OCRDocumentTypeEnum::TAX_INVOICE->value:
+                return $this->getTaxInvoiceLeadDataStructure($quote);
+                break;
+            case OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER->value:
+                return $this->getTaxInvoiceRaisedByBuyerLeadDataStructure($quote);
+                break;
+            case OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE->value:
+                return $this->getMotorInsurancePolicyScheduleLeadDataStructure($quote);
+                break;
+            case OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE->value:
+                return $this->getCertificateOfIssuanceLeadDataStructure($quote);
+                break;
             default:
                 break;
         }
     }
 
-    private function getOcrDataStructure(string $ocrDocType, object $ocrData)
+        // OCR data structures
+    private function getOcrDataStructure(string $ocrDocType, object $ocrData, int $providerId)
     {
         switch ($ocrDocType) {
-            case OCRDocumentTypeEnum::ID_CARD:
-                return $this->getEmiratesIdDataStructure($ocrData);
+            case OCRDocumentTypeEnum::ID_CARD->value:
+                return $this->getEmiratesIdOCRDataStructure($ocrData);
+                break;
+            case OCRDocumentTypeEnum::DRIVING_LICENSE->value:
+                return $this->getDrivingLicenseOCRDataStructure($ocrData);
+                break;
+            case OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE->value:
+                return $this->getVehicleRegistrationCertificateOCRDataStructure($ocrData, $providerId);
+                break;
+            case OCRDocumentTypeEnum::TAX_INVOICE->value:
+                //return $this->getTaxInvoiceDataStructure($ocrData);
+                break;
+            case OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER->value:
+                //return $this->getTaxInvoiceRaisedByBuyerDataStructure($ocrData);
+                break;
+            case OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE->value:
+                //return $this->getMotorInsurancePolicyScheduleDataStructure($ocrData);
+                break;
+            case OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE->value:
+                //return $this->getCertificateOfIssuanceDataStructure($ocrData);
                 break;
             default:
                 break;
         }
     }
 
-    // OCR data structures
-    private function getEmiratesIdDataStructurest(object $ocrData): array
+    private function getEmiratesIdOCRDataStructure(object $ocrData): array
     {
-        print_r($ocrData); exit;
-        /*return [
+        return [
             'eid_number' => $ocrData->idNumber,
-            'name' => $ocrData->name,
+            'first_name' => $this->extractFirstName($ocrData->name),
+            'last_name' => $this->extractLastName($ocrData->name),
             'date_of_birth' => $ocrData->dateOfBirth,
-        ];*/
+            'nationality_id' => $this->getNationalityId($ocrData->nationality),
+            'gender' => $this->formatGender($ocrData->sex),
+            'id_issuance_date' => $this->formatDate($ocrData->issuingDate),
+            'id_expiry_date' => $this->formatDate($ocrData->expiryDate),
+            'place_of_birth' => $this->getNationalityId($ocrData->nationality),
+            'country_of_residence' => $this->getNationalityId($ocrData->country), 
+            'residential_address' =>  $ocrData->issuingPlace.', UAE',
+            'employer_company_name' => $ocrData->sponsor,
+            'job_title' => $ocrData->occupation,
+            'issuing_place' => $ocrData->issuingPlace,
+        ];
+    }
+
+    private function getDrivingLicenseOCRDataStructure(object $ocrData): array
+    {
+        return [
+            'driver_license_number' => $ocrData->licenseNumber,
+            'driver_license_issue_date' => $this->formatDate($ocrData->issueDate),
+            'driver_license_expiry_date' => $this->formatDate($ocrData->expiryDate),
+            'driver_license_issue_place' => $this->getIssuancePlaceCode($ocrData->placeOfIssue),
+            'traffic_code_number' => $ocrData->trafficCodeNumber,
+            'driver_first_name' => $this->extractFirstName($ocrData->personalInformation['fullName']),
+            'driver_last_name' => $this->extractLastName($ocrData->personalInformation['fullName']),
+            'driver_dob' => $this->formatDate($ocrData->personalInformation['dateOfBirth']),
+            'driver_gender' => $this->formatGender($ocrData->personalInformation['sex']),
+            'nationality_id' => $this->getNationalityId($ocrData->personalInformation['nationality']),
+        ];
+    }
+
+    private function getVehicleRegistrationCertificateOCRDataStructure(object $ocrData, int $providerId): array
+    {
+        $plateInfo = $this->extractPlateCodeNumber($ocrData->trafficPlateNumber ?? null);
+        $bankName = $this->getBankCode($ocrData->mortageBy ?? null, QuoteTypeId::Car, $providerId);
+
+        return [
+            'vehicle_plate_code' => $plateInfo['plate_code'] ?? null,
+            'vehicle_plate_number' => $plateInfo['plate_number'] ?? null,
+            'first_registration_date' => $this->formatDate($ocrData->registrationDate ?? null),
+            'vehicle_color' => $this->getVehicleColorCode($ocrData->vehicalColor ?? null, QuoteTypeId::Car, $providerId),
+            'vehicle_engine_number' => $ocrData->engineNumber ?? null,
+            'bank_name' => $bankName ?? null,
+            'bank_loan' => $bankName ? 1 : 0,
+            'place_of_issue' => $ocrData->placeOfIssue,
+            'expiry_date' => $this->formatDate($ocrData->expiryDate),
+            'owner' => $ocrData->owner ?? null,
+            'nationality_id' => $this->getNationalityId($ocrData->nationality),
+            'mortgage_by' => $ocrData->mortageBy,
+            'notes' => $ocrData->notes,
+            'insured_with' => $ocrData->insuredWith,
+            'insurance_type' => $ocrData->insuranceType,
+            'model' => $ocrData->vehicalModel,
+            'vehicle_class' => $ocrData->vehicalClass,
+            'vehicle_type' => $ocrData->vehicalType,
+            'vehicle_make' => $ocrData->vehicleMake,
+            'vehicle_make_model' => $ocrData->vehicleMakeModel,
+            'origin' => $ocrData->origin,
+            'empty_weight' => $ocrData->emptyWeight,
+            'gross_vehicle_weight' => $ocrData->grossVehicleWeight,
+            'number_of_passengers' => isset($ocrData->numberOfPassengers) ? (int) $ocrData->numberOfPassengers : null,
+            'traffic_code_number' => $ocrData->trafficCodeNumber ?? null,
+        ];
     }
 
     // Lead data structures
@@ -934,10 +1044,10 @@ class ApiController extends Controller
     {
         $result = [];
         $insured = $quote->insured;
-        $insuredKyc = $insured->insuredKyc;
+        $insuredKyc = $insured?->insuredKyc;
 
         if ($insured) {
-            $result ['insured'] = [
+            $result = [
                 'eid_number' => $insured->id_number,
                 'first_name' => $insured->first_name,
                 'lastname' => $insured->last_name,
@@ -948,7 +1058,7 @@ class ApiController extends Controller
         }
 
         if ($insuredKyc) {
-            $result ['insured_kyc'] = [
+            $result = array_merge($result, [
                 'id_issuance_date' => $insuredKyc->id_issuance_date,
                 'id_expiry_date' => $insuredKyc->id_expiry_date,
                 'place_of_birth' => $insuredKyc->place_of_birth,
@@ -956,7 +1066,7 @@ class ApiController extends Controller
                 'residential_address' => $insuredKyc->residential_address,
                 'employer_company_name' => $insuredKyc->employer_company_name,
                 'job_title' => $insuredKyc->job_title,
-            ];
+            ]);
         }
 
         return $result;
@@ -968,7 +1078,7 @@ class ApiController extends Controller
         $vehicleDriverDetail = $quote->vehicleDriverDetail;
 
         if ($vehicleDriverDetail) {
-            $result ['vehicle_driver_detail'] = [
+            $result = [
                 'driver_license_number' => $vehicleDriverDetail->driver_license_number,
                 'driver_license_issue_date' => $vehicleDriverDetail->driver_license_issue_date,
                 'driver_license_expiry_date' => $vehicleDriverDetail->driver_license_expiry_date,
@@ -991,9 +1101,9 @@ class ApiController extends Controller
         $registrationCertificate = $quote->registrationCertificate;
 
         if ($vehicleDriverDetail) {
-            $result['VEHICLE_DRIVER_DETAIL_FIELDS'] = [
+            $result = [
                 'vehicle_plate_number' => $vehicleDriverDetail->vehicle_plate_number,
-                'first_registration_date',
+                'first_registration_date' => $vehicleDriverDetail->first_registration_date,
                 'vehicle_color' => $vehicleDriverDetail->vehicle_color,
                 'vehicle_engine_number' => $vehicleDriverDetail->vehicle_engine_number,
                 'traffic_code_number' => $vehicleDriverDetail->traffic_code_number,
@@ -1001,9 +1111,9 @@ class ApiController extends Controller
         } 
 
         If ($registrationCertificate) {
-            $result['REGISTRATION_CERTIFICATE_FIELDS'] = [
+            $result = array_merge($result, [
                 'place_of_issue' => $registrationCertificate->place_of_issue,
-                'expiry_date' => $registrationCertificate->expiry_date,
+                'expiry_date' => $registrationCertificate->expiry_date->format('Y-m-d'),
                 'owner' => $registrationCertificate->owner,
                 'nationality_id' => $registrationCertificate->nationality_id,
                 'mortgage_by' => $registrationCertificate->mortgage_by,
@@ -1011,21 +1121,84 @@ class ApiController extends Controller
                 'vehicle_type' => $registrationCertificate->vehicle_type,
                 'origin' => $registrationCertificate->origin,
                 'traffic_code_number' => $registrationCertificate->traffic_code_number,
+            ]);
+        }
+
+        return $result;
+    }
+
+    private function getTaxInvoiceLeadDataStructure($quote): array
+    {
+        $result = [];
+
+        $result = [
+            'price_with_vat' => $quote->price_with_vat,
+            'price_vat_applicable' => $quote->price_vat_applicable,
+            'vat' => $quote->vat,
+            'policy_issuance_date' => $quote->policy_issuance_date,
+        ];
+
+        $payment = $quote->payment;
+
+        if ($payment) {
+            $result = array_merge($result, [
+                'insurer_invoice_date' => $payment->insurer_invoice_date,
+                'insurer_tax_number' => $payment->insurer_tax_number,
+                'tax_invoice_number' => $payment->tax_invoice_number,
+            ]);
+        }
+
+        return $result;
+    }
+
+    private function getTaxInvoiceRaisedByBuyerLeadDataStructure($quote): array
+    {
+        $result = [];
+        $payment = $quote->payment;
+
+        if ($payment) {
+            $result = [
+                'commission_vat' => $payment->commission_vat,
+                'commission' => $payment->commission,
+                'commmission_percentage' => $payment->commmission_percentage,
+                'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+                'commission_vat_applicable' => $payment->commission_vat_applicable,
             ];
         }
 
         return $result;
     }
 
-    private function callOcrApi(CarQuote $quote, QuoteDocument $document): ?object
+    private function getMotorInsurancePolicyScheduleLeadDataStructure($quote): array
+    {
+        return [
+            'policy_number' => $quote->personalQuote->policy_number,
+            'policy_start_date' => $quote->personalQuote->policy_start_date,
+            'policy_expiry_date' => $quote->personalQuote->policy_expiry_date,
+        ];
+    }
+
+    private function getCertificateOfIssuanceLeadDataStructure($quote): array
+    {
+        return [
+            'policy_number' => $quote->personalQuote->policy_number,
+            'policy_start_date' => $quote->personalQuote->policy_start_date,
+            'policy_expiry_date' => $quote->personalQuote->policy_expiry_date,
+            'policy_issuance_date' => $quote->personalQuote->policy_issuance_date,
+        ];
+    }
+
+    private function callOcrApi(CarQuote $quote, QuoteDocument $document, string $docType): ?object
     {
         $providerCode = $this->extractProviderCode($quote);
         $refId = $this->getRefId($quote);
-        $docType = OCRDocumentTypeEnum::ID_CARD;
         $isEcom = false;
 
-        $docUrl = $this->quoteDocumentService->getDocumentUrl($document->doc_url);
-      
+        //$docUrl = $this->quoteDocumentService->getDocumentUrl($document->doc_url);
+        //$docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
+        $encodedFileName = urlencode($document->doc_url);
+        $docUrl = Storage::disk('azureIM')->temporaryUrl($encodedFileName, now()->addMinutes(20));
+
         if (!$docUrl) {
             LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
                 'quote_uuid' => $quote->uuid,
@@ -1041,7 +1214,7 @@ class ApiController extends Controller
             'uuid' => $quote->uuid,
             'quote_type_id' => QuoteTypes::CAR->id(),
             'doc_url' => $docUrl,
-            'doc_type' => $docType->value,
+            'doc_type' => $docType,
             'provider_code' => $providerCode,
             'image' => false,
         ];
@@ -1090,6 +1263,183 @@ class ApiController extends Controller
             return null;
         }
     }
+
+    
+    private function getNationalityId(?string $nationality): ?int
+    {
+        if (empty($nationality)) {
+            return null;
+        }
+
+        $nationalityRecord = Nationality::where('text', $nationality)
+            ->orWhere('code', $nationality)
+            ->orWhere('country_name', $nationality)
+            ->first();
+
+        return $nationalityRecord?->id;
+    }
+
+    private function getNationalityName(?int $nationalityId): ?string
+    {
+        if (empty($nationalityId)) {
+            return null;
+        }
+
+        $nationalityRecord = Nationality::find($nationalityId);
+
+        // Return country_name if available, otherwise fall back to text
+        return $nationalityRecord?->country_name ?? $nationalityRecord?->text ?? null;
+    }
+
+    private function extractFirstName(string $fullName): string
+    {
+        $nameParts = explode(' ', trim($fullName));
+
+        return $nameParts[0] ?? '';
+    }
+
+    private function extractLastName(string $fullName): string
+    {
+        $nameParts = explode(' ', trim($fullName));
+        if (count($nameParts) > 1) {
+            array_shift($nameParts); // Remove first name
+
+            return implode(' ', $nameParts);
+        }
+
+        return '';
+    }
+
+    private function formatGender(?string $gender): ?string
+    {
+        if (empty($gender)) {
+            return null;
+        }
+
+        return match (strtoupper(trim($gender))) {
+            'M', 'MALE' => 'Male',
+            'F', 'FEMALE' => 'Female',
+            default => $gender
+        };
+    }
+    
+    public function formatDate(?string $date): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to format date', exception: $e);
+
+            return null;
+        }
+    }
+
+    public function getIssuancePlaceCode(?string $issuancePlace): ?string
+    {
+        if (empty($issuancePlace)) {
+            return null;
+        }
+
+        $issuancePlaces = app(LookupService::class)->getIssuancePlaces();
+
+        return $issuancePlaces->first(function ($place) use ($issuancePlace) {
+            return strtolower($place->text) === strtolower($issuancePlace);
+        })?->code ?? null;
+    }
+
+    public function getVehicleColorCode(?string $vehicleColor, int $quoteTypeId, ?int $providerId): ?string
+    {
+        LoggerService::info('OCR Utils - getVehicleColorCode called', extra: [
+            'vehicleColor' => $vehicleColor,
+            'quoteTypeId' => $quoteTypeId,
+            'providerId' => $providerId,
+        ]);
+
+        if (empty($vehicleColor)) {
+            LoggerService::info('OCR Utils - Vehicle color is empty, returning null');
+
+            return null;
+        }
+
+        if (! $providerId) {
+            LoggerService::warning('OCR Utils - No valid provider id for vehicle color code', extra: [
+                'vehicleColor' => $vehicleColor,
+                'quoteTypeId' => $quoteTypeId,
+                'providerId' => $providerId,
+            ]);
+
+            return null;
+        }
+
+        $vehicleColors = app(LookupService::class)->getVehicleColors($quoteTypeId, $providerId);
+
+        $matchedColor = $vehicleColors->first(function ($color) use ($vehicleColor) {
+            return strtolower($color->text) === strtolower($vehicleColor);
+        });
+
+        LoggerService::info('OCR Utils - Vehicle color lookup result', extra: [
+            'vehicleColor' => $vehicleColor,
+            'providerId' => $providerId,
+            'availableColors' => $vehicleColors->pluck('text')->toArray(),
+            'matchedColor' => $matchedColor?->code,
+            'matchedColorText' => $matchedColor?->text,
+        ]);
+
+        return $matchedColor?->code ?? null;
+    }
+
+    public function getBankCode(?string $bankName, int $quoteTypeId, ?int $providerId): ?string
+    {
+        if (empty($bankName)) {
+            return null;
+        }
+
+        if (! $providerId) {
+            LoggerService::warning('OCR Utils - No valid provider id for bank code');
+
+            return null;
+        }
+
+        $banks = app(LookupService::class)->getBankNames($quoteTypeId, $providerId);
+
+        return $banks->first(function ($bank) use ($bankName) {
+            return strtolower($bank->text) === strtolower($bankName);
+        })?->code ?? null;
+    }
+
+
+    public function extractPlateCodeNumber(?string $plateNumber): ?array
+    {
+        if (empty($plateNumber)) {
+            return null;
+        }
+
+        $cleaned = trim($plateNumber);
+
+        // $parts = explode('/', $cleaned, 2);
+        if (preg_match('/^([A-Z0-9]+)[\/:\-\s\']*(\d+)$/i', $cleaned, $matches)) {
+            LoggerService::info('OCR Utils - extractPlateCodeNumber - Plate code and number extracted', extra: [
+                'plate_number' => $plateNumber,
+                'matches' => $matches,
+            ]);
+
+            return [
+                'plate_code' => $matches[1],
+                'plate_number' => $matches[2],
+            ];
+        }
+
+        return [
+            'plate_code' => null,
+            'plate_number' => null,
+        ];
+    }
+
+    //----------------- End Ocr Util ------------------------------
 
     private function extractProviderCode(CarQuote $quote): ?string
     {
