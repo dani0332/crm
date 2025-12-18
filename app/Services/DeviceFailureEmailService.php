@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DeviceFailureTypeEnum;
+use App\Enums\EnvEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
+use App\Exceptions\BirdWebhookException;
 use App\Jobs\SendDeviceFailureEmailJob;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -16,6 +20,10 @@ use App\Services\Logger\LoggerService;
 class DeviceFailureEmailService
 {
     private string $logPrefix = 'DeviceFailureEmailService:';
+
+    public function __construct(
+        private readonly BirdService $birdService
+    ) {}
 
     /**
      * Dispatch failure email job for Device/NGI quotes
@@ -58,6 +66,243 @@ class DeviceFailureEmailService
         ]);
 
         return true;
+    }
+
+    /**
+     * Execute sending failure email via Bird webhook.
+     * This is called by the SendDeviceFailureEmailJob.
+     *
+     * @param int $quoteId
+     * @param DeviceFailureTypeEnum $failureType
+     * @param string|null $providerCode
+     * @param int $attempt Current attempt number
+     * @return array{status: bool, error?: string}
+     * @throws BirdWebhookException When Bird webhook fails
+     */
+    public function executeFailureEmail(
+        int $quoteId,
+        DeviceFailureTypeEnum $failureType,
+        ?string $providerCode = null,
+        int $attempt = 1
+    ): array {
+        LoggerService::info("{$this->logPrefix} Starting failure email execution", extra: [
+            'quoteId' => $quoteId,
+            'failureType' => $failureType->value,
+            'attempt' => $attempt,
+        ]);
+
+        $quote = PersonalQuote::with(['advisor', 'customer'])->find($quoteId);
+
+        if (! $quote) {
+            LoggerService::error("{$this->logPrefix} Quote not found", extra: [
+                'quoteId' => $quoteId,
+            ]);
+            return ['status' => false, 'error' => 'Quote not found'];
+        }
+
+        // Validate LOB is Device and Provider is NGI
+        if (! $this->isValidDeviceNgiQuote($quote, $providerCode)) {
+            LoggerService::warning("{$this->logPrefix} Skipping - not a valid Device/NGI quote", extra: [
+                'quoteId' => $quoteId,
+                'quoteTypeId' => $quote->quote_type_id,
+            ]);
+            return ['status' => false, 'error' => 'Not a valid Device/NGI quote'];
+        }
+
+        // Send email via Bird
+        $response = $this->sendViaBird($quote, $failureType);
+
+        if ($response === 200) {
+            $this->logFailureAttempt($quote, $failureType, $attempt);
+            LoggerService::info("{$this->logPrefix} Failure email sent successfully via Bird", extra: [
+                'quoteId' => $quoteId,
+                'failureType' => $failureType->value,
+                'refId' => $quote->code,
+            ]);
+            return ['status' => true];
+        }
+
+        throw new BirdWebhookException(
+            "Bird webhook returned status: {$response}",
+            BirdWebhookException::WEBHOOK_FAILED,
+            $response
+        );
+    }
+
+    /**
+     * Send failure email via Bird webhook
+     *
+     * @param PersonalQuote $quote
+     * @param DeviceFailureTypeEnum $failureType
+     * @return int|null
+     */
+    private function sendViaBird(PersonalQuote $quote, DeviceFailureTypeEnum $failureType): ?int
+    {
+        $appEnv = config('constants.APP_ENV');
+
+        // Build CC emails
+        $cc = $this->buildCcEmails($quote, $failureType, $appEnv);
+
+        // Determine recipient based on failure type
+        $recipient = $this->getRecipient($quote, $failureType);
+
+        // Build email data for Bird workflow
+        $emailData = (object) [
+            'quoteUID' => $quote->uuid,
+            'refId' => $quote->code,
+            'customerEmail' => $recipient['email'],
+            'customerName' => $recipient['name'],
+            'recipientEmail' => $recipient['email'],
+            'recipientName' => $recipient['name'],
+            'triggerPoint' => $failureType->getTriggerPointText(),
+            'failureType' => $failureType->getDisplayName(),
+            'imcrmReferenceNumber' => $quote->code,
+            'imcrmLink' => $this->generateImcrmLink($quote),
+            'escalationLink' => $this->getEscalationLink(),
+            'cc' => $cc,
+            'workflowType' => WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED,
+        ];
+
+        // Get Bird workflow URL from ApplicationStorage
+        $birdUrl = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL);
+
+        if (empty($birdUrl)) {
+            LoggerService::warning("{$this->logPrefix} Bird URL not found in ApplicationStorage", extra: [
+                'key' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL,
+            ]);
+            return null;
+        }
+
+        LoggerService::info("{$this->logPrefix} Triggering Bird webhook", extra: [
+            'quoteId' => $quote->id,
+            'url' => $birdUrl,
+            'emailData' => $emailData,
+        ]);
+
+        $response = $this->birdService->triggerWebHookRequest($birdUrl, $emailData);
+
+        return $response?->status_code;
+    }
+
+    /**
+     * Get recipient based on failure type (FRD requirement)
+     *
+     * @param PersonalQuote $quote
+     * @param DeviceFailureTypeEnum $failureType
+     * @return array{email: string, name: string}
+     */
+    private function getRecipient(PersonalQuote $quote, DeviceFailureTypeEnum $failureType): array
+    {
+        // Booking Details API failure goes to Production Approval Team
+        if ($failureType === DeviceFailureTypeEnum::BOOK_POLICY) {
+            $toEmail = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO)
+                ?: 'production.approval.team@insurancemarket.ae';
+            return ['email' => $toEmail, 'name' => 'Production Approval Team'];
+        }
+
+        // Other failures go to assigned advisor
+        if ($quote->advisor) {
+            return ['email' => $quote->advisor->email, 'name' => $quote->advisor->name];
+        }
+
+        // Fallback
+        $toEmail = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO)
+            ?: 'production.approval.team@insurancemarket.ae';
+        return ['email' => $toEmail, 'name' => 'Device Support Team'];
+    }
+
+    /**
+     * Build CC emails
+     *
+     * @param PersonalQuote $quote
+     * @param DeviceFailureTypeEnum $failureType
+     * @param string $appEnv
+     * @return array{approvalemail: string|null, prodemail: string|null, advisoremail: string|null}
+     */
+    private function buildCcEmails(PersonalQuote $quote, DeviceFailureTypeEnum $failureType, string $appEnv): array
+    {
+        $cc = [
+            'approvalemail' => null,
+            'prodemail' => null,
+            'advisoremail' => null,
+        ];
+
+        if (in_array($appEnv, [EnvEnum::PRODUCTION, EnvEnum::STAGING])) {
+            $cc['approvalemail'] = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC);
+            $cc['prodemail'] = getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL);
+
+            // Include advisor in CC for booking failures
+            if ($failureType === DeviceFailureTypeEnum::BOOK_POLICY && $quote->advisor) {
+                $cc['advisoremail'] = $quote->advisor->email;
+            }
+        }
+
+        return $cc;
+    }
+
+    /**
+     * Generate IMCRM link for the quote
+     *
+     * @param PersonalQuote $quote
+     * @return string
+     */
+    private function generateImcrmLink(PersonalQuote $quote): string
+    {
+        $baseUrl = config('app.url', env('APP_URL'));
+        return "{$baseUrl}/personal-quotes/device/{$quote->uuid}";
+    }
+
+    /**
+     * Get escalation link from ApplicationStorage
+     *
+     * @return string
+     */
+    private function getEscalationLink(): string
+    {
+        $link = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK);
+
+        return $link ?: 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T';
+    }
+
+    /**
+     * Log the failure attempt to API logs
+     *
+     * @param PersonalQuote $quote
+     * @param DeviceFailureTypeEnum $failureType
+     * @param int $attempt
+     */
+    private function logFailureAttempt(PersonalQuote $quote, DeviceFailureTypeEnum $failureType, int $attempt): void
+    {
+        // Log to API logs table for auditing
+        $quote->apiLogs()->create([
+            'request_type' => 'FAILURE_EMAIL_SENT_VIA_BIRD',
+            'request_data' => json_encode([
+                'failure_type' => $failureType->value,
+                'trigger_point' => $failureType->getTriggerPointText(),
+                'attempt' => $attempt,
+            ]),
+            'response_data' => json_encode([
+                'status' => 'sent',
+                'sent_at' => now()->toIso8601String(),
+            ]),
+            'status' => 'success',
+        ]);
+    }
+
+    /**
+     * Handle job failure - log the error
+     *
+     * @param int $quoteId
+     * @param DeviceFailureTypeEnum $failureType
+     * @param string $errorMessage
+     */
+    public function handleJobFailure(int $quoteId, DeviceFailureTypeEnum $failureType, string $errorMessage): void
+    {
+        LoggerService::error("{$this->logPrefix} Job failed after all retries", extra: [
+            'quoteId' => $quoteId,
+            'failureType' => $failureType->value,
+            'error' => $errorMessage,
+        ]);
     }
 
     /**

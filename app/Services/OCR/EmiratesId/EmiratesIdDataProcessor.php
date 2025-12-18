@@ -384,7 +384,7 @@ class EmiratesIdDataProcessor
         // Currently only supporting Car quotes and Personal quotes for Emirates ID OCR
         return match (get_class($this->quote)) {
             CarQuote::class => QuoteTypeId::Car,
-            PersonalQuote::class => $this->quote?->quote_type_id ?? PersonalQuote::where('uuid', $this->quote->uuid)->select('quote_type_id')->first()->quote_type_id,
+            PersonalQuote::class => $this->quote?->quote_type_id?? PersonalQuote::where('uuid',$this->quote->uuid)->select('quote_type_id')->first()?->quote_type_id?? QuoteTypeId::Device,
             default => QuoteTypeId::Car,
         };
     }
