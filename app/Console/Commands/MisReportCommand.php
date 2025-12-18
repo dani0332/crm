@@ -48,4 +48,3 @@ class MisReportCommand extends Command
         }
     }
 }
-
