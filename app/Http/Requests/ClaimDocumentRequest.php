@@ -31,7 +31,7 @@ class ClaimDocumentRequest extends FormRequest
     {
         $rules = [
             'files' => ['required', 'array'],
-            'files.*' => ['required', 'file', 'max:2048'],
+            'files.*' => ['required', 'file'],
             'document_type_code' => [
                 'required',
                 'string',
