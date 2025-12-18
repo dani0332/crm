@@ -43,6 +43,7 @@ class RolePermissionSeeder extends Seeder
         $this->addUtmReportExportPermission();
         $this->addEditLastYearDetailsPermission();
         $this->addBranchesPermission();
+        $this->addCarLegacyKycSkipInsurerApiPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -507,5 +508,16 @@ class RolePermissionSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function addCarLegacyKycSkipInsurerApiPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
