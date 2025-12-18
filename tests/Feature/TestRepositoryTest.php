@@ -1,9 +1,15 @@
-<!-- https://medium.com/@zulfikarditya/mastering-testing-in-laravel-with-pest-php-a-comprehensive-guide-0d1a599f79f5 -->
 <?php
 
 // test/Unit/TestRepositoryTest.php
 
+use App\Models\User;
 use App\Repositories\TestRepository;
+use Tests\Helpers\TestSchemaCreator;
+
+// Set up database schema for all HTTP/Feature tests
+beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
+});
 
 // 3. Writing Unit Tests with Pest
 test('generates correct username', function () {
@@ -26,4 +32,14 @@ test('check age must be greater than 18', function () {
 test("check if payment exists or not", function(){
 	$testRepository = new TestRepository(); 
 	expect($testRepository->isPaymentExists('CAR-ABC123'))->toBeTrue();
+});
+
+
+// 4. HTTP Status Code Assertions
+test('check login access', function(){
+    $response = $this->get('/login-page');
+    $response->assertOk(); // Checks for 200 status
+
+    $response = $this->get('/non-existent-page');
+    $response->assertNotFound(); // Checks for 404 status
 });

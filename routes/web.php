@@ -116,6 +116,9 @@ use Illuminate\Support\Facades\Route;
 |
  */
 
+Route::get('/login-page', function () {
+    return response('Login page', 200);
+});
 Route::get('/', function () {
     return redirect('login');
 });
