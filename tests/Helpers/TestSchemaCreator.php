@@ -287,6 +287,7 @@ class TestSchemaCreator
                 $table->string('text')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
+                $table->softDeletes(); // BaseModel uses SoftDeletes trait
             });
         }
 
@@ -299,6 +300,7 @@ class TestSchemaCreator
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('provider_id')->nullable();
                 $table->timestamps();
+                $table->softDeletes(); // BaseModel uses SoftDeletes trait
             });
         }
 
@@ -324,6 +326,7 @@ class TestSchemaCreator
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
                 $table->timestamps();
+                $table->softDeletes(); // BaseModel uses SoftDeletes trait
             });
         }
     }
