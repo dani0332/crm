@@ -278,5 +278,28 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        // Create insurance_provider table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('insurance_provider')) {
+            Schema::connection('sqlite')->create('insurance_provider', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        // Create car_plan table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('car_plan')) {
+            Schema::connection('sqlite')->create('car_plan', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->unsignedBigInteger('provider_id')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 }
