@@ -8,6 +8,20 @@ php artisan pest:test
 ./vendor/bin/pest  # Verify installation
 ```
 
+# Creating Tests
+
+## Create Unit Test
+```bash
+php artisan make:test UserTest --unit
+```
+
+## Create Feature Test
+```bash
+php artisan make:test UserTest --feature
+```
+
+**Note:** Unit tests are placed in `tests/Unit/` and Feature tests in `tests/Feature/`
+
 # Running Tests
 
 ## Run All Tests
@@ -29,6 +43,12 @@ doppler run -- php artisan test tests/Feature/
 
 # Run tests in specific suite (Unit or Feature)
 doppler run -- php artisan test --testsuite=Feature
+
+# Run unit test
+doppler run -- php artisan test tests/Unit/UserTest.php
+
+# Run all unit tests
+doppler run -- php artisan test --testsuite=Unit
 ```
 
 **Note:** You may see a warning about XML configuration schema. To fix it, run:
