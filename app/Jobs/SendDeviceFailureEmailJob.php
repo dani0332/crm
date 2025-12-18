@@ -9,7 +9,6 @@ use App\Enums\DeviceFailureTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exceptions\BirdWebhookException;
-use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Services\BirdService;
 use App\Services\DeviceFailureEmailService;
@@ -138,9 +137,9 @@ class SendDeviceFailureEmailJob implements ShouldQueue
 
 
         // Get Bird workflow URL from ApplicationStorage
-        $birdUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL)->first();
+        $birdUrl = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL);
 
-        if (! $birdUrl) {
+        if (empty($birdUrl)) {
             LoggerService::warning("{$this->logPrefix} Bird URL not found in ApplicationStorage", extra: [
                 'key' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL,
             ]);
@@ -149,11 +148,11 @@ class SendDeviceFailureEmailJob implements ShouldQueue
 
         LoggerService::info("{$this->logPrefix} Triggering Bird webhook", extra: [
             'quoteId' => $this->quoteId,
-            'url' => $birdUrl->value,
+            'url' => $birdUrl,
             'emailData' => $emailData,
         ]);
 
-        $response = app(BirdService::class)->triggerWebHookRequest($birdUrl->value, $emailData);
+        $response = app(BirdService::class)->triggerWebHookRequest($birdUrl, $emailData);
 
         return $response?->status_code;
     }

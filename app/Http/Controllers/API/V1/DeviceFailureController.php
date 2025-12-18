@@ -8,12 +8,11 @@ use App\Enums\DeviceFailureTypeEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\DeviceFailureEmailRequest;
 use App\Models\PersonalQuote;
 use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class DeviceFailureController extends Controller
 {
@@ -28,31 +27,16 @@ class DeviceFailureController extends Controller
      *
      * POST /api/v1/device/failure-email
      *
-     * @param Request $request
+     * @param DeviceFailureEmailRequest $request
      * @return JsonResponse
      */
-    public function failureEmail(Request $request): JsonResponse
+    public function failureEmail(DeviceFailureEmailRequest $request): JsonResponse
     {
         LoggerService::info("{$this->logPrefix} Failure notification endpoint called", extra: [
             'request_data' => $request->all(),
         ]);
 
-        $validator = Validator::make($request->all(), [
-            'quote_uuid' => 'required|string',
-            'failure_type' => 'required|string|in:'.DeviceFailureTypeEnum::BOOK_POLICY->value.','.DeviceFailureTypeEnum::AUTO_CAPTURE_PAYMENT->value.','.DeviceFailureTypeEnum::ISSUE_POLICY->value.','.DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS->value,
-            'provider_code' => 'nullable|string',
-            'reason' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $validated = $validator->validated();
+        $validated = $request->validated();
 
         $quoteUuid = $validated['quote_uuid'];
         $failureType = DeviceFailureTypeEnum::from($validated['failure_type']);

@@ -87,7 +87,7 @@ class NgiHttpClient
     public function post(string $endPoint, array $payload = [], array $headers = []): Response
     {
         $url = $this->baseUrl . $endPoint;
-        $request = $this->buildClient($headers);
+        $request = $this->getAuthenticatedClient($headers);
 
         LoggerService::info('Initiating NGI API POST call', extra: [
             'endpoint' => $endPoint,
@@ -138,7 +138,7 @@ class NgiHttpClient
             $url .= '?' . http_build_query($queryParams);
         }
 
-        $request = $this->buildClient($headers);
+        $request = $this->getAuthenticatedClient($headers);
 
         LoggerService::info('Initiating NGI API GET call', extra: [
             'endpoint' => $endPoint,
@@ -173,12 +173,12 @@ class NgiHttpClient
     }
 
     /**
-     * Build HTTP client with authentication
+     * Get authenticated HTTP client
      *
      * @param array $headers
      * @return PendingRequest
      */
-    private function buildClient(array $headers = []): PendingRequest
+    public function getAuthenticatedClient(array $headers = []): PendingRequest
     {
         $token = $this->authenticate();
 
@@ -204,44 +204,5 @@ class NgiHttpClient
     public function getBaseUrl(): string
     {
         return $this->baseUrl;
-    }
-
-    /**
-     * Download document from URL
-     *
-     * @param string $documentUrl
-     * @return Response
-     */
-    public function downloadDocument(string $documentUrl): Response
-    {
-        $request = $this->buildClient();
-
-        LoggerService::info('Downloading document from NGI', extra: [
-            'url' => $documentUrl,
-        ]);
-
-        try {
-            $response = $request->get($documentUrl);
-
-            if ($response->failed()) {
-                LoggerService::error('NGI document download failed', extra: [
-                    'url' => $documentUrl,
-                    'status_code' => $response->status(),
-                ]);
-            } else {
-                LoggerService::info('NGI document download completed', extra: [
-                    'url' => $documentUrl,
-                    'status_code' => $response->status(),
-                ]);
-            }
-
-            return $response;
-        } catch (Exception $ex) {
-            LoggerService::error('NGI document download exception', extra: [
-                'url' => $documentUrl,
-            ], exception: $ex);
-
-            throw $ex;
-        }
     }
 }

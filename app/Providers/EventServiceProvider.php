@@ -5,11 +5,13 @@ namespace App\Providers;
 use App\Events\Axiom\FlushAxiomBatch;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\Device\DevicePaymentAuthorised;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\QuoteEmailUpdated;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Listeners\Axiom\HandleAxiomBatchFlush;
+use App\Listeners\Device\HandleDevicePaymentAuthorised;
 use App\Listeners\HandleBikeAdvisorUpdated;
 use App\Listeners\HandleBookPolicyJobFailed;
 use App\Listeners\HandleCarAdvisorUpdated;
@@ -63,6 +65,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         HealthTransactionApproved::class => [
             HandleHealthTransactionApproved::class,
+        ],
+        DevicePaymentAuthorised::class => [
+            HandleDevicePaymentAuthorised::class,
         ],
         TakeImpersonation::class => [
             HandleImpersonatedSession::class,

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
 use App\Enums\DeviceFailureTypeEnum;
-use App\Enums\DocumentTypeCode;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -13,10 +12,6 @@ use App\Enums\QuoteTypes;
 use App\Models\PolicyIssuance;
 use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiException;
-use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiApiService;
-use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiDocumentHandler;
-use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -153,7 +148,8 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
         ]);
 
         // Step 2: Download documents from provider URLs and store in DB
-        $downloadResult = $this->downloadAndStoreDocuments($quote, $process);
+        $documentHandler = app(NgiDocumentHandler::class);
+        $downloadResult = $documentHandler->downloadAndStorePolicyDocuments($quote, $process);
 
         if (!$downloadResult['status']) {
             $errorMessage = $downloadResult['error'] ?? 'Document download failed';
@@ -191,137 +187,6 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
             'completed_step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             'new_status' => PolicyIssuanceEnum::PENDING_STATUS,
         ]);
-    }
-
-    /**
-     * Download documents from provider URLs and store in database
-     */
-    private function downloadAndStoreDocuments($quote, $process): array
-    {
-        $documentHandler = app(NgiDocumentHandler::class);
-
-        // Refresh quote to get latest document URLs from GetPolicyDocuments response
-        $quote->refresh();
-
-        // Document URLs stored by NgiQuoteUpdaterService during GetPolicyDocuments API call
-        $documentUrls = [
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $quote->insurer_policy_doc_id,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $quote->insurer_debit_note_doc_id,
-        ];
-
-        // Validate document URLs exist
-        $validationService = app(NgiValidationService::class);
-        $validationResult = $validationService->validateDownloadDocuments($documentUrls);
-        if (!$validationResult['status']) {
-            return $validationResult;
-        }
-
-        $downloadedDocuments = collect();
-        $failedDocuments = [];
-
-        foreach ($documentUrls as $docCode => $documentUrl) {
-            if (empty($documentUrl)) {
-                $failedDocuments[] = $docCode;
-                LoggerService::warning('NgiGetPolicyDocumentsJob: Empty document URL', [
-                    'document_code' => $docCode,
-                ]);
-                continue;
-            }
-
-            LoggerService::info('NgiGetPolicyDocumentsJob: Downloading document', [
-                'document_code' => $docCode,
-                'document_url' => $documentUrl,
-            ]);
-
-            // Download document content from provider URL
-            $documentContentResponse = $documentHandler->fetchDocumentFromUrl($documentUrl);
-
-            if (!$documentContentResponse['status']) {
-                $failedDocuments[] = $docCode;
-                LoggerService::warning('NgiGetPolicyDocumentsJob: Document download failed', [
-                    'document_code' => $docCode,
-                    'error' => $documentContentResponse['message'] ?? 'Download failed',
-                ]);
-                continue;
-            }
-
-            // Generate file name
-            $fileName = $this->getDocumentFileName($docCode, $quote->policy_number);
-
-            // Detect MIME type from raw content
-            $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->buffer($documentContentResponse['content']);
-
-            // Encode content to base64 and format as Data URL for storage
-            $base64Content = 'data:' . $mimeType . ';base64,' . base64_encode($documentContentResponse['content']);
-
-            LoggerService::info('NgiGetPolicyDocumentsJob: Storing document in DB', [
-                'document_code' => $docCode,
-                'file_name' => $fileName,
-            ]);
-
-            // Store document in database (similar to upload step but just storing)
-            $quoteDocument = $documentHandler->uploadAndAttachToQuoteDocuments(
-                $quote,
-                $base64Content,
-                $docCode,
-                $fileName
-            );
-
-            // Log the download action
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
-                $quote,
-                ['document_url' => $documentUrl, 'document_code' => $docCode],
-                ['stored' => (bool) $quoteDocument?->id, 'document_id' => $quoteDocument?->id],
-                $documentUrl,
-                NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
-                $quoteDocument?->id ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
-                $process
-            );
-
-            if ($quoteDocument?->id) {
-                $downloadedDocuments->push([
-                    'code' => $docCode,
-                    'document_id' => $quoteDocument->id,
-                    'file_name' => $fileName,
-                ]);
-            } else {
-                $failedDocuments[] = $docCode;
-            }
-        }
-
-        // Check if all 3 required documents were downloaded
-        $allDocsDownloaded = $downloadedDocuments->count() === 3;
-
-        if (!$allDocsDownloaded) {
-            return [
-                'status' => false,
-                'error' => 'Failed to download documents: ' . implode(', ', $failedDocuments),
-                'documents_count' => $downloadedDocuments->count(),
-                'failed_documents' => $failedDocuments,
-            ];
-        }
-
-        return [
-            'status' => true,
-            'documents_count' => $downloadedDocuments->count(),
-            'documents' => $downloadedDocuments->toArray(),
-        ];
-    }
-
-    /**
-     * Get document file name based on document type
-     */
-    private function getDocumentFileName(string $docCode, ?string $policyNumber): string
-    {
-        $prefix = $policyNumber ?? 'policy';
-
-        return match ($docCode) {
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $prefix . '_policy_schedule.pdf',
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $prefix . '_tax_invoice.pdf',
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $prefix . '_commission_invoice.pdf',
-            default => $prefix . '_document.pdf',
-        };
     }
 
     /**

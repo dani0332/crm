@@ -113,24 +113,15 @@ class NgiQuoteUpdaterService
      */
     private function buildPaymentUpdateData(object $policyDocumentsResult): array
     {
-        // mapped
-        // 'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
-        // 'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
-        // 'insurer_invoice_date' => $validatedData['invoice_date'],
-        // 'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
-        // 'commission_vat' => $validatedData['vat_on_commission'],
-        // 'commission' => $validatedData['total_commission'],
 
-        // ignore
+        // ignore TODO:: NGI:: remaining
         // 'transaction_payment_status' => $validatedData['transaction_payment_status'],
         // 'broker_invoice_number' => $validatedData['broker_invoice_number'],
 
-        // remaining
+        // TODO:: NGI:: remaining
         // 'commmission_percentage' => $validatedData['commission_percentage'],
         // 'invoice_description' => $validatedData['invoice_description'],
 
-        // skip it
-        // 'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
         $updateData = [];
 
         // Commission details - direct mapping
