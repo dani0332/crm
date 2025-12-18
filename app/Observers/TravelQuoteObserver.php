@@ -18,6 +18,7 @@ use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -96,8 +97,6 @@ class TravelQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $travelQuote->transaction_approved_at];
         }
 
-        $this->syncQuote($travelQuote, $dirty);
-
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($travelQuote->uuid, QuoteTypeId::Travel, $dirty);
@@ -107,7 +106,25 @@ class TravelQuoteObserver
                     'uuid' => $travelQuote->uuid,
                 ]);
             }
+
+            try {
+                app(BranchAssignmentService::class)->saveBranchOverride($travelQuote, QuoteTypeId::Travel);
+                TravelQuote::withoutEvents(function () use ($travelQuote, &$dirty) {
+
+                    $branch = app(BranchAssignmentService::class)->getBranch($travelQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+                    $travelQuote->update([
+                        'branch_id' => $branch?->id,
+                    ]);
+                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                });
+            } catch (Exception $e) {
+                LoggerService::error('TravelQuoteObserver - save branch data failed', [
+                    'uuid' => $travelQuote->uuid,
+                ], exception: $e);
+            }
         }
+
+        $this->syncQuote($travelQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
             try {
