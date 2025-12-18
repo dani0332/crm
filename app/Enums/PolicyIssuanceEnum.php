@@ -132,7 +132,7 @@ final class PolicyIssuanceEnum extends Enum
             self::AUTO_CAPTURE_FAILED_STATUS_ID => self::AUTO_CAPTURE_FAILED,
             self::POLICY_DETAIL_API_FAILED_STATUS_ID => self::POLICY_DETAIL_API_FAILED,
             self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
-            self::BOOK_POLICY_FAILED_STATUS_ID => self::BOOK_POLICY_FAILED,
+            self::BOOKING_DETAILS_API_FAILED_STATUS_ID => self::BOOKING_DETAILS_API_FAILED,
         ];
 
         return $status ? $statuses[$status] : $statuses;
@@ -144,7 +144,7 @@ final class PolicyIssuanceEnum extends Enum
             self::AUTO_CAPTURE_FAILED_STATUS_ID => self::AUTO_CAPTURE_ACTION_MESSAGE,
             self::POLICY_DETAIL_API_FAILED_STATUS_ID => self::POLICY_DETAIL_API_ACTION_MESSAGE,
             self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE,
-            self::BOOK_POLICY_FAILED_STATUS_ID => self::BOOK_POLICY_ACTION_MESSAGE,
+            self::BOOKING_DETAILS_API_FAILED_STATUS_ID => self::BOOKING_DETAILS_API_ACTION_MESSAGE,
         ];
 
         return $status ? $statuses[$status] : '';

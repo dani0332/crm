@@ -259,7 +259,7 @@ class NgiBookPolicyService
             $response['message'] = NgiEnum::ALL_STEPS_ARE_EDITABLE;
         } elseif (
             $policyIssuance?->status === PolicyIssuanceEnum::PROCESSING_STATUS &&
-            $policyIssuance?->completed_step === NgiEnum::STEP_UPLOAD_POLICY_DOCS
+            $policyIssuance?->completed_step === NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
         ) {
             $response['isEditBookingDetailsDisabled'] = false;
             $response['message'] = NgiEnum::ALL_STEPS_ARE_EDITABLE;

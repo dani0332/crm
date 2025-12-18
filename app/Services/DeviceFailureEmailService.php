@@ -119,21 +119,21 @@ class DeviceFailureEmailService
      * Used by PolicyIssuanceService and NgiInsuranceService
      *
      * @param int $quoteId
-     * @param int|null $insurerApiStatus
+     * @param int|null $insurerApiStatusId
      * @param string|null $completedStep Fallback to determine failure type
      * @return bool
      */
     public function sendFailureEmailFromStatus(
         int $quoteId,
-        ?int $insurerApiStatus,
+        ?int $insurerApiStatusId,
         ?string $completedStep = null
     ): bool {
-        $failureType = $this->determineFailureTypeFromStatus($insurerApiStatus, $completedStep);
+        $failureType = $this->determineFailureTypeFromStatus($insurerApiStatusId, $completedStep);
 
         if (! $failureType) {
             LoggerService::warning("{$this->logPrefix} Could not determine failure type", extra: [
                 'quoteId' => $quoteId,
-                'insurerApiStatus' => $insurerApiStatus,
+                'insurerApiStatusId' => $insurerApiStatusId,
                 'completedStep' => $completedStep,
             ]);
             return false;
@@ -145,15 +145,15 @@ class DeviceFailureEmailService
     /**
      * Determine failure type from insurer API status or completed step
      *
-     * @param int|null $insurerApiStatus
+     * @param int|null $insurerApiStatusId
      * @param string|null $completedStep
      * @return DeviceFailureTypeEnum|null
      */
-    public function determineFailureTypeFromStatus(?int $insurerApiStatus, ?string $completedStep = null): ?DeviceFailureTypeEnum
+    public function determineFailureTypeFromStatus(?int $insurerApiStatusId, ?string $completedStep = null): ?DeviceFailureTypeEnum
     {
         // First try to determine from insurer API status
-        if ($insurerApiStatus !== null) {
-            $failureType = match ($insurerApiStatus) {
+        if ($insurerApiStatusId !== null) {
+            $failureType = match ($insurerApiStatusId) {
                 PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID => DeviceFailureTypeEnum::ISSUE_POLICY,
                 PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS,
                 PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID => DeviceFailureTypeEnum::BOOK_POLICY,

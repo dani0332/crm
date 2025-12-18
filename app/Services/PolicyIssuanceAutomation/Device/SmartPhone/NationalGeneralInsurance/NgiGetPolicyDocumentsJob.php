@@ -55,7 +55,7 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
     /**
      * Unique lock duration (slightly longer than timeout to prevent overlap)
      */
-    public int $uniqueFor = 180;
+    public int $uniqueFor = 1800;
 
     private int $processId;
 

@@ -499,12 +499,12 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                 // Uses service method that handles failure type determination
                 app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
                     $quote->id,
-                    $quote->insurer_api_status
+                    $quote->insurer_api_status_id
                 );
 
                     LoggerService::info('Automation failed - failure notification dispatched', extra: [
                         'quote_code' => $quote->code,
-                        'insurer_api_status' => $quote->insurer_api_status,
+                        'insurer_api_status' => $quote->insurer_api_status_id,
                     ]);
                 }
 
