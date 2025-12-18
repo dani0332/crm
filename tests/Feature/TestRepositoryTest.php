@@ -4,11 +4,15 @@
 
 use App\Models\User;
 use App\Repositories\TestRepository;
+use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 // Set up database schema for all HTTP/Feature tests
+
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
+    $this->user = TestDataSeeder::createAdminUser();
+    $this->actingAs($this->user);
 });
 
 // 3. Writing Unit Tests with Pest
@@ -43,3 +47,5 @@ test('check login access', function(){
     $response = $this->get('/non-existent-page');
     $response->assertNotFound(); // Checks for 404 status
 });
+
+// 5. Database Assertions in Laravel Pest

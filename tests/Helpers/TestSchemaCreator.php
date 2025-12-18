@@ -268,5 +268,15 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        // Create pest_test_table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('pest_test_table')) {
+            Schema::connection('sqlite')->create('pest_test_table', function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->string('email');
+                $table->timestamps();
+            });
+        }
     }
 }
