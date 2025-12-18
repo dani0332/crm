@@ -323,66 +323,77 @@ class ClaimsService extends BaseService
         $policyNumber = $request->policy_number;
         $quoteTypeId = $request->quote_type_id;
 
-        $policies = PersonalQuote::query()
+        $policies = PersonalQuote::with([
+            'insuranceProvider:id,text',
+            'quoteType:id,text',
+            'carQuote' => function ($query) {
+                $query->select(['id', 'uuid', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
+                    ->with([
+                        'carMake:id,text',
+                        'carModel:id,text',
+                        'carQuoteRequestDetail:id,car_quote_request_id,plate_number',
+                    ]);
+            },
+        ])
             ->select([
-                'personal_quotes.id',
-                'personal_quotes.uuid',
-                'personal_quotes.code as ref_id',
-                'personal_quotes.policy_number',
-                DB::raw("TRIM(CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name)) as customer_name"),
-                'personal_quotes.policy_expiry_date',
-                'personal_quotes.policy_start_date',
-                'personal_quotes.email',
-                'personal_quotes.mobile_no',
-                'personal_quotes.quote_type_id',
-                'personal_quotes.id as quote_id',
-                'personal_quotes.customer_id',
-                'personal_quotes.insurance_provider_id',
-                'personal_quotes.quote_status_id',
-                'insurance_provider.text as currently_insured_with',
-                'quote_type.text as product',
-                // Car-specific fields
-                DB::raw('CASE WHEN personal_quotes.quote_type_id = '.QuoteTypeId::Car.' THEN car_make.text ELSE NULL END as car_make'),
-                DB::raw('CASE WHEN personal_quotes.quote_type_id = '.QuoteTypeId::Car.' THEN car_model.text ELSE NULL END as car_model'),
-                DB::raw('CASE WHEN personal_quotes.quote_type_id = '.QuoteTypeId::Car.' THEN car_quote_request.year_of_manufacture ELSE NULL END as model_year'),
-                DB::raw('CASE WHEN personal_quotes.quote_type_id = '.QuoteTypeId::Car.' THEN car_quote_request_detail.plate_number ELSE NULL END as plate_number'),
+                'id',
+                'uuid',
+                'code',
+                'policy_number',
+                'first_name',
+                'last_name',
+                'policy_expiry_date',
+                'policy_start_date',
+                'email',
+                'mobile_no',
+                'quote_type_id',
+                'customer_id',
+                'insurance_provider_id',
+                'quote_status_id',
             ])
-            ->leftJoin('insurance_provider', 'personal_quotes.insurance_provider_id', '=', 'insurance_provider.id')
-            ->leftJoin('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            // Car-specific joins - only when quote_type_id is Car
-            ->leftJoin('car_quote_request', function ($join) {
-                $join->on('car_quote_request.uuid', '=', 'personal_quotes.uuid')
-                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
-            })
-            ->leftJoin('car_make', function ($join) {
-                $join->on('car_make.id', '=', 'car_quote_request.car_make_id')
-                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
-            })
-            ->leftJoin('car_model', function ($join) {
-                $join->on('car_model.id', '=', 'car_quote_request.car_model_id')
-                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
-            })
-            ->leftJoin('car_quote_request_detail', function ($join) {
-                $join->on('car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
-                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
-            })
-            ->whereNotNull('personal_quotes.policy_number')
+            ->whereNotNull('policy_number')
             ->when($quoteTypeId, function ($query) use ($quoteTypeId) {
-                $query->where('personal_quotes.quote_type_id', $quoteTypeId);
+                $query->where('quote_type_id', $quoteTypeId);
             })
-            ->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::PolicyBooked]) // Active policy statuses
+            ->whereIn('quote_status_id', [QuoteStatusEnum::PolicyBooked])
             ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
                 $query->where(function ($subQuery) use ($email, $policyNumber) {
-                    $subQuery->where('personal_quotes.email', $email);
+                    $subQuery->where('email', $email);
                     if ($policyNumber) {
-                        $subQuery->orWhere('personal_quotes.policy_number', $policyNumber);
+                        $subQuery->orWhere('policy_number', $policyNumber);
                     }
                 });
             })
-            ->orderBy('personal_quotes.policy_expiry_date', 'desc')
+            ->orderBy('policy_expiry_date', 'desc')
             ->simplePaginate($this->perPage);
 
-        // Return pagination data structure
+        // Transform data to match expected output format
+        $policies->getCollection()->transform(function ($policy) {
+            return (object) [
+                'id' => $policy->id,
+                'uuid' => $policy->uuid,
+                'ref_id' => $policy->code,
+                'policy_number' => $policy->policy_number,
+                'customer_name' => trim($policy->first_name.' '.$policy->last_name),
+                'policy_expiry_date' => $policy->policy_expiry_date,
+                'policy_start_date' => $policy->policy_start_date,
+                'email' => $policy->email,
+                'mobile_no' => $policy->mobile_no,
+                'quote_type_id' => $policy->quote_type_id,
+                'quote_id' => $policy->id,
+                'customer_id' => $policy->customer_id,
+                'insurance_provider_id' => $policy->insurance_provider_id,
+                'quote_status_id' => $policy->quote_status_id,
+                'currently_insured_with' => $policy->insuranceProvider?->text,
+                'product' => $policy->quoteType?->text,
+                // Car-specific fields - only populated when quote_type_id is Car
+                'car_make' => $policy->quote_type_id === QuoteTypeId::Car ? $policy->carQuote?->carMake?->text : null,
+                'car_model' => $policy->quote_type_id === QuoteTypeId::Car ? $policy->carQuote?->carModel?->text : null,
+                'model_year' => $policy->quote_type_id === QuoteTypeId::Car ? $policy->carQuote?->year_of_manufacture : null,
+                'plate_number' => $policy->quote_type_id === QuoteTypeId::Car ? $policy->carQuote?->carQuoteRequestDetail?->plate_number : null,
+            ];
+        });
+
         return $policies;
 
     }
@@ -445,75 +456,140 @@ class ClaimsService extends BaseService
         $claimRequest = $this->getClaimById($uuid);
 
         try {
-
-            // Get fillable fields from ClaimRequest model and add form-specific fields
-            $claimRequestFillable = (new ClaimRequest)->getFillable();
-            $formSpecificFields = ['incident_story', 'whatsapp_consent', 'selected_policy_id', 'policy_not_listed'];
-            $allowedFields = array_merge($claimRequestFillable, $formSpecificFields);
-
-            // Separate claim request data from detail data
-            $claimRequestData = collect($request)->only($allowedFields)->filter()->toArray();
-
-            // Store incident_story as incident field
-            if (isset($claimRequestData['incident_story'])) {
-                $claimRequestData['incident'] = $claimRequestData['incident_story'];
-                unset($claimRequestData['incident_story']);
-            }
+            // Update main claim request data
+            $claimRequestData = $this->prepareClaimRequestData($request);
             $claimRequest->update($claimRequestData);
 
-            // Handle claim request detail updates with quote type logic
-            $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
-            $detailData = collect($request)->only($claimRequestDetailFillable)->toArray();
+            // Update claim request detail with quote type-specific logic
+            $quoteTypeId = $request->quote_type_id ?? $claimRequest->quote_type_id;
+            $this->updateClaimRequestDetail($claimRequest, $request, $quoteTypeId);
 
-            // Handle quote type specific field clearing
-            $quoteTypeId = $request->quote_type_id ?? null;
-            // Clear fields based on quote type (don't filter null values as we want to set them)
-            if ($quoteTypeId == QuoteTypeId::Car) {
-                // Clear health-related detail fields
-                $detailData['service_type_id'] = null;
-                $detailData['request_reference_number'] = null;
-            } elseif ($quoteTypeId == QuoteTypeId::Health) {
-                // Clear car-related detail fields
-                $detailData['car_make'] = null;
-                $detailData['car_model'] = null;
-                $detailData['model_year'] = null;
-                $detailData['plate_number'] = null;
-            } else {
-                // Clear both car and health detail fields
-                $detailData['service_type_id'] = null;
-                $detailData['request_reference_number'] = null;
-                $detailData['car_make'] = null;
-                $detailData['car_model'] = null;
-                $detailData['model_year'] = null;
-                $detailData['plate_number'] = null;
-            }
-
-            if (! empty($detailData)) {
-                $claimRequestDetail = $claimRequest->claimRequestDetails()->first();
-                if ($claimRequestDetail) {
-                    $claimRequestDetail->update($detailData);
-                } else {
-                    $claimRequest->claimRequestDetails()->create($detailData);
-                }
-            }
-
-            // Log the update
-            LoggerService::info(' Claim request updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_uuid' => $claimRequest->uuid,
-                'code' => $claimRequest->code,
-                'updated_by' => Auth::id(),
-            ]);
+            // Log successful update
+            $this->logClaimUpdate($claimRequest);
 
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus']);
         } catch (\Exception $e) {
-            LoggerService::error(' Error updating claim request - Claim UUID: '.$uuid, extra: [
-                'error' => $e->getMessage(),
-                'claim_request_id' => $uuid,
-                'data' => $request,
-            ]);
-
+            $this->logClaimUpdateError($uuid, $e, $request);
             throw $e;
         }
+    }
+
+    /**
+     * Get allowed fields for claim request update
+     */
+    protected function getAllowedClaimRequestFields(): array
+    {
+        $claimRequestFillable = (new ClaimRequest)->getFillable();
+        $formSpecificFields = ['incident_story', 'whatsapp_consent', 'selected_policy_id', 'policy_not_listed'];
+
+        return array_merge($claimRequestFillable, $formSpecificFields);
+    }
+
+    /**
+     * Prepare claim request data for update
+     */
+    protected function prepareClaimRequestData($request): array
+    {
+        $allowedFields = $this->getAllowedClaimRequestFields();
+        $claimRequestData = collect($request)->only($allowedFields)->filter()->toArray();
+
+        // Map incident_story to incident field
+        if (isset($claimRequestData['incident_story'])) {
+            $claimRequestData['incident'] = $claimRequestData['incident_story'];
+            unset($claimRequestData['incident_story']);
+        }
+
+        return $claimRequestData;
+    }
+
+    /**
+     * Update or create claim request detail
+     */
+    protected function updateClaimRequestDetail(ClaimRequest $claimRequest, $request, ?int $quoteTypeId): void
+    {
+        $detailData = $this->prepareClaimDetailData($request, $quoteTypeId);
+
+        if (empty($detailData)) {
+            return;
+        }
+
+        $this->updateOrCreateClaimDetail($claimRequest, $detailData);
+    }
+
+    /**
+     * Prepare claim detail data with quote type-specific field clearing
+     */
+    protected function prepareClaimDetailData($request, ?int $quoteTypeId): array
+    {
+        $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
+        $detailData = collect($request)->only($claimRequestDetailFillable)->toArray();
+
+        return $this->clearQuoteTypeSpecificFields($detailData, $quoteTypeId);
+    }
+
+    /**
+     * Clear fields based on quote type to maintain data integrity
+     */
+    protected function clearQuoteTypeSpecificFields(array $detailData, ?int $quoteTypeId): array
+    {
+        $carFields = ['car_make', 'car_model', 'model_year', 'plate_number'];
+        $healthFields = ['service_type_id', 'request_reference_number'];
+
+        if ($quoteTypeId === QuoteTypeId::Car) {
+            // Clear health-related fields for car quotes
+            foreach ($healthFields as $field) {
+                $detailData[$field] = null;
+            }
+        } elseif ($quoteTypeId === QuoteTypeId::Health) {
+            // Clear car-related fields for health quotes
+            foreach ($carFields as $field) {
+                $detailData[$field] = null;
+            }
+        } else {
+            // Clear both car and health fields for other quote types
+            foreach (array_merge($carFields, $healthFields) as $field) {
+                $detailData[$field] = null;
+            }
+        }
+
+        return $detailData;
+    }
+
+    /**
+     * Update existing or create new claim detail record
+     */
+    protected function updateOrCreateClaimDetail(ClaimRequest $claimRequest, array $detailData): void
+    {
+        $claimRequestDetail = $claimRequest->claimRequestDetails()->first();
+
+        if ($claimRequestDetail) {
+            $claimRequestDetail->update($detailData);
+        } else {
+            $claimRequest->claimRequestDetails()->create($detailData);
+        }
+    }
+
+    /**
+     * Log successful claim update
+     */
+    protected function logClaimUpdate(ClaimRequest $claimRequest): void
+    {
+        LoggerService::info(' Claim request updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
+            'code' => $claimRequest->code,
+            'updated_by' => Auth::id(),
+        ]);
+    }
+
+    /**
+     * Log claim update error
+     */
+    protected function logClaimUpdateError(string $uuid, $e, $request): void
+    {
+        LoggerService::error(' Error updating claim request - Claim UUID: '.$uuid, extra: [
+            'error' => $e->getMessage(),
+            'claim_request_id' => $uuid,
+            'data' => $request,
+        ]);
     }
 
     /**
@@ -522,84 +598,162 @@ class ClaimsService extends BaseService
     public function updateClaimDetails(ClaimRequest $claimRequest, $request): ClaimRequest
     {
         try {
+            $hasMainTableUpdates = $this->processClaimMainTableUpdates($claimRequest, $request);
+            $hasDetailsTableUpdates = $this->processClaimDetailsTableUpdates($claimRequest, $request);
 
-            // Get allowed fields from model fillable arrays (filtered for this specific update method)
-            $claimRequestFillable = (new ClaimRequest)->getFillable();
-            $claimRequestFields = array_intersect($claimRequestFillable, [
-                'claim_type_id',
-                'claim_number',
-                'claim_decline_reason',
-                'claim_request_type_id',
-                'incident_date',
-            ]);
-
-            // Get allowed detail fields from model fillable array (filtered for this specific update method)
-            $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
-            $claimRequestDetailFields = array_intersect($claimRequestDetailFillable, [
-                'plate_number',
-                'car_make',
-                'car_model',
-                'model_year',
-                'service_type_id',
-            ]);
-
-            // Separate data for claim request table
-            $claimRequestData = collect($request)->only($claimRequestFields)->toArray();
-
-            // Update claim request if there's data
-            if (! empty($claimRequestData)) {
-                $isClaimDeclineReasonUpdated = empty($claimRequest->claim_decline_reason) && ! empty($claimRequestData['claim_decline_reason']);
-                $claimRequest->update($claimRequestData);
-
-                if ($isClaimDeclineReasonUpdated) {
-                    $this->claimsStatusesService->markClaimAsClosed($claimRequest);
-                }
-
-                LoggerService::info(' Claim request main table updated - Claim UUID: '.$claimRequest->uuid, extra: [
-                    'claim_uuid' => $claimRequest->uuid,
-                    'updated_fields' => array_keys($claimRequestData),
-                    'updated_by' => Auth::id(),
-                ]);
-            }
-
-            // Separate data for claim request details table
-            $detailData = collect($request)->only($claimRequestDetailFields)->toArray();
-
-            // Handle claim request details update/create
-            if (! empty($detailData)) {
-                $claimRequestDetail = $claimRequest->claimRequestDetails()->first();
-
-                if ($claimRequestDetail) {
-                    $claimRequestDetail->update($detailData);
-
-                } else {
-                    // Create new detail record if it doesn't exist
-                    $detailData['claim_request_id'] = $claimRequest->id;
-                    $claimRequestDetail = $claimRequest->claimRequestDetails()->create($detailData);
-                }
-            }
-
-            // Log the overall update
-            LoggerService::info(' Claim details updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_uuid' => $claimRequest->uuid,
-                'code' => $claimRequest->code,
-                'updated_by' => Auth::id(),
-                'main_table_updates' => ! empty($claimRequestData),
-                'details_table_updates' => ! empty($detailData),
-            ]);
+            $this->logClaimDetailsUpdate($claimRequest, $hasMainTableUpdates, $hasDetailsTableUpdates);
 
             return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus', 'claimType', 'claimRequestType']);
 
         } catch (\Exception $e) {
-            LoggerService::error(' Error updating claim details - Claim UUID: '.$claimRequest->uuid, extra: [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'data' => $request,
-                'updated_by' => Auth::id(),
-            ]);
-
+            $this->logClaimDetailsUpdateError($claimRequest, $e, $request);
             throw $e;
         }
+    }
+
+    /**
+     * Get allowed fields for claim details update
+     */
+    protected function getAllowedClaimDetailsFields(): array
+    {
+        $claimRequestFillable = (new ClaimRequest)->getFillable();
+
+        return array_intersect($claimRequestFillable, [
+            'claim_type_id',
+            'claim_number',
+            'claim_decline_reason',
+            'claim_request_type_id',
+            'incident_date',
+        ]);
+    }
+
+    /**
+     * Get allowed fields for claim request detail update
+     */
+    protected function getAllowedClaimRequestDetailFields(): array
+    {
+        $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
+
+        return array_intersect($claimRequestDetailFillable, [
+            'plate_number',
+            'car_make',
+            'car_model',
+            'model_year',
+            'service_type_id',
+        ]);
+    }
+
+    /**
+     * Process updates to claim main table
+     */
+    protected function processClaimMainTableUpdates(ClaimRequest $claimRequest, $request): bool
+    {
+        $allowedFields = $this->getAllowedClaimDetailsFields();
+        $claimRequestData = collect($request)->only($allowedFields)->toArray();
+
+        if (empty($claimRequestData)) {
+            return false;
+        }
+
+        $this->updateClaimMainTable($claimRequest, $claimRequestData);
+
+        return true;
+    }
+
+    /**
+     * Update claim main table and handle decline reason logic
+     */
+    protected function updateClaimMainTable(ClaimRequest $claimRequest, array $claimRequestData): void
+    {
+        $isClaimDeclineReasonUpdated = $this->isClaimDeclineReasonUpdated($claimRequest, $claimRequestData);
+
+        $claimRequest->update($claimRequestData);
+
+        if ($isClaimDeclineReasonUpdated) {
+            $this->claimsStatusesService->markClaimAsClosed($claimRequest);
+        }
+
+        $this->logClaimMainTableUpdate($claimRequest, $claimRequestData);
+    }
+
+    /**
+     * Check if claim decline reason is being set for the first time
+     */
+    protected function isClaimDeclineReasonUpdated(ClaimRequest $claimRequest, array $claimRequestData): bool
+    {
+        return empty($claimRequest->claim_decline_reason)
+            && ! empty($claimRequestData['claim_decline_reason']);
+    }
+
+    /**
+     * Log claim main table update
+     */
+    protected function logClaimMainTableUpdate(ClaimRequest $claimRequest, array $claimRequestData): void
+    {
+        LoggerService::info(' Claim request main table updated - Claim UUID: '.$claimRequest->uuid, extra: [
+            'claim_uuid' => $claimRequest->uuid,
+            'updated_fields' => array_keys($claimRequestData),
+            'updated_by' => Auth::id(),
+        ]);
+    }
+
+    /**
+     * Process updates to claim details table
+     */
+    protected function processClaimDetailsTableUpdates(ClaimRequest $claimRequest, $request): bool
+    {
+        $allowedFields = $this->getAllowedClaimRequestDetailFields();
+        $detailData = collect($request)->only($allowedFields)->toArray();
+
+        if (empty($detailData)) {
+            return false;
+        }
+
+        $this->updateOrCreateClaimRequestDetailRecord($claimRequest, $detailData);
+
+        return true;
+    }
+
+    /**
+     * Update existing or create new claim request detail record
+     */
+    protected function updateOrCreateClaimRequestDetailRecord(ClaimRequest $claimRequest, array $detailData): void
+    {
+        $claimRequestDetail = $claimRequest->claimRequestDetails()->first();
+
+        if ($claimRequestDetail) {
+            $claimRequestDetail->update($detailData);
+        } else {
+            $detailData['claim_request_id'] = $claimRequest->id;
+            $claimRequest->claimRequestDetails()->create($detailData);
+        }
+    }
+
+    /**
+     * Log successful claim details update
+     */
+    protected function logClaimDetailsUpdate(ClaimRequest $claimRequest, bool $hasMainTableUpdates, bool $hasDetailsTableUpdates): void
+    {
+        LoggerService::info(' Claim details updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
+            'claim_uuid' => $claimRequest->uuid,
+            'code' => $claimRequest->code,
+            'updated_by' => Auth::id(),
+            'main_table_updates' => $hasMainTableUpdates,
+            'details_table_updates' => $hasDetailsTableUpdates,
+        ]);
+    }
+
+    /**
+     * Log claim details update error
+     */
+    protected function logClaimDetailsUpdateError(ClaimRequest $claimRequest, $e, $request): void
+    {
+        LoggerService::error(' Error updating claim details - Claim UUID: '.$claimRequest->uuid, extra: [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'data' => $request,
+            'updated_by' => Auth::id(),
+        ]);
     }
 
     /**
@@ -672,9 +826,7 @@ class ClaimsService extends BaseService
      */
     public function getCarModelByMake(?string $carMake = null): array
     {
-        $carMakeCode = CarMake::active()
-            ->where('text', $carMake)
-            ->value('code');
+        $carMakeCode = CarMake::active()->where('text', $carMake)->value('code');
 
         if (! $carMakeCode) {
             return [];
@@ -693,8 +845,6 @@ class ClaimsService extends BaseService
         $claimRequestDetails = $claimRequest->claimRequestDetails;
 
         $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
-        $isHealthQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Health;
-        $isLifeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Life;
 
         $isRequiredFieldsFilled = false;
 
@@ -753,21 +903,27 @@ class ClaimsService extends BaseService
     public function getClaimLeadHistory(int $claimId)
     {
         try {
-            // Simple query - frontend will process old status from chronological order
-            $claimLeadHistory = DB::table('claim_activities as ca')
-                ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
-                ->join('users as u', 'ca.created_by_id', '=', 'u.id')
-                ->select(
-                    'ca.created_at as ModifiedAt',
-                    'ca.comment as Notes',
-                    'u.name as ModifiedBy',
-                    'cs.text as NewStatus',
-                    'ca.created_at as created_at' // Include for frontend sorting
-                )
-                ->where('ca.claim_request_id', $claimId)
-                ->where('cs.status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value) // Only get status_type statuses (main claim statuses)
-                ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
-                ->get();
+            // Simple query using Eloquent ORM - frontend will process old status from chronological order
+            $claimLeadHistory = ClaimActivity::with([
+                'claimStatus:id,text,status_type',
+                'createdBy:id,name',
+            ])
+                ->forClaimRequest($claimId)
+                ->whereNotNull('status_id')
+                ->whereHas('claimStatus', function ($query) {
+                    $query->where('status_type', ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value);
+                })
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(function ($activity) {
+                    return [
+                        'ModifiedAt' => $activity->created_at,
+                        'Notes' => $activity->comment,
+                        'ModifiedBy' => $activity->createdBy->name ?? null,
+                        'NewStatus' => $activity->claimStatus->text ?? null,
+                        'created_at' => $activity->created_at, // Include for frontend sorting
+                    ];
+                });
 
             return $claimLeadHistory;
 

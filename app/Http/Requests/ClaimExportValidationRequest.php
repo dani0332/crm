@@ -152,7 +152,7 @@ class ClaimExportValidationRequest extends FormRequest
                 $diffInDays = 31;
                 $diff = $start->diffInDays($end);
 
-                if ($diff >= $diffInDays) {
+                if ($diff > $diffInDays) {
                     $validator->errors()->add('created_at_end', "Maximum of {$diffInDays} days (created date range) are allowed for download exports.");
                 }
             }

@@ -27,6 +27,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
+use App\Http\Controllers\ClaimDocumentsController;
+use App\Http\Controllers\ClaimLogController;
 use App\Http\Controllers\HealthQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
@@ -330,16 +332,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('optimize-message');
 
         // Documents
-        Route::post('/{claim:uuid}/documents', [ClaimsController::class, 'storeDocument'])->name('documents.store');
-        Route::delete('/{claim:uuid}/documents/{document}', [ClaimsController::class, 'destroyDocument'])->name('documents.destroy');
-        Route::post('/documents/get-s3-temp-url', [ClaimsController::class, 'getS3TempUrl'])->name('documents.get-s3-temp-url');
-        Route::get('/{claim:uuid}/documents/download-all', [ClaimsController::class, 'downloadAllDocuments'])->name('documents.download-all');
+        Route::post('/{claim:uuid}/documents', [ClaimDocumentsController::class, 'storeDocument'])->name('documents.store');
+        Route::delete('/{claim:uuid}/documents/{document}', [ClaimDocumentsController::class, 'destroyDocument'])->name('documents.destroy');
+        Route::post('/documents/get-s3-temp-url', [ClaimDocumentsController::class, 'getS3TempUrl'])->name('documents.get-s3-temp-url');
+        Route::get('/{claim:uuid}/documents/download-all', [ClaimDocumentsController::class, 'downloadAllDocuments'])->name('documents.download-all');
 
         // History & Logs
-        Route::get('/{claim:uuid}/lead-history', [ClaimsController::class, 'getClaimLeadHistory'])->name('lead-history');
-        Route::get('/{claim:uuid}/sub-status-logs', [ClaimsController::class, 'getClaimSubStatusLogs'])->name('sub-status-logs');
-        Route::get('/{claim:uuid}/complaint-status-logs', [ClaimsController::class, 'getComplaintStatusLogs'])->name('complaint-status-logs');
-        Route::get('/{claim:uuid}/next-follow-up-logs', [ClaimsController::class, 'getNextFollowUpLogs'])->name('next-follow-up-logs');
+        Route::get('/{claim:uuid}/lead-history', [ClaimLogController::class, 'getClaimLeadHistory'])->name('lead-history');
+        Route::get('/{claim:uuid}/sub-status-logs', [ClaimLogController::class, 'getClaimSubStatusLogs'])->name('sub-status-logs');
+        Route::get('/{claim:uuid}/complaint-status-logs', [ClaimLogController::class, 'getComplaintStatusLogs'])->name('complaint-status-logs');
+        Route::get('/{claim:uuid}/next-follow-up-logs', [ClaimLogController::class, 'getNextFollowUpLogs'])->name('next-follow-up-logs');
     });
 
     // Non Motor

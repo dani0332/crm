@@ -26,7 +26,7 @@ class SearchPoliciesRequest extends FormRequest
         return [
             'email' => 'required|email|max:255',
             'quote_type_id' => 'required|integer|exists:quote_type,id',
-            'policy_number' => 'required|string|max:100',
+            'policy_number' => 'nullable|string|max:100',
             'page' => 'nullable|integer|min:1',
         ];
     }

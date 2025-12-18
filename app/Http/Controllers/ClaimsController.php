@@ -7,9 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Exports\ClaimsExport;
 use App\Http\Requests\ClaimComplaintStatusUpdateRequest;
 use App\Http\Requests\ClaimDetailsUpdateRequest;
-use App\Http\Requests\ClaimDocumentRequest;
 use App\Http\Requests\ClaimExportValidationRequest;
-use App\Http\Requests\ClaimGetS3TempUrlRequest;
 use App\Http\Requests\ClaimMakeAdditionalContactPrimaryRequest;
 use App\Http\Requests\ClaimNextFollowUpUpdateRequest;
 use App\Http\Requests\ClaimOptimizeMessageRequest;
@@ -20,13 +18,11 @@ use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\ClaimRequest;
-use App\Models\QuoteDocument;
 use App\Services\ClaimDocumentService;
 use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
 use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
-use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,20 +36,17 @@ class ClaimsController extends Controller
     protected ClaimsService $claimsService;
     protected ClaimDocumentService $claimDocumentService;
     protected ClaimStatusesService $claimsStatusesService;
-    protected QuoteDocumentService $quoteDocumentService;
     protected CustomerService $customerService;
 
     public function __construct(
         ClaimsService $claimsService,
         ClaimStatusesService $claimsStatusesService,
         ClaimDocumentService $claimDocumentService,
-        QuoteDocumentService $quoteDocumentService,
         CustomerService $customerService,
     ) {
         $this->claimsService = $claimsService;
         $this->claimsStatusesService = $claimsStatusesService;
         $this->claimDocumentService = $claimDocumentService;
-        $this->quoteDocumentService = $quoteDocumentService;
         $this->customerService = $customerService;
         $this->cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
@@ -62,11 +55,7 @@ class ClaimsController extends Controller
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_EXPORT_DATA], ['only' => ['export']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_UPLOAD], ['only' => ['storeDocument']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_DELETE], ['only' => ['destroyDocument']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_S3_URL], ['only' => ['getS3TempUrl']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOWNLOAD_ALL_DOCUMENTS], ['only' => ['downloadAllDocuments']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['getClaimLeadHistory', 'getClaimSubStatusLogs']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['getClaimLeadHistory', 'getClaimSubStatusLogs', 'getComplaintStatusLogs', 'getNextFollowUpLogs']]);
     }
 
     /**
@@ -308,6 +297,8 @@ class ClaimsController extends Controller
         try {
             $requestParams = $request->safe();
 
+            /* TODO: Might need in future so commented it */
+
             // Check export type for email vs download
             /*if ($request->input('exportType') === 'email') {
                 $requestParams->recipientEmail = auth()->user()->email;
@@ -388,192 +379,6 @@ class ClaimsController extends Controller
     }
 
     /**
-     * Store claim document(s) - Enhanced version following PersonalQuoteController pattern
-     */
-    public function storeDocument(ClaimDocumentRequest $request, ClaimRequest $claim): JsonResponse
-    {
-        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_DOCUMENT_UPLOAD);
-        try {
-            $files = $request->file('files', []);
-            $documentData = ['document_type_code' => $request->document_type_code, 'folder_path' => $request->folder_path ?? 'claims'];
-
-            // Use the enhanced service method
-            $result = $this->claimDocumentService->uploadClaimDocuments($claim, $files, $documentData);
-
-            LoggerService::info(' Document upload process completed', extra: [
-                'claim_uuid' => $claim->uuid,
-                'success_count' => $result['success_count'],
-                'error_count' => $result['error_count'],
-                'document_type' => $request->document_type_code,
-                'user_id' => Auth::id(),
-            ]);
-
-            // Handle mixed results (some success, some failures)
-            if ($result['error_count'] > 0 && $result['success_count'] > 0) {
-                return response()->json([
-                    'success' => true,
-                    'message' => "{$result['success_count']} document(s) uploaded successfully, {$result['error_count']} failed.",
-                    'documents' => $result['uploaded_documents'],
-                    'errors' => $result['errors'],
-                    'partial_success' => true,
-                ], 207); // 207 Multi-Status
-            }
-
-            // All failed
-            if ($result['error_count'] > 0 && $result['success_count'] === 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'All document uploads failed.',
-                    'errors' => $result['errors'],
-                ], 400);
-            }
-
-            // All succeeded
-            return response()->json([
-                'success' => true,
-                'message' => count($files) === 1
-                    ? 'Document uploaded successfully.'
-                    : "{$result['success_count']} documents uploaded successfully.",
-                'documents' => $result['uploaded_documents'],
-            ]);
-
-        } catch (Exception $e) {
-            LoggerService::error(' Unexpected error during document upload', extra: [
-                'error' => $e->getMessage(),
-                'claim_uuid' => $claim->uuid,
-                'document_type' => $request->document_type_code ?? null,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json(['success' => false, 'message' => 'An unexpected error occurred during document upload.'], 500);
-        }
-    }
-
-    /**
-     * Delete claim document - Enhanced version with business logic validation
-     */
-    public function destroyDocument(ClaimRequest $claim, QuoteDocument $document): JsonResponse
-    {
-        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_DOCUMENT_DELETE);
-        try {
-            // Use service method with business logic validation
-            $deleted = $this->claimDocumentService->deleteClaimDocument($claim, $document->id);
-
-            if (! $deleted) {
-                return response()->json(['success' => false, 'message' => 'Document could not be deleted. It may be required for claim processing or the claim is in a finalized state.'], 422);
-            }
-
-            return response()->json(['success' => true, 'message' => 'Document deleted successfully.']);
-
-        } catch (Exception $e) {
-            LoggerService::error(' Unexpected error deleting document', extra: [
-                'error' => $e->getMessage(),
-                'claim_uuid' => $claim->uuid,
-                'document_id' => $document->id ?? null,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json(['success' => false, 'message' => 'An unexpected error occurred while deleting the document.'], 500);
-        }
-    }
-
-    /**
-     * Get S3 temporary URL for document access
-     */
-    public function getS3TempUrl(ClaimGetS3TempUrlRequest $request): JsonResponse
-    {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_DOCUMENT_S3_URL);
-
-        try {
-            // Use the same logic as quote documents for S3 temp URLs
-            return $this->quoteDocumentService->getDocumentTempURL($request->safe()->docURL);
-
-        } catch (Exception $e) {
-            LoggerService::error(' Error getting S3 temp URL', extra: [
-                'error' => $e->getMessage(),
-                'docURL' => $request->safe()->docURL,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json(['success' => false, 'error' => 'Failed to access document.'], 500);
-        }
-    }
-
-    /**
-     * Download all claim documents as a ZIP file
-     */
-    public function downloadAllDocuments(ClaimRequest $claim)
-    {
-        LoggerService::startQuoteLogging($claim, LoggerFeatureEnum::CLAIM_DOCUMENT_DOWNLOAD_ALL);
-        try {
-            // Use service to create ZIP
-            $result = $this->claimDocumentService->createDocumentsZip($claim);
-
-            if (! $result['success']) {
-                return response()->json([
-                    'message' => 'Failed to create document archive.',
-                    'details' => $result['errors'] ?? [],
-                ], 500);
-            }
-
-            return response()->download($result['file_path'])->deleteFileAfterSend(true);
-
-        } catch (Exception $e) {
-            LoggerService::error(' Unexpected error', extra: [
-                'error' => $e->getMessage(),
-                'claim_uuid' => $claim->uuid,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json(['success' => false, 'error' => 'An unexpected error occurred while downloading documents.'], 500);
-        }
-    }
-
-    /**
-     * Get claim lead history (AJAX endpoint)
-     */
-    public function getClaimLeadHistory(ClaimRequest $claim): JsonResponse
-    {
-        try {
-            $history = $this->claimsService->getClaimLeadHistory($claim->id);
-
-            return response()->json($history);
-
-        } catch (Exception $e) {
-            LoggerService::error(' Error fetching claim lead history', extra: [
-                'error' => $e->getMessage(),
-                'claim_uuid' => $claim->uuid,
-                'claim_id' => $claim->id,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json(['success' => false, 'message' => 'Failed to load claim lead history.'], 500);
-        }
-    }
-
-    /**
-     * Get claim sub-status logs (AJAX endpoint)
-     */
-    public function getClaimSubStatusLogs(ClaimRequest $claim): JsonResponse
-    {
-        try {
-            $logs = $this->claimsStatusesService->getClaimSubStatusLogs($claim->id);
-
-            return response()->json($logs);
-
-        } catch (Exception $e) {
-            LoggerService::error(' Error fetching claim sub-status logs', extra: [
-                'error' => $e->getMessage(),
-                'claim_uuid' => $claim->uuid,
-                'claim_id' => $claim->id,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json(['success' => false, 'message' => 'Failed to load claim sub-status logs.'], 500);
-        }
-    }
-
-    /**
      * Update complaint status for a claim
      */
     public function updateComplaintStatus(ClaimComplaintStatusUpdateRequest $request, ClaimRequest $claim)
@@ -640,59 +445,6 @@ class ClaimsController extends Controller
         }
     }
 
-    /**
-     * Get complaint status logs for a claim
-     */
-    public function getComplaintStatusLogs(ClaimRequest $claim): JsonResponse
-    {
-        try {
-            $complaintStatusLogs = $this->claimsStatusesService->getComplaintStatusLogs($claim->id);
-
-            LoggerService::info(' Complaint status logs retrieved successfully', extra: [
-                'claim_uuid' => $claim->uuid,
-                'total_records' => count($complaintStatusLogs),
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json($complaintStatusLogs);
-
-        } catch (Exception $e) {
-            LoggerService::error(' Error retrieving complaint status logs', extra: [
-                'error' => $e->getMessage(),
-                'claim_uuid' => $claim->uuid,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json(['success' => false, 'message' => 'Failed to load complaint status logs.'], 500);
-        }
-    }
-
-    /**
-     * Get next follow-up logs for a claim
-     */
-    public function getNextFollowUpLogs(ClaimRequest $claim): JsonResponse
-    {
-        try {
-            $nextFollowUpLogs = $this->claimsService->getNextFollowUpLogs($claim->id);
-
-            LoggerService::info(' Next follow-up logs retrieved successfully', extra: [
-                'claim_uuid' => $claim->uuid,
-                'total_records' => count($nextFollowUpLogs),
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json($nextFollowUpLogs);
-
-        } catch (Exception $e) {
-            LoggerService::error(' Error retrieving next follow-up logs', extra: [
-                'error' => $e->getMessage(),
-                'claim_uuid' => $claim->uuid,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json(['success' => false, 'message' => 'Failed to load next follow-up logs.'], 500);
-        }
-    }
 
     /**
      * Make additional contact primary for claim request

@@ -326,7 +326,7 @@ class LookupService extends BaseService
     public function getClaimTypes(): array
     {
         return CacheManager::remember(CacheKeyEnum::CLAIM_TYPE_KEY, function () {
-            return Lookup::byKey(LookupsEnum::CLAIM_TYPES)
+            return Lookup::byKey(LookupsEnum::CLAIM_TYPES->value)
                 ->active()
                 ->select('id', 'text', 'code')
                 ->orderBy('text')

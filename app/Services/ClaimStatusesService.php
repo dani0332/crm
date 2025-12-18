@@ -205,7 +205,7 @@ class ClaimStatusesService extends BaseService
             // Update the claim request
             $claimRequest->update($statusUpdateData);
 
-            LoggerService::info(' Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info('Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'code' => $claimRequest->code,
@@ -270,22 +270,27 @@ class ClaimStatusesService extends BaseService
     public function getClaimSubStatusLogs(int $claimId)
     {
         try {
-            // Simple query - frontend will process old sub-status from chronological order
-            $claimSubStatusLogs = DB::table('claim_activities as ca')
-                ->join('claim_statuses as cs', 'ca.status_id', '=', 'cs.id')
-                ->join('users as u', 'ca.created_by_id', '=', 'u.id')
-                ->select(
-                    'ca.created_at as ModifiedAt',
-                    'u.name as ModifiedBy',
-                    'cs.text as NewSubStatus',
-                    'ca.comment as Notes',
-                    'ca.created_at as created_at' // Include for frontend sorting
-                )
-                ->where('ca.claim_request_id', $claimId)
-                ->where('cs.status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value) // Only get sub-statuses (not status_type statuses)
-                ->whereNotNull('ca.status_id')
-                ->orderBy('ca.created_at', 'asc') // Order chronologically for frontend processing
-                ->get();
+            // Simple query using Eloquent ORM - frontend will process old sub-status from chronological order
+            $claimSubStatusLogs = ClaimActivity::with([
+                    'claimStatus:id,text,status_type',
+                    'createdBy:id,name'
+                ])
+                ->forClaimRequest($claimId)
+                ->whereNotNull('status_id')
+                ->whereHas('claimStatus', function ($query) {
+                    $query->where('status_type', ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value);
+                })
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(function ($activity) {
+                    return [
+                        'ModifiedAt' => $activity->created_at,
+                        'ModifiedBy' => $activity->createdBy->name ?? null,
+                        'NewSubStatus' => $activity->claimStatus->text ?? null,
+                        'Notes' => $activity->comment,
+                        'created_at' => $activity->created_at, // Include for frontend sorting
+                    ];
+                });
 
             return $claimSubStatusLogs;
 
@@ -310,8 +315,7 @@ class ClaimStatusesService extends BaseService
             $claim->updateComplaintStatus($complaintStatusId, $complaintDatetime, $notes);
 
             // Check if complaint status has changed to open complaint status
-            $newComplaintStatus = ClaimStatus::active()
-                ->find($complaintStatusId);
+            $newComplaintStatus = ClaimStatus::active()->find($complaintStatusId);
 
             $isNewStatusComplaintOpen = $newComplaintStatus?->text === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 

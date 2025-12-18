@@ -890,12 +890,7 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
           </DataTable>
 
           <!-- Pagination -->
-          <div
-            v-if="
-              policySearch.pagination.has_more_pages ||
-              policySearch.pagination.current_page > 1
-            "
-          >
+          <div>
             <PaginateClient
               :links="{
                 next: policySearch.pagination.next_page_url,
