@@ -301,5 +301,30 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        
+        // Create personal_quotes table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('car_quote_request')) {
+            Schema::connection('sqlite')->create('car_quote_request', function ($table) {
+                $table->id();
+                $table->string('uuid')->unique();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->date('dob')->nullable();
+                $table->string('source')->nullable();
+                $table->string('device')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->unsignedBigInteger('created_by_id')->nullable();
+                $table->unsignedBigInteger('updated_by_id')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 }
