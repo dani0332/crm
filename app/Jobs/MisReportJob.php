@@ -28,7 +28,7 @@ class MisReportJob implements ShouldQueue
     public function __construct()
     {
         $this->startDate = now()->subDays(7)->startOfDay();
-        $this->endDate = now()->endOfDay();
+        $this->endDate = now()->subDays(1)->endOfDay();
     }
 
     public function handle(): void
