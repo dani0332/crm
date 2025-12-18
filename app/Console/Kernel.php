@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\MisReportCommand;
 use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
@@ -9,7 +10,6 @@ use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
-use App\Jobs\MisReportJob;
 use App\Jobs\SLAMonitoringJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -42,6 +42,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
         Commands\CaptureEPPaymentsCommand::class,
+        Commands\MisReportCommand::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
@@ -162,34 +163,31 @@ class Kernel extends ConsoleKernel
             });
         $schedule->job(new SLAMonitoringJob)->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
+        // Schedule MIS Report command with environment-specific configurations
         $this->scheduleWithEnvironment(
             $schedule,
-            new MisReportJob,
-            default: fn($event) => $event->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
+            'mis-report:run',
+            default: fn($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
             environments: ['staging' => fn($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
         );
     }
 
     /**
-     * Schedule a command or job with environment-specific configurations.
+     * Schedule a command with environment-specific configurations.
      *
      * @param  Schedule  $schedule
-     * @param  mixed  $schedulable  Command string, job instance, or closure
+     * @param  string|class-string  $command  Command string (e.g., 'command:name') or command class name
      * @param  \Closure  $default  Default schedule configuration callback
      * @param  array<string, \Closure>  $environments  Environment-specific schedule configurations
      * @return \Illuminate\Console\Scheduling\Event
      */
     protected function scheduleWithEnvironment(
         Schedule $schedule,
-        mixed $schedulable,
+        string $command,
         \Closure $default,
         array $environments = []
     ) {
-        $event = is_string($schedulable)
-            ? $schedule->command($schedulable)
-            : (is_object($schedulable) && !($schedulable instanceof \Closure)
-                ? $schedule->job($schedulable)
-                : $schedule->call($schedulable));
+        $event = $schedule->command($command);
 
         $currentEnvironment = app()->environment();
 
