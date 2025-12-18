@@ -9,7 +9,6 @@ use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
-use App\Jobs\MisReportJob;
 use App\Jobs\SLAMonitoringJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -42,6 +41,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
         Commands\CaptureEPPaymentsCommand::class,
+        Commands\MisReportCommand::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
@@ -162,11 +162,40 @@ class Kernel extends ConsoleKernel
             });
         $schedule->job(new SLAMonitoringJob)->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->job(new MisReportJob)
-            ->mondays()
-            ->at('08:00')
-            ->onOneServer()
-            ->withoutOverlapping();
+        // Schedule MIS Report command with environment-specific configurations
+        $this->scheduleWithEnvironment(
+            $schedule,
+            'mis-report:run',
+            default: fn ($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
+            environments: ['staging' => fn ($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
+        );
+    }
+
+    /**
+     * Schedule a command with environment-specific configurations.
+     *
+     * @param  string|class-string  $command  Command string (e.g., 'command:name') or command class name
+     * @param  \Closure  $default  Default schedule configuration callback
+     * @param  array<string, \Closure>  $environments  Environment-specific schedule configurations
+     * @return \Illuminate\Console\Scheduling\Event
+     */
+    protected function scheduleWithEnvironment(
+        Schedule $schedule,
+        string $command,
+        \Closure $default,
+        array $environments = []
+    ) {
+        $event = $schedule->command($command);
+
+        $currentEnvironment = app()->environment();
+
+        // Check if there's an environment-specific configuration
+        if (isset($environments[$currentEnvironment])) {
+            return $environments[$currentEnvironment]($event);
+        }
+
+        // Apply default configuration
+        return $default($event);
     }
 
     /**
