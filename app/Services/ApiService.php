@@ -613,7 +613,7 @@ class ApiService
                                     'message' => 'Lead not found',
                                 ];
                             }
-                            app(HealthEmailService::class)->sendSTPAdvisorNotification($lead);
+                            app(HealthEmailService::class)->sendSTPAdvisorNotification($lead, $request->apiFailed);
                             return [
                                 'success' => true,
                                 'message' => 'STP Advisor notification sent',

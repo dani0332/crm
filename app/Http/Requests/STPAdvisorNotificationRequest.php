@@ -25,6 +25,7 @@ class STPAdvisorNotificationRequest extends FormRequest
         return [
                 'quoteUuid' => 'required|string',
                 'quoteTypeId' => 'required|integer',
+                'apiFailed' => 'sometimes|boolean',
         ];
     }
 

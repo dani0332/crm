@@ -71,5 +71,6 @@ final class WorkflowTypeEnum extends Enum
 
     // Health STP Advisor Notification
     public const HEALTH_STP_ADVISOR_NOTIFICATION = 'health_stp_advisor_notification';
+    public const HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 'health_stp_advisor_notification_api_failed';
    
 }
