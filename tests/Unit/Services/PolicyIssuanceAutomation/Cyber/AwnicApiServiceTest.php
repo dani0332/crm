@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\AwnicEnum;
+use App\Models\PersonalQuote;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicApiService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicDocumentHandler;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicQuoteUpdaterService;
@@ -10,11 +11,12 @@ use App\Services\PolicyIssuanceAutomation\Cyber\AwnicValidationService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Http\Client\Response;
-use Tests\Support\FakeAwnicQuote;
+use Tests\Helpers\TestSchemaCreator;
 use Tests\Support\FakePolicyIssuanceProcess;
 use Tests\Support\FakePolicyIssuanceService;
 
 beforeEach(function () {
+    TestSchemaCreator::createCyberSchema();
     app()->instance(PolicyIssuanceService::class, new FakePolicyIssuanceService());
 });
 
@@ -28,7 +30,7 @@ function makeHttpResponse(array $payload, int $status = 200): Response
 }
 
 it('issues policy and updates quote data on success', function () {
-    $quote = new FakeAwnicQuote();
+    $quote = PersonalQuote::factory()->withCyberDependencies()->create();
     $process = new FakePolicyIssuanceProcess($quote);
 
     $payload = ['payload' => true];
@@ -76,7 +78,7 @@ it('issues policy and updates quote data on success', function () {
 });
 
 it('returns failure when issue policy API responds with error', function () {
-    $quote = new FakeAwnicQuote();
+    $quote = PersonalQuote::factory()->withCyberDependencies()->create();
     $process = new FakePolicyIssuanceProcess($quote);
 
     $requestBuilder = Mockery::mock(AwnicRequestBuilder::class);
@@ -106,7 +108,7 @@ it('returns failure when issue policy API responds with error', function () {
 });
 
 it('skips upload documents call when validation fails', function () {
-    $quote = new FakeAwnicQuote();
+    $quote = PersonalQuote::factory()->withCyberDependencies()->create();
     $process = new FakePolicyIssuanceProcess($quote);
 
     $validation = Mockery::mock(AwnicValidationService::class);

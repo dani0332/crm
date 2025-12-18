@@ -3,39 +3,41 @@
 namespace Database\Factories;
 
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Payment>
- */
 class PaymentFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition($code = ''): array
+    protected $model = Payment::class;
+
+    public function definition(): array
     {
         return [
-            'uuid' => $this->faker->uuid,
-            'code' => $code,
-            'price_vat_applicable' => $this->faker->randomFloat(2, 1000, 10000),
-            'price_vat_not_applicable' => $this->faker->randomFloat(2, 1000, 10000),
-            'discount_value' => $this->faker->randomFloat(2, 100, 500),
-            'commission_vat_applicable' => $this->faker->randomFloat(2, 1000, 10000),
-            'commission_vat_not_applicable' => $this->faker->randomFloat(2, 1000, 10000),
-            'created_at' => $this->faker->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
-            'updated_at' => $this->faker->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
+            'code' => 'PAY-'.Str::upper(Str::random(6)),
+            'price_vat_applicable' => $this->faker->randomFloat(2, 1000, 5000),
+            'price_vat' => 0,
+            'commission_vat_applicable' => 0,
+            'commission' => 0,
+            'commission_vat' => 0,
+            'commmission_percentage' => 0,
+            'insurer_tax_number' => null,
+            'insurer_invoice_date' => now()->toDateString(),
+            'insurer_commmission_invoice_number' => null,
         ];
     }
 
-    public function configure()
+    /**
+     * Define the model's cyber quote state.
+     *
+     * @return array
+     */
+    public function cyberPayment($code, $id)
     {
-        return $this->afterCreating(function (Payment $payment) {
-            if (! Payment::where('uuid', $personalQuote->uuid)->exists()) {
-                $personalQuote->payment()->save(Payment::factory()->create(['code' => $personalQuote->code]));
-            }
-        });
+        return $this->state(fn(array $attributes) => [
+            'code' => $code,
+            'paymentable_id' => $id,
+            'paymentable_type' => PersonalQuote::class,
+        ]);
     }
 }
