@@ -69,6 +69,8 @@ const isPlanSelectionDisable = computed(() => {
   return false;
 });
 
+const isLocked = quote?.is_quote_locked ?? false;
+
 const closeSelectPlanConfirmModal = () => {
   showSelectPlanConfirm.value = false;
 };
@@ -416,7 +418,7 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
       color="success"
       outlined
       :loading="isLoading"
-      :disabled="isDisabled || isPlanSelectionDisable"
+      :disabled="isDisabled || isPlanSelectionDisable || isLocked"
       @click.prevent="checkAndUpdateSelectedPlan()"
     >
       Select

@@ -4,9 +4,10 @@ namespace App\Traits;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BranchEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
@@ -15,6 +16,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
@@ -25,8 +27,10 @@ use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
+use App\Models\User;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\BrokerCommissionService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
@@ -273,10 +277,7 @@ trait GenericQueriesAllLobs
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
-        $isHealthAUHLead = $this->isHealthAUHLead($quoteType, $record);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$record->code.' - Is Health AUH Lead Check ', extra : [
-            'isHealthAUHLead' => $isHealthAUHLead,
-        ]);
+        $isAbuDhabiBranch = $this->isAbuDhabiBranch($quoteType, $record);
 
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
@@ -287,7 +288,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['editButton'] = false;
         $bookPolicyDetails['sendPolicyType'] = null;
         $bookPolicyDetails['text'] = 'Send and Book Policy';
-        @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record, $isHealthAUHLead);
+        @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record, $isAbuDhabiBranch);
         $bookPolicyDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
         $bookPolicyDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
         $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payment);
@@ -348,8 +349,8 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
-        // Check if this is an Abu Dhabi health quote lead
-        $bookPolicyDetails['isHealthAUHLead'] = $isHealthAUHLead;
+        // Check if this is an Abu Dhabi quote lead
+        $bookPolicyDetails['isAbuDhabiBranch'] = $isAbuDhabiBranch;
 
         return $bookPolicyDetails;
     }
@@ -393,7 +394,7 @@ trait GenericQueriesAllLobs
      *
      * @return array
      */
-    private function transactionPaymentStatus($payment, $quote, $isHealthAUHLead = false)
+    private function transactionPaymentStatus($payment, $quote, $isAbuDhabiBranch = false)
     {
         // If no payment has been created for the lead, return an unpaid payment status along with the relevant tooltip
         if (! $payment) {
@@ -408,7 +409,7 @@ trait GenericQueriesAllLobs
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
         $updateRequired = in_array($quote->quote_status_id, $statusesTriggeringUpdate) && is_null($payment->transaction_payment_status);
-        if ($updateRequired && ! $isHealthAUHLead) {
+        if ($updateRequired && ! $isAbuDhabiBranch) {
             $this->updatePaymentAllocationStatus($quote);
         }
 
@@ -833,11 +834,38 @@ trait GenericQueriesAllLobs
         return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
     }
 
-    public function isHealthAUHLead($quoteType, $record)
+    public function isAbuDhabiBranch($quoteType, $record)
     {
-        return strtolower($quoteType) === strtolower(QuoteTypes::HEALTH->value) &&
-                                            isset($record->emirate_of_your_visa_id) &&
-                                            $record->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI;
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $advisor = User::with('primaryBranch')->find($record?->advisor_id);
+        $emirate = null;
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emirate = $record?->emirate_of_your_visa_id ?? null;
+        } elseif (
+            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
+            && $record?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+        ) {
+            $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
+            $quoteTypeId = QuoteTypeId::GroupMedical;
+        }
+
+        if ($record?->is_branch_applicable == 0) {
+            return false;
+        }
+
+        if (isset($record?->lead_branch_id) && $record?->lead_branch_id) {
+            return $record?->lead_branch_id == BranchEnum::ABU_DHABI->value;
+        }
+
+        $branch = $record?->branch ?? app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
+
+        LoggerService::info('Branch check for Quote', extra: [
+            'ref_id' => $record?->code,
+            'branch_id' => $branch?->id,
+            'is_abu_dhabi_branch' => $branch?->id == BranchEnum::ABU_DHABI->value,
+        ]);
+
+        return $branch?->id == BranchEnum::ABU_DHABI->value;
     }
 
     /**
