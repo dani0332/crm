@@ -2,8 +2,15 @@
 
 namespace Database\Factories;
 
+use App\Enums\CollectionTypeEnum;
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Models\CarQuote;
 use App\Models\Payment;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Payment>
@@ -15,27 +22,64 @@ class PaymentFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    public function definition($code = ''): array
+    public function definition(): array
     {
         return [
-            'uuid' => $this->faker->uuid,
-            'code' => $code,
-            'price_vat_applicable' => $this->faker->randomFloat(2, 1000, 10000),
-            'price_vat_not_applicable' => $this->faker->randomFloat(2, 1000, 10000),
-            'discount_value' => $this->faker->randomFloat(2, 100, 500),
-            'commission_vat_applicable' => $this->faker->randomFloat(2, 1000, 10000),
-            'commission_vat_not_applicable' => $this->faker->randomFloat(2, 1000, 10000),
-            'created_at' => $this->faker->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
-            'updated_at' => $this->faker->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
+            'payment_status_id' => PaymentStatusEnum::NEW,
+            'payment_methods_code' => PaymentMethodsEnum::InsurerPayment,
+            'collection_type' => CollectionTypeEnum::INSURER,
+            'frequency' => PaymentFrequency::UPFRONT,
+            'total_payments' => 1,
+            'discount_value' => 0,
+            'collection_date' => now(),
+            'captured_amount' => 0,
         ];
     }
 
-    public function configure()
+    /**
+     * Create a Payment using SQLite connection for tests.
+     * Accepts a CarQuote object and extracts plan_id, insurance_provider_id, code, and premium.
+     * Gets created_by and updated_by from currently logged in user.
+     *
+     * @param CarQuote $carQuote The car quote to create payment for
+     * @param array $attributes Additional attributes to override defaults
+     * @return Payment
+     */
+    public function createForSqlite(CarQuote $carQuote, array $attributes = []): Payment
     {
-        return $this->afterCreating(function (Payment $payment) {
-            if (! Payment::where('uuid', $personalQuote->uuid)->exists()) {
-                $personalQuote->payment()->save(Payment::factory()->create(['code' => $personalQuote->code]));
-            }
-        });
+        $db = DB::connection('sqlite');
+        $user = Auth::user();
+        
+        // Get premium from car quote (default to 1000 if not set)
+        $premium = $carQuote->premium ?? 1000;
+        
+        // Build payment attributes from car quote
+        $paymentAttributes = array_merge($this->definition(), [
+            'code' => $carQuote->code,
+            'plan_id' => $carQuote->plan_id,
+            'insurance_provider_id' => $carQuote->insurance_provider_id,
+            'paymentable_id' => $carQuote->id,
+            'paymentable_type' => CarQuote::class,
+            'total_price' => $premium,
+            'total_amount' => $premium, 
+            'created_by' => $user?->id,
+            'updated_by' => $user?->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], $attributes);
+        
+        // Insert via SQLite connection
+        $paymentId = $db->table('payments')->insertGetId($paymentAttributes);
+        
+        // Load and return model with SQLite connection
+        return Payment::on('sqlite')->find($paymentId);
     }
 }
+
+// Simple usage - just pass the CarQuote
+// $payment = Payment::factory()->createForSqlite($this->carQuote);
+
+// Or override specific attributes if needed
+// $payment = Payment::factory()->createForSqlite($this->carQuote, [
+//     'payment_methods_code' => PaymentMethodsEnum::CreditCard,
+// ]);

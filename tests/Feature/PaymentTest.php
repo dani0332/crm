@@ -50,7 +50,37 @@ beforeEach(function () {
     ]);
 });
 
-
 test('payment should be created', function () {
-    expect($this->carQuote->code)->toBe($this->quoteCode);
+    // Create payment using factory with CarQuote
+    $payment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
+    
+    // Log complete payment object for verification
+    \Illuminate\Support\Facades\Log::info('Payment Object:', [
+        'payment' => $payment->toArray(),
+        'payment_attributes' => $payment->getAttributes(),
+    ]);
+    
+    // Log complete car quote object for verification
+    \Illuminate\Support\Facades\Log::info('Car Quote Object:', [
+        'car_quote' => $this->carQuote->toArray(),
+        'car_quote_attributes' => $this->carQuote->getAttributes(),
+    ]);
+    
+    // Also output to console for immediate verification
+    dump('=== PAYMENT OBJECT ===');
+    dump($payment->toArray());
+    dump('=== CAR QUOTE OBJECT ===');
+    dump($this->carQuote->toArray());
+    
+    expect($payment->code)->toBe($this->quoteCode)
+        ->and($payment->plan_id)->toBe($this->carPlan->id)
+        ->and($payment->insurance_provider_id)->toBe($this->insuranceProvider->id)
+        ->and($payment->total_price)->toBe($this->carQuote->premium)
+        ->and($payment->total_amount)->toBe($this->carQuote->premium)
+        ->and($payment->discount_value)->toBe(0)
+        ->and($payment->created_by)->toBe($this->user->id)
+        ->and($payment->updated_by)->toBe($this->user->id)
+        ->and($payment->paymentable_id)->toBe($this->carQuote->id)
+        ->and($payment->paymentable_type)->toBe(\App\Models\CarQuote::class);
+
 });
