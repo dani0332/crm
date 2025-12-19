@@ -772,13 +772,13 @@ class SukoonMedexService
             $firstName = $quote->first_name ?? '';
             $lastName = $quote->last_name ?? '';
         } else {
-            $firstName = ($insuredKyc?->first_name ?? $quote->customer?->insured_first_name) ?? '';
-            $lastName = ($insuredKyc?->last_name ?? $quote->customer?->insured_last_name) ?? '';
+            $firstName = ($latestInsuredData?->first_name ?? $quote->customer?->insured_first_name) ?? '';
+            $lastName = ($latestInsuredData?->last_name ?? $quote->customer?->insured_last_name) ?? '';
         }
 
         $quoteType = $quote->quote_type_id ?? null;
         $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
-        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
+        $emirateIdNumber = str_replace('-', '', $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '');
 
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
             $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
