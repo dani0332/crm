@@ -109,7 +109,7 @@ class CarQuoteFactory extends Factory
             'dob' => $this->faker->date(),
             'source' => $this->faker->randomElement(['IMCRM']),
             'device' => $this->faker->randomElement(['web']),
-            'premium' => 1000,
+            'premium' => 1680,
             'quote_status_id' => null,
             'payment_status_id' => null,
             'advisor_id' => null,

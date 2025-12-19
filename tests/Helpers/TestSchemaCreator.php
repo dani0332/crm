@@ -2,6 +2,7 @@
 
 namespace Tests\Helpers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class TestSchemaCreator
@@ -196,16 +197,18 @@ class TestSchemaCreator
         }
 
         // Create application_storage table if it doesn't exist
+        // Required for VAT calculations in PaymentObserver and PaymentSplitsObserver
         if (! Schema::connection('sqlite')->hasTable('application_storage')) {
             Schema::connection('sqlite')->create('application_storage', function ($table) {
                 $table->id();
                 $table->string('key_name')->unique();
                 $table->text('value')->nullable();
+                $table->boolean('is_active')->default(1);
                 $table->softDeletes();
                 $table->timestamps();
             });
         }
-
+        
         // Create teams table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('teams')) {
             Schema::connection('sqlite')->create('teams', function ($table) {
@@ -457,6 +460,7 @@ class TestSchemaCreator
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
+                $table->unsignedBigInteger('customer_id')->nullable(); // Required for UpdateCustomerEmail listener
                 $table->timestamps();
                 $table->softDeletes(); // BaseModel uses SoftDeletes trait
             });
@@ -513,6 +517,21 @@ class TestSchemaCreator
                 $table->id();
                 $table->unsignedBigInteger('car_quote_request_id')->nullable();
                 $table->timestamps();
+            });
+        }
+
+        // Create customer table if it doesn't exist
+        // Required by UpdateCustomerEmail listener when QuoteEmailUpdated event is fired
+        if (! Schema::connection('sqlite')->hasTable('customer')) {
+            Schema::connection('sqlite')->create('customer', function ($table) {
+                $table->id();
+                $table->string('email')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->boolean('pcp_tag')->default(0);
+                $table->timestamps();
+                $table->softDeletes();
             });
         }
     }
