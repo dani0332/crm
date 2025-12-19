@@ -701,8 +701,8 @@ class ApiController extends Controller
     public function getCarDocuments()
     {
         $uuid = request('uuid');
-        $startDate = Carbon::parse('2025-11-01')->startOfMonth();
-        $endDate = Carbon::parse('2025-11-30')->endOfMonth();
+        $startDate = Carbon::parse('2025-12-01')->startOfMonth();
+        $endDate = Carbon::parse('2025-12-31')->endOfMonth();
 
         $documentTypeCodes = DocumentType::query()
             ->active()
@@ -726,12 +726,12 @@ class ApiController extends Controller
                 'vat',
                 'policy_issuance_date',
             ])
-           /* ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+           ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->when($uuid, function ($q) use ($uuid) {
                 $q->where('uuid', $uuid);
             }, function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('transaction_approved_at', [$startDate, $endDate]);
-            })*/
+            })
             ->whereHas('documents', function ($q) use ($documentTypeCodes) {
                 $q->whereIn('document_type_code', $documentTypeCodes);
             })
@@ -748,8 +748,7 @@ class ApiController extends Controller
                 },
                 'insuranceProvider:id,code',
             ])
-            ->where('uuid', '7M9V8B6Y')
-            ->take(1)
+            ->take(20)
             ->get();
 
         $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('id');
@@ -1058,6 +1057,8 @@ class ApiController extends Controller
 
     private function getTaxInvoiceOCRDataStructure(object $ocrData, $quote): array
     {
+        $payment = $quote->payment;
+        $taxInvoiceNumber = $ocrData->taxInvoiceNumber ?? $payment?->insurer_tax_number;
         $priceVatApplicable = $ocrData->price?->baseAmount ?? $quote->price_vat_applicable;
         $priceWithVat = $ocrData->price?->totalAmount ?? $quote->price_with_vat;
 
@@ -1070,7 +1071,8 @@ class ApiController extends Controller
             'vat' => $vatAmount,
             'policy_issuance_date' => $ocrData->issuanceDate ?? $quote->policy_issuance_date,
             'insurer_invoice_date' => $ocrData->invoiceDate,
-            'tax_invoice_number' => $ocrData->taxInvoiceNumber,
+            'tax_invoice_number' => $taxInvoiceNumber,
+            'insurer_tax_number' => $taxInvoiceNumber,
         ];
     }
 
@@ -1117,7 +1119,7 @@ class ApiController extends Controller
     private function getEmiratesIdLeadDataStructure($quote): array
     {
         $result = [];
-        $insured = $quote->insured;
+        $insured = $quote->latestInsured;
         $insuredKyc = $insured?->insuredKyc;
 
         if ($insured) {
