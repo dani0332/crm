@@ -54,6 +54,15 @@ test('payment should be created', function () {
     // Create payment using factory with CarQuote
     $payment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
     
+    // Refresh payment to get latest values from database (including observer updates)
+    $payment->refresh();
+    
+    // Create payment split using factory with Payment
+    $paymentSplit = \App\Models\PaymentSplits::factory()->createForSqlite($payment);
+    
+    // Refresh payment split to get latest values from database (including observer updates)
+    $paymentSplit->refresh();
+    
     // Log complete payment object for verification
     \Illuminate\Support\Facades\Log::info('Payment Object:', [
         'payment' => $payment->toArray(),
@@ -66,12 +75,12 @@ test('payment should be created', function () {
         'car_quote_attributes' => $this->carQuote->getAttributes(),
     ]);
     
-    // Also output to console for immediate verification
-    dump('=== PAYMENT OBJECT ===');
-    dump($payment->toArray());
-    dump('=== CAR QUOTE OBJECT ===');
-    dump($this->carQuote->toArray());
+    // Log payment split object for verification (using getAttributes to avoid relationship queries)
+    \Illuminate\Support\Facades\Log::info('Payment Split Object:', [
+        'payment_split_attributes' => $paymentSplit->getAttributes(),
+    ]);
     
+    // Validate payment
     expect($payment->code)->toBe($this->quoteCode)
         ->and($payment->plan_id)->toBe($this->carPlan->id)
         ->and($payment->insurance_provider_id)->toBe($this->insuranceProvider->id)
@@ -82,5 +91,20 @@ test('payment should be created', function () {
         ->and($payment->updated_by)->toBe($this->user->id)
         ->and($payment->paymentable_id)->toBe($this->carQuote->id)
         ->and($payment->paymentable_type)->toBe(\App\Models\CarQuote::class);
-
+    
+    // Validate payment split
+    expect($paymentSplit->code)->toBe($payment->code)
+        ->and($paymentSplit->payment_amount)->toBe($payment->total_price)
+        ->and($paymentSplit->discount_value)->toBe(0)
+        ->and($paymentSplit->sr_no)->toBe(1)
+        ->and($paymentSplit->payment_method)->toBe(\App\Enums\PaymentMethodsEnum::InsurerPayment)
+        ->and($paymentSplit->payment_status_id)->toBe(\App\Enums\PaymentStatusEnum::NEW);
+    
+    
+    // Assert that observers ran (VAT fields should be set, not null)
+    expect($payment->price_vat_applicable)->not->toBeNull()
+        ->and($payment->price_vat)->not->toBeNull()
+        ->and($paymentSplit->price_vat_applicable)->not->toBeNull()
+        ->and($paymentSplit->price_vat)->not->toBeNull();
+   
 });

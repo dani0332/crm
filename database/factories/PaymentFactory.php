@@ -10,7 +10,6 @@ use App\Models\CarQuote;
 use App\Models\Payment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Payment>
@@ -40,6 +39,7 @@ class PaymentFactory extends Factory
      * Create a Payment using SQLite connection for tests.
      * Accepts a CarQuote object and extracts plan_id, insurance_provider_id, code, and premium.
      * Gets created_by and updated_by from currently logged in user.
+     * Uses model-based insertion so observers will run.
      *
      * @param CarQuote $carQuote The car quote to create payment for
      * @param array $attributes Additional attributes to override defaults
@@ -47,7 +47,6 @@ class PaymentFactory extends Factory
      */
     public function createForSqlite(CarQuote $carQuote, array $attributes = []): Payment
     {
-        $db = DB::connection('sqlite');
         $user = Auth::user();
         
         // Get premium from car quote (default to 1000 if not set)
@@ -64,15 +63,10 @@ class PaymentFactory extends Factory
             'total_amount' => $premium, 
             'created_by' => $user?->id,
             'updated_by' => $user?->id,
-            'created_at' => now(),
-            'updated_at' => now(),
         ], $attributes);
         
-        // Insert via SQLite connection
-        $paymentId = $db->table('payments')->insertGetId($paymentAttributes);
-        
-        // Load and return model with SQLite connection
-        return Payment::on('sqlite')->find($paymentId);
+        // Use model-based insertion with SQLite connection so observers run
+        return Payment::on('sqlite')->create($paymentAttributes);
     }
 }
 

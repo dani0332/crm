@@ -460,5 +460,35 @@ class TestSchemaCreator
                 $table->softDeletes(); // BaseModel uses SoftDeletes trait
             });
         }
+
+        // Create sage_processes table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('sage_processes')) {
+            Schema::connection('sqlite')->create('sage_processes', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->string('model_type')->nullable();
+                $table->unsignedBigInteger('model_id')->nullable();
+                $table->text('request')->nullable();
+                $table->text('message')->nullable();
+                $table->string('status')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create sage_api_logs table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('sage_api_logs')) {
+            Schema::connection('sqlite')->create('sage_api_logs', function ($table) {
+                $table->id();
+                $table->string('section_type')->nullable();
+                $table->unsignedBigInteger('section_id')->nullable();
+                $table->text('request')->nullable();
+                $table->text('response')->nullable();
+                $table->string('status')->nullable();
+                $table->string('sage_request_type')->nullable();
+                $table->integer('step')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 }
