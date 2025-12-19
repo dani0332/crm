@@ -448,6 +448,7 @@ class TestSchemaCreator
                 $table->date('dob')->nullable();
                 $table->string('source')->nullable();
                 $table->string('device')->nullable();
+                $table->decimal('premium', 10, 2)->nullable();
                 $table->unsignedBigInteger('insurance_provider_id')->nullable();
                 $table->unsignedBigInteger('plan_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
