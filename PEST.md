@@ -88,6 +88,71 @@ beforeEach(function () {
 });
 ```
 
+# Test Structure: Arrange-Act-Assert Pattern
+
+All tests should follow the **Arrange-Act-Assert (AAA)** pattern for clarity and maintainability:
+
+1. **ARRANGE**: Set up test data and prepare the environment
+2. **ACT**: Execute the code being tested
+3. **ASSERT**: Verify the results and expected outcomes
+
+## Example Structure
+
+```php
+test('payment should be created via endpoint', function () {
+    // ============================================
+    // 1. ARRANGE: Prepare test data and payload
+    // ============================================
+    
+    // Build the request payload using helper method
+    $requestPayload = PaymentTestHelper::buildPaymentCreationPayload(
+        carQuote: $this->carQuote,
+        planId: $this->carPlan->id,
+        insuranceProviderId: $this->insuranceProvider->id
+    );
+    
+    // ============================================
+    // 2. ACT: Execute the endpoint request
+    // ============================================
+    
+    // Make POST request to payment creation endpoint using route name
+    $response = $this->post(route('payment-create', ['quoteType' => 'Car']), $requestPayload);
+    
+    // ============================================
+    // 3. ASSERT: Verify the results
+    // ============================================
+    
+    // Assert that the endpoint returned a successful redirect response
+    $response->assertStatus(302);
+    
+    // Retrieve and assert payment was created correctly
+    $createdPayment = PaymentTestHelper::getPaymentByQuoteCode($this->carQuote->code);
+    expect($createdPayment)->not->toBeNull();
+    PaymentTestHelper::assertPaymentCreatedCorrectly(
+        payment: $createdPayment,
+        carQuote: $this->carQuote,
+        expectedPlanId: $this->carPlan->id,
+        expectedInsuranceProviderId: $this->insuranceProvider->id,
+        expectedUserId: $this->user->id
+    );
+});
+```
+
+## Benefits of AAA Pattern
+
+- **Clarity**: Easy to understand what each section does
+- **Maintainability**: Changes to one section don't affect others
+- **Readability**: Clear separation of concerns
+- **Debugging**: Easier to identify where issues occur
+
+## Best Practices
+
+- Use helper classes for complex data preparation (e.g., `PaymentTestHelper::setupTestData()`)
+- Use helper methods for assertions (e.g., `PaymentTestHelper::assertPaymentCreatedCorrectly()`)
+- Use route names instead of hardcoded URLs (e.g., `route('payment-create')`)
+- Add clear comments separating each section
+- Keep each section focused on its specific purpose
+
 # Common Expectations
 ```php
 expect($value)->toBe($expected)
