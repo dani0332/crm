@@ -1660,10 +1660,10 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->tpa = $quote?->plan?->healthNetwork->text;
-            $emailData->numberOfMembersCovered = (string) count($quote->members);
+            $emailData->numberOfMembersCovered = (string) count($quote->activeMembers);
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
-            }, $quote->members->toArray()));
+            }, $quote->activeMembers->toArray()));
 
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
