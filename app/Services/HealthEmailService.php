@@ -426,7 +426,7 @@ class HealthEmailService extends BaseService
             return;
         }
 
-        $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value);
+        $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(),$isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value);
         if ($isFollowupExecuted) {
             LoggerService::info('STP Advisor ' . ($isApiFailed ? 'API Failed' : '') . ' notification already executed');
             return [
@@ -437,7 +437,7 @@ class HealthEmailService extends BaseService
         }
         $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
         if ( in_array($response->status_code, [200, 201])) {
-            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value, QuoteTypeId::Health);
+            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value, QuoteTypeId::Health);
             LoggerService::info('STP Advisor ' . ($isApiFailed ? 'API Failed' : '') . ' notification sent for lead uuid: ' . $lead->uuid);
             return [
                 'success' => true,
