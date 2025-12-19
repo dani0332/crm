@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypeId;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Form Request for toggling policy issuance automation
- * 
- * Validates and handles business logic for enabling/disabling 
+ *
+ * Validates and handles business logic for enabling/disabling
  * policy issuance automation for Car quotes only.
  */
 class TogglePolicyIssuanceAutomationRequest extends FormRequest
@@ -46,8 +46,8 @@ class TogglePolicyIssuanceAutomationRequest extends FormRequest
         $validator->after(function ($validator) {
             // Validate quote type is Car
             if ($this->quote_type_id) {
-                
-                if (!$this->quote_type_id || $this->quote_type_id !== QuoteTypeId::Car) {
+
+                if (! $this->quote_type_id || $this->quote_type_id !== QuoteTypeId::Car) {
                     $validator->errors()->add(
                         'quote_type_id',
                         'Policy issuance automation is only available for Car quotes'
@@ -90,4 +90,3 @@ class TogglePolicyIssuanceAutomationRequest extends FormRequest
         ];
     }
 }
-
