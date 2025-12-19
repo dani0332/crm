@@ -22,7 +22,7 @@ class NgiHttpClient
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(config('constants.NGI_API_BASE_URL'), '/');
+        $this->baseUrl = rtrim(config('constants.NGI_API_BASE_URL', ''), '/');
         $this->apiTimeout = (int) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::NGI_SMARTPHONE_AUTOMATION_API_TIMEOUT) ?: 60;
     }
 
