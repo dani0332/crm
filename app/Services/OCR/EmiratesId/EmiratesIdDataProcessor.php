@@ -7,15 +7,13 @@ namespace App\Services\OCR\EmiratesId;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
-use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -33,7 +31,7 @@ class EmiratesIdDataProcessor
     public function __construct(
         private Model $quote,
         private object $data,
-        private string $documentTypeCode
+        private string $documentTypeCode,
     ) {
         $this->emiratesIdExtractor = new EmiratesIdExtractor($this->data);
     }
@@ -57,7 +55,12 @@ class EmiratesIdDataProcessor
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
             // Trigger OCR success validation
-            $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $ocrDocumentValidator->validateEIDFields($this->documentTypeCode);
             LoggerService::info('EmiratesId data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
 
             DB::commit();
@@ -85,7 +88,7 @@ class EmiratesIdDataProcessor
 
             if (! empty($fieldsToUpdate)) {
                 $quote->vehicleDriverDetail()->updateOrCreate(
-                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
+                    ['quoteable_type' => get_class($quote), 'quoteable_id' => $quote->id],
                     $fieldsToUpdate
                 );
 
@@ -153,21 +156,23 @@ class EmiratesIdDataProcessor
     private function updateInsuredTable(Insured $insured): bool
     {
         try {
-            $updateData = [];
-
-            if (! empty($this->extractedData['name'])) {
-                $updateData['first_name'] = $this->extractFirstName($this->extractedData['name']);
-                $updateData['last_name'] = $this->extractLastName($this->extractedData['name']);
-            }
-
-            if (! empty($this->extractedData['sex'])) {
-                $updateData['gender'] = $this->formatGender($this->extractedData['sex']);
-            }
-
-            if (! empty($this->extractedData['eid_number'])) {
-                $updateData['id_type'] = 'emiratesId';
-                $updateData['id_number'] = $this->extractedData['eid_number'];
-            }
+            $updateData = [
+                ...(! empty($this->extractedData['name'])
+                  ? ['first_name' => $this->extractFirstName($this->extractedData['name']), 'last_name' => $this->extractLastName($this->extractedData['name'])]
+                  : []),
+                ...(! empty($this->extractedData['sex'])
+                 ? ['gender' => $this->formatGender($this->extractedData['sex'])]
+                 : []),
+                ...(! empty($this->extractedData['eid_number'])
+                 ? ['id_type' => 'emiratesId', 'id_number' => $this->extractedData['eid_number']]
+                 : []),
+                ...(! empty($this->extractedData['nationality'])
+                 ? ['nationality_id' => $this->getNationalityId($this->extractedData['nationality'])]
+                 : []),
+                ...(! empty($this->extractedData['date_of_birth'])
+                 ? ['dob' => $this->extractedData['date_of_birth']]
+                 : []),
+            ];
 
             // Update all fields with OCR data
             $dataToUpdate = $this->getFieldsToUpdate($updateData);
@@ -175,7 +180,7 @@ class EmiratesIdDataProcessor
             if (! empty($dataToUpdate)) {
                 $insured->update($dataToUpdate);
 
-                LoggerService::info('Insured table updated successfully');
+                LoggerService::info('Insured table updated successfully with following data:', json_encode($dataToUpdate));
 
                 return true;
             }
@@ -377,8 +382,12 @@ class EmiratesIdDataProcessor
 
     private function getQuoteTypeId(): int
     {
-        // Currently only supporting Car quotes for Emirates ID OCR
-        return QuoteTypes::getId(QuoteTypes::CAR) ?? QuoteTypeId::Car;
+        // Using this approach to get quote type id in all lobs
+        $personalQuote = PersonalQuote::where('uuid', $this->quote->uuid)
+            ->select('quote_type_id')
+            ->first();
+
+        return $personalQuote->quote_type_id;
     }
 
     public function getProcessingSummary(): array

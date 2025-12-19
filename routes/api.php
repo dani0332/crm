@@ -68,6 +68,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
 
+    Route::post('check-document-upload-after-authorization', [ApiController::class, 'checkDocumentUploadAfterPayment']);
     // Missing docs reminder and verify missing docs routes
     Route::prefix('imcrm')->group(function () {
         Route::post('/missing-docs-reminder/{quoteUuid}', [ApiController::class, 'missingDocsReminder'])->name('missingDocsReminder');

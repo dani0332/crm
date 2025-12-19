@@ -38,6 +38,7 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_FLEET_NEW_POLICY = 'car_fleet_new_policy';
     public const TRADE_NEW_POLICY = 'trade_new_policy';
     public const OTHER_BUSINESS_NEW_POLICY = 'other_business_new_policy';
+    public const CYBER_NEW_POLICY = 'cyber_new_policy';
     public const HOME_RENEWAL_OCB = 'home_renewal_ocb';
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
     public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
@@ -69,6 +70,11 @@ final class WorkflowTypeEnum extends Enum
     public const TRAVEL_AUTOMATED_FOLLOWUPS = 'travel_automated_followups';
     public const TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS = 'travel_renewal_automated_followups';
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
+
+    // Cyber workflow
+    public const CYBER_OCB_INTRO_EMAIL = 'cyber_ocb_intro_email';
+    public const CYBER_OCB_INTRO_WHATSAPP = 'sendOcbCyberWhatsapp';
+    public const CYBER_AUTOMATED_FOLLOWUPS = 'cyber_automated_followups';
 
     // Misreport Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';

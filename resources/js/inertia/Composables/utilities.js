@@ -77,6 +77,7 @@ export const useGetShowPageRoute = (
     9: route('pet-quotes-show', uuid),
     10: route('cycle-quotes-show', uuid),
     18: route('savings-quotes-show', uuid),
+    19: route('cyber-quotes-show', uuid),
   };
 
   return routesObj[quoteTypeId];

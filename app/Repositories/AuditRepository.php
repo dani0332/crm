@@ -30,6 +30,7 @@ class AuditRepository extends BaseRepository
             quoteTypeCode::Yacht,
             quoteTypeCode::Jetski,
             quoteTypeCode::SAVINGS,
+            quoteTypeCode::CYBER,
         ];
         $quoteObject = (in_array(ucfirst(strtolower(request()->quote_type)), $lobs)) ? app('\\App\\Models\\'.ucfirst(strtolower(request()->quote_type)).'Quote') : app('\\App\\Models\\'.request()->quote_type);
 

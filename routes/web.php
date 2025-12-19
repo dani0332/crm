@@ -1,7 +1,9 @@
 <?php
 
 use App\Enums\EnvEnum;
+use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -79,6 +81,7 @@ use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CustomerAcceptanceLogController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
+use App\Http\Controllers\V2\CyberQuoteController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
@@ -90,6 +93,7 @@ use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\PolicyIssuanceController;
 use App\Http\Controllers\V2\QuoteSyncController;
 use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
@@ -98,7 +102,10 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\PolicyIssuanceJob;
 use App\Models\BorLog;
+use App\Models\CcPaymentProcess;
+use App\Models\PolicyIssuance;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
@@ -192,6 +199,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // travel routes
         Route::post('travel/{quoteUuId}/send-email-one-click-buy', [TravelController::class, 'sendEmailOneClickBuy'])->name('travelSendEmailOneClickBuy');
+
+        // cyber routes
+        Route::post('cyber/{quoteUuId}/send-email-one-click-buy', [CyberQuoteController::class, 'sendEmailOneClickBuy'])->name('cyberSendEmailOneClickBuy');
     });
     Route::get('/bike-insurance-provider-plans', [BikeQuoteController::class, 'bikePlansByInsuranceProvider']);
 
@@ -302,6 +312,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             // Non Motor
             Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update');
             Route::get('renewals/retry/{renewalsUploadLead}', [RenewalsUploadController::class, 'retryRenewalProcesses'])->name('renewals.retry');
+        });
+
+        Route::prefix('personal-quotes')->group(function () {
+            Route::resource('/cyber', CyberQuoteController::class)->names(generateRouteNames('cyber-quotes'));
         });
     });
 
@@ -997,4 +1011,32 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return view('pdf.bor-document', $pdfData);
     });
+
+    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('check_route_access');
+
+    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance']);
+
+    // Cyber Quote Policy Automation Routes for testing purposes
+    // this route is only for testing purposes to trigger the policy issuance automation
+    Route::get('/trigger-policy-document-update', function () {
+
+        // without plan id and payments
+        // $policyIssuanceProcess = PolicyIssuance::where('id', 1682)->first();
+        // with plan id and payments
+        $policyIssuanceProcess = PolicyIssuance::where('id', 1886)->first();
+
+        $policyIssuanceProcess->status = PolicyIssuanceEnum::PENDING_STATUS;
+        $policyIssuanceProcess->completed_step = null;
+        $policyIssuanceProcess->save();
+
+        PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation'); // ✅ Pass only the ID
+        echo 'Done';
+    });
+});
+
+Route::get('test', function () {
+    $ccPayment = CcPaymentProcess::find(5088);
+    $ccPayment->update(['status' => PaymentProcessJobEnum::PENDING]);
+
+    echo 'Done';
 });

@@ -208,11 +208,13 @@ class ManagementReport
         if ($lobs->isEmpty()) {
             $lobs = $this->getUserProducts($user->id)->pluck('name');
         }
+        $lobs = $lobs->map(fn ($item) => quoteTypeCode::getQuoteTypeCodeFromProductName($item));
         $lobsIds = $lobs->map(fn ($item) => (
             in_array($item, [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])
                 ? QuoteTypeId::Business
                 : QuoteTypes::getIdFromValue($item
                 )))
+            ->filter()
             ->toArray();
         $lobs = $lobs->toArray();
 
@@ -643,6 +645,7 @@ class ManagementReport
             10 => 'cycle-quotes-show',
             11 => 'jetski-quotes-show',
             18 => 'savings-quotes-show',
+            19 => 'cyber-quotes-show',
         ];
 
         $routeName = $types[$quoteTypeID];

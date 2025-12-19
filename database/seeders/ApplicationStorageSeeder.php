@@ -73,6 +73,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
         $this->seedLegacyPolicyKeys();
+        $this->seedCyberAdvisors();
         $this->seedBranchData();
     }
 
@@ -262,6 +263,24 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f25be3f7-9382-426d-aa90-9f9aaa1825dd/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_CYBER_OCB_INTRO_EMAIL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/736a4efe-5b5b-49c0-a658-0563a0dbb0e2/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_CYBER_AUTOMATED_FOLLOWUPS],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/736a4efe-5b5b-49c0-a658-0563a0dbb0e2/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1070,6 +1089,34 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_AWNI_CYBER_POLICY_ISSUANCE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_AWNI_CYBER_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AWNI_CYBER_AUTOMATION_API_TIMEOUT],
+            [
+                'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedEnableMetLife()
@@ -1164,6 +1211,49 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedCyberAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS],
+            [
+                'value' => 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS_TEST],
+            [
+                'value' => 'fahadhussain2020@gmail.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE],
+            [
+                'value' => '0',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_SEND_POLICY_TEMPLATE],
+            [
+                'value' => 772,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedBranchData()
     {
         ApplicationStorage::firstOrCreate(
@@ -1175,7 +1265,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
         $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync';
         if (env('APP_ENV') === 'production') {
             $birdWorkflowUrl = 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/7e474d25-cfad-4f11-a13e-daa26f08133a/invoke-sync';

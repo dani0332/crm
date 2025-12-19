@@ -1,0 +1,126 @@
+# Instant Lead Allocation (ILA) Module
+
+## Overview
+
+The Instant Lead Allocation (ILA) module for Cyber Insurance automatically assigns incoming leads to available advisors based on predefined rules, advisor availability, and leave status. This ensures efficient lead distribution and optimal advisor utilization.
+
+## Purpose
+
+The ILA system for Cyber handles:
+
+- **Automatic Advisor Assignment**: Assigns leads to advisors without manual intervention
+- **Leave Management**: Automatically routes leads to backup advisors when primary advisor is on leave
+- **Test Mode Support**: Allows testing with specific advisors before production deployment
+- **Paid Lead Handling**: Routes paid leads to Happiness Support team
+- **SIC Lead Handling**: Routes SIC (Self-Initiated Customer) leads to appropriate advisors
+
+## Key Features
+
+- **Primary/Backup Advisor Logic**: Primary advisor (Smitha) gets all leads unless on leave
+- **Leave Status Detection**: Automatically detects SICK (4) or LEAVE (5) status
+- **Daily Capacity Cap**: 200 leads per day per advisor (manually updateable by admin)
+- **Payment-Based Assignment**: Paid leads always assigned to HAPEX team
+- **SIC Lead Handling**: All leads are SIC; allocation triggered when advisor requested
+- **Test Mode**: Separate advisor list for testing purposes
+- **Production Mode**: Smart routing with leave checking
+- **Multiple Backup Support**: Supports unlimited backup advisors with round-robin distribution
+- **Manual Reassignment**: Available via admin interface (auto-reassignment not required)
+
+## Components
+
+### Allocation Strategy
+
+- **File**: `app/Strategies/Allocations/CyberAllocation.php`
+- **Purpose**: Main allocation orchestrator using Laravel Pipeline pattern
+
+### Allocation Pipes
+
+1. **FetchLeadPipe**: Retrieves the Cyber quote/lead
+2. **VerifyLeadPreChecksPipe**: Validates lead eligibility
+3. **VerifyAlreadyInProgressAllocationPipe**: Prevents duplicate allocations
+4. **EvaluateTeamPipe**: Determines team assignment logic
+5. **FetchAvailableAdvisorPipe**: Finds and selects available advisor
+6. **AssignLeadPipe**: Assigns advisor to lead
+7. **MakeResponsePipe**: Returns allocation response
+
+## Allocation Flow
+
+```
+Quote Created/Updated
+    ↓
+CyberAllocation::execute()
+    ↓
+Pipeline Execution
+    ↓
+FetchLeadPipe → Get Cyber quote
+    ↓
+VerifyLeadPreChecksPipe → Validate lead
+    ↓
+VerifyAlreadyInProgressAllocationPipe → Check duplicates
+    ↓
+EvaluateTeamPipe → Determine team logic
+    ↓
+FetchAvailableAdvisorPipe → Find advisor
+    ↓
+AssignLeadPipe → Assign advisor
+    ↓
+MakeResponsePipe → Return response
+```
+
+## Configuration
+
+### Application Storage Keys
+
+The ILA system uses three app storage keys:
+
+1. **CYBER_ADVISORS**: Production advisor emails (comma-separated)
+
+   - First email = Primary advisor
+   - Remaining emails = Backup advisors
+   - Example: `smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae`
+
+2. **CYBER_ADVISORS_TEST**: Test advisor emails (comma-separated)
+
+   - Used when test mode is enabled
+   - Example: `fahadhussain2020@gmail.com`
+
+3. **CYBER_ALLOCATION_TEST_MODE**: Test mode flag
+   - `0` = Production mode
+   - `1` = Test mode
+
+### Seeder Location
+
+- **File**: `database/seeders/ApplicationStorageSeeder.php`
+- **Method**: `seedCyberAdvisors()`
+
+## Related Files
+
+### Backend
+
+- `app/Strategies/Allocations/CyberAllocation.php` - Main allocation strategy
+- `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php` - Advisor fetching logic
+- `app/Pipes/Allocation/Cyber/EvaluateTeamPipe.php` - Team evaluation logic
+- `app/Pipes/Allocation/Cyber/AssignLeadPipe.php` - Lead assignment logic
+- `app/Pipes/Allocation/Cyber/VerifyLeadPreChecksPipe.php` - Lead validation
+- `app/Services/AllocationService.php` - Base allocation service with `isUserOnLeave()` method
+
+### Configuration
+
+- `app/Enums/ApplicationStorageEnums.php` - Storage key constants
+- `database/seeders/ApplicationStorageSeeder.php` - Seeder for app storage keys
+
+## Business Requirements
+
+For complete business requirements and functional specifications:
+
+- [Business Requirements](./business-requirements.md) - Complete FR documentation
+
+## Next Steps
+
+For detailed information about each component:
+
+- [Allocation Logic](./allocation-logic.md) - How advisors are selected
+- [Test Mode](./test-mode.md) - Test mode configuration and usage
+- [Production Mode](./production-mode.md) - Production allocation rules
+- [Daily Capacity](./daily-capacity.md) - Daily capacity cap management (200 leads/day)
+- [App Storage Keys](./app-storage-keys.md) - Storage key documentation

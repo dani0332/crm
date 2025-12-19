@@ -161,7 +161,8 @@ class ReportsController extends Controller
      */
     public function fetchTeamListByLob(Request $request)
     {
-        $lobId = $this->getProductByName($request->lob)->id;
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $lobId = $this->getProductByName($productName)->id;
         $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
 
         if (auth()->user()->hasAnyRole([
@@ -190,7 +191,8 @@ class ReportsController extends Controller
      */
     public function fetchAdvisorsListByLob(Request $request)
     {
-        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob);
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $usersReportToLoggedInUser = $this->getUsersByProductName($productName);
         if (! auth()->user()->hasAnyRole([
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,
@@ -604,14 +606,24 @@ class ReportsController extends Controller
             QuoteTypes::CYCLE,
             QuoteTypes::YACHT,
             QuoteTypes::SAVINGS,
+            QuoteTypes::CYBER,
         ];
 
         $products = Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->get();
 
+        $productNames = $products->pluck('name')->toArray();
+        $mappedProducts = array_map(function ($name) {
+            if ($name === 'Cyber Insurance') {
+                return 'Cyber';
+            }
+
+            return $name;
+        }, $productNames);
+
         return inertia('Reports/StaleLeadsReport', [
             'reportData' => $data,
             'teams' => $team,
-            'products' => $products->pluck('name')->toArray(),
+            'products' => $mappedProducts,
         ]);
     }
 
