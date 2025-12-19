@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\QuoteTypes;
 use Tests\Helpers\PaymentTestHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -9,6 +10,9 @@ beforeEach(function () {
     // Initialize test database schema
     TestSchemaCreator::createMinimalSchema();
     
+    // Create VAT_VALUE record using factory
+    \Database\Factories\ApplicationStorageFactory::createVatValueForSqlite('5');
+
     // Set up authenticated user
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
@@ -27,12 +31,12 @@ beforeEach(function () {
 
 test('payment and payment split can be created using factories', function () {
     // ============================================
-    // ARRANGE: Prepare test data
+    // 1. ARRANGE: Prepare test data
     // ============================================
     // No additional arrangement needed - data is prepared in beforeEach
     
     // ============================================
-    // ACT: Create payment and payment split using factories
+    // 2. ACT: Create payment and payment split using factories
     // ============================================
     
     // Create payment using factory with CarQuote
@@ -50,7 +54,7 @@ test('payment and payment split can be created using factories', function () {
     $createdPaymentSplit->refresh();
     
     // ============================================
-    // ASSERT: Verify the results
+    // 3- ASSERT: Verify the results
     // ============================================
     
     // Assert payment was created correctly
@@ -74,4 +78,69 @@ test('payment and payment split can be created using factories', function () {
         payment: $createdPayment,
         paymentSplit: $createdPaymentSplit
     );
+});
+
+test('payment should be created via endpoint', function () {
+    // ============================================
+    // 1-ARRANGE: Prepare test data and payload
+    // ============================================
+    
+    // Build the request payload using helper method
+    // This extracts data from factories and combines with CarQuote data
+    $requestPayload = PaymentTestHelper::buildPaymentCreationPayload(
+        carQuote: $this->carQuote,
+        planId: $this->carPlan->id,
+        insuranceProviderId: $this->insuranceProvider->id
+    );
+    
+    // ============================================
+    // 2- ACT: Execute the endpoint request
+    // ============================================
+    
+    // Make POST request to payment creation endpoint using route name
+    $response = $this->post(route('payment-create', ['quoteType' => QuoteTypes::CAR->value]), $requestPayload);
+    
+    // ============================================
+    // 3- ASSERT: Verify the results
+    // ============================================
+    
+    // Assert that the endpoint returned a successful redirect response
+    $response->assertStatus(302);
+    
+    // Retrieve the created payment from database
+    $createdPayment = PaymentTestHelper::getPaymentByQuoteCode($this->carQuote->code);
+    
+    // Assert payment exists and was created correctly
+    expect($createdPayment)->not->toBeNull();
+    PaymentTestHelper::assertPaymentCreatedCorrectly(
+        payment: $createdPayment,
+        carQuote: $this->carQuote,
+        expectedPlanId: $this->carPlan->id,
+        expectedInsuranceProviderId: $this->insuranceProvider->id,
+        expectedUserId: $this->user->id
+    );
+    
+    // Retrieve the created payment split from database
+    $createdPaymentSplit = PaymentTestHelper::getPaymentSplitByCodeAndSerial(
+        paymentCode: $createdPayment->code,
+        srNo: 1
+    );
+    
+    // Assert payment split exists and was created correctly
+    expect($createdPaymentSplit)->not->toBeNull();
+    PaymentTestHelper::assertPaymentSplitCreatedCorrectly(
+        paymentSplit: $createdPaymentSplit,
+        payment: $createdPayment,
+        expectedAmount: (float) $this->carQuote->premium
+    );
+    
+    // Assert that observers ran successfully (VAT calculations)
+    PaymentTestHelper::assertObserversRanSuccessfully(
+        payment: $createdPayment,
+        paymentSplit: $createdPaymentSplit
+    );
+});
+
+test('payment should be updated via endpoint ', function(){
+
 });
