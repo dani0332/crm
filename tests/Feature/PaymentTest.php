@@ -1,110 +1,77 @@
 <?php
 
-use App\Models\CarPlan;
-use App\Models\CarQuote;
-use App\Models\InsuranceProvider;
-use Illuminate\Support\Facades\DB;
+use Tests\Helpers\PaymentTestHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
+// Will run for each test 
 beforeEach(function () {
+    // Initialize test database schema
     TestSchemaCreator::createMinimalSchema();
+    
+    // Set up authenticated user
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
     
-    // Create factories using SQLite connection
-    // Since models have hardcoded MySQL connection, we use factories to generate
-    // attributes but insert via DB facade with SQLite connection
+    // Set up test data: InsuranceProvider, CarPlan, and CarQuote
+    // This helper method creates all necessary test data for payment testing
+    $testData = PaymentTestHelper::setupTestData();
     
-    $db = DB::connection('sqlite');
-    
-    // Create InsuranceProvider using factory definition directly
-    $providerFactory = InsuranceProvider::factory();
-    $providerAttributes = $providerFactory->definition();
-    $providerId = $db->table('insurance_provider')->insertGetId(array_merge($providerAttributes, [
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]));
-    $this->insuranceProvider = InsuranceProvider::on('sqlite')->find($providerId);
-    
-    // Create CarPlan
-    $planFactory = CarPlan::factory();
-    $planAttributes = array_merge($planFactory->definition(), [
-        'provider_id' => $providerId,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-    $planId = $db->table('car_plan')->insertGetId($planAttributes);
-    $this->carPlan = CarPlan::on('sqlite')->find($planId);
-    
-    // Generate UUID in format CAR-ABCDEF12345
-    $this->quoteCode = 'CAR-ABCDEF12345';
-    $this->quoteUuid = 'ABCDEF12345'; // Extract UUID part (without CAR- prefix)
-    
-    // Create CarQuote using factory method that handles SQLite connection
-    $this->carQuote = CarQuote::factory()->createForSqlite([
-        'uuid' => $this->quoteUuid,
-        'code' => $this->quoteCode,
-        'insurance_provider_id' => $providerId,
-        'plan_id' => $planId,
-    ]);
+    // Assign test data to test properties for easy access
+    $this->insuranceProvider = $testData['insuranceProvider'];
+    $this->carPlan = $testData['carPlan'];
+    $this->carQuote = $testData['carQuote'];
+    $this->quoteCode = $testData['quoteCode'];
+    $this->quoteUuid = $testData['quoteUuid'];
 });
 
-test('payment should be created', function () {
+test('payment and payment split can be created using factories', function () {
+    // ============================================
+    // ARRANGE: Prepare test data
+    // ============================================
+    // No additional arrangement needed - data is prepared in beforeEach
+    
+    // ============================================
+    // ACT: Create payment and payment split using factories
+    // ============================================
+    
     // Create payment using factory with CarQuote
-    $payment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
+    // This will trigger PaymentObserver which calculates VAT
+    $createdPayment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
     
     // Refresh payment to get latest values from database (including observer updates)
-    $payment->refresh();
+    $createdPayment->refresh();
     
     // Create payment split using factory with Payment
-    $paymentSplit = \App\Models\PaymentSplits::factory()->createForSqlite($payment);
+    // This will trigger PaymentSplitsObserver which calculates VAT
+    $createdPaymentSplit = \App\Models\PaymentSplits::factory()->createForSqlite($createdPayment);
     
     // Refresh payment split to get latest values from database (including observer updates)
-    $paymentSplit->refresh();
+    $createdPaymentSplit->refresh();
     
-    // Log complete payment object for verification
-    \Illuminate\Support\Facades\Log::info('Payment Object:', [
-        'payment' => $payment->toArray(),
-        'payment_attributes' => $payment->getAttributes(),
-    ]);
+    // ============================================
+    // ASSERT: Verify the results
+    // ============================================
     
-    // Log complete car quote object for verification
-    \Illuminate\Support\Facades\Log::info('Car Quote Object:', [
-        'car_quote' => $this->carQuote->toArray(),
-        'car_quote_attributes' => $this->carQuote->getAttributes(),
-    ]);
+    // Assert payment was created correctly
+    PaymentTestHelper::assertPaymentCreatedCorrectly(
+        payment: $createdPayment,
+        carQuote: $this->carQuote,
+        expectedPlanId: $this->carPlan->id,
+        expectedInsuranceProviderId: $this->insuranceProvider->id,
+        expectedUserId: $this->user->id
+    );
     
-    // Log payment split object for verification (using getAttributes to avoid relationship queries)
-    \Illuminate\Support\Facades\Log::info('Payment Split Object:', [
-        'payment_split_attributes' => $paymentSplit->getAttributes(),
-    ]);
+    // Assert payment split was created correctly
+    PaymentTestHelper::assertPaymentSplitCreatedCorrectly(
+        paymentSplit: $createdPaymentSplit,
+        payment: $createdPayment,
+        expectedAmount: (float) $this->carQuote->premium
+    );
     
-    // Validate payment
-    expect($payment->code)->toBe($this->quoteCode)
-        ->and($payment->plan_id)->toBe($this->carPlan->id)
-        ->and($payment->insurance_provider_id)->toBe($this->insuranceProvider->id)
-        ->and($payment->total_price)->toBe($this->carQuote->premium)
-        ->and($payment->total_amount)->toBe($this->carQuote->premium)
-        ->and($payment->discount_value)->toBe(0)
-        ->and($payment->created_by)->toBe($this->user->id)
-        ->and($payment->updated_by)->toBe($this->user->id)
-        ->and($payment->paymentable_id)->toBe($this->carQuote->id)
-        ->and($payment->paymentable_type)->toBe(\App\Models\CarQuote::class);
-    
-    // Validate payment split
-    expect($paymentSplit->code)->toBe($payment->code)
-        ->and($paymentSplit->payment_amount)->toBe($payment->total_price)
-        ->and($paymentSplit->discount_value)->toBe(0)
-        ->and($paymentSplit->sr_no)->toBe(1)
-        ->and($paymentSplit->payment_method)->toBe(\App\Enums\PaymentMethodsEnum::InsurerPayment)
-        ->and($paymentSplit->payment_status_id)->toBe(\App\Enums\PaymentStatusEnum::NEW);
-    
-    
-    // Assert that observers ran (VAT fields should be set, not null)
-    expect($payment->price_vat_applicable)->not->toBeNull()
-        ->and($payment->price_vat)->not->toBeNull()
-        ->and($paymentSplit->price_vat_applicable)->not->toBeNull()
-        ->and($paymentSplit->price_vat)->not->toBeNull();
-   
+    // Assert that observers ran successfully (VAT calculations)
+    PaymentTestHelper::assertObserversRanSuccessfully(
+        payment: $createdPayment,
+        paymentSplit: $createdPaymentSplit
+    );
 });
