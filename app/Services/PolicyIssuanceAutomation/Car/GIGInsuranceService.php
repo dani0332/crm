@@ -144,8 +144,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         if ($this->isPolicyIssuanceAutomationEnabled() && $isQuotePolicyIssuanceAutomationEnabled) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            $errorMessage =  $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Automation is disabled' : 'GIG Car Quote Policy Issuance Automation is disabled';
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - ' . $errorMessage);
+            $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Automation is disabled' : 'GIG Car Quote Policy Issuance Automation is disabled';
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
         }
 
         return $this->policyIssuance;
@@ -164,8 +164,8 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         try {
             $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
             if (! $this->isPolicyIssuanceAutomationEnabled() || ! $isQuotePolicyIssuanceAutomationEnabled) {
-                $errorMessage =  $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Automation is disabled' : 'GIG Car Quote Policy Issuance Automation is disabled';
-                LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - ' . $errorMessage);
+                $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Automation is disabled' : 'GIG Car Quote Policy Issuance Automation is disabled';
+                LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - '.$errorMessage);
                 $response['error'] = $errorMessage;
                 $response['message'] = $errorMessage;
 

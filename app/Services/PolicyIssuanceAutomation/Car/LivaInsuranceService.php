@@ -105,8 +105,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         if ($this->isPolicyIssuanceAutomationEnabled() && $isQuotePolicyIssuanceAutomationEnabled) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            $errorMessage =  $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Automation is disabled' : 'LIVA Car Quote Policy Issuance Automation is disabled';
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - ' . $errorMessage);
+            $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Automation is disabled' : 'LIVA Car Quote Policy Issuance Automation is disabled';
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
@@ -129,8 +129,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         try {
             $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
             if (! $this->isPolicyIssuanceAutomationEnabled() || ! $isQuotePolicyIssuanceAutomationEnabled) {
-                $errorMessage =  $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Automation is disabled' : 'LIVA Car Quote Policy Issuance Automation is disabled';
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - ' . $errorMessage);
+                $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Automation is disabled' : 'LIVA Car Quote Policy Issuance Automation is disabled';
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
                 $response['error'] = $errorMessage;
                 $response['message'] = $errorMessage;
 
