@@ -13,8 +13,8 @@ class TestSchemaCreator
     public static function createMinimalSchema(): void
     {
         // Create audits table if it doesn't exist (for Laravel Auditing)
-        if (! Schema::connection('sqlite')->hasTable('audits')) {
-            Schema::connection('sqlite')->create('audits', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('audits')) {
+            Schema::connection('sqlite_testing')->create('audits', function ($table) {
                 $table->id();
                 $table->string('user_type')->nullable();
                 $table->unsignedBigInteger('user_id')->nullable();
@@ -31,8 +31,8 @@ class TestSchemaCreator
         }
 
         // Create users table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('users')) {
-            Schema::connection('sqlite')->create('users', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('users')) {
+            Schema::connection('sqlite_testing')->create('users', function ($table) {
                 $table->id();
                 $table->string('name');
                 $table->string('email')->unique();
@@ -44,8 +44,8 @@ class TestSchemaCreator
         }
 
         // Create roles table if it doesn't exist (for Spatie permissions)
-        if (! Schema::connection('sqlite')->hasTable('roles')) {
-            Schema::connection('sqlite')->create('roles', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('roles')) {
+            Schema::connection('sqlite_testing')->create('roles', function ($table) {
                 $table->id();
                 $table->string('name');
                 $table->string('guard_name');
@@ -54,8 +54,8 @@ class TestSchemaCreator
         }
 
         // Create model_has_roles table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('model_has_roles')) {
-            Schema::connection('sqlite')->create('model_has_roles', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('model_has_roles')) {
+            Schema::connection('sqlite_testing')->create('model_has_roles', function ($table) {
                 $table->id();
                 $table->unsignedBigInteger('role_id');
                 $table->string('model_type');
@@ -65,8 +65,8 @@ class TestSchemaCreator
         }
 
         // Create permissions table if it doesn't exist (for Spatie permissions)
-        if (! Schema::connection('sqlite')->hasTable('permissions')) {
-            Schema::connection('sqlite')->create('permissions', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('permissions')) {
+            Schema::connection('sqlite_testing')->create('permissions', function ($table) {
                 $table->id();
                 $table->string('name');
                 $table->string('guard_name');
@@ -75,8 +75,8 @@ class TestSchemaCreator
         }
 
         // Create model_has_permissions table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('model_has_permissions')) {
-            Schema::connection('sqlite')->create('model_has_permissions', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('model_has_permissions')) {
+            Schema::connection('sqlite_testing')->create('model_has_permissions', function ($table) {
                 $table->id();
                 $table->unsignedBigInteger('permission_id');
                 $table->string('model_type');
@@ -86,8 +86,8 @@ class TestSchemaCreator
         }
 
         // Create role_has_permissions table if it doesn't exist (pivot table for Spatie permissions)
-        if (! Schema::connection('sqlite')->hasTable('role_has_permissions')) {
-            Schema::connection('sqlite')->create('role_has_permissions', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('role_has_permissions')) {
+            Schema::connection('sqlite_testing')->create('role_has_permissions', function ($table) {
                 $table->unsignedBigInteger('permission_id');
                 $table->unsignedBigInteger('role_id');
                 $table->primary(['permission_id', 'role_id']);
@@ -95,8 +95,8 @@ class TestSchemaCreator
         }
 
         // Create nationality table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('nationality')) {
-            Schema::connection('sqlite')->create('nationality', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('nationality')) {
+            Schema::connection('sqlite_testing')->create('nationality', function ($table) {
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text');
@@ -107,8 +107,8 @@ class TestSchemaCreator
         }
 
         // Create currency_type table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('currency_type')) {
-            Schema::connection('sqlite')->create('currency_type', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('currency_type')) {
+            Schema::connection('sqlite_testing')->create('currency_type', function ($table) {
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text');
@@ -118,8 +118,8 @@ class TestSchemaCreator
         }
 
         // Create marital_status table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('marital_status')) {
-            Schema::connection('sqlite')->create('marital_status', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('marital_status')) {
+            Schema::connection('sqlite_testing')->create('marital_status', function ($table) {
                 $table->id();
                 $table->string('text');
                 $table->boolean('is_active')->default(1);
@@ -128,8 +128,8 @@ class TestSchemaCreator
         }
 
         // Create life_insurance_purpose table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('life_insurance_purpose')) {
-            Schema::connection('sqlite')->create('life_insurance_purpose', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('life_insurance_purpose')) {
+            Schema::connection('sqlite_testing')->create('life_insurance_purpose', function ($table) {
                 $table->id();
                 $table->string('text');
                 $table->boolean('is_active')->default(1);
@@ -138,8 +138,8 @@ class TestSchemaCreator
         }
 
         // Create life_number_of_year table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('life_number_of_year')) {
-            Schema::connection('sqlite')->create('life_number_of_year', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('life_number_of_year')) {
+            Schema::connection('sqlite_testing')->create('life_number_of_year', function ($table) {
                 $table->id();
                 $table->string('text');
                 $table->boolean('is_active')->default(1);
@@ -148,8 +148,8 @@ class TestSchemaCreator
         }
 
         // Create personal_quotes table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('personal_quotes')) {
-            Schema::connection('sqlite')->create('personal_quotes', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('personal_quotes')) {
+            Schema::connection('sqlite_testing')->create('personal_quotes', function ($table) {
                 $table->id();
                 $table->string('uuid')->unique();
                 $table->string('code')->nullable();
@@ -169,8 +169,8 @@ class TestSchemaCreator
         }
 
         // Create life_quote_request table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('life_quote_request')) {
-            Schema::connection('sqlite')->create('life_quote_request', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('life_quote_request')) {
+            Schema::connection('sqlite_testing')->create('life_quote_request', function ($table) {
                 $table->id();
                 $table->unsignedBigInteger('personal_quote_id');
                 $table->string('first_name')->nullable();
@@ -197,8 +197,8 @@ class TestSchemaCreator
         }
 
         // Create application_storage table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('application_storage')) {
-            Schema::connection('sqlite')->create('application_storage', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('application_storage')) {
+            Schema::connection('sqlite_testing')->create('application_storage', function ($table) {
                 $table->id();
                 $table->string('key_name')->unique();
                 $table->text('value')->nullable();
@@ -208,8 +208,8 @@ class TestSchemaCreator
         }
 
         // Create teams table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('teams')) {
-            Schema::connection('sqlite')->create('teams', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('teams')) {
+            Schema::connection('sqlite_testing')->create('teams', function ($table) {
                 $table->id();
                 $table->string('name');
                 $table->timestamps();
@@ -217,8 +217,8 @@ class TestSchemaCreator
         }
 
         // Create user_team table if it doesn't exist (pivot table)
-        if (! Schema::connection('sqlite')->hasTable('user_team')) {
-            Schema::connection('sqlite')->create('user_team', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('user_team')) {
+            Schema::connection('sqlite_testing')->create('user_team', function ($table) {
                 $table->id();
                 $table->unsignedBigInteger('user_id');
                 $table->unsignedBigInteger('team_id');
@@ -227,8 +227,8 @@ class TestSchemaCreator
         }
 
         // Create payments table if it doesn't exist (minimal structure)
-        if (! Schema::connection('sqlite')->hasTable('payments')) {
-            Schema::connection('sqlite')->create('payments', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('payments')) {
+            Schema::connection('sqlite_testing')->create('payments', function ($table) {
                 $table->id();
                 $table->string('code')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
@@ -238,8 +238,8 @@ class TestSchemaCreator
         }
 
         // Create lookups table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('lookups')) {
-            Schema::connection('sqlite')->create('lookups', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('lookups')) {
+            Schema::connection('sqlite_testing')->create('lookups', function ($table) {
                 $table->id();
                 $table->string('key')->nullable();
                 $table->string('text')->nullable();
@@ -249,8 +249,8 @@ class TestSchemaCreator
         }
 
         // Create policy_issuance_status table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('policy_issuance_status')) {
-            Schema::connection('sqlite')->create('policy_issuance_status', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('policy_issuance_status')) {
+            Schema::connection('sqlite_testing')->create('policy_issuance_status', function ($table) {
                 $table->id();
                 $table->string('name')->nullable();
                 $table->boolean('is_active')->default(1);
@@ -259,8 +259,8 @@ class TestSchemaCreator
         }
 
         // Create activities table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('activities')) {
-            Schema::connection('sqlite')->create('activities', function ($table) {
+        if (! Schema::connection('sqlite_testing')->hasTable('activities')) {
+            Schema::connection('sqlite_testing')->create('activities', function ($table) {
                 $table->id();
                 $table->string('activity_type')->nullable();
                 $table->integer('reminders_sent')->default(0);
@@ -274,7 +274,7 @@ class TestSchemaCreator
     public static function createCyberSchema(): void
     {
         self::createMinimalSchema();
-        $schema = Schema::connection('sqlite');
+        $schema = Schema::connection('sqlite_testing');
 
         if (! $schema->hasTable('customer')) {
             $schema->create('customer', function (Blueprint $table) {
@@ -375,7 +375,7 @@ class TestSchemaCreator
 
     private static function addColumnIfMissing(string $table, string $column, callable $callback): void
     {
-        $schema = Schema::connection('sqlite');
+        $schema = Schema::connection('sqlite_testing');
 
         if (! $schema->hasColumn($table, $column)) {
             $schema->table($table, function (Blueprint $table) use ($callback) {
