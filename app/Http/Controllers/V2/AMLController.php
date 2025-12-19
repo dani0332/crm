@@ -30,6 +30,7 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
+use App\Http\Requests\TogglePolicyIssuanceAutomationRequest;
 use App\Http\Requests\UpdateAdditionalVehicleDriverDetailsRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\ExportCsvAndSendEmailJob;
@@ -63,6 +64,7 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -294,6 +296,13 @@ class AMLController extends Controller
             $gigInsurerDefaultEmail = GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
         }
 
+        // Check if policy automation is enabled for the insurer
+        $isPolicyAutomationEnabled = false;
+        if ($quoteType->code === quoteTypeCode::Car && $insuranceProvider) {
+            $policyIssuanceService = app(PolicyIssuanceService::class)->init($quoteType->code, $insuranceProvider->code);
+            $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled();
+        }
+
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -325,6 +334,7 @@ class AMLController extends Controller
             'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
             'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
+            'isPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
@@ -1111,5 +1121,87 @@ class AMLController extends Controller
         $result = app(AMLService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $request->quoteUID);
 
         return response()->json($result);
+    }
+
+    /**
+     * Toggle policy issuance automation enabled status for a car quote
+     *
+     * @param TogglePolicyIssuanceAutomationRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function togglePolicyIssuanceAutomation(TogglePolicyIssuanceAutomationRequest $request)
+    {
+        $requestData = $request->safe();
+        LoggerService::startQuoteLogging($requestData->quote_uuid, LoggerFeatureEnum::DISABLE_POLICY_ISSUANCE_AUTOMATION);
+
+        try {
+
+            LoggerService::info('Toggle Policy Issuance Automation for Lead', extra: [
+                'quote_uuid' => $requestData->quote_uuid,
+                'quote_type_id' => $requestData->quote_type_id,
+                'enabled' => $requestData->enabled,
+            ]);
+
+            $quoteType = QuoteTypes::getName($requestData->quote_type_id)->value;
+            $quote = $this->getQuoteObjectBy($quoteType, $requestData->quote_uuid, 'uuid');
+
+            if (! $quote) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Quote not found',
+                ], 404);
+            }
+
+            $insuranceProvider = $quote?->plan?->insuranceProvider;
+            if (! $insuranceProvider) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insurance provider not found',
+                ], 400);
+            }
+
+            $isPolicyAutomationEnabled = false;
+            if ($requestData->quote_type_id === QuoteTypeId::Car && $insuranceProvider) {
+                $policyIssuanceService = app(PolicyIssuanceService::class)->init($quoteType, $insuranceProvider->code);
+                $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled();
+            }
+
+            if (! $isPolicyAutomationEnabled) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Policy automation is not enabled for this insurer',
+                ], 400);
+            }
+
+            // Update the policy_issuance_automation_enabled field
+            $quote->update(['policy_issuance_automation_enabled' => $requestData->enabled]);
+
+            LoggerService::info('Policy issuance automation toggled successfully for quote', extra: [
+                'quote_uuid' => $quote->uuid,
+                'quote_code' => $quote->code,
+                'enabled' => $requestData->enabled,
+                'user_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => $requestData->enabled
+                    ? 'Policy issuance automation enabled successfully'
+                    : 'Policy issuance automation disabled successfully',
+                'data' => [
+                    'policy_issuance_automation_enabled' => $quote->policy_issuance_automation_enabled,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Error toggling policy issuance automation for quote', extra: [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while toggling policy issuance automation',
+            ], 500);
+        }
     }
 }

@@ -48,4 +48,6 @@ enum LoggerFeatureEnum: string
     case CC_PAYMENT_PROCESS_COMMAND = 'cc-payment-process-command';
     case SEND_AND_BOOK_POLICY_FAILED_BULK_EMAIL_JOB = 'send-and-book-policy-failed-bulk-email-job';
     case INSURER_AML_SCREENING_WITH_KYC_DOCUMENT = 'insurer-aml-screening-with-kyc-document';
+
+    case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
 }
