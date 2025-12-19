@@ -289,6 +289,83 @@ class TestSchemaCreator
             });
         }
 
+        // Create payment_splits table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('payment_splits')) {
+            Schema::connection('sqlite')->create('payment_splits', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->integer('sr_no')->nullable();
+                $table->string('payment_method')->nullable();
+                $table->text('check_detail')->nullable();
+                $table->decimal('payment_amount', 10, 2)->nullable();
+                $table->date('due_date')->nullable();
+                $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->decimal('collection_amount', 10, 2)->nullable();
+                $table->string('bank_reference_number')->nullable();
+                $table->unsignedBigInteger('decline_reason_id')->nullable();
+                $table->string('insurer_payment_link')->nullable();
+                $table->string('decline_custom_reason')->nullable();
+                $table->string('sage_reciept_id')->nullable();
+                $table->string('digital_wallet')->nullable();
+                $table->string('payment_link')->nullable();
+                $table->timestamp('payment_link_created_at')->nullable();
+                $table->string('payment_allocation_status')->nullable();
+                $table->timestamp('captured_at')->nullable();
+                $table->timestamp('authorized_at')->nullable();
+                $table->boolean('is_approved')->default(0);
+                $table->string('reference')->nullable();
+                $table->decimal('discount_value', 10, 2)->default(0);
+                $table->unsignedBigInteger('verified_by')->nullable();
+                $table->timestamp('verified_at')->nullable();
+                $table->decimal('price_vat_applicable', 10, 2)->nullable();
+                $table->decimal('price_vat', 10, 2)->nullable();
+                $table->decimal('commission_vat_applicable', 10, 2)->nullable();
+                $table->decimal('commission_vat', 10, 2)->nullable();
+                $table->string('insurer_receipt_number')->nullable();
+                $table->string('sage_ap_payment_receipt_id')->nullable();
+                $table->unsignedBigInteger('payment_gateway_id')->nullable();
+                $table->string('cc_payment_gateway')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
+        // Create payment_status_log table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('payment_status_log')) {
+            Schema::connection('sqlite')->create('payment_status_log', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('current_payment_status_id')->nullable();
+                $table->unsignedBigInteger('previous_payment_status_id')->nullable();
+                $table->string('payment_code')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create quote_documents table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('quote_documents')) {
+            Schema::connection('sqlite')->create('quote_documents', function ($table) {
+                $table->id();
+                $table->string('doc_name')->nullable();
+                $table->string('doc_url')->nullable();
+                $table->string('doc_mime_type')->nullable();
+                $table->string('document_type_code')->nullable();
+                $table->string('document_type_text')->nullable();
+                $table->string('doc_uuid')->nullable();
+                $table->unsignedBigInteger('created_by_id')->nullable();
+                $table->string('original_name')->nullable();
+                $table->unsignedBigInteger('member_detail_id')->nullable();
+                $table->string('payment_split_type')->nullable();
+                $table->unsignedBigInteger('payment_split_id')->nullable();
+                $table->string('watermarked_doc_name')->nullable();
+                $table->string('watermarked_doc_url')->nullable();
+                $table->string('document_category')->nullable();
+                $table->string('insurer_document_link')->nullable();
+                $table->morphs('quote_documentable'); // Creates quote_documentable_id and quote_documentable_type
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
         // Create lookups table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('lookups')) {
             Schema::connection('sqlite')->create('lookups', function ($table) {
