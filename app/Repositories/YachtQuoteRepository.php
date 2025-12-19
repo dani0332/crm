@@ -4,11 +4,13 @@ namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -134,6 +136,7 @@ class YachtQuoteRepository extends BaseRepository
             ->with([
                 'yachtQuote',
                 'advisor',
+                'advisor.primaryBranch',
                 'transactionType',
                 'nationality',
                 'quoteDetail.lostReason',
@@ -162,6 +165,7 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -179,6 +183,7 @@ class YachtQuoteRepository extends BaseRepository
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht));
 
         return $quote;
     }
@@ -200,6 +205,7 @@ class YachtQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
@@ -208,6 +214,7 @@ class YachtQuoteRepository extends BaseRepository
             },
             'customer',
             'subSource',
+            'branch:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -271,7 +278,21 @@ class YachtQuoteRepository extends BaseRepository
             return 0;
         }
 
-        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        if (! $forTotalLeadsCount && ! $forExport) {
+            $this->postProcessYachtQuotes($result);
+        }
+
+        return $result;
+    }
+
+    private function postProcessYachtQuotes($quotes)
+    {
+        return $quotes->map(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht));
+
+            return $item;
+        });
     }
 
     /**
