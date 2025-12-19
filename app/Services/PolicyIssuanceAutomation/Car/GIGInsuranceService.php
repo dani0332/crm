@@ -140,10 +140,12 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     {
         LoggerService::startQuoteLogging($quote);
 
-        if ($this->isPolicyIssuanceAutomationEnabled()) {
+        $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+        if ($this->isPolicyIssuanceAutomationEnabled() && $isQuotePolicyIssuanceAutomationEnabled) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - AXA Car Automation is disabled');
+            $errorMessage =  $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Automation is disabled' : 'GIG Car Quote Policy Issuance Automation is disabled';
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - ' . $errorMessage);
         }
 
         return $this->policyIssuance;
@@ -160,10 +162,12 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id.' started');
 
         try {
-            if (! $this->isPolicyIssuanceAutomationEnabled()) {
-                LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - GIG Car Automation is disabled');
-                $response['error'] = 'GIG Car Automation is disabled';
-                $response['message'] = 'GIG Car Automation is disabled';
+            $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+            if (! $this->isPolicyIssuanceAutomationEnabled() || ! $isQuotePolicyIssuanceAutomationEnabled) {
+                $errorMessage =  $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Automation is disabled' : 'GIG Car Quote Policy Issuance Automation is disabled';
+                LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - ' . $errorMessage);
+                $response['error'] = $errorMessage;
+                $response['message'] = $errorMessage;
 
                 return $response;
             }
