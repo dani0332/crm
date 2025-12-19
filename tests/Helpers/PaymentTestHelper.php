@@ -8,7 +8,6 @@ use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
-use Illuminate\Support\Facades\DB;
 
 class PaymentTestHelper
 {
@@ -24,33 +23,23 @@ class PaymentTestHelper
         string $quoteCode = 'CAR-ABCDEF12345',
         string $quoteUuid = 'ABCDEF12345'
     ): array {
-        $db = DB::connection('sqlite');
+        // Create InsuranceProvider using model-based creation
+        $providerAttributes = InsuranceProvider::factory()->definition();
+        $insuranceProvider = InsuranceProvider::forceCreate($providerAttributes);
         
-        // Create InsuranceProvider using factory definition
-        $providerFactory = InsuranceProvider::factory();
-        $providerAttributes = $providerFactory->definition();
-        $providerId = $db->table('insurance_provider')->insertGetId(array_merge($providerAttributes, [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]));
-        $insuranceProvider = InsuranceProvider::on('sqlite')->find($providerId);
-        
-        // Create CarPlan linked to the InsuranceProvider
+        // Create CarPlan linked to the InsuranceProvider using model-based creation
         $planFactory = CarPlan::factory();
-        $planAttributes = array_merge($planFactory->definition(), [
-            'provider_id' => $providerId,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        $planId = $db->table('car_plan')->insertGetId($planAttributes);
-        $carPlan = CarPlan::on('sqlite')->find($planId);
+        $planAttributes = $planFactory->definition();
+        // Replace factory relationship with actual provider ID
+        $planAttributes['provider_id'] = $insuranceProvider->id;
+        $carPlan = CarPlan::forceCreate($planAttributes);
         
         // Create CarQuote using factory method that handles SQLite connection
         $carQuote = CarQuote::factory()->createForSqlite([
             'uuid' => $quoteUuid,
             'code' => $quoteCode,
-            'insurance_provider_id' => $providerId,
-            'plan_id' => $planId,
+            'insurance_provider_id' => $insuranceProvider->id,
+            'plan_id' => $carPlan->id,
         ]);
         
         return [

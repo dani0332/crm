@@ -6,7 +6,6 @@ use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\DB;
 
 class CarQuoteFactory extends Factory
 {
@@ -79,8 +78,6 @@ class CarQuoteFactory extends Factory
      */
     public function createForSqlite(array $attributes = []): CarQuote
     {
-        $db = DB::connection('sqlite');
-        
         // Generate UUID if not provided
         if (!isset($attributes['uuid'])) {
             $uuidLength = $this->faker->numberBetween(8, 10);
@@ -109,20 +106,15 @@ class CarQuoteFactory extends Factory
             'dob' => $this->faker->date(),
             'source' => $this->faker->randomElement(['IMCRM']),
             'device' => $this->faker->randomElement(['web']),
-            'premium' => 1680,
+            'premium' => 1000,
             'quote_status_id' => null,
             'payment_status_id' => null,
             'advisor_id' => null,
             'created_by_id' => null,
             'updated_by_id' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
         ], $attributes);
         
-        // Insert via SQLite connection
-        $quoteId = $db->table('car_quote_request')->insertGetId($quoteAttributes);
-        
-        // Load and return model with SQLite connection
-        return CarQuote::on('sqlite')->find($quoteId);
+        // Use model-based creation with forceCreate to bypass mass assignment protection
+        return CarQuote::forceCreate($quoteAttributes);
     }
 }

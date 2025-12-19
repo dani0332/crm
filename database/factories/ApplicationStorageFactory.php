@@ -40,19 +40,12 @@ class ApplicationStorageFactory extends Factory
      */
     public static function createVatValueForSqlite(string $value = '5'): ApplicationStorage
     {
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
-        
-        // Insert directly using DB facade to avoid mass assignment issues
-        $id = $db->table('application_storage')->insertGetId([
+        // Use model-based creation with forceCreate to bypass mass assignment protection
+        return ApplicationStorage::on('sqlite')->forceCreate([
             'key_name' => 'VAT_VALUE',
             'value' => $value,
             'is_active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
-
-        // Load and return the model instance
-        return ApplicationStorage::on('sqlite')->find($id);
     }
 }
 
