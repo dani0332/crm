@@ -35,8 +35,6 @@ class NgiInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Get API steps in order
-     *
-     * @return array
      */
     private function getAPISteps(): array
     {
@@ -50,9 +48,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Update process with completed step
      *
-     * @param mixed $process
-     * @param array $response
-     * @return void
+     * @param  mixed  $process
      */
     private function updateProcessWithStep($process, array $response): void
     {
@@ -68,9 +64,6 @@ class NgiInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Get step handler method name
-     *
-     * @param string $step
-     * @return string|null
      */
     private function getStepHandler(string $step): ?string
     {
@@ -79,8 +72,6 @@ class NgiInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Check if policy issuance automation is enabled
-     *
-     * @return bool
      */
     public function isPolicyIssuanceAutomationEnabled(): bool
     {
@@ -89,8 +80,6 @@ class NgiInsuranceService implements PolicyIssuanceInterface
 
     /**
      * Check if policy issuance automation retry is enabled for timeout
-     *
-     * @return bool
      */
     public function isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool
     {
@@ -100,8 +89,8 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Create policy issuance schedule
      *
-     * @param mixed $quote
-     * @param mixed $insurer
+     * @param  mixed  $quote
+     * @param  mixed  $insurer
      * @return void
      */
     public function createPolicyIssuanceSchedule($quote, $insurer)
@@ -125,7 +114,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Execute automation steps
      *
-     * @param mixed $process
+     * @param  mixed  $process
      * @return array
      */
     public function executeSteps($process)
@@ -200,9 +189,9 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Execute step sequence
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @param string $nextStepToBeExecuted
+     * @param  mixed  $quote
+     * @param  mixed  $process
+     * @param  string  $nextStepToBeExecuted
      * @return array
      */
     private function executeStepSequence($quote, $process, $nextStepToBeExecuted)
@@ -219,7 +208,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
 
         while ($currentStep !== null) {
             if (! in_array($currentStep, $allSteps, true)) {
-                $error = 'Unknown step encountered: ' . $currentStep;
+                $error = 'Unknown step encountered: '.$currentStep;
                 LoggerService::error('Invalid step', extra: [
                     'process_id' => $process->id,
                     'current_step' => $currentStep,
@@ -232,7 +221,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
 
             $handler = $this->getStepHandler($currentStep);
             if (! $handler || ! method_exists($this->stepExecutor, $handler)) {
-                $error = 'Missing handler for step: ' . $currentStep;
+                $error = 'Missing handler for step: '.$currentStep;
                 LoggerService::error('Handler not found for step', extra: [
                     'process_id' => $process->id,
                     'current_step' => $currentStep,
@@ -283,7 +272,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
             $currentStep = $this->getNextStep($process->completed_step);
         }
 
-        if ($result['status'] && !isset($result['documents_pending'])) {
+        if ($result['status'] && ! isset($result['documents_pending'])) {
             LoggerService::info('All steps completed successfully', extra: [
                 'process_id' => $process->id,
                 'steps_executed' => $stepsExecuted,
@@ -298,8 +287,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Get next step to execute
      *
-     * @param string|null $completedStep
-     * @return string|null
+     * @param  string|null  $completedStep
      */
     public function getNextStep($completedStep = null): ?string
     {
@@ -339,9 +327,8 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Get steps locking status
      *
-     * @param mixed $quote
-     * @param bool $throughAutomation
-     * @return array
+     * @param  mixed  $quote
+     * @param  bool  $throughAutomation
      */
     public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
@@ -351,8 +338,7 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Get insurer API status by step (required for markPolicyIssuanceFailed)
      *
-     * @param mixed $policyIssuance
-     * @return int|null
+     * @param  mixed  $policyIssuance
      */
     public function getInsurerAPIStatusByStep($policyIssuance): ?int
     {
@@ -372,10 +358,9 @@ class NgiInsuranceService implements PolicyIssuanceInterface
      * Update quote API issuance status and allocate lead
      * Called by SageApiService after book policy completes
      *
-     * @param mixed $quote
-     * @param int|null $newInsurerApiStatus
-     * @param int|null $newApiIssuanceStatus
-     * @return void
+     * @param  mixed  $quote
+     * @param  int|null  $newInsurerApiStatus
+     * @param  int|null  $newApiIssuanceStatus
      */
     public function updateQuoteApiIssuanceStatusAndAllocate($quote, $newInsurerApiStatus = null, $newApiIssuanceStatus = null): void
     {
@@ -437,9 +422,8 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Update quote insurer API status
      *
-     * @param mixed $quote
-     * @param int|null $newInsurerApiStatus
-     * @return void
+     * @param  mixed  $quote
+     * @param  int|null  $newInsurerApiStatus
      */
     private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus): void
     {
@@ -456,9 +440,8 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Update quote API issuance status
      *
-     * @param mixed $quote
-     * @param int|null $newApiIssuanceStatus
-     * @return void
+     * @param  mixed  $quote
+     * @param  int|null  $newApiIssuanceStatus
      */
     private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus): void
     {
@@ -475,9 +458,8 @@ class NgiInsuranceService implements PolicyIssuanceInterface
     /**
      * Allocate lead and send notifications after policy booking
      *
-     * @param mixed $quote
-     * @param bool $isInsurerApiStatusAlreadyFailed
-     * @return void
+     * @param  mixed  $quote
+     * @param  bool  $isInsurerApiStatusAlreadyFailed
      */
     private function allocateLead($quote, $isInsurerApiStatusAlreadyFailed): void
     {
@@ -502,11 +484,11 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                     $quote->insurer_api_status_id
                 );
 
-                    LoggerService::info('Automation failed - failure notification dispatched', extra: [
-                        'quote_code' => $quote->code,
-                        'insurer_api_status' => $quote->insurer_api_status_id,
-                    ]);
-                }
+                LoggerService::info('Automation failed - failure notification dispatched', extra: [
+                    'quote_code' => $quote->code,
+                    'insurer_api_status' => $quote->insurer_api_status_id,
+                ]);
+            }
 
             // Send policy documents if policy is booked
             if ($isPolicyBooked) {

@@ -13,9 +13,6 @@ class HandleDevicePaymentAuthorised
 {
     /**
      * Handle the DevicePaymentAuthorised event.
-     *
-     * @param DevicePaymentAuthorised $event
-     * @return void
      */
     public function handle(DevicePaymentAuthorised $event): void
     {

@@ -17,6 +17,7 @@ class NgiHttpClient
     private string $baseUrl;
     private int $apiTimeout;
     private ?string $authToken = null;
+
     private const APPLICATION_JSON = 'application/json';
 
     public function __construct()
@@ -27,8 +28,6 @@ class NgiHttpClient
 
     /**
      * Authenticate and get bearer token
-     *
-     * @return string|null
      */
     public function authenticate(): ?string
     {
@@ -36,7 +35,7 @@ class NgiHttpClient
             return $this->authToken;
         }
 
-        $authUrl = $this->baseUrl . '/api/Auth/GetToken';
+        $authUrl = $this->baseUrl.'/api/Auth/GetToken';
         $payload = [
             'client_code' => config('constants.NGI_API_CLIENT_CODE'),
             'client_id' => config('constants.NGI_API_CLIENT_ID'),
@@ -78,15 +77,10 @@ class NgiHttpClient
 
     /**
      * Perform a POST request against NGI API
-     *
-     * @param string $endPoint
-     * @param array $payload
-     * @param array $headers
-     * @return Response
      */
     public function post(string $endPoint, array $payload = [], array $headers = []): Response
     {
-        $url = $this->baseUrl . $endPoint;
+        $url = $this->baseUrl.$endPoint;
         $request = $this->getAuthenticatedClient($headers);
 
         LoggerService::info('Initiating NGI API POST call', extra: [
@@ -125,17 +119,12 @@ class NgiHttpClient
 
     /**
      * Perform a GET request against NGI API
-     *
-     * @param string $endPoint
-     * @param array $queryParams
-     * @param array $headers
-     * @return Response
      */
     public function get(string $endPoint, array $queryParams = [], array $headers = []): Response
     {
-        $url = $this->baseUrl . $endPoint;
+        $url = $this->baseUrl.$endPoint;
         if (! empty($queryParams)) {
-            $url .= '?' . http_build_query($queryParams);
+            $url .= '?'.http_build_query($queryParams);
         }
 
         $request = $this->getAuthenticatedClient($headers);
@@ -174,9 +163,6 @@ class NgiHttpClient
 
     /**
      * Get authenticated HTTP client
-     *
-     * @param array $headers
-     * @return PendingRequest
      */
     public function getAuthenticatedClient(array $headers = []): PendingRequest
     {
@@ -188,7 +174,7 @@ class NgiHttpClient
         ];
 
         if ($token) {
-            $defaultHeaders['Authorization'] = 'Bearer ' . $token;
+            $defaultHeaders['Authorization'] = 'Bearer '.$token;
         }
 
         return Http::timeout($this->apiTimeout)
@@ -198,8 +184,6 @@ class NgiHttpClient
 
     /**
      * Get the base URL
-     *
-     * @return string
      */
     public function getBaseUrl(): string
     {

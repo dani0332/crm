@@ -29,9 +29,8 @@ class NgiBookPolicyService
     /**
      * Execute book policy process
      *
-     * @param mixed $quote
-     * @param mixed $policyIssuance
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $policyIssuance
      */
     public function bookPolicy($quote, $policyIssuance = null): array
     {
@@ -116,8 +115,7 @@ class NgiBookPolicyService
     /**
      * Update booking details
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function updateBookingDetails($quote): array
     {
@@ -191,8 +189,8 @@ class NgiBookPolicyService
             }
         } catch (Exception $e) {
             $response['status'] = false;
-            $response['error'] = 'Booking update error: ' . $e->getMessage();
-            $response['message'] = 'An error occurred while updating booking details: ' . $e->getMessage();
+            $response['error'] = 'Booking update error: '.$e->getMessage();
+            $response['message'] = 'An error occurred while updating booking details: '.$e->getMessage();
 
             LoggerService::error('Exception during booking update', exception: $e);
         }
@@ -203,9 +201,8 @@ class NgiBookPolicyService
     /**
      * Get steps locking status for UI
      *
-     * @param mixed $quote
-     * @param bool $throughAutomation
-     * @return array
+     * @param  mixed  $quote
+     * @param  bool  $throughAutomation
      */
     public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {

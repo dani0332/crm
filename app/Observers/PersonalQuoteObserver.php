@@ -50,9 +50,6 @@ class PersonalQuoteObserver
 
     /**
      * Handle the FTC email dispatch on payment authorised.
-     *
-     * @param PersonalQuote $quote
-     * @return void
      */
     public function sendFTCEmailOnPaymentAuthorised(PersonalQuote $quote): void
     {

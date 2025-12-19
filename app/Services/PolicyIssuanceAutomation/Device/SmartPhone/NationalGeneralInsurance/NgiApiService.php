@@ -23,9 +23,8 @@ class NgiApiService
     /**
      * Create policy from quote API call
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function createPolicyFromQuote($quote, $process): array
     {
@@ -55,7 +54,7 @@ class NgiApiService
             $quote,
             $payload,
             $createPolicyResponse,
-            Ngi::getBaseUrl() . $endPoint,
+            Ngi::getBaseUrl().$endPoint,
             NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
             $createPolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
             $process
@@ -95,9 +94,8 @@ class NgiApiService
     /**
      * Get policy documents API call
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function getPolicyDocuments($quote, $process): array
     {
@@ -125,7 +123,7 @@ class NgiApiService
             $quote,
             $queryParams,
             $policyDocumentsResponse,
-            Ngi::getBaseUrl() . $endPoint . '?' . http_build_query($queryParams),
+            Ngi::getBaseUrl().$endPoint.'?'.http_build_query($queryParams),
             NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             $policyDocumentsResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
             $process

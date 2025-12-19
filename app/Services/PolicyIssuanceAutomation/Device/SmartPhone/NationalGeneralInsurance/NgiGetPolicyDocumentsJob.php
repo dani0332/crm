@@ -59,7 +59,7 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
      */
     public function uniqueId(): string
     {
-        return 'ngi-get-policy-docs-' . $this->processId;
+        return 'ngi-get-policy-docs-'.$this->processId;
     }
 
     /**

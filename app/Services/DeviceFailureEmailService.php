@@ -28,11 +28,6 @@ class DeviceFailureEmailService
     /**
      * Dispatch failure email job for Device/NGI quotes
      * This is the main entry point - validates LOB and Provider before dispatching
-     *
-     * @param int $quoteId
-     * @param DeviceFailureTypeEnum $failureType
-     * @param string|null $providerCode
-     * @return bool
      */
     public function sendFailureEmail(
         int $quoteId,
@@ -72,11 +67,9 @@ class DeviceFailureEmailService
      * Execute sending failure email via Bird webhook.
      * This is called by the SendDeviceFailureEmailJob.
      *
-     * @param int $quoteId
-     * @param DeviceFailureTypeEnum $failureType
-     * @param string|null $providerCode
-     * @param int $attempt Current attempt number
+     * @param  int  $attempt  Current attempt number
      * @return array{status: bool, error?: string}
+     *
      * @throws BirdWebhookException When Bird webhook fails
      */
     public function executeFailureEmail(
@@ -97,6 +90,7 @@ class DeviceFailureEmailService
             LoggerService::error("{$this->logPrefix} Quote not found", extra: [
                 'quoteId' => $quoteId,
             ]);
+
             return ['status' => false, 'error' => 'Quote not found'];
         }
 
@@ -106,6 +100,7 @@ class DeviceFailureEmailService
                 'quoteId' => $quoteId,
                 'quoteTypeId' => $quote->quote_type_id,
             ]);
+
             return ['status' => false, 'error' => 'Not a valid Device/NGI quote'];
         }
 
@@ -119,6 +114,7 @@ class DeviceFailureEmailService
                 'failureType' => $failureType->value,
                 'refId' => $quote->code,
             ]);
+
             return ['status' => true];
         }
 
@@ -131,10 +127,6 @@ class DeviceFailureEmailService
 
     /**
      * Send failure email via Bird webhook
-     *
-     * @param PersonalQuote $quote
-     * @param DeviceFailureTypeEnum $failureType
-     * @return int|null
      */
     private function sendViaBird(PersonalQuote $quote, DeviceFailureTypeEnum $failureType): ?int
     {
@@ -170,6 +162,7 @@ class DeviceFailureEmailService
             LoggerService::warning("{$this->logPrefix} Bird URL not found in ApplicationStorage", extra: [
                 'key' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL,
             ]);
+
             return null;
         }
 
@@ -187,8 +180,6 @@ class DeviceFailureEmailService
     /**
      * Get recipient based on failure type (FRD requirement)
      *
-     * @param PersonalQuote $quote
-     * @param DeviceFailureTypeEnum $failureType
      * @return array{email: string, name: string}
      */
     private function getRecipient(PersonalQuote $quote, DeviceFailureTypeEnum $failureType): array
@@ -197,6 +188,7 @@ class DeviceFailureEmailService
         if ($failureType === DeviceFailureTypeEnum::BOOK_POLICY) {
             $toEmail = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO)
                 ?: 'production.approval.team@insurancemarket.ae';
+
             return ['email' => $toEmail, 'name' => 'Production Approval Team'];
         }
 
@@ -208,15 +200,13 @@ class DeviceFailureEmailService
         // Fallback
         $toEmail = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO)
             ?: 'production.approval.team@insurancemarket.ae';
+
         return ['email' => $toEmail, 'name' => 'Device Support Team'];
     }
 
     /**
      * Build CC emails
      *
-     * @param PersonalQuote $quote
-     * @param DeviceFailureTypeEnum $failureType
-     * @param string $appEnv
      * @return array{approvalemail: string|null, prodemail: string|null, advisoremail: string|null}
      */
     private function buildCcEmails(PersonalQuote $quote, DeviceFailureTypeEnum $failureType, string $appEnv): array
@@ -242,20 +232,16 @@ class DeviceFailureEmailService
 
     /**
      * Generate IMCRM link for the quote
-     *
-     * @param PersonalQuote $quote
-     * @return string
      */
     private function generateImcrmLink(PersonalQuote $quote): string
     {
         $baseUrl = config('app.url', env('APP_URL'));
+
         return "{$baseUrl}/personal-quotes/device/{$quote->uuid}";
     }
 
     /**
      * Get escalation link from ApplicationStorage
-     *
-     * @return string
      */
     private function getEscalationLink(): string
     {
@@ -266,10 +252,6 @@ class DeviceFailureEmailService
 
     /**
      * Log the failure attempt to API logs
-     *
-     * @param PersonalQuote $quote
-     * @param DeviceFailureTypeEnum $failureType
-     * @param int $attempt
      */
     private function logFailureAttempt(PersonalQuote $quote, DeviceFailureTypeEnum $failureType, int $attempt): void
     {
@@ -291,10 +273,6 @@ class DeviceFailureEmailService
 
     /**
      * Handle job failure - log the error
-     *
-     * @param int $quoteId
-     * @param DeviceFailureTypeEnum $failureType
-     * @param string $errorMessage
      */
     public function handleJobFailure(int $quoteId, DeviceFailureTypeEnum $failureType, string $errorMessage): void
     {
@@ -308,11 +286,6 @@ class DeviceFailureEmailService
     /**
      * Validate quote for failure email dispatch
      * Checks: quote exists, is Device LOB, and is NGI provider
-     *
-     * @param PersonalQuote|null $quote
-     * @param int $quoteId
-     * @param string|null $providerCode
-     * @return bool
      */
     private function isValidQuoteForFailureEmail(?PersonalQuote $quote, int $quoteId, ?string $providerCode): bool
     {
@@ -320,6 +293,7 @@ class DeviceFailureEmailService
             LoggerService::error("{$this->logPrefix} Quote not found", extra: [
                 'quoteId' => $quoteId,
             ]);
+
             return false;
         }
 
@@ -327,6 +301,7 @@ class DeviceFailureEmailService
         $effectiveProviderCode = $providerCode ?? $quote->insuranceProvider?->code;
         if (! $this->isValidDeviceNgiQuote($quote, $effectiveProviderCode)) {
             $this->logInvalidQuoteWarning($quote, $quoteId, $effectiveProviderCode);
+
             return false;
         }
 
@@ -335,11 +310,6 @@ class DeviceFailureEmailService
 
     /**
      * Log warning for invalid Device/NGI quote
-     *
-     * @param PersonalQuote $quote
-     * @param int $quoteId
-     * @param string|null $providerCode
-     * @return void
      */
     private function logInvalidQuoteWarning(PersonalQuote $quote, int $quoteId, ?string $providerCode): void
     {
@@ -350,6 +320,7 @@ class DeviceFailureEmailService
                 'quoteId' => $quoteId,
                 'quoteTypeId' => $quote->quote_type_id,
             ]);
+
             return;
         }
 
@@ -363,10 +334,7 @@ class DeviceFailureEmailService
      * Trigger failure email from insurer API status ID
      * Used by PolicyIssuanceService and NgiInsuranceService
      *
-     * @param int $quoteId
-     * @param int|null $insurerApiStatusId
-     * @param string|null $completedStep Fallback to determine failure type
-     * @return bool
+     * @param  string|null  $completedStep  Fallback to determine failure type
      */
     public function sendFailureEmailFromStatus(
         int $quoteId,
@@ -381,6 +349,7 @@ class DeviceFailureEmailService
                 'insurerApiStatusId' => $insurerApiStatusId,
                 'completedStep' => $completedStep,
             ]);
+
             return false;
         }
 
@@ -389,10 +358,6 @@ class DeviceFailureEmailService
 
     /**
      * Determine failure type from insurer API status or completed step
-     *
-     * @param int|null $insurerApiStatusId
-     * @param string|null $completedStep
-     * @return DeviceFailureTypeEnum|null
      */
     public function determineFailureTypeFromStatus(?int $insurerApiStatusId, ?string $completedStep = null): ?DeviceFailureTypeEnum
     {
@@ -425,9 +390,6 @@ class DeviceFailureEmailService
 
     /**
      * Check if quote is Device LOB
-     *
-     * @param PersonalQuote $quote
-     * @return bool
      */
     public function isDeviceLob(PersonalQuote $quote): bool
     {
@@ -436,9 +398,6 @@ class DeviceFailureEmailService
 
     /**
      * Check if provider is NGI
-     *
-     * @param string|null $providerCode
-     * @return bool
      */
     public function isNgiProvider(?string $providerCode): bool
     {
@@ -447,14 +406,11 @@ class DeviceFailureEmailService
 
     /**
      * Check if quote is valid Device/NGI quote
-     *
-     * @param PersonalQuote $quote
-     * @param string|null $providerCode
-     * @return bool
      */
     public function isValidDeviceNgiQuote(PersonalQuote $quote, ?string $providerCode = null): bool
     {
         $effectiveProviderCode = $providerCode ?? $quote->insuranceProvider?->code;
+
         return $this->isDeviceLob($quote) && $this->isNgiProvider($effectiveProviderCode);
     }
 }

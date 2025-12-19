@@ -6,8 +6,8 @@ namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGenera
 
 use App\Enums\DeviceFailureTypeEnum;
 use App\Enums\NgiEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypes;
 use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -22,9 +22,8 @@ class NgiStepExecutor
     /**
      * Execute create policy from quote step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeCreatePolicyFromQuoteStep($quote, $process): array
     {
@@ -75,13 +74,12 @@ class NgiStepExecutor
      * - Retry up to 3 times with 5-minute gaps (handled by job's $tries and $backoff)
      * - Download documents from provider and store to IMCRM
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeGetPolicyDocumentsAndUploadToIMCRMStep($quote, $process): array
     {
-        LoggerService::info('Dispatching ' . NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM . ' job with 3-minute delay per FRD', extra: [
+        LoggerService::info('Dispatching '.NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM.' job with 3-minute delay per FRD', extra: [
             'step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             'process_id' => $process->id,
             'policy_number' => $quote->policy_number,
@@ -95,7 +93,7 @@ class NgiStepExecutor
 
         $scheduledAt = now()->addMinutes($delayMinutes)->toDateTimeString();
 
-        LoggerService::info(NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM . ' job dispatched successfully', extra: [
+        LoggerService::info(NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM.' job dispatched successfully', extra: [
             'step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             'process_id' => $process->id,
             'delay_minutes' => $delayMinutes,
@@ -105,7 +103,7 @@ class NgiStepExecutor
         return [
             'status' => true,
             'documents_pending' => true,
-            'message' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM . " job dispatched with {$delayMinutes}-minute delay. Scheduled at: {$scheduledAt}",
+            'message' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM." job dispatched with {$delayMinutes}-minute delay. Scheduled at: {$scheduledAt}",
             'completed_step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
         ];
     }
@@ -113,9 +111,8 @@ class NgiStepExecutor
     /**
      * Execute book policy step
      *
-     * @param mixed $quote
-     * @param mixed $process
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $process
      */
     public function executeBookPolicyStep($quote, $process): array
     {

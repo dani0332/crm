@@ -8,17 +8,15 @@ use Carbon\Carbon;
 
 class NgiRequestBuilder
 {
-
     private const APPLICATION_JSON = 'application/json';
 
     /**
      * Build payload for CreatePolicyFromQuote API
      *
-     * @param mixed $quote
-     * @param mixed $customer
-     * @param mixed $deviceQuote
-     * @param mixed $payment
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $customer
+     * @param  mixed  $deviceQuote
+     * @param  mixed  $payment
      */
     public function buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $payment, $latestInsured): array
     {
@@ -65,14 +63,12 @@ class NgiRequestBuilder
             ],
         ];
         unset($payload['payment_reference_number']); // TODO:: NGI:: Rucha ask to send payload without this field which is not according to the FRD or documentation discussion link is https://chat.google.com/room/AAQAZXb03Dc/a6vYYW81pkM/I_2Yfeqb1xc?cls=10
+
         return $payload;
     }
 
     /**
      * Format Emirates ID to expected format
-     *
-     * @param string|null $emiratesId
-     * @return string|null
      */
     private function formatEmiratesId(?string $emiratesId): ?string
     {
@@ -97,8 +93,6 @@ class NgiRequestBuilder
 
     /**
      * Build headers required for CreatePolicyFromQuote API
-     *
-     * @return array
      */
     public function buildCreatePolicyHeaders(): array
     {

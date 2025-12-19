@@ -26,9 +26,6 @@ class DeviceFailureController extends Controller
      * Generic failure notification endpoint
      *
      * POST /api/v1/device/failure-email
-     *
-     * @param DeviceFailureEmailRequest $request
-     * @return JsonResponse
      */
     public function failureEmail(DeviceFailureEmailRequest $request): JsonResponse
     {
@@ -61,12 +58,6 @@ class DeviceFailureController extends Controller
 
     /**
      * Process failure email and return response
-     *
-     * @param PersonalQuote $quote
-     * @param DeviceFailureTypeEnum $failureType
-     * @param string $providerCode
-     * @param string $quoteUuid
-     * @return JsonResponse
      */
     private function processFailureEmail(
         PersonalQuote $quote,
@@ -106,9 +97,6 @@ class DeviceFailureController extends Controller
     /**
      * Get validation error for quote, or null if valid
      *
-     * @param PersonalQuote|null $quote
-     * @param string $quoteUuid
-     * @param string $providerCode
      * @return array{message: string, error_code: string, status_code: int}|null
      */
     private function getQuoteValidationError(?PersonalQuote $quote, string $quoteUuid, string $providerCode): ?array
@@ -137,8 +125,6 @@ class DeviceFailureController extends Controller
     /**
      * Get LOB or provider validation error, or null if valid
      *
-     * @param PersonalQuote $quote
-     * @param string $providerCode
      * @return array{message: string, error_code: string, status_code: int}|null
      */
     private function getLobOrProviderError(PersonalQuote $quote, string $providerCode): ?array

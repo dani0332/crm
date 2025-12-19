@@ -25,9 +25,6 @@ class NgiDocumentHandler
 
     /**
      * Fetch document content from URL
-     *
-     * @param string $documentUrl
-     * @return array
      */
     public function fetchDocumentFromUrl(string $documentUrl): array
     {
@@ -54,6 +51,7 @@ class NgiDocumentHandler
             $errorMessage = $this->getDownloadErrorMessage($response);
             if ($errorMessage !== null) {
                 $this->logDocumentFetchError($errorMessage, $documentUrl, $response->failed() ? $response->status() : null);
+
                 return ['status' => false, 'message' => $errorMessage];
             }
 
@@ -70,8 +68,7 @@ class NgiDocumentHandler
     /**
      * Get error message for download response, or null if successful
      *
-     * @param \Illuminate\Http\Client\Response $response
-     * @return string|null
+     * @param  \Illuminate\Http\Client\Response  $response
      */
     private function getDownloadErrorMessage($response): ?string
     {
@@ -88,11 +85,6 @@ class NgiDocumentHandler
 
     /**
      * Log document fetch error with context
-     *
-     * @param string $message
-     * @param string $documentUrl
-     * @param int|null $statusCode
-     * @return void
      */
     private function logDocumentFetchError(string $message, string $documentUrl, ?int $statusCode = null): void
     {
@@ -110,9 +102,6 @@ class NgiDocumentHandler
 
     /**
      * Fetch document content from Azure storage
-     *
-     * @param string $relativePath
-     * @return array
      */
     public function fetchDocumentContent(string $relativePath): array
     {
@@ -132,7 +121,7 @@ class NgiDocumentHandler
 
         $mimeType = $this->detectMimeType($fileContent);
         if (! $mimeType || ! in_array($mimeType, self::ALLOWED_DOCUMENT_MIME_TYPES, true)) {
-            $message = 'Unsupported document type: ' . ($mimeType ?? 'unknown');
+            $message = 'Unsupported document type: '.($mimeType ?? 'unknown');
             LoggerService::error('Invalid document mime type', extra: [
                 'file_path' => $filePath,
                 'mime_type' => $mimeType,
@@ -148,20 +137,14 @@ class NgiDocumentHandler
 
     /**
      * Build Azure document path from relative path
-     *
-     * @param string $relativePath
-     * @return string
      */
     private function buildAzureDocumentPath(string $relativePath): string
     {
-        return rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/') . '/' . rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/') . '/' . ltrim($relativePath, '/');
+        return rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/').'/'.rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/').'/'.ltrim($relativePath, '/');
     }
 
     /**
      * Detect MIME type of file content
-     *
-     * @param string $fileContent
-     * @return string|null
      */
     private function detectMimeType(string $fileContent): ?string
     {
@@ -179,9 +162,7 @@ class NgiDocumentHandler
     /**
      * Get document by type from quote documents
      *
-     * @param mixed $quote
-     * @param string $documentTypeCode
-     * @return array|null
+     * @param  mixed  $quote
      */
     public function getDocumentByType($quote, string $documentTypeCode): ?array
     {
@@ -198,10 +179,10 @@ class NgiDocumentHandler
     /**
      * Upload document to IMCRM and attach to quote
      *
-     * @param mixed $quote
-     * @param string $documentContent Base64 encoded document content
-     * @param string $documentCode
-     * @param string|null $originalName
+     * @param  mixed  $quote
+     * @param  string  $documentContent  Base64 encoded document content
+     * @param  string  $documentCode
+     * @param  string|null  $originalName
      * @return mixed
      */
     public function uploadAndAttachToQuoteDocuments($quote, $documentContent, $documentCode, $originalName = null)
@@ -214,14 +195,12 @@ class NgiDocumentHandler
         $data['document_type_code'] = $documentCode;
 
         $quoteDocumentService = new QuoteDocumentService;
+
         return $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
     }
 
     /**
      * Get document URLs mapping from GetPolicyDocuments response
-     *
-     * @param object $policyDocumentsResponse
-     * @return array
      */
     public function getDocumentUrlsFromResponse(object $policyDocumentsResponse): array
     {
@@ -234,9 +213,6 @@ class NgiDocumentHandler
 
     /**
      * Map document types to IMCRM document type codes for Device/Smartphone
-     *
-     * @param PersonalQuote $quote
-     * @return array
      */
     public function getDocTypeCodeForIMCRM(PersonalQuote $quote): array
     {
@@ -249,10 +225,6 @@ class NgiDocumentHandler
 
     /**
      * Download all policy documents from provider URLs and store in database
-     *
-     * @param PersonalQuote $quote
-     * @param PolicyIssuance $process
-     * @return array
      */
     public function downloadAndStorePolicyDocuments(PersonalQuote $quote, PolicyIssuance $process): array
     {
@@ -269,7 +241,7 @@ class NgiDocumentHandler
         // Validate document URLs exist
         $validationService = app(NgiValidationService::class);
         $validationResult = $validationService->validateDownloadDocuments($documentUrls);
-        if (!$validationResult['status']) {
+        if (! $validationResult['status']) {
             return $validationResult;
         }
 
@@ -282,6 +254,7 @@ class NgiDocumentHandler
                 LoggerService::warning('NgiDocumentHandler: Empty document URL', [
                     'document_code' => $docCode,
                 ]);
+
                 continue;
             }
 
@@ -293,12 +266,13 @@ class NgiDocumentHandler
             // Download document content from provider URL
             $documentContentResponse = $this->fetchDocumentFromUrl($documentUrl);
 
-            if (!$documentContentResponse['status']) {
+            if (! $documentContentResponse['status']) {
                 $failedDocuments[] = $docCode;
                 LoggerService::warning('NgiDocumentHandler: Document download failed', [
                     'document_code' => $docCode,
                     'error' => $documentContentResponse['message'] ?? 'Download failed',
                 ]);
+
                 continue;
             }
 
@@ -312,11 +286,12 @@ class NgiDocumentHandler
                 LoggerService::warning('NgiDocumentHandler: Failed to detect MIME type', [
                     'document_code' => $docCode,
                 ]);
+
                 continue;
             }
 
             // Encode content to base64 and format as Data URL for storage
-            $base64Content = 'data:' . $mimeType . ';base64,' . base64_encode($documentContentResponse['content']);
+            $base64Content = 'data:'.$mimeType.';base64,'.base64_encode($documentContentResponse['content']);
 
             LoggerService::info('NgiDocumentHandler: Storing document in DB', [
                 'document_code' => $docCode,
@@ -356,10 +331,10 @@ class NgiDocumentHandler
         // Check if all 3 required documents were downloaded
         $allDocsDownloaded = $downloadedDocuments->count() === 3;
 
-        if (!$allDocsDownloaded) {
+        if (! $allDocsDownloaded) {
             return [
                 'status' => false,
-                'error' => 'Failed to download documents: ' . implode(', ', $failedDocuments),
+                'error' => 'Failed to download documents: '.implode(', ', $failedDocuments),
                 'documents_count' => $downloadedDocuments->count(),
                 'failed_documents' => $failedDocuments,
             ];
@@ -374,20 +349,16 @@ class NgiDocumentHandler
 
     /**
      * Get document file name based on document type
-     *
-     * @param string $docCode
-     * @param string|null $policyNumber
-     * @return string
      */
     private function getDocumentFileName(string $docCode, ?string $policyNumber): string
     {
         $prefix = $policyNumber ?? 'policy';
 
         return match ($docCode) {
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $prefix . '_policy_schedule.pdf',
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $prefix . '_tax_invoice.pdf',
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $prefix . '_commission_invoice.pdf',
-            default => $prefix . '_document.pdf',
+            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $prefix.'_policy_schedule.pdf',
+            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $prefix.'_tax_invoice.pdf',
+            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $prefix.'_commission_invoice.pdf',
+            default => $prefix.'_document.pdf',
         };
     }
 }

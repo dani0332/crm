@@ -37,7 +37,7 @@ class NgiServiceProvider extends ServiceProvider
         });
 
         App::bind(NgiValidationService::class, function ($app) {
-            return new NgiValidationService();
+            return new NgiValidationService;
         });
 
         App::bind(NgiApiService::class, function ($app) {

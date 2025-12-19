@@ -38,10 +38,11 @@ class NgiGetPolicyDocumentsService
     /**
      * Execute the policy document retrieval process.
      *
-     * @param int $processId The policy issuance process ID
-     * @param int $attempt Current attempt number (for logging)
-     * @param int $maxTries Maximum number of tries (for logging)
+     * @param  int  $processId  The policy issuance process ID
+     * @param  int  $attempt  Current attempt number (for logging)
+     * @param  int  $maxTries  Maximum number of tries (for logging)
      * @return array{status: bool, error?: string, documents_count?: int}
+     *
      * @throws NgiException When validation or API calls fail
      */
     public function execute(int $processId, int $attempt = 1, int $maxTries = 4): array
@@ -78,15 +79,13 @@ class NgiGetPolicyDocumentsService
     /**
      * Get policy issuance process with quote relationship.
      *
-     * @param int $processId
-     * @return PolicyIssuance
      * @throws NgiException When process or quote not found
      */
     private function getProcessWithQuote(int $processId): PolicyIssuance
     {
         $process = PolicyIssuance::with('model')->find($processId);
 
-        if (!$process) {
+        if (! $process) {
             LoggerService::error("{$this->logPrefix} Process not found", [
                 'process_id' => $processId,
             ]);
@@ -97,7 +96,7 @@ class NgiGetPolicyDocumentsService
             );
         }
 
-        if (!$process->model) {
+        if (! $process->model) {
             LoggerService::error("{$this->logPrefix} Quote not found", [
                 'process_id' => $processId,
             ]);
@@ -114,21 +113,19 @@ class NgiGetPolicyDocumentsService
     /**
      * Validate that policy number exists on the quote.
      *
-     * @param PersonalQuote $quote
-     * @param int $processId
      * @throws NgiException When policy number validation fails
      */
     private function validatePolicyNumber(PersonalQuote $quote, int $processId): void
     {
         $validationResult = $this->validationService->validatePolicyNumberExists($quote);
 
-        if (!$validationResult['status']) {
+        if (! $validationResult['status']) {
             LoggerService::error("{$this->logPrefix} Policy number validation failed", [
                 'process_id' => $processId,
                 'error' => $validationResult['error'] ?? 'No policy number',
             ]);
             throw new NgiException(
-                "{$this->logPrefix} Policy number validation failed " . ($validationResult['error'] ?? 'Policy number not found'),
+                "{$this->logPrefix} Policy number validation failed ".($validationResult['error'] ?? 'Policy number not found'),
                 NgiException::POLICY_NUMBER_VALIDATION_FAILED,
                 ['process_id' => $processId, 'error' => $validationResult['error'] ?? 'Policy number not found']
             );
@@ -138,16 +135,13 @@ class NgiGetPolicyDocumentsService
     /**
      * Call the GetPolicyDocuments API.
      *
-     * @param PersonalQuote $quote
-     * @param PolicyIssuance $process
-     * @param int $processId
      * @throws NgiException When API call fails
      */
     private function callGetPolicyDocumentsApi(PersonalQuote $quote, PolicyIssuance $process, int $processId): void
     {
         $getPolicyDocsResponse = $this->apiService->getPolicyDocuments($quote, $process);
 
-        if (!$getPolicyDocsResponse['status']) {
+        if (! $getPolicyDocsResponse['status']) {
             $errorMessage = $getPolicyDocsResponse['error'] ?? 'GetPolicyDocuments API failed';
             LoggerService::warning("{$this->logPrefix} API call failed", [
                 'process_id' => $processId,
@@ -155,7 +149,7 @@ class NgiGetPolicyDocumentsService
                 'error' => $errorMessage,
             ]);
             throw new NgiException(
-                "{$this->logPrefix} API call failed " . $errorMessage,
+                "{$this->logPrefix} API call failed ".$errorMessage,
                 NgiException::API_CALL_FAILED,
                 ['process_id' => $processId, 'error' => $errorMessage]
             );
@@ -170,17 +164,15 @@ class NgiGetPolicyDocumentsService
     /**
      * Download documents from provider URLs and store in DB.
      *
-     * @param PersonalQuote $quote
-     * @param PolicyIssuance $process
-     * @param int $processId
      * @return array{status: bool, documents_count?: int, error?: string}
+     *
      * @throws NgiException When document download fails
      */
     private function downloadDocuments(PersonalQuote $quote, PolicyIssuance $process, int $processId): array
     {
         $downloadResult = $this->documentHandler->downloadAndStorePolicyDocuments($quote, $process);
 
-        if (!$downloadResult['status']) {
+        if (! $downloadResult['status']) {
             $errorMessage = $downloadResult['error'] ?? 'Document download failed';
             LoggerService::warning("{$this->logPrefix} Document download failed", [
                 'process_id' => $processId,
@@ -188,7 +180,7 @@ class NgiGetPolicyDocumentsService
                 'error' => $errorMessage,
             ]);
             throw new NgiException(
-                "{$this->logPrefix} Document download failed " . $errorMessage,
+                "{$this->logPrefix} Document download failed ".$errorMessage,
                 NgiException::DOCUMENT_DOWNLOAD_FAILED,
                 ['process_id' => $processId, 'error' => $errorMessage]
             );
@@ -205,10 +197,6 @@ class NgiGetPolicyDocumentsService
 
     /**
      * Update process status for the next step.
-     *
-     * @param PolicyIssuance $process
-     * @param int $processId
-     * @param array $downloadResult
      */
     private function updateProcessForNextStep(PolicyIssuance $process, int $processId, array $downloadResult): void
     {
@@ -230,11 +218,6 @@ class NgiGetPolicyDocumentsService
 
     /**
      * Handle job failure after all retries exhausted.
-     *
-     * @param int $processId
-     * @param int $totalAttempts
-     * @param int $maxTries
-     * @param string $exceptionMessage
      */
     public function handleFailure(int $processId, int $totalAttempts, int $maxTries, string $exceptionMessage): void
     {
@@ -248,7 +231,7 @@ class NgiGetPolicyDocumentsService
             'exception' => $exceptionMessage,
         ]);
 
-        if (!$process) {
+        if (! $process) {
             return;
         }
 

@@ -14,12 +14,8 @@ class NgiResponseHandler
     /**
      * Build step response array
      *
-     * @param string $step
-     * @param bool $status
-     * @param string|null $message
-     * @param mixed $error
-     * @param mixed $data
-     * @return array
+     * @param  mixed  $error
+     * @param  mixed  $data
      */
     public function buildStepResponse(string $step, bool $status = false, ?string $message = null, $error = null, $data = null): array
     {
@@ -34,17 +30,13 @@ class NgiResponseHandler
 
     /**
      * Normalize HTTP response from NGI into consistent structure
-     *
-     * @param Response $response
-     * @param string $apiKey
-     * @return array
      */
     public function parseHttpResponse(Response $response, string $apiKey): array
     {
         $responseObject = $response->object();
         $result = [
             'status' => false,
-            'error' => $apiKey . ' ' . self::API_FAILED,
+            'error' => $apiKey.' '.self::API_FAILED,
             'message' => 'There is an Exception on NGI API call.',
             'data' => null,
             'completed_step' => null,
@@ -54,7 +46,7 @@ class NgiResponseHandler
             if ($this->hasApiErrors($responseObject)) {
                 $result = [
                     'status' => false,
-                    'error' => $responseObject?->errorCode ?? $apiKey . ' ' . self::API_FAILED,
+                    'error' => $responseObject?->errorCode ?? $apiKey.' '.self::API_FAILED,
                     'message' => $this->extractErrorMessage($responseObject, $apiKey),
                     'data' => $responseObject == null ? null : '',
                     'completed_step' => null,
@@ -84,8 +76,7 @@ class NgiResponseHandler
     /**
      * Check if response contains API errors
      *
-     * @param mixed $responseObject
-     * @return bool
+     * @param  mixed  $responseObject
      */
     private function hasApiErrors($responseObject): bool
     {
@@ -109,13 +100,11 @@ class NgiResponseHandler
     /**
      * Extract error message from response
      *
-     * @param mixed $responseObject
-     * @param string $apiKey
-     * @return string
+     * @param  mixed  $responseObject
      */
     private function extractErrorMessage($responseObject, string $apiKey): string
     {
-        $errorMessage = $apiKey . ' ' . self::API_FAILED;
+        $errorMessage = $apiKey.' '.self::API_FAILED;
 
         if (isset($responseObject?->statusMessage) && ! empty($responseObject->statusMessage)) {
             $errorMessage = $responseObject->statusMessage;

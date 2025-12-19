@@ -15,9 +15,8 @@ class NgiQuoteUpdaterService
     /**
      * Update quote from CreatePolicyFromQuote API response
      *
-     * @param mixed $quote
-     * @param object $createPolicyResult
-     * @return void
+     * @param  mixed  $quote
+     * @param  object  $createPolicyResult
      */
     public function updateQuoteFromCreatePolicyResponse($quote, $createPolicyResult): void
     {
@@ -39,9 +38,8 @@ class NgiQuoteUpdaterService
     /**
      * Update quote from GetPolicyDocuments API response
      *
-     * @param mixed $quote
-     * @param object $policyDocumentsResult
-     * @return void
+     * @param  mixed  $quote
+     * @param  object  $policyDocumentsResult
      */
     public function updateQuoteFromPolicyDocumentsResponse($quote, $policyDocumentsResult): void
     {
@@ -86,9 +84,7 @@ class NgiQuoteUpdaterService
     /**
      * Update payment from GetPolicyDocuments API response
      *
-     * @param string $quoteCode
-     * @param object $policyDocumentsResult
-     * @return void
+     * @param  object  $policyDocumentsResult
      */
     public function updatePaymentFromPolicyDocumentsResponse(string $quoteCode, $policyDocumentsResult): void
     {
@@ -107,9 +103,6 @@ class NgiQuoteUpdaterService
 
     /**
      * Build payment update data from policy documents response
-     *
-     * @param object $policyDocumentsResult
-     * @return array
      */
     private function buildPaymentUpdateData(object $policyDocumentsResult): array
     {
@@ -134,7 +127,7 @@ class NgiQuoteUpdaterService
         foreach ($commissionMapping as $sourceField => $targetField) {
             if (isset($policyDocumentsResult->$sourceField)) {
                 $updateData[$targetField] = $policyDocumentsResult->$sourceField;
-        }
+            }
         }
 
         // Invoice date
@@ -145,19 +138,16 @@ class NgiQuoteUpdaterService
         // Invoice numbers with fallback for testing
         // TODO:: NGI:: premium_inv_no & commision_inv_no are required for book policy while missed from provider in case of missing payment_refrence in issue policy API call
         $updateData['insurer_tax_number'] = $policyDocumentsResult->premium_inv_no
-            ?? 'P/INV/NN100TS10344' . rand(9999, 99999999) . rand(9999, 99999999);
+            ?? 'P/INV/NN100TS10344'.rand(9999, 99999999).rand(9999, 99999999);
 
         $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no
-            ?? 'INV/NN100TS10344' . rand(9999, 99999999) . rand(9999, 99999999);
+            ?? 'INV/NN100TS10344'.rand(9999, 99999999).rand(9999, 99999999);
 
         return $updateData;
-        }
+    }
 
     /**
      * Build payment splits data by removing fields not applicable to splits
-     *
-     * @param array $paymentData
-     * @return array
      */
     private function buildPaymentSplitsData(array $paymentData): array
     {

@@ -156,6 +156,7 @@ class QuoteDocumentService extends BaseService
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
+
             // LoggerService::info('Document deleted', [
             //     'quote_uuid' => $data['quote_uuid'],
             //     'doc_name' => $data['doc_name']

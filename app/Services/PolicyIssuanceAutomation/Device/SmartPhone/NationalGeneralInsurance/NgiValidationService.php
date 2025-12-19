@@ -13,12 +13,10 @@ use Illuminate\Support\Facades\Validator;
 
 class NgiValidationService
 {
-
     /**
      * Validate book policy prerequisites
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function validateBookPolicy($quote): array
     {
@@ -57,8 +55,8 @@ class NgiValidationService
             $response['message'] = 'All book policy prerequisites validated successfully';
         } catch (Exception $e) {
             $response['status'] = false;
-            $response['error'] = 'Validation error: ' . $e->getMessage();
-            $response['message'] = 'An error occurred during validation: ' . $e->getMessage();
+            $response['error'] = 'Validation error: '.$e->getMessage();
+            $response['message'] = 'An error occurred during validation: '.$e->getMessage();
 
             LoggerService::error('Exception during validation', exception: $e);
         }
@@ -69,8 +67,7 @@ class NgiValidationService
     /**
      * Validate required data for policy issuance
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function validateRequiredData($quote, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
@@ -127,8 +124,7 @@ class NgiValidationService
     /**
      * Validate policy number exists for document retrieval
      *
-     * @param mixed $quote
-     * @return array
+     * @param  mixed  $quote
      */
     public function validatePolicyNumberExists($quote): array
     {
@@ -146,19 +142,17 @@ class NgiValidationService
     /**
      * Validate download documents prerequisites
      *
-     * @param mixed $quote
-     * @param array $documentUrls
-     * @return array
+     * @param  mixed  $quote
      */
     public function validateDownloadDocuments(array $documentUrls): array
     {
-        $missingDocs = array_keys(array_filter($documentUrls, fn($url) => $url === null || empty($url)));
+        $missingDocs = array_keys(array_filter($documentUrls, fn ($url) => $url === null || empty($url)));
 
         if (! empty($missingDocs)) {
             return [
                 'status' => false,
-                'error' => 'Missing document URLs: ' . implode(', ', $missingDocs),
-                'message' => 'Missing document URLs: ' . implode(', ', $missingDocs),
+                'error' => 'Missing document URLs: '.implode(', ', $missingDocs),
+                'message' => 'Missing document URLs: '.implode(', ', $missingDocs),
             ];
         }
 

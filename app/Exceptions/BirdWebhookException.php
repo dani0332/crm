@@ -16,11 +16,6 @@ class BirdWebhookException extends Exception
 
     /**
      * Create a new Bird webhook exception instance.
-     *
-     * @param string $message
-     * @param int $code
-     * @param int|null $httpStatusCode
-     * @param Throwable|null $previous
      */
     public function __construct(
         string $message = 'Bird webhook request failed',
@@ -34,8 +29,6 @@ class BirdWebhookException extends Exception
 
     /**
      * Get the HTTP status code returned by Bird webhook
-     *
-     * @return int|null
      */
     public function getHttpStatusCode(): ?int
     {
