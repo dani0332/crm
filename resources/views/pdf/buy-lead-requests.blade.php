@@ -39,7 +39,11 @@
             @foreach($list as $row)
                 <tr>
                     <td>{{ $quoteType->refId($row->ref_id) }}</td>
-                    <td>{{ $row->quoteType?->code }}</td>
+                    @if($row->source == 'REVIVAL')
+                        <td>Car CAT A</td>
+                    @else
+                        <td>{{ $row->quoteType?->code }}</td>
+                    @endif
                     <td>{{ $row->department }}</td>
                     <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d H:i:s') }}</td>
                     <td>{{ $row->cost }}</td>

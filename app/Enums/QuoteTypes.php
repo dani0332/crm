@@ -73,6 +73,7 @@ enum QuoteTypes: string
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
     case DEVICE = 'Device';
+    case CAR_CAT_A = 'CAR_CAT_A';
 
     public function id(): string
     {
@@ -312,7 +313,7 @@ enum QuoteTypes: string
     public function advisorRoles()
     {
         return match ($this) {
-            self::CAR => [RolesEnum::CarAdvisor],
+            self::CAR => [RolesEnum::CarAdvisor, RolesEnum::CarRevivalAdvisor],
             self::HEALTH => [RolesEnum::HealthAdvisor, RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor],
             self::BIKE => [RolesEnum::BikeAdvisor],
             self::TRAVEL => [RolesEnum::TravelAdvisor],
@@ -324,6 +325,7 @@ enum QuoteTypes: string
             self::HOME => [RolesEnum::HomeAdvisor],
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
+            self::CAR_REVIVAL => [RolesEnum::CarRevivalAdvisor],
             self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             default => [],
         };

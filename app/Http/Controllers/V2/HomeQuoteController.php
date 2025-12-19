@@ -18,6 +18,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HomeQuoteService;
@@ -92,6 +93,7 @@ class HomeQuoteController extends Controller
             abort(404, 'No Quote Found. Please check your details and try again.');
         }
 
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home));
         $quoteWithData = HomeQuoteRepository::getShowFormOptions($quote);
 
         return inertia('HomeQuote/Show', $quoteWithData);

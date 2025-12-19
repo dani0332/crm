@@ -30,4 +30,9 @@ class Insured extends Model implements AuditableContract
                 ->orWhere('id_number', str_replace('-', '', $idNumber));
         });
     }
+
+    public function entity()
+    {
+        return $this->hasOne(Entity::class, 'id', 'entity_id');
+    }
 }
