@@ -88,6 +88,8 @@ class DeviceQuoteService extends BaseQuoteService
                     'insuranceProvider:id,text,code',
                     'insuranceProviderPlan',
                     'insuranceProvider',
+                    'latestInsured',
+                    'latestInsured.insuredKyc',
                     'payments' => function ($q) {
                         $q->with([
                             'paymentStatus',
