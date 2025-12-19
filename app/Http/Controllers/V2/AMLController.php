@@ -1126,7 +1126,6 @@ class AMLController extends Controller
     /**
      * Toggle policy issuance automation enabled status for a car quote
      *
-     * @param TogglePolicyIssuanceAutomationRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function togglePolicyIssuanceAutomation(TogglePolicyIssuanceAutomationRequest $request)
