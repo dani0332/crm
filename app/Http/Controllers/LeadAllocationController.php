@@ -74,6 +74,7 @@ class LeadAllocationController extends Controller
                 'data' => $data,
                 'quoteType' => QuoteTypes::HEALTH->value,
                 'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
+                'totalUnassignedLeadsCount' => $this->leadAllocationService->getHealthUnassignedLeadsCount(),
             ]);
         } else {
             abort(403, 'Unauthorized action.');
