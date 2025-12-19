@@ -268,5 +268,177 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        // Create customer table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('customer')) {
+            Schema::connection('sqlite')->create('customer', function ($table) {
+                $table->id();
+                $table->string('emirates_id_number')->nullable();
+                $table->date('emirates_id_expiry_date')->nullable();
+                $table->date('dob')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->text('address')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create insurance_provider table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('insurance_provider')) {
+            Schema::connection('sqlite')->create('insurance_provider', function ($table) {
+                $table->id();
+                $table->string('code')->unique();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
+        // Create policy_issuance table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('policy_issuance')) {
+            Schema::connection('sqlite')->create('policy_issuance', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('insurance_provider_id');
+                $table->string('model_type');
+                $table->unsignedBigInteger('model_id');
+                $table->string('quote_type');
+                $table->string('status')->nullable();
+                $table->string('completed_step')->nullable();
+                $table->text('message')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Update payments table to include required fields
+        if (Schema::connection('sqlite')->hasTable('payments')) {
+            Schema::connection('sqlite')->table('payments', function ($table) {
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'total_amount')) {
+                    $table->decimal('total_amount', 15, 2)->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'is_main_lead_payment')) {
+                    $table->boolean('is_main_lead_payment')->default(false);
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'insurer_invoice_date')) {
+                    $table->date('insurer_invoice_date')->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'insurer_tax_number')) {
+                    $table->string('insurer_tax_number')->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'insurer_commmission_invoice_number')) {
+                    $table->string('insurer_commmission_invoice_number')->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'discount_value')) {
+                    $table->decimal('discount_value', 15, 2)->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'commission_vat_applicable')) {
+                    $table->decimal('commission_vat_applicable', 15, 2)->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'commission_vat_not_applicable')) {
+                    $table->decimal('commission_vat_not_applicable', 15, 2)->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'commission')) {
+                    $table->decimal('commission', 15, 2)->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'commission_vat')) {
+                    $table->decimal('commission_vat', 15, 2)->nullable();
+                }
+                if (! Schema::connection('sqlite')->hasColumn('payments', 'commmission_percentage')) {
+                    $table->decimal('commmission_percentage', 5, 2)->nullable();
+                }
+            });
+        }
+    }
+
+    /**
+     * Create Device/NGI specific schema tables.
+     */
+    public static function createDeviceSchema(): void
+    {
+        // Ensure minimal schema exists first
+        self::createMinimalSchema();
+
+        // Create device_quote table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('device_quote')) {
+            Schema::connection('sqlite')->create('device_quote', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id');
+                $table->string('imei')->nullable();
+                $table->string('device_make')->nullable();
+                $table->string('device_model')->nullable();
+                $table->string('device_type')->nullable();
+                $table->decimal('device_value', 15, 2)->nullable();
+                $table->string('device_condition')->nullable();
+                $table->string('purchase_date')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create insured table if it doesn't exist (for latestInsured relationship)
+        if (! Schema::connection('sqlite')->hasTable('insured')) {
+            Schema::connection('sqlite')->create('insured', function ($table) {
+                $table->id();
+                $table->morphs('insurable');
+                $table->string('id_type')->nullable();
+                $table->string('id_number')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create quote_documents table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('quote_documents')) {
+            Schema::connection('sqlite')->create('quote_documents', function ($table) {
+                $table->id();
+                $table->morphs('documentable');
+                $table->string('document_type')->nullable();
+                $table->string('document_path')->nullable();
+                $table->string('document_name')->nullable();
+                $table->string('document_url')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create payment_splits table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('payment_splits')) {
+            Schema::connection('sqlite')->create('payment_splits', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('payment_id');
+                $table->string('payment_method')->nullable();
+                $table->decimal('amount', 15, 2)->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create payment_charges table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('payment_charges')) {
+            Schema::connection('sqlite')->create('payment_charges', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('payment_split_id');
+                $table->string('transaction_id')->nullable();
+                $table->string('charge_id')->nullable();
+                $table->decimal('amount', 15, 2)->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create policy_issuance_log table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('policy_issuance_log')) {
+            Schema::connection('sqlite')->create('policy_issuance_log', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('policy_issuance_id');
+                $table->string('step')->nullable();
+                $table->string('status')->nullable();
+                $table->text('request_payload')->nullable();
+                $table->text('response_payload')->nullable();
+                $table->string('api_url')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 }
