@@ -728,7 +728,6 @@ class ManagementReport
                 )');
             })
             ->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id')
-            ->leftJoin('entities as e', 'e.id', '=', 'i.entity_id')
 
             // branch join
             ->leftJoin('branches as b', function ($join) {
@@ -758,7 +757,7 @@ class ManagementReport
                         ->whereNull('oc.target_branch_id')
                         ->whereNotNull('personal_quotes.advisor_id')
                         ->where('personal_quotes.business_type_of_insurance_id', '=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
-                        ->where('e.emirate_of_registration_id', '=', EmirateEnum::ABU_DHABI)
+                        ->where('i.emirate_of_registration_id', '=', EmirateEnum::ABU_DHABI)
                         ->where('b.id', '=', BranchEnum::ABU_DHABI->value);
                 })
 
@@ -778,8 +777,8 @@ class ManagementReport
                             ->where(function ($q) {
                                 $q->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
                                     ->orWhereNull('personal_quotes.business_type_of_insurance_id')
-                                    ->orWhere('e.emirate_of_registration_id', '!=', EmirateEnum::ABU_DHABI)
-                                    ->orWhereNull('e.emirate_of_registration_id');
+                                    ->orWhere('i.emirate_of_registration_id', '!=', EmirateEnum::ABU_DHABI)
+                                    ->orWhereNull('i.emirate_of_registration_id');
                             });
                         });
                 });
