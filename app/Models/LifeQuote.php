@@ -235,9 +235,10 @@ class LifeQuote extends Model implements AuditableContract
             CustomerInsured::class,
             'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // personal_quotes.id
+            'id', // personal_quotes.id (life quotes use personal_quotes table)
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
+        )
+        ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()

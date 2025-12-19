@@ -560,8 +560,9 @@ class CarQuote extends BaseModel
             'id', // insured.id
             'id', // car_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
-            ->latest('customer_insured.updated_at');
+        )
+        ->where('customer_insured.is_active', true)
+        ->where('customer_insured.quote_type_id', QuoteTypeId::Car);
     }
 
     public function amlLogs()

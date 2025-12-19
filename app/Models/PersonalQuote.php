@@ -416,7 +416,7 @@ class PersonalQuote extends Model implements AuditableContract
         );
     }
 
-    // Get the latest/most recent insured record for this quote
+    // Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -426,7 +426,8 @@ class PersonalQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
+        )
+        ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()

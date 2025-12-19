@@ -386,8 +386,9 @@ class HealthQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // health_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
-            ->latest('customer_insured.updated_at');
+        )
+        ->where('customer_insured.is_active', true)
+        ->where('customer_insured.quote_type_id', QuoteTypeId::Health);
     }
 
     public function amlLogs()

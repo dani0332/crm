@@ -398,8 +398,9 @@ class TravelQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // travel_quote_request.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Travel)
-            ->latest('customer_insured.updated_at');
+        )
+        ->where('customer_insured.is_active', true)
+        ->where('customer_insured.quote_type_id', QuoteTypeId::Travel);
     }
 
     public function amlLogs()

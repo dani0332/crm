@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\PermissionsEnum;
-use App\Models\Insured;
 use Illuminate\Foundation\Http\FormRequest;
 
 class InsuredKycRequest extends FormRequest

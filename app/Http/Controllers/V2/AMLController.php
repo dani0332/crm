@@ -690,34 +690,37 @@ class AMLController extends Controller
         $insured = Insured::where('id', $request->entity_id)->first();
         app(AMLService::class)->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
 
-        // Check for orphaned record (without quote mapping) first
-        $orphanedRecord = CustomerInsured::where('customer_id', $quoteObject->customer_id)
-            ->where('insured_id', $insured->id)
-            ->whereNull('quote_type_id')
-            ->whereNull('quote_request_id')
-            ->first();
+        // Handle customer-insured mapping with transaction safety
+        DB::transaction(function () use ($quoteObject, $insured, $request) {
+            // Check for orphaned record (without quote mapping) first
+            $orphanedRecord = CustomerInsured::where('customer_id', $quoteObject->customer_id)
+                ->where('insured_id', $insured->id)
+                ->whereNull('quote_type_id')
+                ->whereNull('quote_request_id')
+                ->first();
 
-        if ($orphanedRecord) {
-            // Deactivate existing records for this quote first
-            CustomerInsured::forQuote($request->quote_type_id, $request->quote_request_id)
-                ->update(['is_active' => false]);
+            if ($orphanedRecord) {
+                // Deactivate existing records for this quote first
+                CustomerInsured::forQuote($request->quote_type_id, $request->quote_request_id)
+                    ->update(['is_active' => false]);
 
-            // Activate the orphaned record
-            $orphanedRecord->update([
-                'quote_type_id' => $request->quote_type_id,
-                'quote_request_id' => $request->quote_request_id,
-                'is_active' => true,
-                'updated_at' => now(),
-            ]);
-        } else {
-            // Use createOrUpdateActive for new or existing records
-            CustomerInsured::createOrUpdateActive([
-                'customer_id' => $quoteObject->customer_id,
-                'insured_id' => $insured->id,
-                'quote_type_id' => $request->quote_type_id,
-                'quote_request_id' => $request->quote_request_id,
-            ]);
-        }
+                // Activate the orphaned record with quote mapping
+                $orphanedRecord->update([
+                    'quote_type_id' => $request->quote_type_id,
+                    'quote_request_id' => $request->quote_request_id,
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ]);
+            } else {
+                // Use createOrUpdateActive for new or existing records
+                CustomerInsured::createOrUpdateActive([
+                    'customer_id' => $quoteObject->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $request->quote_type_id,
+                    'quote_request_id' => $request->quote_request_id,
+                ]);
+            }
+        });
 
         // Reminder:: This code should be remove when new structure will be completly mapped
         $oldStructureEntity = Entity::where('trade_license_no', $insured->trade_license_no)->first();

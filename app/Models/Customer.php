@@ -152,6 +152,7 @@ class Customer extends Model implements AuditableContract
     // Get the latest/most recent insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
+        // TODO:: There is no latest insured as single customer bind with multiple insured, need to check where it's being used and why
         return $this->hasOneThrough(
             Insured::class,
             CustomerInsured::class,
@@ -159,7 +160,8 @@ class Customer extends Model implements AuditableContract
             'id', // insured.id
             'id', // customer.id
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
+        )
+        ->where('customer_insured.is_active', true);
     }
 
     /**

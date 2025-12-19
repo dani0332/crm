@@ -214,9 +214,11 @@ class BusinessQuote extends Model implements AuditableContract
             CustomerInsured::class,
             'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // personal_quotes.id
+            'id', // business_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
+        )
+        ->where('customer_insured.is_active', true)
+        ->where('customer_insured.quote_type_id', QuoteTypeId::Business);
     }
 
     public function amlLogs()
