@@ -225,14 +225,67 @@ class TestSchemaCreator
             });
         }
 
-        // Create payments table if it doesn't exist (minimal structure)
+        // Create payments table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('payments')) {
             Schema::connection('sqlite')->create('payments', function ($table) {
                 $table->id();
                 $table->string('code')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
-                $table->morphs('paymentable');
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->decimal('captured_amount', 10, 2)->default(0);
+                $table->timestamp('captured_at')->nullable();
+                $table->timestamp('authorized_at')->nullable();
+                $table->string('payment_methods_code')->nullable();
+                $table->unsignedBigInteger('created_by')->nullable();
+                $table->unsignedBigInteger('updated_by')->nullable();
+                $table->boolean('is_approved')->default(0);
+                $table->string('reference')->nullable();
+                $table->string('collection_type')->nullable();
+                $table->string('payment_link')->nullable();
+                $table->integer('total_payments')->nullable();
+                $table->string('credit_approval')->nullable();
+                $table->string('frequency')->nullable();
+                $table->string('discount_type')->nullable();
+                $table->string('discount_reason')->nullable();
+                $table->string('custom_reason')->nullable();
+                $table->text('notes')->nullable();
+                $table->decimal('total_price', 10, 2)->nullable();
+                $table->date('collection_date')->nullable();
+                $table->string('payer_name')->nullable();
+                $table->string('paid_by')->nullable();
+                $table->decimal('discount_value', 10, 2)->default(0);
+                $table->decimal('total_amount', 10, 2)->nullable();
+                $table->string('payment_allocation_status')->nullable();
+                $table->unsignedBigInteger('decline_reason_id')->nullable();
+                $table->string('decline_custom_reason')->nullable();
+                $table->string('discount_custom_reason')->nullable();
+                $table->decimal('commission_vat', 10, 2)->nullable();
+                $table->decimal('commission_without_vat', 10, 2)->nullable();
+                $table->decimal('commission_vat_applicable', 10, 2)->nullable();
+                $table->decimal('commission_vat_not_applicable', 10, 2)->nullable();
+                $table->decimal('commission', 10, 2)->nullable();
+                $table->string('tax_invoice_number')->nullable();
+                $table->string('broker_invoice_number')->nullable();
+                $table->date('insurer_invoice_date')->nullable();
+                $table->text('invoice_description')->nullable();
+                $table->string('insurer_payment_link')->nullable();
+                $table->string('insurer_tax_number')->nullable();
+                $table->string('transaction_payment_status')->nullable();
+                $table->string('insurer_commmission_invoice_number')->nullable();
+                $table->decimal('commmission_percentage', 5, 2)->nullable();
+                $table->unsignedBigInteger('send_update_log_id')->nullable();
+                $table->date('policy_expiry_date')->nullable();
+                $table->decimal('price_vat_applicable', 10, 2)->nullable();
+                $table->decimal('price_vat', 10, 2)->nullable();
+                $table->string('commission_based_on_currency')->nullable();
+                $table->decimal('exchange_rate', 10, 4)->nullable();
+                $table->string('currency')->nullable();
+                $table->string('sage_commission_receipt_id')->nullable();
+                $table->unsignedBigInteger('payment_gateway_id')->nullable();
+                $table->morphs('paymentable'); // Creates paymentable_id and paymentable_type
                 $table->timestamps();
+                $table->softDeletes();
             });
         }
 
