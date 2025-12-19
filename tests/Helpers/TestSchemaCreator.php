@@ -452,6 +452,7 @@ class TestSchemaCreator
                 $table->unsignedBigInteger('insurance_provider_id')->nullable();
                 $table->unsignedBigInteger('plan_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->timestamp('quote_status_date')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
@@ -487,6 +488,30 @@ class TestSchemaCreator
                 $table->string('status')->nullable();
                 $table->string('sage_request_type')->nullable();
                 $table->integer('step')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create quote_sync table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('quote_sync')) {
+            Schema::connection('sqlite')->create('quote_sync', function ($table) {
+                $table->id();
+                $table->string('quote_uuid')->nullable();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->text('updated_fields')->nullable();
+                $table->boolean('is_synced')->default(0);
+                $table->timestamp('synced_at')->nullable();
+                $table->string('status')->nullable();
+                $table->text('error')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create car_quote_request_detail table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('car_quote_request_detail')) {
+            Schema::connection('sqlite')->create('car_quote_request_detail', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('car_quote_request_id')->nullable();
                 $table->timestamps();
             });
         }
