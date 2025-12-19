@@ -39,9 +39,8 @@ class CustomerInsured extends Model
     /**
      * Create or update an active customer-insured record and deactivate previous ones
      *
-     * @param array $conditions Must include quote_type_id and quote_request_id
-     * @param array $attributes Additional attributes to set
-     * @return self
+     * @param  array  $conditions  Must include quote_type_id and quote_request_id
+     * @param  array  $attributes  Additional attributes to set
      */
     public static function createOrUpdateActive(array $conditions, array $attributes = []): self
     {

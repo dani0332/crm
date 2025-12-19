@@ -123,6 +123,7 @@ class QuoteAllocation extends Command
                 'sic_flow_enabled',
                 'sic_advisor_requested',
                 'quote_status_id',
+                'tier_id',
             ])
             ->where('created_at', '<=', $to)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -190,6 +191,7 @@ class QuoteAllocation extends Command
                 'sic_advisor_requested',
                 'quote_status_id',
                 'advisor_id',
+                'tier_id',
             ])
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
