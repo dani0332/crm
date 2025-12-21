@@ -140,7 +140,7 @@ class NgiDocumentHandler
      */
     private function buildAzureDocumentPath(string $relativePath): string
     {
-        return rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/').'/'.rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/').'/'.ltrim($relativePath, '/');
+        return rtrim(config('constants.AZURE_IM_STORAGE_URL', ''), '/').'/'.rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER', ''), '/').'/'.ltrim($relativePath, '/');
     }
 
     /**
