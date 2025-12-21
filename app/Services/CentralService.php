@@ -1671,7 +1671,9 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Cyber) {
-            $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) ? (string) $quote->cyberPlanDetail->coverage : '-';
+            $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
+                ? number_format($quote->cyberPlanDetail->coverage)
+                : '-';
             $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
             $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
             $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '';
