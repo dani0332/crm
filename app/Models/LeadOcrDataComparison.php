@@ -14,6 +14,7 @@ class LeadOcrDataComparison extends Model
         'lead_data',
         'ocr_data',
         'ocr_responses',
+        'compairson_data',
         'comparison_score',
     ];
 }
