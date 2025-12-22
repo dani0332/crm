@@ -15,37 +15,37 @@ trait SendsEpFailureEmail
     /**
      * Send EP failure notification email for Sukoon Medex
      *
-     * @param mixed $quoteObject
-     * @param int|null $quoteTypeId
-     * @param int|null $transactionId
-     * @param string $logPrefix
-     * @return void
+     * @param  mixed  $quoteObject
+     * @param  int|null  $quoteTypeId
+     * @param  int|null  $transactionId
      */
     protected function sendSukoonMedexFailureEmail($quoteObject, $quoteTypeId, $transactionId, string $logPrefix): void
     {
-        if (!$transactionId) {
+        if (! $transactionId) {
             LoggerService::warning("{$logPrefix} Cannot send failure email - transaction ID not found");
+
             return;
         }
 
         // Check if email was already sent
         $transaction = EmbeddedTransaction::find($transactionId);
-        if ($transaction && !empty($transaction->failure_email_sent_at)) {
+        if ($transaction && ! empty($transaction->failure_email_sent_at)) {
             LoggerService::info("{$logPrefix} EP failure email already sent, skipping", extra: [
                 'transactionId' => $transactionId,
                 'failure_email_sent_at' => $transaction->failure_email_sent_at,
             ]);
+
             return;
         }
 
         try {
             Mail::send(new SukoonMedexEPFailureNotification($quoteObject, $quoteTypeId));
-            
+
             // Update failure_email_sent_at after successful send
             DB::table('embedded_transactions')
                 ->where('id', $transactionId)
                 ->update(['failure_email_sent_at' => now()]);
-            
+
             LoggerService::info("{$logPrefix} Send EP failure notification email successfully", extra: [
                 'transactionId' => $transactionId,
             ]);
@@ -59,33 +59,28 @@ trait SendsEpFailureEmail
 
     /**
      * Send EP failure notification email for ECB and other embedded products
-     *
-     * @param int $quoteId
-     * @param int $quoteTypeId
-     * @param int $etId
-     * @param string $logPrefix
-     * @return void
      */
     protected function sendEpFailureEmail(int $quoteId, int $quoteTypeId, int $etId, string $logPrefix): void
     {
         // Check if email was already sent
         $transaction = EmbeddedTransaction::find($etId);
-        if ($transaction && !empty($transaction->failure_email_sent_at)) {
+        if ($transaction && ! empty($transaction->failure_email_sent_at)) {
             LoggerService::info("{$logPrefix} EP failure email already sent, skipping", extra: [
                 'etId' => $etId,
                 'failure_email_sent_at' => $transaction->failure_email_sent_at,
             ]);
+
             return;
         }
 
         try {
             Mail::send(new EpFailureNotification($quoteId, $quoteTypeId, $etId));
-            
+
             // Update failure_email_sent_at after successful send
             DB::table('embedded_transactions')
                 ->where('id', $etId)
                 ->update(['failure_email_sent_at' => now()]);
-            
+
             LoggerService::info("{$logPrefix} Embedded Product failure email sent successfully", extra: [
                 'etId' => $etId,
             ]);
@@ -96,4 +91,3 @@ trait SendsEpFailureEmail
         }
     }
 }
-

@@ -66,19 +66,20 @@ class SukoonMedexEPFailureNotification extends Mailable
     {
         return [
             'refId' => $refId,
-            'imcrmLink' => $this->generateImcrmLink()
+            'imcrmLink' => $this->generateImcrmLink(),
         ];
     }
 
     private function getRecipientAddress($recipientType): array
     {
-        $emails =  match ($recipientType) {
+        $emails = match ($recipientType) {
             'from' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM],
             'to' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO],
             'reply_to' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO],
             'cc' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC],
             default => [],
         };
+
         return array_filter(explode(',', str_replace(' ', '', $emails)));
     }
 

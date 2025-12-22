@@ -10,7 +10,6 @@ use App\Traits\SendsEpFailureEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class EpPurchaseFlowJob implements ShouldQueue

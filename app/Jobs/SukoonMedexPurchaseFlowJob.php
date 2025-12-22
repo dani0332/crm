@@ -14,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 
 class SukoonMedexPurchaseFlowJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SendsEpFailureEmail;
+    use Dispatchable, InteractsWithQueue, Queueable, SendsEpFailureEmail, SerializesModels;
 
     public $tries = 3;
     public $timeout = 300;
