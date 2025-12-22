@@ -23,14 +23,12 @@ class InsuredKyc extends Model implements AuditableContract
 
     /**
      * Accessor for id_number: formats as ###-####-#######-# when id_type is emiratesId
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function idNumber(): Attribute
     {
         return Attribute::make(
             get: function (?string $value): ?string {
-                if (!$value) {
+                if (! $value) {
                     return $value;
                 }
 
@@ -50,7 +48,7 @@ class InsuredKyc extends Model implements AuditableContract
                 return $value;
             },
             set: function (?string $value): ?string {
-                if (!$value) {
+                if (! $value) {
                     return $value;
                 }
 
