@@ -421,9 +421,9 @@ watch(
 
 <template>
   <div>
-    <Head title="Claims Management" />
+    <Head title="Claims List" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Claims Management</h2>
+      <h2 class="text-xl font-semibold">Claims List</h2>
       <div class="flex gap-2">
         <Link v-if="can(permissionsEnum.CLAIM_CREATE)" href="/claim/create">
           <x-button size="sm" color="primary">Add New Claim</x-button>

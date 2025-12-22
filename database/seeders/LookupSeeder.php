@@ -440,6 +440,12 @@ class LookupSeeder extends Seeder
                 'text' => 'Out-patient request (Consultation, Diagnostics/Imaging, Pharmacy)',
                 'sort_order' => 2,
             ],
+            [
+                'quote_type_id' => QuoteTypeId::Health,
+                'code' => 'others',
+                'text' => 'Others',
+                'sort_order' => 3,
+            ],
 
         ];
 
