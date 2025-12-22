@@ -139,29 +139,49 @@ test('payment should be created via endpoint', function () {
         payment: $createdPayment,
         paymentSplit: $createdPaymentSplit
     );
+});
 
-
-
+test('payment should be updated via endpoint', function () {
     // ============================================
-    // Payment should be updated via endpoint
+    // 1. ARRANGE: Create payment and payment split using factories
     // ============================================
+    // First, create payment and payment split using factories
+    // This simulates an existing payment that needs to be updated
     
-    // Build the request payload using helper method
-    $requestPayload = PaymentTestHelper::buildPaymentUpdatePayload(
+    // Create payment using factory with CarQuote
+    // This will trigger PaymentObserver which calculates VAT
+    $existingPayment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
+    
+    // Refresh payment to get latest values from database (including observer updates)
+    $existingPayment->refresh();
+    
+    // Create payment split using factory with Payment
+    // This will trigger PaymentSplitsObserver which calculates VAT
+    $existingPaymentSplit = \App\Models\PaymentSplits::factory()->createForSqlite($existingPayment);
+    
+    // Refresh payment split to get latest values from database (including observer updates)
+    $existingPaymentSplit->refresh();
+    
+    // Verify initial state - payment should have 1 split (upfront payment)
+    expect($existingPayment)->not->toBeNull();
+    expect($existingPaymentSplit)->not->toBeNull();
+    
+    // Build the update request payload using helper method
+    // This payload will update payment to have 2 splits instead of 1
+    $updatePayload = PaymentTestHelper::buildPaymentUpdatePayload(
         carQuote: $this->carQuote,
-        payment: $createdPayment
+        payment: $existingPayment
     );
 
     // ============================================
-    // 2- ACT: Execute the endpoint request
+    // 2. ACT: Execute the update endpoint request
     // ============================================
-
-
+    
     // Make POST request to payment update endpoint using route name
-    $response = $this->post("/payments/" . QuoteTypes::CAR->value . "/update-new", $requestPayload);
+    $response = $this->post("/payments/" . QuoteTypes::CAR->value . "/update-new", $updatePayload);
    
     // ============================================
-    // 3- ASSERT: Verify the results
+    // 3. ASSERT: Verify the results
     // ============================================
 
     // Assert that the endpoint returned a successful redirect response
@@ -180,7 +200,7 @@ test('payment should be created via endpoint', function () {
         expectedUserId: $this->user->id
     );
 
-    // Retrieve the updated payment split from database
+    // Retrieve the updated payment split from database (should still be sr_no = 1)
     $updatedPaymentSplit = PaymentTestHelper::getPaymentSplitByCodeAndSerial(
         paymentCode: $updatedPayment->code,
         srNo: 1
