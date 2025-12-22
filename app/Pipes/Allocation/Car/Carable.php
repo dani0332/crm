@@ -2,22 +2,22 @@
 
 namespace App\Pipes\Allocation\Car;
 
-use App\Models\Rule;
-use App\Enums\RuleEnum;
-use App\Models\CarMake;
-use App\Enums\RolesEnum;
-use App\Models\CarModel;
-use App\Enums\QuoteTypes;
-use App\Models\LeadSource;
-use App\Enums\RuleTypeEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\LeadSourceEnum;
-use App\Models\LeadAllocation;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\RuleEnum;
+use App\Enums\RuleTypeEnum;
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CommercialKeyword;
-use App\Enums\CarRegistrationType;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
+use App\Models\LeadAllocation;
+use App\Models\LeadSource;
+use App\Models\Rule;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 trait Carable
 {

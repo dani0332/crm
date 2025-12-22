@@ -3,20 +3,10 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
-use App\Enums\LeadSourceEnum;
-use App\Enums\RuleEnum;
-use App\Enums\RuleTypeEnum;
-use App\Models\CarMake;
-use App\Models\CarModel;
-use App\Models\CommercialKeyword;
-use App\Models\LeadSource;
-use App\Models\Rule;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
 use Closure;
-use Illuminate\Support\Facades\DB;
 
 class ApplyRuleExclusionPipe extends BaseAllocationPipe
 {

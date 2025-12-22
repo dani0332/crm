@@ -52,7 +52,7 @@ class FetchTierUsersPipe extends BaseAllocationPipe
         // Apply team filter if a team ID is provided
         if ($teamId) {
             $rules = $this->getRulesForLeadSource($lead);
-            if($rules->isNotEmpty()) {
+            if ($rules->isNotEmpty()) {
                 $this->allocationRequest->setTeamId(null);
             } else {
                 $tierUserIds = $this->filterUsersByTeam($tierUserIds, $teamId);
