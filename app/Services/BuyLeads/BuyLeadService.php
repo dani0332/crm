@@ -17,9 +17,9 @@ use PDF;
 
 class BuyLeadService
 {
-    public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
+    public function getBlLeadRemainingLimit(QuoteTypes $quoteType, bool $isCarRevival = false)
     {
-        $isCarRevival = $quoteType->value == QuoteTypes::CAR_CAT_A->value;
+        $isCarRevival = $isCarRevival || $quoteType->value == QuoteTypes::CAR_CAT_A->value;
         // if the quote type is car revival, then set the quote type to car
         if ($isCarRevival) {
             $quoteType = QuoteTypes::CAR;
@@ -64,7 +64,7 @@ class BuyLeadService
             return 'You can initiate a new Buy Lead request once the existing requested leads are assigned.';
         }
 
-        $remainingLimit = $this->getBlLeadRemainingLimit($quoteType);
+        $remainingLimit = $this->getBlLeadRemainingLimit($quoteType, $isCarRevival);
         if ($remainingLimit === 'DISABLED' || $remainingLimit <= 0) {
             $message = 'You have reached your maximum buy leads allocation for today';
         } elseif ($request->count > $remainingLimit) {
@@ -207,7 +207,7 @@ class BuyLeadService
 
     public function exportTrackingReportPDF(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isCarRevival = false)
     {
-        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, false, $isCarRevival);
+        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, true, $isCarRevival);
 
         $data['quoteType'] = $quoteType;
         $pdf = PDF::loadView('pdf.buy-lead-requests', $data);
