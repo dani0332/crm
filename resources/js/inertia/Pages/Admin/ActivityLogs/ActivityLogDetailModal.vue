@@ -20,6 +20,7 @@ const getEventTagColor = event => {
   if (!event) return 'secondary';
 
   const eventColors = {
+    accessed: 'info',
     created: 'success',
     updated: 'primary',
     deleted: 'error',

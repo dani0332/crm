@@ -9,7 +9,7 @@ namespace App\Enums;
  */
 enum ActivityLogEventEnum: string
 {
-    case Accessed = 'Accessed';
+    case Accessed = 'accessed';
     case Updated = 'updated';
     case Created = 'created';
     case Deleted = 'deleted';
