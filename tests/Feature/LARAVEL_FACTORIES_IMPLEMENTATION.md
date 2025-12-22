@@ -11,6 +11,7 @@ Refactored test suite to use Laravel's built-in database factories instead of cu
 ### Files Created
 
 1. **`database/factories/InsuranceProviderFactory.php`**
+
    - Factory for creating insurance provider test data
    - States: `rsa()`, `axa()`
 
@@ -21,11 +22,13 @@ Refactored test suite to use Laravel's built-in database factories instead of cu
 ### Files Modified
 
 3. **`database/factories/CarQuoteFactory.php`**
+
    - Simplified for test usage
    - Added states: `withAutomationEnabled()`, `withAutomationDisabled()`, `withoutCarPlan()`
    - Added method: `forCarPlan($carPlanId)`
 
 4. **`tests/Feature/TogglePolicyIssuanceAutomationTest.php`**
+
    - Refactored all tests to use Laravel factories
    - Cleaner, more readable test code
 
@@ -37,7 +40,6 @@ Refactored test suite to use Laravel's built-in database factories instead of cu
 
 6. **`tests/Helpers/CarQuoteTestDataBuilder.php`**
    - Replaced by Laravel factories
-   
 7. **`tests/Feature/FACTORY_PATTERN_REFACTORING.md`**
    - Obsolete documentation
 
@@ -91,6 +93,7 @@ class InsuranceProviderFactory extends Factory
 ```
 
 **Usage**:
+
 ```php
 // Default provider
 $provider = InsuranceProvider::factory()->createOneQuietly();
@@ -141,6 +144,7 @@ class CarPlanFactory extends Factory
 ```
 
 **Usage**:
+
 ```php
 // With auto-created provider
 $carPlan = CarPlan::factory()->createOneQuietly();
@@ -218,6 +222,7 @@ class CarQuoteFactory extends Factory
 ```
 
 **Usage**:
+
 ```php
 // Simple quote
 $quote = CarQuote::factory()->createOneQuietly();
@@ -277,6 +282,7 @@ $carQuote = CarQuote::factory()
 ```
 
 **Improvements**:
+
 - ✅ 90% less code (from 11 lines to 3 lines)
 - ✅ More readable and expressive
 - ✅ Returns Eloquent model, not array
@@ -288,31 +294,37 @@ $carQuote = CarQuote::factory()
 ## Key Benefits
 
 ### 1. **Laravel Standard**
+
 - Uses framework's built-in factory system
 - Follows official Laravel testing recommendations
 - Familiar to all Laravel developers
 
 ### 2. **Clean, Fluent API**
+
 - Chainable methods
 - Expressive state names
 - Easy to read and understand
 
 ### 3. **Type Safety**
+
 - Returns actual Eloquent models
 - IDE autocomplete support
 - Type hints work properly
 
 ### 4. **Maintainability**
+
 - Single source of truth in factory definitions
 - Easy to update default values
 - States are reusable across tests
 
 ### 5. **Flexibility**
+
 - Can override any attribute
 - Can define custom states
 - Supports relationships out of the box
 
 ### 6. **Performance**
+
 - `createOneQuietly()` suppresses events
 - `createQuietly()` for collections
 - Efficient for test execution
@@ -404,18 +416,18 @@ test('can enable policy issuance automation for car quote', function () {
 
 ## Comparison: Custom vs Laravel Factories
 
-| Aspect | Custom Builder | Laravel Factory |
-|--------|---------------|-----------------|
-| **Lines of Code** | 11 lines per creation | 3 lines per creation |
-| **Return Type** | Array | Eloquent Model |
-| **Chainability** | Limited | Full fluent API |
-| **Framework Standard** | Custom approach | Laravel built-in |
-| **IDE Support** | Limited | Full autocomplete |
-| **Maintainability** | Multiple files | Single factory file |
-| **Learning Curve** | Custom API to learn | Standard Laravel |
-| **Relationships** | Manual setup | Built-in support |
-| **States** | Custom methods | Native states |
-| **Events Control** | Manual | `createQuietly()` |
+| Aspect                 | Custom Builder        | Laravel Factory      |
+| ---------------------- | --------------------- | -------------------- |
+| **Lines of Code**      | 11 lines per creation | 3 lines per creation |
+| **Return Type**        | Array                 | Eloquent Model       |
+| **Chainability**       | Limited               | Full fluent API      |
+| **Framework Standard** | Custom approach       | Laravel built-in     |
+| **IDE Support**        | Limited               | Full autocomplete    |
+| **Maintainability**    | Multiple files        | Single factory file  |
+| **Learning Curve**     | Custom API to learn   | Standard Laravel     |
+| **Relationships**      | Manual setup          | Built-in support     |
+| **States**             | Custom methods        | Native states        |
+| **Events Control**     | Manual                | `createQuietly()`    |
 
 ---
 
@@ -438,12 +450,14 @@ doppler run -- php artisan test --filter="can enable policy issuance automation"
 Consider adding these factory states as needed:
 
 1. **More Insurance Providers**
+
    ```php
    public function alliance() { /* ... */ }
    public function metlife() { /* ... */ }
    ```
 
 2. **Quote Status States**
+
    ```php
    public function pending() { /* ... */ }
    public function booked() { /* ... */ }
@@ -480,4 +494,3 @@ The migration to Laravel database factories provides:
 - ✅ **Professional standard** following Laravel best practices
 
 All tests continue to pass with cleaner, more maintainable code! 🎉
-

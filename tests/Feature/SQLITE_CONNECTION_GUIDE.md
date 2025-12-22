@@ -223,12 +223,14 @@ class CarQuoteFactory extends Factory
 ### 1. **Automatic Connection Management**
 
 **Before** (Manual):
+
 ```php
 $db = DB::connection('sqlite');
 $db->table('car_quote_request')->insert([...]);
 ```
 
 **After** (Automatic):
+
 ```php
 $carQuote = CarQuote::factory()->createOneQuietly();
 // ✅ Automatically uses SQLite!
@@ -274,7 +276,7 @@ test('example test', function () {
     $provider = InsuranceProvider::factory()->rsa()->createOneQuietly();
     $carPlan = CarPlan::factory()->forInsuranceProvider($provider->id)->createOneQuietly();
     $carQuote = CarQuote::factory()->forCarPlan($carPlan->id)->createOneQuietly();
-    
+
     // All models automatically use SQLite connection!
     expect($provider->getConnectionName())->toBe('sqlite');
     expect($carPlan->getConnectionName())->toBe('sqlite');
@@ -307,10 +309,10 @@ test('can create car quote', function () {
         ->withAutomationDisabled()
         ->forCarPlan($this->carPlan->id)
         ->createOneQuietly();
-    
+
     // Verify it's using SQLite
     expect($carQuote->getConnectionName())->toBe('sqlite');
-    
+
     // Test logic...
 });
 ```
@@ -326,10 +328,10 @@ You can verify that models are using SQLite connection:
 ```php
 test('verifies sqlite connection', function () {
     $carQuote = CarQuote::factory()->createOneQuietly();
-    
+
     // Check connection name
     expect($carQuote->getConnectionName())->toBe('sqlite');
-    
+
     // Check connection type
     expect($carQuote->getConnection())->toBeInstanceOf(\Illuminate\Database\SQLiteConnection::class);
 });
@@ -514,4 +516,3 @@ The automatic SQLite connection configuration in factories provides:
 - ✅ **Laravel standard** approach
 
 All tests run faster and safer with this implementation! 🎉
-

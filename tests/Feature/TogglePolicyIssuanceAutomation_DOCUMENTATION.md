@@ -254,6 +254,7 @@ The tests use Laravel's built-in database factories for creating test data. This
 **1. CarQuoteFactory** (`database/factories/CarQuoteFactory.php`)
 
 Provides methods and states:
+
 - `configure()` - Automatically sets SQLite connection for tests
 - `definition()` - Default car quote with sensible test values
 - `withAutomationEnabled()` - State for enabled automation
@@ -262,6 +263,7 @@ Provides methods and states:
 - `withoutCarPlan()` - Create without car plan (for testing edge cases)
 
 **Factory Configuration**:
+
 ```php
 public function configure()
 {
@@ -274,6 +276,7 @@ public function configure()
 ```
 
 **Usage Example**:
+
 ```php
 $carQuote = CarQuote::factory()
     ->withAutomationDisabled()
@@ -285,12 +288,14 @@ $carQuote = CarQuote::factory()
 **2. InsuranceProviderFactory** (`database/factories/InsuranceProviderFactory.php`)
 
 Provides methods and states:
+
 - `configure()` - Automatically sets SQLite connection for tests
 - `definition()` - Default insurance provider
 - `rsa()` - Create RSA insurance provider
 - `axa()` - Create AXA insurance provider
 
 **Usage Example**:
+
 ```php
 $provider = InsuranceProvider::factory()->rsa()->createOneQuietly();
 // ✅ Automatically uses SQLite connection!
@@ -299,11 +304,13 @@ $provider = InsuranceProvider::factory()->rsa()->createOneQuietly();
 **3. CarPlanFactory** (`database/factories/CarPlanFactory.php`)
 
 Provides methods:
+
 - `configure()` - Automatically sets SQLite connection for tests
 - `definition()` - Default car plan
 - `forInsuranceProvider($providerId)` - Associate with specific provider
 
 **Usage Example**:
+
 ```php
 $carPlan = CarPlan::factory()
     ->forInsuranceProvider($provider->id)
@@ -351,6 +358,7 @@ public function configure()
 ```
 
 **Benefits**:
+
 - ✅ Automatic connection handling - no manual setup needed
 - ✅ Proper test isolation from production database
 - ✅ No conflicts with main MySQL database
@@ -369,6 +377,7 @@ public function configure()
 The tests use Laravel's built-in database factories which provide:
 
 **Benefits**:
+
 - **Laravel Standard**: Uses framework's built-in factory system
 - **Fluent API**: Chainable methods for clean test setup
 - **State Management**: Define reusable states (e.g., `withAutomationEnabled()`)
@@ -379,11 +388,13 @@ The tests use Laravel's built-in database factories which provide:
 **Usage Examples**:
 
 **Simple creation**:
+
 ```php
 $carQuote = CarQuote::factory()->createOneQuietly();
 ```
 
 **With states**:
+
 ```php
 $carQuote = CarQuote::factory()
     ->withAutomationDisabled()
@@ -392,11 +403,13 @@ $carQuote = CarQuote::factory()
 ```
 
 **Multiple models**:
+
 ```php
 $quotes = CarQuote::factory()->count(5)->createQuietly();
 ```
 
 **Access model properties**:
+
 ```php
 $quoteUuid = $carQuote->uuid;
 $quoteCode = $carQuote->code;
@@ -432,15 +445,15 @@ $response->assertStatus(200)->assertJson([...]);
 
 ## Files Modified
 
-| File                                                              | Changes                                  | Purpose                          |
-| ----------------------------------------------------------------- | ---------------------------------------- | -------------------------------- |
-| `tests/Feature/TogglePolicyIssuanceAutomationTest.php`            | Created comprehensive test suite         | Tests all functionality          |
-| `database/factories/CarQuoteFactory.php`                          | Enhanced with states and methods         | Laravel factory for car quotes   |
-| `database/factories/InsuranceProviderFactory.php`                 | Created with RSA/AXA states              | Laravel factory for providers    |
-| `database/factories/CarPlanFactory.php`                           | Created with relationship support        | Laravel factory for car plans    |
-| `tests/Helpers/TestSchemaCreator.php`                             | Added car-related tables & user columns  | Database schema for tests        |
-| `app/Services/PolicyIssuanceAutomation/PolicyIssuanceService.php` | Added `togglePolicyIssuanceAutomation()` | Business logic                   |
-| `app/Http/Controllers/V2/AMLController.php`                       | Added `togglePolicyIssuanceAutomation()` | API endpoint                     |
+| File                                                              | Changes                                  | Purpose                        |
+| ----------------------------------------------------------------- | ---------------------------------------- | ------------------------------ |
+| `tests/Feature/TogglePolicyIssuanceAutomationTest.php`            | Created comprehensive test suite         | Tests all functionality        |
+| `database/factories/CarQuoteFactory.php`                          | Enhanced with states and methods         | Laravel factory for car quotes |
+| `database/factories/InsuranceProviderFactory.php`                 | Created with RSA/AXA states              | Laravel factory for providers  |
+| `database/factories/CarPlanFactory.php`                           | Created with relationship support        | Laravel factory for car plans  |
+| `tests/Helpers/TestSchemaCreator.php`                             | Added car-related tables & user columns  | Database schema for tests      |
+| `app/Services/PolicyIssuanceAutomation/PolicyIssuanceService.php` | Added `togglePolicyIssuanceAutomation()` | Business logic                 |
+| `app/Http/Controllers/V2/AMLController.php`                       | Added `togglePolicyIssuanceAutomation()` | API endpoint                   |
 
 ---
 
@@ -493,10 +506,10 @@ When creating new Feature tests with database operations:
    ```php
    // Create factory in database/factories/
    $model = Model::factory()->createOneQuietly();
-   
+
    // With states
    $model = Model::factory()->withSpecificState()->createOneQuietly();
-   
+
    // With relationships
    $model = Model::factory()->forParent($parent->id)->createOneQuietly();
    ```
@@ -518,7 +531,7 @@ When creating new Feature tests with database operations:
    ```php
    // Single model without events
    $model = Model::factory()->createOneQuietly();
-   
+
    // Multiple models without events
    $models = Model::factory()->count(5)->createQuietly();
    ```
@@ -528,7 +541,7 @@ When creating new Feature tests with database operations:
    ```php
    // Prefer Laravel factories:
    $model = Model::factory()->createOneQuietly();
-   
+
    // Over DB facade:
    $db->table('table_name')->insert([...]);
    ```
