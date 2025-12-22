@@ -192,7 +192,7 @@ class ActivityLogService extends BaseService
         activity($logName)
             ->causedBy($user)
             ->withProperties($properties)
-            ->event(config('activitylog.default_event', 'Accessed'))
+            ->event(config('activitylog.default_event'))
             ->tap(function ($activity) use ($request, $feature, $code) {
                 // Set custom fields (avoid duplication - these are already in properties)
                 $activity->url = $request->getRequestUri();

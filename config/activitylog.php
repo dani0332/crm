@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\ActivityLogEventEnum;
+
 return [
 
     /*
@@ -80,5 +82,5 @@ return [
     /*
      * Default event name for HTTP request logging.
      */
-    'default_event' => 'Accessed',
+    'default_event' => ActivityLogEventEnum::Accessed->value,
 ];
