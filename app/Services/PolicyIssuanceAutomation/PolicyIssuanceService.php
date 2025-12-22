@@ -448,10 +448,10 @@ class PolicyIssuanceService
     /**
      * Toggle policy issuance automation for a quote
      *
-     * @param object $quote The quote object
-     * @param string $quoteType The quote type
-     * @param int $quoteTypeId The quote type ID
-     * @param bool $enabled Whether to enable or disable automation
+     * @param  object  $quote  The quote object
+     * @param  string  $quoteType  The quote type
+     * @param  int  $quoteTypeId  The quote type ID
+     * @param  bool  $enabled  Whether to enable or disable automation
      * @return array Response array with success status, message, and data
      */
     public function togglePolicyIssuanceAutomation($requestData, int $quoteTypeId, bool $enabled): array
@@ -463,6 +463,7 @@ class PolicyIssuanceService
         if (! $quote) {
             $response['message'] = 'Quote not found';
             $response['status_code'] = 404;
+
             return $response;
         }
 
@@ -476,6 +477,7 @@ class PolicyIssuanceService
         if (! $insuranceProvider) {
             $response['message'] = 'Insurance provider not found';
             $response['status_code'] = 404;
+
             return $response;
         }
 
@@ -488,6 +490,7 @@ class PolicyIssuanceService
         if (! $isPolicyAutomationEnabled) {
             $response['message'] = 'Policy automation is not enabled for this insurer';
             $response['status_code'] = 400;
+
             return $response;
         }
 
