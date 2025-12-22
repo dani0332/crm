@@ -443,8 +443,6 @@ class AMLController extends Controller
 
                     LoggerService::info('Dispatching AML Screening Job against Entity for Screening', extra: [
                         'payload' => $getEntityDetailsForScreening,
-                        'quoteType' => $quoteType->code,
-                        'quoteRequestId' => $quoteRequestId,
                         'insuredId' => $insured->id,
                     ]);
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $getEntityDetailsForScreening, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);

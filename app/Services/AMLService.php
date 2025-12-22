@@ -488,10 +488,7 @@ class AMLService
 
     public function getLatestScreening($quoteRequestId, $quoteTypeId)
     {
-        LoggerService::info('Getting Latest Screening', extra: [
-            'quoteRequestId' => $quoteRequestId,
-            'quoteTypeId' => $quoteTypeId,
-        ]);
+        LoggerService::info('Getting Latest Screening');
 
         return KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
@@ -547,8 +544,6 @@ class AMLService
     {
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
         LoggerService::info('Getting Member or UBO Details', extra: [
-            'quoteType' => $quoteType->code,
-            'quoteRequestId' => $quoteRequestId,
             'membersFor' => $membersFor,
         ]);
 
@@ -1809,8 +1804,6 @@ class AMLService
     public function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
     {
         LoggerService::info('Updating Insured in Personal Quote', extra: [
-            'quote_type_id' => $quoteTypeId,
-            'quote_uuid' => $quote->uuid,
             'insured_id' => $insured->id,
         ]);
 
@@ -1846,11 +1839,11 @@ class AMLService
             ]);
 
             LoggerService::info('Updated orphaned customer_insured record', extra: [
-                'customerInsuredId' => $orphanedRecord->id,
-                'customerId' => $request->customer_id,
-                'insuredId' => $insured->id,
-                'quoteTypeId' => $quoteTypeId,
-                'quoteRequestId' => $quote->id,
+                'customer_insured_id' => $orphanedRecord->id,
+                'customer_id' => $request->customer_id,
+                'insured_id' => $insured->id,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
             ]);
         } else {
             // Check existing quote mapping
@@ -1874,9 +1867,9 @@ class AMLService
                 $quote->update(['kyc_decision' => Kyc::PENDING]);
 
                 LoggerService::info('Insured association changed for quote', extra: [
-                    'oldInsuredId' => $existingQuoteMapping->insured_id,
-                    'newInsuredId' => $insured->id,
-                    'quoteId' => $quote->id,
+                    'old_insured_id' => $existingQuoteMapping->insured_id,
+                    'new_insured_id' => $insured->id,
+                    'quote_id' => $quote->id,
                 ]);
 
             } elseif (! $existingQuoteMapping) {
@@ -1890,8 +1883,8 @@ class AMLService
                 ], ['updated_at' => now()]);
 
                 LoggerService::info('New insured association created for quote', extra: [
-                    'insuredId' => $insured->id,
-                    'quoteId' => $quote->id,
+                    'insured_id' => $insured->id,
+                    'quote_id' => $quote->id,
                 ]);
             }
         }
