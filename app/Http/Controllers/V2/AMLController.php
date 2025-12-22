@@ -442,7 +442,12 @@ class AMLController extends Controller
                     $bridgerInsightService = new BridgerInsightService;
                     $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
-                    LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched against Entity');
+                    LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched against Entity', [
+                        'entity_details' => $getEntityDetailsForScreening,
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_uuid' => $updateQuote->uuid,
+                        'insured_id' => $insured->id,
+                    ]);
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $getEntityDetailsForScreening, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
 
                     if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
@@ -452,14 +457,16 @@ class AMLController extends Controller
                     }
                 } else {
                     // Handle individual screening
-                    LoggerService::info('AML Screening Bridger - Individual Screening payload generated');
-                    $getMemberOrUBODetails[] = [
+                    $individualDetails = [
                         'first_name' => $insured->first_name,
                         'last_name' => $insured->last_name,
                         'dob' => Carbon::parse($insured->dob)->format(config('constants.DATE_FORMAT_ONLY')),
                         'nationality' => $insured?->nationality->toArray() ?? [],
                         'code' => CustomerTypeEnum::IndividualShort.'-'.$AMLCheckRequest->customer_id, // TODO:: code should be updated with insured id (Required FR for this)
                     ];
+                    $getMemberOrUBODetails[] = $individualDetails;
+
+                    LoggerService::info('AML Screening Bridger - Individual Screening payload', extra: $individualDetails);
                 }
             }
 
@@ -478,7 +485,9 @@ class AMLController extends Controller
             $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
             // Job dispatch for all members including customer
-            LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members');
+            LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members', [
+                'members_details' => $getMemberOrUBODetails,
+            ]);
             $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
             return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);

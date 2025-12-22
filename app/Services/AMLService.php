@@ -502,7 +502,14 @@ class AMLService
     public function prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote)
     {
         $getMemberOrUBODetails = $this->getMemberOrUBODetails($AMLCheckRequest, $quoteType, $updateQuote->id);
+        LoggerService::info('AML Screening Bridger - Members Details', [
+            'members_details' => $getMemberOrUBODetails,
+        ]);
         $getLastScreening = $this->getLatestScreening($updateQuote->id, $quoteType->id);
+        LoggerService::info('AML Screening Bridger - Last Screening', [
+            'last_screening' => $getLastScreening,
+        ]);
+
         $membersDetails = $getMemberOrUBODetails;
 
         if (! empty($getMemberOrUBODetails->toArray())) {
@@ -1726,6 +1733,15 @@ class AMLService
     private function createOrUpdateInsured($request, bool $isEntity): Insured
     {
         if ($isEntity) {
+
+            LoggerService::info('AML Screening Bridger - Entity Details', extra: [
+                'trade_license_no' => $request->trade_license_no,
+                'company_name' => $request->company_name,
+                'company_address' => $request->company_address,
+                'industry_type_code' => $request->industry_type_code,
+                'emirate_of_registration_id' => $request->emirate_of_registration_id,
+            ]);
+
             $insured = Insured::updateOrCreate([
                 'customer_type' => CustomerTypeEnum::Entity,
                 'trade_license_no' => $request->trade_license_no,
@@ -1748,6 +1764,17 @@ class AMLService
                 ->first();
             $idNumber = $insured?->id_number ?? $request->screening_id_number;
 
+            LoggerService::info('AML Screening Bridger - Individual Details', extra: [
+                'id_type' => $request->screening_id_type,
+                'unformatted_id_number' => $request->screening_id_number,
+                'formatted_id_number' => $idNumber,
+                'insured_first_name' => $request->insured_first_name,
+                'insured_last_name' => $request->insured_last_name,
+                'dob' => $request->dob,
+                'nationality_id' => $request->nationality_id,
+                'gender' => $request->screening_gender,
+            ]);
+
             $insured = Insured::updateOrCreate([
                 'customer_type' => CustomerTypeEnum::Individual,
                 'id_type' => $request->screening_id_type,
@@ -1763,11 +1790,29 @@ class AMLService
 
         $insured->refresh();
 
+        LoggerService::info('AML Screening Bridger - Insured Details', extra: [
+            'id' => $insured->id,
+            'customer_type' => $insured->customer_type,
+            'id_type' => $insured->id_type ?? null,
+            'id_number' => $insured->id_number ?? null,
+            'first_name' => $insured->first_name,
+            'last_name' => $insured->last_name ?? null,
+            'dob' => $insured->dob ?? null,
+            'nationality_id' => $insured->nationality_id ?? null,
+            'gender' => $insured->gender ?? null,
+        ]);
+
         return $insured;
     }
 
     public function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
     {
+        LoggerService::info('AML Screening Bridger - Updating Insured in Personal Quote', extra: [
+            'quote_type_id' => $quoteTypeId,
+            'quote_uuid' => $quote->uuid,
+            'insured_id' => $insured->id,
+        ]);
+
         $getPersonalQuote = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => $quoteTypeId])->first();
         if ($getPersonalQuote) {
             $getPersonalQuote->insured_id = $insured->id;
@@ -1899,6 +1944,8 @@ class AMLService
             'industry_type_code' => $request->industry_type_code,
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
+
+        LoggerService::info('AML Screening Bridger - Entity Data', extra: $entityData);
 
         $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
         $entity->fill($entityData);
