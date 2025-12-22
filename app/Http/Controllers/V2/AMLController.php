@@ -920,7 +920,7 @@ class AMLController extends Controller
 
         $isPolicyIssuanceAutomationEnabled = true;
         $isCarQuote = $insuredKycRequest->quote_type_id == QuoteTypeId::Car;
-        if($isCarQuote){
+        if ($isCarQuote) {
             $isPolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
         }
 
@@ -928,7 +928,6 @@ class AMLController extends Controller
             'isCarQuote' => $isCarQuote,
             'isPolicyIssuanceAutomationEnabled' => $isPolicyIssuanceAutomationEnabled,
         ]);
-
         // Insurer AML Screening is required if policy issuance automation is enabled
         if (
             $insuredKycRequest->customer_type == CustomerTypeEnum::Individual &&
