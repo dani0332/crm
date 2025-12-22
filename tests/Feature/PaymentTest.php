@@ -139,8 +139,57 @@ test('payment should be created via endpoint', function () {
         payment: $createdPayment,
         paymentSplit: $createdPaymentSplit
     );
-});
 
-test('payment should be updated via endpoint ', function(){
 
+
+    // ============================================
+    // Payment should be updated via endpoint
+    // ============================================
+    
+    // Build the request payload using helper method
+    $requestPayload = PaymentTestHelper::buildPaymentUpdatePayload(
+        carQuote: $this->carQuote,
+        payment: $createdPayment
+    );
+
+    // ============================================
+    // 2- ACT: Execute the endpoint request
+    // ============================================
+
+
+    // Make POST request to payment update endpoint using route name
+    $response = $this->post("/payments/" . QuoteTypes::CAR->value . "/update-new", $requestPayload);
+   
+    // ============================================
+    // 3- ASSERT: Verify the results
+    // ============================================
+
+    // Assert that the endpoint returned a successful redirect response
+    $response->assertStatus(302);
+
+    // Retrieve the updated payment from database
+    $updatedPayment = PaymentTestHelper::getPaymentByQuoteCode($this->carQuote->code);
+    
+    // Assert payment exists and was updated correctly
+    expect($updatedPayment)->not->toBeNull();
+    PaymentTestHelper::assertPaymentUpdatedCorrectly(
+        payment: $updatedPayment,
+        carQuote: $this->carQuote,
+        expectedPlanId: $this->carPlan->id,
+        expectedInsuranceProviderId: $this->insuranceProvider->id,
+        expectedUserId: $this->user->id
+    );
+
+    // Retrieve the updated payment split from database
+    $updatedPaymentSplit = PaymentTestHelper::getPaymentSplitByCodeAndSerial(
+        paymentCode: $updatedPayment->code,
+        srNo: 1
+    );
+    
+    // Assert payment split exists and was updated correctly
+    expect($updatedPaymentSplit)->not->toBeNull();
+    PaymentTestHelper::assertPaymentSplitUpdatedCorrectly(
+        paymentSplit: $updatedPaymentSplit,
+        payment: $updatedPayment
+    );
 });
