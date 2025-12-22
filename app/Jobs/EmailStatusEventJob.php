@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class EmailStatusEventJob implements ShouldQueue
 {
@@ -99,6 +100,9 @@ class EmailStatusEventJob implements ShouldQueue
 
     public function storeEmailStatusEvent($emailStatusData)
     {
+        if (DB::getDefaultConnection() !== 'mysql') {
+            DB::setDefaultConnection('mysql_read');
+        }
         $newEmailStatus = new EmailStatus;
         $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
         $newEmailStatus->quote_id = $emailStatusData->quote_id;
