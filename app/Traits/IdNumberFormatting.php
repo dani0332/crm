@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 /**
  * Trait IdNumberFormatting
- * 
+ *
  * Provides automatic formatting for Emirates ID numbers.
  * Formats as ###-####-#######-# when retrieving and stores without hyphens.
  */
@@ -53,4 +53,3 @@ trait IdNumberFormatting
         );
     }
 }
-

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Traits\IdNumberFormatting;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
