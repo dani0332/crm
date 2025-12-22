@@ -117,7 +117,7 @@ class BusinessQuoteObserver
                 $emirateOfRegistrationId = null;
                 if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                     $quoteTypeId = QuoteTypeId::GroupMedical;
-                    $emirateOfRegistrationId = $businessQuote->latestInsured?->emirate_of_registration_id ?? null;
+                    $emirateOfRegistrationId = $businessQuote->latestInsured?->entity?->emirate_of_registration_id ?? null;
                 }
 
                 app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, $quoteTypeId);
