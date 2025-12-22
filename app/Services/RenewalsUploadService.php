@@ -2256,18 +2256,21 @@ class RenewalsUploadService
                             }
 
                             if ($leadData->premium) {
+
+                                // check if the lead is a Genesis lead
+                                $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+
                                 if (! empty($leadData->provider_name) && ! $leadData->plan_type) {
                                     $leadValidationErrors->push('Repair Type is required');
-                                } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0) {
+                                } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0 && ! $isGenesisLead['status']) {
                                     $leadValidationErrors->push('Excess should be 0 with TPL');
-                                } elseif ($leadData->plan_type == CarPlanType::COMP || $leadData->plan_type == CarPlanType::AGENCY) {
+                                } elseif (($leadData->plan_type == CarPlanType::COMP || $leadData->plan_type == CarPlanType::AGENCY) && ! $isGenesisLead['status']) {
                                     if (! $leadData->excess) {
                                         $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
                                     }
                                 }
 
-                                // check if the lead is a Genesis lead
-                                $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+                                
 
                                 // if the lead is a Genesis lead, then the Insurer Quote No is not required
                                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no && ! $isGenesisLead['status']) {
