@@ -499,4 +499,16 @@ class User extends Authenticatable implements AuditableContract
     {
         return $this->is_ai_user ?? false;
     }
+
+    public function userBranches()
+    {
+        return $this->hasMany(UserBranch::class, 'user_id', 'id');
+    }
+
+    public function primaryBranch()
+    {
+        return $this->hasOne(UserBranch::class, 'user_id', 'id')
+            ->where('is_primary', 1)
+            ->where('status', 1);
+    }
 }

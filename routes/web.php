@@ -14,6 +14,8 @@ use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
+use App\Http\Controllers\BranchAssignmentController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CommercialKeywordsController;
@@ -512,6 +514,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
+        Route::resource('branches', BranchController::class);
+        Route::prefix('branch-assignments')->name('branch-assignments.')->group(function () {
+            Route::get('/', [BranchAssignmentController::class, 'index'])->name('index');
+            Route::get('/{user}', [BranchAssignmentController::class, 'show'])->name('show');
+            Route::post('/{user}', [BranchAssignmentController::class, 'store'])->name('store');
+            Route::patch('/{user}/branches/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('delete');
+            Route::patch('/{user_id}/branches/{branch_id}/make-primary', [BranchAssignmentController::class, 'makePrimary'])->name('make-primary');
+        });
 
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;

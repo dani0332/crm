@@ -129,6 +129,18 @@ const maxLeadsOptions = computed(() => {
     value: i,
   }));
 });
+
+const updatedLobs = computed(() => {
+  return props.lobs.map(lob => {
+    if (lob.value === 'CAR_CAT_A') {
+      return {
+        ...lob,
+        label: 'Car Revival Cat A',
+      };
+    }
+    return lob;
+  });
+});
 </script>
 <template>
   <Head title="Buy Lead" />
@@ -142,7 +154,7 @@ const maxLeadsOptions = computed(() => {
         label="Line Of Business"
         required
         placeholder="Select LOB"
-        :options="lobs"
+        :options="props.lobs"
         filterable
         v-model="requestForm.quote_type"
         :rules="[isRequired]"
@@ -260,7 +272,7 @@ const maxLeadsOptions = computed(() => {
   >
     <template #item-quote_type.code="{ quote_type, source }">
       <span v-if="source == 'REVIVAL'">
-        <x-tag color="primary"> Car CAT A </x-tag>
+        <x-tag color="primary">Car Cat A</x-tag>
       </span>
       <span v-else>
         <x-tag color="primary">
