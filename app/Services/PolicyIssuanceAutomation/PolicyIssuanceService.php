@@ -480,7 +480,7 @@ class PolicyIssuanceService
         }
 
         $isPolicyAutomationEnabled = false;
-        if ($quoteTypeId === QuoteTypeId::Car && $insuranceProvider) {
+        if ($quoteTypeId == QuoteTypeId::Car && $insuranceProvider) {
             $policyIssuanceService = $this->init($quoteType, $insuranceProvider->code);
             $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled();
         }

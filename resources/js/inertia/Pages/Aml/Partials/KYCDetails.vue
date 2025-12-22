@@ -22,9 +22,13 @@ const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
 const syncProcessLoading = ref(false);
 const quoteRequest = page.props.quoteRequest;
 const isPrivateCar = page.props.isPrivateCar;
-const isPolicyAutomationEnabled = ref(page.props.isPolicyAutomationEnabled ?? false);
+const isPolicyAutomationEnabled = ref(
+  page.props.isPolicyAutomationEnabled ?? false,
+);
 const policyAutomationToggleLoading = ref(false);
-const policyIssuanceAutomationEnabled = isPrivateCar ? ref(quoteRequest.policy_issuance_automation_enabled) : ref(false);
+const policyIssuanceAutomationEnabled = isPrivateCar
+  ? ref(quoteRequest.policy_issuance_automation_enabled)
+  : ref(false);
 
 const emit = defineEmits(['update:insurerPortalSyncData']);
 
@@ -118,11 +122,11 @@ const complianceRules = computed(() => {
 });
 
 const showPolicyIssuanceAutomationToggle = computed(() => {
-  console.clear();
-  console.log('isPrivateCar', isPrivateCar);
-  console.log('isPolicyAutomationEnabled', isPolicyAutomationEnabled.value);
-  console.log('can(permissionsEnum.CAR_LEGACY_KYC_SKIP_INSURER_API)', can(permissionsEnum.CAR_LEGACY_KYC_SKIP_INSURER_API));
-  return isPrivateCar && isPolicyAutomationEnabled.value && can(permissionsEnum.CAR_LEGACY_KYC_SKIP_INSURER_API);
+  return (
+    isPrivateCar &&
+    isPolicyAutomationEnabled.value &&
+    can(permissionsEnum.CAR_LEGACY_KYC_SKIP_INSURER_API)
+  );
 });
 
 function activePatternField() {
@@ -335,13 +339,13 @@ const syncInsurerPortalUpdates = () => {
 const togglePolicyIssuanceAutomation = () => {
   // Set loading state
   policyAutomationToggleLoading.value = true;
-  
+
   // The v-model will have already updated when @change fires, so we use the current value
   const newValue = policyIssuanceAutomationEnabled.value;
-  
+
   // Store the previous value to revert on error
   const previousValue = !newValue;
-  
+
   axios
     .post('/toggle-policy-issuance-automation', {
       quote_uuid: quoteRequest.uuid,
@@ -350,7 +354,8 @@ const togglePolicyIssuanceAutomation = () => {
     })
     .then(response => {
       if (response.data.success) {
-        policyIssuanceAutomationEnabled.value = response.data.data.policy_issuance_automation_enabled;
+        policyIssuanceAutomationEnabled.value =
+          response.data.data.policy_issuance_automation_enabled;
         notification.success({
           title: response.data.message,
           position: 'top',
@@ -368,7 +373,8 @@ const togglePolicyIssuanceAutomation = () => {
       // Revert on error
       policyIssuanceAutomationEnabled.value = previousValue;
       notification.error({
-        title: error.response?.data?.message || 'Error toggling policy automation',
+        title:
+          error.response?.data?.message || 'Error toggling policy automation',
         position: 'top',
       });
       console.error('Toggle error:', error);
@@ -1251,7 +1257,6 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
             :label="policyIssuanceAutomationEnabled ? 'Enabled' : 'Disabled'"
           />
         </template>
-
       </div>
       <div class="flex gap-x-2">
         <!-- :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)" -->
