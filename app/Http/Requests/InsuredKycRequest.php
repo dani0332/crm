@@ -118,12 +118,14 @@ class InsuredKycRequest extends FormRequest
         $validator->after(function ($validator) {
             if (! auth()->user()->can(PermissionsEnum::AMLList)) {
                 $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
+
                 return;
             }
 
             $quoteTypeEnum = QuoteTypes::getName(request()->quote_type_id);
             if (! $quoteTypeEnum) {
                 $validator->errors()->add('quote_type_id', 'Invalid quote type provided for AML Screening');
+
                 return;
             }
 
@@ -131,6 +133,7 @@ class InsuredKycRequest extends FormRequest
             $quote = $this->getQuoteObjectBy($quoteType, request()->quote_uuid, 'uuid');
             if (! $quote) {
                 $validator->errors()->add('quote_uuid', 'Quote not found');
+
                 return;
             }
 
