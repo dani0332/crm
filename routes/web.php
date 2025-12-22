@@ -1013,6 +1013,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('check_route_access');
+    Route::get('trigger-failure-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerFailurePolicyIssuance'])->middleware('check_route_access');
 
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance']);
 

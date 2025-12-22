@@ -4,11 +4,13 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\InsuranceProvider;
 use App\Models\PolicyIssuance;
 use App\Models\QuoteType;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 
@@ -23,6 +25,7 @@ class PolicyIssuanceController extends Controller
             return response()->json(['message' => 'Policy issuance not found'], 404);
         }
         $policyIssuance->status = PolicyIssuanceEnum::PENDING_STATUS;
+        $policyIssuance->model->update(['quote_status_id' => QuoteStatusEnum::TransactionApproved]);
         if ($request->has('completed_step')) {
             $policyIssuance->completed_step = $request->completed_step;
         }
@@ -60,5 +63,16 @@ class PolicyIssuanceController extends Controller
                 'message' => 'Manual policy issuance triggered successfully',
                 'policy_issuance_id' => $policyIssuance->id,
             ], 200);
+    }
+
+    public function triggerFailurePolicyIssuance($policyIssuanceId, Request $request)
+    {
+        $policyIssuance = PolicyIssuance::find($policyIssuanceId);
+        if (! $policyIssuance) {
+            return response()->json(['message' => 'Policy issuance not found'], 404);
+        }
+        $policyIssuance->status = PolicyIssuanceEnum::FAILED_STATUS;
+        $policyIssuance->save();
+        app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($policyIssuance->model, $policyIssuance->quote_type, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
     }
 }

@@ -331,6 +331,7 @@ final class ApplicationStorageEnums extends Enum
     /* Cyber OCB */
     public const BIRD_CYBER_OCB_INTRO_EMAIL = 'BIRD_CYBER_OCB_INTRO_EMAIL';
     public const BIRD_CYBER_AUTOMATED_FOLLOWUPS = 'BIRD_CYBER_AUTOMATED_FOLLOWUPS';
+    public const CYBER_FAILURE_EMAIL = 'CYBER_FAILURE_EMAIL';
 
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';

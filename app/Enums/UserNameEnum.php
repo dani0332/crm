@@ -8,4 +8,5 @@ final class UserNameEnum extends Enum
 {
     const System = 'System User';
     const PA_USER = 'PA User';
+    const PA = 'PA';
 }

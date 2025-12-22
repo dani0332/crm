@@ -1252,6 +1252,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_FAILURE_EMAIL],
+            [
+                'value' => 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1
+            ]
+        );
     }
 
     private function seedBranchData()

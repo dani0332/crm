@@ -15,6 +15,7 @@ use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\PolicyIssuanceJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Jobs\SendCyberAwnicFailedAllocationEmailJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
@@ -352,7 +353,7 @@ class PolicyIssuanceService
         ]);
 
         $statusAPIFailed = null;
-        if ($quoteType === QuoteTypes::CAR->value && $processInvolved) {
+        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value]) && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType);
@@ -392,26 +393,32 @@ class PolicyIssuanceService
         $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
 
         if (
-            $quoteType === QuoteTypes::CAR->value &&
+            in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value]) &&
             (! empty($statusAPIFailed) && ! empty($processInvolved)) &&
             ! $isPolicyBooked
         ) {
             $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
+            [$jobQuoteTypeId, $workflowType, $recipientUser] = $this->resolveAutomationFailureRouting($quoteType, $processInvolved);
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob', extra: [
                 'actionRequired' => $actionRequired,
                 'statusAPIFailed' => $statusAPIFailed,
                 'processInvolved' => $processInvolved,
+                'jobQuoteTypeId' => $jobQuoteTypeId,
+                'workflowType' => $workflowType,
+                'recipientUser' => $recipientUser,
             ]);
+
             AutomationFailedJob::dispatch(
                 $quote->id,
-                QuoteTypeId::Car,
+                $jobQuoteTypeId,
                 $actionRequired,
                 $statusAPIFailed,
                 $processInvolved,
-                WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
-                UserNameEnum::PA_USER
+                $workflowType,
+                $recipientUser
             )->onQueue('policy-issuance-automation');
+
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
         }
 
@@ -430,6 +437,22 @@ class PolicyIssuanceService
                 SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
             }
         }
+    }
+
+    private function resolveAutomationFailureRouting(string $quoteType, string $processInvolved): array
+    {
+        $isCyber = $quoteType === QuoteTypes::CYBER->value;
+
+        $quoteTypeId = $isCyber ? QuoteTypeId::Cyber : QuoteTypeId::Car;
+        $workflowType = $isCyber ? WorkflowTypeEnum::CYBER_AUTOMATION_FAILED : WorkflowTypeEnum::CAR_AUTOMATION_FAILED;
+        $recipientUser = UserNameEnum::PA_USER;
+
+        if ($isCyber && $processInvolved !== PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY) {
+            // For Cyber non-booking failures we notify the assigned SIC advisor directly.
+            $recipientUser = null;
+        }
+
+        return [$quoteTypeId, $workflowType, $recipientUser];
     }
 
     public function getInsurerAPIStatuses($status = null, $onlyKeys = false)

@@ -6,6 +6,7 @@ use App\Enums\AwnicEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypes;
 use App\Facades\Awnic;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -35,7 +36,7 @@ class AwnicApiService
         ]);
 
         $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_ISSUE_POLICY);
-        $endPoint = '/cyber/generatePolicy';
+        $endPoint = '/cyber/generatePolicy/2323132312';
 
         $customer = $quote->customer;
         $nationality = $quote->nationality;
@@ -63,6 +64,8 @@ class AwnicApiService
             $response['error'] = $issuePolicyResponse['error'];
             $response['message'] = $issuePolicyResponse['message'];
             $response['status'] = false;
+
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY);
 
             return $response;
         }
@@ -144,6 +147,8 @@ class AwnicApiService
             $response['message'] = 'Some documents failed to upload';
             $response['error'] = 'Some documents failed to upload';
             $response['status'] = false;
+
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS);
 
             return $response;
         }
@@ -230,6 +235,8 @@ class AwnicApiService
             $response['error'] = $error;
             $response['message'] = $error;
             $response['status'] = false;
+
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
             return $response;
         }
