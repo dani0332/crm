@@ -290,6 +290,8 @@ function createDeviceQuoteWithDependencies()
         'code' => $quoteData['code'],
         'uuid' => $quoteData['uuid'],
         'quote_type_id' => QuoteTypes::DEVICE->value,
+        'customer_id' => $customerId,
+        'insurer_quote_number' => $quoteData['insurer_quote_number'],
         'first_name' => $quoteData['first_name'],
         'last_name' => $quoteData['last_name'],
         'email' => $quoteData['email'],
@@ -300,7 +302,7 @@ function createDeviceQuoteWithDependencies()
     ]);
 
     // Add additional device quote fields (simulating the device quote relationship)
-    $db->table('device_quote')->insertGetId([
+    $db->table('device_quote_request')->insertGetId([
         'personal_quote_id' => $quoteId,
         'imei' => $deviceSubQuoteData['imei'],
         'device_make' => $deviceSubQuoteData['device_make'],
@@ -389,6 +391,8 @@ function createDeviceQuoteWithoutDeviceDetails()
         'code' => $quoteData['code'],
         'uuid' => $quoteData['uuid'],
         'quote_type_id' => QuoteTypes::DEVICE->value,
+        'customer_id' => $customerId,
+        'insurer_quote_number' => $quoteData['insurer_quote_number'],
         'first_name' => $quoteData['first_name'],
         'last_name' => $quoteData['last_name'],
         'email' => $quoteData['email'],
@@ -404,17 +408,21 @@ function createDeviceQuoteWithoutImei()
     $lookups = seedNgiDeviceLookups();
     $quoteData = NgiPolicyIssuanceTestDataBuilder::buildDeviceQuoteData([], $lookups);
     $customerData = NgiPolicyIssuanceTestDataBuilder::buildCustomerData();
+    $deviceSubQuoteData = NgiPolicyIssuanceTestDataBuilder::buildDeviceSubQuoteData();
+    $paymentData = NgiPolicyIssuanceTestDataBuilder::buildPaymentData();
 
     $db = \Illuminate\Support\Facades\DB::connection('sqlite');
 
     // Create Customer
     $customerId = $db->table('customer')->insertGetId([
         'emirates_id_number' => $customerData['emirates_id_number'],
+        'emirates_id_expiry_date' => $customerData['emirates_id_expiry_date'],
         'dob' => $customerData['dob'],
         'first_name' => $customerData['first_name'],
         'last_name' => $customerData['last_name'],
         'email' => $customerData['email'],
         'mobile_no' => $customerData['mobile_no'],
+        'address' => $customerData['address'],
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -424,19 +432,52 @@ function createDeviceQuoteWithoutImei()
         'code' => $quoteData['code'],
         'uuid' => $quoteData['uuid'],
         'quote_type_id' => QuoteTypes::DEVICE->value,
+        'customer_id' => $customerId,
+        'insurer_quote_number' => $quoteData['insurer_quote_number'],
         'first_name' => $quoteData['first_name'],
         'last_name' => $quoteData['last_name'],
         'email' => $quoteData['email'],
+        'mobile_no' => $quoteData['mobile_no'],
+        'dob' => $quoteData['dob'],
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
     // Create device quote without IMEI
-    $db->table('device_quote')->insertGetId([
+    $db->table('device_quote_request')->insertGetId([
         'personal_quote_id' => $quoteId,
         'imei' => null, // Missing IMEI
-        'device_make' => 'Apple',
-        'device_model' => 'iPhone 15',
+        'device_make' => $deviceSubQuoteData['device_make'],
+        'device_model' => $deviceSubQuoteData['device_model'],
+        'device_type' => $deviceSubQuoteData['device_type'],
+        'device_value' => $deviceSubQuoteData['device_value'],
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Create Payment
+    $db->table('payments')->insertGetId([
+        'code' => $paymentData['code'],
+        'payment_status_id' => $paymentData['payment_status_id'],
+        'paymentable_type' => PersonalQuote::class,
+        'paymentable_id' => $quoteId,
+        'total_amount' => $paymentData['total_amount'],
+        'is_main_lead_payment' => $paymentData['is_main_lead_payment'],
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Create Insured record
+    $insuredData = NgiPolicyIssuanceTestDataBuilder::buildInsuredData();
+    $db->table('insured')->insertGetId([
+        'insurable_type' => PersonalQuote::class,
+        'insurable_id' => $quoteId,
+        'id_type' => $insuredData['id_type'],
+        'id_number' => $insuredData['id_number'],
+        'first_name' => $insuredData['first_name'],
+        'last_name' => $insuredData['last_name'],
+        'email' => $insuredData['email'],
+        'mobile_no' => $insuredData['mobile_no'],
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -471,6 +512,8 @@ function createDeviceQuoteWithoutInsurerQuoteNumber()
         'code' => $quoteData['code'],
         'uuid' => $quoteData['uuid'],
         'quote_type_id' => QuoteTypes::DEVICE->value,
+        'customer_id' => $customerId,
+        'insurer_quote_number' => $quoteData['insurer_quote_number'], // This will be null
         'first_name' => $quoteData['first_name'],
         'last_name' => $quoteData['last_name'],
         'email' => $quoteData['email'],
@@ -479,7 +522,7 @@ function createDeviceQuoteWithoutInsurerQuoteNumber()
     ]);
 
     // Create device quote with IMEI
-    $db->table('device_quote')->insertGetId([
+    $db->table('device_quote_request')->insertGetId([
         'personal_quote_id' => $quoteId,
         'imei' => $deviceSubQuoteData['imei'],
         'device_make' => $deviceSubQuoteData['device_make'],
@@ -530,6 +573,8 @@ function createDeviceQuoteWithCustomerMissingEmiratesId()
         'code' => $quoteData['code'],
         'uuid' => $quoteData['uuid'],
         'quote_type_id' => QuoteTypes::DEVICE->value,
+        'customer_id' => $customerId,
+        'insurer_quote_number' => $quoteData['insurer_quote_number'],
         'first_name' => $quoteData['first_name'],
         'last_name' => $quoteData['last_name'],
         'email' => $quoteData['email'],
@@ -538,7 +583,7 @@ function createDeviceQuoteWithCustomerMissingEmiratesId()
     ]);
 
     // Create device quote
-    $db->table('device_quote')->insertGetId([
+    $db->table('device_quote_request')->insertGetId([
         'personal_quote_id' => $quoteId,
         'imei' => $deviceSubQuoteData['imei'],
         'device_make' => $deviceSubQuoteData['device_make'],

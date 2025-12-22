@@ -153,6 +153,8 @@ class TestSchemaCreator
                 $table->string('uuid')->unique();
                 $table->string('code')->nullable();
                 $table->unsignedBigInteger('quote_type_id');
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->string('insurer_quote_number')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
                 $table->string('email')->nullable();
@@ -376,6 +378,22 @@ class TestSchemaCreator
             });
         }
 
+        // Create device_quote_request table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('device_quote_request')) {
+            Schema::connection('sqlite')->create('device_quote_request', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id');
+                $table->string('imei')->nullable();
+                $table->string('device_make')->nullable();
+                $table->string('device_model')->nullable();
+                $table->string('device_type')->nullable();
+                $table->decimal('device_value', 15, 2)->nullable();
+                $table->string('device_condition')->nullable();
+                $table->string('purchase_date')->nullable();
+                $table->timestamps();
+            });
+        }
+
         // Create insured table if it doesn't exist (for latestInsured relationship)
         if (! Schema::connection('sqlite')->hasTable('insured')) {
             Schema::connection('sqlite')->create('insured', function ($table) {
@@ -387,6 +405,16 @@ class TestSchemaCreator
                 $table->string('last_name')->nullable();
                 $table->string('email')->nullable();
                 $table->string('mobile_no')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create customer_insured pivot table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('customer_insured')) {
+            Schema::connection('sqlite')->create('customer_insured', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_request_id');
+                $table->unsignedBigInteger('insured_id');
                 $table->timestamps();
             });
         }
