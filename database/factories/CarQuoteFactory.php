@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Enums\CarRegistrationType;
-use App\Models\CarPlan;
 use App\Models\CarQuote;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

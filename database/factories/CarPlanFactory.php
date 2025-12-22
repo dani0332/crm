@@ -49,4 +49,3 @@ class CarPlanFactory extends Factory
         ]);
     }
 }
-
