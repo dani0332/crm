@@ -488,6 +488,11 @@ class AMLService
 
     public function getLatestScreening($quoteRequestId, $quoteTypeId)
     {
+        LoggerService::info('Getting Latest Screening', extra: [
+            'quoteRequestId' => $quoteRequestId,
+            'quoteTypeId' => $quoteTypeId,
+        ]);
+
         return KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
@@ -502,21 +507,14 @@ class AMLService
     public function prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote)
     {
         $getMemberOrUBODetails = $this->getMemberOrUBODetails($AMLCheckRequest, $quoteType, $updateQuote->id);
-        LoggerService::info('AML Screening Bridger - Members Details', [
-            'members_details' => $getMemberOrUBODetails,
-        ]);
         $getLastScreening = $this->getLatestScreening($updateQuote->id, $quoteType->id);
-        LoggerService::info('AML Screening Bridger - Last Screening', [
-            'last_screening' => $getLastScreening,
-        ]);
-
         $membersDetails = $getMemberOrUBODetails;
 
         if (! empty($getMemberOrUBODetails->toArray())) {
-            LoggerService::info('AML Screening Bridger - Validation check - Members found against quote');
+            LoggerService::info('Validation check - Members found against quote');
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
             if (in_array(null, $memberValidateCheck)) {
-                LoggerService::info('AML Screening Bridger - Validation check - Member First Name missing');
+                LoggerService::info('Validation check - Member First Name missing');
 
                 return [false, 'First Name missing', [], $getLastScreening];
             }
@@ -527,7 +525,7 @@ class AMLService
 
                 // Include members with null updated_at (replicated members that need screening)
                 if (is_null($member->updated_at)) {
-                    LoggerService::info('AML Screening Bridger - Including member with null updated_at (replicated member)', extra: [
+                    LoggerService::info('Including member with null updated_at (replicated member)', extra: [
                         'member_id' => $member->id ?? 'unknown',
                         'member_name' => ($member->first_name ?? '').' '.($member->last_name ?? ''),
                     ]);
@@ -547,9 +545,12 @@ class AMLService
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
-        LoggerService::info('fn:getMemberOrUBODetails - AMLService');
-
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+        LoggerService::info('Getting Member or UBO Details', extra: [
+            'quoteType' => $quoteType->code,
+            'quoteRequestId' => $quoteRequestId,
+            'membersFor' => $membersFor,
+        ]);
 
         return CustomerMembersRepository::getBy($quoteRequestId, $quoteType->code, $membersFor);
     }
@@ -1715,7 +1716,7 @@ class AMLService
 
     public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening)
     {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+        LoggerService::info('Processing Insured Data for Screening');
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
 
@@ -1734,7 +1735,7 @@ class AMLService
     {
         if ($isEntity) {
 
-            LoggerService::info('AML Screening Bridger - Entity Details', extra: [
+            LoggerService::info('Entity Details', extra: [
                 'trade_license_no' => $request->trade_license_no,
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
@@ -1764,7 +1765,7 @@ class AMLService
                 ->first();
             $idNumber = $insured?->id_number ?? $request->screening_id_number;
 
-            LoggerService::info('AML Screening Bridger - Individual Details', extra: [
+            LoggerService::info('Individual Details', extra: [
                 'id_type' => $request->screening_id_type,
                 'unformatted_id_number' => $request->screening_id_number,
                 'formatted_id_number' => $idNumber,
@@ -1790,7 +1791,7 @@ class AMLService
 
         $insured->refresh();
 
-        LoggerService::info('AML Screening Bridger - Insured Details', extra: [
+        LoggerService::info('Insured Details', extra: [
             'id' => $insured->id,
             'customer_type' => $insured->customer_type,
             'id_type' => $insured->id_type ?? null,
@@ -1807,7 +1808,7 @@ class AMLService
 
     public function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
     {
-        LoggerService::info('AML Screening Bridger - Updating Insured in Personal Quote', extra: [
+        LoggerService::info('Updating Insured in Personal Quote', extra: [
             'quote_type_id' => $quoteTypeId,
             'quote_uuid' => $quote->uuid,
             'insured_id' => $insured->id,
@@ -1844,12 +1845,12 @@ class AMLService
                 'updated_at' => now(),
             ]);
 
-            LoggerService::info('AML Screening Bridger - Updated orphaned customer_insured record', [
-                'customer_insured_id' => $orphanedRecord->id,
-                'customer_id' => $request->customer_id,
-                'insured_id' => $insured->id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
+            LoggerService::info('Updated orphaned customer_insured record', extra: [
+                'customerInsuredId' => $orphanedRecord->id,
+                'customerId' => $request->customer_id,
+                'insuredId' => $insured->id,
+                'quoteTypeId' => $quoteTypeId,
+                'quoteRequestId' => $quote->id,
             ]);
         } else {
             // Check existing quote mapping
@@ -1872,10 +1873,10 @@ class AMLService
                 // Update quote status
                 $quote->update(['kyc_decision' => Kyc::PENDING]);
 
-                LoggerService::info('AML Screening Bridger - Insured association changed for quote', [
-                    'old_insured_id' => $existingQuoteMapping->insured_id,
-                    'new_insured_id' => $insured->id,
-                    'quote_id' => $quote->id,
+                LoggerService::info('Insured association changed for quote', extra: [
+                    'oldInsuredId' => $existingQuoteMapping->insured_id,
+                    'newInsuredId' => $insured->id,
+                    'quoteId' => $quote->id,
                 ]);
 
             } elseif (! $existingQuoteMapping) {
@@ -1888,9 +1889,9 @@ class AMLService
                     'quote_request_id' => $quote->id,
                 ], ['updated_at' => now()]);
 
-                LoggerService::info('AML Screening Bridger - New insured association created for quote', [
-                    'insured_id' => $insured->id,
-                    'quote_id' => $quote->id,
+                LoggerService::info('New insured association created for quote', extra: [
+                    'insuredId' => $insured->id,
+                    'quoteId' => $quote->id,
                 ]);
             }
         }
@@ -1901,13 +1902,13 @@ class AMLService
     private function shouldApplyScreening($insured, bool $isCustomerInsuredAssociationUpdated, $getLastScreening, bool $isEntity): bool
     {
         if ($insured->wasRecentlyCreated) {
-            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile created');
+            LoggerService::info('Insured '.($isEntity ? 'Entity' : 'Person').' profile created');
 
             return true;
         }
 
         if ($isCustomerInsuredAssociationUpdated) {
-            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile association changed for quote');
+            LoggerService::info('Insured '.($isEntity ? 'Entity' : 'Person').' profile association changed for quote');
 
             return true;
         }
@@ -1915,7 +1916,7 @@ class AMLService
         if ($insured->isDirty() ||
             ! isset($getLastScreening->created_at) ||
             Carbon::parse($insured->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
-            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile details updated');
+            LoggerService::info('Insured '.($isEntity ? 'Entity' : 'Person').' profile details updated');
 
             return true;
         }
@@ -1945,7 +1946,7 @@ class AMLService
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
 
-        LoggerService::info('AML Screening Bridger - Entity Data', extra: $entityData);
+        LoggerService::info('Handle Legacy Entity Data', extra: $entityData);
 
         $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
         $entity->fill($entityData);
