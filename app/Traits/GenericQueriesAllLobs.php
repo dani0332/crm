@@ -844,7 +844,7 @@ trait GenericQueriesAllLobs
             in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $record?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
-            $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
+            $emirate = $record?->latestInsured?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
 
