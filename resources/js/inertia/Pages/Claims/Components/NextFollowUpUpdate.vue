@@ -161,10 +161,10 @@ const checkFollowUpReminder = () => {
     followUpDateTime,
     'isOverdue',
     isOverdue,
+    'show alert condition',
     isFollowUpDate && !isOverdue,
   );
   if (isFollowUpDate && !isOverdue) {
-    console.log('Follow-up due today', followUpDateTime);
     // Show reminder toast for follow-up due today
     const timeString = followUpDate.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -266,6 +266,7 @@ const updateNextFollowUp = () => {
         <x-form :form="nextFollowUpForm" @submit="updateNextFollowUp">
           <div class="space-y-4">
             <!-- Next Follow-up Date & Time -->
+            <!--    :utc="true"         -->
             <div class="w-1/2">
               <DatePicker
                 v-model="nextFollowUpForm.next_follow_up_date"
@@ -280,7 +281,6 @@ const updateNextFollowUp = () => {
                 placeholder="Please select follow-up date & time"
                 class="w-full"
                 required
-                :utc="true"
                 :is-24="true"
                 @update:model-value="validateFormOnChange"
               />
