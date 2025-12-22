@@ -1,8 +1,11 @@
 <?php
 
 use App\Enums\QuoteTypes;
-use Tests\Helpers\PaymentTestHelper;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
+use Database\Factories\ApplicationStorageFactory;
 use Tests\Helpers\TestDataSeeder;
+use Tests\Helpers\Payments\PaymentTestHelper;
 use Tests\Helpers\TestSchemaCreator;
 
 // Will run for each test 
@@ -11,7 +14,7 @@ beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     
     // Create VAT_VALUE record using factory
-    \Database\Factories\ApplicationStorageFactory::createVatValueForSqlite('5');
+   ApplicationStorageFactory::createVatValueForSqlite('5');
 
     // Set up authenticated user
     $this->user = TestDataSeeder::createAdminUser();
@@ -41,14 +44,14 @@ test('payment and payment split can be created using factories', function () {
     
     // Create payment using factory with CarQuote
     // This will trigger PaymentObserver which calculates VAT
-    $createdPayment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
+    $createdPayment = Payment::factory()->createForSqlite($this->carQuote);
     
     // Refresh payment to get latest values from database (including observer updates)
     $createdPayment->refresh();
     
     // Create payment split using factory with Payment
     // This will trigger PaymentSplitsObserver which calculates VAT
-    $createdPaymentSplit = \App\Models\PaymentSplits::factory()->createForSqlite($createdPayment);
+    $createdPaymentSplit = PaymentSplits::factory()->createForSqlite($createdPayment);
     
     // Refresh payment split to get latest values from database (including observer updates)
     $createdPaymentSplit->refresh();
@@ -150,14 +153,14 @@ test('payment should be updated via endpoint', function () {
     
     // Create payment using factory with CarQuote
     // This will trigger PaymentObserver which calculates VAT
-    $existingPayment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
+    $existingPayment = Payment::factory()->createForSqlite($this->carQuote);
     
     // Refresh payment to get latest values from database (including observer updates)
     $existingPayment->refresh();
     
     // Create payment split using factory with Payment
     // This will trigger PaymentSplitsObserver which calculates VAT
-    $existingPaymentSplit = \App\Models\PaymentSplits::factory()->createForSqlite($existingPayment);
+    $existingPaymentSplit = PaymentSplits::factory()->createForSqlite($existingPayment);
     
     // Refresh payment split to get latest values from database (including observer updates)
     $existingPaymentSplit->refresh();
@@ -219,20 +222,20 @@ test('payment split validates presence and format of insurer receipt number', fu
     // ============================================
     // 1. ARRANGE: Create payment splits for testing
     // ============================================
-    $payment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
+    $payment = Payment::factory()->createForSqlite($this->carQuote);
     
     // Create a payment split with an existing receipt number for case 3
     $existingReceiptNumber = 'INS-REC-EXISTING';
-    \App\Models\PaymentSplits::factory()->createForSqlite($payment, [
+    PaymentSplits::factory()->createForSqlite($payment, [
         'insurer_receipt_number' => $existingReceiptNumber,
     ]);
 
     // Create another payment split without insurer_receipt_number for testing updates
-    \App\Models\PaymentSplits::factory()->createForSqlite($payment, [
+    PaymentSplits::factory()->createForSqlite($payment, [
         'insurer_receipt_number' => null,
     ]);
 
-    $quoteType = \App\Enums\QuoteTypes::CAR->value;
+    $quoteType = QuoteTypes::CAR->value;
 
     // ============================================
     // CASE 1: Test null validation error

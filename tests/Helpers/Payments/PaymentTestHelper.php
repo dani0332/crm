@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Helpers;
+namespace Tests\Helpers\Payments;
 
 use App\Enums\PaymentCollectionTypeEnum;
 use App\Enums\PaymentFrequency;
