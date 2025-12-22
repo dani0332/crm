@@ -20,7 +20,7 @@ beforeEach(function () {
 
     // Create mocked dependencies for unit tests
     $this->requestBuilder = Mockery::mock(NgiRequestBuilder::class);
-    $this->responseHandler = new NgiResponseHandler();
+    $this->responseHandler = new NgiResponseHandler;
     $this->quoteUpdater = Mockery::mock(NgiQuoteUpdaterService::class);
     $this->validationService = Mockery::mock(NgiValidationService::class);
 

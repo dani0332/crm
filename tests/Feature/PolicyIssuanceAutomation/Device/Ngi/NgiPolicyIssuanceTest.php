@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\InsuranceProviderEnum;
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
@@ -12,7 +11,6 @@ use App\Models\PersonalQuote;
 use App\Models\PolicyIssuance;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
 use Illuminate\Support\Facades\Cache;
-use Tests\Helpers\NgiPolicyIssuanceMockHelper;
 use Tests\Helpers\NgiPolicyIssuanceTestDataBuilder;
 use Tests\Helpers\TestSchemaCreator;
 

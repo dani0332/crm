@@ -139,7 +139,7 @@ class Kernel extends ConsoleKernel
             'policy-issuance-automation:run',
             default: fn ($event) => $event->timezone('Asia/Dubai')->everyThreeMinutes()->onOneServer()->withoutOverlapping(4),
             environments: [
-                'test' => fn ($event) => $event->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4)
+                'test' => fn ($event) => $event->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4),
             ]
         );
         $schedule->command('aml-screening-automation:run')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();

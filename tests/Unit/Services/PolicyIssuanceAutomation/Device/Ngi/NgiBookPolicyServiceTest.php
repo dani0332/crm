@@ -15,7 +15,7 @@ beforeEach(function () {
 
     // Create real dependencies where appropriate, mock others
     $this->validationService = Mockery::mock(NgiValidationService::class);
-    $this->responseHandler = new NgiResponseHandler();
+    $this->responseHandler = new NgiResponseHandler;
 
     $this->bookPolicyService = new NgiBookPolicyService(
         $this->validationService,
