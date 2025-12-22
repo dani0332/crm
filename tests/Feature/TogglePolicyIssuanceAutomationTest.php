@@ -1,9 +1,10 @@
 <?php
 
-use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\CarPlan;
+use App\Models\CarQuote;
+use App\Models\InsuranceProvider;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -12,26 +13,9 @@ beforeEach(function () {
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
 
-    // Use DB facade to create records directly in SQLite
-    $db = DB::connection('sqlite');
-
-    // Create insurance provider
-    $this->insuranceProviderId = $db->table('insurance_provider')->insertGetId([
-        'code' => InsuranceProvidersEnum::RSA,
-        'text' => 'RSA Insurance',
-        'is_active' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    // Create car plan
-    $this->carPlanId = $db->table('car_plan')->insertGetId([
-        'insurance_provider_id' => $this->insuranceProviderId,
-        'plan_name' => 'Test Car Plan',
-        'is_active' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    // Use Laravel factories to create test data
+    $this->insuranceProvider = InsuranceProvider::factory()->rsa()->createOneQuietly();
+    $this->carPlan = CarPlan::factory()->forInsuranceProvider($this->insuranceProvider->id)->createOneQuietly();
 });
 
 afterEach(function () {
@@ -39,22 +23,11 @@ afterEach(function () {
 });
 
 test('can enable policy issuance automation for car quote', function () {
-    $db = DB::connection('sqlite');
-
-    // Create a car quote
-    $quoteUuid = 'test-car-quote-'.uniqid();
-    $db->table('car_quote_request')->insert([
-        'uuid' => $quoteUuid,
-        'code' => 'CQ-TEST-'.rand(100000, 999999),
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@test.com',
-        'mobile_no' => '+971501234567',
-        'plan_id' => $this->carPlanId,
-        'policy_issuance_automation_enabled' => false,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    // Create a car quote using Laravel factory
+    $carQuote = CarQuote::factory()
+        ->withAutomationDisabled()
+        ->forCarPlan($this->carPlan->id)
+        ->createOneQuietly();
 
     // Mock the PolicyIssuanceService
     $mockService = Mockery::mock(PolicyIssuanceService::class);
@@ -73,7 +46,7 @@ test('can enable policy issuance automation for car quote', function () {
 
     // Make the request
     $response = $this->postJson(route('toggle-policy-issuance-automation'), [
-        'quote_uuid' => $quoteUuid,
+        'quote_uuid' => $carQuote->uuid,
         'quote_type_id' => QuoteTypeId::Car,
         'enabled' => true,
     ]);
@@ -86,22 +59,11 @@ test('can enable policy issuance automation for car quote', function () {
 });
 
 test('can disable policy issuance automation for car quote', function () {
-    $db = DB::connection('sqlite');
-
-    // Create a car quote with automation enabled
-    $quoteUuid = 'test-car-quote-'.uniqid();
-    $db->table('car_quote_request')->insert([
-        'uuid' => $quoteUuid,
-        'code' => 'CQ-TEST-'.rand(100000, 999999),
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@test.com',
-        'mobile_no' => '+971501234567',
-        'plan_id' => $this->carPlanId,
-        'policy_issuance_automation_enabled' => true,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    // Create a car quote with automation enabled using Laravel factory
+    $carQuote = CarQuote::factory()
+        ->withAutomationEnabled()
+        ->forCarPlan($this->carPlan->id)
+        ->createOneQuietly();
 
     // Mock the PolicyIssuanceService
     $mockService = Mockery::mock(PolicyIssuanceService::class);
@@ -120,7 +82,7 @@ test('can disable policy issuance automation for car quote', function () {
 
     // Make the request
     $response = $this->postJson(route('toggle-policy-issuance-automation'), [
-        'quote_uuid' => $quoteUuid,
+        'quote_uuid' => $carQuote->uuid,
         'quote_type_id' => QuoteTypeId::Car,
         'enabled' => false,
     ]);
@@ -181,23 +143,13 @@ test('validates quote_type_id must be Car', function () {
 });
 
 test('validates enabled must be boolean', function () {
-    $db = DB::connection('sqlite');
-
-    $quoteUuid = 'test-car-quote-'.uniqid();
-    $db->table('car_quote_request')->insert([
-        'uuid' => $quoteUuid,
-        'code' => 'CQ-TEST-'.rand(100000, 999999),
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@test.com',
-        'mobile_no' => '+971501234567',
-        'plan_id' => $this->carPlanId,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    // Create a car quote using Laravel factory
+    $carQuote = CarQuote::factory()
+        ->forCarPlan($this->carPlan->id)
+        ->createOneQuietly();
 
     $response = $this->postJson(route('toggle-policy-issuance-automation'), [
-        'quote_uuid' => $quoteUuid,
+        'quote_uuid' => $carQuote->uuid,
         'quote_type_id' => QuoteTypeId::Car,
         'enabled' => 'invalid', // Not boolean
     ]);
@@ -207,21 +159,10 @@ test('validates enabled must be boolean', function () {
 });
 
 test('returns 400 when insurance provider not found', function () {
-    $db = DB::connection('sqlite');
-
-    // Create a car quote without insurance provider
-    $quoteUuid = 'test-car-quote-'.uniqid();
-    $db->table('car_quote_request')->insert([
-        'uuid' => $quoteUuid,
-        'code' => 'CQ-TEST-'.rand(100000, 999999),
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@test.com',
-        'mobile_no' => '+971501234567',
-        'plan_id' => null, // No plan
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    // Create a car quote without insurance provider using Laravel factory
+    $carQuote = CarQuote::factory()
+        ->withoutCarPlan()
+        ->createOneQuietly();
 
     // Mock the PolicyIssuanceService to return insurance provider not found
     $mockService = Mockery::mock(PolicyIssuanceService::class);
@@ -236,7 +177,7 @@ test('returns 400 when insurance provider not found', function () {
     $this->app->instance(PolicyIssuanceService::class, $mockService);
 
     $response = $this->postJson(route('toggle-policy-issuance-automation'), [
-        'quote_uuid' => $quoteUuid,
+        'quote_uuid' => $carQuote->uuid,
         'quote_type_id' => QuoteTypeId::Car,
         'enabled' => true,
     ]);
@@ -249,20 +190,10 @@ test('returns 400 when insurance provider not found', function () {
 });
 
 test('returns 400 when policy automation is not enabled for insurer', function () {
-    $db = DB::connection('sqlite');
-
-    $quoteUuid = 'test-car-quote-'.uniqid();
-    $db->table('car_quote_request')->insert([
-        'uuid' => $quoteUuid,
-        'code' => 'CQ-TEST-'.rand(100000, 999999),
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@test.com',
-        'mobile_no' => '+971501234567',
-        'plan_id' => $this->carPlanId,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    // Create a car quote using Laravel factory
+    $carQuote = CarQuote::factory()
+        ->forCarPlan($this->carPlan->id)
+        ->createOneQuietly();
 
     // Mock the PolicyIssuanceService to return automation not enabled
     $mockService = Mockery::mock(PolicyIssuanceService::class);
@@ -277,7 +208,7 @@ test('returns 400 when policy automation is not enabled for insurer', function (
     $this->app->instance(PolicyIssuanceService::class, $mockService);
 
     $response = $this->postJson(route('toggle-policy-issuance-automation'), [
-        'quote_uuid' => $quoteUuid,
+        'quote_uuid' => $carQuote->uuid,
         'quote_type_id' => QuoteTypeId::Car,
         'enabled' => true,
     ]);
@@ -290,20 +221,10 @@ test('returns 400 when policy automation is not enabled for insurer', function (
 });
 
 test('handles exceptions and returns 500', function () {
-    $db = DB::connection('sqlite');
-
-    $quoteUuid = 'test-car-quote-'.uniqid();
-    $db->table('car_quote_request')->insert([
-        'uuid' => $quoteUuid,
-        'code' => 'CQ-TEST-'.rand(100000, 999999),
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@test.com',
-        'mobile_no' => '+971501234567',
-        'plan_id' => $this->carPlanId,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    // Create a car quote using Laravel factory
+    $carQuote = CarQuote::factory()
+        ->forCarPlan($this->carPlan->id)
+        ->createOneQuietly();
 
     // Mock the PolicyIssuanceService to throw exception
     $mockService = Mockery::mock(PolicyIssuanceService::class);
@@ -314,7 +235,7 @@ test('handles exceptions and returns 500', function () {
     $this->app->instance(PolicyIssuanceService::class, $mockService);
 
     $response = $this->postJson(route('toggle-policy-issuance-automation'), [
-        'quote_uuid' => $quoteUuid,
+        'quote_uuid' => $carQuote->uuid,
         'quote_type_id' => QuoteTypeId::Car,
         'enabled' => true,
     ]);

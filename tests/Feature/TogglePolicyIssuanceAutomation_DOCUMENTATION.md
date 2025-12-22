@@ -245,17 +245,71 @@ Schema::connection('sqlite')->create('users', function ($table) {
 
 ---
 
-## Helper Files
+## Laravel Database Factories
 
-### CarQuoteTestDataBuilder
+The tests use Laravel's built-in database factories for creating test data. This provides a clean, maintainable, and Laravel-standard approach.
 
-**Location**: `tests/Helpers/CarQuoteTestDataBuilder.php`
+### Created Factories
 
-Provides methods for building test data:
+**1. CarQuoteFactory** (`database/factories/CarQuoteFactory.php`)
 
-- `buildCarQuoteData()` - Default car quote data
-- `buildRSACarQuoteData()` - Car quote with RSA insurer
-- `buildAXACarQuoteData()` - Car quote with AXA insurer
+Provides methods and states:
+- `configure()` - Automatically sets SQLite connection for tests
+- `definition()` - Default car quote with sensible test values
+- `withAutomationEnabled()` - State for enabled automation
+- `withAutomationDisabled()` - State for disabled automation
+- `forCarPlan($carPlanId)` - Associate with specific car plan
+- `withoutCarPlan()` - Create without car plan (for testing edge cases)
+
+**Factory Configuration**:
+```php
+public function configure()
+{
+    return $this->afterMaking(function (CarQuote $carQuote) {
+        if (app()->environment('testing')) {
+            $carQuote->setConnection('sqlite');
+        }
+    });
+}
+```
+
+**Usage Example**:
+```php
+$carQuote = CarQuote::factory()
+    ->withAutomationDisabled()
+    ->forCarPlan($carPlan->id)
+    ->createOneQuietly();
+// ✅ Automatically uses SQLite connection!
+```
+
+**2. InsuranceProviderFactory** (`database/factories/InsuranceProviderFactory.php`)
+
+Provides methods and states:
+- `configure()` - Automatically sets SQLite connection for tests
+- `definition()` - Default insurance provider
+- `rsa()` - Create RSA insurance provider
+- `axa()` - Create AXA insurance provider
+
+**Usage Example**:
+```php
+$provider = InsuranceProvider::factory()->rsa()->createOneQuietly();
+// ✅ Automatically uses SQLite connection!
+```
+
+**3. CarPlanFactory** (`database/factories/CarPlanFactory.php`)
+
+Provides methods:
+- `configure()` - Automatically sets SQLite connection for tests
+- `definition()` - Default car plan
+- `forInsuranceProvider($providerId)` - Associate with specific provider
+
+**Usage Example**:
+```php
+$carPlan = CarPlan::factory()
+    ->forInsuranceProvider($provider->id)
+    ->createOneQuietly();
+// ✅ Automatically uses SQLite connection!
+```
 
 ### TestDataSeeder (Enhanced)
 
@@ -282,11 +336,26 @@ Added table schemas:
 
 ### Database Connection
 
-The tests use **SQLite in-memory database** for isolation. All database operations use `DB::connection('sqlite')` to ensure:
+The tests use **SQLite in-memory database** for isolation. All factories are configured to automatically use SQLite connection in testing environment through the `configure()` method:
 
-- Proper test isolation
-- No conflicts with main MySQL database
-- Fast test execution
+```php
+public function configure()
+{
+    return $this->afterMaking(function ($model) {
+        // Use SQLite connection for tests
+        if (app()->environment('testing')) {
+            $model->setConnection('sqlite');
+        }
+    });
+}
+```
+
+**Benefits**:
+- ✅ Automatic connection handling - no manual setup needed
+- ✅ Proper test isolation from production database
+- ✅ No conflicts with main MySQL database
+- ✅ Fast test execution with in-memory database
+- ✅ Safety - prevents accidental production data creation
 
 ### Mocking Strategy
 
@@ -295,20 +364,67 @@ The tests use **SQLite in-memory database** for isolation. All database operatio
 - Ensures consistent behavior and isolation
 - Avoids complex database setup for edge cases
 
+### Laravel Database Factories
+
+The tests use Laravel's built-in database factories which provide:
+
+**Benefits**:
+- **Laravel Standard**: Uses framework's built-in factory system
+- **Fluent API**: Chainable methods for clean test setup
+- **State Management**: Define reusable states (e.g., `withAutomationEnabled()`)
+- **Model Instances**: Returns actual Eloquent models, not arrays
+- **Relationships**: Automatically handles factory relationships
+- **Quiet Mode**: Use `createOneQuietly()` to suppress events in tests
+
+**Usage Examples**:
+
+**Simple creation**:
+```php
+$carQuote = CarQuote::factory()->createOneQuietly();
+```
+
+**With states**:
+```php
+$carQuote = CarQuote::factory()
+    ->withAutomationDisabled()
+    ->forCarPlan($carPlan->id)
+    ->createOneQuietly();
+```
+
+**Multiple models**:
+```php
+$quotes = CarQuote::factory()->count(5)->createQuietly();
+```
+
+**Access model properties**:
+```php
+$quoteUuid = $carQuote->uuid;
+$quoteCode = $carQuote->code;
+```
+
 ### Key Implementation Pattern
 
 ```php
 // Test Setup (beforeEach)
 TestSchemaCreator::createMinimalSchema();
-$db = DB::connection('sqlite');
-$insuranceProviderId = $db->table('insurance_provider')->insertGetId([...]);
+$this->insuranceProvider = InsuranceProvider::factory()->rsa()->createOneQuietly();
+$this->carPlan = CarPlan::factory()->forInsuranceProvider($this->insuranceProvider->id)->createOneQuietly();
 
-// Test Execution
+// Test Execution (using Laravel Factories)
+$carQuote = CarQuote::factory()
+    ->withAutomationDisabled()
+    ->forCarPlan($this->carPlan->id)
+    ->createOneQuietly();
+
 $mockService = Mockery::mock(PolicyIssuanceService::class);
 $mockService->shouldReceive('togglePolicyIssuanceAutomation')->andReturn([...]);
 $this->app->instance(PolicyIssuanceService::class, $mockService);
 
-$response = $this->postJson(route('toggle-policy-issuance-automation'), [...]);
+$response = $this->postJson(route('toggle-policy-issuance-automation'), [
+    'quote_uuid' => $carQuote->uuid,
+    'quote_type_id' => QuoteTypeId::Car,
+    'enabled' => true,
+]);
 $response->assertStatus(200)->assertJson([...]);
 ```
 
@@ -316,14 +432,15 @@ $response->assertStatus(200)->assertJson([...]);
 
 ## Files Modified
 
-| File                                                              | Changes                                  | Purpose                      |
-| ----------------------------------------------------------------- | ---------------------------------------- | ---------------------------- |
-| `tests/Feature/TogglePolicyIssuanceAutomationTest.php`            | Created comprehensive test suite         | Tests all functionality      |
-| `tests/Helpers/CarQuoteTestDataBuilder.php`                       | Created test data builder                | Provides car quote test data |
-| `tests/Helpers/TestDataSeeder.php`                                | Added `seedCarQuoteLookups()`            | Seeds test lookup data       |
-| `tests/Helpers/TestSchemaCreator.php`                             | Added car-related tables & user columns  | Database schema for tests    |
-| `app/Services/PolicyIssuanceAutomation/PolicyIssuanceService.php` | Added `togglePolicyIssuanceAutomation()` | Business logic               |
-| `app/Http/Controllers/V2/AMLController.php`                       | Added `togglePolicyIssuanceAutomation()` | API endpoint                 |
+| File                                                              | Changes                                  | Purpose                          |
+| ----------------------------------------------------------------- | ---------------------------------------- | -------------------------------- |
+| `tests/Feature/TogglePolicyIssuanceAutomationTest.php`            | Created comprehensive test suite         | Tests all functionality          |
+| `database/factories/CarQuoteFactory.php`                          | Enhanced with states and methods         | Laravel factory for car quotes   |
+| `database/factories/InsuranceProviderFactory.php`                 | Created with RSA/AXA states              | Laravel factory for providers    |
+| `database/factories/CarPlanFactory.php`                           | Created with relationship support        | Laravel factory for car plans    |
+| `tests/Helpers/TestSchemaCreator.php`                             | Added car-related tables & user columns  | Database schema for tests        |
+| `app/Services/PolicyIssuanceAutomation/PolicyIssuanceService.php` | Added `togglePolicyIssuanceAutomation()` | Business logic                   |
+| `app/Http/Controllers/V2/AMLController.php`                       | Added `togglePolicyIssuanceAutomation()` | API endpoint                     |
 
 ---
 
@@ -354,13 +471,16 @@ $response->assertStatus(200)->assertJson([...]);
 ## Best Practices Applied
 
 1. **Test Isolation**: Each test is independent and can run in any order
-2. **Database Connection**: Explicit SQLite connection for all operations
+2. **Database Connection**: Explicit SQLite connection with `createOneQuietly()` for tests
 3. **Mocking**: Service layer mocked to avoid external dependencies
 4. **Error Handling**: All error scenarios covered with proper assertions
 5. **Documentation**: Comprehensive inline and external documentation
-6. **Code Organization**: Helper classes for data building and seeding
+6. **Code Organization**: Laravel factories for clean, standardized data creation
 7. **Naming Conventions**: Clear, descriptive test names
 8. **Response Validation**: Both status codes and JSON structure validated
+9. **Laravel Factories**: Uses built-in `Model::factory()` pattern for clean, reusable test data
+10. **DRY Principle**: Factory states eliminate code duplication
+11. **Framework Standards**: Follows Laravel's official testing recommendations
 
 ---
 
@@ -368,33 +488,69 @@ $response->assertStatus(200)->assertJson([...]);
 
 When creating new Feature tests with database operations:
 
-1. **Always specify database connection**:
+1. **Use Laravel Database Factories** (Recommended):
 
    ```php
-   $db = DB::connection('sqlite');
+   // Create factory in database/factories/
+   $model = Model::factory()->createOneQuietly();
+   
+   // With states
+   $model = Model::factory()->withSpecificState()->createOneQuietly();
+   
+   // With relationships
+   $model = Model::factory()->forParent($parent->id)->createOneQuietly();
    ```
 
-2. **Use DB facade for test data creation**:
+2. **Create Factory States for Common Scenarios**:
 
    ```php
+   // In your factory class
+   public function withSpecificState()
+   {
+       return $this->state(fn (array $attributes) => [
+           'field' => 'value',
+       ]);
+   }
+   ```
+
+3. **Use `createOneQuietly()` or `createQuietly()`** to suppress model events:
+
+   ```php
+   // Single model without events
+   $model = Model::factory()->createOneQuietly();
+   
+   // Multiple models without events
+   $models = Model::factory()->count(5)->createQuietly();
+   ```
+
+4. **Avoid direct DB inserts** unless absolutely necessary:
+
+   ```php
+   // Prefer Laravel factories:
+   $model = Model::factory()->createOneQuietly();
+   
+   // Over DB facade:
    $db->table('table_name')->insert([...]);
    ```
 
-3. **Avoid Eloquent models in tests** unless explicitly setting connection:
+5. **Define relationships in factories**:
 
    ```php
-   // Instead of:
-   Model::create([...]);
-
-   // Use:
-   $db->table('table_name')->insert([...]);
+   public function definition()
+   {
+       return [
+           'parent_id' => Parent::factory(),  // Auto-creates parent
+       ];
+   }
    ```
 
-4. **Reference LifeQuoteTest pattern** which follows these best practices
+6. **Reference Laravel's official factory documentation** for advanced patterns
 
-5. **Mock services appropriately** to avoid complex setup and external dependencies
+7. **Mock services appropriately** to avoid complex setup and external dependencies
 
-6. **Ensure schema includes all required columns** for the operations being tested
+8. **Ensure schema includes all required columns** for the operations being tested
+
+9. **Use TestSchemaCreator** for consistent test database setup
 
 ---
 
