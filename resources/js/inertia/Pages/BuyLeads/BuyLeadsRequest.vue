@@ -129,6 +129,18 @@ const maxLeadsOptions = computed(() => {
     value: i,
   }));
 });
+
+const updatedLobs = computed(() => {
+  return props.lobs.map(lob => {
+    if (lob.value === 'CAR_CAT_A') {
+      return {
+        ...lob,
+        label: 'Car Revival Cat A',
+      };
+    }
+    return lob;
+  });
+});
 </script>
 <template>
   <Head title="Buy Lead" />
