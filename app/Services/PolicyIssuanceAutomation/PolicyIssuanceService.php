@@ -448,8 +448,7 @@ class PolicyIssuanceService
     /**
      * Toggle policy issuance automation for a quote
      *
-     * @param  object  $quote  The quote object
-     * @param  string  $quoteType  The quote type
+     * @param  object  $requestData  The quote object
      * @param  int  $quoteTypeId  The quote type ID
      * @param  bool  $enabled  Whether to enable or disable automation
      * @return array Response array with success status, message, and data
