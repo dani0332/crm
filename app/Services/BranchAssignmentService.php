@@ -123,7 +123,7 @@ class BranchAssignmentService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Health) {
             $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null;
         } elseif ($quoteTypeId == QuoteTypeId::GroupMedical) {
-            $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->latestInsured?->emirate_of_registration_id !== null;
+            $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->latestInsured?->entity?->emirate_of_registration_id !== null;
         } else {
             $hasBranch = $quote->advisor?->primaryBranch()->exists();
         }
