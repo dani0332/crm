@@ -44,6 +44,7 @@ class PaymentSplitsFactory extends Factory
         $splitAttributes = array_merge($this->definition(), [
             'code' => $payment->code,
             'payment_amount' => $payment->total_price,
+            'insurer_receipt_number' => $payment->code,
         ], $attributes);
         
         // Use model-based insertion with SQLite connection so observers run

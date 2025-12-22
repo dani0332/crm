@@ -213,3 +213,61 @@ test('payment should be updated via endpoint', function () {
         payment: $updatedPayment
     );
 });
+
+
+test('payment split validates presence and format of insurer receipt number', function () {
+    // ============================================
+    // 1. ARRANGE: Create payment splits for testing
+    // ============================================
+    $payment = \App\Models\Payment::factory()->createForSqlite($this->carQuote);
+    
+    // Create a payment split with an existing receipt number for case 3
+    $existingReceiptNumber = 'INS-REC-EXISTING';
+    \App\Models\PaymentSplits::factory()->createForSqlite($payment, [
+        'insurer_receipt_number' => $existingReceiptNumber,
+    ]);
+
+    // Create another payment split without insurer_receipt_number for testing updates
+    \App\Models\PaymentSplits::factory()->createForSqlite($payment, [
+        'insurer_receipt_number' => null,
+    ]);
+
+    $quoteType = \App\Enums\QuoteTypes::CAR->value;
+
+    // ============================================
+    // CASE 1: Test null validation error
+    // ============================================
+    $response = $this->postJson(
+        '/payments/' . $quoteType . '/check-insurer-receipt-number',
+        ['insurer_receipt_number' => null]
+    );
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['insurer_receipt_number']);
+
+    // ============================================
+    // CASE 2: Test with non-existent receipt number (should show "not exists")
+    // ============================================
+    $nonExistentReceipt = 'INS-REC-NONEXISTENT';
+    $response = $this->postJson(
+        '/payments/' . $quoteType . '/check-insurer-receipt-number',
+        ['insurer_receipt_number' => $nonExistentReceipt]
+    );
+    $response->assertStatus(200);
+    $response->assertJson([
+        'status' => true,
+        'message' => 'Receipt number does not exist',
+    ]);
+
+    // ============================================
+    // CASE 3: Test with existing receipt number (should show "exists")
+    // ============================================
+    $response = $this->postJson(
+        '/payments/' . $quoteType . '/check-insurer-receipt-number',
+        ['insurer_receipt_number' => $existingReceiptNumber]
+    );
+    $response->assertStatus(200);
+    $response->assertJson([
+        'status' => false,
+        'message' => 'Receipt number already exists',
+    ]);
+});
