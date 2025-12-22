@@ -169,6 +169,7 @@ const shouldProcessUpdate = () => {
   }
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
+  //const insurerAMLStatus = page.props.amlStatusEnum.InsurerAMLScreeningCleared;
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
@@ -188,8 +189,11 @@ const shouldProcessUpdate = () => {
     hasAnyCCSplitPayment(payment) &&
     !shouldSendUpdate
   ) {
+
+    let isCarQuote = props.quoteType === quoteTypeCodeEnum.Car;
+    let isQuotePolicyIssuanceAutomationEnabled = props.quoteRequest.policy_issuance_automation_enabled;
     if (
-      insuredApiStatus === genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID
+      insuredApiStatus === genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID || !isQuotePolicyIssuanceAutomationEnabled
     ) {
       isInsurerAmlCleared = true;
     } else {

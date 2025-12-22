@@ -923,7 +923,12 @@ class AMLController extends Controller
         if($isCarQuote){
             $isPolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
         }
-        
+
+        LoggerService::info('Check Quote Policy Issuance Enabled condition', extra: [
+            'isCarQuote' => $isCarQuote,
+            'isPolicyIssuanceAutomationEnabled' => $isPolicyIssuanceAutomationEnabled,
+        ]);
+
         // Insurer AML Screening is required if policy issuance automation is enabled
         if (
             $insuredKycRequest->customer_type == CustomerTypeEnum::Individual &&
@@ -1142,63 +1147,18 @@ class AMLController extends Controller
         LoggerService::startQuoteLogging($requestData->quote_uuid, LoggerFeatureEnum::DISABLE_POLICY_ISSUANCE_AUTOMATION);
 
         try {
-
-            LoggerService::info('Toggle Policy Issuance Automation for Lead', extra: [
-                'quote_uuid' => $requestData->quote_uuid,
-                'quote_type_id' => $requestData->quote_type_id,
-                'enabled' => $requestData->enabled,
-            ]);
-
-            $quoteType = QuoteTypes::getName($requestData->quote_type_id)->value;
-            $quote = $this->getQuoteObjectBy($quoteType, $requestData->quote_uuid, 'uuid');
-
-            if (! $quote) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quote not found',
-                ], 404);
-            }
-
-            $insuranceProvider = $quote?->plan?->insuranceProvider;
-            if (! $insuranceProvider) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insurance provider not found',
-                ], 400);
-            }
-
-            $isPolicyAutomationEnabled = false;
-            if ($requestData->quote_type_id === QuoteTypeId::Car && $insuranceProvider) {
-                $policyIssuanceService = app(PolicyIssuanceService::class)->init($quoteType, $insuranceProvider->code);
-                $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled();
-            }
-
-            if (! $isPolicyAutomationEnabled) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Policy automation is not enabled for this insurer',
-                ], 400);
-            }
-
-            // Update the policy_issuance_automation_enabled field
-            $quote->update(['policy_issuance_automation_enabled' => $requestData->enabled]);
-
-            LoggerService::info('Policy issuance automation toggled successfully for quote', extra: [
-                'quote_uuid' => $quote->uuid,
-                'quote_code' => $quote->code,
-                'enabled' => $requestData->enabled,
-                'user_id' => auth()->id(),
-            ]);
+            $policyIssuanceService = app(PolicyIssuanceService::class);
+            $result = $policyIssuanceService->togglePolicyIssuanceAutomation(
+                $requestData,
+                $requestData->quote_type_id,
+                $requestData->enabled
+            );
 
             return response()->json([
-                'success' => true,
-                'message' => $requestData->enabled
-                    ? 'Policy issuance automation enabled successfully'
-                    : 'Policy issuance automation disabled successfully',
-                'data' => [
-                    'policy_issuance_automation_enabled' => $quote->policy_issuance_automation_enabled,
-                ],
-            ]);
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'data' => $result['data'] ?? null,
+            ], $result['status_code']);
         } catch (\Exception $e) {
             LoggerService::error('Error toggling policy issuance automation for quote', extra: [
                 'error' => $e->getMessage(),
@@ -1207,7 +1167,7 @@ class AMLController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while toggling policy issuance automation',
+                'message' => 'Unable to toggle policy issuance automation, Please try again later.',
             ], 500);
         }
     }
