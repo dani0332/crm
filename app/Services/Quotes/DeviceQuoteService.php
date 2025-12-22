@@ -89,7 +89,13 @@ class DeviceQuoteService extends BaseQuoteService
                     'insuranceProviderPlan',
                     'insuranceProvider',
                     'latestInsured',
-                    'latestInsured.insuredKyc',
+                    'latestInsured.insuredKyc' => function ($query) {
+                        $query->select([
+                            'id',  
+                            'insured_id',        // advisor primary key
+                            'id_expiry_date'
+                        ]);
+                    },
                     'payments' => function ($q) {
                         $q->with([
                             'paymentStatus',
