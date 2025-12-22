@@ -15,6 +15,8 @@ use Closure;
 
 class FetchTierUsersPipe extends BaseAllocationPipe
 {
+    use Carable;
+
     /**
      * Handle the incoming request.
      */
@@ -49,7 +51,12 @@ class FetchTierUsersPipe extends BaseAllocationPipe
 
         // Apply team filter if a team ID is provided
         if ($teamId) {
-            $tierUserIds = $this->filterUsersByTeam($tierUserIds, $teamId);
+            $rules = $this->getRulesForLeadSource($lead);
+            if($rules->isNotEmpty()) {
+                $this->allocationRequest->setTeamId(null);
+            } else {
+                $tierUserIds = $this->filterUsersByTeam($tierUserIds, $teamId);
+            }
         }
 
         return $tierUserIds;
