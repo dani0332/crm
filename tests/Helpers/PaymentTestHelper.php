@@ -2,6 +2,10 @@
 
 namespace Tests\Helpers;
 
+use App\Enums\PaymentCollectionTypeEnum;
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
@@ -205,6 +209,106 @@ class PaymentTestHelper
             ->where('code', $paymentCode)
             ->where('sr_no', $srNo)
             ->first();
+    }
+
+    public static function buildPaymentUpdatePayload(CarQuote $carQuote, Payment $payment): array
+    {
+        $premium = (float) $carQuote->premium;
+        $paymentNo = 2;
+        $splitPrice = round($premium / $paymentNo, 2);
+
+        $updatePayload = [
+            'modelType' => QuoteTypes::CAR->value,
+            'quote_id' => $carQuote->id,
+            'plan_id' => $payment->plan_id,
+            'captured_amount' => '',
+            'insurance_provider_id' => $payment->insurance_provider_id,
+            'new_payment_structure' => true,
+            'send_update_id' => null,
+            'payment' => [
+                'collection_type' => PaymentCollectionTypeEnum::INSURER,
+                'payment_methods' => PaymentMethodsEnum::MultiplePayment,
+                'reference' => '',
+                'payment_no' => $paymentNo,
+                'frequency' => PaymentFrequency::SPLIT_PAYMENTS,
+                'credit_approval' => '',
+                'discount' => '',
+                'discount_reason' => '',
+                'custom_reason' => null,
+                'discount_custom_reason' => null,
+                'collection_date' => now(),
+                'notes' => null,
+                'total_amount' => $premium,
+                'total_price' => $premium,
+                'discount_value' => 0,
+                'payment_splits' => [
+                    [
+                        'sr_no' => 1,
+                        'payment_method' => PaymentMethodsEnum::CreditCard,
+                        'payment_amount' => $splitPrice,
+                        'due_date' => now(),
+                        'collection_amount' => null,
+                        'document_detail' => [],
+                        'discount_documents' => []
+                    ],
+                    [
+                        'sr_no' => 2,
+                        'payment_method' => PaymentMethodsEnum::InsurerPayment,
+                        'payment_amount' => $splitPrice,
+                        'due_date' => now(),
+                        'collection_amount' => null,
+                    ]
+                ]
+            ],
+            'paymentCode' => $payment->code,
+            'trashedFilesModal' => [],
+            'isPaymentLocked' => false,
+            'isPolicyIssuanceDiscount' => false,
+            'isPaidEditable' => false
+        ];
+
+        return $updatePayload;  
+    }
+
+    public static function assertPaymentUpdatedCorrectly(
+        Payment $payment,
+        CarQuote $carQuote,
+        int $expectedPlanId,
+        int $expectedInsuranceProviderId,
+        int $expectedUserId
+    ): void {
+        // Handle collection_date - it might be a string or Carbon instance
+        $collectionDate = is_string($payment->collection_date) 
+            ? \Carbon\Carbon::parse($payment->collection_date) 
+            : $payment->collection_date;
+        
+        expect($payment->code)->toBe($carQuote->code)
+            ->and($payment->total_payments)->toBe(2)
+            ->and($payment->frequency)->toBe(PaymentFrequency::SPLIT_PAYMENTS)
+            ->and($payment->collection_type)->toBe(PaymentCollectionTypeEnum::INSURER)
+            ->and($payment->payment_methods_code)->toBe(PaymentMethodsEnum::MultiplePayment)
+            ->and($collectionDate->toDateString())->toBe(now()->toDateString())
+            ->and($payment->plan_id)->toBe($expectedPlanId)
+            ->and($payment->insurance_provider_id)->toBe($expectedInsuranceProviderId)
+            ->and((float) $payment->total_price)->toBe((float) $carQuote->premium)
+            ->and((float) $payment->total_amount)->toBe((float) $carQuote->premium)
+            ->and($payment->discount_value)->toBe(0)
+            ->and($payment->created_by)->toBe($expectedUserId)
+            ->and($payment->updated_by)->toBe($expectedUserId);
+    }
+
+    public static function assertPaymentSplitUpdatedCorrectly(
+        PaymentSplits $paymentSplit,
+        Payment $payment
+    ): void {
+
+        $amount = (float) $payment->total_price / 2;
+        expect($paymentSplit->code)->toBe($payment->code)
+            ->and((float) $paymentSplit->payment_amount)->toBe($amount)
+            ->and($paymentSplit->discount_value)->toBe(0)
+            ->and($paymentSplit->sr_no)->toBe(1)
+            ->and($paymentSplit->payment_method)->toBe(PaymentMethodsEnum::CreditCard)
+            ->and($paymentSplit->payment_status_id)->toBe(PaymentStatusEnum::NEW);
     }
 }
 
