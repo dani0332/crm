@@ -437,7 +437,7 @@ class AmtController extends Controller
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
