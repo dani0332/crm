@@ -53,9 +53,15 @@ class FetchTierUsersPipe extends BaseAllocationPipe
         if ($teamId) {
             $rules = $this->getRulesForLeadSource($lead);
             if ($rules->isNotEmpty()) {
+                LoggerService::info(self::class.'::getEligibleUserForAllocation - Rules found, skipping team filter', [
+                    'teamId' => $teamId,
+                ]);
                 $this->allocationRequest->setTeamId(null);
             } else {
                 $tierUserIds = $this->filterUsersByTeam($tierUserIds, $teamId);
+                LoggerService::info(self::class.'::getEligibleUserForAllocation - No rules found, filtering by team', [
+                    'teamId' => $teamId,
+                ]);
             }
         }
 
