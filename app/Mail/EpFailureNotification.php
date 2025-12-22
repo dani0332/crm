@@ -47,41 +47,77 @@ class EpFailureNotification extends Mailable
             'etId' => $this->etId,
         ]);
 
-        $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $this->etId))->first();
-        $epProductName = $ep->product_name ?? 'Unknown';
-
         $this->getEpFailureEmailConfigs();
+        
+        $epProductName = $this->getEmbeddedProductName();
+        $refId = $this->initializeQuoteData();
+        $viewData = $this->getViewData($refId, $epProductName);
 
-        // Get quote object first
+        return $this->subject($this->getEmailSubject($epProductName, $refId))
+            ->from(...$this->getFromAddress())
+            ->to($this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO])
+            ->replyTo($this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO])
+            ->cc($this->buildCcEmails())
+            ->view('email.ep-booking-job-failed', $viewData);
+    }
+
+    private function getEmbeddedProductName(): string
+    {
+        $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $this->etId))->first();
+        
+        return $ep->product_name ?? 'Unknown';
+    }
+
+    private function initializeQuoteData(): string
+    {
         $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
         $this->quoteObject = $this->getQuoteObject($quoteType, $this->quoteId);
-        $refId = $this->quoteObject?->code ?? $this->quoteObject?->uuid ?? 'Unknown';
-        $subject = "❗Action Required: Embedded Product for {$epProductName} has failed for REF-ID: {$refId} – Immediate Attention Needed";
+        
+        return $this->quoteObject?->code ?? $this->quoteObject?->uuid ?? 'Unknown';
+    }
 
-        // Generate IMCRM link based on quote
-        $imcrmLink = $this->generateImcrmLink();
+    private function getEmailSubject(string $epProductName, string $refId): string
+    {
+        return "❗Action Required: Embedded Product for {$epProductName} has failed for REF-ID: {$refId} – Immediate Attention Needed";
+    }
 
-        $fromEmail = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM]));
-        $toEmail = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO]));
-        $replyToEmail = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO]));
-        $ccEmails = explode(',', str_replace(' ', '', $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC]));
+    private function buildCcEmails(): array
+    {
+        $ccString = $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC] ?? '';
+        
+        $ccEmails =  array_filter(explode(',', str_replace(' ', '', $ccString)));
+        
+        if ($advisorEmail = $this->getAdvisorEmail()) {
+            $ccEmails[] = $advisorEmail;
+        }
+        
+        return $ccEmails;
+    }
 
-        return $this->subject($subject)
-            ->from(...array_slice($fromEmail, 0, 2)) // for email & name
-            ->to(...array_slice($toEmail, 0, 1)) // only email address
-            ->replyTo(...array_slice($replyToEmail, 0, 2))
-            ->cc($ccEmails) // multiple cc emails
-            ->view('email.ep-booking-job-failed', [
-                'refId' => $refId,
-                'imcrmLink' => $imcrmLink,
-                'epProductName' => $epProductName,
-            ]);
+    private function getAdvisorEmail(): ?string
+    {
+        return $this->quoteObject?->advisor?->email;
+    }
+
+    private function getFromAddress(): array
+    {
+        return app()->environment('production')
+            ? ['alfred@notify.insurancemarket.ae', 'InsuranceMarket.ae']
+            : ['alfred@testnotify.alfred.ae', 'InsuranceMarket Test'];
+    }
+
+    private function getViewData(string $refId, string $epProductName): array
+    {
+        return [
+            'refId' => $refId,
+            'imcrmLink' => $this->generateImcrmLink(),
+            'epProductName' => $epProductName,
+        ];
     }
 
     private function getEpFailureEmailConfigs()
     {
         $epEcbAppStorageKeys = [
-            ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_TO,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_CC,
