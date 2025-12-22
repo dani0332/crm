@@ -46,7 +46,7 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
@@ -370,17 +370,23 @@ class HealthQuoteService extends BaseService
             'isPecMarked' => $request->pec == 1,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
+            $dataArr['advisorId'] = Auth::user()->id;
 
             if (Auth::user()->hasAnyRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
                 $dataArr['supportUserId'] = Auth::user()->id;
-            } else {
-                $dataArr['advisorId'] = Auth::user()->id;
             }
         }
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
 
         if (isset($response->quoteUID)) {
+
+            LoggerService::info('Health saveHealthQuote - after CAPI request - advisorId and supportUserId:', [
+                'advisorId' => $dataArr['advisorId'] ?? null,
+                'supportUserId' => $dataArr['supportUserId'] ?? null,
+                'quoteUID' => $response->quoteUID ?? null,
+            ]);
+
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
             $subTeam = null;
             if (auth()->user()->subTeam) {
