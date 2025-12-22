@@ -102,7 +102,6 @@ class EmailStatusEventJob implements ShouldQueue
 
     public function storeEmailStatusEvent($emailStatusData)
     {
-
         $newEmailStatus = new EmailStatus;
         $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
         $newEmailStatus->quote_id = $emailStatusData->quote_id;
