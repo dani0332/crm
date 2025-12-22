@@ -6,7 +6,6 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -26,14 +25,14 @@ use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\GroupMedicalType;
 use App\Models\KycLog;
+use App\Models\Lookup;
+use App\Models\LostReasons;
 use App\Models\Nationality;
 use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -424,22 +423,22 @@ class AmtController extends Controller
         /* End - Temporarily adding for correcting historic data */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);
-        $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $companyType = Lookup::getCompanyTypes();
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
         $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
-        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        $lostReasons = LostReasons::getAll();
         $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
-        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+        $memberRelations = Lookup::getMemberRelations();
         $nationalities = Nationality::getActiveNationalities();
-        $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $UBORelations = Lookup::getUBORelations();
+        $emirates = Emirate::getActiveEmirates();
 
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record, QuoteTypes::BUSINESS->id(), $quoteStatuses);
         if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
@@ -461,7 +460,7 @@ class AmtController extends Controller
             ->standardAmlFilters()
             ->latest()->first();
         @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::GroupMedical);
-        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $vatPercentage = getAppStorageValueByKey(ApplicationStorageEnums::VAT_VALUE, useCache: true, default: 0);
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
