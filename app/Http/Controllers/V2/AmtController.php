@@ -337,7 +337,7 @@ class AmtController extends Controller
         // Eager load all CustomerInsured records in a single query
         $customerInsuredRecords = CustomerInsured::whereIn('quote_request_id', $quoteIds)
             ->where('quote_type_id', QuoteTypeId::Business)
-            ->with('insured.entity')
+            ->with('insured')
             ->get()
             ->groupBy('quote_request_id')
             ->map(function ($records) {
@@ -348,7 +348,7 @@ class AmtController extends Controller
         // Map through quotes and add branch_name using pre-loaded data
         return $quotes->map(function ($quote) use ($customerInsuredRecords) {
             $customerInsured = $customerInsuredRecords->get($quote->id);
-            $emirateOfRegistrationId = $customerInsured?->insured?->entity?->emirate_of_registration_id ?? null;
+            $emirateOfRegistrationId = $customerInsured?->insured?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
             return $quote;
