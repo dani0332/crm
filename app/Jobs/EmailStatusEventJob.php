@@ -37,7 +37,9 @@ class EmailStatusEventJob implements ShouldQueue
     public function handle()
     {
         try {
-
+            if (DB::getDefaultConnection() !== 'mysql') {
+                DB::setDefaultConnection('mysql');
+            }
             if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
 
                 $isEmailMessage = EmailStatus::latest()->where('msg_id', $this->emailData->message_id)->first();
@@ -100,9 +102,7 @@ class EmailStatusEventJob implements ShouldQueue
 
     public function storeEmailStatusEvent($emailStatusData)
     {
-        if (DB::getDefaultConnection() !== 'mysql') {
-            DB::setDefaultConnection('mysql');
-        }
+
         $newEmailStatus = new EmailStatus;
         $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
         $newEmailStatus->quote_id = $emailStatusData->quote_id;
