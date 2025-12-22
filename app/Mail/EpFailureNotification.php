@@ -54,10 +54,10 @@ class EpFailureNotification extends Mailable
         $viewData = $this->getViewData($refId, $epProductName);
 
         return $this->subject($this->getEmailSubject($epProductName, $refId))
-            ->from(...$this->getFromAddress())
-            ->to($this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO])
-            ->replyTo($this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO])
-            ->cc($this->buildCcEmails())
+            ->from(...array_slice($this->getRecipientAddress('from'), 0, 2)) // for email with name
+            ->to(...array_slice($this->getRecipientAddress('to'), 0, 1)) // only email address
+            ->replyTo(...array_slice($this->getRecipientAddress('reply_to'), 0, 2)) // for email with name
+            ->cc($this->buildCcEmails()) // multiple cc emails
             ->view('email.ep-booking-job-failed', $viewData);
     }
 
@@ -83,14 +83,11 @@ class EpFailureNotification extends Mailable
 
     private function buildCcEmails(): array
     {
-        $ccString = $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC] ?? '';
-        
-        $ccEmails =  array_filter(explode(',', str_replace(' ', '', $ccString)));
-        
+        $ccEmails = $this->getRecipientAddress('cc');
         if ($advisorEmail = $this->getAdvisorEmail()) {
             $ccEmails[] = $advisorEmail;
         }
-        
+
         return $ccEmails;
     }
 
@@ -99,11 +96,16 @@ class EpFailureNotification extends Mailable
         return $this->quoteObject?->advisor?->email;
     }
 
-    private function getFromAddress(): array
+    private function getRecipientAddress($recipientType): array
     {
-        return app()->environment('production')
-            ? ['alfred@notify.insurancemarket.ae', 'InsuranceMarket.ae']
-            : ['alfred@testnotify.alfred.ae', 'InsuranceMarket Test'];
+        $emails =  match ($recipientType) {
+            'from' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM],
+            'to' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO],
+            'reply_to' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO],
+            'cc' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC],
+            default => [],
+        };
+        return array_filter(explode(',', str_replace(' ', '', $emails)));
     }
 
     private function getViewData(string $refId, string $epProductName): array
@@ -118,6 +120,7 @@ class EpFailureNotification extends Mailable
     private function getEpFailureEmailConfigs()
     {
         $epEcbAppStorageKeys = [
+            ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_TO,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO,
             ApplicationStorageEnums::EP_FAILURE_EMAIL_CC,

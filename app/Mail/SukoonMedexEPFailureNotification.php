@@ -15,6 +15,7 @@ class SukoonMedexEPFailureNotification extends Mailable
 
     private $quoteObject;
     private $quoteTypeId;
+    private array $epFailureEmailConfigs = [];
 
     /**
      * Create a new message instance.
@@ -32,27 +33,53 @@ class SukoonMedexEPFailureNotification extends Mailable
      */
     public function build()
     {
+        $this->getEpFailureEmailConfigs();
+
         $refId = $this->quoteObject->code ?? $this->quoteObject->uuid ?? 'Unknown';
         $subject = "❗Action Required: Embedded Product for Medex has failed for REF-ID: {$refId} – Immediate Attention Needed";
-
-        // Generate IMCRM link based on quote
-        $imcrmLink = $this->generateImcrmLink();
-
-        $epFailureEmailConfigs = $this->getEpFailureEmailConfigs();
-        $fromEmail = explode(',', str_replace(' ', '', $epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM]));
-        $toEmail = explode(',', str_replace(' ', '', $epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO]));
-        $replyToEmail = explode(',', str_replace(' ', '', $epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO]));
-        $ccEmails = explode(',', str_replace(' ', '', $epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC]));
+        $viewData = $this->getViewData($refId);
 
         return $this->subject($subject)
-            ->from(...array_slice($fromEmail, 0, 2)) // for email & name
-            ->to(...array_slice($toEmail, 0, 1)) // only email address
-            ->replyTo(...array_slice($replyToEmail, 0, 2))
-            ->cc($ccEmails) // multiple cc emails
-            ->view('email.sukoon-medex-ep-job-failed', [
-                'refId' => $refId,
-                'imcrmLink' => $imcrmLink,
-            ]);
+            ->from(...array_slice($this->getRecipientAddress('from'), 0, 2)) // for email with name
+            ->to(...array_slice($this->getRecipientAddress('to'), 0, 1)) // only email address
+            ->replyTo(...array_slice($this->getRecipientAddress('reply_to'), 0, 2)) // for email with name
+            ->cc($this->buildCcEmails()) // multiple cc emails
+            ->view('email.sukoon-medex-ep-job-failed', $viewData);
+    }
+
+    private function buildCcEmails(): array
+    {
+        $ccEmails = $this->getRecipientAddress('cc');
+        if ($advisorEmail = $this->getAdvisorEmail()) {
+            $ccEmails[] = $advisorEmail;
+        }
+
+        return $ccEmails;
+    }
+
+    private function getAdvisorEmail(): ?string
+    {
+        return $this->quoteObject?->advisor?->email;
+    }
+
+    private function getViewData(string $refId): array
+    {
+        return [
+            'refId' => $refId,
+            'imcrmLink' => $this->generateImcrmLink()
+        ];
+    }
+
+    private function getRecipientAddress($recipientType): array
+    {
+        $emails =  match ($recipientType) {
+            'from' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM],
+            'to' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_TO],
+            'reply_to' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO],
+            'cc' => $this->epFailureEmailConfigs[ApplicationStorageEnums::EP_FAILURE_EMAIL_CC],
+            default => [],
+        };
+        return array_filter(explode(',', str_replace(' ', '', $emails)));
     }
 
     private function getEpFailureEmailConfigs()
@@ -74,7 +101,7 @@ class SukoonMedexEPFailureNotification extends Mailable
             throw new \Exception('EP Failure Email configuration not found');
         }
 
-        return $appStorageRecords->pluck('value', 'key_name')->toArray();
+        $this->epFailureEmailConfigs = $appStorageRecords->pluck('value', 'key_name')->toArray();
     }
     /**
      * Generate IMCRM link for the quote
