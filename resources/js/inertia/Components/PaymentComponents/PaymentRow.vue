@@ -189,11 +189,13 @@ const shouldProcessUpdate = () => {
     hasAnyCCSplitPayment(payment) &&
     !shouldSendUpdate
   ) {
-
     let isCarQuote = props.quoteType === quoteTypeCodeEnum.Car;
-    let isQuotePolicyIssuanceAutomationEnabled = props.quoteRequest.policy_issuance_automation_enabled;
+    let isQuotePolicyIssuanceAutomationEnabled =
+      props.quoteRequest.policy_issuance_automation_enabled;
     if (
-      insuredApiStatus === genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID || !isQuotePolicyIssuanceAutomationEnabled
+      insuredApiStatus ===
+        genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID ||
+      !isQuotePolicyIssuanceAutomationEnabled
     ) {
       isInsurerAmlCleared = true;
     } else {
