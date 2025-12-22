@@ -4,6 +4,7 @@ import ActivityLogDetailModal from './ActivityLogDetailModal.vue';
 const props = defineProps({
   activityLogs: Object,
   users: Array,
+  eventOptions: Array,
   filters: Object,
 });
 
@@ -13,6 +14,7 @@ const dateFormat = date =>
 
 const filters = reactive({
   user_id: props.filters?.user_id || '',
+  event: props.filters?.event || '',
   date_from: props.filters?.date_from || '',
   date_to: props.filters?.date_to || '',
   page: 1,
@@ -47,6 +49,7 @@ const getEventTagColor = event => {
   if (!event) return 'secondary';
 
   const eventColors = {
+    accessed: 'info',
     created: 'success',
     updated: 'primary',
     deleted: 'error',
@@ -57,6 +60,7 @@ const getEventTagColor = event => {
 
 const onReset = () => {
   filters.user_id = '';
+  filters.event = '';
   filters.date_from = '';
   filters.date_to = '';
   filters.page = 1;
@@ -77,6 +81,7 @@ const onSubmit = isValid => {
     // Include only provided filters (all optional)
     const searchFilters = {};
     if (filters.user_id) searchFilters.user_id = filters.user_id;
+    if (filters.event) searchFilters.event = filters.event;
     if (filters.date_from) searchFilters.date_from = filters.date_from;
     if (filters.date_to) searchFilters.date_to = filters.date_to;
 
@@ -147,7 +152,7 @@ const hasFiltersApplied = computed(() => {
 
   <!-- Filters -->
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-select
         label="USER"
         :modelValue="filters.user_id"
@@ -156,6 +161,15 @@ const hasFiltersApplied = computed(() => {
         filterable
         placeholder="Select user (optional)"
         @update:modelValue="val => (filters.user_id = val)"
+      />
+      <x-select
+        label="EVENT"
+        :modelValue="filters.event"
+        :options="props.eventOptions || []"
+        class="w-full"
+        filterable
+        placeholder="Select event (optional)"
+        @update:modelValue="val => (filters.event = val)"
       />
       <DatePicker
         v-model="filters.date_from"

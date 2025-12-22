@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ActivityLogEventEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V2\Admin\IndexActivityLogRequest;
 use App\Services\ActivityLogService;
@@ -34,10 +35,12 @@ class ActivityLogController extends Controller
         $activityLogs = $this->activityLogService->getActivityLogs($filters);
         
         $users = $this->userService->getAllUsers();
+        $eventOptions = ActivityLogEventEnum::getOptions();
 
         return Inertia::render('Admin/ActivityLogs/Index', [
             'activityLogs' => $activityLogs,
             'users' => $users,
+            'eventOptions' => $eventOptions,
             'filters' => $request->getFiltersForResponse(),
         ]);
     }

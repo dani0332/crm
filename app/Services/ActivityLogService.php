@@ -29,7 +29,7 @@ class ActivityLogService extends BaseService
     /**
      * Get paginated activity logs with optional filters
      *
-     * @param array<string, mixed> $filters Optional filters: user_id, date_from, date_to
+     * @param array<string, mixed> $filters Optional filters: user_id, date_from, date_to, event
      * @param int $perPage
      * @return LengthAwarePaginator
      */
@@ -42,6 +42,12 @@ class ActivityLogService extends BaseService
             !empty($filters['user_id']),
             fn ($q) => $q->where('causer_id', $filters['user_id'])
                 ->where('causer_type', User::class)
+        );
+
+        // Filter by event - optional
+        $query->when(
+            !empty($filters['event']),
+            fn ($q) => $q->where('event', $filters['event'])
         );
 
         // Filter by date from
