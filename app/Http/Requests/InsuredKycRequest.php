@@ -3,12 +3,16 @@
 namespace App\Http\Requests;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
-use App\Models\Insured;
+use App\Enums\QuoteTypes;
+use App\Models\Payment;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
 class InsuredKycRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
     /**
      * Customer type determined from the insured record.
      */
@@ -113,6 +117,20 @@ class InsuredKycRequest extends FormRequest
         $validator->after(function ($validator) {
             if (! auth()->user()->can(PermissionsEnum::AMLList)) {
                 $validator->errors()->add('error', 'You don\'t have permission to edit this section.');
+            }
+
+            $quoteType = QuoteTypes::getName(request()->quote_type_id)->value;
+            $quote = $this->getQuoteObjectBy($quoteType, request()->quote_uuid, 'uuid');
+            $paymentDetails = Payment::with('insuranceProvider')->where([
+                'paymentable_type' => $quote->getMorphClass(),
+                'paymentable_id' => $quote->id,
+            ])->first();
+
+            if ($quoteType == QuoteTypes::CAR->value && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+                $vehicleDriverDetail = $quote->vehicleDriverDetail;
+                if (! $vehicleDriverDetail?->rta_transaction_type) {
+                    $validator->errors()->add('error', 'RTA Transaction Type is required for Liva Insurance');
+                }
             }
         });
     }
