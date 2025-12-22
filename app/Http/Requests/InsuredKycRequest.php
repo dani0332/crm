@@ -13,6 +13,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class InsuredKycRequest extends FormRequest
 {
     use GenericQueriesAllLobs;
+
     /**
      * Customer type determined from the insured record.
      */
