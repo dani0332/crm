@@ -56,4 +56,3 @@ class CarQuoteTestDataBuilder
         return self::buildCarQuoteData(array_merge($insurerData, $overrides), $lookups);
     }
 }
-

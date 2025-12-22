@@ -2,10 +2,8 @@
 
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypeId;
-use App\Models\CarQuote;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Support\Facades\DB;
-use Tests\Helpers\CarQuoteTestDataBuilder;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -13,10 +11,10 @@ beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
-    
+
     // Use DB facade to create records directly in SQLite
     $db = DB::connection('sqlite');
-    
+
     // Create insurance provider
     $this->insuranceProviderId = $db->table('insurance_provider')->insertGetId([
         'code' => InsuranceProvidersEnum::RSA,
@@ -25,7 +23,7 @@ beforeEach(function () {
         'created_at' => now(),
         'updated_at' => now(),
     ]);
-    
+
     // Create car plan
     $this->carPlanId = $db->table('car_plan')->insertGetId([
         'insurance_provider_id' => $this->insuranceProviderId,
@@ -42,7 +40,7 @@ afterEach(function () {
 
 test('can enable policy issuance automation for car quote', function () {
     $db = DB::connection('sqlite');
-    
+
     // Create a car quote
     $quoteUuid = 'test-car-quote-'.uniqid();
     $db->table('car_quote_request')->insert([
@@ -89,7 +87,7 @@ test('can enable policy issuance automation for car quote', function () {
 
 test('can disable policy issuance automation for car quote', function () {
     $db = DB::connection('sqlite');
-    
+
     // Create a car quote with automation enabled
     $quoteUuid = 'test-car-quote-'.uniqid();
     $db->table('car_quote_request')->insert([
@@ -184,7 +182,7 @@ test('validates quote_type_id must be Car', function () {
 
 test('validates enabled must be boolean', function () {
     $db = DB::connection('sqlite');
-    
+
     $quoteUuid = 'test-car-quote-'.uniqid();
     $db->table('car_quote_request')->insert([
         'uuid' => $quoteUuid,
@@ -210,7 +208,7 @@ test('validates enabled must be boolean', function () {
 
 test('returns 400 when insurance provider not found', function () {
     $db = DB::connection('sqlite');
-    
+
     // Create a car quote without insurance provider
     $quoteUuid = 'test-car-quote-'.uniqid();
     $db->table('car_quote_request')->insert([
@@ -252,7 +250,7 @@ test('returns 400 when insurance provider not found', function () {
 
 test('returns 400 when policy automation is not enabled for insurer', function () {
     $db = DB::connection('sqlite');
-    
+
     $quoteUuid = 'test-car-quote-'.uniqid();
     $db->table('car_quote_request')->insert([
         'uuid' => $quoteUuid,
@@ -293,7 +291,7 @@ test('returns 400 when policy automation is not enabled for insurer', function (
 
 test('handles exceptions and returns 500', function () {
     $db = DB::connection('sqlite');
-    
+
     $quoteUuid = 'test-car-quote-'.uniqid();
     $db->table('car_quote_request')->insert([
         'uuid' => $quoteUuid,
@@ -340,4 +338,3 @@ test('requires authentication', function () {
 
     $response->assertStatus(401);
 });
-
