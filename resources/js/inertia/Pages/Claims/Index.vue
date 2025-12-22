@@ -35,7 +35,7 @@ const loader = reactive({
 });
 
 const tableHeader = [
-  { text: 'CODE', value: 'code' },
+  { text: 'Ref ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'EMAIL', value: 'email' },
