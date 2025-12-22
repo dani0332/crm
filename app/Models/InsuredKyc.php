@@ -35,7 +35,7 @@ class InsuredKyc extends Model implements AuditableContract
                 }
 
                 // Only format if id_type is emiratesId
-                if ($this->attributes['id_type'] !== 'emiratesId') {
+                if (($this->attributes['id_type'] ?? null) !== 'emiratesId') {
                     return $value;
                 }
 
@@ -55,7 +55,7 @@ class InsuredKyc extends Model implements AuditableContract
                 }
 
                 // Only remove hyphens before saving if id_type is emiratesId
-                if ($this->attributes['id_type'] === 'emiratesId') {
+                if (($this->attributes['id_type'] ?? null) === 'emiratesId') {
                     return str_replace('-', '', $value);
                 }
 
