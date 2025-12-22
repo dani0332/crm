@@ -24,7 +24,6 @@ use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\CustomerInsured;
 use App\Models\Emirate;
-use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\KycLog;
 use App\Models\Nationality;
@@ -449,9 +448,7 @@ class AmtController extends Controller
             })->values();
         }
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
-        $countries = Nationality::all();
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
-        $entities = Entity::all();
         $lookupService = app(LookupService::class);
         $paymentMethods = $lookupService->getPaymentMethods();
         $legalStructure = $lookupService->getLegalStructure();
@@ -515,8 +512,6 @@ class AmtController extends Controller
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
             'legalStructure' => $legalStructure,
             'idDocumentType' => $idDocumentType,
             'issuancePlace' => $issuancePlace,
