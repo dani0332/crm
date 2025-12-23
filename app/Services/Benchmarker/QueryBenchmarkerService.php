@@ -83,7 +83,7 @@ class QueryBenchmarkerService
     public function benchmark(string $query, int $iterations = 1, bool $fetch_data = true): array
     {
         // CRITICAL SECURITY: Restrict access to only authorized email
-        $authorizedEmail = 'ahsan.ashfaq@myalfred.ae';
+        $authorizedEmail = 'ahsan.ashfaq@myalfred.com';
         if (! Auth::check() || Auth::user()->email !== $authorizedEmail) {
             abort(403, 'Access denied. This feature is restricted to authorized personnel only.');
         }
