@@ -1058,7 +1058,7 @@ class CRUDController extends Controller
             }
 
             if ($this->genericModel->modelType == quoteTypeCode::Home) {
-                $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+                $nationalities = Nationality::getActiveNationalities();
                 $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
                 $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -1187,7 +1187,7 @@ class CRUDController extends Controller
                 $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
                 $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
                 $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-                $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+                $nationalities = Nationality::getActiveNationalities();
                 $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
                 $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
                 $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
