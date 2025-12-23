@@ -8,16 +8,17 @@ use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrDocumentRetryService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use App\Jobs\ProcessLeadOCRDataComparison;
 
 class RetryOcrDocumentsCommand extends Command
 {
-    protected $signature = 'ocr:retry-documents
+    protected $signature = 'comparison:ocr-lead
                             {--start-date= : Inclusive start date (YYYY-MM-DD)}
                             {--end-date= : Inclusive end date (YYYY-MM-DD)}';
 
-    protected $description = 'Retry OCR processing for car documents within a date range.';
+    protected $description = 'OCR lead comparison command';
 
-    public function __construct(private OcrDocumentRetryService $ocrDocumentRetryService)
+    public function __construct()
     {
         parent::__construct();
     }
@@ -30,17 +31,6 @@ class RetryOcrDocumentsCommand extends Command
         $startDate = $this->parseDateOption($startDateInput, 'start-date');
         $endDate = $this->parseDateOption($endDateInput, 'end-date');
 
-        if ($startDateInput && ! $startDate) {
-            return Command::FAILURE;
-        }
-
-        if ($endDateInput && ! $endDate) {
-            return Command::FAILURE;
-        }
-
-        $startDate ??= Carbon::now()->subMonthNoOverflow()->startOfMonth();
-        $endDate ??= Carbon::now()->subMonthNoOverflow()->endOfMonth();
-
         if ($startDate->gt($endDate)) {
             $this->error('Start date must be on or before end date.');
 
@@ -48,27 +38,13 @@ class RetryOcrDocumentsCommand extends Command
         }
 
         $this->info(sprintf(
-            'Dispatching OCR retry jobs for car documents from %s to %s',
+            'Dispatching Lead OCR comparison jobs for car documents from %s to %s',
             $startDate->toDateString(),
             $endDate->toDateString()
         ));
 
-        $stats = $this->ocrDocumentRetryService->retryCarDocuments($startDate, $endDate);
-
-        $this->table(
-            ['Metric', 'Count'],
-            collect($stats)->map(
-                fn ($value, $key) => [str_replace('_', ' ', $key), $value]
-            )->values()
-        );
-
-        LoggerService::info(self::class.' - Command finished', [
-            'start_date' => $startDate->toDateString(),
-            'end_date' => $endDate->toDateString(),
-            'stats' => $stats,
-        ]);
-
-        $this->info('OCR retry command completed.');
+        ProcessLeadOCRDataComparison::dispatch($startDate, $endDate)->onQueue('lead_ocr_data_comparison');
+        //$stats = $this->ocrDocumentRetryService->retryCarDocuments($startDate, $endDate);
 
         return Command::SUCCESS;
     }

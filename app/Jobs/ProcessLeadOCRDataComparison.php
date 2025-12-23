@@ -24,12 +24,15 @@ use App\Services\QuoteDocumentService;
 class ProcessLeadOCRDataComparison implements ShouldQueue
 {
     use Queueable;
+    protected  $startDate;
+    protected  $endDate;
+    protected  $uuid; 
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct()
+    public function __construct($uuid = null,  $startDate, $endDate)
     {
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
+        $this->uuid = $uuid;
     }
 
     /**
@@ -43,8 +46,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     public function getCarDocuments()
     {
         $uuid = request('uuid');
-        $startDate = Carbon::parse('2025-03-01')->startOfMonth();
-        $endDate = Carbon::parse('2025-03-31')->endOfMonth();
+        //$startDate = Carbon::parse('2025-03-01')->startOfMonth();
+        //$endDate = Carbon::parse('2025-03-31')->endOfMonth();
 
         $documentTypeCodes = DocumentType::query()
             ->active()
@@ -69,10 +72,14 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 'policy_issuance_date',
             ])
         ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
-            ->when($uuid, function ($q) use ($uuid) {
-                $q->where('uuid', $uuid);
-            }, function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('transaction_approved_at', [$startDate, $endDate]);
+            ->when($this->uuid, function ($q) {
+                $q->where('uuid', $this->uuid);
+            })
+            ->when($this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween(
+                    'transaction_approved_at',
+                    [$this->startDate, $this->endDate]
+                );
             })
             ->whereHas('documents', function ($q) use ($documentTypeCodes) {
                 $q->whereIn('document_type_code', $documentTypeCodes);
@@ -89,17 +96,17 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                         ->with(['insuranceProvider:id,code']);
                 },
                 'insuranceProvider:id,code',
-            ])
-            //->take(2)
-            ->get();
+            ]);
 
+            $carQuotes = $carQuotes->get();
+           
         $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('id');
 
         LoggerService::info('getCarDocuments - Car quotes with OCR documents fetched', extra: [
             'uuid_filter' => $uuid,
             'document_type_codes' => $documentTypeCodes,
-            'start_date' => $startDate->toDateString(),
-            'end_date' => $endDate->toDateString(),
+            'start_date' => $this->startDate ? $this->startDate->toDateString() : null,
+            'end_date' => $this->endDate ? $this->endDate->toDateString() : null,
             'total_car_quotes' => $carQuotes->count(),
             'car_quotes_with_documents' => $carQuoteIds->count(),
             'car_quote_ids' => $carQuoteIds->toArray(),
@@ -642,13 +649,9 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $refId = $this->getRefId($quote);
         $isEcom = false;
 
-         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
-         //echo $docUrl; exit;
+         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);   
         // $docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
-        //$encodedFileName = urlencode($document->doc_url);
-        //$docUrl = Storage::disk('azureIM')->temporaryUrl($encodedFileName, now()->addMinutes(20));
-        //$docUrl = 'https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/'.$encodedFileName;
-        //echo $docUrl; exit;
+
 
         if (! $docUrl) {
             LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
