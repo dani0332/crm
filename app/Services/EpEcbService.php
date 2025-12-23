@@ -6,6 +6,7 @@ use App\DTO\EpBookingContext;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Exceptions\EpEcbException;
 use App\Jobs\EpWatermarkDocumentJob;
 use App\Jobs\SyncEpDocumentsJob;
 use App\Models\DocumentType;
@@ -16,6 +17,8 @@ use Error;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class EpEcbService extends EpBookingService
@@ -60,11 +63,11 @@ class EpEcbService extends EpBookingService
         $this->logExtra = $this->context->logExtra;
 
         if (! $this->quote) {
-            throw new Exception('Quote not found.');
+            throw new EpEcbException('Quote not found.');
         }
 
         if (! $this->embeddedTransaction) {
-            throw new Exception("EmbeddedTransaction not found with ID: {$this->context->etId}");
+            throw new EpEcbException("EmbeddedTransaction not found with ID: {$this->context->etId}");
         }
 
         // Load API configuration
@@ -137,6 +140,12 @@ class EpEcbService extends EpBookingService
             $this->executeWorkflowFromStep();
 
             LoggerService::info($this->logPrefix.' Purchase flow completed successfully', extra: $this->logExtra);
+        } catch (EpEcbException|ValidationException $e) {
+            LoggerService::info($this->logPrefix.' Purchase flow failed', extra: [
+                ...$this->logExtra,
+                'error' => $e->getMessage(),
+            ]);
+            throw new EpEcbException($e->getMessage());
         } catch (Exception $e) {
             LoggerService::error($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
@@ -205,7 +214,7 @@ class EpEcbService extends EpBookingService
             } else {
                 // Dispatch job with 2 minutes delay, because documents are available after 2 minutes of policy creation
                 LoggerService::info($this->logPrefix.' Dispatch SyncEpDocumentsJob with 2 minutes delay', extra: $this->logExtra);
-                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(1));
+                dispatch(new SyncEpDocumentsJob($this->context))->delay(now()->addMinutes(2));
             }
         }
 
@@ -273,6 +282,115 @@ class EpEcbService extends EpBookingService
         };
     }
 
+    private function getValidationRules(string $step): array
+    {
+        $documentTypeRule = implode(',', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY]);
+        $customerIdTypeRule = implode(',', ['EID']);
+        $policySoldDateRules = 'required|date|date_equals:today';
+        $documentUrlRules = 'required|url|active_url';
+
+        $validationRules = [];
+        switch ($step) {
+            case self::STEP_GET_QUOTE:
+                $validationRules = [
+                    'client_reference_number' => 'nullable',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'transaction_currency' => "required|in:{$this->transactionCurrency}",
+                    'product_info.policy_product' => "required|in:{$this->policyProduct}",
+                    'customer_info.customer_type' => 'nullable',
+                    'vehicle_info.vehicle_make' => 'required',
+                    'vehicle_info.vehicle_model' => 'required',
+                    'vehicle_info.vehicle_model_year' => 'required',
+                ];
+                break;
+            case self::STEP_CREATE_POLICY_FROM_QUOTE:
+                $validationRules = [
+                    'client_reference_number' => 'nullable',
+                    'quote_reference_number' => 'required',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'payment_reference_number' => 'required',
+                    'sales_info.policy_sold_date' => $policySoldDateRules,
+                    'customer_info.customer_fname' => 'required',
+                    'customer_info.customer_lname' => 'required',
+                    'customer_info.customer_id_type' => "required|in:{$customerIdTypeRule}",
+                    'customer_info.customer_id_no' => 'required',
+                    'vehicle_info.vehicle_chassis_no' => 'required',
+                    'motor_insurance_info.mi_policy_number' => 'required|in:NA',
+                    'motor_insurance_info.mi_policy_issuer' => 'required',
+                    'motor_insurance_info.mi_start_date' => 'required|date',
+                    'motor_insurance_info.mi_end_date' => 'required|date',
+                    'motor_insurance_info.mi_coverage_area' => 'required|in:NA',
+                    'motor_insurance_info.mi_sum_insured' => 'required',
+                    'motor_insurance_info.mi_policy_excess' => 'required',
+                    'document_info' => 'required|array|size:2',
+                    'document_info.*.document_type' => "required|in:{$documentTypeRule}",
+                    'document_info.*.document_name' => 'required',
+                    'document_info.*.document_url' => $documentUrlRules,
+                ];
+                break;
+            case self::STEP_CREATE_POLICY_WITHOUT_QUOTE:
+                $validationRules = [
+                    'client_reference_number' => 'nullable',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'payment_reference_number' => 'required',
+                    'sales_info.policy_sold_date' => 'required|date|date_equals:today',
+                    'sales_info.policy_currency' => "required|in:{$this->transactionCurrency}",
+                    'product_info.policy_product' => "required|in:{$this->policyProduct}",
+                    'product_info.policy_coverage_type' => "required|in:{$this->policyProduct}",
+                    'product_info.policy_plan_type' => "required|in:{$this->policyProduct}-STANDARD",
+                    'customer_info.customer_fname' => 'required',
+                    'customer_info.customer_lname' => 'required',
+                    'customer_info.customer_id_type' => "required|in:{$customerIdTypeRule}",
+                    'customer_info.customer_id_no' => 'required',
+                    'vehicle_info.vehicle_make' => 'required',
+                    'vehicle_info.vehicle_model' => 'required',
+                    'vehicle_info.vehicle_first_regn_date' => 'required|date',
+                    'vehicle_info.vehicle_model_year' => 'required',
+                    'vehicle_info.vehicle_chassis_no' => 'required',
+                    'motor_insurance_info.mi_policy_number' => 'required|in:NA',
+                    'motor_insurance_info.mi_policy_issuer' => 'required',
+                    'motor_insurance_info.mi_start_date' => 'required|date',
+                    'motor_insurance_info.mi_end_date' => 'required|date',
+                    'motor_insurance_info.mi_coverage_area' => 'required|in:NA',
+                    'motor_insurance_info.mi_sum_insured' => 'required',
+                    'motor_insurance_info.mi_policy_excess' => 'required',
+                    'document_info' => 'required|array|size:2',
+                    'document_info.*.document_type' => "required|in:{$documentTypeRule}",
+                    'document_info.*.document_name' => 'required',
+                    'document_info.*.document_url' => $documentUrlRules,
+                ];
+                break;
+            case self::STEP_GET_POLICY_DOCUMENTS:
+                $validationRules = ['policyNumber' => 'required'];
+                break;
+            default:
+                break;
+        }
+
+        return $validationRules;
+    }
+    private function validatePayload($operation, $payload)
+    {
+        $validationRules = $this->getValidationRules($operation);
+        $validator = Validator::make($payload, $validationRules);
+        if ($validator->fails()) {
+
+            InsurerRequestResponse::create([
+                'quote_uuid' => $this->quote?->uuid,
+                'provider_id' => $this->context->insuranceProviderId, // You may want to set this based on your provider mapping
+                'call_type' => 'EpEcb',
+                'request' => json_encode($payload),
+                'response' => json_encode($validator->errors()->toArray()),
+                'status' => 'failed',
+                'execution_method' => $operation,
+            ]);
+
+            LoggerService::info("{$this->logPrefix} API {$operation} payload validation (failed)", extra: [...$this->logExtra, 'validation_errors' => $validator->errors()->toArray()]);
+        }
+
+        return $validator->validate();
+    }
+
     /**
      * Step 1: Get authentication token
      */
@@ -301,13 +419,13 @@ class EpEcbService extends EpBookingService
         );
 
         if (! $response['success']) {
-            throw new Exception('GetToken API call failed: '.($response['error'] ?? 'Unknown error'));
+            throw new EpEcbException('GetToken API call failed: '.($response['error'] ?? 'Unknown error'));
         }
 
         $responseData = $response['data'];
 
         if (! isset($responseData->access_token)) {
-            throw new Exception('Token not found in GetToken response');
+            throw new EpEcbException('Token not found in GetToken response');
         }
 
         $this->bearerToken = $responseData->access_token;
@@ -322,7 +440,7 @@ class EpEcbService extends EpBookingService
     private function executeGetQuote(): void
     {
         if (! $this->bearerToken) {
-            throw new Exception('No bearer token available for GetQuote');
+            throw new EpEcbException('No bearer token available for GetQuote');
         }
 
         // Check if we already have a restored quote reference number
@@ -331,23 +449,25 @@ class EpEcbService extends EpBookingService
         }
 
         // Build quote request payload based on your business requirements
+        $operation = self::STEP_GET_QUOTE;
         $payload = $this->buildQuotePayload();
+        $this->validatePayload($operation, $payload);
 
         $response = $this->makeApiCall(
             'POST',
             '/api/Quote/GetQuote',
             $payload,
             true,
-            self::STEP_GET_QUOTE
+            $operation
         );
 
         if (! $response['success']) {
-            throw new Exception('GetQuote API call failed: '.($response['error'] ?? 'Unknown error'));
+            throw new EpEcbException('GetQuote API call failed: '.($response['error'] ?? 'Unknown error'));
         }
 
         $responseQuote = $response['data']->quotes[0] ?? null;
         if (empty($responseQuote->quote_reference_no ?? null)) {
-            throw new Exception('Quote reference number not found in GetQuote response');
+            throw new EpEcbException('Quote reference number not found in GetQuote response');
         }
 
         $this->quoteReferenceNumber = $responseQuote->quote_reference_no;
@@ -364,11 +484,11 @@ class EpEcbService extends EpBookingService
     private function executeCreatePolicyFromQuote(): void
     {
         if (! $this->bearerToken) {
-            throw new Exception('No bearer token available for CreatePolicyFromQuote');
+            throw new EpEcbException('No bearer token available for CreatePolicyFromQuote');
         }
 
         if (! $this->quoteReferenceNumber) {
-            throw new Exception('No quote reference number available for CreatePolicyFromQuote');
+            throw new EpEcbException('No quote reference number available for CreatePolicyFromQuote');
         }
 
         // Check if we already have a restored policy number
@@ -377,25 +497,27 @@ class EpEcbService extends EpBookingService
         }
 
         // Build policy creation payload
+        $operation = self::STEP_CREATE_POLICY_FROM_QUOTE;
         $payload = $this->buildPolicyFromQuotePayload();
+        $this->validatePayload($operation, $payload);
 
         $response = $this->makeApiCall(
             'POST',
             '/api/Policy/CreatePolicyFromQuote',
             $payload,
             true,
-            self::STEP_CREATE_POLICY_FROM_QUOTE
+            $operation
         );
 
         if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
-            throw new Exception("CreatePolicyFromQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
+            throw new EpEcbException("CreatePolicyFromQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
         }
 
         $responseData = $response['data'];
         if (empty($responseData->policy_no ?? null)) {
-            throw new Exception('Policy number not found in CreatePolicyFromQuote response');
+            throw new EpEcbException('Policy number not found in CreatePolicyFromQuote response');
         }
 
         $this->policyNumber = $responseData->policy_no;
@@ -412,7 +534,7 @@ class EpEcbService extends EpBookingService
     private function executeCreatePolicyWithoutQuote(): void
     {
         if (! $this->bearerToken) {
-            throw new Exception('No bearer token available for CreatePolicyFromQuote');
+            throw new EpEcbException('No bearer token available for CreatePolicyFromQuote');
         }
 
         // Check if we already have a restored policy number
@@ -421,25 +543,27 @@ class EpEcbService extends EpBookingService
         }
 
         // Build policy creation payload
+        $operation = self::STEP_CREATE_POLICY_WITHOUT_QUOTE;
         $payload = $this->buildPolicyWithoutQuotePayload();
+        $this->validatePayload($operation, $payload);
 
         $response = $this->makeApiCall(
             'POST',
             '/api/Policy/CreatePolicy',
             $payload,
             true,
-            self::STEP_CREATE_POLICY_WITHOUT_QUOTE
+            $operation
         );
 
         if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
-            throw new Exception("CreatePolicyWithoutQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
+            throw new EpEcbException("CreatePolicyWithoutQuote API call failed: ($responseErrorCode) - $responseStatusMessage");
         }
 
         $responseData = $response['data'];
         if (empty($responseData->policy_no ?? null)) {
-            throw new Exception('Policy number not found in CreatePolicyWithoutQuote response');
+            throw new EpEcbException('Policy number not found in CreatePolicyWithoutQuote response');
         }
 
         $this->policyNumber = $responseData->policy_no;
@@ -472,7 +596,7 @@ class EpEcbService extends EpBookingService
 
             $docCode = match ($docKey) {
                 'policy_certificate_url' => QuoteDocumentsEnum::POLICY_SCHEDULE, // Policy Schedule (GETPOLICYSCHEDULE)
-                'premium_inv_doc_url' => QuoteDocumentsEnum::CAR_TAX_INVOICE, // Tax Invoice (GETPOLICYTAXINVOICE - DOCTYPE=1)
+                'premium_inv_doc_url' => QuoteDocumentsEnum::CAR_EP_TAX_INVOICE, // Tax Invoice (GETPOLICYTAXINVOICE - DOCTYPE=1)
                 'commision_inv_doc_url' => QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, // Tax Invoice (GETPOLICYTAXINVOICE - DOCTYPE=2)
                 default => null
             };
@@ -538,22 +662,27 @@ class EpEcbService extends EpBookingService
     private function executeGetPolicyDocuments(): array
     {
         if (! $this->policyNumber) {
-            throw new Exception('No policy number available for GetDocuments');
+            throw new EpEcbException('No policy number available for GetDocuments');
         }
 
         $this->executeGetToken();
+
+        $operation = self::STEP_GET_POLICY_DOCUMENTS;
+        $payload = ['policyNumber' => $this->policyNumber];
+        $this->validatePayload($operation, $payload);
+
         $response = $this->makeApiCall(
             'GET',
             '/api/Policy/GetPolicyDocuments',
-            ['policyNumber' => $this->policyNumber],
+            $payload,
             true,
-            self::STEP_GET_POLICY_DOCUMENTS
+            $operation
         );
 
         if (! $response['success']) {
             $responseErrorCode = $response['errorCode'] ?? '-';
             $responseStatusMessage = $response['statusMessage'] ?? 'Unknown error';
-            throw new Exception("GetPolicyDocuments API call failed: ($responseErrorCode) - $responseStatusMessage");
+            throw new EpEcbException("GetPolicyDocuments API call failed: ($responseErrorCode) - $responseStatusMessage");
         }
 
         return (array) $response['data'] ?? [];
@@ -644,7 +773,7 @@ class EpEcbService extends EpBookingService
                 'PUT' => $httpClient->put($url, $data),
                 'PATCH' => $httpClient->patch($url, $data),
                 'DELETE' => $httpClient->delete($url, $data),
-                default => throw new Exception("Unsupported HTTP method: {$method}")
+                default => throw new EpEcbException("Unsupported HTTP method: {$method}")
             };
 
             $responseTime = round((microtime(true) - $startTime) * 1000, 2);
@@ -857,7 +986,7 @@ class EpEcbService extends EpBookingService
     private function buildQuotePayload(): array
     {
         if (! $this->quote) {
-            throw new Exception('Quote not found for building quote payload');
+            throw new EpEcbException('Quote not found for building quote payload');
         }
 
         $productInfo = $this->getProductInfo(self::STEP_GET_QUOTE);
@@ -880,11 +1009,11 @@ class EpEcbService extends EpBookingService
     private function buildPolicyFromQuotePayload(): array
     {
         if (! $this->quote) {
-            throw new Exception('Quote not found for building policy payload');
+            throw new EpEcbException('Quote not found for building policy payload');
         }
 
         if (! $this->embeddedTransaction) {
-            throw new Exception('EmbeddedTransaction not found for building policy payload');
+            throw new EpEcbException('EmbeddedTransaction not found for building policy payload');
         }
 
         $salesInfo = $this->getSalesInfo(self::STEP_CREATE_POLICY_FROM_QUOTE);
@@ -952,6 +1081,8 @@ class EpEcbService extends EpBookingService
         $documentsInfo = $this->quote->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY])
             ->select('document_type_code', 'doc_name', 'doc_url')
             ->get()
+            ->unique('document_type_code')
+            ->values()
             ->map(function ($document) {
                 return [
                     'document_type' => $document->document_type_code,
@@ -965,7 +1096,6 @@ class EpEcbService extends EpBookingService
 
     private function getCustomerInfo(string $step): array
     {
-        $emirateIdNumber = $this->getEmirateIdNumber();
         $customerDetails = [
             'customer_type' => null,
             'customer_fname' => $this->quote?->first_name,
@@ -974,7 +1104,7 @@ class EpEcbService extends EpBookingService
             'customer_whatsapp_no' => null,
             'customer_email_id' => null,
             'customer_id_type' => 'EID',
-            'customer_id_no' => $emirateIdNumber,
+            'customer_id_no' => $this->getEmirateIdNumber(),
             'customer_id_expiry_date' => null,
             'customer_address' => null,
             'customer_address_city' => null,

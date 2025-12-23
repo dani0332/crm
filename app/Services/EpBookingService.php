@@ -50,7 +50,7 @@ class EpBookingService extends BaseService
         $this->embeddedTransaction = EmbeddedTransaction::find($this->context->etId);
 
         $this->reqDocTypeCodes = $this->getRequiredDocTypeCodes();
-        $this->watermarkableDocTypeCodes = $this->getWatermarkableDocTypeCodes();
+        $this->watermarkableDocTypeCodes = $this->getWatermarkableDocTypeCodes($this->context->epShortCode);
     }
 
     public static function buildContext(int $etId, string $quoteId, int $quoteTypeId, string $quoteCode)
@@ -257,7 +257,10 @@ class EpBookingService extends BaseService
         $quoteType = QuoteTypes::getName($this->context->quoteTypeId)->value;
 
         $sageApiService = (new SageApiService);
-        $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+
+        if ($this->quote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
+            $sageApiService->updateAndLogQuoteStatus($this->quote, $this->context?->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+        }
 
         $request = new \stdClass;
         $request->quote_id = $this->quote?->id;
@@ -292,19 +295,16 @@ class EpBookingService extends BaseService
         return $scheduledBookingResponse;
     }
 
-    protected function getWatermarkableDocTypeCodes(): array
+    protected function getWatermarkableDocTypeCodes($epShortCode): array
     {
-        return [
-            QuoteDocumentsEnum::POLICY_SCHEDULE,
-            QuoteDocumentsEnum::CAR_TAX_INVOICE,
-        ];
+        return QuoteDocumentsEnum::getWatermarkableDocTypeCodes($epShortCode);
     }
 
     protected function getRequiredDocTypeCodes(): array
     {
         return [
             QuoteDocumentsEnum::POLICY_SCHEDULE,
-            QuoteDocumentsEnum::CAR_TAX_INVOICE,
+            QuoteDocumentsEnum::CAR_EP_TAX_INVOICE,
             QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER,
         ];
     }

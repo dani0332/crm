@@ -341,13 +341,22 @@ class AllocationService extends BaseService
                 $message = 'Advisor already assigned';
             }
 
+            $advisor = $request->getAdvisor() ?? $lead?->advisor;
+            $landLine = (! empty($advisor?->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '');
+            $whatsAppNumber = ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
+
             $data = [
-                'advisorId' => $request->getAdvisor()?->id ?? $lead?->advisor_id,
+                'advisorId' => $advisor?->id ?? $lead?->advisor_id,
+                'isAIAdvisor' => $advisor?->isAi(),
+                'advisorName' => $advisor?->name,
+                'advisorEmail' => $advisor?->email,
+                'advisorPhone' => $whatsAppNumber,
+                'advisorLandLine' => $landLine,
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
 
-            $tier = $request->getTier();
+            $tier = $request->getTier() ?? $lead->tier;
 
             if ($tier) {
                 $data['tierId'] = $tier->id;

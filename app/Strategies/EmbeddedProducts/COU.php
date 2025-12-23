@@ -3,6 +3,7 @@
 namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\QuoteTypeId;
+use Carbon\Carbon;
 
 class COU extends EmbeddedProduct
 {
@@ -61,6 +62,15 @@ class COU extends EmbeddedProduct
         } else {
             $item->vehicle = 'N/A';
         }
+
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+        $item->advisor_name = $quoteObject?->advisor?->name ?? '';
+        $item->dob = isset($quoteObject?->dob) ? Carbon::parse($quoteObject?->dob)->format($dateFormat) : '';
+        $item->nationality = $quoteObject?->customer?->nationality?->text ?? '';
+        $item->policy_issuance_date = $quoteObject?->policy_issuance_date ?? '';
+        $item->age = isset($quoteObject?->dob) ?
+            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())).' Years'
+            : '';
 
         return $item;
     }

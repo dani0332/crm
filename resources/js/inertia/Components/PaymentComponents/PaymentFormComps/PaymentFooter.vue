@@ -161,7 +161,7 @@ const handleCancelModalClick = () => {
               ) &&
               (can(permissionEnum.ApprovePayments) ||
                 (can(permissionEnum.INPL_APPROVER) &&
-                  splitPaymentRecord.payment_method.code ==
+                  splitPaymentRecord.payment_method?.code ==
                     paymentMethodsEnum?.InsureNowPayLater)))
           "
           class="w-full flex justify-end"

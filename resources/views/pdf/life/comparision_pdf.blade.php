@@ -816,8 +816,20 @@
                     @foreach($displayPlans as $planId)
                         <th>
                             <p class="text-center" style="text-align: center; margin: 0; padding: 2px;">
-                                <a class="btn-buy" href="{{($websitURL . '/life-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $plans[$planId]->planId) . '&version='. $quote->version}}">
-                                    APPLY NOW<br />@php $price = $plans[$planId]->isApi ?  number_format($plans[$planId]->actualPremium, 2) : number_format($plans[$planId]->totalPrice ?? 0.0, 2); @endphp
+                                @php
+                                    $isMetlife = $plans[$planId]->providerCode === $insuranceProviderEnum['MTL'];
+                                @endphp
+                                <a class="btn-buy" href="{{ $isMetlife ? ($websitURL . '/life-insurance/quote/' . $quote->uuid . '/') : (($websitURL . '/life-insurance/quote/' . $quote->uuid .  '/payment/?planId=' . $plans[$planId]->planId . '&providerCode=' . $plans[$planId]->providerCode) . '&version='. $quote->version) }}">
+                                    {{ $isMetlife ? 'BUY NOW' : 'APPLY NOW' }}<br />@php
+                                        if ($plans[$planId]->isApi && $plans[$planId]->instantPolicy) {
+                                            $price = ($plans[$planId]->totalPrice == 0) ? $plans[$planId]->actualPremium : $plans[$planId]->totalPrice;
+                                        } elseif ($plans[$planId]->isApi && !$plans[$planId]->instantPolicy) {
+                                            $price = $plans[$planId]->actualPremium;
+                                        } else {
+                                            $price = $plans[$planId]->totalPrice ?? 0.0;
+                                        }
+                                        $price = number_format($price, 2);
+                                    @endphp
                                     <span style="font-size: 10px; font-weight: normal">{{ $plans[$planId]->currency }}</span> <strong>{{ $price }}</strong>
                                 </a>
                             </p>

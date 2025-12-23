@@ -67,6 +67,7 @@ final class ApplicationStorageEnums extends Enum
     public const DUBAI_NOW_CC_GROUP = 'DUBAI_NOW_CC_GROUP';
     public const SAGE_ENABLED = 'SAGE_ENABLED';
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
+    public const TEMP_DISABLE_SAGE_BOOKING = 'TEMP_DISABLE_SAGE_BOOKING';
     public const DTT_ENABLED = 'DTT_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
@@ -127,6 +128,7 @@ final class ApplicationStorageEnums extends Enum
     public const SUKOON_TEMPLATE_TAX_INVOICE_BUYER = 'SUKOON_TEMPLATE_TAX_INVOICE_BUYER';
     public const LEAD_SOURCE_ECOMMERCE = 'LEAD_SOURCE_ECOMMERCE';
     public const FAKE_LEAD_DOMAINS = 'FAKE_LEAD_DOMAINS';
+    public const ENABLE_VOICE_AI_INTEGRATION = 'ENABLE_VOICE_AI_INTEGRATION';
 
     // Travel SIC 2.0
     public const SIC_TRAVEL_WORKFLOW_ENABLE = 'SIC_TRAVEL_WORKFLOW_ENABLE';
@@ -137,6 +139,10 @@ final class ApplicationStorageEnums extends Enum
     public const TRAVEL_EMAIL_REPLY_TO = 'TRAVEL_EMAIL_REPLY_TO';
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
     public const BIRD_SIC_HEALTH_WORKFLOW = 'BIRD_SIC_HEALTH_WORKFLOW';
+
+    // Travel Automated Followups
+    public const TRAVEL_AUTOMATED_FOLLOWUPS = 'TRAVEL_AUTOMATED_FOLLOWUPS';
+    public const AUTOMATED_TRAVEL_FOLLOWUP_SWITCH = 'AUTOMATED_TRAVEL_FOLLOWUP_SWITCH';
 
     // MOTOR RENEWAL SIC 3.0
     public const BIRD_SIC_MOTOR_RENEWAL_WORKFLOW = 'BIRD_SIC_MOTOR_RENEWAL_WORKFLOW';
@@ -235,9 +241,6 @@ final class ApplicationStorageEnums extends Enum
     /* BOR (Broker on Record) Workflow Integration */
     public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
 
-    /* Sent EP Policy Documents Email */
-    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
-
     /* Advisor Emails for Allocation */
     public const YACHT_ADVISORS = 'YACHT_ADVISORS';
     public const PET_ADVISORS = 'PET_ADVISORS';
@@ -264,6 +267,7 @@ final class ApplicationStorageEnums extends Enum
     /* Cut Off Dates */
     public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
     public const LIFE_CUT_OFF_DATE = 'LIFE_CUT_OFF_DATE';
+    public const BIRD_AI_ADVISOR_OCB = 'BIRD_AI_ADVISOR_OCB';
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 
@@ -279,11 +283,37 @@ final class ApplicationStorageEnums extends Enum
     public const PRODUCTION_APPROVAL_EMAIL = 'PRODUCTION_APPROVAL_EMAIL';
     public const APPROVAL_PRODUCTION_EMAIL = 'APPROVAL_PRODUCTION_EMAIL';
     public const BULK_POLICY_DOCUMENT_SEND_CODES = 'BULK_POLICY_DOCUMENT_SEND_CODES';
+
+    // Customer Verification Feature Toggle
+    public const CUSTOMER_VERIFICATION_ENABLED = 'CUSTOMER_VERIFICATION_ENABLED';
     public const ENABLE_AUTO_CAPTURE_EP_PAYMENTS = 'ENABLE_AUTO_CAPTURE_EP_PAYMENTS';
     public const AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS = 'AUTO_CAPTURE_EP_PAYMENTS_BOOKING_DAYS';
 
     /* Customer Callback SLA Configuration */
     public const SLA_CALLBACK_HOURS = 'SLA_CALLBACK_HOURS';
     public const SLA_REMINDER_MINUTES = 'SLA_REMINDER_MINUTES';
+
+    // Car Missing Doc Reminder Workflow
+    public const BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW = 'BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW';
     public const RTA_PORTAL_LINK = 'RTA_PORTAL_LINK';
+
+    /* OCR Customer Journey Flag */
+    public const OCR_CUSTOMER_JOURNEY_ENABLED = 'OCR_CUSTOMER_JOURNEY_ENABLED';
+
+    /* EP ECB Policy Configuration */
+    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
+    public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';
+    public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';
+    public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE';
+    public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';
+
+    // EP Failure Notification Email
+    public const EP_FAILURE_EMAIL_TO = 'EP_FAILURE_EMAIL_TO';
+    public const EP_FAILURE_EMAIL_REPLY_TO = 'EP_FAILURE_EMAIL_REPLY_TO';
+    public const EP_FAILURE_EMAIL_CC = 'EP_FAILURE_EMAIL_CC';
+
+    // MetLife Integration
+    public const ENABLE_METLIFE = 'ENABLE_METLIFE';
+    public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
+    public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
 }

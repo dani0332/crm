@@ -21,9 +21,11 @@ use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -91,7 +93,8 @@ class HealthQuoteObserver
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
                     if ($healthQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(now()->addMinutes(2));
+                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
+                        LoggerService::info('OCAHealthFollowupEmailJob dispatched ');
                     }
 
                 }

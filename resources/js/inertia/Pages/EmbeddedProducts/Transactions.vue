@@ -22,7 +22,7 @@ const loader = reactive({
 
 const filters = reactive({
   ref_id: '',
-  email: '',
+  certificate_number: '',
   name: '',
   date_of_purchase: '',
   chassis_number: '',
@@ -49,8 +49,6 @@ const tableHeader = [
   { text: 'Sync Status', value: 'sync_status', sortable: true },
   { text: 'NATIONALITY', value: 'nationality' },
   { text: 'Vehicle', value: 'vehicle' },
-  { text: 'Contact Number', value: 'contact_number' },
-  { text: 'Email ID', value: 'email' },
   { text: 'Contribution Amount', value: 'contribution_amount', sortable: true },
   { text: 'Policy Issue Status', value: 'status' },
   { text: 'Certificate Number', value: 'certificate_number' },
@@ -113,7 +111,6 @@ function filterTransactions(isValid) {
       preserveScroll: true,
       onFinish: () => {
         loader.table = false;
-        setQueryFilters();
       },
       onBefore: () => {
         loader.table = true;
@@ -208,6 +205,55 @@ watch(
   },
   { deep: true },
 );
+
+const filteredHeaders = computed(() => {
+  return tableHeader.filter(header => {
+    if (header.value === 'sync_status') {
+      return (
+        page.props.embeddedProduct.detail.short_code ===
+        page.props.ep_enums.COURIER
+      );
+    }
+
+    if (
+      page.props.embeddedProduct.detail.short_code === page.props.ep_enums.ECB
+    ) {
+      let excludeHeaders = [
+        'advisor_name',
+        'dob',
+        'age',
+        'passport_number',
+        'nationality',
+        'vehicle',
+      ];
+      return !excludeHeaders.includes(header.value);
+    } else {
+      let excludeHeaders = [
+        'model_year',
+        'make',
+        'model',
+        'chassis_number',
+        'excess_amount',
+      ];
+      return !excludeHeaders.includes(header.value);
+    }
+
+    return true;
+  });
+});
+
+const showCertificateNumberFilter = computed(() => {
+  const reports = [
+    page.props.ep_enums.ECB,
+    page.props.ep_enums.RDX,
+    page.props.ep_enums.MDX,
+  ];
+
+  if (reports.includes(page.props.embeddedProduct.detail.short_code)) {
+    return true;
+  }
+  return false;
+});
 </script>
 
 <template>
@@ -267,7 +313,25 @@ watch(
             placeholder="Search by Ref-ID"
           />
         </div>
-        <div>
+        <div v-if="showCertificateNumberFilter">
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              EP policy number
+            </label>
+            <template #tooltip> EP policy number </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.certificate_number"
+            type="search"
+            name="certificate_number"
+            class="w-full"
+            placeholder="Search by EP policy number"
+          />
+        </div>
+
+        <div v-if="embeddedProduct.detail.short_code === ep_enums.ECB">
           <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
@@ -281,16 +345,6 @@ watch(
             name="chassis_number"
             class="w-full"
             placeholder="Chassis Number"
-          />
-        </div>
-        <div>
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Type here"
-            label="Email"
           />
         </div>
         <div>
@@ -372,27 +426,7 @@ watch(
     <DataTable
       v-model:server-options="serverOptions"
       table-class-name=""
-      :headers="
-        tableHeader.filter(header => {
-          if (header.value === 'sync_status') {
-            return embeddedProduct.detail.short_code === ep_enums.COURIER;
-          }
-
-          if (embeddedProduct.detail.short_code === ep_enums.ECB) {
-            let excludeHeaders = [
-              'advisor_name',
-              'dob',
-              'age',
-              'passport_number',
-              'nationality',
-              'vehicle',
-            ];
-            return !excludeHeaders.includes(header.value);
-          }
-
-          return true;
-        })
-      "
+      :headers="filteredHeaders"
       :loading="loader.table"
       :items="embeddedProduct.transactions.data || []"
       border-cell

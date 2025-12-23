@@ -15,7 +15,6 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL],
             [
@@ -60,9 +59,19 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedSendUpdateEmailTemplate();
         $this->seedOcrSendUpdateLogFlag();
         $this->seedProductionApprovalEmails();
+        $this->seedCustomerVerificationEnabled();
         $this->seedAutoCaptureEPPayments();
+        $this->seedEnableVoiceAIIntegration();
         $this->seedSla();
+        $this->seedTravelAutomatedFollowUps();
         $this->rtaPortalLink();
+        $this->seedOCRCustomerJourneyFlag();
+        $this->seedEpEcbConfigurations();
+        $this->seedUnavailableTimeThreshold();
+        $this->sendUpdateEmailBirdFlow();
+        $this->seedEnableMetLife();
+        $this->seedTempDisableSageBooking();
+        $this->seedMrIncludeFailedBookings();
     }
 
     private function livaCarAutomationSeed()
@@ -209,6 +218,16 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_AI_ADVISOR_OCB],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/c66ef6c5-966c-43d4-a6d2-8402d53f79bf/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/3260c727-5aef-4806-a869-f24f21ac7317/invoke-sync',
@@ -227,9 +246,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
-        $this->seedUnavailableTimeThreshold();
-        $this->sendUpdateEmailBirdFlow();
     }
 
     private function seedHomeAdvisors()
@@ -366,7 +382,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
     }
 
     private function seedUnavailableTimeThreshold()
@@ -435,7 +450,6 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
     }
 
     public function seedStopDeduplicateScript()
@@ -671,6 +685,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'travel-enquiries@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }
@@ -834,6 +849,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'production.approval@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
         ApplicationStorage::firstOrCreate(
@@ -842,6 +858,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'approval.production@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
     }
@@ -854,6 +871,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'is_active' => 1,
             ]
         );
 
@@ -877,7 +895,7 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ],
         );
 
         ApplicationStorage::firstOrCreate(
@@ -887,7 +905,56 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]
+            ],
+        );
+    }
+
+    private function seedTravelAutomatedFollowUps()
+    {
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_AUTOMATED_FOLLOWUPS],
+            [
+                'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/6ac637e8-4bf6-418b-8f65-7485ce47687f/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AUTOMATED_TRAVEL_FOLLOWUP_SWITCH],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedEnableVoiceAIIntegration()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_VOICE_AI_INTEGRATION],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCustomerVerificationEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CUSTOMER_VERIFICATION_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
         );
     }
 
@@ -897,6 +964,135 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::RTA_PORTAL_LINK],
             [
                 'value' => 'https://vls.rta.ae/renewal/identityVerification',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOCRCustomerJourneyFlag()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+    }
+
+    private function seedEpEcbConfigurations()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_TO],
+            [
+                'value' => 'production.approval.team@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO],
+            [
+                'value' => 'instant@alfred.insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_CC],
+            [
+                'value' => 'dt.system.notifications@insurancemarket.ae,sic.car.team@insurancemarket.ae,diya.lekhwani@myalfred.com,rucha.keluskar@myalfred.com,sandeep.sharma@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC],
+            [
+                'value' => 'diya.lekhwani@myalfred.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_CLAIM_LIMIT],
+            [
+                'value' => 'One claim per policy term.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_COVERAGE],
+            [
+                'value' => 'If you have an accident, you pay part of the repair bill (this is called "excess"), usually between AED 350 to AED 1,400. This benefit gives you back up to AED 1,200.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_ECB_POLICY_DURATION],
+            [
+                'value' => 'Your coverage lasts for 13 months or until the expiry of your motor insurance policy, whichever comes first.',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedEnableMetLife()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_METLIFE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTempDisableSageBooking()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TEMP_DISABLE_SAGE_BOOKING],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedMrIncludeFailedBookings()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MR_FAILED_BOOKING_DATE_FROM],
+            [
+                'value' => '2025-11-27 12:00:00',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

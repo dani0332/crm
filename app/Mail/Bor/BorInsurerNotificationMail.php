@@ -2,11 +2,9 @@
 
 namespace App\Mail\Bor;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteTypeId;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\BorLog;
 use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
@@ -17,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
 
 class BorInsurerNotificationMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use BorMailTrait, Queueable, SerializesModels;
 
     protected $borLog;
     protected $insurerContact;
@@ -104,7 +102,7 @@ class BorInsurerNotificationMail extends Mailable
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_INSURER_NOTIFICATION ?? 'bor_insurer_notification',
-            'customer_name' => $this->getCustomerName() ?? '',
+            'customer_name' => $this->getCustomerName(false, true) ?? '',
             'subject_line' => $this->getSubjectLine($personalQuote, $quoteType) ?? '',
             'insurance' => [
                 'insurance_name' => $this->borLog->insuranceProvide?->text ?? '',
@@ -115,7 +113,7 @@ class BorInsurerNotificationMail extends Mailable
                 'policy_number' => $this->borLog->policy_number ?? '',
                 'policy_expiry_date' => $this->borLog->policy_expiry ?? '',
                 'insurer_name' => $this->borLog->insurer_name ?? '',
-                'customer_type' => $this->borLog->customer_type == 'Entity' ? 'company' : 'individual',
+                'customer_type' => $this->borLog->customer_type == CustomerTypeEnum::Entity ? 'company' : 'individual',
                 'bor_ref_id' => $this->borLog->bor_reference ?? '',
                 'document_id' => $this->borLog->document_id ?? '',
                 'date_created' => $this->borLog->date_created ?? '',
@@ -123,44 +121,5 @@ class BorInsurerNotificationMail extends Mailable
             'advisor' => $this->advisorData,
             'attachPdf' => app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog),
         ];
-    }
-
-    /**
-     * Get customer display name based on customer type
-     */
-    private function getCustomerName()
-    {
-        if ($this->borLog->customer_type === 'Entity') {
-            return $this->borLog->company_name ?? $this->customerData['company_name'] ?? 'Valued Company';
-        }
-
-        $firstName = $this->customerData['first_name'] ?? '';
-        $lastName = $this->customerData['last_name'] ?? '';
-        $name = trim($firstName.' '.$lastName);
-
-        return $this->borLog->insurer_name ?? $name ?: 'Valued Customer';
-    }
-    private function getSubjectLine($personalQuote, $quoteType)
-    {
-        $provider = \App\Models\InsuranceProvider::find($this->borLog->insurance_provider_id);
-        $name = $this->getCustomerName();
-        if ($personalQuote->quote_type_id === QuoteTypeId::Car && $provider && (strtolower($provider->code) === 'oic' || stripos($provider->text, 'sukoon') !== false)) {
-            $subjectLine = 'Request for BOR '.$this->borLog->chassis_number.' - '.$name.' '.$personalQuote->code;
-
-            return $subjectLine;
-        }
-        $subjectLine = 'Request for BOR '.$name.' '.$personalQuote->code;
-
-        return $subjectLine;
-    }
-
-    /**
-     * Get Bird workflow URL for BOR insurer notification emails
-     */
-    private function getBirdWorkflowUrl()
-    {
-        $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL)->first();
-
-        return $workflowConfig ? $workflowConfig->value : null;
     }
 }

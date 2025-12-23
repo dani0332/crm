@@ -266,7 +266,8 @@ class EmbeddedProductRepository extends BaseRepository
                 $isSukoonEpReadyForSage = $transaction[0]->policy_status == EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
                 $canSendDocuments = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction)
                     || $this->canSendSukoonMedexDocumentsWithPolicyIssued($item->product_category, $quoteObject->quote_status_id, $transaction);
-                $item->sync_document_button = (! $isSukoonEpReadyForSage) && $canSendDocuments;
+                $item->sync_document_button = (! $isSukoonEpReadyForSage && $canSendDocuments) ||
+                (auth()->user()->can(PermissionsEnum::EMBEDDED_PRODUCT_MANUAL_OVERRIDE) && $transaction[0]->payment_status_id == PaymentStatusEnum::CAPTURED);
             }
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
@@ -510,12 +511,13 @@ class EmbeddedProductRepository extends BaseRepository
                         $response = ['success' => true];
 
                     } else {
+                        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($epShortCode);
                         $watermarkedDocuments = $item->documents()
-                            ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get()
+                            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
                             ->where('is_watermarked', true);
 
                         $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-                        $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $watermarkedDocumentTypes);
+                        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
 
                         // make sure email required watermarked documents is not missing
                         if (empty($missingReqWatermarkedDocTypes)) {
@@ -661,7 +663,7 @@ class EmbeddedProductRepository extends BaseRepository
         } elseif ($isSukoonMedex) {
             return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep, $modelType, $isSalama);
         } elseif ($isECB) {
-            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType);
+            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType, $short_code);
         }
     }
 
@@ -798,10 +800,23 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendECBEmail($transaction, $quoteId, $modelType)
+    private function sendECBEmail($transaction, $quoteId, $modelType, $short_code)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $quote = $this->getQuoteObject($modelType, $quoteId);
+
+        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($short_code);
+        $watermarkedDocuments = $transaction->documents()
+            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
+            ->where('is_watermarked', true);
+
+        $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
+        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
+
+        // make sure watermarked documents is not missing
+        if (! empty($missingReqWatermarkedDocTypes)) {
+            return ['success' => false, 'message' => 'Required watermarked document is not found'];
+        }
 
         $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quote->code);
         dispatch(new EpSendDocumentJob($context));

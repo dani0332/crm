@@ -501,7 +501,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE);
     }
 
-    public function getStepsLockingStatus($quote): array
+    public function getStepsLockingStatus($quote, $throughAutomation = false): array
     {
         $policyIssuance = $quote->policyIssuance;
         $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;

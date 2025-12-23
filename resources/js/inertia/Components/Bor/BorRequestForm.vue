@@ -71,9 +71,9 @@ const form = useForm({
   company_name: props.customerData.companyName,
   insurance_provider_id: props.customerData.currentlyInsuredWith,
   insurance_contact_id: props.borLog?.insurance_contact_id ?? null,
-  policy_number: '',
-  policy_expiry: '',
-  chassis_number: '',
+  policy_number: props.borLog?.policy_number ?? '',
+  policy_expiry: props.borLog?.policy_expiry ?? '',
+  chassis_number: props.borLog?.chassis_number ?? '',
   // Edit mode fields - these will NOT be updated
   additional_notes: '',
   reason: '',
@@ -128,6 +128,17 @@ const isSukoonInsurance = computed(() => {
   );
 });
 
+// Function to initialize selectedInsurer based on current form data
+const initializeSelectedInsurer = () => {
+  if (form.insurance_provider_id) {
+    selectedInsurer.value =
+      props.insuranceProviders.find(p => p.id == form.insurance_provider_id) ||
+      null;
+  } else {
+    selectedInsurer.value = null;
+  }
+};
+
 // Function to fetch provider representors
 const fetchProviderRepresentor = async insuranceProviderId => {
   if (!insuranceProviderId) {
@@ -148,8 +159,12 @@ const fetchProviderRepresentor = async insuranceProviderId => {
     insuranceProviderRepresentor.value =
       response.data.providerRepresentor ?? [];
   } catch (error) {
-    console.error('Error fetching provider representor:', error);
     insuranceProviderRepresentor.value = [];
+    notification.error({
+      title: 'Error',
+      message: 'Failed to fetch insurance provider representatives',
+      position: 'top',
+    });
   }
 };
 
@@ -176,10 +191,6 @@ const getStatusBadge = status => {
     SIGNATURE_REQUESTED: {
       class: 'bg-yellow-100 text-yellow-800',
       text: 'Signature Requested',
-    },
-    SENT_TO_INSURER: {
-      class: 'bg-blue-100 text-blue-800',
-      text: 'Sent to Insurer',
     },
     DOCUMENT_SIGNED: {
       class: 'bg-indigo-100 text-indigo-800',
@@ -245,6 +256,9 @@ watch(
       if (isEditMode.value) {
         prefillFormFromBorLog();
         loadEmbeddedDocuments();
+      } else {
+        // For create mode, initialize selectedInsurer if there's a default provider
+        initializeSelectedInsurer();
       }
     }
   },
@@ -253,9 +267,15 @@ watch(
 // Watch for customer type changes to reset relevant fields
 watch(
   () => form.customer_type,
-  newValue => {
+  (newValue, oldValue) => {
+    // Skip clearing fields during initial load or edit mode prefill
+    // Only clear when user actively changes from Individual to Entity
+    if (isEditMode.value || !oldValue) {
+      return;
+    }
+
     // Clear policy fields when switching to Entity (since they won't be visible)
-    if (newValue === 'Entity') {
+    if (newValue === 'Entity' && oldValue === 'Individual') {
       form.policy_number = '';
       form.policy_expiry = '';
       form.chassis_number = '';
@@ -305,6 +325,9 @@ const resetForm = () => {
   } else if (isMotorLob.value || isHealthLob.value) {
     form.customer_type = props.customerData.customerType;
   }
+
+  // Initialize selectedInsurer after setting form values
+  initializeSelectedInsurer();
 };
 
 // Prefill form with BorLog data for edit mode
@@ -325,13 +348,11 @@ const prefillFormFromBorLog = async () => {
   form.reason = borLog.reason || '';
   form.insurance_contact_id = borLog.insurance_contact_id || null;
 
-  // Set the selected insurer
+  // Initialize selectedInsurer based on the prefilled insurance_provider_id
+  initializeSelectedInsurer();
+
+  // Fetch representors for the selected provider if it exists
   if (borLog.insurance_provider_id) {
-    selectedInsurer.value =
-      props.insuranceProviders.find(
-        p => p.id == borLog.insurance_provider_id,
-      ) || null;
-    // Fetch representors for the selected provider
     await fetchProviderRepresentor(borLog.insurance_provider_id);
   }
 };
@@ -549,7 +570,6 @@ const viewSignedPdf = async () => {
       throw new Error(response.data.message || 'Failed to load document');
     }
   } catch (error) {
-    console.error('Error viewing signed PDF:', error);
     notification.error({
       title: 'View Error',
       message: 'Failed to view signed document. Please try again.',
