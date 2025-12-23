@@ -1973,9 +1973,18 @@ class CentralService extends BaseService
 
     }
 
-    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode, $quote)
     {
         try {
+            $isQuotePolicyAutomationEnabled = true;
+            $isCarQuote = $quoteTypeId == QuoteTypeId::Car;
+            
+            if($isCarQuote){
+                $isQuotePolicyAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+            }
+            if(!$isQuotePolicyAutomationEnabled){
+                return ['status' => PaymentCaptureValidationEnum::SUCCESS, 'message' => 'Quote Policy Issuance Automation disabled for this Lead.'];
+            }
             $data = [
                 'quoteUID' => $uuid,
                 'quoteTypeId' => $quoteTypeId,
