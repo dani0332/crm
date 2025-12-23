@@ -591,6 +591,7 @@ export const validateField = (form, fieldValue, errorField, validationRule) => {
 };
 
 export const applyEmiratesNumberMasking = emiratesId => {
+  if (!emiratesId) return emiratesId;
   let emiratesIDNumber = emiratesId.replace(/\D/g, '');
   if (emiratesIDNumber?.length > 15) {
     emiratesIDNumber = emiratesIDNumber.substring(0, 15); // Limit to 15 characters
