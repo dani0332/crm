@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BranchEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -20,12 +21,11 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Enums\BranchEnum;
 
 class TravelQuoteObserver
 {
@@ -121,7 +121,7 @@ class TravelQuoteObserver
                     } else {
                         $branch_id = BranchEnum::DUBAI->value;
                     }
-                    
+
                     $travelQuote->update([
                         'branch_id' => $branch_id,
                     ]);

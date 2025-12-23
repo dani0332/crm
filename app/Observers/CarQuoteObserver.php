@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\BranchEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -25,12 +26,11 @@ use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Enums\BranchEnum;
 
 class CarQuoteObserver
 {
@@ -124,14 +124,13 @@ class CarQuoteObserver
 
                     $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($lead, QuoteTypes::CAR->value);
                     $branch_id = null;
-                    if($shouldValidateBranch) {
+                    if ($shouldValidateBranch) {
                         $branch = app(BranchAssignmentService::class)->getBranch($lead?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
                         $branch_id = $branch?->id;
                     } else {
                         $branch_id = BranchEnum::DUBAI->value;
                     }
 
-                    
                     $lead->update([
                         'branch_id' => $branch_id,
                     ]);

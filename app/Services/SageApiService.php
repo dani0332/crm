@@ -666,7 +666,7 @@ class SageApiService
 
         $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($quote, $quoteType);
         if ($shouldValidateBranch == true) {
-            
+
             $hasBranchAssignment = app(BranchAssignmentService::class)->hasBranchAssignment($quote, $quoteTypeId);
             if ($hasBranchAssignment == false) {
                 return ['status' => false, 'message' => 'Branch assignment missing. Please ensure '.

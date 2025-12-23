@@ -163,9 +163,9 @@ class PolicyIssuanceService
     /**
      * Returns false incase of automation is enabled and policy issuance is not failed
      * Returns true incase of automation is disabled or policy issuance is failed
-     * 
-     * @param mixed $quote
-     * @param mixed $quoteType
+     *
+     * @param  mixed  $quote
+     * @param  mixed  $quoteType
      * @return bool
      */
     public function shouldValidateBranch($quote, $quoteType)

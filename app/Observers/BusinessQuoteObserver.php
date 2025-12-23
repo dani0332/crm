@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\BranchEnum;
 use App\Enums\BusinessTypeOfInsuranceEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
@@ -16,13 +17,12 @@ use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Enums\BranchEnum;
 
 class BusinessQuoteObserver
 {
@@ -126,19 +126,18 @@ class BusinessQuoteObserver
                 BusinessQuote::withoutEvents(function () use ($businessQuote, $quoteTypeId, $emirateOfRegistrationId, &$dirty) {
 
                     $shouldValidateBranch = true;
-                    if($quoteTypeId === QuoteTypeId::Business) {
+                    if ($quoteTypeId === QuoteTypeId::Business) {
                         $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($businessQuote, QuoteTypes::BUSINESS->value);
                     }
-                    
+
                     $branch_id = null;
-                    if($shouldValidateBranch) {
+                    if ($shouldValidateBranch) {
                         $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirateOfRegistrationId);
                         $branch_id = $branch?->id;
                     } else {
                         $branch_id = BranchEnum::DUBAI->value;
                     }
-                    
-                    
+
                     $businessQuote->update([
                         'branch_id' => $branch_id,
                     ]);
