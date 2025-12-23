@@ -36,7 +36,7 @@ class AwnicApiService
         ]);
 
         $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_ISSUE_POLICY);
-        $endPoint = '/cyber/generatePolicy/2323132312';
+        $endPoint = '/cyber/generatePolicy';
 
         $customer = $quote->customer;
         $nationality = $quote->nationality;
@@ -64,8 +64,6 @@ class AwnicApiService
             $response['error'] = $issuePolicyResponse['error'];
             $response['message'] = $issuePolicyResponse['message'];
             $response['status'] = false;
-
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY);
 
             return $response;
         }
@@ -135,8 +133,6 @@ class AwnicApiService
             $httpResponse = Awnic::post($endPoint, $payload);
             $uploadResponse = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_UPLOAD_DOCUMENTS);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, Awnic::getBaseUrl().$endPoint, AwnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
-
             if (! $uploadResponse['status']) {
                 $allDocsDownloaded = false;
                 break;
@@ -147,8 +143,6 @@ class AwnicApiService
             $response['message'] = 'Some documents failed to upload';
             $response['error'] = 'Some documents failed to upload';
             $response['status'] = false;
-
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS);
 
             return $response;
         }
@@ -235,8 +229,6 @@ class AwnicApiService
             $response['error'] = $error;
             $response['message'] = $error;
             $response['status'] = false;
-
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
             return $response;
         }

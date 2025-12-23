@@ -1262,6 +1262,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1
             ]
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_ESCALATION_LINK],
+            [
+                'value' => 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedBranchData()

@@ -1806,3 +1806,21 @@ if (! function_exists('formatEmiratesIdNumber')) {
         return $formattedIdNumber;
     }
 }
+
+if (! function_exists('getImcrmLink')) {
+    function getImcrmLink($quoteType, $quote): string
+    {
+        $baseUrl = config('app.url', env('APP_URL'));
+        $quoteId = $quote->uuid ?? $quote->id ?? '';
+
+        // Generate appropriate link based on quote type
+        $imcrmLink = match ($quoteType) {
+            QuoteTypeId::Car => "{$baseUrl}/quotes/car/{$quoteId}",           // Car quote type
+            QuoteTypeId::Bike => "{$baseUrl}/personal-quotes/bike/{$quoteId}", // Bike quote type
+            QuoteTypeId::Cyber => "{$baseUrl}/personal-quotes/cyber/{$quoteId}", // Cyber quote type
+            default => null
+        };
+
+        return "{$baseUrl}/quotes/{$quoteType}/{$quoteId}";
+    }
+}

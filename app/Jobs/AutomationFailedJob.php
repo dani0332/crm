@@ -129,11 +129,16 @@ class AutomationFailedJob implements ShouldQueue
             return;
         }
 
+        $escalationLink = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, "");
+
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
             'recipientEmail' => $this->recipientEmail,
             'recipientName' => $this->recipientName,
             'imcrmReferenceNumber' => $quote->code,
+            'escalationLink' => $escalationLink,
+            'refId' => $quote->code,
+            'imcrmLink' => getImcrmLink($this->quoteTypeId, $quote),
             'insurerApiStatus' => $this->statusAPIFailed,
             'insurerName' => $this->insuranceProvider?->text ?? '',
             'processInvolved' => $this->processInvolved,
@@ -202,7 +207,7 @@ class AutomationFailedJob implements ShouldQueue
 
         $distribution = array_unique(array_filter($distribution));
         if (! empty($distribution)) {
-            $cc['cyberdistribution'] = implode(',', $distribution);
+            $cc = $distribution;
         }
 
         return $cc;
@@ -228,7 +233,14 @@ class AutomationFailedJob implements ShouldQueue
             return null;
         }
 
-        return $quote->advisor->managers()->first()?->email;
+        $cyberManager = $quote->advisor
+            ->managers()
+            ->get()
+            ->first(function (User $manager) {
+                return $manager->isCyberManager();
+            });
+
+        return $cyberManager?->email;
     }
 
     private function getPaContactDetails(): array

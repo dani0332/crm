@@ -1013,7 +1013,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('check_route_access');
-    Route::get('trigger-failure-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerFailurePolicyIssuance'])->middleware('check_route_access');
 
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance']);
 
@@ -1024,10 +1023,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         // without plan id and payments
         // $policyIssuanceProcess = PolicyIssuance::where('id', 1682)->first();
         // with plan id and payments
-        $policyIssuanceProcess = PolicyIssuance::where('id', 1886)->first();
+        $policyIssuanceProcess = PolicyIssuance::where('id', 2041)->first();
 
         $policyIssuanceProcess->status = PolicyIssuanceEnum::PENDING_STATUS;
         $policyIssuanceProcess->completed_step = null;
+        $policyIssuanceProcess->message = null;
         $policyIssuanceProcess->save();
 
         PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation'); // ✅ Pass only the ID

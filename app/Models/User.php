@@ -509,4 +509,9 @@ class User extends Authenticatable implements AuditableContract
             ->where('is_primary', 1)
             ->where('status', 1);
     }
+
+    public function isCyberManager()
+    {
+        return $this->hasRole(RolesEnum::CyberManager);
+    }
 }
