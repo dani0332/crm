@@ -7,6 +7,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiBookPolicyService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
+use Database\Factories\DeviceQuoteFactory;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -29,7 +30,7 @@ afterEach(function () {
 
 describe('getStepsLockingStatus', function () {
     test('returns all steps editable when throughAutomation is true', function () {
-        $quote = createMockQuoteForBookPolicyTest(['policyIssuance' => null, 'insurer_api_status' => null]);
+        $quote = DeviceQuoteFactory::makeMock(['policyIssuance' => null, 'insurer_api_status' => null]);
 
         $result = $this->bookPolicyService->getStepsLockingStatus($quote, true);
 
@@ -39,7 +40,7 @@ describe('getStepsLockingStatus', function () {
     });
 
     test('returns all steps editable when no policy issuance exists', function () {
-        $quote = createMockQuoteForBookPolicyTest(['policyIssuance' => null, 'insurer_api_status' => null]);
+        $quote = DeviceQuoteFactory::makeMock(['policyIssuance' => null, 'insurer_api_status' => null]);
 
         $result = $this->bookPolicyService->getStepsLockingStatus($quote, false);
 
@@ -53,7 +54,7 @@ describe('getStepsLockingStatus', function () {
             'status' => PolicyIssuanceEnum::FAILED_STATUS,
             'completed_step' => null,
         ];
-        $quote = createMockQuoteForBookPolicyTest(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
+        $quote = DeviceQuoteFactory::makeMock(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
 
         $result = $this->bookPolicyService->getStepsLockingStatus($quote, false);
 
@@ -67,7 +68,7 @@ describe('getStepsLockingStatus', function () {
             'status' => PolicyIssuanceEnum::FAILED_STATUS,
             'completed_step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
         ];
-        $quote = createMockQuoteForBookPolicyTest(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
+        $quote = DeviceQuoteFactory::makeMock(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
 
         $result = $this->bookPolicyService->getStepsLockingStatus($quote, false);
 
@@ -80,7 +81,7 @@ describe('getStepsLockingStatus', function () {
             'status' => PolicyIssuanceEnum::FAILED_STATUS,
             'completed_step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
         ];
-        $quote = createMockQuoteForBookPolicyTest(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
+        $quote = DeviceQuoteFactory::makeMock(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
 
         $result = $this->bookPolicyService->getStepsLockingStatus($quote, false);
 
@@ -93,7 +94,7 @@ describe('getStepsLockingStatus', function () {
             'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
             'completed_step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
         ];
-        $quote = createMockQuoteForBookPolicyTest(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
+        $quote = DeviceQuoteFactory::makeMock(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
 
         $result = $this->bookPolicyService->getStepsLockingStatus($quote, false);
 
@@ -105,7 +106,7 @@ describe('getStepsLockingStatus', function () {
             'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
             'completed_step' => null,
         ];
-        $quote = createMockQuoteForBookPolicyTest(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
+        $quote = DeviceQuoteFactory::makeMock(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
 
         $result = $this->bookPolicyService->getStepsLockingStatus($quote, false);
 
@@ -119,7 +120,7 @@ describe('getStepsLockingStatus', function () {
             'status' => PolicyIssuanceEnum::COMPLETED_STATUS,
             'completed_step' => NgiEnum::STEP_BOOK_POLICY,
         ];
-        $quote = createMockQuoteForBookPolicyTest(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
+        $quote = DeviceQuoteFactory::makeMock(['policyIssuance' => $policyIssuance, 'insurer_api_status' => null]);
 
         $result = $this->bookPolicyService->getStepsLockingStatus($quote, false);
 
@@ -128,7 +129,7 @@ describe('getStepsLockingStatus', function () {
     });
 
     test('returns insurer_api_status in result', function () {
-        $quote = createMockQuoteForBookPolicyTest([
+        $quote = DeviceQuoteFactory::makeMock([
             'policyIssuance' => null,
             'insurer_api_status' => 'FAILED',
         ]);
@@ -162,20 +163,3 @@ describe('NgiResponseHandler integration', function () {
             ->and($response['data'])->toBe(['booking_id' => 123]);
     });
 });
-
-// Helper function for creating mock quote for book policy tests
-
-function createMockQuoteForBookPolicyTest(array $overrides = []): object
-{
-    $defaults = [
-        'id' => 1,
-        'code' => 'DEV-12345',
-        'policy_number' => 'NGI-POL-123',
-        'policyIssuance' => null,
-        'insurer_api_status' => null,
-    ];
-
-    $merged = array_merge($defaults, $overrides);
-
-    return (object) $merged;
-}
