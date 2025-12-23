@@ -1821,6 +1821,6 @@ if (! function_exists('getImcrmLink')) {
             default => null
         };
 
-        return "{$baseUrl}/quotes/{$quoteType}/{$quoteId}";
+        return $imcrmLink;
     }
 }
