@@ -1359,6 +1359,10 @@ class SendUpdateLogService
             'reason' => $notes ?? '',
             'insuredName' => $quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name,
             'insuranceCompany' => $quote?->insuranceProvider?->text ?? '',
+            'providerName' => $quote?->insuranceProvider?->text ?? '',
+            'coverage' => isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
+                ? number_format($quote->cyberPlanDetail->coverage)
+                : '-',
             'planName' => $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-',
             'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),

@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace App\Services\Quotes;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\UserNameEnum;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Models\PersonalQuote;
+use App\Models\User;
 use App\Services\CustomerInsuredService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
@@ -22,6 +27,8 @@ use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
+    private const CYBER_BOOKING_TEAM_EMAIL = 'production.approval.team@insurancemarket.ae';
+    private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
     public function __construct(
         private CustomerInsuredService $customerInsuredService
     ) {
@@ -365,5 +372,99 @@ class CyberQuoteService extends BaseQuoteService
 
         // Return null - base URL from getShowCommonData will be used
         return null;
+    }
+
+    public function applyAutomationFailureNotificationRules(
+        PersonalQuote $quote,
+        array $cc,
+        string $processInvolved,
+        ?string $recipientEmail,
+        ?string $recipientName
+    ): array {
+        if ((int) $quote->quote_type_id !== QuoteTypeId::Cyber) {
+            return [
+                'cc' => $cc,
+                'recipientEmail' => $recipientEmail,
+                'recipientName' => $recipientName,
+            ];
+        }
+
+        $distribution = $this->getCyberDistributionEmails();
+        $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
+
+        if ($isBookingFailure) {
+            [$recipientEmail, $recipientName] = $this->getPaContactDetails();
+        } elseif (! $recipientEmail && $quote?->advisor) {
+            $recipientEmail = $quote->advisor->email;
+            $recipientName = $quote->advisor->name;
+        }
+
+        if (! $recipientEmail) {
+            [$recipientEmail, $recipientName] = $this->getPaContactDetails();
+        }
+
+        if ($quote?->advisor?->email && $quote->advisor->email !== $recipientEmail) {
+            $distribution[] = $quote->advisor->email;
+        }
+
+        $advisorManagerEmail = $this->getAdvisorManagerEmail($quote);
+        if ($advisorManagerEmail && $advisorManagerEmail !== $recipientEmail) {
+            $distribution[] = $advisorManagerEmail;
+        }
+
+        $distribution = array_values(array_unique(array_filter($distribution)));
+        if (! empty($distribution)) {
+            $cc = $distribution;
+        }
+
+        return [
+            'cc' => $cc,
+            'recipientEmail' => $recipientEmail,
+            'recipientName' => $recipientName,
+        ];
+    }
+
+    private function getCyberDistributionEmails(): array
+    {
+        $configured = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_FAILURE_EMAIL, useCache: true);
+
+        if (empty($configured)) {
+            return [];
+        }
+
+        $emails = array_map('trim', explode(',', $configured));
+        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
+
+        return ! empty($emails) ? array_values($emails) : self::FALLBACK_CYBER_FAILURE_DISTRIBUTION;
+    }
+
+    private function getPaContactDetails(): array
+    {
+        // TODO: need to add OE user here; right now we don't have any from Business
+        $paUser = User::activeUser()
+            ->where('name', UserNameEnum::PA)
+            ->first();
+
+        if ($paUser && $paUser->email) {
+            return [$paUser->email, $paUser->name ?? self::CYBER_BOOKING_TEAM_NAME];
+        }
+
+        return [self::CYBER_BOOKING_TEAM_EMAIL, self::CYBER_BOOKING_TEAM_NAME];
+    }
+
+    private function getAdvisorManagerEmail(PersonalQuote $quote): ?string
+    {
+        if (! $quote?->advisor) {
+            return null;
+        }
+
+        $cyberManager = $quote->advisor
+            ->managers()
+            ->get()
+            ->first(function (User $manager) {
+                return $manager->isCyberManager();
+            });
+
+        return $cyberManager?->email;
     }
 }
