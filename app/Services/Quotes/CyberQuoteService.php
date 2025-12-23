@@ -29,14 +29,6 @@ class CyberQuoteService extends BaseQuoteService
 {
     private const CYBER_BOOKING_TEAM_EMAIL = 'production.approval.team@insurancemarket.ae';
     private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
-    private const FALLBACK_CYBER_FAILURE_DISTRIBUTION = [
-        'dt.system.notifications@insurancemarket.ae',
-        'cyber.enquiries@insurancemarket.ae',
-        'sandeep.sharma@insurancemarket.ae',
-        'diya.lekhwani@myalfred.com',
-        'digital.transformation.support@myalfred.com',
-    ];
-
     public function __construct(
         private CustomerInsuredService $customerInsuredService
     ) {
@@ -437,7 +429,7 @@ class CyberQuoteService extends BaseQuoteService
         $configured = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_FAILURE_EMAIL, useCache: true);
 
         if (empty($configured)) {
-            return self::FALLBACK_CYBER_FAILURE_DISTRIBUTION;
+            return [];
         }
 
         $emails = array_map('trim', explode(',', $configured));
