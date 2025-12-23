@@ -329,7 +329,7 @@ class LookupService extends BaseService
             return Lookup::byKey(LookupsEnum::CLAIM_TYPES->value)
                 ->active()
                 ->select('id', 'text', 'code')
-                ->orderBy('text')
+                ->orderBySortOrder()
                 ->get()
                 ->toArray();
         });

@@ -315,6 +315,7 @@ class LookupSeeder extends Seeder
         ], [
             'description' => 'Claims for damage to the insured vehicle caused by the policyholder or covered under comprehensive insurance.',
             'is_active' => 1,
+            'sort_order' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -326,6 +327,7 @@ class LookupSeeder extends Seeder
         ], [
             'description' => 'Claims that can be recovered from a third party or through subrogation.',
             'is_active' => 1,
+            'sort_order' => 2,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -337,6 +339,7 @@ class LookupSeeder extends Seeder
         ], [
             'description' => 'Claims where the cause of damage is unknown or unclear.',
             'is_active' => 1,
+            'sort_order' => 3,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -348,6 +351,7 @@ class LookupSeeder extends Seeder
         ], [
             'description' => 'Claims for damage caused by water, flooding, or water-related incidents.',
             'is_active' => 1,
+            'sort_order' => 4,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -370,6 +374,7 @@ class LookupSeeder extends Seeder
         ], [
             'description' => 'Claims for damage caused by fire or arson.',
             'is_active' => 1,
+            'sort_order' => 5,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -381,6 +386,7 @@ class LookupSeeder extends Seeder
         ], [
             'description' => 'Claims specifically for windscreen damage or replacement.',
             'is_active' => 1,
+            'sort_order' => 6,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

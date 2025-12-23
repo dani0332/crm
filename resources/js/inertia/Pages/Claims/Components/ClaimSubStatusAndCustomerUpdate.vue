@@ -51,7 +51,6 @@ const updateClaimSubStatusAndCustomer = async isValid => {
 
     // Show success notification
     if (response.data.success) {
-      claimSubStatusAndCustomerForm.reset();
       notification.success({
         title: response.data.message || 'Notification sent successfully',
         position: 'top',
@@ -59,10 +58,8 @@ const updateClaimSubStatusAndCustomer = async isValid => {
     }
 
     // Partial reload of just the claim data while preserving scroll
-    router.reload({
-      only: ['claim', 'dropdowns'],
+    router.visit(route('claims.show', props.claim?.uuid), {
       preserveScroll: true,
-      preserveState: true,
     });
   } catch (error) {
     console.error('Error sending notification:', error);

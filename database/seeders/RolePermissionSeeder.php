@@ -329,7 +329,30 @@ class RolePermissionSeeder extends Seeder
 
         $claimsPermissions = PermissionsEnum::getClaimsPermissions();
 
-        foreach ($claimsPermissions as $permissionName) {
+        foreach ($claimsPermissions['claimLead'] as $permissionName) {
+            $permission = Permission::firstOrCreate([
+                'name' => $permissionName,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    info("Permission {$permission->name} assigned to {$role->name} role");
+                } else {
+                    info("{$role->name} role already has permission {$permission->name}");
+                }
+            }
+
+        }
+
+        $roles = Role::whereIn('name', [RolesEnum::CLAIM_MANAGER])->get();
+
+
+        foreach ($claimsPermissions['claimManager'] as $permissionName) {
             $permission = Permission::firstOrCreate([
                 'name' => $permissionName,
                 'guard_name' => 'web',

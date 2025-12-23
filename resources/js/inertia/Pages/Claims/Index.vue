@@ -184,6 +184,15 @@ const isPendingClaimRequestType = ref(
 
 function searchClaims(isValid) {
   if (isValid) {
+    // Validate date range before proceeding
+    if (!validateDateRange()) {
+      notification.error({
+        message: dateRangeError.value,
+        position: 'top',
+      });
+      return;
+    }
+
     filters.page = 1;
     Object.keys(filters).forEach(
       key =>
@@ -217,6 +226,20 @@ function searchClaims(isValid) {
       preserveScroll: true,
       onBefore: () => (loader.table = true),
       onSuccess: () => (loader.table = false),
+      onError: (errors) => {
+        loader.table = false;
+
+        // Extract and display backend validation errors
+        const errorMessages = Object.values(errors).flat();
+        const errorMessage = errorMessages.length > 0
+          ? errorMessages.join(' ')
+          : 'Failed to search claims.';
+
+        notification.error({
+          message: errorMessage,
+          position: 'top',
+        });
+      },
     });
     NProgress.done();
   }
@@ -237,6 +260,15 @@ function onReset() {
 const exportLoader = ref(false);
 
 const onDataExport = exportType => {
+  // Validate date range first
+  if (!validateDateRange()) {
+    notification.error({
+      message: dateRangeError.value,
+      position: 'top',
+    });
+    return;
+  }
+
   // Check date range restriction for created dates
   if (filters.created_at_start && filters.created_at_end) {
     let diff, maxLimit, maxPeriod;
@@ -367,6 +399,50 @@ const canExport = computed(() => {
   );
 });
 
+// Validate date range for created_at filters
+const dateRangeError = ref('');
+
+const validateDateRange = () => {
+  dateRangeError.value = '';
+
+  if (filters.created_at_start && filters.created_at_end) {
+    const startDate = new Date(filters.created_at_start);
+    const endDate = new Date(filters.created_at_end);
+
+    if (startDate > endDate) {
+      dateRangeError.value = 'The end date must be equal to or after the start date.';
+      return false;
+    }
+  }
+
+  return true;
+};
+
+// Get backend validation errors for date fields
+const backendDateError = computed(() => {
+  const errors = page.props.errors || {};
+  return errors.created_at_end || errors.created_at_start || '';
+});
+
+// Check if any filters (excluding availableFilters) are filled
+const hasActiveFilters = computed(() => {
+  const excludeKeys = Object.keys(availableFilters);
+
+  return Object.keys(filters).some(key => {
+    // Skip keys from availableFilters
+    if (excludeKeys.includes(key)) {
+      return false;
+    }
+
+    // Check if value is not null, undefined, empty string, or empty array
+    const value = filters[key];
+    return value !== null &&
+           value !== undefined &&
+           value !== '' &&
+           !(Array.isArray(value) && value.length === 0);
+  });
+});
+
 // Initialize car model options on mount if car make is already selected
 onMounted(() => {
   if (filters.car_make && (isCarLOB.value || isBikeLOB.value)) {
@@ -414,6 +490,16 @@ watch(
       isPendingClaimRequestType.value = false;
     } else {
       isPendingClaimRequestType.value = true;
+    }
+  },
+);
+
+// Clear date range error when dates change
+watch(
+  () => [filters.created_at_start, filters.created_at_end],
+  () => {
+    if (dateRangeError.value) {
+      dateRangeError.value = '';
     }
   },
 );
@@ -482,6 +568,7 @@ watch(
           label="Created Date Start "
           placeholder="Select Date From"
           format="yyyy-MM-dd"
+          :error="backendDateError"
         />
         <DatePicker
           v-model="filters.created_at_end"
@@ -489,6 +576,7 @@ watch(
           label="Created Date End "
           placeholder="Select Date To"
           format="yyyy-MM-dd"
+          :error="dateRangeError || backendDateError"
         />
 
         <x-select
@@ -661,6 +749,7 @@ watch(
             size="sm"
             color="#ff5e00"
             :loading="loader.table"
+            :disabled="!hasActiveFilters"
             type="submit"
             >Search</x-button
           >
@@ -669,6 +758,7 @@ watch(
             color="primary"
             @click.prevent="onReset"
             :loading="loader.table"
+            :disabled="!hasActiveFilters"
           >
             Reset
           </x-button>

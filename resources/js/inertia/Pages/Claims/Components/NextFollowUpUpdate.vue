@@ -278,6 +278,7 @@ const updateNextFollowUp = () => {
                   nextFollowUpForm.errors.next_follow_up_date ||
                   validationErrors.next_follow_up_date
                 "
+                :utc="false"
                 placeholder="Please select follow-up date & time"
                 class="w-full"
                 required
@@ -311,7 +312,7 @@ const updateNextFollowUp = () => {
           <x-divider class="my-4" />
           <div class="flex justify-end">
             <x-button
-              :disabled="isSubmitDisabled"
+              :disabled="isSubmitDisabled || !nextFollowUpForm.isDirty"
               :loading="nextFollowUpForm.processing"
               type="submit"
               color="emerald"

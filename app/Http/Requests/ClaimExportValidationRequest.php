@@ -43,7 +43,7 @@ class ClaimExportValidationRequest extends FormRequest
     {
         return [
             'created_at_start' => 'nullable|date',
-            'created_at_end' => 'nullable|date',
+            'created_at_end' => 'nullable|date|after_or_equal:created_at_start',
             'exportType' => 'nullable|in:email,download',
             'subject' => 'nullable|string|max:255',
             'exportTitle' => 'nullable|string|max:100',
@@ -110,6 +110,7 @@ class ClaimExportValidationRequest extends FormRequest
         return [
             'created_at_start.date' => 'The start date must be a valid date.',
             'created_at_end.date' => 'The end date must be a valid date.',
+            'created_at_end.after_or_equal' => 'The end date must be equal to or after the start date.',
             'exportType.in' => 'The export type must be either email or download.',
             'model_year.min' => 'The model year must be at least 1900.',
             'model_year.max' => 'The model year cannot be more than next year.',
