@@ -187,7 +187,7 @@ class BikeQuoteController extends Controller
             })->values();
         }
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BIKE->id());
         $personalPlans = PersonalPlanRepository::get();

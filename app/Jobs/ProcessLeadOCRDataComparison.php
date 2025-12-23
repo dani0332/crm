@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Http;
 use App\Enums\OCRSourceEnum;
 use App\Models\Nationality;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 
 class ProcessLeadOCRDataComparison implements ShouldQueue
 {
@@ -42,8 +43,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     public function getCarDocuments()
     {
         $uuid = request('uuid');
-        $startDate = Carbon::parse('2025-10-01')->startOfMonth();
-        $endDate = Carbon::parse('2025-12-31')->endOfMonth();
+        $startDate = Carbon::parse('2025-03-01')->startOfMonth();
+        $endDate = Carbon::parse('2025-03-31')->endOfMonth();
 
         $documentTypeCodes = DocumentType::query()
             ->active()
@@ -641,11 +642,12 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $refId = $this->getRefId($quote);
         $isEcom = false;
 
-        // $docUrl = $this->quoteDocumentService->getDocumentUrl($document->doc_url);
+         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
+         //echo $docUrl; exit;
         // $docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
-        $encodedFileName = urlencode($document->doc_url);
+        //$encodedFileName = urlencode($document->doc_url);
         //$docUrl = Storage::disk('azureIM')->temporaryUrl($encodedFileName, now()->addMinutes(20));
-        $docUrl = 'https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/'.$encodedFileName;
+        //$docUrl = 'https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/'.$encodedFileName;
         //echo $docUrl; exit;
 
         if (! $docUrl) {

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EnvEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\BranchOverrides\BranchOverrideDetailsExport;
 use App\Models\ApplicationStorage;
@@ -81,8 +82,11 @@ class MisReportJob implements ShouldQueue
         $fileDate = now()->format(config('constants.MISREPORT_FILENAME_DATE_FORMAT'));
         $attachment = $this->getAttachment($fileDate);
         $reportDate = now()->format(config('constants.MISREPORT_SUBJECT_DATE_FORMAT'));
+        $subject = "Interim AUH→DXB Override – Weekly MIS Report | <$reportDate>";
         $env = config('constants.APP_ENV');
-        $subject = "$env | Interim AUH→DXB Override – Weekly MIS Report | <$reportDate>";
+        if ($env != EnvEnum::PRODUCTION) {
+            $subject = "$env | $subject";
+        }
 
         $emailData = [
             'subject' => $subject,
