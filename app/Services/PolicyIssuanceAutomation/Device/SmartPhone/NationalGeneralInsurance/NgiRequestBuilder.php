@@ -62,8 +62,8 @@ class NgiRequestBuilder
                     : Carbon::now()->addYear()->format('Y-m-d'),
             ],
         ];
-        unset($payload['payment_reference_number']); // TODO:: NGI:: Rucha ask to send payload without this field which is not according to the FRD or documentation discussion link is https://chat.google.com/room/AAQAZXb03Dc/a6vYYW81pkM/I_2Yfeqb1xc?cls=10
-
+        // unset($payload['payment_reference_number']); // TODO:: NGI:: Rucha ask to send payload without this field which is not according to the FRD or documentation discussion link is https://chat.google.com/room/AAQAZXb03Dc/a6vYYW81pkM/I_2Yfeqb1xc?cls=10
+        $payload['payment_reference_number'] = ''; // TODO:: NGI:: Rucha ask to make it empty string
         return $payload;
     }
 
