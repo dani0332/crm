@@ -195,7 +195,7 @@ return [
             ],
             'supervisor-uat-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared'],
+                'queue' => ['shared', 'lead_ocr_data_comparison'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -233,7 +233,7 @@ return [
             ],
             'supervisor-stg-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared'],
+                'queue' => ['shared', 'lead_ocr_data_comparison'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -251,7 +251,7 @@ return [
             ],
             'supervisor-dev-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared'],
+                'queue' => ['shared', 'lead_ocr_data_comparison'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -269,7 +269,7 @@ return [
             ],
             'supervisor-test-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared'],
+                'queue' => ['shared', 'lead_ocr_data_comparison'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -288,7 +288,7 @@ return [
             ],
             'supervisor-local-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared'],
+                'queue' => ['shared', 'lead_ocr_data_comparison'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
