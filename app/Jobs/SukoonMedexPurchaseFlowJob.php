@@ -58,9 +58,9 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
             $sukoonMedexService = app(SukoonMedexService::class);
             $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
             $sukoonMedexService->processPurchaseFlow($this->isSendEmail);
-        } catch (Exception $exception) {
+        } catch (Throwable $e) {
 
-            LoggerService::info("{$this->logPrefix} Failed", extra: [...$this->logExtra, 'exception' => $exception->getMessage()]);
+            LoggerService::info("{$this->logPrefix} Failed", extra: [...$this->logExtra, 'exception' => $e->getMessage()]);
             $this->sendFailureEmail();
         }
     }

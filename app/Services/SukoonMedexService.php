@@ -23,11 +23,11 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class SukoonMedexService
 {
@@ -73,7 +73,7 @@ class SukoonMedexService
             $response = $this->request("/policy/{$this->certificateNumber}", 'get', headers: $headers)->json();
 
             return $response;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -110,7 +110,7 @@ class SukoonMedexService
             $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
             $this->providerId = InsuranceProvider::where('code', InsuranceProviderEnum::OIC->value)->value('id');
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -209,7 +209,7 @@ class SukoonMedexService
                     ->delay(now()->addMinutes(1));
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -289,7 +289,7 @@ class SukoonMedexService
             }
 
             return $quoteDocument;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             LoggerService::error("Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->currentQuote->uuid}. Error: ".$e->getMessage());
 
             return false;
@@ -327,7 +327,7 @@ class SukoonMedexService
             }
 
             return false;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
 
             return false;
@@ -347,7 +347,7 @@ class SukoonMedexService
 
             $this->handleJobSuccess();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -432,7 +432,7 @@ class SukoonMedexService
             $viewQuotePolicyResponse = $this->viewQuotePolicy();
 
             return $this->paymentToken = $viewQuotePolicyResponse['payments'][0]['payment_token'] ?? null;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -513,7 +513,7 @@ class SukoonMedexService
 
             return $savedDocuments;
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -620,7 +620,7 @@ class SukoonMedexService
 
             return $response;
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logRequest('failed', $e->getMessage(), $payload, $endPoint, $responseData, $parentFunction);
             throw $e;
         }
@@ -842,7 +842,7 @@ class SukoonMedexService
 
             return $response;
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -872,7 +872,7 @@ class SukoonMedexService
             // policy_status => SukoonPurchaseFlowEnum::STATUS_QUOTED
             return ['quote_policy' => $result['policy_number'], 'policy_status' => $result['policy_status']];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -939,7 +939,7 @@ class SukoonMedexService
                 'amount_disclaimer_text' => $pluckedFieldsValue['amount_disclaimer_text'],
             ];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1017,7 +1017,7 @@ class SukoonMedexService
                 'policy_status' => $responsePolicyData['policy_status'], // SukoonPurchaseFlowEnum::STATUS_QUOTED
             ];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1037,7 +1037,7 @@ class SukoonMedexService
             );
 
             return true;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1070,7 +1070,7 @@ class SukoonMedexService
 
             return ['payment_token' => $result['token'] ?? null];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1105,7 +1105,7 @@ class SukoonMedexService
 
             return ['certificate_number' => $result['policy_number'], 'policy_status' => EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1118,7 +1118,7 @@ class SukoonMedexService
             }
 
             $this->request('/policy/'.$this->certificateNumber.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1131,7 +1131,7 @@ class SukoonMedexService
             }
 
             $this->request('/payment/'.$this->paymentToken.'/tax-invoice', 'get', headers: ['x-session-id' => $this->sessionId]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1156,7 +1156,7 @@ class SukoonMedexService
 
             return $result->json();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1240,7 +1240,7 @@ class SukoonMedexService
 
             return $savedDocuments;
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1325,7 +1325,7 @@ class SukoonMedexService
 
                 return false;
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logFailure('downloadDocument', $e->getMessage(), [...$logContext, 'doc_code' => $docCode]);
             throw new EpEcbException('downloadDocument ERROR: '.$e->getMessage());
         }
@@ -1344,7 +1344,7 @@ class SukoonMedexService
 
             return response()->json(['success' => $filePathAzure, 'doc_name' => $docName, 'doc_url' => $docUrl]);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
