@@ -39,6 +39,7 @@ class CarQuoteFactory extends Factory
             'device' => $this->faker->randomElement(['web']),
             'premium' => 1000,
             'insurance_provider_id' => $carPlan->provider_id,
+            'customer_id' => 1,
             'plan_id' => $carPlan->id,
             'quote_status_id' => null,
             'payment_status_id' => null,
@@ -97,6 +98,7 @@ class CarQuoteFactory extends Factory
         
         // Build quote attributes
         $quoteAttributes = array_merge([
+            'customer_id' => 1,
             'uuid' => $uuid,
             'code' => $code,
             'first_name' => $this->faker->firstName(),
