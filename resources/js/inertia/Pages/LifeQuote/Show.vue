@@ -1274,8 +1274,10 @@ const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const isMetLife = item => {
   if (!item) return false;
 
-  return item.providerCode === insuranceProviderCodeEnum?.MTL 
-    && item.instantPolicy === true; // only for metlife instant policy
+  return (
+    item.providerCode === insuranceProviderCodeEnum?.MTL &&
+    item.instantPolicy === true
+  ); // only for metlife instant policy
 };
 
 const canSelectMetLifePlan = computed(() => {
