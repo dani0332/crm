@@ -13,8 +13,8 @@ use App\Jobs\ProcessLeadOCRDataComparison;
 class RetryOcrDocumentsCommand extends Command
 {
     protected $signature = 'comparison:ocr-lead
-                            {--start-date= : Inclusive start date (YYYY-MM-DD)}
-                            {--end-date= : Inclusive end date (YYYY-MM-DD)}';
+    {start_date : Inclusive start date (YYYY-MM-DD)}
+    {end_date : Inclusive end date (YYYY-MM-DD)}';
 
     protected $description = 'OCR lead comparison command';
 
@@ -25,11 +25,11 @@ class RetryOcrDocumentsCommand extends Command
 
     public function handle(): int
     {
-        $startDateInput = $this->option('start-date');
-        $endDateInput = $this->option('end-date');
+        $startDateInput = $this->argument('start_date');
+        $endDateInput = $this->argument('end_date');
 
-        $startDate = $this->parseDateOption($startDateInput, 'start-date');
-        $endDate = $this->parseDateOption($endDateInput, 'end-date');
+        $startDate = $this->parseDateOption($startDateInput, 'start_date');
+        $endDate = $this->parseDateOption($endDateInput, 'end_date');
 
         if ($startDate->gt($endDate)) {
             $this->error('Start date must be on or before end date.');
@@ -43,7 +43,7 @@ class RetryOcrDocumentsCommand extends Command
             $endDate->toDateString()
         ));
 
-        ProcessLeadOCRDataComparison::dispatch($startDate, $endDate)->onQueue('lead_ocr_data_comparison');
+        //ProcessLeadOCRDataComparison::dispatch($startDate, $endDate)->onQueue('lead_ocr_data_comparison');
         //$stats = $this->ocrDocumentRetryService->retryCarDocuments($startDate, $endDate);
 
         return Command::SUCCESS;

@@ -27,6 +27,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     protected  $startDate;
     protected  $endDate;
     protected  $uuid; 
+    protected  $ocrReponseStructure;
 
     public function __construct($uuid = null,  $startDate, $endDate)
     {
@@ -45,7 +46,6 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     public function getCarDocuments()
     {
-        $uuid = request('uuid');
         //$startDate = Carbon::parse('2025-03-01')->startOfMonth();
         //$endDate = Carbon::parse('2025-03-31')->endOfMonth();
 
@@ -103,7 +103,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('id');
 
         LoggerService::info('getCarDocuments - Car quotes with OCR documents fetched', extra: [
-            'uuid_filter' => $uuid,
+            'uuid_filter' => $this->uuid,
             'document_type_codes' => $documentTypeCodes,
             'start_date' => $this->startDate ? $this->startDate->toDateString() : null,
             'end_date' => $this->endDate ? $this->endDate->toDateString() : null,
@@ -113,8 +113,6 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         ]);
 
         $this->processOcrDocumentsForLeads($carQuotes, $documentTypeCodes);
-
-        return apiResponse(null, Response::HTTP_OK, 'OCR documents reprocessing job has been completed');
     }
 
     private function processOcrDocumentsForLeads($carQuotes, array $documentTypeCodes): void
@@ -462,8 +460,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $commissionVatApplicable = $ocrData->commission['baseAmount'] ?? $quote->payment?->commission_vat_applicable;
         $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05 : 0);
         $commissionWithoutVat = $commissionTotal - $commissionVat;
-        $premiumWithoutVat = $quote->payment->total_price / $commissionPercentageDivisor;
-        $commissionPercentage = roundNumber((($commissionWithoutVat / $premiumWithoutVat) * 100)) ?? $this->quote->payment?->comission_percentage;
+        $premiumWithoutVat = $quote->payment?->total_price / $commissionPercentageDivisor;
+        $commissionPercentage = roundNumber((($commissionWithoutVat / $premiumWithoutVat) * 100)) ?? $quote->payment?->comission_percentage;
 
         return [
             'commission_vat' => $commissionVat,
