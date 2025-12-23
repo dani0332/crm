@@ -664,11 +664,15 @@ class SageApiService
 
         $quoteTypeId = QuoteTypes::getIdFromValue($request->model_type) ?? $quote->quote_type_id;
 
-        $hasBranchAssignment = app(BranchAssignmentService::class)->hasBranchAssignment($quote, $quoteTypeId);
-        if (! $hasBranchAssignment) {
-            return ['status' => false, 'message' => 'Branch assignment missing. Please ensure '.
-                ($quoteTypeId === QuoteTypeId::Health ? 'Emirate of visa or advisor branch' : 'advisor branch').
-                ' is configured OR contact admin.'];
+        $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($quote, $quoteType);
+        if ($shouldValidateBranch == true) {
+            
+            $hasBranchAssignment = app(BranchAssignmentService::class)->hasBranchAssignment($quote, $quoteTypeId);
+            if ($hasBranchAssignment == false) {
+                return ['status' => false, 'message' => 'Branch assignment missing. Please ensure '.
+                    ($quoteTypeId === QuoteTypeId::Health ? 'Emirate of visa or advisor branch' : 'advisor branch').
+                    ' is configured OR contact admin.'];
+            }
         }
 
         if (in_array($quoteTypeId, EmbeddedProductRepository::ALLOWED_LOBS)) {

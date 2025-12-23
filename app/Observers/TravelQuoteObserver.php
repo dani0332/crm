@@ -24,6 +24,8 @@ use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Enums\BranchEnum;
 
 class TravelQuoteObserver
 {
@@ -111,11 +113,19 @@ class TravelQuoteObserver
                 app(BranchAssignmentService::class)->saveBranchOverride($travelQuote, QuoteTypeId::Travel);
                 TravelQuote::withoutEvents(function () use ($travelQuote, &$dirty) {
 
-                    $branch = app(BranchAssignmentService::class)->getBranch($travelQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+                    $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($travelQuote, QuoteTypes::TRAVEL->value);
+                    $branch_id = null;
+                    if ($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($travelQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+                    
                     $travelQuote->update([
-                        'branch_id' => $branch?->id,
+                        'branch_id' => $branch_id,
                     ]);
-                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                    $dirty = [...$dirty, 'branch_id' => $branch_id];
                 });
             } catch (Exception $e) {
                 LoggerService::error('TravelQuoteObserver - save branch data failed', [
