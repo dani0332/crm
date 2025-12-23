@@ -20,8 +20,8 @@ trait QueryBuildable
             $parsedDate = Carbon::parse($date);
         } catch (\Throwable $e) {
             LoggerService::warning('QueryBuildable::parseDate invalid date', [
-                'date' => $date
-            ],exception: $e);
+                'date' => $date,
+            ], exception: $e);
 
             return null;
         }
