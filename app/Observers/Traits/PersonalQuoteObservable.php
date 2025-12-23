@@ -28,6 +28,8 @@ use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Enums\BranchEnum;
 
 trait PersonalQuoteObservable
 {
@@ -185,9 +187,18 @@ trait PersonalQuoteObservable
             try {
                 app(BranchAssignmentService::class)->saveBranchOverride($personalQuote, $personalQuote->quote_type_id);
                 PersonalQuote::withoutEvents(function () use ($personalQuote) {
-                    $branch = app(BranchAssignmentService::class)->getBranch($personalQuote?->advisor?->primaryBranch?->branch_id, $personalQuote->quote_type_id);
+
+                    $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($personalQuote, QuoteTypes::getName($personalQuote->quote_type_id)->value);
+                    $branch_id = null;
+                    if($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($personalQuote?->advisor?->primaryBranch?->branch_id, $personalQuote->quote_type_id);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+                    
                     $personalQuote->update([
-                        'branch_id' => $branch?->id,
+                        'branch_id' => $branch_id,
                     ]);
                 });
             } catch (Exception $e) {
