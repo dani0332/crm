@@ -104,7 +104,6 @@ const filterkeys = () => {
     ),
     activePolicies: filters.reportCategory === 'Active Policies',
     lobs: !(filters.reportCategory !== 'Sales Summary'),
-    branch: !(filters.reportCategory !== 'Sales Summary'),
   };
 
   if (filterConditions.policyExpiredDate) delete filters.policyExpiredDate;
@@ -112,7 +111,6 @@ const filterkeys = () => {
   if (filterConditions.paymentDueDate) delete filters.paymentDueDate;
   if (filterConditions.paymentDate) delete filters.paymentDate;
   if (filterConditions.lobs) delete filters.lob;
-  if (filterConditions.branch) delete filters.branch;
 };
 
 const loaders = reactive({
@@ -935,7 +933,7 @@ watch(
         />
       </x-field>
       
-      <div v-if="filters.reportCategory != 'Sales Summary'">
+      <div>
         <x-tooltip position="top">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
