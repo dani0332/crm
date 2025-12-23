@@ -2,16 +2,21 @@
 
 namespace Tests\Helpers\Payments;
 
+use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentCollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\User;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class PaymentTestHelper
 {
@@ -309,6 +314,127 @@ class PaymentTestHelper
             ->and($paymentSplit->sr_no)->toBe(1)
             ->and($paymentSplit->payment_method)->toBe(PaymentMethodsEnum::CreditCard)
             ->and($paymentSplit->payment_status_id)->toBe(PaymentStatusEnum::NEW);
+    }
+
+    /**
+     * Assert that a payment split was approved correctly.
+     *
+     * @param PaymentSplits $paymentSplit The payment split to validate
+     * @param float $expectedCollectionAmount The expected collection amount
+     * @param string|null $expectedBankReferenceNumber The expected bank reference number (nullable)
+     * @param string|null $expectedInsurerReceiptNumber The expected insurer receipt number (nullable)
+     * @param int $expectedUserId The expected user ID who approved the payment
+     * @param float|null $actualAmount The actual amount (used to determine if status should be PARTIALLY_PAID)
+     * @return void
+     */
+    public static function assertPaymentSplitApprovedCorrectly(
+        PaymentSplits $paymentSplit,
+        float $expectedCollectionAmount,
+        ?string $expectedInsurerReceiptNumber,
+        int $expectedUserId,
+        ?float $actualAmount = null
+    ): void {
+        // Determine expected payment status
+        $expectedPaymentStatus = PaymentStatusEnum::PAID;
+        if ($actualAmount && $actualAmount > $expectedCollectionAmount) {
+            $expectedPaymentStatus = PaymentStatusEnum::PARTIALLY_PAID;
+        }
+
+        expect((float) $paymentSplit->collection_amount)->toBe((float) $expectedCollectionAmount)
+            ->and($paymentSplit->payment_status_id)->toBe($expectedPaymentStatus)
+            ->and($paymentSplit->payment_allocation_status)->toBe(\App\Enums\PaymentAllocationStatus::NOT_ALLOCATED)
+            ->and($paymentSplit->verified_at)->not->toBeNull()
+            ->and($paymentSplit->verified_by)->toBe($expectedUserId);
+
+        if ($expectedInsurerReceiptNumber !== null) {
+            expect($paymentSplit->insurer_receipt_number)->toBe($expectedInsurerReceiptNumber);
+        }
+    }
+
+    /**
+     * Assert that a master payment was updated correctly after split payment approval.
+     *
+     * @param Payment $payment The payment to validate
+     * @param float $expectedCapturedAmount The expected total captured_amount after approval
+     * @return void
+     */
+    public static function assertPaymentCapturedAmountUpdatedCorrectly(
+        Payment $payment,
+        float $expectedCapturedAmount
+    ): void {
+        expect((float) $payment->captured_amount)->toBe((float) $expectedCapturedAmount)
+            ->and($payment->payment_allocation_status)->toBe(\App\Enums\PaymentAllocationStatus::NOT_ALLOCATED);
+    }
+
+    public static function buildApprovePaymentPayload(CarQuote $carQuote, PaymentSplits $paymentSplit): array {
+        $approvePayload = [
+            'splitPaymentId' => $paymentSplit->id,
+            'is_approved' => true,
+            'is_declined' => false,
+            'modelType' => QuoteTypes::CAR->value,
+            'quote_id' => $carQuote->id,
+            'plan_id' => $carQuote->plan_id,
+            'customer_id' => $carQuote->customer_id,
+            'collection_amount' => (float) $paymentSplit->payment_amount, // Ensure numeric, not string
+            'collection_type' => PaymentCollectionTypeEnum::INSURER,
+            'bank_reference_number' => 'TEST-BANK-REF-123',
+            'insurer_receipt_number' => 'INS-REC-' . $paymentSplit->code,
+            'actual_amount' => (float) $paymentSplit->payment_amount,
+            'approved_document_model' => [],
+            'declined_reason' => null,
+            'declined_custom_reason' => null,
+            'send_update_id' => null,
+        ];
+
+        return $approvePayload;
+    }
+
+    /**
+     * Set up payment-related permissions for testing.
+     * Creates and assigns required permissions to the Admin role and user.
+     * This includes permissions needed for payment approval/decline operations.
+     *
+     * @param User $user The user to assign permissions to
+     * @return void
+     */
+    public static function setupPaymentPermissions(User $user): void
+    {
+        // Required permissions for payment operations
+        // These permissions are checked in SplitPaymentUpdateRequest validation
+        $permissions = [
+            PermissionsEnum::PAYMENT_VERIFICATION_COLLECTED_BY_INSURER, // Required for insurer collection type approval
+            PermissionsEnum::PAYMENT_VERIFICATION_COLLECTED_BY_BROKER,  // Required for broker collection type approval
+            PermissionsEnum::INPL_APPROVER,                              // Required for INPL payment method approval
+        ];
+
+        // Get or create Admin role on SQLite connection
+        $adminRole = Role::on('sqlite')->firstOrCreate(
+            ['name' => \App\Enums\RolesEnum::Admin, 'guard_name' => 'web'],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+
+        // Create and assign each permission
+        foreach ($permissions as $permissionName) {
+            // Create permission on SQLite connection
+            $permission = Permission::on('sqlite')->firstOrCreate(
+                ['name' => $permissionName, 'guard_name' => 'web'],
+                ['created_at' => now(), 'updated_at' => now()]
+            );
+
+            // Assign permission to Admin role
+            $adminRole->givePermissionTo($permission);
+
+
+            // Assign permission directly to user as well
+            $user->refresh();
+            $user->givePermissionTo($permission);
+        }
+
+        // Clear permission cache to ensure permissions are available immediately
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // Refresh user to ensure permissions are loaded
+        $user->refresh();
     }
 }
 
