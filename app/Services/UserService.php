@@ -114,7 +114,7 @@ class UserService extends BaseService
         return User::whereHas('managers', function ($query) use ($userId) {
             $query->where('users.id', $userId);
         })
-        ->select('name', 'email')
+        ->select('id','name', 'email')
         ->get();
     }
 

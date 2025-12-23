@@ -357,7 +357,11 @@ class UserController extends Controller
             if ($subordinates->isNotEmpty()) {
                 /** @var User $currentUser */
                 $currentUser = auth()->user();
-                SendManagerDeactivationAttemptEmailJob::dispatch($user, $subordinates, $currentUser);
+                SendManagerDeactivationAttemptEmailJob::dispatch(
+                    $user->id,
+                    $subordinates->pluck('id')->all(),
+                    $currentUser->id
+                );
 
                 $subordinateList = $subordinates->map(fn ($subordinate) => $subordinate->name.' ('.$subordinate->email.')')->implode(', ');
 

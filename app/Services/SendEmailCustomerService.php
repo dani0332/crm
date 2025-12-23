@@ -2027,10 +2027,12 @@ class SendEmailCustomerService extends BaseService
         }
 
         $emailData = (object)[
-            'itSupportEmail' => "itsupport@afia.ae",
-            'managerName' => $manager->name,
-            'managerEmail' => $manager->email,
-            'managerId' => $manager->id,
+            'recipientEmail' => "itsupport@afia.ae",
+            'recipientName' => "IT Support AFIA",
+            'name' => $manager->name,
+            'email' => $manager->email,
+            'managerEmails' => collect($manager->managers)->pluck('email')->implode(','),
+            // 'managerId' => $manager->id,
             'subordinatesCount' => count($subordinates),
             'subordinates' => collect($subordinates)->map(function ($sub) {
                 return [
@@ -2046,6 +2048,7 @@ class SendEmailCustomerService extends BaseService
         LoggerService::info('Sending manager deactivation attempt email via Bird', [
             'manager_id' => $manager->id,
             'attempted_by' => $attemptedBy->id,
+            'emailData' => $emailData
         ]);
 
         // app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);

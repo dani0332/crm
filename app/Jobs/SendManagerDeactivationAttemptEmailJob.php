@@ -11,7 +11,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Collection;
 
 /**
  * SendManagerDeactivationAttemptEmailJob
@@ -25,27 +24,23 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
 
     public $tries = 3;
     public $timeout = 60;
-    
-    private $managerUser;
-    private $subordinates;
-    private $attemptedBy;
+
+    private int $managerUserId;
+    private array $subordinateIds;
+    private int $attemptedByUserId;
 
     /**
      * Create a new job instance.
      *
-     * @param  User  $managerUser
-     * @param  array|Collection  $subordinates
-     * @param  User  $attemptedBy
+     * @param  int  $managerUserId
+     * @param  array  $subordinateIds
+     * @param  int  $attemptedByUserId
      */
-    public function __construct(User $managerUser, $subordinates, User $attemptedBy)
+    public function __construct(int $managerUserId, array $subordinateIds, int $attemptedByUserId)
     {
-        $this->managerUser = $managerUser->only(['id', 'name', 'email']);
-        // Convert collection to array of objects with necessary properties to save space
-        $this->subordinates = $subordinates instanceof Collection
-            ? $subordinates->map(fn($u) => (object)['id' => $u->id, 'name' => $u->name, 'email' => $u->email])->toArray()
-            : $subordinates;
-
-        $this->attemptedBy = $attemptedBy->only(['id', 'name', 'email']);
+        $this->managerUserId = $managerUserId;
+        $this->subordinateIds = array_values(array_unique(array_map('intval', $subordinateIds)));
+        $this->attemptedByUserId = $attemptedByUserId;
         $this->onQueue('shared');
     }
 
@@ -55,27 +50,56 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            // Convert arrays back to objects for compatibility with service method
-            $managerUser = (object) $this->managerUser;
-            $attemptedBy = (object) $this->attemptedBy;
+            $managerUser = User::query()
+                ->with(['managers' => fn ($query) => $query->select('user_manager.id', 'email')])
+                ->select(['id', 'name', 'email'])
+                ->find($this->managerUserId);
+
+            $attemptedBy = User::query()
+                ->select(['id', 'name', 'email'])
+                ->find($this->attemptedByUserId);
+
+            if (! $managerUser || ! $attemptedBy) {
+                LoggerService::error('Manager deactivation attempt email skipped: user not found', [
+                    'manager_id' => $this->managerUserId,
+                    'attempted_by' => $this->attemptedByUserId,
+                ]);
+
+                return;
+            }
+
+            $subordinates = User::query()
+                ->select(['id', 'name', 'email'])
+                ->activeUser()
+                ->whereIn('id', $this->subordinateIds)
+                ->get()
+                ->map(fn (User $user) => (object) [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ])
+                ->all();
+
+            $managerPayload = (object) $managerUser->only(['id', 'name', 'email','managers']);
+            $attemptedByPayload = (object) $attemptedBy->only(['id', 'name', 'email']);
 
             LoggerService::info('Sending manager deactivation attempt email', [
-                'manager_id' => $managerUser->id,
-                'subordinates_count' => count($this->subordinates),
-                'attempted_by' => $attemptedBy->id,
+                'manager_id' => $managerPayload->id,
+                'subordinates_count' => count($subordinates),
+                'attempted_by' => $attemptedByPayload->id,
             ]);
 
             app(SendEmailCustomerService::class)->sendManagerDeactivationAttemptEmail(
-                $managerUser,
-                $this->subordinates,
-                $attemptedBy
+                $managerPayload,
+                $subordinates,
+                $attemptedByPayload
             );
 
             LoggerService::info('Manager deactivation attempt email sent successfully');
 
         } catch (Exception $e) {
             LoggerService::error('Error sending manager deactivation attempt email', [
-                'manager_id' => $this->managerUser['id'] ?? null,
+                'manager_id' => $this->managerUserId,
                 'error' => $e->getMessage(),
             ], $e);
 
