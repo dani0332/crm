@@ -352,7 +352,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 return $this->getDrivingLicenseOCRDataStructure($ocrData);
                 break;
             case OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE->value:
-                return $this->getVehicleRegistrationCertificateOCRDataStructure($ocrData, $quote->insurance_provider_id);
+                return $this->getVehicleRegistrationCertificateOCRDataStructure($ocrData, $quote->insurance_provider_id ?? 0);
                 break;
             case OCRDocumentTypeEnum::TAX_INVOICE->value:
                 return $this->getTaxInvoiceOCRDataStructure($ocrData, $quote);
@@ -635,9 +635,9 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     {
         return [
             'policy_number' => $quote->personalQuote->policy_number,
-            'policy_start_date' => Carbon::parse($quote->personalQuote->policy_start_date)->format('Y-m-d'),
-            'policy_expiry_date' => Carbon::parse($quote->personalQuote->policy_expiry_date)->format('Y-m-d'),
-            'policy_issuance_date' => Carbon::parse($quote->personalQuote->policy_issuance_date)->format('Y-m-d'),
+            'policy_start_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_start_date)->format('Y-m-d') : null,
+            'policy_expiry_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_expiry_date)->format('Y-m-d') : null,
+            'policy_issuance_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_issuance_date)->format('Y-m-d') : null,
         ];
     }
 
