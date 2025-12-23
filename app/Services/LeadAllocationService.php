@@ -1059,9 +1059,9 @@ class LeadAllocationService extends BaseService
                     // ECOM leads criteria
                     $query->where(function ($ecomQuery) use ($ecomSources) {
                         $ecomQuery->where(function ($sourceQuery) use ($ecomSources) {
-                            // Match exact sources or sources containing insurancemarket.ae
+                            // Match exact sources or environment-based source (insurancemarket.ae for prod, alfred.ae for others)
                             $sourceQuery->whereIn('source', $ecomSources)
-                                ->orWhere('source', 'LIKE', '%insurancemarket.ae%');
+                                ->orWhere('source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
                         })
                             ->where(function ($ecomCriteria) {
                                 // SIC leads with advisor_requested = Yes
@@ -1083,9 +1083,9 @@ class LeadAllocationService extends BaseService
                                 // OR Clicked proceed with application (payment link requested or authorized)
                                     ->orWhereIn('payment_status_id', [
                                         PaymentStatusEnum::PAYMENT_LINK_REQUESTED,
-                                        PaymentStatusEnum::AUTHORISED,
-                                        PaymentStatusEnum::CAPTURED,
-                                        PaymentStatusEnum::PAID,
+                                        // PaymentStatusEnum::AUTHORISED,
+                                        // PaymentStatusEnum::CAPTURED,
+                                        // PaymentStatusEnum::PAID,
                                     ]);
                             });
                     })
