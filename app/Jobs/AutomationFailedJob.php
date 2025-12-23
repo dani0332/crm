@@ -71,8 +71,7 @@ class AutomationFailedJob implements ShouldQueue
      */
     public function handle()
     {
-        $quoteTypeEnum = QuoteTypes::getName($this->quoteTypeId);
-        $quoteType = $quoteTypeEnum?->value ?? QuoteTypes::CAR->value;
+        $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
         $quote = $this->getQuoteObject($quoteType, $this->quoteId);
 
         if (! $quote) {

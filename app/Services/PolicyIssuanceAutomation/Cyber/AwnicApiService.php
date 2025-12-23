@@ -133,6 +133,8 @@ class AwnicApiService
             $httpResponse = Awnic::post($endPoint, $payload);
             $uploadResponse = $this->responseHandler->parseHttpResponse($httpResponse, AwnicEnum::RESPONSE_UPLOAD_DOCUMENTS);
 
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, Awnic::getBaseUrl() . $endPoint, AwnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+
             if (! $uploadResponse['status']) {
                 $allDocsDownloaded = false;
                 break;
