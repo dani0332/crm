@@ -226,14 +226,15 @@ function searchClaims(isValid) {
       preserveScroll: true,
       onBefore: () => (loader.table = true),
       onSuccess: () => (loader.table = false),
-      onError: (errors) => {
+      onError: errors => {
         loader.table = false;
 
         // Extract and display backend validation errors
         const errorMessages = Object.values(errors).flat();
-        const errorMessage = errorMessages.length > 0
-          ? errorMessages.join(' ')
-          : 'Failed to search claims.';
+        const errorMessage =
+          errorMessages.length > 0
+            ? errorMessages.join(' ')
+            : 'Failed to search claims.';
 
         notification.error({
           message: errorMessage,
@@ -410,7 +411,8 @@ const validateDateRange = () => {
     const endDate = new Date(filters.created_at_end);
 
     if (startDate > endDate) {
-      dateRangeError.value = 'The end date must be equal to or after the start date.';
+      dateRangeError.value =
+        'The end date must be equal to or after the start date.';
       return false;
     }
   }
@@ -436,10 +438,12 @@ const hasActiveFilters = computed(() => {
 
     // Check if value is not null, undefined, empty string, or empty array
     const value = filters[key];
-    return value !== null &&
-           value !== undefined &&
-           value !== '' &&
-           !(Array.isArray(value) && value.length === 0);
+    return (
+      value !== null &&
+      value !== undefined &&
+      value !== '' &&
+      !(Array.isArray(value) && value.length === 0)
+    );
   });
 });
 
