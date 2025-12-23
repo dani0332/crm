@@ -1253,20 +1253,24 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        $ccEmails = env('APP_ENV') === 'production' ? 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com' : 'diya.lekhwani@myalfred.com';
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_FAILURE_EMAIL],
             [
-                'value' => 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com',
+                'value' => $ccEmails,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1
             ]
         );
 
+        $escalationLink = env('APP_ENV') === 'production' ? 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T' : 'https://imcrmuat.alfred.ae/';
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_ESCALATION_LINK],
             [
-                'value' => 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T',
+                'value' => $escalationLink,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

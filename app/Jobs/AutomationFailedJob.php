@@ -6,13 +6,12 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\User;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -28,15 +27,6 @@ class AutomationFailedJob implements ShouldQueue
 
     public int $timeout = 100;
     public int $tries = 3;
-    private const CYBER_BOOKING_TEAM_EMAIL = 'production.approval.team@insurancemarket.ae';
-    private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
-    private const FALLBACK_CYBER_FAILURE_DISTRIBUTION = [
-        'dt.system.notifications@insurancemarket.ae',
-        'cyber.enquiries@insurancemarket.ae',
-        'sandeep.sharma@insurancemarket.ae',
-        'diya.lekhwani@myalfred.com',
-        'digital.transformation.support@myalfred.com',
-    ];
     private $quoteId;
     private $quoteTypeId;
     private $actionRequired;
@@ -119,7 +109,18 @@ class AutomationFailedJob implements ShouldQueue
             $cc['advisoremail'] = $quote?->advisor?->email ?? '';
         }
 
-        $cc = $this->applyCyberNotificationRules($quote, $cc);
+        $notificationContext = app(CyberQuoteService::class)
+            ->applyAutomationFailureNotificationRules(
+                $quote,
+                $cc,
+                $this->processInvolved,
+                $this->recipientEmail,
+                $this->recipientName
+            );
+
+        $cc = $notificationContext['cc'];
+        $this->recipientEmail = $notificationContext['recipientEmail'];
+        $this->recipientName = $notificationContext['recipientName'];
 
         if (! $this->recipientEmail || ! $this->recipientName) {
             LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Insurer: '.$this->insurerName);
@@ -136,7 +137,7 @@ class AutomationFailedJob implements ShouldQueue
             'imcrmReferenceNumber' => $quote->code,
             'escalationLink' => $escalationLink,
             'refId' => $quote->code,
-            'imcrmLink' => getImcrmLink($this->quoteTypeId, $quote),
+            'imcrmLink' => $quote->getCrmQuoteLink(),
             'insurerApiStatus' => $this->statusAPIFailed,
             'insurerName' => $this->insuranceProvider?->text ?? '',
             'processInvolved' => $this->processInvolved,
@@ -170,88 +171,4 @@ class AutomationFailedJob implements ShouldQueue
         return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
     }
 
-    private function applyCyberNotificationRules($quote, array $cc): array
-    {
-        if ($this->quoteTypeId !== QuoteTypeId::Cyber) {
-            return $cc;
-        }
-
-        $distribution = $this->getCyberDistributionEmails();
-        $isBookingFailure = $this->processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
-
-        if ($isBookingFailure) {
-            [$paEmail, $paName] = $this->getPaContactDetails();
-            $this->recipientEmail = $paEmail;
-            $this->recipientName = $paName;
-        } elseif (! $this->recipientEmail && $quote?->advisor) {
-            $this->recipientEmail = $quote->advisor->email;
-            $this->recipientName = $quote->advisor->name;
-        }
-
-        if (! $this->recipientEmail) {
-            [$paEmail, $paName] = $this->getPaContactDetails();
-            $this->recipientEmail = $paEmail;
-            $this->recipientName = $paName;
-        }
-
-        if ($quote?->advisor?->email && $quote->advisor->email != $this->recipientEmail) {
-            $distribution[] = $quote->advisor->email;
-        }
-
-        $advisorManagerEmail = $this->getAdvisorManagerEmail($quote);
-        if ($advisorManagerEmail) {
-            $distribution[] = $advisorManagerEmail;
-        }
-
-        $distribution = array_unique(array_filter($distribution));
-        if (! empty($distribution)) {
-            $cc = $distribution;
-        }
-
-        return $cc;
-    }
-
-    private function getCyberDistributionEmails(): array
-    {
-        $configured = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_FAILURE_EMAIL, useCache: true);
-
-        if (empty($configured)) {
-            return self::FALLBACK_CYBER_FAILURE_DISTRIBUTION;
-        }
-
-        $emails = array_map('trim', explode(',', $configured));
-        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
-
-        return ! empty($emails) ? array_values($emails) : self::FALLBACK_CYBER_FAILURE_DISTRIBUTION;
-    }
-
-    private function getAdvisorManagerEmail($quote): ?string
-    {
-        if (! $quote?->advisor) {
-            return null;
-        }
-
-        $cyberManager = $quote->advisor
-            ->managers()
-            ->get()
-            ->first(function (User $manager) {
-                return $manager->isCyberManager();
-            });
-
-        return $cyberManager?->email;
-    }
-
-    private function getPaContactDetails(): array
-    {
-        // TODO: needo to add OE user here right now we dont have any from Business
-        $paUser = User::activeUser()
-            ->where('name', UserNameEnum::PA)
-            ->first();
-
-        if ($paUser && $paUser->email) {
-            return [$paUser->email, $paUser->name ?? self::CYBER_BOOKING_TEAM_NAME];
-        }
-
-        return [self::CYBER_BOOKING_TEAM_EMAIL, self::CYBER_BOOKING_TEAM_NAME];
-    }
 }
