@@ -22,9 +22,7 @@ class OcrDocumentRetryService
     /** @var array<string, DocumentType|null> */
     private array $documentTypeCache = [];
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Re-dispatch OCR processing for car quote documents in the given date window.
@@ -45,7 +43,6 @@ class OcrDocumentRetryService
          * as evidenced by DocumentTypeCode enum and usage in CarMissingDocReminderJob.
          * This mismatch will cause the query to miss most OCR-eligible documents since only 'DL' and 'TI' overlap between the two code sets.
          *  */
-
 
         /** So updated to this haven't verfied if its correct business-wise or not*/
         $documentTypeCodes = DocumentType::query()
@@ -106,7 +103,7 @@ class OcrDocumentRetryService
                         foreach ($carQuote->documents as $document) {
                             $stats['documents_considered']++;
 
-                            //region Check active document Type for the given provider
+                            // region Check active document Type for the given provider
                             $documentType = $this->resolveDocumentType($document->document_type_code);
 
                             if (! $documentType) {
@@ -118,7 +115,7 @@ class OcrDocumentRetryService
 
                                 continue;
                             }
-                            //endregion
+                            // endregion
 
                             if (! $document->doc_url || ! $document->doc_mime_type) {
                                 $stats['documents_skipped_missing_payload']++;
@@ -146,7 +143,7 @@ class OcrDocumentRetryService
 
         LoggerService::info(self::class.'::retryCarDocuments - Summary', [
             'date_range' => [$start->toDateTimeString(), $end->toDateTimeString()],
-            'stats' => $stats
+            'stats' => $stats,
         ]);
 
         return $stats;
@@ -165,5 +162,3 @@ class OcrDocumentRetryService
         return $this->documentTypeCache[$documentTypeCode];
     }
 }
-
-

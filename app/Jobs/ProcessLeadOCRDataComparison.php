@@ -2,34 +2,35 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use App\Models\LeadOcrDataComparison;
-use Carbon\Carbon;
-use App\Enums\QuoteTypes;
-use App\Enums\QuoteStatusEnum;
-use App\Models\DocumentType;
 use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\OCRSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
+use App\Models\DocumentType;
+use App\Models\LeadOcrDataComparison;
+use App\Models\Nationality;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
-use App\Enums\OCRSourceEnum;
-use App\Models\Nationality;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
 
 class ProcessLeadOCRDataComparison implements ShouldQueue
 {
     use Queueable;
-    protected  $startDate;
-    protected  $endDate;
-    protected  $uuid; 
-    protected  $ocrReponseStructure;
 
-    public function __construct($uuid = null,  $startDate, $endDate)
+    protected $startDate;
+    protected $endDate;
+    protected $uuid;
+    protected $ocrReponseStructure;
+
+    public function __construct($uuid, $startDate, $endDate)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
@@ -46,8 +47,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     public function getCarDocuments()
     {
-        //$startDate = Carbon::parse('2025-03-01')->startOfMonth();
-        //$endDate = Carbon::parse('2025-03-31')->endOfMonth();
+        // $startDate = Carbon::parse('2025-03-01')->startOfMonth();
+        // $endDate = Carbon::parse('2025-03-31')->endOfMonth();
 
         $documentTypeCodes = DocumentType::query()
             ->active()
@@ -71,7 +72,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 'vat',
                 'policy_issuance_date',
             ])
-        ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->when($this->uuid, function ($q) {
                 $q->where('uuid', $this->uuid);
             })
@@ -98,8 +99,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 'insuranceProvider:id,code',
             ]);
 
-            $carQuotes = $carQuotes->get();
-           
+        $carQuotes = $carQuotes->get();
+
         $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('id');
 
         LoggerService::info('getCarDocuments - Car quotes with OCR documents fetched', extra: [
@@ -182,30 +183,30 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                     $this->processOcrDocument($quote, $document, $ocrDocType->value, $leadDataStructure, $ocrDataStructure);
 
                     // Caculate accuracy of the OCR data
-                    //if ($ocrDocType->value === OCRDocumentTypeEnum::ID_CARD->value) {
-                        //print_r($leadDataStructure[$ocrDocType->value]);
-                        //print_r($ocrDataStructure[$ocrDocType->value]);
-                        $count = count($leadDataStructure[$ocrDocType->value]);
-                        $matchCount = 0;
+                    // if ($ocrDocType->value === OCRDocumentTypeEnum::ID_CARD->value) {
+                    // print_r($leadDataStructure[$ocrDocType->value]);
+                    // print_r($ocrDataStructure[$ocrDocType->value]);
+                    $count = count($leadDataStructure[$ocrDocType->value]);
+                    $matchCount = 0;
 
-                        foreach ($leadDataStructure[$ocrDocType->value] as $key => $value) {
-                            if (! isset($ocrDataStructure[$ocrDocType->value][$key])) {
-                                continue;
-                            }
-
-                            if ($leadDataStructure[$ocrDocType->value][$key] === $ocrDataStructure[$ocrDocType->value][$key]) {
-                                $matchCount++;
-                            }
+                    foreach ($leadDataStructure[$ocrDocType->value] as $key => $value) {
+                        if (! isset($ocrDataStructure[$ocrDocType->value][$key])) {
+                            continue;
                         }
 
-                       //print_r($matchCount.' - '.$count); exit;
+                        if ($leadDataStructure[$ocrDocType->value][$key] === $ocrDataStructure[$ocrDocType->value][$key]) {
+                            $matchCount++;
+                        }
+                    }
 
-                        $comparisonStructure[$ocrDocType->value] = [
-                            'count' => $count,
-                            'match_count' => $matchCount,
-                            'accuracy' => $count > 0 ? number_format($matchCount / $count * 100, 2) : 0,
-                        ];
-                   //}
+                    // print_r($matchCount.' - '.$count); exit;
+
+                    $comparisonStructure[$ocrDocType->value] = [
+                        'count' => $count,
+                        'match_count' => $matchCount,
+                        'accuracy' => $count > 0 ? number_format($matchCount / $count * 100, 2) : 0,
+                    ];
+                    // }
 
                 } else {
                     LoggerService::warning(self::class.'::processOcrDocumentsForLeads - DocumentType not found', extra: [
@@ -216,8 +217,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 }
             }
 
-           //print_r($leadDataStructure); exit;
-            //print_r($ocrDataStructure); exit;
+            // print_r($leadDataStructure); exit;
+            // print_r($ocrDataStructure); exit;
             // Save data in database
             $this->saveleadOCRComparisonData($quote->id, $quote->uuid, $leadDataStructure, $ocrDataStructure, $comparisonStructure);
 
@@ -244,7 +245,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         foreach ($comparisonStructure as $key => $value) {
             $totalAccuracy += $value['accuracy'];
         }
-        $totalAccuracy = number_format(($totalAccuracy / $totalCount)* 100, 2);
+        $totalAccuracy = number_format(($totalAccuracy / $totalCount) * 100, 2);
 
         // Save data in database
         LeadOcrDataComparison::updateOrCreate([
@@ -476,8 +477,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     {
         return [
             'policy_number' => $ocrData->policyNumber,
-            //'policy_start_date' => isset($ocrData->policyStartDate) ? Carbon::parse($ocrData->policyStartDate)->format('Y-m-d') : null,
-            //'policy_expiry_date' => isset($ocrData->policyExpiryDate) ? Carbon::parse($ocrData->policyExpiryDate)->format('Y-m-d') : null,
+            // 'policy_start_date' => isset($ocrData->policyStartDate) ? Carbon::parse($ocrData->policyStartDate)->format('Y-m-d') : null,
+            // 'policy_expiry_date' => isset($ocrData->policyExpiryDate) ? Carbon::parse($ocrData->policyExpiryDate)->format('Y-m-d') : null,
         ];
     }
 
@@ -626,8 +627,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     {
         return [
             'policy_number' => $quote->personalQuote->policy_number,
-            //'policy_start_date' => Carbon::parse($quote->personalQuote->policy_start_date)->format('Y-m-d'),
-            //'policy_expiry_date' => Carbon::parse($quote->personalQuote->policy_expiry_date)->format('Y-m-d'),
+            // 'policy_start_date' => Carbon::parse($quote->personalQuote->policy_start_date)->format('Y-m-d'),
+            // 'policy_expiry_date' => Carbon::parse($quote->personalQuote->policy_expiry_date)->format('Y-m-d'),
         ];
     }
 
@@ -647,9 +648,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $refId = $this->getRefId($quote);
         $isEcom = false;
 
-         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);   
+        $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
         // $docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
-
 
         if (! $docUrl) {
             LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [

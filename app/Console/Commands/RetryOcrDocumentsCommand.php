@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrDocumentRetryService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use App\Jobs\ProcessLeadOCRDataComparison;
 
 class RetryOcrDocumentsCommand extends Command
 {
     protected $signature = 'comparison:ocr-lead
     {start_date : Inclusive start date (YYYY-MM-DD)}
     {end_date : Inclusive end date (YYYY-MM-DD)}';
-
     protected $description = 'OCR lead comparison command';
 
     public function __construct()
@@ -43,8 +42,8 @@ class RetryOcrDocumentsCommand extends Command
             $endDate->toDateString()
         ));
 
-        //ProcessLeadOCRDataComparison::dispatch($startDate, $endDate)->onQueue('lead_ocr_data_comparison');
-        //$stats = $this->ocrDocumentRetryService->retryCarDocuments($startDate, $endDate);
+        // ProcessLeadOCRDataComparison::dispatch($startDate, $endDate)->onQueue('lead_ocr_data_comparison');
+        // $stats = $this->ocrDocumentRetryService->retryCarDocuments($startDate, $endDate);
 
         return Command::SUCCESS;
     }
@@ -70,4 +69,3 @@ class RetryOcrDocumentsCommand extends Command
         }
     }
 }
-

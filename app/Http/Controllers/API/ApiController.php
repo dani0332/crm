@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
-use App\Enums\OCRSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -36,16 +35,14 @@ use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
+use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\RunCQFJobs;
 use App\Models\CarQuote;
 use App\Models\DocumentType;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
-use App\Models\LeadOcrDataComparison;
-use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
-use App\Models\QuoteDocument;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
@@ -56,7 +53,6 @@ use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\Logger\LoggerService;
-use App\Services\LookupService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
@@ -68,10 +64,8 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Jobs\ProcessLeadOCRDataComparison;
 
 class ApiController extends Controller
 {
@@ -701,30 +695,29 @@ class ApiController extends Controller
 
     public function getLeadOCRComparison(Request $request)
     {
-            $request->validate(
-                [
-                    'start_date' => 'nullable|date_format:Y-m-d',
-                    'end_date'   => 'nullable|date_format:Y-m-d',
-                ],
-                [
-                    'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
-                    'end_date.date_format'   => 'End date must be in YYYY-MM-DD format',
-                ]
-            );
-        
-            $startDate = $request->filled('start_date')
-            ? Carbon::createFromFormat('Y-m-d', $request->start_date)
+        $request->validate(
+            [
+                'start_date' => 'nullable|date_format:Y-m-d',
+                'end_date' => 'nullable|date_format:Y-m-d',
+            ],
+            [
+                'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
+                'end_date.date_format' => 'End date must be in YYYY-MM-DD format',
+            ]
+        );
+
+        $startDate = $request->filled('start_date')
+        ? Carbon::createFromFormat('Y-m-d', $request->start_date)
+        : null;
+
+        $endDate = $request->filled('end_date')
+            ? Carbon::createFromFormat('Y-m-d', $request->end_date)
             : null;
-        
-            $endDate = $request->filled('end_date')
-                ? Carbon::createFromFormat('Y-m-d', $request->end_date)
-                : null;
-        
-            ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate)->onQueue('lead_ocr_data_comparison');
 
-            return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
+        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate)->onQueue('lead_ocr_data_comparison');
+
+        return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
     }
-
 
     public function checkLeadDocuments()
     {
