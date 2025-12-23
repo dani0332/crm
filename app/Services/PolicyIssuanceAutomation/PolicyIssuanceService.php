@@ -393,13 +393,12 @@ class PolicyIssuanceService
         $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
-
-        if(! $advisorId && $quoteType === QuoteTypes::CYBER->value) {
+        if (! $advisorId && $quoteType === QuoteTypes::CYBER->value) {
             $response = QuoteTypes::CYBER->allocate($uuid, $unassistedTeamId);
             if ($response && $response['advisorId']) {
                 $advisorId = $response['advisorId'];
             }
-            LoggerService::info('fn:allocateLead - Quote Code : ' . $quote->code . ' -  Assigned Advisor through Allocation when advisor id is not assigned during policy issuance automation', extra: [
+            LoggerService::info('fn:allocateLead - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation when advisor id is not assigned during policy issuance automation', extra: [
                 'advisorId' => $advisorId,
                 'allocation_response' => $response,
             ]);

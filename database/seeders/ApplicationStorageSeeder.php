@@ -1261,7 +1261,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => $ccEmails,
                 'created_at' => now(),
                 'updated_at' => now(),
-                'is_active' => 1
+                'is_active' => 1,
             ]
         );
 

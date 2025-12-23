@@ -468,7 +468,7 @@ trait QuoteModelTrait
         return in_array($this->quote_status_id, $excludedQuoteStatuses);
     }
 
-    function getCrmQuoteLink(): string
+    public function getCrmQuoteLink(): string
     {
         $baseUrl = config('app.url', env('APP_URL'));
         $quoteId = $this->uuid ?? $this->id ?? '';

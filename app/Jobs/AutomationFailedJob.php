@@ -5,10 +5,8 @@ namespace App\Jobs;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserNameEnum;
-use App\Enums\WorkflowTypeEnum;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
@@ -128,7 +126,7 @@ class AutomationFailedJob implements ShouldQueue
             return;
         }
 
-        $escalationLink = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, "");
+        $escalationLink = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, '');
 
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
