@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -20,10 +21,12 @@ beforeEach(function () {
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
     
+    // Set up payment-related permissions (required for payment approval/decline operations)
+    PaymentTestHelper::setupPaymentPermissions($this->user);
+    
     // Set up test data: InsuranceProvider, CarPlan, and CarQuote
     // This helper method creates all necessary test data for payment testing
     $testData = PaymentTestHelper::setupTestData();
-    
     // Assign test data to test properties for easy access
     $this->insuranceProvider = $testData['insuranceProvider'];
     $this->carPlan = $testData['carPlan'];
@@ -217,7 +220,6 @@ test('payment should be updated via endpoint', function () {
     );
 });
 
-
 test('payment split validates presence and format of insurer receipt number', function () {
     // ============================================
     // 1. ARRANGE: Create payment splits for testing
@@ -273,4 +275,101 @@ test('payment split validates presence and format of insurer receipt number', fu
         'status' => false,
         'message' => 'Receipt number already exists',
     ]);
+});
+
+test('payment should be approved via endpoint', function () {
+    // ============================================
+    // 1. ARRANGE: Create payment and payment split using factories
+    // ============================================
+    // First, create payment and payment split using factories
+    // This simulates an existing payment that needs to be approved
+    
+    // Disable Sage API for testing to avoid external API calls
+    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db->table('application_storage')->updateOrInsert(
+        ['key_name' => ApplicationStorageEnums::SAGE_ENABLED],
+        ['value' => '0', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()]
+    );
+    
+    // Create payment using factory with CarQuote
+    // This will trigger PaymentObserver which calculates VAT
+    $existingPayment = Payment::factory()->createForSqlite($this->carQuote);
+    
+    // Refresh payment to get latest values from database (including observer updates)
+    $existingPayment->refresh();
+    
+    // Ensure captured_amount is initialized to 0 if null
+    if ($existingPayment->captured_amount === null) {
+        $existingPayment->update(['captured_amount' => 0]);
+        $existingPayment->refresh();
+    }
+    
+    // Create payment split using factory with Payment
+    // This will trigger PaymentSplitsObserver which calculates VAT
+    $existingPaymentSplit = PaymentSplits::factory()->createForSqlite($existingPayment);
+    
+    // Refresh payment split to get latest values from database (including observer updates)
+    $existingPaymentSplit->refresh();
+    
+    // Verify initial state - payment should have 1 split (upfront payment)
+    expect($existingPayment)->not->toBeNull();
+    expect($existingPaymentSplit)->not->toBeNull();
+    
+    // Store initial captured_amount before approval
+    $initialCapturedAmount = (float) ($existingPayment->captured_amount ?? 0);
+    $collectionAmount = (float) $existingPaymentSplit->payment_amount;
+    
+    // Build the approval request payload using helper method
+    $approvePayload = PaymentTestHelper::buildApprovePaymentPayload(
+        carQuote: $this->carQuote,
+        paymentSplit: $existingPaymentSplit
+    );
+
+    // ============================================
+    // 2. ACT: Execute the approval endpoint request
+    // ============================================
+    
+    // Make POST request to payment approval endpoint
+    $response = $this->post("/payments/" . QuoteTypes::CAR->value . "/split-payment-approve-decline", $approvePayload);
+
+    // ============================================
+    // 3. ASSERT: Verify the results
+    // ============================================
+
+    // Assert that the endpoint returned a successful redirect response
+    // This will fail with helpful error message if status is not 302
+    $response->assertStatus(302);
+
+    // Retrieve the updated payment from database
+    $updatedPayment = PaymentTestHelper::getPaymentByQuoteCode($this->carQuote->code);
+    // Assert payment exists
+    expect($updatedPayment)->not->toBeNull();
+    
+    // Refresh to get latest values
+    $updatedPayment->refresh();
+
+    // Assert captured_amount was incremented correctly
+    PaymentTestHelper::assertPaymentCapturedAmountUpdatedCorrectly(
+        payment: $updatedPayment,
+        expectedCapturedAmount: $initialCapturedAmount + $collectionAmount
+    );
+
+    // Retrieve the approved payment split from database
+    $approvedPaymentSplit = PaymentTestHelper::getPaymentSplitByCodeAndSerial(
+        paymentCode: $updatedPayment->code,
+        srNo: 1
+    );
+    
+    // Refresh to get latest values
+    $approvedPaymentSplit->refresh();
+
+    // Assert payment split exists and was approved correctly
+    expect($approvedPaymentSplit)->not->toBeNull();
+    PaymentTestHelper::assertPaymentSplitApprovedCorrectly(
+        paymentSplit: $approvedPaymentSplit,
+        expectedCollectionAmount: $collectionAmount,
+        expectedInsurerReceiptNumber: $approvePayload['insurer_receipt_number'],
+        expectedUserId: $this->user->id,
+        actualAmount: $approvePayload['actual_amount']
+    );
 });
