@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Mail\SukoonMedexEPFailureNotification;
 use App\Services\Logger\LoggerService;
 use App\Services\SukoonMedexService;
-use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
