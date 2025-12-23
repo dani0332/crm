@@ -32,6 +32,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     public function __construct($uuid, $startDate, $endDate)
     {
+        $this->onQueue('lead_ocr_data_comparison');
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->uuid = $uuid;

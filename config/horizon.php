@@ -177,7 +177,7 @@ return [
             ],
             'supervisor-prod-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared'],
+                'queue' => ['shared', 'lead_ocr_data_comparison'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,

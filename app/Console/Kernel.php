@@ -42,7 +42,6 @@ class Kernel extends ConsoleKernel
         Commands\TravelRenewalLeads::class,
         Commands\CaptureEPPaymentsCommand::class,
         Commands\MisReportCommand::class,
-        Commands\RetryOcrDocumentsCommand::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
