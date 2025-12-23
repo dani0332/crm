@@ -457,6 +457,7 @@ class TestSchemaCreator
                 $table->unsignedBigInteger('quote_status_id')->nullable();
                 $table->timestamp('quote_status_date')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->timestamp('payment_paid_at')->nullable(); // Required for payment approval updates
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
