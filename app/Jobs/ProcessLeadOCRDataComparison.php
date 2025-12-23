@@ -433,7 +433,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     private function getTaxInvoiceOCRDataStructure(object $ocrData, $quote): array
     {
-        $payment = $quote->payment;
+        $payment = $quote->payments;
         $taxInvoiceNumber = $ocrData->taxInvoiceNumber ?? $payment?->insurer_tax_number;
         $priceVatApplicable = $ocrData->price?->baseAmount ?? $quote->price_vat_applicable;
         $priceWithVat = $ocrData->price?->totalAmount ?? $quote->price_with_vat;
@@ -446,7 +446,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             'price_vat_applicable' => $priceVatApplicable,
             'vat' => $vatAmount,
             'policy_issuance_date' => Carbon::parse($ocrData->issuanceDate ?? $quote->policy_issuance_date)->format('Y-m-d'),
-            'insurer_invoice_date' => Carbon::parse($ocrData->invoiceDate)->format('Y-m-d'),
+            'insurer_invoice_date' => $ocrData->invoiceDate ? Carbon::parse($ocrData->invoiceDate)->format('Y-m-d') : null,
             'tax_invoice_number' => $taxInvoiceNumber,
             'insurer_tax_number' => $taxInvoiceNumber,
         ];
