@@ -62,6 +62,10 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
 
             LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
+            $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
+
+            LoggerService::info('Final rule users after excluding non rule users: ', json_encode($ruleUserIds));
+
             return array_diff($tierUserIds, $ruleUserIds);
         } else {
             return $this->finalizeTierUsers($tierUserIds, $rules);

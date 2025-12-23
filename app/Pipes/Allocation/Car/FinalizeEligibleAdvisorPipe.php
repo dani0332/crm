@@ -113,6 +113,12 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
             // If no rules are found, get user IDs from rule lead sources.
             $ruleUsers = (empty($teamId) || $teamId == 0) ? $this->allocationRequest->get('ruleUsers') : [];
 
+            LoggerService::info('Rule users are: '.json_encode($ruleUsers));
+
+            $ruleUsers = $this->finalizeExcludedAdvisorIds($ruleUsers);
+
+            LoggerService::info('Final rule users after excluding non rule users: '.json_encode($ruleUsers));
+
             LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUsers).' and teamId is : '.$teamId);
 
             // Find the difference between available user IDs and rule users.
