@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
@@ -142,7 +143,11 @@ class InsuredKycRequest extends FormRequest
                 'paymentable_id' => $quote->id,
             ])->first();
 
-            if ($quoteType == QuoteTypes::CAR->value && $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::RSA) {
+            if (
+                $quoteType == QuoteTypes::CAR->value &&
+                $paymentDetails?->insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
+                $quote->registration_type == CarRegistrationType::PERSONAL
+            ) {
                 $vehicleDriverDetail = $quote->vehicleDriverDetail;
                 if (! $vehicleDriverDetail?->rta_transaction_type) {
                     $validator->errors()->add('error', 'RTA Transaction Type is required for Liva Insurance');
