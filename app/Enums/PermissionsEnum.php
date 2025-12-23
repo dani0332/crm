@@ -543,11 +543,9 @@ final class PermissionsEnum extends Enum
                 self::CLAIM_EDIT,
                 self::CLAIM_SHOW,
                 self::CLAIMS_EXPORT_DATA,
-                self::CLAIMS_STATUS_UPDATE,
                 self::CLAIMS_SUB_STATUS_UPDATE,
-                self::CLAIM_DOCUMENT_UPLOAD, 
+                self::CLAIM_DOCUMENT_UPLOAD,
                 self::CLAIM_DOCUMENT_S3_URL,
-                self::CLAIM_DOWNLOAD_ALL_DOCUMENTS,
             ],
             'claimLead' => [
                 self::CLAIM_LIST,
