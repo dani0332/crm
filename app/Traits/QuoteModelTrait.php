@@ -478,7 +478,7 @@ trait QuoteModelTrait
             QuoteTypeId::Car => "{$baseUrl}/quotes/car/{$quoteId}",           // Car quote type
             QuoteTypeId::Bike => "{$baseUrl}/personal-quotes/bike/{$quoteId}", // Bike quote type
             QuoteTypeId::Cyber => "{$baseUrl}/personal-quotes/cyber/{$quoteId}", // Cyber quote type
-            default => null
+            default => 'N/A'
         };
 
         return $crmQuoteLink;
