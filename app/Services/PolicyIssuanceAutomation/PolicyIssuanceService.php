@@ -16,7 +16,6 @@ use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\PolicyIssuanceJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Jobs\SendCyberAwnicFailedAllocationEmailJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
