@@ -6,7 +6,6 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -24,17 +23,16 @@ use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\CustomerInsured;
 use App\Models\Emirate;
-use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\KycLog;
+use App\Models\Lookup;
+use App\Models\LostReasons;
 use App\Models\Nationality;
 use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -337,7 +335,7 @@ class AmtController extends Controller
         // Eager load all CustomerInsured records in a single query
         $customerInsuredRecords = CustomerInsured::whereIn('quote_request_id', $quoteIds)
             ->where('quote_type_id', QuoteTypeId::Business)
-            ->with('insured.entity')
+            ->with('insured')
             ->get()
             ->groupBy('quote_request_id')
             ->map(function ($records) {
@@ -348,7 +346,7 @@ class AmtController extends Controller
         // Map through quotes and add branch_name using pre-loaded data
         return $quotes->map(function ($quote) use ($customerInsuredRecords) {
             $customerInsured = $customerInsuredRecords->get($quote->id);
-            $emirateOfRegistrationId = $customerInsured?->insured?->entity?->emirate_of_registration_id ?? null;
+            $emirateOfRegistrationId = $customerInsured?->insured?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
             return $quote;
@@ -425,22 +423,22 @@ class AmtController extends Controller
         /* End - Temporarily adding for correcting historic data */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);
-        $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $companyType = Lookup::getCompanyTypes();
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
         $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
-        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        $lostReasons = LostReasons::getAll();
         $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
-        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
-        $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $memberRelations = Lookup::getMemberRelations();
+        $nationalities = Nationality::getActiveNationalities();
+        $UBORelations = Lookup::getUBORelations();
+        $emirates = Emirate::getActiveEmirates();
 
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record, QuoteTypes::BUSINESS->id(), $quoteStatuses);
         if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
@@ -449,9 +447,7 @@ class AmtController extends Controller
             })->values();
         }
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
-        $countries = Nationality::all();
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
-        $entities = Entity::all();
         $lookupService = app(LookupService::class);
         $paymentMethods = $lookupService->getPaymentMethods();
         $legalStructure = $lookupService->getLegalStructure();
@@ -464,7 +460,7 @@ class AmtController extends Controller
             ->standardAmlFilters()
             ->latest()->first();
         @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::GroupMedical);
-        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $vatPercentage = getAppStorageValueByKey(ApplicationStorageEnums::VAT_VALUE, useCache: true, default: 0);
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
@@ -515,8 +511,6 @@ class AmtController extends Controller
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
             'legalStructure' => $legalStructure,
             'idDocumentType' => $idDocumentType,
             'issuancePlace' => $issuancePlace,

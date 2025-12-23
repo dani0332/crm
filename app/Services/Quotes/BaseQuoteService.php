@@ -128,7 +128,7 @@ abstract class BaseQuoteService extends BaseService
         $bookPolicyDetails = $this->bookPolicyPayload($quote, $quoteType->value, $quote->payments, $quoteDocuments);
 
         $membersDetails = CustomerMembersRepository::getBy($quote->id, $quoteType->name);
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
