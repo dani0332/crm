@@ -10,6 +10,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
@@ -391,6 +392,19 @@ class PolicyIssuanceService
         ]);
 
         $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+        $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
+
+        if(! $advisorId && $quoteType === QuoteTypes::CYBER->value) {
+            $response = QuoteTypes::CYBER->allocate($uuid, $unassistedTeamId);
+            if ($response && $response['advisorId']) {
+                $advisorId = $response['advisorId'];
+            }
+            LoggerService::info('fn:allocateLead - Quote Code : ' . $quote->code . ' -  Assigned Advisor through Allocation when advisor id is not assigned during policy issuance automation', extra: [
+                'advisorId' => $advisorId,
+                'allocation_response' => $response,
+            ]);
+        }
 
         if (
             in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value]) &&

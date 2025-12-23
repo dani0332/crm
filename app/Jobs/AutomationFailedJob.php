@@ -96,7 +96,6 @@ class AutomationFailedJob implements ShouldQueue
         $this->insurerName = InsuranceProvidersEnum::getTextByCode($this->insuranceProvider?->code);
 
         if ($this->userToSendEmail == UserNameEnum::PA_USER) {
-            // TODO: Need to confirm from mirza
             $this->recipientEmail = $quote?->kycDocumentUser?->createdBy?->email;
             $this->recipientName = $quote?->kycDocumentUser?->createdBy?->name;
         } else {
@@ -196,7 +195,7 @@ class AutomationFailedJob implements ShouldQueue
             $this->recipientName = $paName;
         }
 
-        if ($quote?->advisor?->email) {
+        if ($quote?->advisor?->email && $quote->advisor->email != $this->recipientEmail) {
             $distribution[] = $quote->advisor->email;
         }
 
@@ -245,6 +244,7 @@ class AutomationFailedJob implements ShouldQueue
 
     private function getPaContactDetails(): array
     {
+        // TODO: needo to add OE user here right now we dont have any from Business
         $paUser = User::activeUser()
             ->where('name', UserNameEnum::PA)
             ->first();
