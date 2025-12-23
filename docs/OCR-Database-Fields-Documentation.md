@@ -13,6 +13,7 @@ This document outlines all database fields that are updated by OCR processing fo
 ### Tables Updated:
 
 #### `vehicle_driver_details`
+
 - `driver_license_number`
 - `driver_license_issue_date`
 - `driver_license_expiry_date`
@@ -33,6 +34,7 @@ This document outlines all database fields that are updated by OCR processing fo
 ### Tables Updated:
 
 #### `insured`
+
 - `customer_type` (set to 'Individual')
 - `first_name` (extracted from full name)
 - `last_name` (extracted from full name)
@@ -43,6 +45,7 @@ This document outlines all database fields that are updated by OCR processing fo
 - `id_number` (EID number)
 
 #### `insured_kyc`
+
 - `country_of_residence` (converted from country to nationality_id)
 - `place_of_birth` (converted from nationality to nationality_id)
 - `id_issuance_date`
@@ -58,9 +61,11 @@ This document outlines all database fields that are updated by OCR processing fo
 - `last_name` (synced from insured table)
 
 #### `vehicle_driver_details`
+
 - `driver_gender`
 
 #### `customer_insured` (relationship table - created if needed)
+
 - `customer_id`
 - `insured_id`
 - `quote_type_id`
@@ -75,6 +80,7 @@ This document outlines all database fields that are updated by OCR processing fo
 ### Tables Updated:
 
 #### `vehicle_driver_details`
+
 - `vehicle_plate_number`
 - `vehicle_plate_code`
 - `first_registration_date`
@@ -85,12 +91,15 @@ This document outlines all database fields that are updated by OCR processing fo
 - `traffic_code_number`
 
 #### `car_quote_request_details`
+
 - `chassis_number`
 
 #### `car_quotes`
+
 - `policy_expiry_date`
 
 #### `registration_certificates`
+
 - `place_of_issue`
 - `expiry_date`
 - `owner`
@@ -122,12 +131,14 @@ This document outlines all database fields that are updated by OCR processing fo
 ### Tables Updated:
 
 #### `car_quotes` (or quote table based on quote type)
+
 - `price_with_vat`
 - `price_vat_applicable`
 - `vat` (only for regular quotes, calculated or from OCR)
 - `policy_issuance_date`
 
 #### `payments`
+
 - `insurer_invoice_date`
 - `insurer_tax_number`
 - `tax_invoice_number`
@@ -143,10 +154,12 @@ This document outlines all database fields that are updated by OCR processing fo
 ### Tables Updated:
 
 #### `car_quotes` (for Send Update only)
+
 - `insurer_commission_invoice_number`
 - `commission_vat_applicable`
 
 #### `payments` (for regular quotes)
+
 - `commission_vat`
 - `commission`
 - `commmission_percentage` (calculated)
@@ -164,6 +177,7 @@ This document outlines all database fields that are updated by OCR processing fo
 ### Tables Updated:
 
 #### `car_quotes` (or quote table based on quote type)
+
 - `policy_number`
 - `policy_start_date`
 - `policy_expiry_date`
@@ -178,6 +192,7 @@ This document outlines all database fields that are updated by OCR processing fo
 ### Tables Updated:
 
 #### `car_quotes` (or quote table based on quote type)
+
 - `insurer_quote_number` (only for specific providers)
 
 **Note:** This is a minimal implementation that only updates `insurer_quote_number` for certain providers. For CAR LOB, this is the only field updated by MPS.
@@ -187,25 +202,35 @@ This document outlines all database fields that are updated by OCR processing fo
 ## Summary by Table
 
 ### `vehicle_driver_details`
+
 Updated by: **DL, IDC, RC**
+
 - Driver license fields (DL)
 - Driver gender (IDC)
 - Vehicle plate and registration info (RC)
 
 ### `insured`
+
 Updated by: **IDC**
+
 - Personal information from Emirates ID
 
 ### `insured_kyc`
+
 Updated by: **IDC**
+
 - KYC information from Emirates ID
 
 ### `car_quote_request_details`
+
 Updated by: **RC**
+
 - Chassis number
 
 ### `car_quotes`
+
 Updated by: **TI, TIB, PC, MPS, RC**
+
 - Pricing fields (TI)
 - Commission fields (TIB)
 - Policy dates and numbers (PC)
@@ -213,16 +238,22 @@ Updated by: **TI, TIB, PC, MPS, RC**
 - Insurer quote number (MPS)
 
 ### `payments`
+
 Updated by: **TI, TIB**
+
 - Invoice dates and numbers (TI)
 - Commission fields (TIB)
 
 ### `registration_certificates`
+
 Updated by: **RC**
+
 - All registration certificate specific fields
 
 ### `customer_insured`
+
 Updated by: **IDC**
+
 - Relationship linking customer to insured
 
 ---
@@ -258,4 +289,3 @@ The following 7 document types are enabled for CAR LOB OCR processing:
 6. **Send Update vs Regular Quotes:** Some document types have different behavior for Send Update logs vs regular quotes, updating different fields or tables accordingly.
 
 7. **CAR LOB Specific:** All fields documented here are specific to CAR quote processing. Other LOBs (Home, Group Medical) may have different document types and field mappings.
-
