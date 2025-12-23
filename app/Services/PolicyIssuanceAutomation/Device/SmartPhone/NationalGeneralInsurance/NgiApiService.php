@@ -145,12 +145,7 @@ class NgiApiService
         }
 
         $policyDocumentsResult = $policyDocumentsResponse['data'];
-        LoggerService::info('GetPolicyDocuments API call successful, updating quote and payment', extra: [
-            'policy_number' => $policyDocumentsResult?->policy_no,
-            'has_policy_certificate_url' => ! empty($policyDocumentsResult?->policy_certificate_url),
-            'has_premium_inv_url' => ! empty($policyDocumentsResult?->premium_inv_doc_url),
-            'has_commission_inv_url' => ! empty($policyDocumentsResult?->commision_inv_doc_url),
-        ]);
+        LoggerService::info('GetPolicyDocuments API call successful, updating quote and payment', extra: (array) $policyDocumentsResult);
 
         $this->quoteUpdater->updateQuoteFromPolicyDocumentsResponse($quote, $policyDocumentsResult);
         $this->quoteUpdater->updatePaymentFromPolicyDocumentsResponse($quote->code, $policyDocumentsResult);
