@@ -699,11 +699,30 @@ class ApiController extends Controller
         }
     }
 
-    public function getCarDocuments()
+    public function getLeadOCRComparison(Request $request)
     {
-        ProcessLeadOCRDataComparison::dispatch()->onQueue('lead_ocr_data_comparison');
+            $request->validate(
+                [
+                    'start_date' => 'nullable|date_format:Y-m-d',
+                    'end_date'   => 'nullable|date_format:Y-m-d',
+                ],
+                [
+                    'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
+                    'end_date.date_format'   => 'End date must be in YYYY-MM-DD format',
+                ]
+            );
+        
+            $startDate = $request->filled('start_date')
+            ? Carbon::createFromFormat('Y-m-d', $request->start_date)
+            : null;
+        
+            $endDate = $request->filled('end_date')
+                ? Carbon::createFromFormat('Y-m-d', $request->end_date)
+                : null;
+        
+            ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate)->onQueue('lead_ocr_data_comparison');
 
-        return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
+            return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
     }
 
 
