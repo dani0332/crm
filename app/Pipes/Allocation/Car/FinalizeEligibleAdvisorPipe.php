@@ -110,6 +110,8 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
 
             LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
+            LoggerService::info('No rules found, so filtering rule users');
+
             // If no rules are found, get user IDs from rule lead sources.
             $ruleUsers = (empty($teamId) || $teamId == 0) ? $this->allocationRequest->get('ruleUsers') : [];
 
@@ -118,8 +120,6 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
             $ruleUsers = $this->finalizeExcludedAdvisorIds($ruleUsers);
 
             LoggerService::info('Final rule users after excluding non rule users: '.json_encode($ruleUsers));
-
-            LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUsers).' and teamId is : '.$teamId);
 
             // Find the difference between available user IDs and rule users.
             $finalEligibleUserIds = array_diff(
