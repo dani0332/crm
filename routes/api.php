@@ -75,6 +75,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     });
 
     Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
+    Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'ExportFailedIlaLeads'])->name('ExportFailedIlaLeads');
 
 });
 

@@ -61,6 +61,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Services\EmailServices\FailedILAEmailService;
 
 class ApiController extends Controller
 {
@@ -682,6 +683,23 @@ class ApiController extends Controller
                 'error_details' => $e->getMessage(),
                 'quote_uuid' => $validatedData['quote_uuid'],
             ], 500);
+        }
+    }
+
+    public function ExportFailedIlaLeads($quoteType)
+    {
+        $publicUrl = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
+        if ($publicUrl) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Failed ILA leads exported successfully',
+                'public_url' => $publicUrl,
+            ], Response::HTTP_OK);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export failed ILA leads',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
