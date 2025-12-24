@@ -955,6 +955,9 @@ class AMLController extends Controller
         if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared || $insurerAMLScreeningResponse['is_previous_policy_expired']) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
+            if(! $isPolicyIssuanceAutomationEnabled){
+                $response['message'] = 'Please Capture and Issue Policy Manually.';
+            }
         }
 
         return response()->json($response);
