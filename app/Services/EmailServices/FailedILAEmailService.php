@@ -23,9 +23,14 @@ class FailedILAEmailService
     {
         // Fetch leads created today (from midnight to now)
         $managerEmails = $this->getManagerEmails(RolesEnum::CarManager);
+        LoggerService::info(self::class.' - sendFailedCarIlaEmails - Sending failed ILA emails to managers: '.implode(', ', $managerEmails));
         $birdSendFailedIlaEmailsWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW, useCache: true);
         if ($birdSendFailedIlaEmailsWorkflow) {
-            app(BirdService::class)->triggerWebHookRequest($birdSendFailedIlaEmailsWorkflow, $this->buildFailedIlaEmailData(QuoteTypes::CAR, $managerEmails));
+            LoggerService::info(self::class.' - sendFailedCarIlaEmails - Triggering web hook request for workflow: '.$birdSendFailedIlaEmailsWorkflow);
+            app(BirdService::class)->triggerWebHookRequest($birdSendFailedIlaEmailsWorkflow, $this->buildFailedIlaEmailData(QuoteTypes::CAR->value, $managerEmails));
+            LoggerService::info(self::class.' - sendFailedCarIlaEmails - Web hook request triggered successfully');
+        } else {
+            LoggerService::warning(self::class.' - sendFailedCarIlaEmails - Workflow not found');
         }
     }
 
@@ -44,6 +49,7 @@ class FailedILAEmailService
             'quoteType' => $quoteType,
             'workflowType' => WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS,
             'dateOfAttempt' => now()->format('Y-m-d'),
+            'fileDownloadUrl' => route('export-failed-ila-leads', ['quoteType' => $quoteType]),
         ];
     }
 

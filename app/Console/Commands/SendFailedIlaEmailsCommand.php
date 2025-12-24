@@ -24,7 +24,7 @@ class SendFailedIlaEmailsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Send failed ILA emails';
+    protected $description = 'Send failed ILA emails to managers';
 
     public function handle()
     {
