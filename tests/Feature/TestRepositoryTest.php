@@ -2,8 +2,6 @@
 
 // test/Unit/TestRepositoryTest.php
 
-use App\Models\PestTestTable;
-use App\Models\User;
 use App\Repositories\TestRepository;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
