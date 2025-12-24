@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
@@ -69,12 +68,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->leftJoin('health_quote_request as hqr', function ($join) {
-                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
-                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
-            })
             ->selectRaw('
-            CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name,
             COUNT(DISTINCT(personal_quotes.uuid)) as total_policies,
             COUNT(DISTINCT(personal_quotes.uuid)) as total_transaction,
             SUM(personal_quotes.price_vat_applicable) as price_vat_applicable,
@@ -92,7 +86,7 @@ class SaleSummaryReportService extends ManagementReport
             ->when($request->groupBy, function ($query, $groupBy) use ($request) {
                 $groupByArray = [];
                 $groupBy = $this->resolveGroupByColumn($groupBy);
-                $groupByArray = array_merge($groupByArray, $groupBy);
+                array_push($groupByArray, $groupBy);
                 $utmGroupBy = $this->getUtmGroup($request, $query);
                 if ($utmGroupBy) {
                     array_push($groupByArray, $utmGroupBy);
@@ -152,7 +146,6 @@ class SaleSummaryReportService extends ManagementReport
                 $join->on('p.code', '=', 'ps.code');
             });
         }
-        $this->branchJoin($query);
         $this->applyFilters($query, $request, false, true);
 
         LoggerService::sql(self::class.' - Sale Summary Report Query', $query);
@@ -227,12 +220,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('departments as support_dp', 'support_dp.id', '=', 'support_user.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
-            ->leftJoin('health_quote_request as hqr', function ($join) {
-                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
-                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
-            })
             ->select(
-                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('((
                     sum(CASE WHEN send_update_logs.price_vat_applicable is not null AND send_update_logs.price_vat_applicable != 0.00
@@ -253,7 +241,7 @@ class SaleSummaryReportService extends ManagementReport
             ->when($request->groupBy, function ($query, $groupBy) use ($request) {
                 $groupByArray = [];
                 $groupBy = $this->resolveGroupByColumn($groupBy, true);
-                $groupByArray = array_merge($groupByArray, $groupBy);
+                array_push($groupByArray, $groupBy);
                 $utmGroupBy = $this->getUtmGroup($request, $query);
                 if ($utmGroupBy) {
                     array_push($groupByArray, $utmGroupBy);
@@ -306,7 +294,6 @@ class SaleSummaryReportService extends ManagementReport
             // Endorsements
             $query->addSelect('quote_type.code as line_of_business');
         }
-        $this->branchJoin($query);
         $query = $this->applyFilters($query, $request, true, true);
 
         $reversalQuery = SendUpdateLog::query()
@@ -321,13 +308,8 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('departments as support_dp', 'support_dp.id', '=', 'support_user.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
-            ->leftJoin('health_quote_request as hqr', function ($join) {
-                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
-                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
-            })
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->select(
-                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('-1 * ((
                     sum(CASE WHEN send_update_logs.price_vat_applicable is not null THEN
@@ -348,7 +330,7 @@ class SaleSummaryReportService extends ManagementReport
             ->when($request->groupBy, function ($reversalQuery, $groupBy) use ($request) {
                 $groupByArray = [];
                 $groupBy = $this->resolveGroupByColumn($groupBy, true);
-                $groupByArray = array_merge($groupByArray, $groupBy);
+                array_push($groupByArray, $groupBy);
                 $utmGroupBy = $this->getUtmGroup($request, $reversalQuery);
                 if ($utmGroupBy) {
                     array_push($groupByArray, $utmGroupBy);
@@ -416,7 +398,6 @@ class SaleSummaryReportService extends ManagementReport
             });
         }
 
-        $this->branchJoin($reversalQuery);
         $reversalQuery = $this->applyFilters($reversalQuery, $request, true, true);
         $endorsementsQuery = $query->unionAll($reversalQuery);
 
@@ -424,19 +405,10 @@ class SaleSummaryReportService extends ManagementReport
 
         $groupByColumn = $request->groupBy;
         $data = collect($data
-            ->groupBy(function ($item) use ($groupByColumn) {
-                // Group by both the groupByColumn and branch
-                return $item->$groupByColumn.'|'.$item->branch_name;
-            })
-            ->map(function ($group, $compositeKey) use ($request) {
-                // Split the composite key back into individual values
-                $keys = explode('|', $compositeKey);
-                $groupBy = $keys[0];
-                $branch = $keys[1] ?? 'N/A';
-
+            ->groupBy($groupByColumn)
+            ->map(function ($group, $groupByColumn) use ($request) {
                 return (object) [
-                    $request->groupBy => $groupBy,
-                    'branch_name' => $branch,
+                    $request->groupBy => $groupByColumn,
                     'total_endorsements' => $group->sum('total_endorsements'),
                     'total_endorsement_amount' => $group->sum('total_endorsement_amount'),
                     'commission_vat_applicable' => $group->sum('commission_vat_applicable'),
@@ -464,21 +436,20 @@ class SaleSummaryReportService extends ManagementReport
     private function resolveGroupByColumn($groupBy, $isEndorsementQuery = false)
     {
         $mapping = [
-            'policy_issuer' => ['p.policy_issuer_id', 'branch_name'],
-            'customer_group' => ['personal_quotes.customer_id', 'branch_name'],
-            'insurer' => ['p.insurance_provider_id', 'branch_name'],
-            'advisor' => ['u.name', 'branch_name'],
-            'support_user' => ['support_user.name', 'branch_name'],
-            'line_of_business' => ['quote_type.code', 'branch_name'],
-            'department' => ['u.department_id', 'branch_name'],
-            'branch' => ['branch_name'],
+            'policy_issuer' => 'p.policy_issuer_id',
+            'customer_group' => 'personal_quotes.customer_id',
+            'insurer' => 'p.insurance_provider_id',
+            'advisor' => 'u.name',
+            'support_user' => 'support_user.name',
+            'line_of_business' => 'quote_type.code',
+            'department' => 'u.department_id',
         ];
 
         if ($isEndorsementQuery) {
-            $mapping['insurer'] = ['insurer', 'branch_name'];
+            $mapping['insurer'] = 'insurer';
         }
 
-        return $mapping[$groupBy] ?? [$groupBy];
+        return $mapping[$groupBy] ?? $groupBy;
     }
 
     public function getDefaultFilters()

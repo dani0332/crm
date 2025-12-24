@@ -96,7 +96,6 @@ class SaleDetailReportService extends ManagementReport
                 'cli.text as travel_currently_located_in_id_text',
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
-                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -131,7 +130,6 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id');
 
-        $this->branchJoin($query);
         $this->applyFilters($query, $request);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);
