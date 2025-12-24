@@ -1093,9 +1093,18 @@ class ApplicationStorageSeeder extends Seeder
     private function seedEpEcbConfigurations()
     {
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM],
+            [
+                'value' => 'alfred@testnotify.alfred.ae,InsuranceMarket-Test',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_TO],
             [
-                'value' => 'production.approval.team@insurancemarket.ae',
+                'value' => 'rucha.keluskar@myalfred.com',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1104,7 +1113,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO],
             [
-                'value' => 'instant@alfred.insurancemarket.ae',
+                'value' => 'test.emails@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1113,7 +1122,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::EP_FAILURE_EMAIL_CC],
             [
-                'value' => 'dt.system.notifications@insurancemarket.ae,sic.car.team@insurancemarket.ae,diya.lekhwani@myalfred.com,rucha.keluskar@myalfred.com,sandeep.sharma@insurancemarket.ae',
+                'value' => 'diya.lekhwani@myalfred.com',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
