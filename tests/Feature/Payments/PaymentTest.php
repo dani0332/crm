@@ -10,6 +10,8 @@ use Tests\Helpers\Payments\PaymentTestHelper;
 use Tests\Helpers\Payments\PaymentTestDataHelper;
 use Tests\Helpers\Payments\PaymentTestAssertionHelper;
 use Tests\Helpers\Payments\PaymentTestCreationHelper;
+use Tests\Helpers\Payments\PaymentTestPayloadHelper;
+use Tests\Helpers\Payments\PaymentTestQueryHelper;
 use Tests\Helpers\TestSchemaCreator;
 
 // Will run for each test 
@@ -88,7 +90,7 @@ test('payment should be created via endpoint', function () {
     
     // Build the request payload using helper method
     // This extracts data from factories and combines with CarQuote data
-    $requestPayload = PaymentTestHelper::buildPaymentCreationPayload(
+    $requestPayload = PaymentTestPayloadHelper::buildPaymentCreationPayload(
         carQuote: $this->carQuote,
         planId: $this->carPlan->id,
         insuranceProviderId: $this->insuranceProvider->id
@@ -109,11 +111,11 @@ test('payment should be created via endpoint', function () {
     $response->assertStatus(302);
     
     // Retrieve the created payment from database
-    $createdPayment = PaymentTestHelper::getPaymentByQuoteCode($this->carQuote->code);
+    $createdPayment = PaymentTestQueryHelper::getPaymentByQuoteCode($this->carQuote->code);
     
     // Assert payment exists and was created correctly
     expect($createdPayment)->not->toBeNull();
-    PaymentTestHelper::assertPaymentCreatedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentCreatedCorrectly(
         payment: $createdPayment,
         carQuote: $this->carQuote,
         expectedPlanId: $this->carPlan->id,
@@ -122,21 +124,21 @@ test('payment should be created via endpoint', function () {
     );
     
     // Retrieve the created payment split from database
-    $createdPaymentSplit = PaymentTestHelper::getPaymentSplitByCodeAndSerial(
+    $createdPaymentSplit = PaymentTestQueryHelper::getPaymentSplitByCodeAndSerial(
         paymentCode: $createdPayment->code,
         srNo: 1
     );
     
     // Assert payment split exists and was created correctly
     expect($createdPaymentSplit)->not->toBeNull();
-    PaymentTestHelper::assertPaymentSplitCreatedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentSplitCreatedCorrectly(
         paymentSplit: $createdPaymentSplit,
         payment: $createdPayment,
         expectedAmount: (float) $this->carQuote->premium
     );
     
     // Assert that observers ran successfully (VAT calculations)
-    PaymentTestHelper::assertObserversRanSuccessfully(
+    PaymentTestAssertionHelper::assertObserversRanSuccessfully(
         payment: $createdPayment,
         paymentSplit: $createdPaymentSplit
     );
