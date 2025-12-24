@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
@@ -17,7 +18,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\QuoteTypeId;
 
 class SaleSummaryReportService extends ManagementReport
 {
@@ -426,14 +426,14 @@ class SaleSummaryReportService extends ManagementReport
         $data = collect($data
             ->groupBy(function ($item) use ($groupByColumn) {
                 // Group by both the groupByColumn and branch
-                return $item->$groupByColumn . '|' . $item->branch_name;
+                return $item->$groupByColumn.'|'.$item->branch_name;
             })
             ->map(function ($group, $compositeKey) use ($request) {
                 // Split the composite key back into individual values
                 $keys = explode('|', $compositeKey);
                 $groupBy = $keys[0];
                 $branch = $keys[1] ?? 'N/A';
-                
+
                 return (object) [
                     $request->groupBy => $groupBy,
                     'branch_name' => $branch,

@@ -106,7 +106,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
             $headings[] = 'Department';
         }
 
-        if($this->groupByColumn != 'branch') {
+        if ($this->groupByColumn != 'branch') {
             $headings[] = 'Branch';
         }
 
@@ -146,7 +146,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
             $values[] = $quote->department ?? 'N/A';
         }
 
-        if($this->groupByColumn != 'branch') {
+        if ($this->groupByColumn != 'branch') {
             $values[] = $quote->branch_name ?? 'N/A';
         }
 
@@ -181,7 +181,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
         $totalsRow[0] = 'Totals';
         // Adjust offset for: groupBy column (1) + optional department column (1) + branch column (1)
         $offset = 2;
-        if($this->groupByColumn == 'branch') {
+        if ($this->groupByColumn == 'branch') {
             $offset = 1;
         } elseif (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $offset = 3;
