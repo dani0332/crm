@@ -1365,8 +1365,9 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchGenerateEPRenewal($batchName)
     {
         $batch = RenewalBatch::where('name', $batchName)->first();
-        if(! $batch) {
+        if (! $batch) {
             LoggerService::info("fn:fetchGenerateEPRenewal - RenewalBatch not found for name: {$batchName}");
+
             return;
         }
 
