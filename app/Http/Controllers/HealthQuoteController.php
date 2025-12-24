@@ -133,7 +133,7 @@ class HealthQuoteController extends Controller
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Plan has not been updated ' . json_encode($responseMessage);
+            $message = 'Plan has not been updated '.json_encode($responseMessage);
         }
 
         return $message;
