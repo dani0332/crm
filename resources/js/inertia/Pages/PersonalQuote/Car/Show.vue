@@ -1447,7 +1447,8 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.record.id,
   insured_first_name: page.props.record.insured_first_name || '',
   insured_last_name: page.props.record.insured_last_name || '',
-  emirates_id_number: page.props.record.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.record.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
 
   entity_id: page.props.record.entity_id ?? null,
@@ -1901,7 +1902,7 @@ const handleCancelConfirmationModal = () => {
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Car Detail</h2>
         <x-button
-          v-if="record?.pc_qualified == true"
+          v-if="record?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"

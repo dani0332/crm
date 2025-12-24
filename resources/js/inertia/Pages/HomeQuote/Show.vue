@@ -4,16 +4,16 @@ import {
   useIsQuoteCreatedAfterCutoff,
 } from '@/inertia/Composables/utilities.js';
 
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import OcrNotification from '@/inertia/Components/OcrNotification.vue';
-import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -1159,7 +1159,7 @@ function handleOcrNotification(event) {
           Stale for {{ countDays }}
         </p>
         <x-button
-          v-if="quote?.home_quote?.pc_qualified == true"
+          v-if="quote?.customer?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"
@@ -1549,6 +1549,24 @@ function handleOcrNotification(event) {
                   }}
                 </dd>
               </div>
+              <!-- Previous Contents AED for Renewal Leads -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  quote?.source === $page.props.leadSource.RENEWAL_UPLOAD &&
+                  quote?.home_quote?.previous_contents_aed
+                "
+              >
+                <dt class="font-medium text-blue-600">PREVIOUS CONTENTS AED</dt>
+                <dd class="text-blue-600 font-medium">
+                  {{
+                    Number(
+                      quote?.home_quote?.previous_contents_aed,
+                    ).toLocaleString()
+                  }}
+                  AED
+                </dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS BUILDING</dt>
                 <dd>{{ quote?.home_quote?.building_value ? 'Yes' : 'No' }}</dd>
@@ -1556,6 +1574,24 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BUILDING AED</dt>
                 <dd>{{ quote?.home_quote?.building_value }}</dd>
+              </div>
+              <!-- Previous Building AED for Renewal Leads -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  quote?.source === $page.props.leadSource.RENEWAL_UPLOAD &&
+                  quote?.home_quote?.previous_building_aed
+                "
+              >
+                <dt class="font-medium">PREVIOUS BUILDING AED</dt>
+                <dd class="font-medium">
+                  {{
+                    Number(
+                      quote?.home_quote?.previous_building_aed,
+                    ).toLocaleString()
+                  }}
+                  AED
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS PERSONAL BELONGINGS</dt>
@@ -1578,10 +1614,38 @@ function handleOcrNotification(event) {
                   }}
                 </dd>
               </div>
+              <!-- Previous Personal Belongings AED for Renewal Leads -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  quote?.source === $page.props.leadSource.RENEWAL_UPLOAD &&
+                  quote?.home_quote?.previous_personal_belongings_aed
+                "
+              >
+                <dt class="font-medium">PREVIOUS PERSONAL BELONGINGS AED</dt>
+                <dd class="font-medium">
+                  {{
+                    Number(
+                      quote?.home_quote?.previous_personal_belongings_aed,
+                    ).toLocaleString()
+                  }}
+                  AED
+                </dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CLAIM HISTORY</dt>
                 <dd>
                   {{ quote?.home_quote?.has_claimed_losses ? 'Yes' : 'No' }}
+                </dd>
+              </div>
+              <!-- Enquiry Count for Renewal Leads -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.source === $page.props.leadSource.RENEWAL_UPLOAD"
+              >
+                <dt class="font-medium">ENQUIRY COUNT</dt>
+                <dd class="">
+                  {{ quote?.home_quote?.enquiry_count || 0 }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">

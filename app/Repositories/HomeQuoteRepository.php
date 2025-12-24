@@ -29,6 +29,7 @@ use App\Models\HomePlan;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use App\Models\SubArea;
+use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -141,8 +142,21 @@ class HomeQuoteRepository extends BaseRepository
                 })
             );
 
+        if (! $forTotalLeadsCount && ! $forExport) {
+            $this->postProcessHomeQuote($query);
+        }
+
         // logger()->debug("toRawSql: " . $query->toRawSql());
         return $query;
+    }
+
+    private function postProcessHomeQuote($query)
+    {
+        return $query->map(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home));
+
+            return $item;
+        });
     }
 
     /**
@@ -206,6 +220,7 @@ class HomeQuoteRepository extends BaseRepository
             'quoteDetail.lostReason',
             'quoteStatus',
             'advisor',
+            'advisor.primaryBranch.branch:id,name',
             'nationality',
             'insuranceProviderPlan',
             'homeQuote',
@@ -233,6 +248,7 @@ class HomeQuoteRepository extends BaseRepository
             },
             'customer',
             'renewalBatchModel',
+            'branch:id,name',
         ];
     }
 
@@ -796,6 +812,7 @@ class HomeQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'quoteStatus',
                 'advisor',
+                'advisor.primaryBranch.branch:id,name',
                 'nationality',
                 'renewalBatchModel',
                 'plans',
@@ -840,6 +857,7 @@ class HomeQuoteRepository extends BaseRepository
                 'transactionType',
                 'subSource',
                 'subSourceOption',
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',

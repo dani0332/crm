@@ -78,6 +78,8 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
         ->name('pc-customer-assignment');
+        
+    Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
