@@ -36,10 +36,11 @@ class PaymentFactory extends Factory
     }
 
     /**
-     * Create a Payment using SQLite connection for tests.
+     * Create a Payment for tests.
      * Accepts a CarQuote object and extracts plan_id, insurance_provider_id, code, and premium.
      * Gets created_by and updated_by from currently logged in user.
      * Uses model-based insertion so observers will run.
+     * Uses the default database connection (SQLite in tests as configured in phpunit.xml).
      *
      * @param  CarQuote  $carQuote  The car quote to create payment for
      * @param  array  $attributes  Additional attributes to override defaults
@@ -64,8 +65,9 @@ class PaymentFactory extends Factory
             'updated_by' => $user?->id,
         ], $attributes);
 
-        // Use model-based insertion with SQLite connection so observers run
-        return Payment::on('sqlite')->create($paymentAttributes);
+        // Use model-based insertion so observers run
+        // Uses default connection (SQLite in tests as configured in phpunit.xml)
+        return Payment::create($paymentAttributes);
     }
 }
 

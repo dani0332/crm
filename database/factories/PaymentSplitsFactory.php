@@ -30,9 +30,10 @@ class PaymentSplitsFactory extends Factory
     }
 
     /**
-     * Create a PaymentSplit using SQLite connection for tests.
+     * Create a PaymentSplit for tests.
      * Accepts a Payment object and extracts code and payment_amount from total_price.
      * Uses model-based insertion so observers will run.
+     * Uses the default database connection (SQLite in tests as configured in phpunit.xml).
      *
      * @param  Payment  $payment  The payment to create split for
      * @param  array  $attributes  Additional attributes to override defaults
@@ -46,7 +47,8 @@ class PaymentSplitsFactory extends Factory
             'insurer_receipt_number' => $payment->code,
         ], $attributes);
 
-        // Use model-based insertion with SQLite connection so observers run
-        return PaymentSplits::on('sqlite')->create($splitAttributes);
+        // Use model-based insertion so observers run
+        // Uses default connection (SQLite in tests as configured in phpunit.xml)
+        return PaymentSplits::create($splitAttributes);
     }
 }

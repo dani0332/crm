@@ -73,16 +73,18 @@ class PaymentTestDataHelper
             PermissionsEnum::INPL_APPROVER,                              // Required for INPL payment method approval
         ];
 
-        // Get or create Admin role on SQLite connection
-        $adminRole = Role::on('sqlite')->firstOrCreate(
+        // Get or create Admin role
+        // Uses default connection (SQLite in tests as configured in phpunit.xml)
+        $adminRole = Role::firstOrCreate(
             ['name' => \App\Enums\RolesEnum::Admin, 'guard_name' => 'web'],
             ['created_at' => now(), 'updated_at' => now()]
         );
 
         // Create and assign each permission
         foreach ($permissions as $permissionName) {
-            // Create permission on SQLite connection
-            $permission = Permission::on('sqlite')->firstOrCreate(
+            // Create permission
+            // Uses default connection (SQLite in tests as configured in phpunit.xml)
+            $permission = Permission::firstOrCreate(
                 ['name' => $permissionName, 'guard_name' => 'web'],
                 ['created_at' => now(), 'updated_at' => now()]
             );

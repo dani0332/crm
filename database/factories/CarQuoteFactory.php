@@ -69,9 +69,8 @@ class CarQuoteFactory extends Factory
     }
 
     /**
-     * Create a CarQuote using SQLite connection for tests.
-     * This method handles models with hardcoded MySQL connections by inserting
-     * directly via DB facade and then loading the model with SQLite connection.
+     * Create a CarQuote for tests.
+     * Uses the default database connection (SQLite in tests as configured in phpunit.xml).
      *
      * @param  array  $attributes  If 'uuid' is provided, it will be used. If 'code' is provided, it will be used.
      *                             Otherwise, UUID and code will be auto-generated.

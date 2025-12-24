@@ -13,26 +13,26 @@ class PaymentTestQueryHelper
 {
     /**
      * Retrieve payment from database by quote code.
+     * Uses the default database connection (SQLite in tests as configured in phpunit.xml).
      *
      * @param  string  $quoteCode  The quote code to search for
      */
     public static function getPaymentByQuoteCode(string $quoteCode): ?Payment
     {
-        return Payment::on('sqlite')
-            ->where('code', $quoteCode)
+        return Payment::where('code', $quoteCode)
             ->first();
     }
 
     /**
      * Retrieve payment split from database by payment code and serial number.
+     * Uses the default database connection (SQLite in tests as configured in phpunit.xml).
      *
      * @param  string  $paymentCode  The payment code
      * @param  int  $srNo  The serial number
      */
     public static function getPaymentSplitByCodeAndSerial(string $paymentCode, int $srNo = 1): ?PaymentSplits
     {
-        return PaymentSplits::on('sqlite')
-            ->where('code', $paymentCode)
+        return PaymentSplits::where('code', $paymentCode)
             ->where('sr_no', $srNo)
             ->first();
     }
