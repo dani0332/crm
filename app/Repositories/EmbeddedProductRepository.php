@@ -64,6 +64,7 @@ use finfo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use Throwable;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -581,7 +582,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $sukoonMedexService = app(SukoonMedexService::class);
                 $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
                 $sukoonMedexService->processPurchaseFlow();
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
 
@@ -601,7 +602,7 @@ class EmbeddedProductRepository extends BaseRepository
             try {
                 $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quoteObject->code);
                 dispatch(new EpPurchaseFlowJob($context));
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
         }
