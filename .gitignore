@@ -24,4 +24,3 @@ notes.txt
 
 dump.rdb
 app/Services/SendBookPolicyDocumentsJobLocal.php
-.env.test
