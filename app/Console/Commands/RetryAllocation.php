@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Services\Allocation\RetryAllocationService;
 use Illuminate\Console\Command;
@@ -14,7 +13,7 @@ class RetryAllocation extends Command
      *
      * @var string
      */
-    protected $signature = 'RetryAllocation:cron {quoteType}';
+    protected $signature = 'RetryAllocation:cron {--quoteType= : The quote type to retry allocation for}';
 
     /**
      * The console command description.
@@ -40,7 +39,8 @@ class RetryAllocation extends Command
      */
     public function handle(RetryAllocationService $retryAllocationService)
     {
-        $quoteType = QuoteTypes::from($this->argument('quoteType'));
+        $quoteType = QuoteTypes::from($this->option('quoteType'));
+
         $retryAllocation = $retryAllocationService->verifyRetryAllocationMasterSwitch($quoteType);
 
         if (empty($retryAllocation)) {
