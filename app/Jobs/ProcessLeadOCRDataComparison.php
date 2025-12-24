@@ -46,9 +46,6 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     public function getCarDocuments()
     {
-        //$startDate = Carbon::parse('2025-03-01')->startOfMonth();
-        //$endDate = Carbon::parse('2025-03-31')->endOfMonth();
-
         $documentTypeCodes = DocumentType::query()
             ->active()
             ->byQuoteTypeId(QuoteTypes::CAR->id())
@@ -198,8 +195,6 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                             }
                         }
 
-                       //print_r($matchCount.' - '.$count); exit;
-
                         $comparisonStructure[$ocrDocType->value] = [
                             'count' => $count,
                             'match_count' => $matchCount,
@@ -216,8 +211,6 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 }
             }
 
-           //print_r($leadDataStructure); exit;
-            //print_r($ocrDataStructure); exit;
             // Save data in database
             $this->saveleadOCRComparisonData($quote->id, $quote->uuid, $leadDataStructure, $ocrDataStructure, $comparisonStructure);
 
@@ -648,9 +641,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $isEcom = false;
 
          $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);   
-        // $docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
-
-
+         
         if (! $docUrl) {
             LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
                 'quote_uuid' => $quote->uuid,
