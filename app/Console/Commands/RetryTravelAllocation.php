@@ -43,7 +43,7 @@ class RetryTravelAllocation extends Command
         $retryAllocation = $retryAllocationService->verifyRetryAllocationMasterSwitch(QuoteTypes::TRAVEL);
 
         if (empty($retryAllocation)) {
-            return;
+            return Command::SUCCESS;
         }
 
         [$startTime, $endTime] = $retryAllocation;

@@ -43,7 +43,7 @@ class RetryCarAllocation extends Command
         $retryAllocation = $retryAllocationService->verifyRetryAllocationMasterSwitch(QuoteTypes::CAR);
 
         if (empty($retryAllocation)) {
-            return;
+            return Command::SUCCESS;
         }
 
         [$startTime, $endTime] = $retryAllocation;

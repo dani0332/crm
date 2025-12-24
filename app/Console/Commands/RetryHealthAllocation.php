@@ -43,7 +43,7 @@ class RetryHealthAllocation extends Command
         $retryAllocation = $retryAllocationService->verifyRetryAllocationMasterSwitch(QuoteTypes::HEALTH);
 
         if (empty($retryAllocation)) {
-            return;
+            return Command::SUCCESS;
         }
 
         [$startTime, $endTime] = $retryAllocation;

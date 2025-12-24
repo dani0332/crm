@@ -43,7 +43,7 @@ class RetryBikeAllocation extends Command
         $retryAllocation = $retryAllocationService->verifyRetryAllocationMasterSwitch(QuoteTypes::BIKE);
 
         if (empty($retryAllocation)) {
-            return;
+            return Command::SUCCESS;
         }
 
         [$startTime, $endTime] = $retryAllocation;
