@@ -22,25 +22,26 @@ class FailedIlaLeadsExport implements FromCollection, WithStrictNullComparison
         $exportLeads = collect();
         
         // Add header row
+ 
         $firstRow = (object) [];
-        $firstRow->id = 'ID';
-        $firstRow->uuid = 'UUID';
+
+        $firstRow->code = 'Ref ID';
         $firstRow->first_name = 'First Name';
         $firstRow->last_name = 'Last Name';
         $firstRow->created_at = 'Created At';
-        $firstRow->payment_authorised_date  = "Payment Authorised Date";
+        $firstRow->paid_at  = "Payment Authorised Date";
         $firstRow->quote_status = "Lead Status";
         $exportLeads->push($firstRow);
 
         // Add data rows
         foreach ($this->leads as $lead) {
             $leadData = (object) [];
-            $leadData->id = $lead->id ?? '';
-            $leadData->uuid = $lead->uuid ?? '';
+            $leadData->code = $lead->code ?? '';
             $leadData->first_name = $lead->first_name ?? '';
             $leadData->last_name = $lead->last_name ?? '';
             $leadData->created_at = $lead->created_at ?? '';
-            
+            $leadData->paid_at = $lead->paid_at ?? '';
+            $leadData->quote_status = $lead->quoteStatus->text ?? '';
             $exportLeads->push($leadData);
         }
 
