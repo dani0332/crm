@@ -146,4 +146,4 @@ Route::post('/remove-pc-assignment', [ApiController::class, 'removePrivateClient
     ->name('remove-pc-assignment');
 
 Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
-    ->name('pc-assignment');
+    ->name('pc-customer-assignment');

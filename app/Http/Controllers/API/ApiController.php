@@ -33,6 +33,7 @@ use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\RemovePrivateClientTagJob;
 use App\Jobs\RunCQFJobs;
+use App\Jobs\TagPcpCustomerJob;
 use App\Jobs\TagPrivateClientJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
@@ -402,7 +403,7 @@ class ApiController extends Controller
     {
         LoggerService::info(self::class.': PC customer tag exercise has been initiated',$request->all());
 
-        dispatch(new TagPrivateClientJob($request->uuids ?? []));
+        dispatch(new TagPcpCustomerJob($request->uuids ?? []));
 
         return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
     }
