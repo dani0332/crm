@@ -34,9 +34,8 @@ class PaymentSplitsFactory extends Factory
      * Accepts a Payment object and extracts code and payment_amount from total_price.
      * Uses model-based insertion so observers will run.
      *
-     * @param Payment $payment The payment to create split for
-     * @param array $attributes Additional attributes to override defaults
-     * @return PaymentSplits
+     * @param  Payment  $payment  The payment to create split for
+     * @param  array  $attributes  Additional attributes to override defaults
      */
     public function createForSqlite(Payment $payment, array $attributes = []): PaymentSplits
     {
@@ -46,7 +45,7 @@ class PaymentSplitsFactory extends Factory
             'payment_amount' => $payment->total_price,
             'insurer_receipt_number' => $payment->code,
         ], $attributes);
-        
+
         // Use model-based insertion with SQLite connection so observers run
         return PaymentSplits::on('sqlite')->create($splitAttributes);
     }

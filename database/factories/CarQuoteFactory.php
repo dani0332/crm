@@ -20,7 +20,7 @@ class CarQuoteFactory extends Factory
     {
         // Generate UUID with 8-10 random characters
         $uuidLength = $this->faker->numberBetween(8, 10);
-        $uuid = $this->faker->regexify('[A-Za-z0-9]{' . $uuidLength . '}');
+        $uuid = $this->faker->regexify('[A-Za-z0-9]{'.$uuidLength.'}');
         $uuid = strtoupper($uuid);
 
         // Create a CarPlan using factory (which automatically creates an InsuranceProvider)
@@ -29,7 +29,7 @@ class CarQuoteFactory extends Factory
 
         return [
             'uuid' => $uuid,
-            'code' => 'CAR-' . $uuid,
+            'code' => 'CAR-'.$uuid,
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'email' => $this->faker->unique()->safeEmail(),
@@ -53,14 +53,14 @@ class CarQuoteFactory extends Factory
      * Associate the quote with a specific car plan.
      * This will automatically set both plan_id and insurance_provider_id.
      *
-     * @param int|CarPlan $carPlan
+     * @param  int|CarPlan  $carPlan
      * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function forCarPlan($carPlan)
     {
         return $this->state(function (array $attributes) use ($carPlan) {
             $plan = $carPlan instanceof CarPlan ? $carPlan : CarPlan::findOrFail($carPlan);
-            
+
             return [
                 'plan_id' => $plan->id,
                 'insurance_provider_id' => $plan->provider_id,
@@ -73,29 +73,28 @@ class CarQuoteFactory extends Factory
      * This method handles models with hardcoded MySQL connections by inserting
      * directly via DB facade and then loading the model with SQLite connection.
      *
-     * @param array $attributes If 'uuid' is provided, it will be used. If 'code' is provided, it will be used.
-     *                          Otherwise, UUID and code will be auto-generated.
-     * @return CarQuote
+     * @param  array  $attributes  If 'uuid' is provided, it will be used. If 'code' is provided, it will be used.
+     *                             Otherwise, UUID and code will be auto-generated.
      */
     public function createForSqlite(array $attributes = []): CarQuote
     {
         // Generate UUID if not provided
-        if (!isset($attributes['uuid'])) {
+        if (! isset($attributes['uuid'])) {
             $uuidLength = $this->faker->numberBetween(8, 10);
-            $uuid = strtoupper($this->faker->regexify('[A-Za-z0-9]{' . $uuidLength . '}'));
+            $uuid = strtoupper($this->faker->regexify('[A-Za-z0-9]{'.$uuidLength.'}'));
         } else {
             $uuid = $attributes['uuid'];
             unset($attributes['uuid']); // Remove from attributes to avoid duplication
         }
-        
+
         // Generate code if not provided
-        if (!isset($attributes['code'])) {
-            $code = 'CAR-' . $uuid;
+        if (! isset($attributes['code'])) {
+            $code = 'CAR-'.$uuid;
         } else {
             $code = $attributes['code'];
             unset($attributes['code']); // Remove from attributes to avoid duplication
         }
-        
+
         // Build quote attributes
         $quoteAttributes = array_merge([
             'customer_id' => 1,
@@ -115,7 +114,7 @@ class CarQuoteFactory extends Factory
             'created_by_id' => null,
             'updated_by_id' => null,
         ], $attributes);
-        
+
         // Use model-based creation with forceCreate to bypass mass assignment protection
         return CarQuote::forceCreate($quoteAttributes);
     }

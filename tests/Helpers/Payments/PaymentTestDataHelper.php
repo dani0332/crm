@@ -2,11 +2,11 @@
 
 namespace Tests\Helpers\Payments;
 
+use App\Enums\PermissionsEnum;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
-use App\Enums\PermissionsEnum;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -20,8 +20,8 @@ class PaymentTestDataHelper
      * Set up test data: InsuranceProvider, CarPlan, and CarQuote.
      * Creates all necessary test data for payment testing.
      *
-     * @param string $quoteCode Optional quote code (default: 'CAR-ABCDEF12345')
-     * @param string $quoteUuid Optional quote UUID (default: 'ABCDEF12345')
+     * @param  string  $quoteCode  Optional quote code (default: 'CAR-ABCDEF12345')
+     * @param  string  $quoteUuid  Optional quote UUID (default: 'ABCDEF12345')
      * @return array Returns array with 'insuranceProvider', 'carPlan', 'carQuote', 'quoteCode', 'quoteUuid'
      */
     public static function setupTestData(
@@ -31,14 +31,14 @@ class PaymentTestDataHelper
         // Create InsuranceProvider using model-based creation
         $providerAttributes = InsuranceProvider::factory()->definition();
         $insuranceProvider = InsuranceProvider::forceCreate($providerAttributes);
-        
+
         // Create CarPlan linked to the InsuranceProvider using model-based creation
         $planFactory = CarPlan::factory();
         $planAttributes = $planFactory->definition();
         // Replace factory relationship with actual provider ID
         $planAttributes['provider_id'] = $insuranceProvider->id;
         $carPlan = CarPlan::forceCreate($planAttributes);
-        
+
         // Create CarQuote using factory method that handles SQLite connection
         $carQuote = CarQuote::factory()->createForSqlite([
             'uuid' => $quoteUuid,
@@ -46,7 +46,7 @@ class PaymentTestDataHelper
             'insurance_provider_id' => $insuranceProvider->id,
             'plan_id' => $carPlan->id,
         ]);
-        
+
         return [
             'insuranceProvider' => $insuranceProvider,
             'carPlan' => $carPlan,
@@ -61,8 +61,7 @@ class PaymentTestDataHelper
      * Creates and assigns required permissions to the Admin role and user.
      * This includes permissions needed for payment approval/decline operations.
      *
-     * @param User $user The user to assign permissions to
-     * @return void
+     * @param  User  $user  The user to assign permissions to
      */
     public static function setupPaymentPermissions(User $user): void
     {
@@ -103,4 +102,3 @@ class PaymentTestDataHelper
         $user->refresh();
     }
 }
-

@@ -2,7 +2,6 @@
 
 namespace Tests\Helpers;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class TestSchemaCreator
@@ -208,7 +207,7 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
-        
+
         // Create teams table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('teams')) {
             Schema::connection('sqlite')->create('teams', function ($table) {
@@ -437,7 +436,6 @@ class TestSchemaCreator
             });
         }
 
-        
         // Create personal_quotes table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('car_quote_request')) {
             Schema::connection('sqlite')->create('car_quote_request', function ($table) {

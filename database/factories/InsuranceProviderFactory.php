@@ -25,7 +25,7 @@ class InsuranceProviderFactory extends Factory
             ['code' => 'AXA', 'text' => 'Gulf Insurance'],
             ['code' => 'QIC', 'text' => 'Qatar Insurance'],
             ['code' => 'RAK', 'text' => 'RAK Insurance'],
-            ['code' => 'TM', 'text' => 'Tokio Marine']
+            ['code' => 'TM', 'text' => 'Tokio Marine'],
         ];
 
         $provider = $this->faker->randomElement($providers);
@@ -51,4 +51,3 @@ class InsuranceProviderFactory extends Factory
         });
     }
 }
-

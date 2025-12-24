@@ -41,17 +41,16 @@ class PaymentFactory extends Factory
      * Gets created_by and updated_by from currently logged in user.
      * Uses model-based insertion so observers will run.
      *
-     * @param CarQuote $carQuote The car quote to create payment for
-     * @param array $attributes Additional attributes to override defaults
-     * @return Payment
+     * @param  CarQuote  $carQuote  The car quote to create payment for
+     * @param  array  $attributes  Additional attributes to override defaults
      */
     public function createForSqlite(CarQuote $carQuote, array $attributes = []): Payment
     {
         $user = Auth::user();
-        
+
         // Get premium from car quote (default to 1000 if not set)
         $premium = $carQuote->premium ?? 1000;
-        
+
         // Build payment attributes from car quote
         $paymentAttributes = array_merge($this->definition(), [
             'code' => $carQuote->code,
@@ -60,11 +59,11 @@ class PaymentFactory extends Factory
             'paymentable_id' => $carQuote->id,
             'paymentable_type' => CarQuote::class,
             'total_price' => $premium,
-            'total_amount' => $premium, 
+            'total_amount' => $premium,
             'created_by' => $user?->id,
             'updated_by' => $user?->id,
         ], $attributes);
-        
+
         // Use model-based insertion with SQLite connection so observers run
         return Payment::on('sqlite')->create($paymentAttributes);
     }
