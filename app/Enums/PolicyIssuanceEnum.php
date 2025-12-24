@@ -39,7 +39,7 @@ final class PolicyIssuanceEnum extends Enum
     const PIA_OCR_PROCESSING_API_FAILED_STATUS_ID = 5;
     const PIA_BOOK_POLICY_API_FAILED_STATUS_ID = 6;
     const PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID = 99;
-    const PIA_LEGACY_NON_API_STATUS_ID = 100;
+    const PIA_LEGACY_NON_API_STATUS_ID = 101;
 
     // Policy Issuance Automation Insurer Statuses Messages
     const PIA_AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
