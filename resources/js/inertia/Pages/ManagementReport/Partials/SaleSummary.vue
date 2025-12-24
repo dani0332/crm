@@ -135,14 +135,14 @@ watchEffect(() => {
   };
 
   const headerMap = {
-    advisor: ['advisor', 'department','branch_name'],
-    support_user: ['support_user', 'department','branch_name'],
-    policy_issuer: ['policy_issuer','branch_name'],
-    customer_group: ['customer_group','branch_name'],
+    advisor: ['advisor', 'department', 'branch_name'],
+    support_user: ['support_user', 'department', 'branch_name'],
+    policy_issuer: ['policy_issuer', 'branch_name'],
+    customer_group: ['customer_group', 'branch_name'],
     insurer: ['insurer', 'branch_name'],
-    line_of_business: ['line_of_business','branch_name'],
-    department: ['department','branch_name'],
-    branch: ['branch_name']
+    line_of_business: ['line_of_business', 'branch_name'],
+    department: ['department', 'branch_name'],
+    branch: ['branch_name'],
   };
 
   // Remove all columns in tableHeader that match any key in the columns object
@@ -153,7 +153,8 @@ watchEffect(() => {
     }
   });
 
-  const headerText = props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
+  const headerText =
+    props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
   let columnsToAdd = [];
   for (const column of headerText) {
     if (!tableHeader.some(item => item.value === column)) {
