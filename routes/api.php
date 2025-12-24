@@ -76,6 +76,9 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
 
+    Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
+        ->name('pc-customer-assignment');
+
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
@@ -144,6 +147,3 @@ Route::post('/pc-assignment', [ApiController::class, 'tagPrivateClients'])
 // Route to remove lead private client tag
 Route::post('/remove-pc-assignment', [ApiController::class, 'removePrivateClientTag'])
     ->name('remove-pc-assignment');
-
-Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
-    ->name('pc-customer-assignment');

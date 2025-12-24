@@ -59,6 +59,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -401,9 +402,18 @@ class ApiController extends Controller
 
     public function tagPcpCustomers(Request $request)
     {
-        LoggerService::info(self::class.': PC customer tag exercise has been initiated',$request->all());
+        try {
+            $validated = Validator::make($request->all(), [
+                'uuids' => ['nullable', 'array'],
+                'uuids.*' => ['string'],
+            ])->validate();
+        } catch (ValidationException $e) {
+            return apiResponse($e->errors(), Response::HTTP_UNPROCESSABLE_ENTITY, 'Validation failed');
+        }
 
-        dispatch(new TagPcpCustomerJob($request->uuids ?? []));
+        LoggerService::info(self::class.': PC customer tag exercise has been initiated', $validated);
+
+        dispatch(new TagPcpCustomerJob($validated['uuids'] ?? []));
 
         return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
     }
