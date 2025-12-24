@@ -221,16 +221,17 @@ test('payment split validates presence and format of insurer receipt number', fu
     // ============================================
     // 1. ARRANGE: Create payment splits for testing
     // ============================================
-    $payment = Payment::factory()->createForSqlite($this->carQuote);
+    // Create payment using helper method
+    $payment = PaymentTestCreationHelper::createPayment($this->carQuote);
     
     // Create a payment split with an existing receipt number for case 3
     $existingReceiptNumber = 'INS-REC-EXISTING';
-    PaymentSplits::factory()->createForSqlite($payment, [
+    PaymentTestCreationHelper::createPaymentSplit($payment, [
         'insurer_receipt_number' => $existingReceiptNumber,
     ]);
 
     // Create another payment split without insurer_receipt_number for testing updates
-    PaymentSplits::factory()->createForSqlite($payment, [
+    PaymentTestCreationHelper::createPaymentSplit($payment, [
         'insurer_receipt_number' => null,
     ]);
 
@@ -243,8 +244,7 @@ test('payment split validates presence and format of insurer receipt number', fu
         '/payments/' . $quoteType . '/check-insurer-receipt-number',
         ['insurer_receipt_number' => null]
     );
-    $response->assertStatus(422);
-    $response->assertJsonValidationErrors(['insurer_receipt_number']);
+    PaymentTestAssertionHelper::assertInsurerReceiptNumberNullValidationError($response);
 
     // ============================================
     // CASE 2: Test with non-existent receipt number (should show "not exists")
@@ -254,11 +254,7 @@ test('payment split validates presence and format of insurer receipt number', fu
         '/payments/' . $quoteType . '/check-insurer-receipt-number',
         ['insurer_receipt_number' => $nonExistentReceipt]
     );
-    $response->assertStatus(200);
-    $response->assertJson([
-        'status' => true,
-        'message' => 'Receipt number does not exist',
-    ]);
+    PaymentTestAssertionHelper::assertInsurerReceiptNumberDoesNotExist($response);
 
     // ============================================
     // CASE 3: Test with existing receipt number (should show "exists")
@@ -267,11 +263,7 @@ test('payment split validates presence and format of insurer receipt number', fu
         '/payments/' . $quoteType . '/check-insurer-receipt-number',
         ['insurer_receipt_number' => $existingReceiptNumber]
     );
-    $response->assertStatus(200);
-    $response->assertJson([
-        'status' => false,
-        'message' => 'Receipt number already exists',
-    ]);
+    PaymentTestAssertionHelper::assertInsurerReceiptNumberAlreadyExists($response);
 });
 
 test('payment should be approved via endpoint', function () {

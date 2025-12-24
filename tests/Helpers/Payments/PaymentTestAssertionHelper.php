@@ -193,5 +193,47 @@ class PaymentTestAssertionHelper
         expect((float) $payment->captured_amount)->toBe((float) $expectedCapturedAmount)
             ->and($payment->payment_allocation_status)->toBe(PaymentAllocationStatus::NOT_ALLOCATED);
     }
+
+    /**
+     * Assert that insurer receipt number validation returns a null validation error.
+     *
+     * @param \Illuminate\Testing\TestResponse $response The HTTP response from the validation endpoint
+     * @return void
+     */
+    public static function assertInsurerReceiptNumberNullValidationError($response): void
+    {
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['insurer_receipt_number']);
+    }
+
+    /**
+     * Assert that insurer receipt number validation returns "does not exist" response.
+     *
+     * @param \Illuminate\Testing\TestResponse $response The HTTP response from the validation endpoint
+     * @return void
+     */
+    public static function assertInsurerReceiptNumberDoesNotExist($response): void
+    {
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => true,
+            'message' => 'Receipt number does not exist',
+        ]);
+    }
+
+    /**
+     * Assert that insurer receipt number validation returns "already exists" response.
+     *
+     * @param \Illuminate\Testing\TestResponse $response The HTTP response from the validation endpoint
+     * @return void
+     */
+    public static function assertInsurerReceiptNumberAlreadyExists($response): void
+    {
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => false,
+            'message' => 'Receipt number already exists',
+        ]);
+    }
 }
 
