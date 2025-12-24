@@ -91,10 +91,14 @@ class FailedILAEmailService
     {
 
         $leads = $this->getFailedILALeads(now()->startOfDay(), now(), $quoteType);
-
+        $totalLeads = count($leads);
         if ($leads->isEmpty()) {
             LoggerService::warning(self::class . ' - exportFailedIlaLeads - No leads found for quote type: ' . $quoteType);
-            return null;
+            return [
+                'success' => false,
+                'message' => 'No leads found for quote type: ' . $quoteType,
+                'total_leads' => $totalLeads,
+            ];
         }
         try {
             LoggerService::info(self::class . ' - exportFailedIlaLeads - Exporting failed ILA leads for quote type: ' . $quoteType);
@@ -113,10 +117,19 @@ class FailedILAEmailService
             $this->scheduleFileDeletion($tempFilePath);
 
             LoggerService::info(self::class . ' - exportFailedIlaLeads - Public URL generated for quote type: ' . $quoteType . ' | URL: ' . $publicUrl);
-            return $publicUrl;
+            return [
+                'success' => true,
+                'message' => 'Failed ILA leads exported successfully',
+                'public_url' => $publicUrl,
+                'total_leads' => $totalLeads,
+            ];
         } catch (\Exception $e) {
             LoggerService::warning(self::class . ' - exportFailedIlaLeads - Error: ' . $e->getMessage());
-            return null;
+            return [
+                'success' => false,
+                'message' => 'Failed to export failed ILA leads: ' . $e->getMessage(),
+                'total_leads' => $totalLeads,
+            ];
         }
     }
     protected function scheduleFileDeletion($filePath)

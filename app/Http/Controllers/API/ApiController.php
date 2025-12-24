@@ -688,18 +688,20 @@ class ApiController extends Controller
 
     public function ExportFailedIlaLeads($quoteType)
     {
-        $publicUrl = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
-        if ($publicUrl) {
+        $response = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
+        if ($response['success']) {
             return response()->json([
                 'success' => true,
-                'message' => 'Failed ILA leads exported successfully',
-                'public_url' => $publicUrl,
+                'message' => $response['message'],
+                'public_url' => $response['public_url'],
+                'total_leads' => $response['total_leads'],
             ], Response::HTTP_OK);
         } else {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to export failed ILA leads',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+                'message' => $response['message'],
+                'total_leads' => $response['total_leads'],
+            ], 404);
         }
     }
 }
