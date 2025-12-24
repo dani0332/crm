@@ -29,7 +29,12 @@ class Kernel extends ConsoleKernel
         Commands\Dtt::class,
         Commands\DttFollowUp::class,
         Commands\UpdateUserStatus::class,
-        Commands\QuoteAllocation::class,
+        Commands\RetryCarAllocation::class,
+        Commands\RetryCarRevivalAllocation::class,
+        Commands\RetryHealthAllocation::class,
+        Commands\RetryTravelAllocation::class,
+        Commands\RetryBikeAllocation::class,
+        Commands\RetryAllocation::class,
         Commands\LeadsReassignment::class,
         Commands\ResetLeadAllocationCounts::class,
         Commands\QuoteSyncUpdateCommand::class,
@@ -91,7 +96,12 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('AddBatchNumberNonMotors:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(5);
 
-        $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryCarAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryCarRevivalAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryHealthAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryTravelAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryBikeAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        // $schedule->command('RetryAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 

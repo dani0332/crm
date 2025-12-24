@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Services\Allocation;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
@@ -17,88 +17,41 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
-use App\Services\ApplicationStorageService;
 use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
-use Illuminate\Console\Command;
 
-class QuoteAllocation extends Command
+class RetryAllocationService
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'QuoteAllocation:cron';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'This runs to check if any unassigned is available then assign them accordingly';
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
-    public function handle(ApplicationStorageService $applicationStorageService)
+    public function verifyRetryAllocationMasterSwitch(QuoteTypes $quoteType): ?array
     {
         $currentIteration = now();
         LoggerService::info(self::class.': Quote Allocation Command Started', extra: [
+            'quote_type' => $quoteType->value,
             'timestamp' => $currentIteration,
         ]);
 
-        $quoteAllocationSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::QUOTE_ALLOCATION_SWITCH);
+        $quoteAllocationSwitch = getAppStorageValueByKey(ApplicationStorageEnums::QUOTE_ALLOCATION_SWITCH, useCache: true);
+
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
-        $allocationStartDate = now()->subWeek()->startOfDay()->toDateTimeString();
+        $startTime = now()->subWeek()->startOfDay()->toDateTimeString();
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
-            $to = now()->subMinutes(5)->toDateTimeString();
-            $chunkSize = 200;
-            LoggerService::info(self::class.': Setting allocation date range', extra: [
-                'start_date' => $allocationStartDate,
-                'end_date' => $to,
-            ]);
-            $this->executeCarRevivalAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate);
-            $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
-            $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
-            $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
-            $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::GROUP_MEDICAL, $to, $chunkSize, $allocationStartDate);
+            $endTime = now()->subMinutes(5)->toDateTimeString();
 
-            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
-
-            $this->executeAllocation(QuoteTypes::CYCLE, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::SAVINGS, $to, $chunkSize, $allocationStartDate);
-            LoggerService::endLogging();
-        } else {
-            LoggerService::info(self::class.': Quote Allocation Command is turned Off');
+            return [
+                'startTime' => $startTime,
+                'endTime' => $endTime,
+            ];
         }
 
-        LoggerService::info(self::class.': Quote Allocation Command Finished', extra: [
-            'timestamp' => $currentIteration,
-        ]);
+        LoggerService::warning(self::class.": Retry Allocation Command is turned Off for quote type {$quoteType->value}");
+
+        return null;
     }
 
-    public function executeCarAllocation($quoteType, $to, $chunkSize, $allocationStartDate, $applicationStorageService)
+    public function executeCarAllocation($quoteType, $to, $chunkSize)
     {
         $processedRecords = 0;
-        $shouldIncludeDubaiNow = $applicationStorageService->getValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+        $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION, useCache: true) == 1;
         $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
 
         if ($shouldIncludeDubaiNow) {
@@ -334,10 +287,10 @@ class QuoteAllocation extends Command
         }
     }
 
-    public function executeBikeAllocation($quoteType, $to, $chunkSize, $allocationStartDate, $applicationStorageService)
+    public function executeBikeAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
     {
         $processedRecords = 0;
-        $shouldIncludeDubaiNow = $applicationStorageService->getValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+        $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION, useCache: true) == 1;
         $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD];
 
         if ($shouldIncludeDubaiNow) {
@@ -370,7 +323,7 @@ class QuoteAllocation extends Command
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
 
-    private function executeAllocation(QuoteTypes $quoteType, $to, $chunkSize, $allocationStartDate)
+    public function executeAllocation(QuoteTypes $quoteType, $to, $chunkSize, $allocationStartDate)
     {
         $processedRecords = 0;
         $leads = $quoteType->model()::whereNull('advisor_id')
