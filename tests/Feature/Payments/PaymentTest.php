@@ -6,7 +6,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use Database\Factories\ApplicationStorageFactory;
 use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\Payments\PaymentTestHelper;
 use Tests\Helpers\Payments\PaymentTestDataHelper;
 use Tests\Helpers\Payments\PaymentTestAssertionHelper;
 use Tests\Helpers\Payments\PaymentTestCreationHelper;
@@ -151,19 +150,11 @@ test('payment should be updated via endpoint', function () {
     // First, create payment and payment split using factories
     // This simulates an existing payment that needs to be updated
     
-    // Create payment using factory with CarQuote
-    // This will trigger PaymentObserver which calculates VAT
-    $existingPayment = Payment::factory()->createForSqlite($this->carQuote);
-    
-    // Refresh payment to get latest values from database (including observer updates)
-    $existingPayment->refresh();
-    
-    // Create payment split using factory with Payment
-    // This will trigger PaymentSplitsObserver which calculates VAT
-    $existingPaymentSplit = PaymentSplits::factory()->createForSqlite($existingPayment);
-    
-    // Refresh payment split to get latest values from database (including observer updates)
-    $existingPaymentSplit->refresh();
+    // Create payment and payment split using helper methods
+    // This will trigger observers which calculate VAT
+    $createdEntities = PaymentTestCreationHelper::createPaymentWithSplit($this->carQuote);
+    $existingPayment = $createdEntities['payment'];
+    $existingPaymentSplit = $createdEntities['paymentSplit'];
     
     // Verify initial state - payment should have 1 split (upfront payment)
     expect($existingPayment)->not->toBeNull();
@@ -171,7 +162,7 @@ test('payment should be updated via endpoint', function () {
     
     // Build the update request payload using helper method
     // This payload will update payment to have 2 splits instead of 1
-    $updatePayload = PaymentTestHelper::buildPaymentUpdatePayload(
+    $updatePayload = PaymentTestPayloadHelper::buildPaymentUpdatePayload(
         carQuote: $this->carQuote,
         payment: $existingPayment
     );
@@ -191,11 +182,11 @@ test('payment should be updated via endpoint', function () {
     $response->assertStatus(302);
 
     // Retrieve the updated payment from database
-    $updatedPayment = PaymentTestHelper::getPaymentByQuoteCode($this->carQuote->code);
+    $updatedPayment = PaymentTestQueryHelper::getPaymentByQuoteCode($this->carQuote->code);
     
     // Assert payment exists and was updated correctly
     expect($updatedPayment)->not->toBeNull();
-    PaymentTestHelper::assertPaymentUpdatedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentUpdatedCorrectly(
         payment: $updatedPayment,
         carQuote: $this->carQuote,
         expectedPlanId: $this->carPlan->id,
@@ -204,14 +195,14 @@ test('payment should be updated via endpoint', function () {
     );
 
     // Retrieve the updated payment split from database (should still be sr_no = 1)
-    $updatedPaymentSplit = PaymentTestHelper::getPaymentSplitByCodeAndSerial(
+    $updatedPaymentSplit = PaymentTestQueryHelper::getPaymentSplitByCodeAndSerial(
         paymentCode: $updatedPayment->code,
         srNo: 1
     );
     
     // Assert payment split exists and was updated correctly
     expect($updatedPaymentSplit)->not->toBeNull();
-    PaymentTestHelper::assertPaymentSplitUpdatedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentSplitUpdatedCorrectly(
         paymentSplit: $updatedPaymentSplit,
         payment: $updatedPayment
     );
@@ -280,25 +271,11 @@ test('payment should be approved via endpoint', function () {
         ['value' => '0', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()]
     );
     
-    // Create payment using factory with CarQuote
-    // This will trigger PaymentObserver which calculates VAT
-    $existingPayment = Payment::factory()->createForSqlite($this->carQuote);
-    
-    // Refresh payment to get latest values from database (including observer updates)
-    $existingPayment->refresh();
-    
-    // Ensure captured_amount is initialized to 0 if null
-    if ($existingPayment->captured_amount === null) {
-        $existingPayment->update(['captured_amount' => 0]);
-        $existingPayment->refresh();
-    }
-    
-    // Create payment split using factory with Payment
-    // This will trigger PaymentSplitsObserver which calculates VAT
-    $existingPaymentSplit = PaymentSplits::factory()->createForSqlite($existingPayment);
-    
-    // Refresh payment split to get latest values from database (including observer updates)
-    $existingPaymentSplit->refresh();
+    // Create payment and payment split using helper methods
+    // This will trigger observers which calculate VAT and handle captured_amount initialization
+    $createdEntities = PaymentTestCreationHelper::createPaymentWithSplitAndCapturedAmount($this->carQuote);
+    $existingPayment = $createdEntities['payment'];
+    $existingPaymentSplit = $createdEntities['paymentSplit'];
     
     // Verify initial state - payment should have 1 split (upfront payment)
     expect($existingPayment)->not->toBeNull();
@@ -309,7 +286,7 @@ test('payment should be approved via endpoint', function () {
     $collectionAmount = (float) $existingPaymentSplit->payment_amount;
     
     // Build the approval request payload using helper method
-    $approvePayload = PaymentTestHelper::buildApprovePaymentPayload(
+    $approvePayload = PaymentTestPayloadHelper::buildApprovePaymentPayload(
         carQuote: $this->carQuote,
         paymentSplit: $existingPaymentSplit
     );
@@ -330,7 +307,7 @@ test('payment should be approved via endpoint', function () {
     $response->assertStatus(302);
 
     // Retrieve the updated payment from database
-    $updatedPayment = PaymentTestHelper::getPaymentByQuoteCode($this->carQuote->code);
+    $updatedPayment = PaymentTestQueryHelper::getPaymentByQuoteCode($this->carQuote->code);
     // Assert payment exists
     expect($updatedPayment)->not->toBeNull();
     
@@ -338,13 +315,13 @@ test('payment should be approved via endpoint', function () {
     $updatedPayment->refresh();
 
     // Assert captured_amount was incremented correctly
-    PaymentTestHelper::assertPaymentCapturedAmountUpdatedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentCapturedAmountUpdatedCorrectly(
         payment: $updatedPayment,
         expectedCapturedAmount: $initialCapturedAmount + $collectionAmount
     );
 
     // Retrieve the approved payment split from database
-    $approvedPaymentSplit = PaymentTestHelper::getPaymentSplitByCodeAndSerial(
+    $approvedPaymentSplit = PaymentTestQueryHelper::getPaymentSplitByCodeAndSerial(
         paymentCode: $updatedPayment->code,
         srNo: 1
     );
@@ -354,7 +331,7 @@ test('payment should be approved via endpoint', function () {
 
     // Assert payment split exists and was approved correctly
     expect($approvedPaymentSplit)->not->toBeNull();
-    PaymentTestHelper::assertPaymentSplitApprovedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentSplitApprovedCorrectly(
         paymentSplit: $approvedPaymentSplit,
         expectedCollectionAmount: $collectionAmount,
         expectedInsurerReceiptNumber: $approvePayload['insurer_receipt_number'],
