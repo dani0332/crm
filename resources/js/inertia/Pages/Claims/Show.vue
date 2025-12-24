@@ -21,6 +21,7 @@ const props = defineProps({
   requiredFieldsFilled: Boolean,
   storageUrl: String,
   cdnPath: String,
+  claimEcomTrackingURL: String,
 });
 
 const modelClass = 'App\\Models\\ClaimRequest';
@@ -33,7 +34,8 @@ const notification = useToast();
 const sectionExpanded = ref(true);
 
 const copyToClipboard = item => {
-  copy(item);
+  console.log('props.claimEcomTrackingURL', props.claimEcomTrackingURL + item);
+  copy(props.claimEcomTrackingURL + item);
   if (copied)
     notification.success({
       title: 'Copied to clipboard!',
@@ -53,11 +55,11 @@ const copyToClipboard = item => {
         <div class="flex gap-2">
           <x-button
             size="sm"
-            color="gray"
+            color="orange"
             tag="button"
             @click.prevent="copyToClipboard(claim.uuid)"
           >
-            Copy Link
+            Copy Claim Status Link
           </x-button>
           <Link
             v-if="can(permissionsEnum.CLAIM_LIST)"

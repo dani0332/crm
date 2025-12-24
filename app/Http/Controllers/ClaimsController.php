@@ -33,6 +33,7 @@ use Inertia\Response;
 class ClaimsController extends Controller
 {
     protected $cdnPath;
+    protected $claimEcomTrackingURL;
     protected ClaimsService $claimsService;
     protected ClaimDocumentService $claimDocumentService;
     protected ClaimStatusesService $claimsStatusesService;
@@ -49,6 +50,7 @@ class ClaimsController extends Controller
         $this->claimDocumentService = $claimDocumentService;
         $this->customerService = $customerService;
         $this->cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $this->claimEcomTrackingURL = config('constants.CLAIM_ECOM_TRACKING_URL').'/';
 
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store']]);
@@ -184,6 +186,7 @@ class ClaimsController extends Controller
                 'requiredFieldsFilled' => $requiredFieldsFilled,
                 'claimDocumentTypes' => $claimDocumentTypes,
                 'cdnPath' => $this->cdnPath,
+                'claimEcomTrackingURL' => $this->claimEcomTrackingURL,
                 'storageUrl' => storageUrl(),
             ]);
 
