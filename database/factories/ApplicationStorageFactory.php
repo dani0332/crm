@@ -35,8 +35,7 @@ class ApplicationStorageFactory extends Factory
      * Create VAT_VALUE record for SQLite test database.
      * Since test database is reset each time, we can directly create without checking.
      *
-     * @param string $value VAT value as percentage (e.g., "5" for 5%)
-     * @return ApplicationStorage
+     * @param  string  $value  VAT value as percentage (e.g., "5" for 5%)
      */
     public static function createVatValueForSqlite(string $value = '5'): ApplicationStorage
     {
@@ -48,4 +47,3 @@ class ApplicationStorageFactory extends Factory
         ]);
     }
 }
-

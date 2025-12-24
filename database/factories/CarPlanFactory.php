@@ -48,7 +48,7 @@ class CarPlanFactory extends Factory
     /**
      * Associate the plan with a specific insurance provider.
      *
-     * @param int|InsuranceProvider $provider
+     * @param  int|InsuranceProvider  $provider
      * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function forProvider($provider)
@@ -60,4 +60,3 @@ class CarPlanFactory extends Factory
         });
     }
 }
-

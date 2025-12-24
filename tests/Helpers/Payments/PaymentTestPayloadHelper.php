@@ -20,9 +20,9 @@ class PaymentTestPayloadHelper
      * Build payment request payload for testing payment creation endpoint.
      * Extracts data from factories and CarQuote to match the endpoint's expected structure.
      *
-     * @param CarQuote $carQuote The car quote to create payment for
-     * @param int $planId The plan ID
-     * @param int $insuranceProviderId The insurance provider ID
+     * @param  CarQuote  $carQuote  The car quote to create payment for
+     * @param  int  $planId  The plan ID
+     * @param  int  $insuranceProviderId  The insurance provider ID
      * @return array The complete request payload matching endpoint structure
      */
     public static function buildPaymentCreationPayload(
@@ -33,11 +33,11 @@ class PaymentTestPayloadHelper
         // Get payment data structure from factory definition
         $paymentFactory = Payment::factory();
         $paymentData = $paymentFactory->definition();
-        
+
         // Get payment split data structure from factory definition
         $paymentSplitFactory = PaymentSplits::factory();
         $paymentSplitData = $paymentSplitFactory->definition();
-        
+
         // Build the complete payload matching the endpoint's expected structure
         return [
             'code' => $carQuote->code,
@@ -77,8 +77,8 @@ class PaymentTestPayloadHelper
     /**
      * Build payment approval request payload for testing payment approval endpoint.
      *
-     * @param CarQuote $carQuote The car quote
-     * @param PaymentSplits $paymentSplit The payment split to approve
+     * @param  CarQuote  $carQuote  The car quote
+     * @param  PaymentSplits  $paymentSplit  The payment split to approve
      * @return array The complete request payload matching endpoint structure
      */
     public static function buildApprovePaymentPayload(CarQuote $carQuote, PaymentSplits $paymentSplit): array
@@ -94,7 +94,7 @@ class PaymentTestPayloadHelper
             'collection_amount' => (float) $paymentSplit->payment_amount, // Ensure numeric, not string
             'collection_type' => PaymentCollectionTypeEnum::INSURER,
             'bank_reference_number' => 'TEST-BANK-REF-123',
-            'insurer_receipt_number' => 'INS-REC-' . $paymentSplit->code,
+            'insurer_receipt_number' => 'INS-REC-'.$paymentSplit->code,
             'actual_amount' => (float) $paymentSplit->payment_amount,
             'approved_document_model' => [],
             'declined_reason' => null,
@@ -109,8 +109,8 @@ class PaymentTestPayloadHelper
      * Build payment update request payload for testing payment update endpoint.
      * This payload will update payment to have 2 splits instead of 1.
      *
-     * @param CarQuote $carQuote The car quote
-     * @param Payment $payment The existing payment to update
+     * @param  CarQuote  $carQuote  The car quote
+     * @param  Payment  $payment  The existing payment to update
      * @return array The complete request payload matching endpoint structure
      */
     public static function buildPaymentUpdatePayload(CarQuote $carQuote, Payment $payment): array
@@ -151,7 +151,7 @@ class PaymentTestPayloadHelper
                         'due_date' => now(),
                         'collection_amount' => null,
                         'document_detail' => [],
-                        'discount_documents' => []
+                        'discount_documents' => [],
                     ],
                     [
                         'sr_no' => 2,
@@ -159,17 +159,16 @@ class PaymentTestPayloadHelper
                         'payment_amount' => $splitPrice,
                         'due_date' => now(),
                         'collection_amount' => null,
-                    ]
-                ]
+                    ],
+                ],
             ],
             'paymentCode' => $payment->code,
             'trashedFilesModal' => [],
             'isPaymentLocked' => false,
             'isPolicyIssuanceDiscount' => false,
-            'isPaidEditable' => false
+            'isPaidEditable' => false,
         ];
 
         return $updatePayload;
     }
 }
-

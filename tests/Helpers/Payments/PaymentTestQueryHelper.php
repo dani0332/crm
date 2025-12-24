@@ -14,8 +14,7 @@ class PaymentTestQueryHelper
     /**
      * Retrieve payment from database by quote code.
      *
-     * @param string $quoteCode The quote code to search for
-     * @return Payment|null
+     * @param  string  $quoteCode  The quote code to search for
      */
     public static function getPaymentByQuoteCode(string $quoteCode): ?Payment
     {
@@ -27,9 +26,8 @@ class PaymentTestQueryHelper
     /**
      * Retrieve payment split from database by payment code and serial number.
      *
-     * @param string $paymentCode The payment code
-     * @param int $srNo The serial number
-     * @return PaymentSplits|null
+     * @param  string  $paymentCode  The payment code
+     * @param  int  $srNo  The serial number
      */
     public static function getPaymentSplitByCodeAndSerial(string $paymentCode, int $srNo = 1): ?PaymentSplits
     {
@@ -39,4 +37,3 @@ class PaymentTestQueryHelper
             ->first();
     }
 }
-
