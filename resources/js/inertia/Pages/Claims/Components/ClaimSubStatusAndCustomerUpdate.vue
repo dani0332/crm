@@ -38,7 +38,8 @@ const subStatusOptions = computed(() => {
         if (page.props.claim.claim_request_type_id != null) {
           const matchesClaimRequestType =
             subStatus.claim_request_type_id === null ||
-            subStatus.claim_request_type_id === page.props.claim.claim_request_type_id;
+            subStatus.claim_request_type_id ===
+              page.props.claim.claim_request_type_id;
           return matchesQuoteType && matchesClaimRequestType;
         }
 
