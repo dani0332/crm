@@ -1081,11 +1081,9 @@ class LeadAllocationService extends BaseService
                                             ->whereNotNull('plan_id');
                                     })
                                 // OR Clicked proceed with application (payment link requested or authorized)
-                                    ->orWhereIn('payment_status_id', [
-                                        PaymentStatusEnum::PAYMENT_LINK_REQUESTED,
-                                        // PaymentStatusEnum::AUTHORISED,
-                                        // PaymentStatusEnum::CAPTURED,
-                                        // PaymentStatusEnum::PAID,
+                                    ->orWhereIn('quote_status_id', [
+                                        QuoteStatusEnum::ApplicationPending,
+                                        QuoteStatusEnum::PaymentLinkRequestedByCustomer
                                     ]);
                             });
                     })
