@@ -33,7 +33,7 @@ class TagPcpCustomerJob implements ShouldQueue
         LoggerService::info(self::class.': PC customer tag has been initiated');
         try {
             $quotesQuery = PersonalQuote::with('customer')
-                ->whereNotNull('pc_qualified') 
+                ->whereNotNull('pc_qualified')
                 ->whereRelation('customer', 'pcp_tag', false)
                 ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                 ->whereNotNull('policy_expiry_date')
