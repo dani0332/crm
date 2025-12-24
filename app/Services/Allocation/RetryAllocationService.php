@@ -37,10 +37,7 @@ class RetryAllocationService
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $endTime = now()->subMinutes(5)->toDateTimeString();
 
-            return [
-                'startTime' => $startTime,
-                'endTime' => $endTime,
-            ];
+            return [$startTime, $endTime];
         }
 
         LoggerService::warning(self::class.": Retry Allocation Command is turned Off for quote type {$quoteType->value}");
