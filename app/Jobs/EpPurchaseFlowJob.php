@@ -4,18 +4,17 @@ namespace App\Jobs;
 
 use App\DTO\EpBookingContext;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Mail\EpFailureNotification;
 use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
+use App\Traits\SendsEpFailureEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class EpPurchaseFlowJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, SendsEpFailureEmail;
 
     public $tries = 3;
     public $timeout = 180;
@@ -60,12 +59,7 @@ class EpPurchaseFlowJob implements ShouldQueue
             'error' => $exception->getMessage(),
         ]);
 
-        try {
-            Mail::send(new EpFailureNotification($this->context->quoteId, $this->context->quoteTypeId, $this->context->etId));
-            LoggerService::info("{$this->logPrefix} Embedded Product failure email sent successfully");
-        } catch (Throwable $e) {
-            LoggerService::error("{$this->logPrefix} Failed to send Embedded Product failure email: ".$e->getMessage());
-        }
+        $this->sendEpFailureEmail($this->context->quoteId, $this->context->quoteTypeId, $this->context->etId, $this->logPrefix);
     }
 
     /**
