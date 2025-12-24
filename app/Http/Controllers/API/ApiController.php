@@ -31,10 +31,8 @@ use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
-use App\Jobs\RemovePrivateClientTagJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
-use App\Jobs\TagPrivateClientJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -375,30 +373,6 @@ class ApiController extends Controller
     {
         return $this->apiService->triggerAIGWorkflow($request);
     }
-
-    /**
-     * Process the one-time exercise to tag customers as Private Clients based on criteria
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function tagPrivateClients(Request $request)
-    {
-        LoggerService::info(self::class.': Private client tag exercise has been initiated');
-
-        dispatch(new TagPrivateClientJob($request->uuids ?? []));
-
-        return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
-    }
-
-    public function removePrivateClientTag(Request $request)
-    {
-        LoggerService::info(self::class.': Private client tag removal has been initiated');
-
-        dispatch(new RemovePrivateClientTagJob($request->uuids ?? []));
-
-        return apiResponse(null, Response::HTTP_OK, 'Private client tag removal has started!');
-    }
-
 
     public function tagPcpCustomers(Request $request)
     {
