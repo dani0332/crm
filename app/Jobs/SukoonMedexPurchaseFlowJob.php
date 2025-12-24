@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Mail\SukoonMedexEPFailureNotification;
 use App\Services\Logger\LoggerService;
 use App\Services\SukoonMedexService;
-use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -58,9 +57,9 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
             $sukoonMedexService = app(SukoonMedexService::class);
             $sukoonMedexService->initiatePurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
             $sukoonMedexService->processPurchaseFlow($this->isSendEmail);
-        } catch (Exception $exception) {
+        } catch (Throwable $e) {
 
-            LoggerService::info("{$this->logPrefix} Failed", extra: [...$this->logExtra, 'exception' => $exception->getMessage()]);
+            LoggerService::info("{$this->logPrefix} Failed", extra: [...$this->logExtra, 'exception' => $e->getMessage()]);
             $this->sendFailureEmail();
         }
     }
