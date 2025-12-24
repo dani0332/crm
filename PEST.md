@@ -84,7 +84,28 @@ Tests use an **in-memory SQLite database** (`:memory:`) configured in `phpunit.x
 
 ```php
 beforeEach(function () {
+    // Initialize test database schema
     TestSchemaCreator::createMinimalSchema();
+    
+    // Create VAT_VALUE record using factory
+    ApplicationStorageFactory::createVatValueForSqlite('5');
+
+    // Set up authenticated user
+    $this->user = TestDataSeeder::createAdminUser();
+    $this->actingAs($this->user);
+    
+    // Set up payment-related permissions (required for payment approval/decline operations)
+    PaymentTestDataHelper::setupPaymentPermissions($this->user);
+    
+    // Set up test data: InsuranceProvider, CarPlan, and CarQuote
+    // This helper method creates all necessary test data for payment testing
+    $testData = PaymentTestDataHelper::setupTestData();
+    // Assign test data to test properties for easy access
+    $this->insuranceProvider = $testData['insuranceProvider'];
+    $this->carPlan = $testData['carPlan'];
+    $this->carQuote = $testData['carQuote'];
+    $this->quoteCode = $testData['quoteCode'];
+    $this->quoteUuid = $testData['quoteUuid'];
 });
 ```
 
@@ -105,7 +126,7 @@ test('payment should be created via endpoint', function () {
     // ============================================
     
     // Build the request payload using helper method
-    $requestPayload = PaymentTestHelper::buildPaymentCreationPayload(
+    $requestPayload = PaymentTestPayloadHelper::buildPaymentCreationPayload(
         carQuote: $this->carQuote,
         planId: $this->carPlan->id,
         insuranceProviderId: $this->insuranceProvider->id
@@ -116,7 +137,7 @@ test('payment should be created via endpoint', function () {
     // ============================================
     
     // Make POST request to payment creation endpoint using route name
-    $response = $this->post(route('payment-create', ['quoteType' => 'Car']), $requestPayload);
+    $response = $this->post(route('payment-create', ['quoteType' => QuoteTypes::CAR->value]), $requestPayload);
     
     // ============================================
     // 3. ASSERT: Verify the results
@@ -126,9 +147,9 @@ test('payment should be created via endpoint', function () {
     $response->assertStatus(302);
     
     // Retrieve and assert payment was created correctly
-    $createdPayment = PaymentTestHelper::getPaymentByQuoteCode($this->carQuote->code);
+    $createdPayment = PaymentTestQueryHelper::getPaymentByQuoteCode($this->carQuote->code);
     expect($createdPayment)->not->toBeNull();
-    PaymentTestHelper::assertPaymentCreatedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentCreatedCorrectly(
         payment: $createdPayment,
         carQuote: $this->carQuote,
         expectedPlanId: $this->carPlan->id,
@@ -147,11 +168,51 @@ test('payment should be created via endpoint', function () {
 
 ## Best Practices
 
-- Use helper classes for complex data preparation (e.g., `PaymentTestHelper::setupTestData()`)
-- Use helper methods for assertions (e.g., `PaymentTestHelper::assertPaymentCreatedCorrectly()`)
+### Helper Classes Organization
+
+Tests use specialized helper classes organized by concern:
+
+- **`PaymentTestDataHelper`** - Setup and data creation
+  - `setupTestData()` - Creates InsuranceProvider, CarPlan, and CarQuote
+  - `setupPaymentPermissions()` - Sets up payment-related permissions
+
+- **`PaymentTestCreationHelper`** - Entity creation
+  - `createPayment()` - Creates payment with automatic refresh
+  - `createPaymentSplit()` - Creates payment split with automatic refresh
+  - `createPaymentWithSplit()` - Creates both payment and split together
+  - `createPaymentWithCapturedAmount()` - Creates payment with captured_amount initialization
+  - `createPaymentWithSplitAndCapturedAmount()` - Creates both with captured_amount initialization
+
+- **`PaymentTestPayloadHelper`** - Request payload building
+  - `buildPaymentCreationPayload()` - Builds payload for payment creation endpoint
+  - `buildPaymentUpdatePayload()` - Builds payload for payment update endpoint
+  - `buildApprovePaymentPayload()` - Builds payload for payment approval endpoint
+
+- **`PaymentTestQueryHelper`** - Data retrieval
+  - `getPaymentByQuoteCode()` - Retrieves payment by quote code
+  - `getPaymentSplitByCodeAndSerial()` - Retrieves payment split by code and serial number
+
+- **`PaymentTestAssertionHelper`** - All assertions
+  - `assertPaymentCreatedCorrectly()` - Asserts payment creation
+  - `assertPaymentSplitCreatedCorrectly()` - Asserts payment split creation
+  - `assertObserversRanSuccessfully()` - Asserts VAT calculations
+  - `assertPaymentUpdatedCorrectly()` - Asserts payment update
+  - `assertPaymentSplitUpdatedCorrectly()` - Asserts payment split update
+  - `assertPaymentSplitApprovedCorrectly()` - Asserts payment split approval
+  - `assertPaymentCapturedAmountUpdatedCorrectly()` - Asserts captured amount update
+  - `assertInsurerReceiptNumberNullValidationError()` - Asserts validation error
+  - `assertInsurerReceiptNumberDoesNotExist()` - Asserts receipt number doesn't exist
+  - `assertInsurerReceiptNumberAlreadyExists()` - Asserts receipt number exists
+
+### General Best Practices
+
+- Use specialized helper classes for each concern (data, creation, payload, query, assertion)
+- Use helper methods for complex data preparation (e.g., `PaymentTestDataHelper::setupTestData()`)
+- Use helper methods for assertions (e.g., `PaymentTestAssertionHelper::assertPaymentCreatedCorrectly()`)
 - Use route names instead of hardcoded URLs (e.g., `route('payment-create')`)
 - Add clear comments separating each section
 - Keep each section focused on its specific purpose
+- Follow separation of concerns - each helper class has a single responsibility
 
 # Common Expectations
 ```php
