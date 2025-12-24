@@ -18,31 +18,37 @@ const calculatorMode = ref('goal');
 const form = reactive({
   currency: 'AED',
   investmentFrequency: 'Monthly',
-  // For "I Want to Invest" mode
   investmentAmount: 5000,
-  // For "I Want to Reach a Goal" mode
-  goalAmount: 1000000,
-  // Common fields
   investmentDuration: 10,
-  withdrawalYears: 10,
   expectedRateOfReturn: 8,
 });
 
-// Currency options
+// Currency options (USD, AED only)
 const currencyOptions = [
-  { value: 'AED', label: 'د.إ' },
+  { value: 'AED', label: 'Ð' },
   { value: 'USD', label: '$' },
-  { value: 'EUR', label: '€' },
-  { value: 'GBP', label: '£' },
 ];
 
 // Investment frequency options
 const frequencyOptions = [
+  { value: 'Single Payment', label: 'Single Payment' },
   { value: 'Monthly', label: 'Monthly' },
   { value: 'Quarterly', label: 'Quarterly' },
-  { value: 'Semi-Annual', label: 'Semi-Annual' },
-  { value: 'Annual', label: 'Annual' },
+  { value: 'Half Yearly', label: 'Half Yearly' },
+  { value: 'Yearly', label: 'Yearly' },
 ];
+
+// Format number with commas
+const formatWithCommas = value => {
+  if (!value) return '';
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+// Parse number from formatted string
+const parseFormattedNumber = value => {
+  if (!value) return 0;
+  return parseInt(value.toString().replace(/,/g, ''), 10) || 0;
+};
 
 // Get currency symbol
 const currencySymbol = computed(() => {
@@ -50,78 +56,100 @@ const currencySymbol = computed(() => {
   return currency ? currency.label : 'د.إ';
 });
 
+// Get periods per year based on frequency
+const getPeriodsPerYear = frequency => {
+  switch (frequency) {
+    case 'Single Payment':
+      return 1;
+    case 'Monthly':
+      return 12;
+    case 'Quarterly':
+      return 4;
+    case 'Half Yearly':
+      return 2;
+    case 'Yearly':
+      return 1;
+    default:
+      return 12;
+  }
+};
+
 // Calculate results based on mode
 const calculationResults = computed(() => {
   const rate = form.expectedRateOfReturn / 100;
-  const monthlyRate = rate / 12;
-  const months = form.investmentDuration * 12;
+  const periodicAmount = form.investmentAmount;
+  const periodsPerYear = getPeriodsPerYear(form.investmentFrequency);
 
   if (calculatorMode.value === 'invest') {
     // Calculate future value from investment amount
-    let periodicAmount = form.investmentAmount;
-    let periodsPerYear = 12;
+    if (form.investmentFrequency === 'Single Payment') {
+      // Lump sum investment: FV = P * (1 + r)^n
+      const futureValue =
+        periodicAmount * Math.pow(1 + rate, form.investmentDuration);
+      const totalInvestment = periodicAmount;
+      const wealthGained = futureValue - totalInvestment;
 
-    if (form.investmentFrequency === 'Quarterly') {
-      periodsPerYear = 4;
-    } else if (form.investmentFrequency === 'Semi-Annual') {
-      periodsPerYear = 2;
-    } else if (form.investmentFrequency === 'Annual') {
-      periodsPerYear = 1;
+      return {
+        headerText: `Estimated returns of ${currencySymbol.value} ${formatNumber(Math.round(futureValue))}`,
+        totalInvestment: Math.round(totalInvestment),
+        wealthGained: Math.round(wealthGained),
+        futureValue: Math.round(futureValue),
+      };
+    } else {
+      // Regular periodic investment
+      const totalPeriods = form.investmentDuration * periodsPerYear;
+      const periodicRate = rate / periodsPerYear;
+
+      // Future Value of Annuity formula: FV = P * [((1 + r)^n - 1) / r]
+      const futureValue =
+        periodicAmount *
+        ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate);
+      const totalInvestment = periodicAmount * totalPeriods;
+      const wealthGained = futureValue - totalInvestment;
+
+      return {
+        headerText: `Estimated returns of ${currencySymbol.value} ${formatNumber(Math.round(futureValue))}`,
+        totalInvestment: Math.round(totalInvestment),
+        wealthGained: Math.round(wealthGained),
+        futureValue: Math.round(futureValue),
+      };
     }
-
-    const totalPeriods = form.investmentDuration * periodsPerYear;
-    const periodicRate = rate / periodsPerYear;
-
-    // Future Value of Annuity formula: FV = P * [((1 + r)^n - 1) / r]
-    const futureValue =
-      periodicAmount *
-      ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate);
-    const totalInvestment = periodicAmount * totalPeriods;
-    const wealthGained = futureValue - totalInvestment;
-
-    return {
-      headerText: `Estimated returns of ${currencySymbol.value} ${formatNumber(Math.round(futureValue))}`,
-      totalInvestment: Math.round(totalInvestment),
-      wealthGained: Math.round(wealthGained),
-      futureValue: Math.round(futureValue),
-    };
   } else {
-    // Calculate required investment from goal amount
-    let periodsPerYear = 12;
+    // Goal mode: Calculate required investment to reach the goal (investment amount is the goal)
+    const goalAmount = form.investmentAmount;
 
-    if (form.investmentFrequency === 'Quarterly') {
-      periodsPerYear = 4;
-    } else if (form.investmentFrequency === 'Semi-Annual') {
-      periodsPerYear = 2;
-    } else if (form.investmentFrequency === 'Annual') {
-      periodsPerYear = 1;
+    if (form.investmentFrequency === 'Single Payment') {
+      // Required lump sum: P = FV / (1 + r)^n
+      const requiredPayment =
+        goalAmount / Math.pow(1 + rate, form.investmentDuration);
+      const wealthGained = goalAmount - requiredPayment;
+
+      return {
+        headerText: `Single investment required of ${currencySymbol.value} ${formatNumber(Math.round(requiredPayment))}`,
+        totalInvestment: Math.round(requiredPayment),
+        wealthGained: Math.round(wealthGained),
+        futureValue: goalAmount,
+      };
+    } else {
+      const totalPeriods = form.investmentDuration * periodsPerYear;
+      const periodicRate = rate / periodsPerYear;
+
+      // PMT formula: PMT = FV * [r / ((1 + r)^n - 1)]
+      const requiredPayment =
+        goalAmount *
+        (periodicRate / (Math.pow(1 + periodicRate, totalPeriods) - 1));
+      const totalInvestment = requiredPayment * totalPeriods;
+      const wealthGained = goalAmount - totalInvestment;
+
+      const frequencyLabel = form.investmentFrequency;
+
+      return {
+        headerText: `${frequencyLabel} investment required of ${currencySymbol.value} ${formatNumber(Math.round(requiredPayment))}`,
+        totalInvestment: Math.round(totalInvestment),
+        wealthGained: Math.round(wealthGained),
+        futureValue: goalAmount,
+      };
     }
-
-    const totalPeriods = form.investmentDuration * periodsPerYear;
-    const periodicRate = rate / periodsPerYear;
-
-    // PMT formula: PMT = FV * [r / ((1 + r)^n - 1)]
-    const requiredPayment =
-      form.goalAmount *
-      (periodicRate / (Math.pow(1 + periodicRate, totalPeriods) - 1));
-    const totalInvestment = requiredPayment * totalPeriods;
-    const wealthGained = form.goalAmount - totalInvestment;
-
-    const frequencyLabel =
-      form.investmentFrequency === 'Monthly'
-        ? 'Monthly'
-        : form.investmentFrequency === 'Quarterly'
-          ? 'Quarterly'
-          : form.investmentFrequency === 'Semi-Annual'
-            ? 'Semi-annual'
-            : 'Annual';
-
-    return {
-      headerText: `${frequencyLabel} investment required of ${currencySymbol.value} ${formatNumber(Math.round(requiredPayment))}`,
-      totalInvestment: Math.round(totalInvestment),
-      wealthGained: Math.round(wealthGained),
-      futureValue: form.goalAmount,
-    };
   }
 });
 
@@ -204,31 +232,36 @@ const formatNumberShort = num => {
 const yearlyInvestmentData = computed(() => {
   const rate = form.expectedRateOfReturn / 100;
   const years = form.investmentDuration;
-  let periodsPerYear = 12;
-
-  if (form.investmentFrequency === 'Quarterly') {
-    periodsPerYear = 4;
-  } else if (form.investmentFrequency === 'Semi-Annual') {
-    periodsPerYear = 2;
-  } else if (form.investmentFrequency === 'Annual') {
-    periodsPerYear = 1;
-  }
-
-  const periodicRate = rate / periodsPerYear;
+  const periodsPerYear = getPeriodsPerYear(form.investmentFrequency);
   const periodicAmount = form.investmentAmount;
   const data = [];
 
-  for (let year = 1; year <= years; year++) {
-    const totalPeriods = year * periodsPerYear;
-    // Future Value of Annuity formula
-    const futureValue =
-      periodicAmount *
-      ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate);
-    data.push({
-      name: `Year ${year}`,
-      y: Math.round(futureValue),
-      color: '#F5A623',
-    });
+  if (form.investmentFrequency === 'Single Payment') {
+    // Lump sum: compound growth each year
+    for (let year = 1; year <= years; year++) {
+      const futureValue = periodicAmount * Math.pow(1 + rate, year);
+      data.push({
+        name: `Year ${year}`,
+        y: Math.round(futureValue),
+        color: '#F5A623',
+      });
+    }
+  } else {
+    // Regular periodic investment
+    const periodicRate = rate / periodsPerYear;
+
+    for (let year = 1; year <= years; year++) {
+      const totalPeriods = year * periodsPerYear;
+      // Future Value of Annuity formula
+      const futureValue =
+        periodicAmount *
+        ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate);
+      data.push({
+        name: `Year ${year}`,
+        y: Math.round(futureValue),
+        color: '#F5A623',
+      });
+    }
   }
 
   return data;
@@ -239,9 +272,10 @@ const barChartOptions = computed(() => ({
   chart: {
     type: 'column',
     backgroundColor: 'transparent',
-    height: 300,
-    marginLeft: 50,
+    height: 350,
+    marginLeft: 80,
     marginRight: 10,
+    marginBottom: 80,
     spacingLeft: 0,
     spacingRight: 0,
     width: null, // Take full width from container
@@ -250,9 +284,18 @@ const barChartOptions = computed(() => ({
     text: '',
   },
   xAxis: {
-    categories: yearlyInvestmentData.value.map(d => d.name),
+    categories: yearlyInvestmentData.value.map((d, i) => i + 1),
     min: 0,
     max: yearlyInvestmentData.value.length - 1,
+    title: {
+      text: 'Investment Tenure',
+      margin: 15,
+      style: {
+        fontSize: '12px',
+        color: '#666',
+        fontWeight: 'bold',
+      },
+    },
     labels: {
       style: {
         fontSize: '11px',
@@ -262,7 +305,12 @@ const barChartOptions = computed(() => ({
   },
   yAxis: {
     title: {
-      text: '',
+      text: 'Maturity Amount',
+      style: {
+        fontSize: '12px',
+        color: '#666',
+        fontWeight: 'bold',
+      },
     },
     labels: {
       formatter: function () {
@@ -378,30 +426,28 @@ const setMode = mode => {
         <div class="bg-white rounded-xl shadow-md p-6">
           <!-- Mode Toggle Buttons -->
           <div class="flex gap-3 mb-6">
-            <button
-              type="button"
-              :class="[
-                'px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200',
-                calculatorMode === 'invest'
-                  ? 'bg-primary-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
-              ]"
-              @click="setMode('invest')"
-            >
-              I Want to Invest
-            </button>
-            <button
-              type="button"
-              :class="[
-                'px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200',
-                calculatorMode === 'goal'
-                  ? 'bg-primary-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
-              ]"
-              @click="setMode('goal')"
-            >
-              I Want to Reach a Goal
-            </button>
+            <div class="flex-1">
+              <x-button
+                size="sm"
+                :color="calculatorMode === 'invest' ? 'primary' : 'default'"
+                :outlined="calculatorMode !== 'invest'"
+                @click="setMode('invest')"
+                class="w-full"
+              >
+                I Want to Invest
+              </x-button>
+            </div>
+            <div class="flex-1">
+              <x-button
+                size="sm"
+                :color="calculatorMode === 'goal' ? 'primary' : 'default'"
+                :outlined="calculatorMode !== 'goal'"
+                @click="setMode('goal')"
+                class="w-full"
+              >
+                I Want to Reach a Goal
+              </x-button>
+            </div>
           </div>
 
           <!-- Form Fields -->
@@ -430,100 +476,72 @@ const setMode = mode => {
               />
             </div>
 
-            <!-- Investment Amount (for "I Want to Invest" mode) -->
-            <div v-if="calculatorMode === 'invest'" class="flex items-center">
-              <label class="text-sm text-gray-600 w-40"
-                >Investment Amount</label
-              >
+            <!-- Investment Amount (shows for both modes with different labels) -->
+            <div class="flex items-center">
+              <label class="text-sm text-gray-600 w-40">{{
+                calculatorMode === 'invest'
+                  ? 'Investment Amount'
+                  : 'Goal Amount'
+              }}</label>
               <x-input
-                v-model.number="form.investmentAmount"
-                type="number"
+                :model-value="formatWithCommas(form.investmentAmount)"
+                @update:model-value="
+                  form.investmentAmount = parseFormattedNumber($event)
+                "
+                type="text"
                 size="sm"
                 class="w-40"
+                placeholder="0"
               />
             </div>
 
-            <!-- Goal Amount (for "I Want to Reach a Goal" mode) -->
-            <div v-if="calculatorMode === 'goal'" class="flex items-center">
-              <label class="text-sm text-gray-600 w-40">Goal Amount</label>
-              <x-input
-                v-model.number="form.goalAmount"
-                type="number"
-                size="sm"
-                class="w-40"
-              />
-            </div>
-
-            <!-- Investment Duration -->
+            <!-- Investment Duration (Up to 100 years) -->
             <div class="flex items-center">
               <label class="text-sm text-gray-600 w-40"
                 >Investment Duration</label
               >
               <div class="flex items-center gap-3 flex-1">
-                <input
-                  v-model.number="form.investmentDuration"
-                  type="range"
-                  min="1"
-                  max="40"
-                  class="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                <x-slider
+                  v-model="form.investmentDuration"
+                  :min="1"
+                  :max="100"
+                  color="primary"
+                  class="w-32"
                 />
                 <x-input
                   v-model.number="form.investmentDuration"
                   type="number"
                   size="sm"
                   class="w-16"
-                  min="1"
-                  max="40"
+                  :min="1"
+                  :max="100"
                 />
                 <span class="text-sm text-gray-600">Years</span>
               </div>
             </div>
 
-            <!-- Withdrawal -->
-            <div class="flex items-center">
-              <label class="text-sm text-gray-600 w-40">Withdrawal</label>
-              <div class="flex items-center gap-3 flex-1">
-                <input
-                  v-model.number="form.withdrawalYears"
-                  type="range"
-                  min="1"
-                  max="40"
-                  class="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
-                />
-                <x-input
-                  v-model.number="form.withdrawalYears"
-                  type="number"
-                  size="sm"
-                  class="w-16"
-                  min="1"
-                  max="40"
-                />
-                <span class="text-sm text-gray-600">years</span>
-              </div>
-            </div>
-
-            <!-- Expected Rate of Return -->
+            <!-- Expected Rate of Return (Up to 50%) -->
             <div class="flex items-center">
               <label class="text-sm text-gray-600 w-40"
                 >Expected Rate of Return</label
               >
               <div class="flex items-center gap-3 flex-1">
-                <input
-                  v-model.number="form.expectedRateOfReturn"
-                  type="range"
-                  min="1"
-                  max="20"
-                  step="0.5"
-                  class="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                <x-slider
+                  v-model="form.expectedRateOfReturn"
+                  :min="1"
+                  :max="50"
+                  :step="0.5"
+                  color="primary"
+                  class="w-32"
                 />
                 <x-input
                   v-model.number="form.expectedRateOfReturn"
                   type="number"
                   size="sm"
                   class="w-16"
-                  min="1"
-                  max="20"
-                  step="0.5"
+                  :min="1"
+                  :max="50"
+                  :step="0.5"
                 />
                 <span class="text-sm text-gray-600">%</span>
               </div>
@@ -574,7 +592,7 @@ const setMode = mode => {
                 ref="chartRef"
                 :options="chartOptions"
                 :class="
-                  calculatorMode === 'invest' ? 'w-full h-72' : 'w-64 h-64'
+                  calculatorMode === 'invest' ? 'w-full h-96' : 'w-64 h-64'
                 "
               />
             </div>
