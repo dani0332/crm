@@ -47,8 +47,8 @@ class AwnicQuoteUpdaterService
         }
 
         Payment::where('code', $quoteCode)->update([
-            'commission_vat_applicable' => $issuePolicyResult?->policyInfo?->commissionPayableAmt,
-            'commission' => $issuePolicyResult?->policyInfo?->commissionAmt,
+            'commission_vat_applicable' => $issuePolicyResult?->policyInfo?->commissionAmt,
+            'commission' => $issuePolicyResult?->policyInfo?->commissionPayableAmt,
             'commission_vat' => $issuePolicyResult?->policyInfo?->commissionVatAmt,
             'commmission_percentage' => $commissionPercentage,
             'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
