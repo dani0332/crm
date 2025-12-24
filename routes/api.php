@@ -75,7 +75,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     });
 
     Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
-    Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'ExportFailedIlaLeads'])->name('export-failed-ila-leads');
+
 
 });
 
@@ -128,6 +128,7 @@ Route::prefix('v1')->group(function () {
 
     // upload to metlife API route
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
+    Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'ExportFailedIlaLeads'])->name('export-failed-ila-leads');
 
 });
 

@@ -692,13 +692,24 @@ class ApiController extends Controller
         if ($response['success']) {
        
             // Instead, embed the data as base64 (with a data URL), or provide it as an attachment link if available.
-            return response()->json([
-                'success' => true,
-                'message' => $response['message'],
-                // Provide a data-URL style prefix for consumer clarity; keep as base64 string (DO NOT decode!)
-                'public_url' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'.$response['public_url'],
-                'total_leads' => $response['total_leads'],
-            ], Response::HTTP_OK);
+            // Return file as a downloadable response using StreamedResponse
+            $filename = 'failed-ila-leads-' . strtolower($quoteType) . '-' . now()->format('Ymd_His') . '.xlsx';
+
+            // The Excel content is base64-encoded, we decode to stream the file
+            $fileContents = base64_decode($response['public_url']);
+
+            return response()->streamDownload(
+                function () use ($fileContents) {
+                    echo $fileContents;
+                },
+                $filename,
+                [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                    // You can pass custom headers with additional info, such as the total count
+                    'X-Total-Leads' => $response['total_leads'] ?? 0,
+                ]
+            );
         } else {
             return response()->json([
                 'success' => false,
