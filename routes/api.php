@@ -144,3 +144,6 @@ Route::post('/pc-assignment', [ApiController::class, 'tagPrivateClients'])
 // Route to remove lead private client tag
 Route::post('/remove-pc-assignment', [ApiController::class, 'removePrivateClientTag'])
     ->name('remove-pc-assignment');
+
+Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
+    ->name('pc-assignment');

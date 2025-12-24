@@ -397,6 +397,16 @@ class ApiController extends Controller
         return apiResponse(null, Response::HTTP_OK, 'Private client tag removal has started!');
     }
 
+
+    public function tagPcpCustomers(Request $request)
+    {
+        LoggerService::info(self::class.': PC customer tag exercise has been initiated',$request->all());
+
+        dispatch(new TagPrivateClientJob($request->uuids ?? []));
+
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
+    }
+
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
     {
         return $this->apiService->triggerTravelAIGWorkflow($request);
