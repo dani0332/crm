@@ -1,7 +1,9 @@
 # Article
+
 https://medium.com/@zulfikarditya/mastering-testing-in-laravel-with-pest-php-a-comprehensive-guide-0d1a599f79f5
 
 # Installation
+
 ```bash
 composer require pestphp/pest pestphp/pest-plugin-laravel --dev --with-all-dependencies
 php artisan pest:test
@@ -11,11 +13,13 @@ php artisan pest:test
 # Creating Tests
 
 ## Create Unit Test
+
 ```bash
 php artisan make:test UserTest --unit
 ```
 
 ## Create Feature Test
+
 ```bash
 php artisan make:test UserTest --feature
 ```
@@ -25,12 +29,14 @@ php artisan make:test UserTest --feature
 # Running Tests
 
 ## Run All Tests
+
 ```bash
 # Run all tests in all test files
 doppler run -- php artisan test
 ```
 
 ## Run Individual Tests
+
 ```bash
 # Run specific test file
 doppler run -- php artisan test tests/Feature/TestRepositoryTest.php
@@ -52,6 +58,7 @@ doppler run -- php artisan test --testsuite=Unit
 ```
 
 **Note:** You may see a warning about XML configuration schema. To fix it, run:
+
 ```bash
 doppler run -- php artisan test --migrate-configuration
 ```
@@ -61,17 +68,20 @@ doppler run -- php artisan test --migrate-configuration
 Tests use an **in-memory SQLite database** (`:memory:`) configured in `phpunit.xml`.
 
 **For each test case:**
+
 - `beforeEach()` runs → creates fresh database schema
 - Test executes → uses that fresh schema
 - Test completes → database is destroyed
 
 **Example with 4 tests:**
+
 - Test 1: Fresh schema → Execute → Destroy
 - Test 2: Fresh schema → Execute → Destroy
 - Test 3: Fresh schema → Execute → Destroy
 - Test 4: Fresh schema → Execute → Destroy
 
 **Example with 10 feature files × 10 test cases = 100 tests:**
+
 - Feature File 1: 10 tests (each gets fresh schema)
 - Feature File 2: 10 tests (each gets fresh schema)
 - Feature File 3: 10 tests (each gets fresh schema)
@@ -86,17 +96,17 @@ Tests use an **in-memory SQLite database** (`:memory:`) configured in `phpunit.x
 beforeEach(function () {
     // Initialize test database schema
     TestSchemaCreator::createMinimalSchema();
-    
+
     // Create VAT_VALUE record using factory
     ApplicationStorageFactory::createVatValueForSqlite('5');
 
     // Set up authenticated user
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
-    
+
     // Set up payment-related permissions (required for payment approval/decline operations)
     PaymentTestDataHelper::setupPaymentPermissions($this->user);
-    
+
     // Set up test data: InsuranceProvider, CarPlan, and CarQuote
     // This helper method creates all necessary test data for payment testing
     $testData = PaymentTestDataHelper::setupTestData();
@@ -124,28 +134,28 @@ test('payment should be created via endpoint', function () {
     // ============================================
     // 1. ARRANGE: Prepare test data and payload
     // ============================================
-    
+
     // Build the request payload using helper method
     $requestPayload = PaymentTestPayloadHelper::buildPaymentCreationPayload(
         carQuote: $this->carQuote,
         planId: $this->carPlan->id,
         insuranceProviderId: $this->insuranceProvider->id
     );
-    
+
     // ============================================
     // 2. ACT: Execute the endpoint request
     // ============================================
-    
+
     // Make POST request to payment creation endpoint using route name
     $response = $this->post(route('payment-create', ['quoteType' => QuoteTypes::CAR->value]), $requestPayload);
-    
+
     // ============================================
     // 3. ASSERT: Verify the results
     // ============================================
-    
+
     // Assert that the endpoint returned a successful redirect response
     $response->assertStatus(302);
-    
+
     // Retrieve and assert payment was created correctly
     $createdPayment = PaymentTestQueryHelper::getPaymentByQuoteCode($this->carQuote->code);
     expect($createdPayment)->not->toBeNull();
@@ -173,10 +183,12 @@ test('payment should be created via endpoint', function () {
 Tests use specialized helper classes organized by concern:
 
 - **`PaymentTestDataHelper`** - Setup and data creation
+
   - `setupTestData()` - Creates InsuranceProvider, CarPlan, and CarQuote
   - `setupPaymentPermissions()` - Sets up payment-related permissions
 
 - **`PaymentTestCreationHelper`** - Entity creation
+
   - `createPayment()` - Creates payment with automatic refresh
   - `createPaymentSplit()` - Creates payment split with automatic refresh
   - `createPaymentWithSplit()` - Creates both payment and split together
@@ -184,11 +196,13 @@ Tests use specialized helper classes organized by concern:
   - `createPaymentWithSplitAndCapturedAmount()` - Creates both with captured_amount initialization
 
 - **`PaymentTestPayloadHelper`** - Request payload building
+
   - `buildPaymentCreationPayload()` - Builds payload for payment creation endpoint
   - `buildPaymentUpdatePayload()` - Builds payload for payment update endpoint
   - `buildApprovePaymentPayload()` - Builds payload for payment approval endpoint
 
 - **`PaymentTestQueryHelper`** - Data retrieval
+
   - `getPaymentByQuoteCode()` - Retrieves payment by quote code
   - `getPaymentSplitByCodeAndSerial()` - Retrieves payment split by code and serial number
 
@@ -215,6 +229,7 @@ Tests use specialized helper classes organized by concern:
 - Follow separation of concerns - each helper class has a single responsibility
 
 # Common Expectations
+
 ```php
 expect($value)->toBe($expected)
 expect($value)->toEqual($expected)
