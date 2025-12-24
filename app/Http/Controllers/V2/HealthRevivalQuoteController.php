@@ -66,7 +66,7 @@ class HealthRevivalQuoteController extends Controller
 
         $memberCategories = app(LookupService::class)->getMemberCategories();
         $formOptions = HealthRevivalQuoteRepository::getFormOptions();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
 
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 

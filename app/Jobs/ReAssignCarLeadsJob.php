@@ -142,7 +142,8 @@ class ReAssignCarLeadsJob implements ShouldQueue
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', $exemptedLeadSources)
             ->where('quote_status_id', QuoteStatusEnum::NewLead)
-            ->where('is_renewal_tier_email_sent', 0);
+            ->where('is_renewal_tier_email_sent', 0)
+            ->where('ai_advisor_required', false);
 
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {

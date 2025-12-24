@@ -139,6 +139,7 @@ const tableHeader = [
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
+  { text: 'BRANCH', value: 'branch_name' },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
@@ -157,7 +158,7 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
 ];
 
