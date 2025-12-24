@@ -101,16 +101,22 @@ class FailedILAEmailService
         }
         try {
             LoggerService::info(self::class . ' - exportFailedIlaLeads - Exporting failed ILA leads for quote type: ' . $quoteType);
-            $file = Excel::download(new FailedIlaLeadsExport($leads), now() . '-failed_ila_leads.xlsx');
+            // Generate Excel content and store in a temporary file in memory
+            $tempFilePath = 'temp/' . uniqid() . '-failed_ila_leads.xlsx';
 
-            // Generate a unique temporary file path
-            $tempFilePath = 'temp/' . uniqid() . '.xlsx';
-            Storage::disk('azureIM')->put($tempFilePath, $file->getContent());
+            // Use Excel::raw to get the XLSX binary contents
+            $excelContent = \Maatwebsite\Excel\Facades\Excel::raw(
+                new FailedIlaLeadsExport($leads),
+                \Maatwebsite\Excel\Excel::XLSX
+            );
+
+            // Store the generated Excel content to Azure disk
+            Storage::disk('azureIM')->put($tempFilePath, $excelContent);
 
             // Generate a public URL
             $publicUrl = Storage::disk('azureIM')->temporaryUrl(
                 $tempFilePath,
-                now()->addMinutes(5)
+                now()->addMinutes(10)
             );
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
