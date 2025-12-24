@@ -48,7 +48,7 @@ class CarAllocation implements Allocation
         );
 
         $lead = CarQuote::where('uuid', $this->uuid)->first();
-        if(!$lead) {
+        if (! $lead) {
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, new Exception('Lead not found'));
         }
         $pipes = $this->getPipes($lead);
