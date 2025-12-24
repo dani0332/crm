@@ -12,7 +12,6 @@ use App\Interfaces\PolicyIssuanceInterface;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicValidationService;
 use Exception;
 
 class AdnicInsuranceService implements PolicyIssuanceInterface

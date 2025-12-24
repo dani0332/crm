@@ -181,7 +181,7 @@ return [
     'GIG_API_AUTH_CLIENT_ID' => env('GIG_API_AUTH_CLIENT_ID'),
     'GIG_API_AUTH_CLIENT_SECRET' => env('GIG_API_AUTH_CLIENT_SECRET'),
 
-    // Adnic Policy Issuance API Credentials 
+    // Adnic Policy Issuance API Credentials
     'ADNIC_API_BASE_URL' => env('ADNIC_API_BASE_URL'),
     'ADNIC_PARTNER_ID' => env('ADNIC_PARTNER_ID'),
     'ADNIC_PARTNER_REFERENCE_NO' => env('ADNIC_PARTNER_REFERENCE_NO'),
