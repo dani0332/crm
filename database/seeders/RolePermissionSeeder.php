@@ -351,7 +351,6 @@ class RolePermissionSeeder extends Seeder
 
         $roles = Role::whereIn('name', [RolesEnum::CLAIM_MANAGER])->get();
 
-
         foreach ($claimsPermissions['claimManager'] as $permissionName) {
             $permission = Permission::firstOrCreate([
                 'name' => $permissionName,

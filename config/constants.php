@@ -190,7 +190,7 @@ return [
     'CUSTOMER_PORTAL_API_TOKEN' => env('CUSTOMER_PORTAL_API_TOKEN', ''),
     'CUSTOMER_PORTAL_API_TIMEOUT' => env('CUSTOMER_PORTAL_API_TIMEOUT', ''),
 
-    /* Claim Tracking ECOM Portal URL*/
+    /* Claim Tracking ECOM Portal URL */
     'CLAIM_ECOM_TRACKING_URL' => env('CLAIM_ECOM_TRACKING_URL', ''),
 
     /* Instant Writer AI API */
