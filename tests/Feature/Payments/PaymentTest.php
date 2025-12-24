@@ -7,6 +7,9 @@ use App\Models\PaymentSplits;
 use Database\Factories\ApplicationStorageFactory;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\Payments\PaymentTestHelper;
+use Tests\Helpers\Payments\PaymentTestDataHelper;
+use Tests\Helpers\Payments\PaymentTestAssertionHelper;
+use Tests\Helpers\Payments\PaymentTestCreationHelper;
 use Tests\Helpers\TestSchemaCreator;
 
 // Will run for each test 
@@ -22,11 +25,11 @@ beforeEach(function () {
     $this->actingAs($this->user);
     
     // Set up payment-related permissions (required for payment approval/decline operations)
-    PaymentTestHelper::setupPaymentPermissions($this->user);
+    PaymentTestDataHelper::setupPaymentPermissions($this->user);
     
     // Set up test data: InsuranceProvider, CarPlan, and CarQuote
     // This helper method creates all necessary test data for payment testing
-    $testData = PaymentTestHelper::setupTestData();
+    $testData = PaymentTestDataHelper::setupTestData();
     // Assign test data to test properties for easy access
     $this->insuranceProvider = $testData['insuranceProvider'];
     $this->carPlan = $testData['carPlan'];
@@ -45,26 +48,18 @@ test('payment and payment split can be created using factories', function () {
     // 2. ACT: Create payment and payment split using factories
     // ============================================
     
-    // Create payment using factory with CarQuote
-    // This will trigger PaymentObserver which calculates VAT
-    $createdPayment = Payment::factory()->createForSqlite($this->carQuote);
-    
-    // Refresh payment to get latest values from database (including observer updates)
-    $createdPayment->refresh();
-    
-    // Create payment split using factory with Payment
-    // This will trigger PaymentSplitsObserver which calculates VAT
-    $createdPaymentSplit = PaymentSplits::factory()->createForSqlite($createdPayment);
-    
-    // Refresh payment split to get latest values from database (including observer updates)
-    $createdPaymentSplit->refresh();
+    // Create payment and payment split using helper method
+    // This handles factory creation, observer triggers, and refresh operations
+    $createdEntities = PaymentTestCreationHelper::createPaymentWithSplit($this->carQuote);
+    $createdPayment = $createdEntities['payment'];
+    $createdPaymentSplit = $createdEntities['paymentSplit'];
     
     // ============================================
     // 3- ASSERT: Verify the results
     // ============================================
     
     // Assert payment was created correctly
-    PaymentTestHelper::assertPaymentCreatedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentCreatedCorrectly(
         payment: $createdPayment,
         carQuote: $this->carQuote,
         expectedPlanId: $this->carPlan->id,
@@ -73,14 +68,14 @@ test('payment and payment split can be created using factories', function () {
     );
     
     // Assert payment split was created correctly
-    PaymentTestHelper::assertPaymentSplitCreatedCorrectly(
+    PaymentTestAssertionHelper::assertPaymentSplitCreatedCorrectly(
         paymentSplit: $createdPaymentSplit,
         payment: $createdPayment,
         expectedAmount: (float) $this->carQuote->premium
     );
     
     // Assert that observers ran successfully (VAT calculations)
-    PaymentTestHelper::assertObserversRanSuccessfully(
+    PaymentTestAssertionHelper::assertObserversRanSuccessfully(
         payment: $createdPayment,
         paymentSplit: $createdPaymentSplit
     );
