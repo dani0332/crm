@@ -387,7 +387,7 @@ class ApiController extends Controller
 
         LoggerService::info(self::class.': PC customer tag exercise has been initiated');
 
-        dispatch(new TagPcpCustomerJob($validated['uuids'] ?? []));
+        dispatch(new TagPcpCustomerJob($request->post('uuids')));
 
         return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
     }
