@@ -53,7 +53,7 @@ const parseFormattedNumber = value => {
 // Get currency symbol
 const currencySymbol = computed(() => {
   const currency = currencyOptions.find(c => c.value === form.currency);
-  return currency ? currency.label : 'د.إ';
+  return currency ? currency.label : 'Ð';
 });
 
 // Get periods per year based on frequency
@@ -96,14 +96,16 @@ const calculationResults = computed(() => {
         futureValue: Math.round(futureValue),
       };
     } else {
-      // Regular periodic investment
+      // Regular periodic investment (SIP - Systematic Investment Plan)
       const totalPeriods = form.investmentDuration * periodsPerYear;
       const periodicRate = rate / periodsPerYear;
 
-      // Future Value of Annuity formula: FV = P * [((1 + r)^n - 1) / r]
+      // Future Value of Annuity Due formula (payment at beginning of period):
+      // FV = P × [((1 + r)^n - 1) / r] × (1 + r)
       const futureValue =
         periodicAmount *
-        ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate);
+        ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate) *
+        (1 + periodicRate);
       const totalInvestment = periodicAmount * totalPeriods;
       const wealthGained = futureValue - totalInvestment;
 
@@ -134,10 +136,12 @@ const calculationResults = computed(() => {
       const totalPeriods = form.investmentDuration * periodsPerYear;
       const periodicRate = rate / periodsPerYear;
 
-      // PMT formula: PMT = FV * [r / ((1 + r)^n - 1)]
+      // PMT formula for Annuity Due (SIP - payment at beginning of period):
+      // PMT = FV × [r / ((1 + r)^n - 1)] / (1 + r)
       const requiredPayment =
-        goalAmount *
-        (periodicRate / (Math.pow(1 + periodicRate, totalPeriods) - 1));
+        (goalAmount *
+          (periodicRate / (Math.pow(1 + periodicRate, totalPeriods) - 1))) /
+        (1 + periodicRate);
       const totalInvestment = requiredPayment * totalPeriods;
       const wealthGained = goalAmount - totalInvestment;
 
@@ -247,15 +251,16 @@ const yearlyInvestmentData = computed(() => {
       });
     }
   } else {
-    // Regular periodic investment
+    // Regular periodic investment (SIP formula)
     const periodicRate = rate / periodsPerYear;
 
     for (let year = 1; year <= years; year++) {
       const totalPeriods = year * periodsPerYear;
-      // Future Value of Annuity formula
+      // Future Value of Annuity Due formula (payment at beginning of period)
       const futureValue =
         periodicAmount *
-        ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate);
+        ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate) *
+        (1 + periodicRate);
       data.push({
         name: `Year ${year}`,
         y: Math.round(futureValue),
