@@ -17,8 +17,8 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 
 const nextFollowUpForm = useForm({
-  notes: props.claim?.next_followup_notes || '',
-  next_follow_up_date: props.claim?.next_followup_datetime || '',
+  notes: '',
+  next_follow_up_date: '',
 });
 
 // Client-side validation rules
@@ -278,7 +278,7 @@ const updateNextFollowUp = () => {
                   nextFollowUpForm.errors.next_follow_up_date ||
                   validationErrors.next_follow_up_date
                 "
-                :utc="false"
+                :utc="'preserve'"
                 placeholder="Please select follow-up date & time"
                 class="w-full"
                 required
