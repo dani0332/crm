@@ -53,11 +53,11 @@ class FailedILAEmailService
         ];
     }
 
-    public function getFailedILALeads($startOfDay, $endOfDay, $quoteType)
+    public function getFailedILALeads($quoteType)
     {
         switch ($quoteType) {
             case QuoteTypes::CAR->value:
-                $leads = $this->getCarFailedILALeads($startOfDay, $endOfDay);
+                $leads = $this->getCarFailedILALeads();
                 break;
                 // case QuoteTypes::BIKE:
                 //   $leads = $this->getBikeFailedILALeads($startOfDay, $endOfDay);
@@ -74,11 +74,10 @@ class FailedILAEmailService
         }
         return $leads;
     }
-    public function getCarFailedILALeads($startOfDay, $endOfDay)
+    public function getCarFailedILALeads()
     {
      
-        $leads = CarQuote::whereBetween('created_at', [$startOfDay, $endOfDay])
-            ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
+        $leads = CarQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where('source', '!=', LeadSourceEnum::IMCRM)
@@ -90,7 +89,7 @@ class FailedILAEmailService
     public function exportFailedIlaLeads($quoteType)
     {
 
-        $leads = $this->getFailedILALeads(now()->startOfDay(), now(), $quoteType);
+        $leads = $this->getFailedILALeads( $quoteType);
         $totalLeads = count($leads);
         if ($leads->isEmpty()) {
             LoggerService::warning(self::class . ' - exportFailedIlaLeads - No leads found for quote type: ' . $quoteType);
