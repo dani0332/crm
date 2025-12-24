@@ -690,10 +690,13 @@ class ApiController extends Controller
     {
         $response = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
         if ($response['success']) {
+       
+            // Instead, embed the data as base64 (with a data URL), or provide it as an attachment link if available.
             return response()->json([
                 'success' => true,
                 'message' => $response['message'],
-                'public_url' => $response['public_url'],
+                // Provide a data-URL style prefix for consumer clarity; keep as base64 string (DO NOT decode!)
+                'public_url' => 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'.$response['public_url'],
                 'total_leads' => $response['total_leads'],
             ], Response::HTTP_OK);
         } else {

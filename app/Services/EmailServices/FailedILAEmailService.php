@@ -101,31 +101,18 @@ class FailedILAEmailService
         }
         try {
             LoggerService::info(self::class . ' - exportFailedIlaLeads - Exporting failed ILA leads for quote type: ' . $quoteType);
-            // Generate Excel content and store in a temporary file in memory
-            $tempFilePath = 'temp/' . uniqid() . '-failed_ila_leads.xlsx';
+         
 
             // Use Excel::raw to get the XLSX binary contents
             $excelContent = \Maatwebsite\Excel\Facades\Excel::raw(
                 new FailedIlaLeadsExport($leads),
                 \Maatwebsite\Excel\Excel::XLSX
             );
-
-            // Store the generated Excel content to Azure disk
-            Storage::disk('azureIM')->put($tempFilePath, $excelContent);
-
-            // Generate a public URL
-            $publicUrl = Storage::disk('azureIM')->temporaryUrl(
-                $tempFilePath,
-                now()->addMinutes(10)
-            );
-            // Schedule deletion after 5 minutes
-            $this->scheduleFileDeletion($tempFilePath);
-
-            LoggerService::info(self::class . ' - exportFailedIlaLeads - Public URL generated for quote type: ' . $quoteType . ' | URL: ' . $publicUrl);
+            // LoggerService::info(self::class . ' - exportFailedIlaLeads - Public URL generated for quote type: ' . $quoteType . ' | URL: ' . $publicUrl);
             return [
                 'success' => true,
                 'message' => 'Failed ILA leads exported successfully',
-                'public_url' => $publicUrl,
+                'public_url' =>base64_encode($excelContent),
                 'total_leads' => $totalLeads,
             ];
         } catch (\Exception $e) {
