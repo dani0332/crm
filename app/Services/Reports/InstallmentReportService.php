@@ -90,6 +90,7 @@ class InstallmentReportService extends ManagementReport
                 'cli.text as travel_currently_located_in_id_text',
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')
@@ -128,6 +129,7 @@ class InstallmentReportService extends ManagementReport
             ->orderBy('personal_quotes.id', 'desc')
             ->orderBy('ps.due_date', 'asc');
 
+        $this->branchJoin($query);
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
 

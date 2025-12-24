@@ -94,8 +94,10 @@ class EndingPoliciesReportService extends ManagementReport
                 'cli.text as travel_currently_located_in_id_text',
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             );
 
+        $this->branchJoin($query);
         $this->applyFilters($query, $request, isSSR: true);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);
