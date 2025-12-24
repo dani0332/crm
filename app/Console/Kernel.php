@@ -101,14 +101,14 @@ class Kernel extends ConsoleKernel
         $schedule->command('RetryHealthAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('RetryTravelAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('RetryBikeAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('RetryAllocation:cron --quoteType="Group Medical"')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('RetryAllocation:cron --quoteType=Home')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('RetryAllocation:cron --quoteType=Life')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('RetryAllocation:cron --quoteType=CorpLine')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('RetryAllocation:cron --quoteType=Cycle')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('RetryAllocation:cron --quoteType=Pet')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('RetryAllocation:cron --quoteType=Yacht')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('RetryAllocation:cron --quoteType=Savings')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType="Group Medical"')->name('retry_allocation:cron:group_medical')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Home')->name('retry_allocation:cron:home')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Life')->name('retry_allocation:cron:life')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=CorpLine')->name('retry_allocation:cron:corpline')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Cycle')->name('retry_allocation:cron:cycle')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Pet')->name('retry_allocation:cron:pet')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Yacht')->name('retry_allocation:cron:yacht')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Savings')->name('retry_allocation:cron:savings')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 

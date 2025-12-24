@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\QuoteTypes;
 use App\Services\Allocation\RetryAllocationService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 
 class RetryAllocation extends Command
@@ -39,12 +40,18 @@ class RetryAllocation extends Command
      */
     public function handle(RetryAllocationService $retryAllocationService)
     {
-        $quoteType = QuoteTypes::from($this->option('quoteType'));
+        try {
+            $quoteType = QuoteTypes::from($this->option('quoteType'));
+        } catch (\Exception $e) {
+            LoggerService::error('Invalid quote type: '.$this->option('quoteType'));
+
+            return Command::FAILURE;
+        }
 
         $retryAllocation = $retryAllocationService->verifyRetryAllocationMasterSwitch($quoteType);
 
         if (empty($retryAllocation)) {
-            return;
+            return Command::SUCCESS;
         }
 
         [$startTime, $endTime] = $retryAllocation;
