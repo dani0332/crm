@@ -508,8 +508,10 @@ class RenewalsUploadService
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
             if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
+                $message = 'can not proceed with quote as payment is already in process. ';
                 LoggerService::info($logPrefix.' can not proceed with quote as payment is already in process. ');
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+                $renewalQuoteProcess->update(['step_errors' => [$message], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
 
                 return false;
             }
@@ -532,6 +534,7 @@ class RenewalsUploadService
                         'UUID' => $quote->uuid,
                     ]);
                     RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+                    $renewalQuoteProcess->update(['step_errors' => ['plan creation failed. API Response'], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
 
                     return false;
                 }
@@ -547,6 +550,8 @@ class RenewalsUploadService
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
             } else {
                 LoggerService::info($logPrefix.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
+
+                $renewalQuoteProcess->update(['step_errors' => [$plansResponse], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
             }
         } else {

@@ -70,13 +70,15 @@ const permissionsEnum = page.props.permissionsEnum;
           {{ good }}
         </Link>
       </template>
-      <template #item-cannot_upload="{ id, cannot_upload }">
-        <Link
-          :href="`/renewals/uploaded-leads/${id}/validation-failed`"
-          class="text-primary-500 hover:underline btn-passed"
+      <template #item-total_failed="{ batch, id, total_failed }">
+        <x-button
+          size="xs"
+          light
+          color="error"
+          :href="route('batch-plans-processes-status', { id: batch, renewalStatusProcessId: id })"
         >
-          {{ cannot_upload }}
-        </Link>
+          {{ total_failed }}
+        </x-button>
       </template>
       <template #item-skip_plans="{ skip_plans }">
         {{
