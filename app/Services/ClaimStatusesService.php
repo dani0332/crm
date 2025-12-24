@@ -25,7 +25,7 @@ class ClaimStatusesService extends BaseService
             function () {
                 return ClaimStatus::byStatusType(ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
                     ->active()
-                    ->select('id', 'text', 'quote_type_id')
+                    ->select('id', 'text', 'quote_type_id', 'claim_request_type_id', 'access_type_id')
                     ->orderBySortOrder()
                     ->get()
                     ->toArray();

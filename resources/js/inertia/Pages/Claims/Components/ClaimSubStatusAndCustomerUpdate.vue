@@ -29,9 +29,22 @@ const claimSubStatusAndCustomerForm = useForm({
 const subStatusOptions = computed(() => {
   return (
     props.dropdowns.claimSubStatuses
-      ?.filter(
-        subStatus => subStatus.quote_type_id === page.props.claim.quote_type_id,
-      )
+      ?.filter(subStatus => {
+        // Always filter by quote_type_id
+        const matchesQuoteType =
+          subStatus.quote_type_id === page.props.claim.quote_type_id;
+
+        // If claim has claim_request_type_id, also filter by it
+        if (page.props.claim.claim_request_type_id != null) {
+          const matchesClaimRequestType =
+            subStatus.claim_request_type_id === null ||
+            subStatus.claim_request_type_id === page.props.claim.claim_request_type_id;
+          return matchesQuoteType && matchesClaimRequestType;
+        }
+
+        // If claim doesn't have claim_request_type_id, only filter by quote_type_id
+        return matchesQuoteType;
+      })
       ?.map(subStatus => ({
         value: subStatus.id,
         label: subStatus.text,
