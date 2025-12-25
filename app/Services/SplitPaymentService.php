@@ -936,12 +936,12 @@ class SplitPaymentService
         if (! $masterPayment) {
             LoggerService::info('Master payment not found during capture payment for quote code: '.$quoteModel->code);
             $errorMessage = 'Master payment not found for quote code: '.$quoteModel->code;
-            
+
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
                 LoggerService::error('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' - Master payment not found');
             }
-            
+
             return $errorMessage;
         }
 
