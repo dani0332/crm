@@ -186,7 +186,7 @@ return [
         'uat' => [
             'supervisor-uat' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', ''],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
