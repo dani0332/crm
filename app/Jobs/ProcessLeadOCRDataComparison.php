@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Response;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Http;
 
 class ProcessLeadOCRDataComparison implements ShouldQueue
@@ -38,6 +39,11 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->uuid = $uuid;
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping())->dontRelease()];
     }
 
     /**
