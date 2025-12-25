@@ -4,8 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\OCRDocumentTypeEnum;
-use App\Enums\OCRSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -36,16 +34,12 @@ use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
+use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\RunCQFJobs;
-use App\Models\CarQuote;
-use App\Models\DocumentType;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
-use App\Models\LeadOcrDataComparison;
-use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
-use App\Models\QuoteDocument;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
@@ -56,7 +50,6 @@ use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\Logger\LoggerService;
-use App\Services\LookupService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
@@ -68,10 +61,8 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Jobs\ProcessLeadOCRDataComparison;
 
 class ApiController extends Controller
 {
@@ -701,117 +692,27 @@ class ApiController extends Controller
 
     public function getLeadOCRComparison(Request $request)
     {
-            $request->validate(
-                [
-                    'start_date' => 'nullable|date_format:Y-m-d',
-                    'end_date'   => 'nullable|date_format:Y-m-d',
-                ],
-                [
-                    'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
-                    'end_date.date_format'   => 'End date must be in YYYY-MM-DD format',
-                ]
-            );
-        
-            $startDate = $request->filled('start_date')
-            ? Carbon::createFromFormat('Y-m-d', $request->start_date)
+        $request->validate(
+            [
+                'start_date' => 'nullable|date_format:Y-m-d',
+                'end_date' => 'nullable|date_format:Y-m-d',
+            ],
+            [
+                'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
+                'end_date.date_format' => 'End date must be in YYYY-MM-DD format',
+            ]
+        );
+
+        $startDate = $request->filled('start_date')
+        ? Carbon::createFromFormat('Y-m-d', $request->start_date)
+        : null;
+
+        $endDate = $request->filled('end_date')
+            ? Carbon::createFromFormat('Y-m-d', $request->end_date)
             : null;
-        
-            $endDate = $request->filled('end_date')
-                ? Carbon::createFromFormat('Y-m-d', $request->end_date)
-                : null;
-        
-            ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate)->onQueue('lead_ocr_data_comparison');
 
-            return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
-    }
+        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate);
 
-
-    public function checkLeadDocuments()
-    {
-        $uuid = request('uuid', 'GWNRK7CH');
-
-        $carQuote = CarQuote::where('uuid', $uuid)
-            ->with([
-                'documents' => function ($q) {
-                    $q->select('id', 'quote_documentable_id', 'doc_name', 'doc_url', 'document_type_code', 'created_at')
-                        ->orderBy('created_at', 'desc');
-                },
-            ])
-            ->first();
-
-        if (! $carQuote) {
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Car quote not found');
-        }
-
-        $emiratesIdCodes = ['CEID', 'EID_CAR', 'IDC'];
-        $allDocuments = $carQuote->documents;
-        $emiratesIdDocuments = $allDocuments->filter(function ($doc) use ($emiratesIdCodes) {
-            return in_array($doc->document_type_code, $emiratesIdCodes);
-        });
-
-        $documentTypeCodes = DocumentType::query()
-            ->active()
-            ->byQuoteTypeId(QuoteTypes::CAR->id())
-            ->get()
-            ->filter(fn (DocumentType $documentType) => OCRDocumentTypeEnum::getDocumentType($documentType) !== null)
-            ->pluck('code')
-            ->values()
-            ->all();
-
-        $ocrEligibleDocuments = $allDocuments->filter(function ($doc) use ($documentTypeCodes) {
-            return in_array($doc->document_type_code, $documentTypeCodes);
-        });
-
-        LoggerService::info(self::class.'::checkLeadDocuments - Lead documents checked', extra: [
-            'quote_id' => $carQuote->id,
-            'quote_uuid' => $carQuote->uuid,
-            'quote_code' => $carQuote->code,
-            'total_documents' => $allDocuments->count(),
-            'emirates_id_documents_count' => $emiratesIdDocuments->count(),
-            'ocr_eligible_documents_count' => $ocrEligibleDocuments->count(),
-            'emirates_id_documents' => $emiratesIdDocuments->map(function ($doc) {
-                return [
-                    'id' => $doc->id,
-                    'doc_name' => $doc->doc_name,
-                    'document_type_code' => $doc->document_type_code,
-                    'doc_url' => $doc->doc_url,
-                    'created_at' => $doc->created_at,
-                ];
-            })->values()->all(),
-            'all_documents' => $allDocuments->map(function ($doc) {
-                return [
-                    'id' => $doc->id,
-                    'doc_name' => $doc->doc_name,
-                    'document_type_code' => $doc->document_type_code,
-                    'created_at' => $doc->created_at,
-                ];
-            })->values()->all(),
-        ]);
-
-        return apiResponse([
-            'quote_id' => $carQuote->id,
-            'quote_uuid' => $carQuote->uuid,
-            'quote_code' => $carQuote->code,
-            'total_documents' => $allDocuments->count(),
-            'emirates_id_documents_count' => $emiratesIdDocuments->count(),
-            'ocr_eligible_documents_count' => $ocrEligibleDocuments->count(),
-            'emirates_id_documents' => $emiratesIdDocuments->map(function ($doc) {
-                return [
-                    'id' => $doc->id,
-                    'doc_name' => $doc->doc_name,
-                    'document_type_code' => $doc->document_type_code,
-                    'doc_url' => $doc->doc_url,
-                    'created_at' => $doc->created_at instanceof \Carbon\Carbon ? $doc->created_at->toDateTimeString() : $doc->created_at,
-                ];
-            })->values()->all(),
-            'all_documents' => $allDocuments->map(function ($doc) {
-                return [
-                    'id' => $doc->id,
-                    'doc_name' => $doc->doc_name,
-                    'document_type_code' => $doc->document_type_code,
-                    'created_at' => $doc->created_at instanceof \Carbon\Carbon ? $doc->created_at->toDateTimeString() : $doc->created_at,
-                ];
-            })->values()->all(),
-        ], Response::HTTP_OK, 'Lead documents retrieved successfully');
+        return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
     }
 }

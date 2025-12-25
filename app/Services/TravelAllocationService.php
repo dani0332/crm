@@ -243,9 +243,6 @@ class TravelAllocationService extends AllocationService
             ->whereIn('r.name', [RolesEnum::TravelAdvisor])
             ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
             ->activeUser()
-            ->when($lead->isSIC(QuoteTypes::TRAVEL), function ($q) {
-                $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
-            })
             ->orderBy('la.last_allocated', 'asc');
         info(self::class." - getAdvisorByStatus query: {$user->toSql()}, bindings: ".json_encode($user->getBindings()));
 

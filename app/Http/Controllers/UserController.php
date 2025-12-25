@@ -263,6 +263,7 @@ class UserController extends Controller
             'userAdvisors' => $user->advisors,
         ]);
     }
+
     /**
      * Show the form for editing the specified resource.
      *
