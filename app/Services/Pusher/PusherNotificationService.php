@@ -31,8 +31,8 @@ class PusherNotificationService extends BaseService
         LoggerService::info(self::class." - Pusher notification broadcasted to advisor (ID: {$advisor->id}) for UUID: {$lead->uuid}");
         } catch (\Exception $e) {
             LoggerService::error(self::class.': STP advisor notification broadcasting failed',  [
-                'uuid' => $lead->uuid,
-                'advisor_id' => $advisor->id,
+                'uuid' => $lead->uuid ?? null,
+                'advisor_id' => $advisor->id ?? $lead->advisor_id ?? null,
                 'error' => $e->getMessage(),
             ]);
             return;

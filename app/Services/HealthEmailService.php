@@ -433,7 +433,6 @@ class HealthEmailService extends BaseService
                 'success' => true,
                 'message' => 'STP Advisor ' . ($isApiFailed ? 'API Failed' : '') . ' notification already executed',
             ];
-            return;
         }
         $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
         if ( in_array($response->status_code, [200, 201])) {

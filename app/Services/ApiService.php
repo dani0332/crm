@@ -603,29 +603,32 @@ class ApiService
     {
         try {
             $quoteType = QuoteTypes::getName($request->quoteTypeId);
-            if ($quoteType && $quoteType->value) {
-                switch ($quoteType->value) {
-                        case QuoteTypes::HEALTH->value:
-                            $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
-                            if (! $lead) {
-                                return [
-                                    'success' => false,
-                                    'message' => 'Lead not found',
-                                ];
-                            }
-                            app(HealthEmailService::class)->sendSTPAdvisorNotification($lead, $request->apiFailed);
-                            return [
-                                'success' => true,
-                                'message' => 'STP Advisor notification sent',
-                            ];
-                            break;
-                 
-                    default:
+            
+            if (! $quoteType || ! $quoteType->value) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid quote type ID',
+                ];
+            }
+            switch ($quoteType->value) {
+                case QuoteTypes::HEALTH->value:
+                    $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
+                    if (! $lead) {
                         return [
                             'success' => false,
-                            'message' => 'Invalid quote type',
+                            'message' => 'Lead not found',
                         ];
-                }
+                    }
+                    app(HealthEmailService::class)->sendSTPAdvisorNotification($lead, $request->apiFailed);
+                    return [
+                        'success' => true,
+                        'message' => 'STP Advisor notification sent',
+                    ];
+                default:
+                    return [
+                        'success' => false,
+                        'message' => 'Invalid quote type',
+                    ];
             }
         } catch (\Exception $e) {
             return [
