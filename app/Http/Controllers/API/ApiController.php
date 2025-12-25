@@ -59,7 +59,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -382,7 +381,7 @@ class ApiController extends Controller
     public function tagPcpCustomers(Request $request)
     {
         $request->validate([
-            'uuids' => 'required|array'
+            'uuids' => 'required|array',
         ]);
 
         LoggerService::info(self::class.': PC customer tag exercise has been initiated');
