@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Http;
 class ProcessLeadOCRDataComparison implements ShouldQueue
 {
     use Queueable;
+    public $tries = 1;
 
     protected $startDate;
     protected $endDate;
