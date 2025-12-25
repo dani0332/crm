@@ -53,7 +53,8 @@ class AwnicApiService
 
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, Awnic::getBaseUrl().$endPoint, AwnicEnum::STEP_ISSUE_POLICY, $issuePolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
-        if (! $issuePolicyResponse['status']) {
+        // this email is used to test the policy issuance automation failure scenario
+        if (! $issuePolicyResponse['status'] || $quote->email == 'imcrm-policy-issue-fake@yopmail.com') {
             LoggerService::error('API call failed', extra: [
                 'endpoint' => $endPoint,
                 'error' => $issuePolicyResponse['error'] ?? AwnicEnum::UNKNOWN_ERROR,
@@ -140,7 +141,8 @@ class AwnicApiService
             }
         }
 
-        if (! $allDocsDownloaded) {
+        // this email is used to test the document download automation failure scenario
+        if (! $allDocsDownloaded || $quote->email == "imcrm-doc-download-fake@yopmail.com") {
             $response['message'] = 'Some documents failed to upload';
             $response['error'] = 'Some documents failed to upload';
             $response['status'] = false;
@@ -219,7 +221,8 @@ class AwnicApiService
             'failed_uploads' => $uploadedDocumentsToIMCRM->where('status', false)->count(),
         ]);
 
-        if (! $allDocsDownload || $uploadedDocumentsToIMCRM->isEmpty()) {
+        // this email is used to test the document upload automation failure scenario
+        if (! $allDocsDownload || $uploadedDocumentsToIMCRM->isEmpty() || $quote->email == "imcrm-doc-upload-fake@yopmail.com") {
             $docsUploadToIMCRMFailed = $uploadedDocumentsToIMCRM->where('status', false)->pluck('name')->toArray();
             LoggerService::error('Failed to fetch/upload all documents', extra: [
                 'failed_documents' => $docsUploadToIMCRMFailed,
