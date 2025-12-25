@@ -15,6 +15,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\DepartmentService;
 use App\Services\LeadAllocationService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
@@ -337,6 +338,9 @@ class UserController extends Controller
         ]);
 
         // Updating user
+        $previouslyActive = (bool) $user->is_active;
+        $isActive = $request->boolean('is_active');
+
         $user->name = $request->name;
         $user->email = $request->email;
         $user->mobile_no = $request->mobile_no;
@@ -348,25 +352,19 @@ class UserController extends Controller
         if (isset($request->password)) {
             $user->password = bcrypt($request->password);
         }
-        $user->is_active = $request->is_active ? 1 : 0;
+        $user->is_active = $isActive ? 1 : 0;
 
 
-        if (! $request->is_active) {
+        if ($previouslyActive && ! $isActive) {
             $subordinates = $this->userService->getSubordinates($user->id);
-
-            if ($subordinates->isNotEmpty()) {
-                /** @var User $currentUser */
-                $currentUser = auth()->user();
-                SendManagerDeactivationAttemptEmailJob::dispatch(
-                    $user->id,
-                    $subordinates->pluck('id')->all(),
-                    $currentUser->id
-                );
-
-                $subordinateList = $subordinates->map(fn ($subordinate) => $subordinate->name.' ('.$subordinate->email.')')->implode(', ');
-
-                return back()->withErrors(['is_active' => "Cannot deactivate user. They are a manager for: {$subordinateList}"]);
-            }
+            /** @var User $currentUser */
+            $currentUser = auth()->user();
+            LoggerService::info("Dispatching SendManagerDeactivationAttemptEmailJob");
+            SendManagerDeactivationAttemptEmailJob::dispatch(
+                $user->id,
+                $subordinates->pluck('id')->all(),
+                $currentUser->id
+            );
         }
 
         if ($request->department_ids != null) {

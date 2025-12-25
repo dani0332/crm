@@ -49,6 +49,7 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
+        LoggerService::info("SendManagerDeactivationAttemptEmailJob Started");
         try {
             $managerUser = User::query()
                 ->with(['managers' => fn ($query) => $query->select('user_manager.id', 'email')])

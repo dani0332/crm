@@ -2019,31 +2019,26 @@ class SendEmailCustomerService extends BaseService
     public function sendManagerDeactivationAttemptEmail($manager, $subordinates, $attemptedBy)
     {
         $workflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW);
+        $itSupportEmail = getAppStorageValueByKey(ApplicationStorageEnums::IT_SUPPORT_EMAIL);
 
         if (empty($workflowUrl)) {
             LoggerService::error('Manager Deactivation Attempt: BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW not found in ApplicationStorage.');
-
             return;
         }
 
         $emailData = (object)[
-            'recipientEmail' => "itsupport@afia.ae",
+            'recipientEmail' => $itSupportEmail,
             'recipientName' => "IT Support AFIA",
             'name' => $manager->name,
             'email' => $manager->email,
-            'managerEmails' => collect($manager->managers)->pluck('email')->implode(','),
-            // 'managerId' => $manager->id,
-            'subordinatesCount' => count($subordinates),
-            'subordinates' => collect($subordinates)->map(function ($sub) {
-                return [
-                    'name' => $sub->name,
-                    'email' => $sub->email,
-                    'id' => $sub->id,
-                ];
-            })->toArray(),
-            'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_ATTEMPT,
+            'managerId' => $manager->id,
+            'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
             'timestamp' => now()->toDateTimeString(),
         ];
+
+        if (property_exists($manager, 'managers') && !empty($manager->managers)) {
+            $emailData->managerEmails = collect($manager->managers)->pluck('email')->toArray();
+        }
 
         LoggerService::info('Sending manager deactivation attempt email via Bird', [
             'manager_id' => $manager->id,
@@ -2051,7 +2046,7 @@ class SendEmailCustomerService extends BaseService
             'emailData' => $emailData
         ]);
 
-        // app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+        app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
     }
 
 }
