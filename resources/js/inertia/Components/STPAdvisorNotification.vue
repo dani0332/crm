@@ -12,20 +12,18 @@ const listen = () => {
   if (!page.props.auth?.user?.id) {
     return;
   }
-  
+
   if (!page.props.pusherKey || !page.props.pusherCluster) {
     return;
   }
-  
- 
+
   worker = new SharedWorker('/build/workers/pusher.worker.js');
 
   worker.port.addEventListener('message', e => {
-    
     // Convert both to numbers for comparison to handle type mismatchesp
     const notificationAdvisorId = Number(e.data.advisorId);
     const currentUserId = Number(page.props.auth.user.id);
-    
+
     if (notificationAdvisorId === currentUserId) {
       showNotification.value = true;
       notificationData.value = {
@@ -37,15 +35,14 @@ const listen = () => {
         timeout: 10000,
       };
       hideNotificationTimeOut();
-    } 
+    }
   });
 
   worker.onerror = function (error) {
     worker.port.close();
   };
 
-  worker.port.onmessageerror = function (error) {
-  };
+  worker.port.onmessageerror = function (error) {};
 
   worker.port.start();
 
@@ -57,7 +54,6 @@ const listen = () => {
     pusherKey: page.props.pusherKey,
     pusherCluster: page.props.pusherCluster,
   });
-  
 };
 
 const hideNotification = () => {
@@ -106,7 +102,7 @@ onUnmounted(() => {
           <span v-if="notificationData.leadUuid" class="notification-lead-uuid">
             Lead:
             <a
-              v-if="notificationData.leadUuid "
+              v-if="notificationData.leadUuid"
               :href="`/quotes/health/${notificationData.leadUuid}`"
               class="text-primary-500 hover:underline ml-1"
               target="_blank"
@@ -167,4 +163,3 @@ onUnmounted(() => {
   font-weight: bold;
 }
 </style>
-
