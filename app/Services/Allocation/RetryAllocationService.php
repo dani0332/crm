@@ -295,7 +295,7 @@ class RetryAllocationService
         }
 
         $leads = PersonalQuote::whereNull('advisor_id')
-            ->select('uuid')
+            ->select('uuid', 'tier_id', 'payment_status_id', 'quote_status_id', 'lead_allocation_failed_at', 'source', 'sic_flow_enabled')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -311,8 +311,15 @@ class RetryAllocationService
             }
 
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
+            LoggerService::info(self::class.': Processing bike quote allocation', extra: [
+                'payment_status_id' => $lead->payment_status_id,
+                'quote_status_id' => $lead->quote_status_id,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'source' => $lead->source,
+                'tier_id' => $lead->tier_id,
+            ]);
 
-            LoggerService::info(self::class.': Processing bike quote allocation');
             QuoteTypes::BIKE->allocate(uuid: $lead->uuid);
             $processedRecords++;
             LoggerService::info(self::class.': Processed bike quote allocation');
@@ -324,7 +331,7 @@ class RetryAllocationService
     {
         $processedRecords = 0;
         $leads = $quoteType->model()::whereNull('advisor_id')
-            ->select('uuid', 'payment_status_id')
+            ->select('uuid', 'payment_status_id', 'quote_status_id', 'lead_allocation_failed_at', 'sic_flow_enabled', 'source')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
@@ -346,6 +353,11 @@ class RetryAllocationService
 
             LoggerService::info(self::class.': Processing quote allocation', extra: [
                 'quote_type' => $quoteType->value,
+                'payment_status_id' => $lead->payment_status_id,
+                'quote_status_id' => $lead->quote_status_id,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'source' => $lead->source,
             ]);
             $quoteType->allocate(uuid: $lead->uuid);
             $processedRecords++;
