@@ -756,7 +756,7 @@ class CRUDService extends BaseService
                     if ($currentScore > $paymentTopScore) {
                         $paymentTopScore = $currentScore;
                         $paymentMethod = $paymentMethodMap[$payment->payment_methods_code] ?? 'Insure Now Pay Later';
-                    }
+                    } 
 
                     // Accumulate the authorized premium
                     if ($payment->premium_authorized !== null) {
