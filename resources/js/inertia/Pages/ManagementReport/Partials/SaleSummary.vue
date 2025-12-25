@@ -95,12 +95,6 @@ const tableHeader = reactive([
     tooltip:
       'Total price plus total endorsement amount less discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount + Total Endorsement Amount',
   },
-  {
-    text: 'Branch',
-    value: 'branch_name',
-    tooltip:
-      'The branch of the lead',
-  },
 ]);
 // v-if="props.groupBy == 'advisor'"
 
