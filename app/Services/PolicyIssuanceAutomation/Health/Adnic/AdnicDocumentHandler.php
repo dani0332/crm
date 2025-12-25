@@ -6,7 +6,7 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
-use App\Models\PersonalQuote;
+use App\Enums\AdnicEnum;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 
@@ -155,12 +155,28 @@ class AdnicDocumentHandler
     /**
      * Map document types to IMCRM document type codes
      */
-    public function getDocTypeCodeForIMCRM(PersonalQuote $quote): array
+    public function getDocTypeCodeForIMCRM($quote): array
     {
         return [
-            DocumentTypeCode::HEA_EID => $quote->insurer_tax_invoice_doc_id,
+           /*  DocumentTypeCode::HEA_EID => $quote->insurer_tax_invoice_doc_id,
             DocumentTypeCode::CTIRBB => $quote->insurer_debit_note_doc_id,
-            DocumentTypeCode::POLICY_SCHEDULE => $quote->insurer_policy_doc_id,
+            DocumentTypeCode::POLICY_SCHEDULE => $quote->insurer_policy_doc_id, */
+            AdnicEnum::INSURER_DOCUMENT_KEY_POLICY_DOCUMENT => DocumentTypeCode::POLC,
+            AdnicEnum::INSURER_DOCUMENT_KEY_COMMISION_NOTE => DocumentTypeCode::TIRBB,
+            AdnicEnum::INSURER_DOCUMENT_KEY_TAX_INVOICE => DocumentTypeCode::TI,
         ];
+    }
+
+    /**
+     * Map insurer documents to IMCRM document type codes
+     */
+    public function getQuoteDocumentMappingForInsurerDocuments($documentType): ?string
+    {
+        return match ($documentType) {
+            AdnicEnum::INSURER_DOCUMENT_KEY_POLICY_DOCUMENT => DocumentTypeCode::POLC,
+            AdnicEnum::INSURER_DOCUMENT_KEY_COMMISION_NOTE => DocumentTypeCode::TIRBB,
+            AdnicEnum::INSURER_DOCUMENT_KEY_TAX_INVOICE => DocumentTypeCode::TI,
+            default => null
+        };
     }
 }

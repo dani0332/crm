@@ -184,11 +184,22 @@ class AdnicApiService
         LoggerService::info('Starting policy documents download and upload to IMCRM', extra: [
             'process_id' => $process->id,
             'step' => AdnicEnum::STEP_UPLOAD_POLICY_DOCS,
-            'endpoint' => '/cyber/downloadDocument',
+            'endpoint' =>  '/GeneratePolicyDocument',
         ]);
 
+        $generatePolicyResponse = $process->policyIssuanceLogs()->where([
+            'step' => AdnicEnum::STEP_ISSUE_POLICY,
+            'status' => PolicyIssuanceEnum::SUCCESS_STATUS,
+        ])->latest()->first();
+
+        if (! $generatePolicyResponse) {
+            $response['error'] = 'Policy generation response not found in process data';
+
+            return $response;
+        }
+
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_POLICY_DOCS);
-        $endPoint = '/cyber/downloadDocument';
+        $endPoint =  '/GeneratePolicyDocument';
 
         $uploadedDocumentsToIMCRM = collect();
         $docTypeCodeForIMCRM = $this->documentHandler->getDocTypeCodeForIMCRM($quote);
@@ -199,29 +210,32 @@ class AdnicApiService
             return $validationResult;
         }
 
-        foreach ($docTypeCodeForIMCRM as $imCrmDocKey => $docId) {
-            $payload = $this->requestBuilder->buildDownloadDocumentPayload($docId);
+        $generatePolicyResponse = json_decode($generatePolicyResponse?->response);
+        $policyDocuments = $generatePolicyResponse?->PolicyDocumentInfo;
+
+        foreach ($policyDocuments as $docKey => $policyDocument) {
+            $payload = $this->requestBuilder->buildDownloadDocumentPayload($generatePolicyResponse, $policyDocument->PolicyDocumentId);
 
             $httpResponse = AdnicHttpFacade::post($endPoint, $payload);
-            $downloadRequest = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_DOWNLOAD_DOCUMENT);
+            $downloadReponse = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_DOWNLOAD_DOCUMENT);
 
-            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadRequest, AdnicHttpFacade::getBaseUrl().$endPoint, AdnicEnum::STEP_UPLOAD_POLICY_DOCS, $downloadRequest['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
+            app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadReponse, AdnicHttpFacade::getBaseUrl().$endPoint, AdnicEnum::STEP_UPLOAD_POLICY_DOCS, $downloadReponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
-            if (isset($downloadRequest['status'])) {
-                $docCode = $imCrmDocKey;
+            if (isset($downloadReponse['status'])) {
+                $docCode = $this->documentHandler->getQuoteDocumentMappingForInsurerDocuments($docKey);
 
-                $documentContent = $downloadRequest['data'];
-                if ($downloadRequest['status'] && $documentContent && isset($documentContent->documentContent, $documentContent->documentName)) {
+                $documentContent = $downloadReponse['data'];
+                if ($downloadReponse['status'] && $documentContent && isset($documentContent->documentContent, $documentContent->documentName)) {
                     $quoteDocument = $this->documentHandler->uploadAndAttachToQuoteDocuments($quote, $documentContent->documentContent, $docCode, $documentContent->documentName);
                 } else {
                     $quoteDocument = null;
                 }
 
                 $uploadedDocumentsToIMCRM->push([
-                    'name' => $docId,
+                    'name' => $docKey,
                     'uploaded' => $quoteDocument?->id ?? false,
-                    'status' => $downloadRequest['status'],
-                    'message' => $downloadRequest['message'] ?? 'Document Retrieve Failed',
+                    'status' => $downloadReponse['status'],
+                    'message' => $downloadReponse['message'] ?? 'Document Retrieve Failed',
                 ]);
             }
         }

@@ -20,7 +20,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
         AdnicEnum::STEP_ISSUE_POLICY => 'executeIssuePolicyStep',
         AdnicEnum::STEP_UPLOAD_DOCUMENTS => 'executeUploadDocumentsStep',
         AdnicEnum::STEP_UPLOAD_POLICY_DOCS => 'executeUploadPolicyDocumentsStep',
-        AdnicEnum::STEP_BOOK_POLICY => 'executeBookPolicyStep',
+        ///AdnicEnum::STEP_BOOK_POLICY => 'executeBookPolicyStep',
     ];
 
     public function __construct(

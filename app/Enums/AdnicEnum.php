@@ -23,4 +23,9 @@ class AdnicEnum
     public const LOADING_AMOUNT = 0;
     public const PAYMENT_TYPE = 5;
     public const NO = 'NO';
+
+    /* Insurer Document Keys */
+    public const INSURER_DOCUMENT_KEY_POLICY_DOCUMENT = 'PolicyDocumentId';
+    public const INSURER_DOCUMENT_KEY_COMMISION_NOTE = 'CommisionNoteDocumentId';
+    public const INSURER_DOCUMENT_KEY_TAX_INVOICE = 'TaxInvoiceDocumentId';
 }

@@ -83,6 +83,7 @@ class DocumentTypeCode extends Enum
     const CPS = 'CPS'; // Car Policy Schedule
     const CPC = 'CPC'; // Car Policy Certificate
     const MTL_EID = 'MTL_EID';
+    public const TIRBB = 'TIRBB'; // tax invoice raised by buyer
 
     // HOME SAL
     const HOME_SAL = 'HOME_SAL';

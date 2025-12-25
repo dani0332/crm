@@ -163,11 +163,19 @@ class AdnicRequestBuilder
      *
      * @param  mixed  $docId
      */
-    public function buildDownloadDocumentPayload($docId): array
+    public function buildDownloadDocumentPayload($generatePolicyResponse, $docId): array
     {
-        return [
-            'docId' => $docId,
-        ];
+        return $payload = [
+            'PartnerInfo' => [
+                'PartnerId' => $this->httpClient->getPartnerId(),
+            ],
+            'PolicyDocumentInfo' => [
+                'PartnerReferenceNo' => $this->httpClient->getPartnerReferenceNo(),
+                'QuotationNo' => $generatePolicyResponse?->QuoteInfo?->QuotationNo,
+                'PolicyNo' => $generatePolicyResponse?->PolicyInfo?->PolicyNo,
+                'DocumentId' => $docId,
+            ],
+        ];;
     }
 
     /**
