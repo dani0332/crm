@@ -616,6 +616,7 @@ class ReportsController extends Controller
             if ($name === 'Cyber Insurance') {
                 return 'Cyber';
             }
+
             return $name;
         }, $productNames);
 

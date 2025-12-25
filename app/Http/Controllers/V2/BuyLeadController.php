@@ -45,7 +45,12 @@ class BuyLeadController extends Controller
 
     public function show()
     {
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+
+        if (auth()->user()->hasPermissionTo(PermissionsEnum::BUY_LEADS_REVIVAL)) {
+            $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
+        } else {
+            $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        }
         $data['requests'] = $this->buyLeadService->getActiveRequests();
 
         return inertia('BuyLeads/BuyLeadsRequest', $data);
@@ -62,15 +67,25 @@ class BuyLeadController extends Controller
 
     public function tracking()
     {
-        $quoteType = QuoteTypes::tryFrom(request()->get('quote_type'));
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        $quoteType = request()->get('quote_type');
+        $isCarRevival = false;
+        if ($quoteType == QuoteTypes::CAR_CAT_A->value) {
+            $quoteType = QuoteTypes::CAR->value;
+            $isCarRevival = true;
+        }
+        if (auth()->user()->hasPermissionTo(PermissionsEnum::BUY_LEADS_REVIVAL)) {
+            $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::CAR_CAT_A->value]))->values()->toArray();
+        } else {
+            $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        }
+        $quoteType = QuoteTypes::tryFrom($quoteType);
         [$startDate, $endDate] = request('date');
 
         if ($quoteType && $startDate && $endDate) {
             if (request()->has('export')) {
-                return $this->buyLeadService->exportTrackingReportPDF($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
+                return $this->buyLeadService->exportTrackingReportPDF($quoteType, Carbon::parse($startDate), Carbon::parse($endDate), $isCarRevival);
             } else {
-                $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
+                $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($startDate), Carbon::parse($endDate), false, $isCarRevival);
             }
         }
 
@@ -152,6 +167,11 @@ class BuyLeadController extends Controller
                     WHEN blr.quote_type_id = 3 THEN hqr.created_at
                     ELSE NULL
                 END AS lead_created_at,
+                CASE
+                    WHEN blr.quote_type_id = 1 THEN cqr.source
+                    WHEN blr.quote_type_id = 3 THEN hqr.source
+                    ELSE NULL
+                END AS source,
                 users.name AS advisor,
                 users.employee_code AS advisor_code,
                 users.email AS advisor_email,

@@ -152,6 +152,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
 
                 $listQuotePlans = app(CarQuoteService::class)->getPlans($revivalCarQuoteUUID, true, true, false, true);
 
+                // Allocate the revived car lead using the CarAllocation strategy.
+                QuoteTypes::CAR->allocate($carQuote->uuid, false, false, false, false, true);
+                // Get the quote plans count.
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
                 if ($quotePlansCount == 0) {

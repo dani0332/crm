@@ -146,7 +146,7 @@ abstract class BaseAllocationPipe extends AllocationService
         return QuoteBatches::latest()->first();
     }
 
-    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles, bool $isBuyLead = false)
+    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles, bool $isBuyLead = false, bool $isCATA = false)
     {
         return User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
@@ -155,9 +155,15 @@ abstract class BaseAllocationPipe extends AllocationService
             ->where('users.status', $onlineStatus)
             ->when(
                 $isBuyLead,
-                function ($q) {
-                    $q->where(function ($query) {
-                        $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')->orWhere('la.buy_lead_max_capacity', -1);
+                function ($q) use ($isCATA) {
+                    $q->where(function ($query) use ($isCATA) {
+                        if ($isCATA) {
+                            $query->whereRaw('la.buy_lead_cat_a_allocation_count < la.buy_lead_max_capacity');
+                        } else {
+                            $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity');
+                        }
+
+                        $query->orWhere('la.buy_lead_max_capacity', -1);
                     });
                 },
                 function ($q) {
@@ -343,10 +349,11 @@ abstract class BaseAllocationPipe extends AllocationService
                 LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
 
                 $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
+                $isCatABuyLead = $this->allocationRequest->get('hasCatABuyLeadRequest', false);
 
                 match ($assignmentType) {
-                    AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, $quoteTypeId, $this->allocationRequest->isBuyLead()),
-                    default => $this->adjustAllocationCounts($advisor->id, $this->lead, $previousAdvisorId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId, $this->allocationRequest->isBuyLead()),
+                    AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, $quoteTypeId, $this->allocationRequest->isBuyLead(), $isCatABuyLead),
+                    default => $this->adjustAllocationCounts($advisor->id, $this->lead, $previousAdvisorId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId, $this->allocationRequest->isBuyLead(), $isCatABuyLead),
                 };
             }
 

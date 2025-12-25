@@ -4,7 +4,6 @@ use App\Enums\EnvEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\RolesEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -17,6 +16,8 @@ use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
+use App\Http\Controllers\BranchAssignmentController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CommercialKeywordsController;
@@ -103,8 +104,8 @@ use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\BorLog;
-use App\Models\PolicyIssuance;
 use App\Models\CcPaymentProcess;
+use App\Models\PolicyIssuance;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
@@ -524,6 +525,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
+        Route::resource('branches', BranchController::class);
+        Route::prefix('branch-assignments')->name('branch-assignments.')->group(function () {
+            Route::get('/', [BranchAssignmentController::class, 'index'])->name('index');
+            Route::get('/{user}', [BranchAssignmentController::class, 'show'])->name('show');
+            Route::post('/{user}', [BranchAssignmentController::class, 'store'])->name('store');
+            Route::patch('/{user}/branches/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('delete');
+            Route::patch('/{user_id}/branches/{branch_id}/make-primary', [BranchAssignmentController::class, 'makePrimary'])->name('make-primary');
+        });
 
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
@@ -569,6 +578,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::prefix('config')->group(function () {
                 Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
+                Route::post('fetch-nationalities', [BuyLeadConfigController::class, 'fetchNationalities'])->name('admin.buy-leads.config.fetch-nationalities');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
         });
@@ -634,7 +644,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
         Route::post('assignSupportUser', [CRUDController::class, 'assignSupportUser'])->name('assign-support-user');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
-
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
@@ -1007,10 +1016,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance']);
 
-
     // Cyber Quote Policy Automation Routes for testing purposes
     // this route is only for testing purposes to trigger the policy issuance automation
-    Route::get('/trigger-policy-document-update', function () { 
+    Route::get('/trigger-policy-document-update', function () {
 
         // without plan id and payments
         // $policyIssuanceProcess = PolicyIssuance::where('id', 1682)->first();
@@ -1026,8 +1034,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 });
 
-
-Route::get('test', function(){
+Route::get('test', function () {
     $ccPayment = CcPaymentProcess::find(5088);
     $ccPayment->update(['status' => PaymentProcessJobEnum::PENDING]);
 

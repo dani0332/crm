@@ -18,6 +18,7 @@ use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
+use App\Services\BuyLeads\BuyLeadService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 
@@ -69,6 +70,7 @@ class QuoteAllocation extends Command
                 'start_date' => $allocationStartDate,
                 'end_date' => $to,
             ]);
+            $this->executeCarRevivalAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate);
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
@@ -122,6 +124,7 @@ class QuoteAllocation extends Command
                 'sic_flow_enabled',
                 'sic_advisor_requested',
                 'quote_status_id',
+                'tier_id',
             ])
             ->where('created_at', '<=', $to)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -146,6 +149,69 @@ class QuoteAllocation extends Command
             }
 
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
+
+            LoggerService::info(self::class.': Processing car quote allocation', extra: [
+                'payment_status_id' => $lead->payment_status_id,
+                'source' => $lead->source,
+                'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+            ]);
+
+            // Only apply teamId if the payment status is AUTHORIZED
+            $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+
+            QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
+            $processedRecords++;
+            LoggerService::info(self::class.': Processed car quote allocation');
+        }
+
+        $this->logProcessedRecords($processedRecords, $quoteType);
+    }
+
+    public function executeCarRevivalAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
+    {
+        $processedRecords = 0;
+        LoggerService::info(self::class.': Executing car revival quote allocation for cat A nationalities');
+        $nationalityIds = BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A);
+
+        $leads = CarQuote::query()
+            ->whereIn('nationality_id', $nationalityIds)
+            ->where('source', LeadSourceEnum::REVIVAL)
+            ->whereNull('advisor_id')
+            ->select([
+                'id',
+                'uuid',
+                'payment_status_id',
+                'source',
+                'is_renewal_tier_email_sent',
+                'lead_allocation_failed_at',
+                'sic_flow_enabled',
+                'sic_advisor_requested',
+                'quote_status_id',
+                'advisor_id',
+                'tier_id',
+            ])
+            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->orderByDesc('car_value')
+            ->take($chunkSize);
+
+        $leads->logRawSql();
+
+        // Get the teamId once before the loop
+        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
+        foreach ($leads->get() as $lead) {
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
+
+            if ($lead->tier_id == TiersIdEnum::TIER_R) {
+                LoggerService::info(self::class.': Skipping car revival quote allocation for tier R');
+
+                continue;
+            }
 
             LoggerService::info(self::class.': Processing car quote allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,

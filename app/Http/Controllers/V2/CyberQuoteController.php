@@ -9,15 +9,15 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Cyber\CyberQuoteRequest;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Models\InsuranceProviderPlan;
 use App\Models\PaymentStatus;
 use App\Services\AMLService;
-use App\Services\Quotes\CyberQuoteService;
 use App\Services\Logger\LoggerService;
-use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 use App\Services\MACRMService;
+use App\Services\Quotes\CyberQuoteService;
 
 class CyberQuoteController extends Controller
 {
@@ -121,7 +121,7 @@ class CyberQuoteController extends Controller
 
         return inertia('CyberQuote/Show', $data);
     }
-    public function sendEmailOneClickBuy( $quoteUuid)
+    public function sendEmailOneClickBuy($quoteUuid)
     {
         LoggerService::startQuoteLogging(QuoteTypes::CYBER->refId($quoteUuid));
         LoggerService::info(self::class.' - sendEmailOneClickBuy OCB email sending started for quote');

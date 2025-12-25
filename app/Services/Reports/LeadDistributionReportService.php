@@ -15,7 +15,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
-use App\Enums\TeamTypeEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
@@ -173,7 +172,7 @@ class LeadDistributionReportService extends BaseService
         // For Cyber only: convert product name to quote type code; others use product name directly
         $quoteTypeCode = ($lob === TeamNameEnum::CYBER) ? quoteTypeCode::getQuoteTypeCodeFromProductName($lob) : $lob;
         $lobId = $this->getLobId($quoteTypeCode);
-        /*Doing a 2nd step because $quoteType uses methods from \App\Enums\QuoteTypes after few lines. */
+        /* Doing a 2nd step because $quoteType uses methods from \App\Enums\QuoteTypes after few lines. */
         $quoteType = QuoteTypes::from($quoteTypeCode);
 
         $parentTeam = $this->getProductByName($lob);
@@ -271,7 +270,7 @@ class LeadDistributionReportService extends BaseService
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
         // For Cyber only: convert product name to quote type code; others use product name directly
-        if($lob === TeamNameEnum::CYBER){
+        if ($lob === TeamNameEnum::CYBER) {
             $lob = quoteTypeCode::getQuoteTypeCodeFromProductName($lob);
         }
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');

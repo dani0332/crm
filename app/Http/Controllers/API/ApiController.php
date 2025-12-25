@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -21,6 +20,7 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -30,13 +30,13 @@ use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
-use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\CheckDocumentUploadAfterPaymentJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
+use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\RunCQFJobs;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
@@ -56,6 +56,7 @@ use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
@@ -75,13 +76,16 @@ class ApiController extends Controller
     public $inboundEmailsHookService;
     public $outboundEmailsHookService;
     protected $emailStatusService;
+    protected $quoteDocumentService;
+    protected $ocrReponseStructure;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService, QuoteDocumentService $quoteDocumentService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
         $this->outboundEmailsHookService = $outboundEmailsHookService;
+        $this->quoteDocumentService = $quoteDocumentService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -172,7 +176,7 @@ class ApiController extends Controller
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
         $response = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
-   
+
         return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }
 
@@ -309,7 +313,8 @@ class ApiController extends Controller
             ]);
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
-            if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
+            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
                 app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -663,18 +668,18 @@ class ApiController extends Controller
             // Dispatch job with 24 hours delay
             CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode)
                 ->delay(now()->addHours(24));
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Job dispatched successfully. Will check document upload after 24 hours.',
                 'payment_code' => $paymentCode,
             ], Response::HTTP_OK);
-            
+
         } catch (\Exception $e) {
             $paymentCodeForError = $request->input('payment_code', 'unknown');
 
             LoggerService::error("CheckDocumentUploadAfterPayment: Failed to dispatch job for payment code: {$paymentCodeForError}", exception: $e);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while dispatching the job',
@@ -682,7 +687,7 @@ class ApiController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     public function lifeSyncHealthQuestionnaire(LifeSyncHealthQuestionnaireRequest $request)
     {
         $metLifeApiService = new MetLifeApiService;
@@ -721,5 +726,31 @@ class ApiController extends Controller
                 'quote_uuid' => $validatedData['quote_uuid'],
             ], 500);
         }
+    }
+
+    public function getLeadOCRComparison(Request $request)
+    {
+        $request->validate(
+            [
+                'start_date' => 'nullable|date_format:Y-m-d',
+                'end_date' => 'nullable|date_format:Y-m-d',
+            ],
+            [
+                'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
+                'end_date.date_format' => 'End date must be in YYYY-MM-DD format',
+            ]
+        );
+
+        $startDate = $request->filled('start_date')
+        ? Carbon::createFromFormat('Y-m-d', $request->start_date)
+        : null;
+
+        $endDate = $request->filled('end_date')
+            ? Carbon::createFromFormat('Y-m-d', $request->end_date)
+            : null;
+
+        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate);
+
+        return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
     }
 }

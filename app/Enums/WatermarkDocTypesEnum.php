@@ -237,5 +237,4 @@ final class WatermarkDocTypesEnum extends Enum
     const CYB_TIRBB = 'CYB_TIRBB';
     const CYB_TI = 'CYB_TI';
     const CYB_PS = 'CYB_PS';
-
 }

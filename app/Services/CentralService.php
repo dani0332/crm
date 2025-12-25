@@ -1662,22 +1662,24 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->tpa = $quote?->plan?->healthNetwork->text;
-            $emailData->numberOfMembersCovered = (string) count($quote->members);
+            $emailData->numberOfMembersCovered = (string) count($quote->activeMembers);
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
-            }, $quote->members->toArray()));
+            }, $quote->activeMembers->toArray()));
 
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
         if ($quoteTypeId == QuoteTypeId::Cyber) {
-            $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) ? (string) $quote->cyberPlanDetail->coverage : '-';
+            $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
+                ? number_format($quote->cyberPlanDetail->coverage)
+                : '-';
             $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
             $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
-            $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL') . $quote?->cyberPolicyWording?->link : '';
+            $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '';
             $emailData->taxInvoice = $quoteDocuments->filter(function ($document) {
                 return $document['document_type_code'] == DocumentTypeCode::CYB_TI;
-            })->first()?->watermarkedDocumentUrl ?? '';;
+            })->first()?->watermarkedDocumentUrl ?? '';
         }
 
         if (

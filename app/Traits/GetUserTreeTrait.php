@@ -40,11 +40,11 @@ trait GetUserTreeTrait
         $productName = $productType ?? quoteTypeCode::Car;
         $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($productName);
         $productTeam = $this->getProductByName($productName);
-        
+
         if (! $productTeam) {
             return [$userId];
         }
-        
+
         $rolesArray = [
             RolesEnum::CarManager,
             RolesEnum::BikeManager,

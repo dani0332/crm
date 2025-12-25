@@ -15,14 +15,13 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class CheckDocumentUploadAfterPaymentJob implements ShouldQueue, ShouldBeUnique
+class CheckDocumentUploadAfterPaymentJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 120;
     public $uniqueFor = 90000; // 25 hours (24 hours delay + 1 hour buffer)
     public $tries = 1;
-
     private string $paymentCode;
 
     /**
@@ -39,23 +38,25 @@ class CheckDocumentUploadAfterPaymentJob implements ShouldQueue, ShouldBeUnique
     public function handle(): void
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::CHECK_DOCUMENT_UPLOAD_AFTER_PAYMENT);
-        
+
         LoggerService::info("CheckDocumentUploadAfterPaymentJob: Starting job execution for payment code: {$this->paymentCode}");
 
         $payment = Payment::whereCode($this->paymentCode)
             ->with('paymentable.documents')
             ->first();
-        if (!$payment) {
+        if (! $payment) {
             LoggerService::info("CheckDocumentUploadAfterPaymentJob: Payment not found or not authorised for payment code: {$this->paymentCode}");
+
             return;
         }
 
         $quote = $payment->paymentable;
-        if (!$quote) {
+        if (! $quote) {
             LoggerService::info("CheckDocumentUploadAfterPaymentJob: Quote not found for payment code: {$this->paymentCode}");
+
             return;
         }
-        
+
         $documents = $quote->documents;
         if ($documents->count() == 0) {
             LoggerService::info("CheckDocumentUploadAfterPaymentJob: No documents found for payment code: {$this->paymentCode}");
@@ -67,6 +68,7 @@ class CheckDocumentUploadAfterPaymentJob implements ShouldQueue, ShouldBeUnique
             return;
         } else {
             LoggerService::info("CheckDocumentUploadAfterPaymentJob: Documents found for payment code: {$this->paymentCode}");
+
             return;
         }
     }
@@ -87,4 +89,3 @@ class CheckDocumentUploadAfterPaymentJob implements ShouldQueue, ShouldBeUnique
         return 'check-document-upload-payment-'.$this->paymentCode;
     }
 }
-

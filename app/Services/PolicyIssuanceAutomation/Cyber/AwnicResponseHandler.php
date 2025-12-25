@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 
 class AwnicResponseHandler
 {
-    private const API_FAILED = "API Failed";
+    private const API_FAILED = 'API Failed';
 
     /**
      * Build step response array
@@ -31,7 +31,7 @@ class AwnicResponseHandler
         $responseObject = $response->object();
         $result = [
             'status' => false,
-            'error' => $apiKey . ' ' . self::API_FAILED,
+            'error' => $apiKey.' '.self::API_FAILED,
             'message' => 'There is an Exception on AWNI API call.',
             'data' => null,
             'completed_step' => null,
@@ -41,7 +41,7 @@ class AwnicResponseHandler
             if ($this->hasApiErrors($responseObject)) {
                 $result = [
                     'status' => false,
-                    'error' => $responseObject?->errorList ?? $apiKey . ' ' . self::API_FAILED,
+                    'error' => $responseObject?->errorList ?? $apiKey.' '.self::API_FAILED,
                     'message' => $this->extractErrorMessage($responseObject, $apiKey),
                     'data' => $responseObject == null ? null : '',
                     'completed_step' => null,
@@ -85,7 +85,6 @@ class AwnicResponseHandler
             return $responseObject->message;
         }
 
-        return $responseObject ?? $apiKey . ' ' . self::API_FAILED;
+        return $responseObject ?? $apiKey.' '.self::API_FAILED;
     }
 }
-

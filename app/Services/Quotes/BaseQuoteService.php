@@ -53,12 +53,12 @@ abstract class BaseQuoteService extends BaseService
         $model = $this->quoteType->model();
         $tableName = $model->getTable();
         $sortBy = request()->sortBy ?? "{$tableName}.created_at";
-        
+
         // If sortBy doesn't have a table prefix, add it
-        if ($sortBy && !str_contains($sortBy, '.')) {
+        if ($sortBy && ! str_contains($sortBy, '.')) {
             $sortBy = "{$tableName}.{$sortBy}";
         }
-        
+
         return $model
             ->when($this->quoteType->isPersonalQuote(), fn ($query) => $query->where('quote_type_id', $this->quoteType->id()))
             ->when($this->isAdvisor(), fn ($query) => $query->where('advisor_id', Auth::id()))
@@ -128,7 +128,7 @@ abstract class BaseQuoteService extends BaseService
         $bookPolicyDetails = $this->bookPolicyPayload($quote, $quoteType->value, $quote->payments, $quoteDocuments);
 
         $membersDetails = CustomerMembersRepository::getBy($quote->id, $quoteType->name);
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();

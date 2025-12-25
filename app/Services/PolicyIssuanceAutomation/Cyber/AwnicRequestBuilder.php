@@ -9,13 +9,12 @@ class AwnicRequestBuilder
     /**
      * Build payload for issue policy API
      *
-     * @param mixed $quote
-     * @param mixed $customer
-     * @param mixed $nationality
-     * @param mixed $planDetail
-     * @param mixed $payment
-     * @param mixed $splitPayment
-     * @return array
+     * @param  mixed  $quote
+     * @param  mixed  $customer
+     * @param  mixed  $nationality
+     * @param  mixed  $planDetail
+     * @param  mixed  $payment
+     * @param  mixed  $splitPayment
      */
     public function buildIssuePolicyPayload($quote, $customer, $nationality, $planDetail, $splitPayment, $emirateOfRegistration): array
     {
@@ -23,13 +22,14 @@ class AwnicRequestBuilder
         if (isset($quote->latestInsured)) {
             $emiratesIdNumber = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
         }
+
         return [
-            'CustName' => trim(($quote->first_name ?? '') . ' ' . ($quote->last_name ?? '')),
+            'CustName' => trim(($quote->first_name ?? '').' '.($quote->last_name ?? '')),
             'CustMobile' => $quote->mobile_no,
             'CustEmail' => $quote->email,
             'CustEID' => str_replace('-', '', $emiratesIdNumber),
             'CustDOB' => $customer?->dob ? strtoupper(Carbon::parse($customer->dob)->format('d-M-Y')) : null,
-            'CustAddress' => $emirateOfRegistration?->text ?? "",
+            'CustAddress' => $emirateOfRegistration?->text ?? '',
             'CustCountryCode' => $nationality?->awni_country_code ?? null,
             'LimitOfLiability' => $planDetail->coverage ?? null,
             'PlanName' => $planDetail->planName ?? null,
@@ -44,39 +44,32 @@ class AwnicRequestBuilder
     /**
      * Build payload for upload documents API
      *
-     * @param mixed $quote
-     * @param string $base64Content
-     * @param string $documentType
-     * @param string $documentName
-     * @return array
+     * @param  mixed  $quote
      */
     public function buildUploadDocumentsPayload($quote, string $base64Content, string $documentType, string $documentName = 'Emirates_Id.png'): array
     {
         return [
-            "QuoteRefNo" => $quote->insurer_quote_number,
-            "DocCategory" => $documentType,
-            "DocName" => $documentName,
-            "DocContent" => $base64Content,
+            'QuoteRefNo' => $quote->insurer_quote_number,
+            'DocCategory' => $documentType,
+            'DocName' => $documentName,
+            'DocContent' => $base64Content,
         ];
     }
 
     /**
      * Build payload for download document API
      *
-     * @param mixed $docId
-     * @return array
+     * @param  mixed  $docId
      */
     public function buildDownloadDocumentPayload($docId): array
     {
         return [
-            "docId" => $docId,
+            'docId' => $docId,
         ];
     }
 
     /**
      * Build headers required for policy issuance API
-     *
-     * @return array
      */
     public function buildIssuePolicyHeaders(): array
     {
@@ -86,4 +79,3 @@ class AwnicRequestBuilder
         ];
     }
 }
-

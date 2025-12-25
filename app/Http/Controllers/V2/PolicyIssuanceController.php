@@ -19,15 +19,16 @@ class PolicyIssuanceController extends Controller
     public function triggerPolicyIssuance($policyIssuanceId, Request $request)
     {
         $policyIssuance = PolicyIssuance::find($policyIssuanceId);
-        if (!$policyIssuance) {
+        if (! $policyIssuance) {
             return response()->json(['message' => 'Policy issuance not found'], 404);
         }
         $policyIssuance->status = PolicyIssuanceEnum::PENDING_STATUS;
-        if($request->has('completed_step')) {
+        if ($request->has('completed_step')) {
             $policyIssuance->completed_step = $request->completed_step;
         }
         $policyIssuance->save();
         PolicyIssuanceJob::dispatch($policyIssuance->id)->onQueue('policy-issuance-automation');
+
         return response()->json(['message' => 'Policy issuance triggered successfully'], 200);
     }
 
@@ -53,6 +54,7 @@ class PolicyIssuanceController extends Controller
             'completed_step' => null,
         ]);
         PolicyIssuanceJob::dispatch($policyIssuance->id)->onQueue('policy-issuance-automation');
+
         return response()->json(
             [
                 'message' => 'Manual policy issuance triggered successfully',
