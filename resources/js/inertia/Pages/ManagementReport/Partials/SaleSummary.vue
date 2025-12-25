@@ -95,6 +95,12 @@ const tableHeader = reactive([
     tooltip:
       'Total price plus total endorsement amount less discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount + Total Endorsement Amount',
   },
+  {
+    text: 'Branch',
+    value: 'branch_name',
+    tooltip:
+      'The branch of the lead',
+  },
 ]);
 // v-if="props.groupBy == 'advisor'"
 
@@ -128,20 +134,16 @@ watchEffect(() => {
       text: 'Department',
       tooltip: 'The department of the advisor assigned to this lead',
     },
-    branch_name: {
-      text: 'Branch',
-      tooltip: 'The branch of the lead',
-    },
   };
 
   const headerMap = {
-    advisor: ['advisor', 'department','branch_name'],
-    support_user: ['support_user', 'department','branch_name'],
-    policy_issuer: ['policy_issuer','branch_name'],
-    customer_group: ['customer_group','branch_name'],
-    insurer: ['insurer', 'branch_name'],
-    line_of_business: ['line_of_business','branch_name'],
-    department: ['department','branch_name'],
+    advisor: ['advisor', 'department'],
+    support_user: ['support_user', 'department'],
+    policy_issuer: ['policy_issuer'],
+    customer_group: ['customer_group'],
+    insurer: ['insurer'],
+    line_of_business: ['line_of_business'],
+    department: ['department'],
     branch: ['branch_name']
   };
 

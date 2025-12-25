@@ -488,6 +488,34 @@ watch(
           :rules="[isRequired]"
         />
       </div>
+      <div>
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
+            Branch
+          </label>
+          <template #tooltip> Branch assigned to the lead </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.branch"
+          placeholder="Filter by Branch"
+          :options="branchOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter Branch...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.branch = branchOptions.filter(item => item.value !== 'not_applicable' && item.value !== 'not_assigned').map(item => item.value)"
+              @clear="filters.branch = []"
+            />
+          </template>
+        </x-select>
+      </div>
       <div v-if="showBookingDate">
         <x-tooltip position="top">
           <label
@@ -603,8 +631,6 @@ watch(
           class="w-full"
         />
       </div>
-    </div>
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div>
         <x-tooltip position="top">
           <label
@@ -784,8 +810,6 @@ watch(
           </template>
         </x-select>
       </div>
-    </div>
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div>
         <x-tooltip position="top">
           <label
@@ -933,34 +957,6 @@ watch(
         />
       </x-field>
       
-      <div>
-        <x-tooltip position="top">
-          <label
-            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
-          >
-            Branch
-          </label>
-          <template #tooltip> Branch assigned to the lead </template>
-        </x-tooltip>
-        <x-select
-          v-model="filters.branch"
-          placeholder="Filter by Branch"
-          :options="branchOptions"
-          deselect-all
-          filterable
-          filterPlaceholder="Filter Branch...."
-          class="w-full"
-          multiple
-          truncate
-        >
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="filters.branch = branchOptions.filter(item => item.value !== 'not_applicable' && item.value !== 'not_assigned').map(item => item.value)"
-              @clear="filters.branch = []"
-            />
-          </template>
-        </x-select>
-      </div>
     </div>
 
     <div class="flex gap-3 justify-end">
