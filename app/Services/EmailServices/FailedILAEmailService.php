@@ -11,11 +11,15 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\BirdService;
 use App\Enums\QuoteTypes;
-use Illuminate\Support\Facades\Storage;
 use App\Exports\FailedIlaLeadsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Services\Logger\LoggerService;
-use App\Jobs\DeleteTempOCBPDFFileJob;
+use App\Models\BikeQuote;
+use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
+use App\Models\BusinessQuote;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 class FailedILAEmailService
 {
@@ -57,6 +61,12 @@ class FailedILAEmailService
             case QuoteTypes::CORPLINE:
                 $managerEmails = $this->getManagerEmails(RolesEnum::CorplineManager);
                 break;
+            case QuoteTypes::YACHT:
+                $managerEmails = $this->getManagerEmails(RolesEnum::YachtManager);
+                break;
+            case QuoteTypes::JETSKI:
+                $managerEmails = $this->getManagerEmails(RolesEnum::JetskiManager);
+                break;
          
             default:
                 $managerEmails = [];
@@ -97,17 +107,46 @@ class FailedILAEmailService
     public function getFailedILALeads($quoteType)
     {
         switch ($quoteType) {
-            case QuoteTypes::CAR->value:
+            case QuoteTypes::CAR:
                 $leads = $this->getCarFailedILALeads();
                 break;
-                // case QuoteTypes::BIKE:
-                //   $leads = $this->getBikeFailedILALeads($startOfDay, $endOfDay);
-                //   break;
-                // case QuoteTypes::HEALTH:
-                //   $leads = $this->getHealthFailedILALeads($startOfDay, $endOfDay);
-                //   break;
-                // case QuoteTypes::LIFE:
-                //   $leads = $this->getLifeFailedILALeads($startOfDay, $endOfDay);
+                case QuoteTypes::BIKE->value:
+                  $leads = $this->getBikeFailedILALeads($quoteType);
+                  break;
+                case QuoteTypes::HEALTH->value:
+                  $leads = $this->getHealthFailedILALeads();
+                  break;
+              
+                case QuoteTypes::LIFE->value:
+                  $leads = $this->getPersonalFailedILALeads( QuoteTypes::LIFE->id());
+                  break;
+                case QuoteTypes::TRAVEL->value:
+                  $leads = $this->getTravelFailedILALeads();
+                  break;
+                case QuoteTypes::HOME->value:
+                  $leads = $this->getPersonalFailedILALeads( QuoteTypes::HOME->id());
+                  break;
+                case QuoteTypes::PET->value:
+                  $leads = $this->getPersonalFailedILALeads( QuoteTypes::PET->id());
+                  break;
+                case QuoteTypes::CYCLE->value:
+                  $leads = $this->getPersonalFailedILALeads( QuoteTypes::CYCLE->id());
+                  break;
+                case QuoteTypes::SAVINGS->value:
+                  $leads = $this->getPersonalFailedILALeads( QuoteTypes::SAVINGS->id());
+                  break;
+                case QuoteTypes::GROUP_MEDICAL->value:
+                  $leads = $this->getBusinessFailedILALeads( BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                  break;
+                case QuoteTypes::CORPLINE->value:
+                  $leads = $this->getBusinessFailedILALeads();
+                  break;
+                case QuoteTypes::YACHT->value:
+                  $leads = $this->getPersonalFailedILALeads( QuoteTypes::YACHT->id());
+                  break;
+                case QuoteTypes::JETSKI->value:
+                  $leads = $this->getPersonalFailedILALeads( QuoteTypes::JETSKI->id());
+                  break;
                 break;
             default:
                 $leads = [];
@@ -115,6 +154,67 @@ class FailedILAEmailService
         }
         return $leads;
     }
+    public function getBikeFailedILALeads()
+    {
+        $leads = BikeQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id')
+            ->whereNull('advisor_id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
+            ->with('quoteStatus')
+            ->get();
+        return $leads;
+    }
+    public function getBusinessFailedILALeads($businessTypeOfInsuranceId = null)
+    {
+        $leads = BusinessQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id')
+        ->when($businessTypeOfInsuranceId, function($query) use ($businessTypeOfInsuranceId) {
+            $query->where('business_type_of_insurance_id', $businessTypeOfInsuranceId);
+        })    
+        ->when(!$businessTypeOfInsuranceId, function($query) {
+            $query->whereNotIn('business_type_of_insurance_id', [BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL]);
+        })
+
+            ->whereNull('advisor_id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
+            ->with('quoteStatus')
+            ->get();
+        return $leads;
+    }
+    public function getHealthFailedILALeads()
+    {
+        $leads = HealthQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
+            ->whereNull('advisor_id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
+            ->where('lead_allocation_failed_at', '!=', null)
+            ->with('quoteStatus')
+            ->get();
+        return $leads;
+    }
+    public function getTravelFailedILALeads()
+    {
+        $leads = TravelQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
+            ->whereNull('advisor_id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
+            ->where('lead_allocation_failed_at', '!=', null)
+            ->with('quoteStatus')
+            ->get();
+        return $leads;
+    }
+    public function getPersonalFailedILALeads($quoteTypeId = null)
+    {
+        $leads = PersonalQuote::where('quote_type_id', $quoteTypeId)->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
+            ->whereNull('advisor_id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
+            ->where('lead_allocation_failed_at', '!=', null)
+            ->with('quoteStatus')
+            ->get();
+        return $leads;
+    }
+    
     public function getCarFailedILALeads()
     {
      
@@ -132,6 +232,7 @@ class FailedILAEmailService
 
         $leads = $this->getFailedILALeads( $quoteType);
         $totalLeads = count($leads);
+        LoggerService::info(self::class.' - exportFailedIlaLeads - Total leads: '.$totalLeads);
 
         $fileName = now()->format('Y-m-d_H-i-s') . '-failed_ila_leads.xlsx';
         $export = new FailedIlaLeadsExport($leads);
