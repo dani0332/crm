@@ -688,34 +688,21 @@ class ApiController extends Controller
 
     public function ExportFailedIlaLeads($quoteType)
     {
+        try {
         $response = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
-        if ($response['success']) {
-       
-            // Instead, embed the data as base64 (with a data URL), or provide it as an attachment link if available.
-            // Return file as a downloadable response using StreamedResponse
-            $filename = 'failed-ila-leads-' . strtolower($quoteType) . '-' . now()->format('Ymd_His') . '.xlsx';
+      
+        $fileResponse = $response['file'];
+        // Add custom header for total leads count
+        $fileResponse->headers->set('X-Total-Leads', $response['total_leads'] ?? 0);
 
-            // The Excel content is base64-encoded, we decode to stream the file
-            $fileContents = base64_decode($response['public_url']);
-
-            return response()->streamDownload(
-                function () use ($fileContents) {
-                    echo $fileContents;
-                },
-                $filename,
-                [
-                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                    // You can pass custom headers with additional info, such as the total count
-                    'X-Total-Leads' => $response['total_leads'] ?? 0,
-                ]
-            );
-        } else {
+            return $fileResponse;
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.': Failed to export failed ILA leads', exception: $e);
             return response()->json([
                 'success' => false,
-                'message' => $response['message'],
-                'total_leads' => $response['total_leads'],
-            ], 404);
+                'message' => 'Failed to export failed ILA leads',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
         }
     }
 }
