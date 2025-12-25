@@ -26,8 +26,8 @@ use Illuminate\Support\Facades\Http;
 class ProcessLeadOCRDataComparison implements ShouldQueue
 {
     use Queueable;
-    public $tries = 1;
 
+    public $tries = 1;
     protected $startDate;
     protected $endDate;
     protected $uuid;
@@ -43,7 +43,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping())->dontRelease()];
+        return [(new WithoutOverlapping)->dontRelease()];
     }
 
     /**
