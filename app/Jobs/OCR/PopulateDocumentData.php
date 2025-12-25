@@ -168,7 +168,7 @@ class PopulateDocumentData implements ShouldQueue
             Skip::unless(fn () => $willRun),
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter($this->timeout), // Lock expires after timeout seconds 
+                ->expireAfter($this->timeout), // Lock expires after timeout seconds
         ];
     }
 
