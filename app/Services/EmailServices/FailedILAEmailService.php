@@ -19,23 +19,64 @@ use App\Jobs\DeleteTempOCBPDFFileJob;
 
 class FailedILAEmailService
 {
-    public function sendFailedCarIlaEmails()
+    public function sendFailedIlaEmails($quoteType)
     {
         // Fetch leads created today (from midnight to now)
-        $managerEmails = $this->getManagerEmails(RolesEnum::CarManager);
-        LoggerService::info(self::class.' - sendFailedCarIlaEmails - Sending failed ILA emails to managers: '.implode(', ', $managerEmails));
+        $managerEmails =[];
+        switch ($quoteType) {
+            case QuoteTypes::CAR:
+                $managerEmails = $this->getManagerEmails(RolesEnum::CarManager);
+                break;
+            case QuoteTypes::BIKE:
+                $managerEmails = $this->getManagerEmails(RolesEnum::BikeManager);
+                break;
+            case QuoteTypes::HEALTH:
+                $managerEmails = $this->getManagerEmails(RolesEnum::HealthManager);
+                break;
+            case QuoteTypes::LIFE:
+                $managerEmails = $this->getManagerEmails(RolesEnum::LifeManager);
+                break;
+            case QuoteTypes::TRAVEL:
+                $managerEmails = $this->getManagerEmails(RolesEnum::TravelManager);
+                break;
+            case QuoteTypes::HOME:
+                $managerEmails = $this->getManagerEmails(RolesEnum::HomeManager);
+                break;
+            case QuoteTypes::PET:
+                $managerEmails = $this->getManagerEmails(RolesEnum::PetManager);
+                break;
+            case QuoteTypes::CYCLE:
+                $managerEmails = $this->getManagerEmails(RolesEnum::CycleManager);
+                break;
+            case QuoteTypes::SAVINGS:
+                $managerEmails = $this->getManagerEmails(RolesEnum::SavingsManager);
+                break;
+            case QuoteTypes::GROUP_MEDICAL:
+                $managerEmails = $this->getManagerEmails(RolesEnum::GMManager);
+                break;
+            case QuoteTypes::CORPLINE:
+                $managerEmails = $this->getManagerEmails(RolesEnum::CorplineManager);
+                break;
+         
+            default:
+                $managerEmails = [];
+                break;
+            }
+        if (empty($managerEmails)) {
+            LoggerService::warning(self::class.' - sendFailedIlaEmails - No managers found for quote type: '.$quoteType);
+            return;
+        }
+        LoggerService::info(self::class.' - sendFailedIlaEmails - Sending failed ILA emails to managers: '.implode(', ', $managerEmails));
         $birdSendFailedIlaEmailsWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW, useCache: true);
         if ($birdSendFailedIlaEmailsWorkflow) {
-            LoggerService::info(self::class.' - sendFailedCarIlaEmails - Triggering web hook request for workflow: '.$birdSendFailedIlaEmailsWorkflow);
-            app(BirdService::class)->triggerWebHookRequest($birdSendFailedIlaEmailsWorkflow, $this->buildFailedIlaEmailData(QuoteTypes::CAR->value, $managerEmails));
-            LoggerService::info(self::class.' - sendFailedCarIlaEmails - Web hook request triggered successfully');
+            LoggerService::info(self::class.' - sendFailedIlaEmails - Triggering web hook request for workflow: '.$birdSendFailedIlaEmailsWorkflow);
+            app(BirdService::class)->triggerWebHookRequest($birdSendFailedIlaEmailsWorkflow, $this->buildFailedIlaEmailData($quoteType, $managerEmails));
+            LoggerService::info(self::class.' - sendFailedIlaEmails - Web hook request triggered successfully');
         } else {
-            LoggerService::warning(self::class.' - sendFailedCarIlaEmails - Workflow not found');
+            LoggerService::warning(self::class.' - sendFailedIlaEmails - Workflow not found');
         }
     }
-
-
-
+  
     public function getManagerEmails($roleName)
     {
         $managerEmails = User::role($roleName)->pluck('email')->toArray();
