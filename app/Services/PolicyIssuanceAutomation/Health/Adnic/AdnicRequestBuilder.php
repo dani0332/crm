@@ -175,7 +175,7 @@ class AdnicRequestBuilder
                 'PolicyNo' => $generatePolicyResponse?->PolicyInfo?->PolicyNo,
                 'DocumentId' => $docId,
             ],
-        ];;
+        ];
     }
 
     /**
