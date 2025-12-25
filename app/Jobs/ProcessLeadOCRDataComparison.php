@@ -41,9 +41,9 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $this->uuid = $uuid;
     }
 
-    public function middleware()
+    public function middleware(): array
     {
-        return [(new WithoutOverlapping())->dontRelease()];
+        return [(new WithoutOverlapping("{$this->uuid}-{$this->startDate}-{$this->endDate}"))->dontRelease()];
     }
 
     /**
