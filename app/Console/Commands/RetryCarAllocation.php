@@ -48,6 +48,6 @@ class RetryCarAllocation extends Command
 
         [$startTime, $endTime] = $retryAllocation;
 
-        $retryAllocationService->executeCarAllocation(QuoteTypeId::Car, $endTime, 200);
+        $retryAllocationService->executeCarAllocation(QuoteTypeId::Car, $endTime, 200, $startTime);
     }
 }

@@ -638,7 +638,7 @@ class ApiController extends Controller
             ? Carbon::createFromFormat('Y-m-d', $request->end_date)
             : null;
 
-        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate);
+        // ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate);
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
     }
