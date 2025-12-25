@@ -98,16 +98,15 @@ class SaleSummaryReportExport implements CsvExportableInterface
     {
         $groupByColumn = $this->groupByColumn == 'support_user' ? 'OE/AE' : $this->groupByColumn;
 
-        $headings = [
-            ucwords(str_replace('_', ' ', $groupByColumn)),
-        ];
+        $headings = [];
+        if ($this->groupByColumn != 'branch') {
+            $headings = [
+                ucwords(str_replace('_', ' ', $groupByColumn)),
+            ];
+        }
 
         if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $headings[] = 'Department';
-        }
-
-        if($this->groupByColumn != 'branch') {
-            $headings[] = 'Branch';
         }
 
         return [
@@ -124,6 +123,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
             'Commission (VAT Not applicable)',
             'Total Endorsement Amount',
             'Total Price',
+            'Branch',
         ];
     }
 
@@ -138,16 +138,13 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         $groupBy = $groupByColumnMapping[$groupBy] ?? $groupBy;
 
-        $values = [
-            $quote->{$groupBy} ?? 'N/A',
-        ];
+        $values = [];
+        if($this->groupByColumn != 'branch') {
+            $values[] = $quote->{$groupBy} ?? 'N/A';
+        }
 
         if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $values[] = $quote->department ?? 'N/A';
-        }
-
-        if($this->groupByColumn != 'branch') {
-            $values[] = $quote->branch_name ?? 'N/A';
         }
 
         $numericValues = collect([
@@ -163,6 +160,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
             'commission_vat_not_applicable' => $this->resolveNumberFormat($quote->commission_vat_not_applicable ?? 0),
             'endorsements_amount' => $this->resolveNumberFormat($quote->endorsements_amount ?? 0),
             'total_price' => $this->resolveNumberFormat($quote->total_price ?? 0),
+            'branch' => $quote->branch_name ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals->keys() as $field) {
