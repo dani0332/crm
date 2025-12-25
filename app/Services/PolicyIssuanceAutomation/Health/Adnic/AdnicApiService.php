@@ -184,7 +184,7 @@ class AdnicApiService
         LoggerService::info('Starting policy documents download and upload to IMCRM', extra: [
             'process_id' => $process->id,
             'step' => AdnicEnum::STEP_UPLOAD_POLICY_DOCS,
-            'endpoint' =>  '/GeneratePolicyDocument',
+            'endpoint' => '/GeneratePolicyDocument',
         ]);
 
         $generatePolicyResponse = $process->policyIssuanceLogs()->where([
@@ -199,7 +199,7 @@ class AdnicApiService
         }
 
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_POLICY_DOCS);
-        $endPoint =  '/GeneratePolicyDocument';
+        $endPoint = '/GeneratePolicyDocument';
 
         $uploadedDocumentsToIMCRM = collect();
         $docTypeCodeForIMCRM = $this->documentHandler->getDocTypeCodeForIMCRM($quote);
