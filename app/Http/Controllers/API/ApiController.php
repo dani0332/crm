@@ -694,11 +694,15 @@ class ApiController extends Controller
     {
         $request->validate(
             [
-                'start_date' => 'nullable|date_format:Y-m-d',
-                'end_date' => 'nullable|date_format:Y-m-d',
+                'uuid' => 'required_without_all:start_date,end_date|string',
+                'start_date' => 'required_without:uuid|date_format:Y-m-d',
+                'end_date' => 'required_without:uuid|date_format:Y-m-d',
             ],
             [
+                'uuid.required_without_all' => 'UUID is required when start date and end date are not provided',
+                'start_date.required_without' => 'Start date is required when UUID is not provided',
                 'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
+                'end_date.required_without' => 'End date is required when UUID is not provided',
                 'end_date.date_format' => 'End date must be in YYYY-MM-DD format',
             ]
         );
