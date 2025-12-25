@@ -441,7 +441,9 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     private function getTaxInvoiceOCRDataStructure(object $ocrData, $quote): array
     {
         $payment = $quote->payments;
-        $taxInvoiceNumber = $ocrData->taxInvoiceNumber ?? $payment?->insurer_tax_number;
+        $taxInvoiceNumber =
+                $ocrData->taxInvoiceNumber
+                ?? (isset($payment->insurer_tax_number) ? $payment->insurer_tax_number : null);
         $priceVatApplicable = $ocrData->price?->baseAmount ?? $quote->price_vat_applicable;
         $priceWithVat = $ocrData->price?->totalAmount ?? $quote->price_with_vat;
 
@@ -604,8 +606,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         if ($payment) {
             $result = array_merge($result, [
                 'insurer_invoice_date' => Carbon::parse($payment->insurer_invoice_date)->format('Y-m-d'),
-                'insurer_tax_number' => $payment->insurer_tax_number,
-                'tax_invoice_number' => $payment->tax_invoice_number,
+                'insurer_tax_number' => isset($payment?->insurer_tax_number) ? $payment?->insurer_tax_number : null,
+                'tax_invoice_number' => $payment->tax_invoice_number ?? null,
             ]);
         }
 
@@ -656,6 +658,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $isEcom = false;
 
         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
+        //$docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
 
         if (! $docUrl) {
             LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
