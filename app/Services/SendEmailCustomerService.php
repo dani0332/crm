@@ -24,6 +24,7 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Collection;
 use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
@@ -2016,7 +2017,7 @@ class SendEmailCustomerService extends BaseService
         return true;
     }
 
-    public function sendManagerDeactivationAttemptEmail($manager, $subordinates, $attemptedBy)
+    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $subordinates, $attemptedBy)
     {
         $workflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW);
         $itSupportEmail = getAppStorageValueByKey(ApplicationStorageEnums::IT_SUPPORT_EMAIL);
@@ -2029,19 +2030,25 @@ class SendEmailCustomerService extends BaseService
         $emailData = (object)[
             'recipientEmail' => $itSupportEmail,
             'recipientName' => "IT Support AFIA",
-            'name' => $manager->name,
-            'email' => $manager->email,
-            'managerId' => $manager->id,
+            'managerIds' => $baseManagers->pluck('id')->filter()->values()->all(),
             'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
             'timestamp' => now()->toDateTimeString(),
         ];
 
-        if (property_exists($manager, 'managers') && !empty($manager->managers)) {
-            $emailData->managerEmails = collect($manager->managers)->pluck('email')->toArray();
+        /*Base user's manager's */
+        $managerEmails = $baseManagers
+            ->flatMap(fn ($manager) => collect(data_get($manager, 'managers', [])))
+            ->pluck('email')
+            ->filter()
+            ->values()
+            ->all();
+
+        if (! empty($managerEmails)) {
+            $emailData->managerEmails = $managerEmails;
         }
 
         LoggerService::info('Sending manager deactivation attempt email via Bird', [
-            'manager_id' => $manager->id,
+            'manager_ids' => $emailData->managerIds,
             'attempted_by' => $attemptedBy->id,
             'emailData' => $emailData
         ]);

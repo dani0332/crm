@@ -81,11 +81,11 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
                 ])
                 ->all();
 
-            $managerPayload = (object) $managerUser->only(['id', 'name', 'email','managers']);
+            $managerPayload =  collect([$managerUser->only(['id', 'name', 'email','managers'])]);
             $attemptedByPayload = (object) $attemptedBy->only(['id', 'name', 'email']);
 
             LoggerService::info('Sending manager deactivation attempt email', [
-                'manager_id' => $managerPayload->id,
+                'manager_id' => $managerPayload,
                 'subordinates_count' => count($subordinates),
                 'attempted_by' => $attemptedByPayload->id,
             ]);
