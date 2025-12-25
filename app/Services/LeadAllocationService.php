@@ -1068,12 +1068,9 @@ class LeadAllocationService extends BaseService
                                 $ecomCriteria->where(function ($sicQuery) {
                                     $sicQuery->where('sic_advisor_requested', 1);
                                 })
-                                // OR Non-SIC Ecom inquiry leads (sic_flow_enabled = 0 or null)
+                                // OR Non-SIC Ecom inquiry leads (no SIC tag in quote_tags)
                                     ->orWhere(function ($nonSicQuery) {
-                                        $nonSicQuery->where(function ($q) {
-                                            $q->whereNull('sic_flow_enabled')
-                                                ->orWhere('sic_flow_enabled', 0);
-                                        });
+                                        $nonSicQuery->isNonSICLead(QuoteTypes::HEALTH);
                                     })
                                 // OR PEC marked with Plan selected
                                     ->orWhere(function ($pecQuery) {
