@@ -658,7 +658,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $isEcom = false;
 
         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
-        //$docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
+        // $docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
 
         if (! $docUrl) {
             LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
