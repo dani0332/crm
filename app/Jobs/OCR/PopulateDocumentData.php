@@ -161,14 +161,14 @@ class PopulateDocumentData implements ShouldQueue
             'decision' => $willRun ? 'Job will execute' : 'Job will be skipped',
         ]);
 
-        // Create unique lock key based on quote ID and document path to prevent duplicate processing
-        $lockKey = 'ocr-populate-'.$this->quote->id.'-'.md5($this->documentPath);
+        // Create unique lock key based on quote ID, document type ID, and document path to prevent duplicate processing
+        $lockKey = 'ocr-populate-'.$this->quote->id.'-'.$this->documentType->id.'-'.md5($this->documentPath);
 
         return [
+            Skip::unless(fn () => $willRun),
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
                 ->expireAfter($this->timeout), // Lock expires after timeout seconds 
-            Skip::unless(fn () => $willRun),
         ];
     }
 
