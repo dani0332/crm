@@ -15,6 +15,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\Skip;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class PopulateDocumentData implements ShouldQueue
 {
@@ -160,7 +161,13 @@ class PopulateDocumentData implements ShouldQueue
             'decision' => $willRun ? 'Job will execute' : 'Job will be skipped',
         ]);
 
+        // Create unique lock key based on quote ID and document path to prevent duplicate processing
+        $lockKey = 'ocr-populate-'.$this->quote->id.'-'.md5($this->documentPath);
+
         return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter($this->timeout), // Lock expires after timeout seconds 
             Skip::unless(fn () => $willRun),
         ];
     }
