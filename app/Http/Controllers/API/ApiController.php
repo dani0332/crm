@@ -711,6 +711,12 @@ class ApiController extends Controller
             ? Carbon::createFromFormat('Y-m-d', $request->end_date)
             : null;
 
+        LoggerService::info(self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'uuid' => $request->uuid,
+        ]);
+
         ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate);
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');

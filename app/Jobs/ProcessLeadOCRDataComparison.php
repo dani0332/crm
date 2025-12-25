@@ -224,6 +224,9 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             // Update processed flag
             $this->updateLeadOCRComparisonProcessedFlag($quote->uuid);
 
+            // Reset OCR response structure
+            $this->ocrReponseStructure = [];
+
             LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote processing summary', extra: [
                 'quote_id' => $quote->id,
                 'quote_uuid' => $quote->uuid,
@@ -249,6 +252,12 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             $totalFieldCount += $value['count'];
         }
 
+        // Calculate comparison score
+        $comparisonScore = 0;
+        if ($totalFieldCount > 0) {
+            $comparisonScore = number_format(($totalMatchCount / $totalFieldCount) * 100, 2);
+        }
+
         // Save data in database
         LeadOcrDataComparison::updateOrCreate([
             'quoteable_id' => $quoteId,
@@ -259,7 +268,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             'ocr_data' => json_encode($ocrDataStructure),
             'ocr_responses' => json_encode($this->ocrReponseStructure),
             'compairson_data' => json_encode($comparisonStructure),
-            'comparison_score' => number_format(($totalMatchCount / $totalFieldCount) * 100, 2),
+            'comparison_score' => $comparisonScore,
         ]);
     }
 
