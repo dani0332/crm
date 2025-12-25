@@ -134,7 +134,7 @@ class AwnicStepExecutor
         $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process);
 
         // this email is used to test the book policy automation failure scenario
-        if (! $triggerBookPolicyResponse['status'] || $quote->email == "imcrm-book-policy-fake@yopmail.com") {
+        if (! $triggerBookPolicyResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY) {
             LoggerService::error('Book policy failed', extra: [
                 'step' => AwnicEnum::STEP_BOOK_POLICY,
                 'error' => $triggerBookPolicyResponse['error'] ?? AwnicEnum::UNKNOWN_ERROR,
