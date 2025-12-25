@@ -595,22 +595,24 @@ const calculateTotalPriceOnVatChange = () => {
   }
 
   const totalVat = Number(bookingDetailsForm.total_vat_amount) || 0;
-  const priceVatApplicable = Number(bookingDetailsForm.price_vat_applicable) || 0;
-  const priceVatNotApplicable = Number(bookingDetailsForm.price_vat_not_applicable) || 0;
-  
+  const priceVatApplicable =
+    Number(bookingDetailsForm.price_vat_applicable) || 0;
+  const priceVatNotApplicable =
+    Number(bookingDetailsForm.price_vat_not_applicable) || 0;
+
   let priceWithVat = priceVatApplicable + priceVatNotApplicable + totalVat;
   bookingDetailsForm.price_with_vat = convertToNegative(priceWithVat);
 };
 
-const preventInvalidVatInput = (event) => {
+const preventInvalidVatInput = event => {
   const charCode = event.which ? event.which : event.keyCode;
   const char = String.fromCharCode(charCode);
-  
+
   if (!/^[0-9.]$/.test(char)) {
     event.preventDefault();
     return false;
   }
-  
+
   const currentValue = bookingDetailsForm.total_vat_amount || '';
   if (char === '.' && currentValue.includes('.')) {
     event.preventDefault();
@@ -2572,7 +2574,10 @@ watch(
                     @change="calculateTotalPriceOnVatChange"
                     @keypress="preventInvalidVatInput"
                     class="!mb-0 w-full"
-                    :disabled="(!can(permissionsEnum.POLICY_DETAILS_ADD_VAT) || !state.isEdit)"
+                    :disabled="
+                      !can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ||
+                      !state.isEdit
+                    "
                     placeholder="Enter Total VAT Amount"
                     :rules="[isRequired]"
                     size="xs"
