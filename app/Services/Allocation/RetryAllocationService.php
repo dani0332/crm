@@ -45,7 +45,7 @@ class RetryAllocationService
         return null;
     }
 
-    public function executeCarAllocation($quoteType, $to, $chunkSize)
+    public function executeCarAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
     {
         $processedRecords = 0;
         $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION, useCache: true) == 1;
@@ -75,7 +75,7 @@ class RetryAllocationService
                 'quote_status_id',
                 'tier_id',
             ])
-            ->where('created_at', '<=', $to)
+            ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
             ->orderByDesc('created_at')
