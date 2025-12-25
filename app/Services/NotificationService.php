@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Events\PaymentNotifications;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 
 class NotificationService extends BaseService
@@ -14,6 +15,11 @@ class NotificationService extends BaseService
     public function paymentStatusUpdate($quoteType, $quoteId)
     {
         if (is_numeric($quoteType)) {
+            LoggerService::info('Payment Status Update API - Quote Type Not Valid', extra: [
+                'quote_type' => $quoteType,
+                'quote_id' => $quoteId,
+                'reason' => 'Quote type must be a string, not numeric',
+            ]);
             return response()->json(['message' => 'Quote Type Not Valid'], 403);
         }
         $model = null;
@@ -23,9 +29,19 @@ class NotificationService extends BaseService
 
         }
         if (! $model) {
+            LoggerService::info('Payment Status Update API - Quote Not Found', extra: [
+                'quote_type' => $quoteType,
+                'quote_id' => $quoteId,
+                'reason' => 'Quote not found with provided quoteType and quoteId',
+            ]);
             return response()->json(['message' => 'Quote Not Found'], 403);
         }
         if ($model->advisor_id === null) {
+            LoggerService::info('Payment Status Update API - No Advisor Assign to this Lead', extra: [
+                'quote_type' => $quoteType,
+                'quote_id' => $quoteId,
+                'reason' => 'No advisor assigned to this lead',
+            ]);
             return response()->json(['message' => 'No Advisor Assign to this Lead'], 403);
         }
 
