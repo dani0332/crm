@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\OCRSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -21,6 +22,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Response;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class ProcessLeadOCRDataComparison implements ShouldQueue
@@ -43,7 +45,15 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     public function middleware(): array
     {
-        return [(new WithoutOverlapping("{$this->uuid}-{$this->startDate}-{$this->endDate}"))->dontRelease()];
+        // Create a unique key that handles null values properly
+        $key = sprintf(
+            'lead-ocr-%s-%s-%s',
+            $this->uuid ?? 'all',
+            $this->startDate ? $this->startDate->format('Y-m-d') : 'no-start',
+            $this->endDate ? $this->endDate->format('Y-m-d') : 'no-end'
+        );
+
+        return [(new WithoutOverlapping($key))->dontRelease()];
     }
 
     /**
@@ -106,11 +116,12 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                         ->with(['insuranceProvider:id,code']);
                 },
                 'insuranceProvider:id,code',
+                'personalQuote:id,uuid,quote_id,quote_type_id,lead_ocr_comparison_processed',
             ]);
 
         $carQuotes = $carQuotes->limit(50)->get();
 
-        $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('id');
+        $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('uuid');
 
         LoggerService::info('getCarDocuments - Car quotes with OCR documents fetched', extra: [
             'uuid_filter' => $this->uuid,
@@ -119,7 +130,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             'end_date' => $this->endDate ? $this->endDate->toDateString() : null,
             'total_car_quotes' => $carQuotes->count(),
             'car_quotes_with_documents' => $carQuoteIds->count(),
-            'car_quote_ids' => $carQuoteIds->toArray(),
+            'car_quote_uuids' => $carQuoteIds->toArray(),
         ]);
 
         $this->processOcrDocumentsForLeads($carQuotes, $documentTypeCodes);
@@ -133,114 +144,144 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         ]);
 
         foreach ($carQuotes as $quote) {
+            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::LEAD_OCR_DATA_COMPARISON);
+
             LoggerService::info(self::class.'::processOcrDocumentsForLeads - Processing quote', extra: [
                 'quote_id' => $quote->id,
                 'quote_uuid' => $quote->uuid,
                 'quote_code' => $quote->code,
                 'documents_count' => $quote->documents->count(),
+                'has_personal_quote' => $quote->personalQuote !== null,
             ]);
 
-            $emiratesIdDocumentsFound = 0;
-            $emiratesIdDocumentsProcessed = 0;
-            $emiratesIdDocumentsFailed = 0;
-            $leadDataStructure = [];
-            $ocrDataStructure = [];
-            $comparisonStructure = [];
-
-            foreach ($quote->documents as $document) {
-                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Checking document', extra: [
+            // Skip if no PersonalQuote exists - this would cause infinite loop
+            if (! $quote->personalQuote) {
+                LoggerService::error(self::class.'::processOcrDocumentsForLeads - PersonalQuote not found, skipping to prevent infinite loop', extra: [
                     'quote_id' => $quote->id,
-                    'document_id' => $document->id,
-                    'document_type_code' => $document->document_type_code,
-                    'doc_name' => $document->doc_name,
-                    'has_doc_url' => (bool) $document->doc_url,
-                    'has_doc_mime_type' => (bool) $document->doc_mime_type,
+                    'quote_uuid' => $quote->uuid,
                 ]);
 
-                $documentType = DocumentType::where('code', $document->document_type_code)
-                    ->where('quote_type_id', QuoteTypes::CAR->id())
-                    ->first();
-
-                if ($documentType) {
-                    // Check if the document type is enabled for OCR
-                    $isDocOCREnabled = OCRDocumentTypeEnum::isOCREnabled($documentType, QuoteTypes::CAR);
-
-                    // Skip if nto enabled for OCR
-                    if (! $isDocOCREnabled) {
-                        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Document type is not enabled for OCR', extra: [
-                            'quote_id' => $quote->id,
-                            'quote_uuid' => $quote->uuid,
-                            'document_id' => $document->id,
-                            'document_type_code' => $document->document_type_code,
-                            'document_type_name' => $documentType->name,
-                        ]);
-
-                        continue;
-                    }
-
-                    // Get the OCR document type
-                    $ocrDocType = OCRDocumentTypeEnum::getDocumentType($documentType);
-
-                    LoggerService::info(self::class."::processOcrDocumentsForLeads - Found {$documentType->name} document", extra: [
-                        'quote_id' => $quote->id,
-                        'quote_uuid' => $quote->uuid,
-                        'document_id' => $document->id,
-                        'document_type_code' => $document->document_type_code,
-                        'total_emirates_id_found' => $emiratesIdDocumentsFound,
-                    ]);
-
-                    $this->processOcrDocument($quote, $document, $ocrDocType->value, $leadDataStructure, $ocrDataStructure);
-
-                    // Caculate accuracy of the OCR data
-                    // if ($ocrDocType->value === OCRDocumentTypeEnum::ID_CARD->value) {
-                    // print_r($leadDataStructure[$ocrDocType->value]);
-                    // print_r($ocrDataStructure[$ocrDocType->value]);
-                    $count = count($leadDataStructure[$ocrDocType->value]);
-                    $matchCount = 0;
-
-                    foreach ($leadDataStructure[$ocrDocType->value] as $key => $value) {
-                        if (! isset($ocrDataStructure[$ocrDocType->value][$key])) {
-                            continue;
-                        }
-
-                        if ($leadDataStructure[$ocrDocType->value][$key] === $ocrDataStructure[$ocrDocType->value][$key]) {
-                            $matchCount++;
-                        }
-                    }
-
-                    $comparisonStructure[$ocrDocType->value] = [
-                        'count' => $count,
-                        'match_count' => $matchCount,
-                        'accuracy' => $count > 0 ? number_format($matchCount / $count * 100, 2) : 0,
-                    ];
-                    // }
-
-                } else {
-                    LoggerService::warning(self::class.'::processOcrDocumentsForLeads - DocumentType not found', extra: [
-                        'quote_id' => $quote->id,
-                        'document_id' => $document->id,
-                        'document_type_code' => $document->document_type_code,
-                    ]);
-                }
+                continue;
             }
 
-            // Save data in database
-            $this->saveleadOCRComparisonData($quote->id, $quote->uuid, $leadDataStructure, $ocrDataStructure, $comparisonStructure);
+            try {
+                DB::transaction(function () use ($quote) {
+                    $emiratesIdDocumentsFound = 0;
+                    $emiratesIdDocumentsProcessed = 0;
+                    $emiratesIdDocumentsFailed = 0;
+                    $leadDataStructure = [];
+                    $ocrDataStructure = [];
+                    $comparisonStructure = [];
 
-            // Update processed flag
-            $this->updateLeadOCRComparisonProcessedFlag($quote->uuid);
+                    foreach ($quote->documents as $document) {
+                        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Checking document', extra: [
+                            'quote_id' => $quote->id,
+                            'document_id' => $document->id,
+                            'document_type_code' => $document->document_type_code,
+                            'doc_name' => $document->doc_name,
+                            'has_doc_url' => (bool) $document->doc_url,
+                            'has_doc_mime_type' => (bool) $document->doc_mime_type,
+                        ]);
 
-            // Reset OCR response structure
-            $this->ocrReponseStructure = [];
+                        $documentType = DocumentType::where('code', $document->document_type_code)
+                            ->where('quote_type_id', QuoteTypes::CAR->id())
+                            ->first();
 
-            LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote processing summary', extra: [
-                'quote_id' => $quote->id,
-                'quote_uuid' => $quote->uuid,
-                'total_documents' => $quote->documents->count(),
-                'emirates_id_documents_found' => $emiratesIdDocumentsFound,
-                'emirates_id_documents_processed' => $emiratesIdDocumentsProcessed,
-                'emirates_id_documents_failed' => $emiratesIdDocumentsFailed,
-            ]);
+                        if ($documentType) {
+                            // Check if the document type is enabled for OCR
+                            $isDocOCREnabled = OCRDocumentTypeEnum::isOCREnabled($documentType, QuoteTypes::CAR);
+
+                            // Skip if not enabled for OCR
+                            if (! $isDocOCREnabled) {
+                                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Document type is not enabled for OCR', extra: [
+                                    'quote_id' => $quote->id,
+                                    'quote_uuid' => $quote->uuid,
+                                    'document_id' => $document->id,
+                                    'document_type_code' => $document->document_type_code,
+                                    'document_type_name' => $documentType->name,
+                                ]);
+
+                                continue;
+                            }
+
+                            // Get the OCR document type
+                            $ocrDocType = OCRDocumentTypeEnum::getDocumentType($documentType);
+
+                            LoggerService::info(self::class."::processOcrDocumentsForLeads - Found {$documentType->name} document", extra: [
+                                'quote_id' => $quote->id,
+                                'quote_uuid' => $quote->uuid,
+                                'document_id' => $document->id,
+                                'document_type_code' => $document->document_type_code,
+                                'total_emirates_id_found' => $emiratesIdDocumentsFound,
+                            ]);
+
+                            $this->processOcrDocument($quote, $document, $ocrDocType->value, $leadDataStructure, $ocrDataStructure);
+
+                            // Calculate accuracy of the OCR data
+                            $count = count($leadDataStructure[$ocrDocType->value]);
+                            $matchCount = 0;
+
+                            foreach ($leadDataStructure[$ocrDocType->value] as $key => $value) {
+                                if (! isset($ocrDataStructure[$ocrDocType->value][$key])) {
+                                    continue;
+                                }
+
+                                if ($leadDataStructure[$ocrDocType->value][$key] === $ocrDataStructure[$ocrDocType->value][$key]) {
+                                    $matchCount++;
+                                }
+                            }
+
+                            $comparisonStructure[$ocrDocType->value] = [
+                                'count' => $count,
+                                'match_count' => $matchCount,
+                                'accuracy' => $count > 0 ? number_format($matchCount / $count * 100, 2) : 0,
+                            ];
+
+                        } else {
+                            LoggerService::warning(self::class.'::processOcrDocumentsForLeads - DocumentType not found', extra: [
+                                'quote_id' => $quote->id,
+                                'document_id' => $document->id,
+                                'document_type_code' => $document->document_type_code,
+                            ]);
+                        }
+                    }
+
+                    // Save data in database
+                    $this->saveleadOCRComparisonData($quote->id, $quote->uuid, $leadDataStructure, $ocrDataStructure, $comparisonStructure);
+
+                    // Update processed flag using the relationship (CRITICAL FIX)
+                    $flagUpdated = $this->updateLeadOCRComparisonProcessedFlag($quote);
+
+                    if (! $flagUpdated) {
+                        throw new \RuntimeException("Failed to update lead_ocr_comparison_processed flag for quote {$quote->uuid}");
+                    }
+
+                    // Reset OCR response structure
+                    $this->ocrReponseStructure = [];
+
+                    LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote processing summary', extra: [
+                        'quote_id' => $quote->id,
+                        'quote_uuid' => $quote->uuid,
+                        'total_documents' => $quote->documents->count(),
+                        'emirates_id_documents_found' => $emiratesIdDocumentsFound,
+                        'emirates_id_documents_processed' => $emiratesIdDocumentsProcessed,
+                        'emirates_id_documents_failed' => $emiratesIdDocumentsFailed,
+                        'flag_updated' => $flagUpdated,
+                    ]);
+                });
+            } catch (\Exception $e) {
+                // Reset OCR response structure even on failure
+                $this->ocrReponseStructure = [];
+
+                LoggerService::error(self::class.'::processOcrDocumentsForLeads - Failed to process quote', exception: $e, extra: [
+                    'quote_id' => $quote->id,
+                    'quote_uuid' => $quote->uuid,
+                ]);
+
+                // Mark as processed anyway to prevent infinite loop on persistent errors
+                // This ensures the quote won't be retried indefinitely
+                $this->markAsProcessedOnError($quote);
+            }
         }
 
         LoggerService::info(self::class.'::processOcrDocumentsForLeads - Completed processing all documents', extra: [
@@ -278,9 +319,74 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         ]);
     }
 
-    private function updateLeadOCRComparisonProcessedFlag(string $quoteUuid): void
+    /**
+     * Update the lead_ocr_comparison_processed flag using the relationship.
+     * This ensures we update the correct PersonalQuote record.
+     *
+     * @param  CarQuote  $quote  The car quote with loaded personalQuote relationship
+     * @return bool True if the flag was successfully updated, false otherwise
+     */
+    private function updateLeadOCRComparisonProcessedFlag(CarQuote $quote): bool
     {
-        PersonalQuote::where('uuid', $quoteUuid)->update(['lead_ocr_comparison_processed' => true]);
+        $personalQuote = $quote->personalQuote;
+
+        if (! $personalQuote) {
+            LoggerService::error(self::class.'::updateLeadOCRComparisonProcessedFlag - PersonalQuote not found via relationship', extra: [
+                'car_quote_id' => $quote->id,
+                'car_quote_uuid' => $quote->uuid,
+            ]);
+
+            return false;
+        }
+
+        // Update using the model instance to ensure we update the correct record
+        $updated = $personalQuote->update(['lead_ocr_comparison_processed' => true]);
+
+        if (! $updated) {
+            LoggerService::error(self::class.'::updateLeadOCRComparisonProcessedFlag - Failed to update flag', extra: [
+                'personal_quote_id' => $personalQuote->id,
+                'car_quote_id' => $quote->id,
+                'car_quote_uuid' => $quote->uuid,
+            ]);
+
+            return false;
+        }
+
+        LoggerService::info(self::class.'::updateLeadOCRComparisonProcessedFlag - Flag updated successfully', extra: [
+            'personal_quote_id' => $personalQuote->id,
+            'car_quote_id' => $quote->id,
+            'car_quote_uuid' => $quote->uuid,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Mark a quote as processed even when an error occurs.
+     * This prevents infinite loops when a quote consistently fails processing.
+     *
+     * @param  CarQuote  $quote  The car quote to mark as processed
+     */
+    private function markAsProcessedOnError(CarQuote $quote): void
+    {
+        try {
+            $personalQuote = $quote->personalQuote;
+
+            if ($personalQuote) {
+                $personalQuote->update(['lead_ocr_comparison_processed' => true]);
+
+                LoggerService::warning(self::class.'::markAsProcessedOnError - Marked as processed after error to prevent infinite loop', extra: [
+                    'personal_quote_id' => $personalQuote->id,
+                    'car_quote_id' => $quote->id,
+                    'car_quote_uuid' => $quote->uuid,
+                ]);
+            }
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.'::markAsProcessedOnError - Failed to mark as processed', exception: $e, extra: [
+                'car_quote_id' => $quote->id,
+                'car_quote_uuid' => $quote->uuid,
+            ]);
+        }
     }
 
     private function processOcrDocument(CarQuote $quote, QuoteDocument $document, string $ocrDocType,
