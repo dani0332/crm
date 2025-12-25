@@ -324,6 +324,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Health STP Advisor Notification
     public const BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW = 'BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW';
+
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';

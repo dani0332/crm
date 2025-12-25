@@ -129,8 +129,6 @@ Route::prefix('v1')->group(function () {
 
     // upload to metlife API route
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
-    
-    
 
 });
 

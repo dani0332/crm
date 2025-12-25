@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Events;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Services\Logger\LoggerService;
 
 class AdvisorNotificationPushed implements ShouldBroadcastNow
 {
@@ -54,10 +54,9 @@ class AdvisorNotificationPushed implements ShouldBroadcastNow
         $data = array_merge($this->pusherData, [
             'advisorId' => $this->advisorId,
         ]);
-        
+
         LoggerService::info('AdvisorNotificationPushed broadcasting data:', $data);
-        
+
         return $data;
     }
 }
-

@@ -603,7 +603,7 @@ class ApiService
     {
         try {
             $quoteType = QuoteTypes::getName($request->quoteTypeId);
-            
+
             if (! $quoteType || ! $quoteType->value) {
                 return [
                     'success' => false,
@@ -620,6 +620,7 @@ class ApiService
                         ];
                     }
                     app(HealthEmailService::class)->sendSTPAdvisorNotification($lead, $request->apiFailed);
+
                     return [
                         'success' => true,
                         'message' => 'STP Advisor notification sent',

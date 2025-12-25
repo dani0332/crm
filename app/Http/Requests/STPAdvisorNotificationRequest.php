@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Enums\QuoteTypeId;
 
 class STPAdvisorNotificationRequest extends FormRequest
 {
@@ -23,9 +22,9 @@ class STPAdvisorNotificationRequest extends FormRequest
     public function rules(): array
     {
         return [
-                'quoteUuid' => 'required|string',
-                'quoteTypeId' => 'required|integer',
-                'apiFailed' => 'sometimes|boolean',
+            'quoteUuid' => 'required|string',
+            'quoteTypeId' => 'required|integer',
+            'apiFailed' => 'sometimes|boolean',
         ];
     }
 

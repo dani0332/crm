@@ -29,6 +29,7 @@ use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Http\Requests\STPAdvisorNotificationRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
@@ -63,7 +64,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Http\Requests\STPAdvisorNotificationRequest;
 
 class ApiController extends Controller
 {
@@ -694,16 +694,18 @@ class ApiController extends Controller
     public function stpAdvisorNotification(STPAdvisorNotificationRequest $request)
     {
         try {
-        $response = app(ApiService::class)->stpAdvisorNotification($request);
-        return response()->json([
+            $response = app(ApiService::class)->stpAdvisorNotification($request);
+
+            return response()->json([
                 'success' => $response['success'],
                 'message' => $response['message'],
             ]);
         } catch (\Exception $e) {
-            LoggerService::error(self::class.': STP advisor notification failed',  [
+            LoggerService::error(self::class.': STP advisor notification failed', [
                 'error' => $e->getMessage(),
                 'exception' => $e->getTraceAsString(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while sending STP advisor notification: '.$e->getMessage(),
