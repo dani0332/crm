@@ -24,4 +24,3 @@ test('axiom logging is disabled in testing', function () {
     expect(app()->environment(['local', 'testing']))->toBeTrue();
     expect(app()->environment('testing'))->toBeTrue();
 });
-
