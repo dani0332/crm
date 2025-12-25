@@ -599,14 +599,17 @@ const onMemberSubmit = isValid => {
   if (memberActionEdit.value) {
     memberForm.put(`/health-quote-update-member`, {
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Member Updated',
-          position: 'top',
-        });
-        memberForm.reset();
-        onLoadAvailablePlansData();
-        // location.reload();
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages.error) {
+          notification.success({
+            title: 'Member Updated',
+            position: 'top',
+          });
+          memberForm.reset();
+          onLoadAvailablePlansData();
+          // location.reload();
+        }
       },
       onError: errors => {
         notification.error({
@@ -623,13 +626,16 @@ const onMemberSubmit = isValid => {
     memberForm.post(`/health-quote-add-member`, {
       // new mavonic endpoint
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Member Added',
-          position: 'top',
-        });
-        onLoadAvailablePlansData();
-        // location.reload();
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages.error) {
+          notification.success({
+            title: 'Member Added',
+            position: 'top',
+          });
+          onLoadAvailablePlansData();
+          // location.reload();
+        }
       },
       onError: errors => {
         notification.error({
@@ -675,6 +681,12 @@ const memberDeleteConfirmed = () => {
         onLoadAvailablePlansData();
         // location.reload();
       },
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not updated',
+          position: 'top',
+        });
+      },
       onFinish: () => {
         modals.memberConfirm = false;
         membersDetailsUpdated.value = true;
@@ -686,16 +698,19 @@ const memberDeleteConfirmed = () => {
 const memberPrincipalConfirmed = () => {
   memberForm.put(`/health-quote-update-member`, {
     preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
-        position: 'top',
-      });
-      onLoadAvailablePlansData();
+    onSuccess: response => {
+      const flash_messages = response.props.flash;
+      if (!flash_messages.error) {
+        notification.success({
+          title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
+          position: 'top',
+        });
+        onLoadAvailablePlansData();
+      }
     },
-    onError: () => {
+    onError: errors => {
       notification.error({
-        title: 'Some error occurred while processing request',
+        title: errors.error || 'Some error occurred while processing request',
         position: 'top',
       });
     },
@@ -1578,7 +1593,8 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.quote.id,
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
-  emirates_id_number: page.props.quote.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.quote.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
@@ -1939,6 +1955,8 @@ const onAddUpdate = () => {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const isLocked = page.props.quote.is_quote_locked ?? false;
 </script>
 
 <template>
@@ -1954,7 +1972,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           Stale for {{ countDays }}
         </p>
         <x-button
-          v-if="quote?.pc_qualified == true"
+          v-if="quote?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"
@@ -1997,10 +2015,18 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('health.edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled && !isLocked"
+            :href="route('health.edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">
+          <x-button
+            v-else
+            :disabled="isDisabled || isLocked"
+            size="sm"
+            tag="div"
+          >
             Edit
           </x-button>
         </LeadEditBtnTemplate>
@@ -2749,7 +2775,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               @click.prevent="onAddMemberModal"
               size="sm"
               color="orange"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isLocked"
               v-if="readOnlyMode.isDisable === true"
             >
               Add Member
@@ -2775,7 +2801,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               color="primary"
               outlined
               @click.prevent="onEditMember(item)"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isLocked"
               v-if="readOnlyMode.isDisable === true"
             >
               Edit
@@ -2787,7 +2813,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               color="error"
               outlined
               @click.prevent="memberDelete(item.id)"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isLocked"
               v-if="readOnlyMode.isDisable === true && !item.is_principal"
             >
               Delete
@@ -2800,6 +2826,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               outlined
               @click.prevent="memberPrincipal(item)"
               v-if="!item.is_principal"
+              :disabled="isLocked"
             >
               Make Principal
             </x-button>
@@ -3636,7 +3663,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   size="sm"
                   color="emerald"
                   @click.prevent="modals.createPlan = true"
-                  :disabled="isDisabled"
+                  :disabled="isDisabled || isLocked"
                 >
                   Add Plan
                 </x-button>

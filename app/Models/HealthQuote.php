@@ -176,6 +176,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function activeMembers()
+    {
+        return $this->members()->whereNull('deleted_at');
+    }
+
     public function plan()
     {
         return $this->belongsTo(HealthPlan::class, 'plan_id');
@@ -394,12 +399,10 @@ class HealthQuote extends Model implements AuditableContract
     /******************************* Quote Status Logs Related Methods Below *******************************/
     /**
      * Get all quote status logs for this model
-     *
-     * @return MorphMany
      */
     public function quoteStatusLogs(): HasMany
     {
-        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
+        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id')->where('quote_type_id', QuoteTypeId::Health);
     }
 
     /**
@@ -553,5 +556,10 @@ class HealthQuote extends Model implements AuditableContract
     public function subSourceOption()
     {
         return $this->belongsTo(Lookup::class, 'sub_source_options_id');
+    }
+
+    public function branch()
+    {
+        return $this->hasOne(Branch::class, 'id', 'branch_id');
     }
 }

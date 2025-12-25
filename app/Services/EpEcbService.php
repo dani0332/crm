@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\DTO\EpBookingContext;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -284,8 +287,8 @@ class EpEcbService extends EpBookingService
 
     private function getValidationRules(string $step): array
     {
-        $documentTypeRule = implode(',', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY]);
-        $customerIdTypeRule = implode(',', ['EID']);
+        $documentTypeRule = implode(',', [QuoteDocumentsEnum::COMPANY_CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY]);
+        $customerIdTypeRule = implode(',', ['TL', 'EID']);
         $policySoldDateRules = 'required|date|date_equals:today';
         $documentUrlRules = 'required|url|active_url';
 
@@ -1061,24 +1064,13 @@ class EpEcbService extends EpBookingService
         ];
     }
 
-    private function getEmirateIdNumber(): string
-    {
-        $latestInsuredData = $this->quote?->latestInsured;
-        $insuredKyc = $latestInsuredData?->insuredKyc;
-
-        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
-
-        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
-            $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
-                .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
-        }
-
-        return $emirateIdNumber;
-    }
-
     private function getDocumentsInfo(): array
     {
-        $documentsInfo = $this->quote->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY])
+        $carQuoteDocumentCodes = [QuoteDocumentsEnum::CAR_MULKIY];
+        $carQuoteDocumentCodes[] = $this->quote?->registration_type == CarRegistrationType::COMPANY
+            ? QuoteDocumentsEnum::COMPANY_CAR_EMIRATE_ID : QuoteDocumentsEnum::CAR_EMIRATE_ID;
+
+        $documentsInfo = $this->quote->documents()->whereIn('document_type_code', $carQuoteDocumentCodes)
             ->select('document_type_code', 'doc_name', 'doc_url')
             ->get()
             ->unique('document_type_code')
@@ -1093,18 +1085,37 @@ class EpEcbService extends EpBookingService
 
         return $documentsInfo->toArray();
     }
+    private function getCustomerTypeInfo(): array
+    {
+        $latestInsuredData = $this->quote?->latestInsured;
+
+        $proceedWithTradeLicense = $this->quote?->registration_type == CarRegistrationType::COMPANY
+            && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE
+            && $latestInsuredData?->customer_type == CustomerTypeEnum::Entity;
+
+        $customerIdType = $proceedWithTradeLicense ? 'TL' : 'EID';
+        $customerIdNo = $customerIdType == 'TL'
+            ? $latestInsuredData?->trade_license_no
+            : ($latestInsuredData?->id_type == 'emiratesId' ? formatEmiratesIdNumber($latestInsuredData?->id_number ?? '') : '');
+
+        return [
+            'customer_id_type' => $customerIdType,
+            'customer_id_no' => $customerIdNo,
+        ];
+    }
 
     private function getCustomerInfo(string $step): array
     {
+        $customerTypeInfo = $this->getCustomerTypeInfo();
+
         $customerDetails = [
+            ...$customerTypeInfo,
             'customer_type' => null,
             'customer_fname' => $this->quote?->first_name,
             'customer_lname' => $this->quote?->last_name,
             'customer_mobile_no' => null,
             'customer_whatsapp_no' => null,
             'customer_email_id' => null,
-            'customer_id_type' => 'EID',
-            'customer_id_no' => $this->getEmirateIdNumber(),
             'customer_id_expiry_date' => null,
             'customer_address' => null,
             'customer_address_city' => null,

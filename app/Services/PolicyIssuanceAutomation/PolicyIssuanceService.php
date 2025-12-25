@@ -58,6 +58,12 @@ class PolicyIssuanceService
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
+        LoggerService::info('Policy Issuance Allowed Automations Check', extra: [
+            'quote_type' => $quoteType,
+            'insurance_provider' => $insuranceProvider?->code ?? 'N/A',
+            'registration_type' => $quote?->registration_type ?? 'N/A',
+        ]);
+
         if (! $insuranceProvider) {
             return false;
         }
@@ -152,6 +158,33 @@ class PolicyIssuanceService
         }
 
         return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote, $throughAutomation));
+    }
+
+    /**
+     * Returns false incase of automation is enabled and policy issuance is not failed
+     * Returns true incase of automation is disabled or policy issuance is failed
+     *
+     * @param  mixed  $quote
+     * @param  mixed  $quoteType
+     * @return bool
+     */
+    public function shouldValidateBranch($quote, $quoteType)
+    {
+        $payment = $quote?->payments()?->mainLeadPayment()?->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        $insuranceProviderAutomation = $this->init($quoteType, $insuranceProvider?->code);
+        if ($insuranceProviderAutomation?->isPolicyIssuanceAutomationEnabled() == true) {
+
+            $policyIssuance = $quote?->policyIssuance;
+            /* If policy issuance is failed, then we need to check the branch because it will be manually booked */
+            if ($policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS) {
+                return true;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     private function processPolicyIssuanceRecords($policyIssuanceAutomationStatus)

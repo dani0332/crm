@@ -731,10 +731,10 @@ class SplitPaymentService
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             // Log message for creating Sage receipt
             LoggerService::info("Creating Sage receipt for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} - Current Sage receipt ID: {$paymentSplit->sage_reciept_id}");
-            $isHealthAUH = $this->isHealthAUHLead($modelType, $mainLeadObject);
+            $isAbuDhabiBranch = $this->isAbuDhabiBranch($modelType, $mainLeadObject);
             $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quoteModel, $paymentSplit); /* Handle NRA case where payment is approved after policy/send update is booked */
             info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' trigger creation of Premium Sage receipt  : ', ['shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
-            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isHealthAUH && empty($paymentSplit->sage_reciept_id)) {
+            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isAbuDhabiBranch && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
                 $sageRequest = new stdClass;
                 $sageRequest->userId = auth()->id();
@@ -932,6 +932,18 @@ class SplitPaymentService
         }]);
 
         $masterPayment = $quoteModel->payments->first();
+
+        if (! $masterPayment) {
+            LoggerService::info('Master payment not found during capture payment for quote code: '.$quoteModel->code);
+            $errorMessage = 'Master payment not found for quote code: '.$quoteModel->code;
+
+            if ($isFromJob && $splitPaymentId > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
+                LoggerService::error('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' - Master payment not found');
+            }
+
+            return $errorMessage;
+        }
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $masterPaymentStatus = $masterPayment->payment_status_id;
