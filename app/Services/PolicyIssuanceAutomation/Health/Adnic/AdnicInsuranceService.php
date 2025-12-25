@@ -39,7 +39,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
             AdnicEnum::STEP_UPLOAD_DOCUMENTS,
             AdnicEnum::STEP_ISSUE_POLICY,
             AdnicEnum::STEP_UPLOAD_POLICY_DOCS,
-            AdnicEnum::STEP_BOOK_POLICY,
+            //AdnicEnum::STEP_BOOK_POLICY,
         ];
     }
 
