@@ -314,4 +314,5 @@ final class ApplicationStorageEnums extends Enum
     // MetLife Integration
     public const ENABLE_METLIFE = 'ENABLE_METLIFE';
     public const BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW = 'BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW';
+    public const IT_SUPPORT_EMAIL = 'IT_SUPPORT_EMAIL';
 }

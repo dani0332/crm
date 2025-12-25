@@ -68,5 +68,5 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_MISSING_DOC_REMINDER = 'car_missing_doc_reminder';
     public const TRAVEL_AUTOMATED_FOLLOWUPS = 'travel_automated_followups';
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
-    public const MANAGER_DEACTIVATION_ATTEMPT = 'manager_deactivation_attempt';
+    public const MANAGER_DEACTIVATION_EMAIL = 'manager_deactivation_email';
 }
