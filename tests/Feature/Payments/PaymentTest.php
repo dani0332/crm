@@ -2,7 +2,6 @@
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
-use App\Models\Payment;
 use Database\Factories\ApplicationStorageFactory;
 use Tests\Helpers\Payments\PaymentTestAssertionHelper;
 use Tests\Helpers\Payments\PaymentTestCreationHelper;
