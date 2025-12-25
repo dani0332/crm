@@ -935,6 +935,7 @@ class SplitPaymentService
 
         if (! $masterPayment) {
             LoggerService::info('Master payment not found during capture payment for quote code: '.$quoteModel->code);
+
             return;
         }
 
