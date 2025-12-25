@@ -584,6 +584,40 @@ const calculateCommission = () => {
   }
 };
 
+const calculateTotalPriceOnVatChange = () => {
+  if (Number(bookingDetailsForm.total_vat_amount) < 0) {
+    notification.error({
+      title: 'Please enter a valid Total VAT Amount',
+      position: 'top',
+    });
+    bookingDetailsForm.total_vat_amount = '0.00';
+    return;
+  }
+
+  const totalVat = Number(bookingDetailsForm.total_vat_amount) || 0;
+  const priceVatApplicable = Number(bookingDetailsForm.price_vat_applicable) || 0;
+  const priceVatNotApplicable = Number(bookingDetailsForm.price_vat_not_applicable) || 0;
+  
+  let priceWithVat = priceVatApplicable + priceVatNotApplicable + totalVat;
+  bookingDetailsForm.price_with_vat = convertToNegative(priceWithVat);
+};
+
+const preventInvalidVatInput = (event) => {
+  const charCode = event.which ? event.which : event.keyCode;
+  const char = String.fromCharCode(charCode);
+  
+  if (!/^[0-9.]$/.test(char)) {
+    event.preventDefault();
+    return false;
+  }
+  
+  const currentValue = bookingDetailsForm.total_vat_amount || '';
+  if (char === '.' && currentValue.includes('.')) {
+    event.preventDefault();
+    return false;
+  }
+};
+
 const isReversalNegative = ref(false);
 
 // this function is used to convert the value to negative if the isNegativeValue is true.
@@ -2528,12 +2562,30 @@ watch(
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
-                  <span>{{
-                    bookingDetailsForm.total_vat_amount !== '0.00'
-                      ? thousandSeparator(bookingDetailsForm.total_vat_amount)
-                      : 'N/A'
-                  }}</span>
+                <div v-if="can(permissionsEnum.POLICY_DETAILS_ADD_VAT)">
+                  <x-input
+                    type="number"
+                    min="0"
+                    add
+                    step="any"
+                    v-model="bookingDetailsForm.total_vat_amount"
+                    @change="calculateTotalPriceOnVatChange"
+                    @keypress="preventInvalidVatInput"
+                    class="!mb-0 w-full"
+                    :disabled="(!can(permissionsEnum.POLICY_DETAILS_ADD_VAT) || !state.isEdit)"
+                    placeholder="Enter Total VAT Amount"
+                    :rules="[isRequired]"
+                    size="xs"
+                  />
+                </div>
+                <div v-else>
+                  <span>
+                    {{
+                      bookingDetailsForm.total_vat_amount !== '0.00'
+                        ? thousandSeparator(bookingDetailsForm.total_vat_amount)
+                        : 'N/A'
+                    }}
+                  </span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
