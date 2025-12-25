@@ -715,6 +715,8 @@ class ApiController extends Controller
             'start_date' => $startDate,
             'end_date' => $endDate,
             'uuid' => $request->uuid,
+            'user_agent' => $request->userAgent(),
+            'ip' => $request->ip(),
         ]);
 
         ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate);
