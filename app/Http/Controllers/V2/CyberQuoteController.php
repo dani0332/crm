@@ -78,9 +78,10 @@ class CyberQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        $quoteType = $this->cyberQuoteService->quoteType;
-        $quote = $quoteType->model()->whereUuid($response->quoteUID)->first();
-        app(CustomerAddressService::class)->syncCustomerAddress($request, $quoteType, $quote, $request->email);
+        $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
+        if ($customerId && $request->has('addressObj') && !empty(array_filter((array) $request->input('addressObj')))) {
+            app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $response->quoteUID);
+        }
 
         return redirect(route('cyber-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
