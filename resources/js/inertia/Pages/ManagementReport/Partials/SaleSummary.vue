@@ -128,6 +128,11 @@ watchEffect(() => {
       text: 'Department',
       tooltip: 'The department of the advisor assigned to this lead',
     },
+    branch_name: {
+      text: 'Branch',
+      tooltip: 'The branch of the lead',
+      value: 'branch_name',
+    },
   };
 
   const headerMap = {
@@ -157,6 +162,10 @@ watchEffect(() => {
     }
   }
   tableHeader.unshift(...columnsToAdd);
+
+  if (props.groupBy != 'branch') { 
+    tableHeader.push(columns['branch_name']);
+  }
 });
 
 const calculateTotalSum = useCalculateTotalSum;
