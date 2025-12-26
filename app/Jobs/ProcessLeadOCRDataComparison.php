@@ -116,7 +116,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 'personalQuote:id,uuid,quote_id,quote_type_id,lead_ocr_comparison_processed',
             ]);
 
-        $carQuotes = $carQuotes->limit(50)->get();
+        $carQuotes = $carQuotes->get();
 
         $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('uuid');
 
@@ -434,6 +434,25 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             return false;
         }
 
+        // Check if OCR data already exists in database
+        $ocrRecord = OCRResponseData::where('quoteable_id', $quote->id)
+            ->where('quoteable_type', QuoteTypes::CAR->modelClass())
+            ->first();
+
+        if ($ocrRecord) {
+            $ocrData = json_decode($ocrRecord->ocr_response, true)[$ocrDocType];
+            $ocrDataStructure[$ocrDocType] = json_decode($ocrRecord->ocr_data, true)[$ocrDocType];
+
+            LoggerService::info(self::class.'::processOcrDocument - OCR data already exists in database', extra: [
+                'quote_id' => $quote->id,
+                'ocr_response' => $ocrData,
+                'ocr_data' => $ocrDataStructure[$ocrDocType],
+            ]);
+
+            return true;
+        }
+
+        // Fetch OCR data from API
         $ocrData = $this->callOcrApi($quote, $document, $ocrDocType);
 
         if ($ocrData) {
