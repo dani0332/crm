@@ -22,6 +22,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
+use App\Services\Quotes\CyberQuoteService;
 
 class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStrictNullComparison
 {
@@ -73,6 +74,8 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
     private const OVERRIDE_APPLIED_DATE = 'OVERRIDE APPLIED DATE';
     private const TOTAL_COMMISSION = 'TOTAL COMMISSION';
     private const COMMISSION_PERCENT = 'COMMISSION %';
+    private const PLAN_NAME = 'PLAN NAME';
+    private const COVERAGE_UP_TO = 'COVERAGE UP TO';
 
     private string $quoteType = '';
     private array $quoteTypes = [];
@@ -88,6 +91,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             QuoteTypes::LIFE->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
+            QuoteTypes::CYBER->value,
         ];
     }
 
@@ -101,12 +105,12 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
                 now()->subDays(1)->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
             ],
         ];
-        if (in_array(ucfirst($this->quoteType), [QuoteTypes::SAVINGS->value, QuoteTypes::LIFE->value])) {
+        if (in_array(ucfirst($this->quoteType), [QuoteTypes::SAVINGS->value, QuoteTypes::LIFE->value, QuoteTypes::CYBER->value])) {
             foreach ($requestParams as $key => $value) {
                 request()->merge([$key => $value]);
             }
 
-            if (ucfirst($this->quoteType) == QuoteTypes::LIFE->value && ! Auth::check()) {
+            if (in_array(ucfirst($this->quoteType), [QuoteTypes::LIFE->value, QuoteTypes::CYBER->value]) && ! Auth::check()) {
                 Auth::login($user);
             }
         }
@@ -119,6 +123,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams),
             QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuoteQuery(isExportRequest: true),
             QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(getQuery: true),
+            QuoteTypes::CYBER->value => app(CyberQuoteService::class)->getData(false, false, false),
             default => abort(404),
         };
 
@@ -339,6 +344,22 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
                 self::POLICY_SUM_ASSURED,
                 self::SUB_SOURCE,
             ],
+            QuoteTypes::CYBER->value => [
+                self::REF_ID,
+                self::FIRST_NAME,
+                self::LAST_NAME,
+                self::LEAD_STATUS,
+                self::SOURCE,
+                self::PLAN_NAME,
+                self::COVERAGE_UP_TO,
+                self::PREMIUM,
+                self::POLICY_NUMBER,
+                self::ADVISOR,
+                self::BRANCH,
+                self::CREATED_DATE,
+                self::LAST_MODIFIED_DATE,
+                self::PREVIOUS_POLICY_EXPIRY_DATE,
+            ],
         ];
 
         $baseHeadings = $headings[ucfirst($quoteType)] ?? [];
@@ -367,6 +388,8 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
     protected function getValues(string $quoteType, $quote): array
     {
         $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypes::getIdFromValue($quoteType)));
+        $coverageUpTo = $quote?->cyberQuote?->coverage ? '$ ' . $quote->cyberQuote->coverage->text : '';
+        $planName = $quote?->insuranceProviderPlan?->text ?? '';
 
         $baseFields = [
             'code' => $quote->code,
@@ -388,6 +411,8 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             'transaction_approved_date' => $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             'booking_date' => $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             'pc_customer' => $quote->customer?->pcp_tag_formatted ?? '',
+            'coverage_up_to' => $coverageUpTo,
+            'plan_name' => $planName,
         ];
 
         $branchFields = [
@@ -586,6 +611,23 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
                 optional($quote->subSource)->text,
                 ...$branchFields,
             ],
+            QuoteTypes::CYBER->value => [
+                $baseFields['code'],
+                $baseFields['first_name'],
+                $baseFields['last_name'],
+                $baseFields['lead_status'],
+                $baseFields['source'],
+                $baseFields['plan_name'],
+                $baseFields['coverage_up_to'],
+                $baseFields['premium'],
+                $baseFields['policy_number'],
+                $baseFields['advisor'],
+                $baseFields['branch'],
+                $baseFields['created_date'],
+                $baseFields['last_modified_date'],
+                $baseFields['previous_policy_expiry_date'],
+                ...$branchFields,
+            ],
             default => [],
         };
     }
@@ -598,6 +640,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             QuoteTypes::PET->value => QuoteTypeId::Pet,
             QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
             QuoteTypes::HOME->value => QuoteTypeId::Home,
+            QuoteTypes::CYBER->value => QuoteTypeId::Cyber,
         ];
 
         return [

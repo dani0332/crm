@@ -23,6 +23,7 @@ use App\Services\SplitPaymentService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\BranchAssignmentService;
 
 class CyberQuoteService extends BaseQuoteService
 {
@@ -43,6 +44,7 @@ class CyberQuoteService extends BaseQuoteService
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
@@ -50,6 +52,7 @@ class CyberQuoteService extends BaseQuoteService
             'nationality',
             'insuranceProviderPlan',
             'cyberQuote.coverage',
+            'branch:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -89,6 +92,20 @@ class CyberQuoteService extends BaseQuoteService
         return $query->resolveData($paginted, $forExport, $getTotalCount);
     }
 
+    public function postProcessCyberQuotes($quotes)
+    {
+        $quotes->getCollection()->transform(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable
+                ? 'N/A'
+                : ($item?->branch?->name ?? app(BranchAssignmentService::class)
+                    ->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Cyber));
+
+            return $item;
+        });
+
+        return $quotes;
+    }
+
     public function getOne(string $uuid, $allDetails = false)
     {
         $quote = $this->baseQuery()
@@ -101,6 +118,8 @@ class CyberQuoteService extends BaseQuoteService
                     'quoteStatus',
                     'currentlyInsuredWith',
                     'advisor',
+                    'advisor.primaryBranch',
+                    'branch:id,name',
                     'paymentStatus',
                     'quoteDetail',
                     'quoteDetail.lostReason',
@@ -163,6 +182,8 @@ class CyberQuoteService extends BaseQuoteService
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
         }
+
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Cyber));
 
         return $quote;
     }

@@ -121,6 +121,7 @@ class CentralController extends Controller
             QuoteTypes::LIFE->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
+            QuoteTypes::CYBER->value,
         ])) {
             if ($request['exportType'] == 'email') {
                 return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->emailCSV($quoteType.'-List', $request->all());
