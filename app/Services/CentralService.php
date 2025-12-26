@@ -1809,7 +1809,11 @@ class CentralService extends BaseService
                     DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
                     DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
                 ]);
-            })->first()?->doc_url ?? '';
+            })->first() ?? null;
+
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
+                ? $emailData->policySchedule->watermarkedDocumentUrl ?? ''
+                : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
 
             if (empty($emailData->policySchedule)) {
                 LoggerService::info('Policy Schedule not found.');
