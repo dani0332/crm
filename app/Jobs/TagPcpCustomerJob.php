@@ -15,8 +15,8 @@ use Illuminate\Foundation\Queue\Queueable;
 class TagPcpCustomerJob implements ShouldQueue
 {
     use PrivateClient, Queueable;
-    public $tries = 1;
 
+    public $tries = 1;
     public array $uuids;
 
     public function __construct(array $uuids)
