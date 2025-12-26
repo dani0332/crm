@@ -145,7 +145,12 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
-        $schedule->command('app:send-failed-ila-emails-command')->timezone('Asia/Dubai')->everyTenMinutes()->onOneServer()->withoutOverlapping();
+        $schedule->command('app:send-failed-ila-emails-command')
+            ->timezone('Asia/Dubai')
+            ->everyTenMinutes()
+            ->between('10:00', '23:00')
+            ->onOneServer()
+            ->withoutOverlapping();
 
         $schedule->command('ep:capture-payments')
             ->everyThirtyMinutes()
