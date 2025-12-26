@@ -21,4 +21,3 @@ class PaymentTestQueryService
             ->first();
     }
 }
-

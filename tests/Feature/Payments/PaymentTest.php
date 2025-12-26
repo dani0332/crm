@@ -14,19 +14,19 @@ use Tests\Helpers\TestSchemaCreator;
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     ApplicationStorageFactory::createVatValueForSqlite('5');
-    
+
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
     PaymentTestDataHelper::setupPaymentPermissions($this->user);
-    
+
     $testData = PaymentTestDataHelper::setupTestData();
     $this->insuranceProvider = $testData['insuranceProvider'];
     $this->carPlan = $testData['carPlan'];
     $this->carQuote = $testData['carQuote'];
     $this->quoteCode = $testData['quoteCode'];
     $this->quoteUuid = $testData['quoteUuid'];
-    
-    $this->paymentQueryService = new PaymentTestQueryService();
+
+    $this->paymentQueryService = new PaymentTestQueryService;
 });
 
 test('payment and payment split can be created using factories', function () {
