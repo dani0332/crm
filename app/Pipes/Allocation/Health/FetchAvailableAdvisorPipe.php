@@ -124,12 +124,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         LoggerService::info(self::class."::getBLAdvisorByStatus - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
-        $rules = $this->allocationRequest->get('rules');
-        $ruleUserIds = [];
-        if (! empty($rules) && $rules->isNotEmpty()) {
-            $ruleUserIds = $this->allocationRequest->get('ruleUserIds', []);
-        }
-
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(
             $this->allocationRequest->getQuoteType(),
             $this->allocationRequest->isSIC(),
@@ -138,12 +132,19 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         LoggerService::info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
 
-        $userIds = array_values(array_intersect(
-            $buyLeadRequestedUserIds,
-            $ruleUserIds
-        ));
+        $rules = $this->allocationRequest->get('rules');
+        $ruleUserIds = [];
+        if (! empty($rules) && $rules->isNotEmpty()) {
+            $ruleUserIds = $this->allocationRequest->get('ruleUserIds', []);
+            $userIds = array_values(array_intersect(
+                $buyLeadRequestedUserIds,
+                $ruleUserIds
+            ));
 
-        LoggerService::info(self::class.'::getBLAdvisorsByStatus - user ids after intersection with rule users are: '.json_encode($userIds));
+            LoggerService::info(self::class.'::getBLAdvisorsByStatus - user ids after intersection with rule users are: '.json_encode($userIds));
+        } else {
+            $userIds = $buyLeadRequestedUserIds;
+        }
 
         $advisors = $this->getAdvisorBaseQuery($status, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor], true)
             ->when($this->lead->isValueLead(), function ($q) {
