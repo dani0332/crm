@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
 use App\Enums\QuoteTypes;
-use App\Enums\AdnicEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Validator;
-use App\Models\HealthQuote;
-use App\Models\HealthInsurerRequestResponse;
 
 class AdnicValidationService
 {
