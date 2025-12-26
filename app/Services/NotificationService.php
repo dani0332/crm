@@ -20,7 +20,6 @@ class NotificationService extends BaseService
      *
      * @param  string  $quoteType  The type of quote (e.g., 'Car', 'Business')
      * @param  string  $quoteId  The UUID of the quote
-     * @return JsonResponse
      */
     public function paymentStatusUpdate(string $quoteType, string $quoteId): JsonResponse
     {
@@ -30,6 +29,7 @@ class NotificationService extends BaseService
                 'quote_id' => $quoteId,
                 'reason' => 'Quote type must be a string, not numeric',
             ]);
+
             return response()->json(['message' => 'Quote type not valid'], 422);
         }
 
@@ -51,7 +51,6 @@ class NotificationService extends BaseService
         return response()->json(['message' => 'Payment notification successfully sent to advisor']);
     }
 
-
     private function validateModel($model, string $quoteType, string $quoteId): ?JsonResponse
     {
         if (! $model) {
@@ -60,6 +59,7 @@ class NotificationService extends BaseService
                 'quote_id' => $quoteId,
                 'reason' => 'Quote not found with provided quoteType and quoteId',
             ]);
+
             return response()->json(['message' => 'Quote not found'], 404);
         }
 
@@ -69,12 +69,12 @@ class NotificationService extends BaseService
                 'quote_id' => $quoteId,
                 'reason' => 'No advisor assigned to this lead',
             ]);
+
             return response()->json(['message' => 'No advisor assigned to this lead'], 422);
         }
 
         return null;
     }
-
 
     private function buildNotificationUrl(string $quoteType, $model): string
     {
@@ -95,7 +95,6 @@ class NotificationService extends BaseService
 
         return $url;
     }
-
 
     private function getQuoteTypeCode(string $quoteType): string
     {
