@@ -1262,7 +1262,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        $ccEmails = env('APP_ENV') === 'production' ? 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com' : 'diya.lekhwani@myalfred.com';
+        $ccEmails = env('APP_ENV') === 'production' ? 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com' : 'diya.lekhwani@myalfred.com, productionapproval@yopmail.com, sheza.moeen@myalfred.com, tasawar.hussain@myalfred.com';
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_FAILURE_EMAIL],
