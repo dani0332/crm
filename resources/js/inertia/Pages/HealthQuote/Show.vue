@@ -196,6 +196,13 @@ const emailTableColumns = reactive({
   ],
 });
 
+const isAdnic = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.ADNIC
+  );
+});
+
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
@@ -4431,6 +4438,14 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+    />
+
+    <PolicyIssuanceApiLogs
+      v-if="isAdnic"
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs

@@ -73,7 +73,7 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
      */
     public function isPolicyIssuanceAutomationEnabled(): bool
     {
-        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE);
+        return (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE);
     }
 
     /**

@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
 use App\Enums\QuoteTypes;
+use App\Enums\AdnicEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Validator;
+use App\Models\HealthQuote;
+use App\Models\HealthInsurerRequestResponse;
 
 class AdnicValidationService
 {
@@ -75,9 +78,11 @@ class AdnicValidationService
      */
     public function validateRequiredData($quote): array
     {
-        $customer = $quote->customer ?? null;
-        $nationality = $quote->nationality ?? null;
-        $emirateOfRegistration = $quote?->cyberQuote?->emirateOfRegistration ?? null;
+        $customer = $quote->customer;
+        $nationality = $quote->nationality;
+        $insurerGenerateQuoteRequestResponse = $quote->insurerGenerateQuoteRequestResponse;
+        $insurerGenerateQuoteResponse = $insurerGenerateQuoteRequestResponse ? json_decode($insurerGenerateQuoteRequestResponse->response) : null;
+        $insurerQuoteNumber = $insurerGenerateQuoteResponse?->QuoteInfo?->QuotationNo;
 
         $missing = [];
 
@@ -85,29 +90,19 @@ class AdnicValidationService
             $missing[] = 'payments';
         }
 
-        if (! $quote->cyberPlanDetail) {
-            $missing[] = 'cyber plan detail';
+        if (! $insurerQuoteNumber) {
+            $missing[] = 'insurer quote number';
         }
-
-        $nationality == null && $missing[] = 'nationality';
-        $emirateOfRegistration == null && $missing[] = 'emirate of registration';
-
         // Only check emirates id if customer exists (not null)
         if ($customer === null) {
             $missing[] = 'customer';
-        } else {
-            empty($customer->emirates_id_number) && $missing[] = 'emirates id number';
-            $customer->dob === null && $missing[] = 'dob';
         }
 
         if (! empty($missing)) {
             LoggerService::error('Missing required data', extra: [
                 'has_payments' => (bool) $quote->payments,
-                'has_plan_detail' => (bool) $quote->cyberPlanDetail,
-                'has_emirates_id' => (bool) ($customer?->emirates_id_number),
-                'has_nationality' => (bool) ($nationality),
-                'has_dob' => (bool) ($customer?->dob),
-                'has_emirate_of_registration' => (bool) ($emirateOfRegistration),
+                'has_insurer_quote_number' => (bool) $insurerQuoteNumber,
+                'has_customer' => (bool) $customer,
             ]);
 
             $missingDesc = implode(', ', $missing);

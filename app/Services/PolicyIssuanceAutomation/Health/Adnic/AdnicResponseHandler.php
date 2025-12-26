@@ -73,18 +73,17 @@ class AdnicResponseHandler
     private function hasApiErrors($responseObject): bool
     {
         return $responseObject == null
-            || isset($responseObject->errorList)
-            || (isset($responseObject->isSuccess) && strtoupper((string) $responseObject->isSuccess) === 'N');
+            || (isset($responseObject->ErrorInfo) && count($responseObject->ErrorInfo) > 0)
+            || (isset($responseObject->DocumentInfo->ErrorInfo) && count($responseObject->DocumentInfo->ErrorInfo) > 0);
     }
 
     private function extractErrorMessage($responseObject, string $apiKey)
     {
-        if (isset($responseObject?->errorList)) {
-            return json_encode($responseObject->errorList);
+        if (isset($responseObject->DocumentInfo->ErrorInfo) && count($responseObject->DocumentInfo->ErrorInfo) > 0) {
+            return json_encode($responseObject->DocumentInfo->ErrorInfo[0]->ErrorMsg);
         }
-
-        if (isset($responseObject?->message)) {
-            return $responseObject->message;
+        if (isset($responseObject->ErrorInfo) && count($responseObject->ErrorInfo) > 0) {
+            return json_encode($responseObject->ErrorInfo[0]->ErrorMsg);
         }
 
         return $responseObject ?? $apiKey.' '.self::API_FAILED;

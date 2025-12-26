@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\EmirateEnum;
+use App\Enums\PolicyIssuanceEnum;
+use App\Enums\AdnicEnum;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
@@ -561,5 +564,25 @@ class HealthQuote extends Model implements AuditableContract
     public function branch()
     {
         return $this->hasOne(Branch::class, 'id', 'branch_id');
+    }
+
+    public function insurerRequestResponses()
+    {
+        return $this->hasMany(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid');
+    }
+
+    public function insurerGenerateQuoteRequestResponse()
+    {
+        return $this->hasOne(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid')->where(['execution_method' => AdnicEnum::STEP_GENERATE_QUOTE,'status' =>'passed'])->latest();
+    }
+
+    public function isBookingFailed()
+    {
+        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+    }
+
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
 }

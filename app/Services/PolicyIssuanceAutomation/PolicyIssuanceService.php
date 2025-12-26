@@ -48,7 +48,7 @@ class PolicyIssuanceService
                 default => null,
             },
             QuoteTypes::HEALTH->value => match ($insurerCode) {
-                InsuranceProvidersEnum::TE => new AdnicInsuranceService,
+                InsuranceProvidersEnum::ADNIC => app(AdnicInsuranceService::class),
                 default => null,
             },
             default => null,

@@ -115,15 +115,13 @@ class AdnicApiService
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
-        $allDocsDownloaded = true;
-        $documents = is_array($quoteDocuments) ? $quoteDocuments : [$quoteDocuments];
+        $allDocsDownloaded = true; 
 
         foreach ($insuredInfoDetails as $memberIndex => $insuredMember) {
             $memberSeqNo = $insuredMember?->MemberSeqNo ?? $memberIndex;
             $memberDocumentUploads[$memberSeqNo] = [];
 
-            foreach ($documents as $docTypeCode => $quoteDocument) {
-                $quoteDocument = $quoteDocuments->firstWhere('document_type_code', $docTypeCode);
+            foreach ($quoteDocuments as $quoteDocument) {
                 $insurerDocumentCode = $this->documentHandler->getInsurerDocCodeForHealth($quoteDocument->document_type_code);
                 $documentContentResponse = $this->documentHandler->fetchDocumentContent($quoteDocument->doc_url);
                 if (! $documentContentResponse['status']) {
@@ -135,7 +133,7 @@ class AdnicApiService
                 $base64Content = base64_encode($documentContentResponse['content']);
 
                 LoggerService::info('Preparing upload payload', extra: [
-                    'document_type' => $docTypeCode,
+                    'document_type' => $quoteDocument->document_type_code,
                     'insurer_document_code' => $insurerDocumentCode,
                     'document_name' => $quoteDocument->original_name ?? $quoteDocument->doc_name,
                     'document_size_kb' => round(strlen($base64Content) / 1024, 2),

@@ -69,7 +69,7 @@ class AdnicStepExecutor
             'process_id' => $process->id,
         ]);
 
-        $this->healthInsurerRequestResponse = HealthInsurerRequestResponse::where('quote_uuid', $quote->uuid)->first();
+        $this->healthInsurerRequestResponse = $quote->insurerGenerateQuoteRequestResponse;
 
         $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process, $this->healthInsurerRequestResponse);
 

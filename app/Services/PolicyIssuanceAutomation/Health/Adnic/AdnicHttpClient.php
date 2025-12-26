@@ -37,7 +37,7 @@ class AdnicHttpClient
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
             'Ocp-Apim-Subscription-Key' => $this->authParam['Ocp-Apim-Subscription-Key'],
-            'Authorization' => 'Bearer '.$this->authParam['Authorization'],
+            'Authorization' => $this->authParam['Authorization'],
         ];
     }
 
