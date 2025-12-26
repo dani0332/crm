@@ -9,7 +9,6 @@ use App\Enums\DaysNameEnum;
 use App\Enums\EnvEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -1080,7 +1079,7 @@ class LeadAllocationService extends BaseService
                                 // OR Clicked proceed with application (payment link requested or authorized)
                                     ->orWhereIn('quote_status_id', [
                                         QuoteStatusEnum::ApplicationPending,
-                                        QuoteStatusEnum::PaymentLinkRequestedByCustomer
+                                        QuoteStatusEnum::PaymentLinkRequestedByCustomer,
                                     ]);
                             });
                     })
