@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\BranchEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -25,6 +26,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -120,11 +122,19 @@ class CarQuoteObserver
                 app(BranchAssignmentService::class)->saveBranchOverride($lead, QuoteTypeId::Car);
                 CarQuote::withoutEvents(function () use ($lead, &$dirty) {
 
-                    $branch = app(BranchAssignmentService::class)->getBranch($lead?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+                    $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($lead, QuoteTypes::CAR->value);
+                    $branch_id = null;
+                    if ($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($lead?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+
                     $lead->update([
-                        'branch_id' => $branch?->id,
+                        'branch_id' => $branch_id,
                     ]);
-                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                    $dirty = [...$dirty, 'branch_id' => $branch_id];
                 });
             } catch (Exception $e) {
                 LoggerService::error('CarQuoteObserver - save branch data failed', [

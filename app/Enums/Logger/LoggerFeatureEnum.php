@@ -51,4 +51,5 @@ enum LoggerFeatureEnum: string
     case CHECK_DOCUMENT_UPLOAD_AFTER_PAYMENT = 'check-document-upload-after-payment';
     case NGI_SMARTPHONE_POLICY_AUTOMATION = 'ngi-smartphone-policy-automation';
     case INSURER_AML_SCREENING_WITH_KYC_DOCUMENT = 'insurer-aml-screening-with-kyc-document';
+    case LEAD_OCR_DATA_COMPARISON = 'lead-ocr-data-comparison';
 }

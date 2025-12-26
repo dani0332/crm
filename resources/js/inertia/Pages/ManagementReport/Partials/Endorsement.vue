@@ -267,11 +267,6 @@ const tableHeader = reactive([
     value: 'sub_source_option',
     tooltip: 'The SUB SOURCE OPTION of the lead',
   },
-  {
-    text: 'Branch',
-    value: 'branch_name',
-    tooltip: 'The branch of the lead',
-  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
