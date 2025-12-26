@@ -21,33 +21,12 @@ class InsuranceProviderFactory extends Factory
      */
     public function definition(): array
     {
-        $providers = [
-            ['code' => 'AXA', 'text' => 'Gulf Insurance'],
-            ['code' => 'QIC', 'text' => 'Qatar Insurance'],
-            ['code' => 'RAK', 'text' => 'RAK Insurance'],
-            ['code' => 'TM', 'text' => 'Tokio Marine'],
-        ];
-
-        $provider = $this->faker->randomElement($providers);
-
         return [
-            'code' => $provider['code'],
-            'text' => $provider['text'],
+            'code' => $this->faker->unique()->lexify('???'),
+            'text' => $this->faker->company(),
             'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
-    }
-
-    /**
-     * Indicate that the provider should be inactive.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
-     */
-    public function inactive()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'is_active' => 0,
-            ];
-        });
     }
 }
