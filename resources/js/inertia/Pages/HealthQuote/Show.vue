@@ -4440,6 +4440,13 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
       :quoteCode="$page.props.quote.code"
     />
 
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
     <PolicyIssuanceApiLogs
       v-if="isAdnic"
       :type="modelClass"
