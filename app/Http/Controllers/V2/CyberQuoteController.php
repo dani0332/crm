@@ -45,7 +45,7 @@ class CyberQuoteController extends Controller
 
         $data = $query->simplePaginate(10)->withQueryString();
         $data = $this->cyberQuoteService->postProcessCyberQuotes($data);
-        
+
         $cyberCoverages = $this->cyberQuoteService->getCyberCoverages();
 
         return inertia('CyberQuote/Index', [

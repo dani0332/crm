@@ -17,13 +17,13 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\User;
+use App\Services\BranchAssignmentService;
 use App\Services\CustomerInsuredService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\BranchAssignmentService;
 
 class CyberQuoteService extends BaseQuoteService
 {
