@@ -3431,7 +3431,7 @@ class RenewalsUploadService
     {
         if (! empty($advisorId) && $quote->advisor_id != $advisorId) {
             $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
-            LoggerService::info($logPrefix . ' quote advisor assigned datetime updated UUID: ' . $quote->uuid);
+            LoggerService::info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
         } else {
             if ($renewalUploadLead->is_sic == 1) {
                 // add entry to quote tag as SIC
@@ -3446,7 +3446,7 @@ class RenewalsUploadService
                 ! $checkExisted && QuoteTag::create($quoteTagPayload);
                 // processing the SIC workflow trigger only and don't send OCB email
                 SendCarOCBIntroEmailJob::dispatch($quote->uuid, $previousAdvisor, true, true);
-                LoggerService::info($logPrefix . ' Quote Tag created. : ' . QuoteSegmentEnum::SIC->tag() . ' for UUID: ' . $quote->uuid);
+                LoggerService::info($logPrefix.' Quote Tag created. : '.QuoteSegmentEnum::SIC->tag().' for UUID: '.$quote->uuid);
             }
         }
     }
