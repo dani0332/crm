@@ -7,7 +7,6 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\AdnicEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
-use App\Models\HealthInsurerRequestResponse;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 

@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
-use App\Enums\EmirateEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\AdnicEnum;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -573,7 +573,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function insurerGenerateQuoteRequestResponse()
     {
-        return $this->hasOne(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid')->where(['execution_method' => AdnicEnum::STEP_GENERATE_QUOTE,'status' =>'passed'])->latest();
+        return $this->hasOne(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid')->where(['execution_method' => AdnicEnum::STEP_GENERATE_QUOTE, 'status' => 'passed'])->latest();
     }
 
     public function isBookingFailed()

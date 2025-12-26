@@ -115,7 +115,7 @@ class AdnicApiService
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
-        $allDocsDownloaded = true; 
+        $allDocsDownloaded = true;
 
         foreach ($insuredInfoDetails as $memberIndex => $insuredMember) {
             $memberSeqNo = $insuredMember?->MemberSeqNo ?? $memberIndex;
