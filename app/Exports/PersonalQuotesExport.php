@@ -376,8 +376,6 @@ class PersonalQuotesExport implements CsvExportableInterface
     protected function getValues(string $quoteType, $quote): array
     {
         $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypes::getIdFromValue($quoteType)));
-        $coverageUpTo = $quote?->cyberQuote?->coverage ? '$ '.$quote->cyberQuote->coverage->text : '';
-        $planName = $quote?->insuranceProviderPlan?->text ?? '';
 
         $baseFields = [
             'code' => $quote->code,
@@ -399,8 +397,6 @@ class PersonalQuotesExport implements CsvExportableInterface
             'transaction_approved_date' => $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             'booking_date' => $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             'pc_customer' => $quote->customer?->pcp_tag_formatted ?? '',
-            'coverage_up_to' => $coverageUpTo,
-            'plan_name' => $planName,
         ];
 
         return match (ucfirst($quoteType)) {
@@ -611,8 +607,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['last_name'],
                 $baseFields['lead_status'],
                 $baseFields['source'],
-                $baseFields['plan_name'],
-                $baseFields['coverage_up_to'],
+                $quote?->insuranceProviderPlan?->text ?? '',
+                $quote?->cyberQuote?->coverage ? '$ '.$quote->cyberQuote->coverage->text : '',
                 $baseFields['premium'],
                 $baseFields['policy_number'],
                 $baseFields['advisor'],
