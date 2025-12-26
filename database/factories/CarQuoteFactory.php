@@ -2,9 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\CarPlan;
 use App\Models\CarQuote;
-use App\Models\InsuranceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CarQuoteFactory extends Factory
@@ -18,103 +16,25 @@ class CarQuoteFactory extends Factory
      */
     public function definition(): array
     {
-        // Generate UUID with 8-10 random characters
-        $uuidLength = $this->faker->numberBetween(8, 10);
-        $uuid = $this->faker->regexify('[A-Za-z0-9]{'.$uuidLength.'}');
-        $uuid = strtoupper($uuid);
-
-        // Create a CarPlan using factory (which automatically creates an InsuranceProvider)
-        // This gives us both insurance_provider_id and plan_id
-        $carPlan = CarPlan::factory()->create();
+        $uuid = $this->faker->unique()->uuid();
 
         return [
             'uuid' => $uuid,
-            'code' => 'CAR-'.$uuid,
+            'code' => 'CQ-TEST-'.strtoupper(substr($uuid, 0, 8)),
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'email' => $this->faker->unique()->safeEmail(),
-            'mobile_no' => $this->faker->phoneNumber(),
-            'dob' => $this->faker->date(),
+            'mobile_no' => '+971'.$this->faker->numerify('#########'),
+            'dob' => $this->faker->date('Y-m-d', '-25 years'),
             'source' => $this->faker->randomElement(['IMCRM']),
             'device' => $this->faker->randomElement(['web']),
             'premium' => 1000,
-            'insurance_provider_id' => $carPlan->provider_id,
             'customer_id' => 1,
-            'plan_id' => $carPlan->id,
             'quote_status_id' => null,
             'payment_status_id' => null,
             'advisor_id' => null,
             'created_by_id' => null,
             'updated_by_id' => null,
         ];
-    }
-
-    /**
-     * Associate the quote with a specific car plan.
-     * This will automatically set both plan_id and insurance_provider_id.
-     *
-     * @param  int|CarPlan  $carPlan
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
-     */
-    public function forCarPlan($carPlan)
-    {
-        return $this->state(function (array $attributes) use ($carPlan) {
-            $plan = $carPlan instanceof CarPlan ? $carPlan : CarPlan::findOrFail($carPlan);
-
-            return [
-                'plan_id' => $plan->id,
-                'insurance_provider_id' => $plan->provider_id,
-            ];
-        });
-    }
-
-    /**
-     * Create a CarQuote for tests.
-     * Uses the default database connection (SQLite in tests as configured in phpunit.xml).
-     *
-     * @param  array  $attributes  If 'uuid' is provided, it will be used. If 'code' is provided, it will be used.
-     *                             Otherwise, UUID and code will be auto-generated.
-     */
-    public function createForSqlite(array $attributes = []): CarQuote
-    {
-        // Generate UUID if not provided
-        if (! isset($attributes['uuid'])) {
-            $uuidLength = $this->faker->numberBetween(8, 10);
-            $uuid = strtoupper($this->faker->regexify('[A-Za-z0-9]{'.$uuidLength.'}'));
-        } else {
-            $uuid = $attributes['uuid'];
-            unset($attributes['uuid']); // Remove from attributes to avoid duplication
-        }
-
-        // Generate code if not provided
-        if (! isset($attributes['code'])) {
-            $code = 'CAR-'.$uuid;
-        } else {
-            $code = $attributes['code'];
-            unset($attributes['code']); // Remove from attributes to avoid duplication
-        }
-
-        // Build quote attributes
-        $quoteAttributes = array_merge([
-            'customer_id' => 1,
-            'uuid' => $uuid,
-            'code' => $code,
-            'first_name' => $this->faker->firstName(),
-            'last_name' => $this->faker->lastName(),
-            'email' => $this->faker->unique()->safeEmail(),
-            'mobile_no' => $this->faker->phoneNumber(),
-            'dob' => $this->faker->date(),
-            'source' => $this->faker->randomElement(['IMCRM']),
-            'device' => $this->faker->randomElement(['web']),
-            'premium' => 1000,
-            'quote_status_id' => null,
-            'payment_status_id' => null,
-            'advisor_id' => null,
-            'created_by_id' => null,
-            'updated_by_id' => null,
-        ], $attributes);
-
-        // Use model-based creation with forceCreate to bypass mass assignment protection
-        return CarQuote::forceCreate($quoteAttributes);
     }
 }

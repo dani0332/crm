@@ -33,13 +33,13 @@ class PaymentTestDataHelper
         $planAttributes['provider_id'] = $insuranceProvider->id;
         $carPlan = CarPlan::forceCreate($planAttributes);
 
-        // Create CarQuote using factory method that handles SQLite connection
-        $carQuote = CarQuote::factory()->createForSqlite([
-            'uuid' => $quoteUuid,
-            'code' => $quoteCode,
-            'insurance_provider_id' => $insuranceProvider->id,
-            'plan_id' => $carPlan->id,
-        ]);
+        // Create CarQuote using factory
+        $quoteAttributes = CarQuote::factory()->definition();
+        $quoteAttributes['uuid'] = $quoteUuid;
+        $quoteAttributes['code'] = $quoteCode;
+        $quoteAttributes['insurance_provider_id'] = $insuranceProvider->id;
+        $quoteAttributes['plan_id'] = $carPlan->id;
+        $carQuote = CarQuote::forceCreate($quoteAttributes);
 
         return [
             'insuranceProvider' => $insuranceProvider,
