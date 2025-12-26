@@ -1077,7 +1077,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     private function formatNumber($number): string | null
     {
-        return $number ?? number_format($number, 2);
+        return $number !== null ? number_format($number, 2) : null;
     }
 
 }
