@@ -1815,7 +1815,7 @@ class CentralService extends BaseService
                 ? $emailData->policySchedule->watermarkedDocumentUrl ?? ''
                 : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
 
-            LoggerService::info("timing to check policy schedule: ".now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
+            LoggerService::info('timing to check policy schedule: '.now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
 
             if (empty($emailData->policySchedule)) {
                 LoggerService::info('Policy Schedule not found.');

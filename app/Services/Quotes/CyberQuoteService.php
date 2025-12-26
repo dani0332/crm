@@ -14,7 +14,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\UserNameEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\User;
@@ -439,8 +438,8 @@ class CyberQuoteService extends BaseQuoteService
 
     private function getPaContactDetails(): array
     {
-        
-        if(!app()->environment('production')) {
+
+        if (! app()->environment('production')) {
             return [self::CYBER_BOOKING_TEAM_EMAIL_TEST, self::CYBER_BOOKING_TEAM_NAME_TEST];
         }
 
