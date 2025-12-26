@@ -3,11 +3,11 @@
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
 use Database\Factories\ApplicationStorageFactory;
+use Tests\Feature\Services\PaymentTestQueryService;
 use Tests\Helpers\Payments\PaymentTestAssertionHelper;
 use Tests\Helpers\Payments\PaymentTestCreationHelper;
 use Tests\Helpers\Payments\PaymentTestDataHelper;
 use Tests\Helpers\Payments\PaymentTestPayloadHelper;
-use Tests\Helpers\Payments\PaymentTestQueryHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -25,6 +25,8 @@ beforeEach(function () {
     $this->carQuote = $testData['carQuote'];
     $this->quoteCode = $testData['quoteCode'];
     $this->quoteUuid = $testData['quoteUuid'];
+    
+    $this->paymentQueryService = new PaymentTestQueryService();
 });
 
 test('payment and payment split can be created using factories', function () {
@@ -63,7 +65,7 @@ test('payment should be created via endpoint', function () {
 
     $response->assertStatus(302);
 
-    $createdPayment = PaymentTestQueryHelper::getPaymentByQuoteCode($this->carQuote->code);
+    $createdPayment = $this->paymentQueryService->getPaymentByQuoteCode($this->carQuote->code);
     expect($createdPayment)->not->toBeNull();
     PaymentTestAssertionHelper::assertPaymentCreatedCorrectly(
         payment: $createdPayment,
@@ -73,7 +75,7 @@ test('payment should be created via endpoint', function () {
         expectedUserId: $this->user->id
     );
 
-    $createdPaymentSplit = PaymentTestQueryHelper::getPaymentSplitByCodeAndSerial(
+    $createdPaymentSplit = $this->paymentQueryService->getPaymentSplitByCodeAndSerial(
         paymentCode: $createdPayment->code,
         srNo: 1
     );
@@ -108,7 +110,7 @@ test('payment should be updated via endpoint', function () {
 
     $response->assertStatus(302);
 
-    $updatedPayment = PaymentTestQueryHelper::getPaymentByQuoteCode($this->carQuote->code);
+    $updatedPayment = $this->paymentQueryService->getPaymentByQuoteCode($this->carQuote->code);
     expect($updatedPayment)->not->toBeNull();
     PaymentTestAssertionHelper::assertPaymentUpdatedCorrectly(
         payment: $updatedPayment,
@@ -118,7 +120,7 @@ test('payment should be updated via endpoint', function () {
         expectedUserId: $this->user->id
     );
 
-    $updatedPaymentSplit = PaymentTestQueryHelper::getPaymentSplitByCodeAndSerial(
+    $updatedPaymentSplit = $this->paymentQueryService->getPaymentSplitByCodeAndSerial(
         paymentCode: $updatedPayment->code,
         srNo: 1
     );
@@ -190,7 +192,7 @@ test('payment should be approved via endpoint', function () {
 
     $response->assertStatus(302);
 
-    $updatedPayment = PaymentTestQueryHelper::getPaymentByQuoteCode($this->carQuote->code);
+    $updatedPayment = $this->paymentQueryService->getPaymentByQuoteCode($this->carQuote->code);
     expect($updatedPayment)->not->toBeNull();
     $updatedPayment->refresh();
 
@@ -199,7 +201,7 @@ test('payment should be approved via endpoint', function () {
         expectedCapturedAmount: $initialCapturedAmount + $collectionAmount
     );
 
-    $approvedPaymentSplit = PaymentTestQueryHelper::getPaymentSplitByCodeAndSerial(
+    $approvedPaymentSplit = $this->paymentQueryService->getPaymentSplitByCodeAndSerial(
         paymentCode: $updatedPayment->code,
         srNo: 1
     );
