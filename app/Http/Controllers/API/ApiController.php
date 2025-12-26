@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
@@ -37,6 +39,7 @@ use App\Jobs\TagPcpCustomerJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
@@ -60,9 +63,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
-use App\Models\PersonalQuote;
+
 class ApiController extends Controller
 {
     use GenericQueriesAllLobs, PrivateClient;
