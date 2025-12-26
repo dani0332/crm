@@ -401,16 +401,6 @@ class TestSchemaCreator
             });
         }
 
-        // Create pest_test_table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('pest_test_table')) {
-            Schema::connection('sqlite')->create('pest_test_table', function ($table) {
-                $table->id();
-                $table->string('name');
-                $table->string('email');
-                $table->timestamps();
-            });
-        }
-
         // Create insurance_provider table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('insurance_provider')) {
             Schema::connection('sqlite')->create('insurance_provider', function ($table) {
