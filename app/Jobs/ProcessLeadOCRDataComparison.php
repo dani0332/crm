@@ -164,7 +164,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 continue;
             }
 
-            try {
+            //try {
                 DB::transaction(function () use ($quote) {
                     $emiratesIdDocumentsFound = 0;
                     $emiratesIdDocumentsProcessed = 0;
@@ -222,7 +222,11 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                             $matchCount = 0;
 
                             foreach ($leadDataStructure[$ocrDocType->value] as $key => $value) {
-                                if (! isset($ocrDataStructure[$ocrDocType->value][$key])) {
+                                /*if (! isset($ocrDataStructure[$ocrDocType->value][$key])) {
+                                    continue;
+                                }*/
+
+                                if (! array_key_exists($key, $ocrDataStructure[$ocrDocType->value] ?? [])) {
                                     continue;
                                 }
 
@@ -269,7 +273,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                         'flag_updated' => $flagUpdated,
                     ]);
                 });
-            } catch (\Exception $e) {
+            /*} catch (\Exception $e) {
                 // Reset OCR response structure even on failure
                 $this->ocrReponseStructure = [];
 
@@ -281,7 +285,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 // Mark as processed anyway to prevent infinite loop on persistent errors
                 // This ensures the quote won't be retried indefinitely
                 $this->markAsProcessedOnError($quote);
-            }
+            }*/
         }
 
         LoggerService::info(self::class.'::processOcrDocumentsForLeads - Completed processing all documents', extra: [
@@ -573,9 +577,9 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $vatAmount = $priceVatApplicable * $vatPercentage / 100;
 
         return [
-            'price_with_vat' => $priceWithVat,
-            'price_vat_applicable' => $priceVatApplicable,
-            'vat' => $vatAmount,
+            'price_with_vat' => $this->formatNumber($priceWithVat),
+            'price_vat_applicable' => $this->formatNumber($priceVatApplicable),
+            'vat' => $this->formatNumber($vatAmount),
             'policy_issuance_date' => Carbon::parse($ocrData->issuanceDate ?? $quote->policy_issuance_date)->format('Y-m-d'),
             'insurer_invoice_date' => $ocrData->invoiceDate ? Carbon::parse($ocrData->invoiceDate)->format('Y-m-d') : null,
             'tax_invoice_number' => $taxInvoiceNumber,
@@ -595,11 +599,11 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $commissionPercentage = roundNumber((($commissionWithoutVat / $premiumWithoutVat) * 100)) ?? $quote->payment?->comission_percentage;
 
         return [
-            'commission_vat' => $commissionVat,
-            'commission' => $commissionTotal,
+            'commission_vat' => $this->formatNumber($commissionVat),
+            'commission' => $this->formatNumber($commissionTotal),
             'commmission_percentage' => $commissionPercentage,
             'insurer_commmission_invoice_number' => $ocrData->taxInvoiceNumber ?? $quote->payment?->insurer_commmission_invoice_number,
-            'commission_vat_applicable' => $commissionVatApplicable,
+            'commission_vat_applicable' => $this->formatNumber($commissionVatApplicable),
         ];
     }
 
@@ -705,7 +709,6 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 'model' => $registrationCertificate->model,
                 'vehicle_type' => $registrationCertificate->vehicle_type,
                 'origin' => $registrationCertificate->origin,
-                'traffic_code_number' => $registrationCertificate->traffic_code_number,
             ]);
         }
 
@@ -717,9 +720,9 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $result = [];
 
         $result = [
-            'price_with_vat' => $quote->price_with_vat,
-            'price_vat_applicable' => $quote->price_vat_applicable,
-            'vat' => $quote->vat,
+            'price_with_vat' => $this->formatNumber($quote->price_with_vat),
+            'price_vat_applicable' => $this->formatNumber($quote->price_vat_applicable),
+            'vat' => $this->formatNumber($quote->vat),
             'policy_issuance_date' => Carbon::parse($quote->policy_issuance_date)->format('Y-m-d'),
         ];
 
@@ -743,11 +746,11 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
         if ($payment) {
             $result = [
-                'commission_vat' => $payment->commission_vat,
-                'commission' => $payment->commission,
+                'commission_vat' => $this->formatNumber($payment->commission_vat),
+                'commission' => $this->formatNumber($payment->commission),
                 'commmission_percentage' => $payment->commmission_percentage,
                 'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                'commission_vat_applicable' => $payment->commission_vat_applicable,
+                'commission_vat_applicable' => $this->formatNumber($payment->commission_vat_applicable),
             ];
         }
 
@@ -780,7 +783,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $isEcom = false;
 
         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
-        // $docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
+        //$docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
 
         if (! $docUrl) {
             LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
@@ -1070,6 +1073,11 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     private function getRefId(CarQuote $quote): string
     {
         return $quote->code;
+    }
+
+    private function formatNumber($number): string | null
+    {
+        return $number ?? number_format($number, 2);
     }
 
 }
