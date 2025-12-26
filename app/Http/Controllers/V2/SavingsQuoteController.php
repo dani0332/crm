@@ -9,12 +9,14 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsPlanUpdateRequest;
 use App\Http\Requests\SavingsQuoteRequest;
+use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Repositories\LostReasonRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\Quotes\SavingsQuoteService;
-use App\Services\Logger\LoggerService;
+use App\Services\Savings\SavingsEmailService;
 use Illuminate\Http\Request;
 
 class SavingsQuoteController extends Controller
@@ -196,23 +198,33 @@ class SavingsQuoteController extends Controller
         try {
             $quote = PersonalQuote::where('uuid', $quoteUuId)->firstOrFail();
 
+            LoggerService::startQuoteLogging($quoteUuId);
             LoggerService::info('SavingsQuoteController - sendOCAEmail', [
                 'quote_uuid' => $quoteUuId,
-                'customer_email' => $request->customer_email,
+                'customer_email' => $quote->email,
+                'plan_ids' => $request->plan_ids ?? [],
             ]);
 
-            // TODO: Implement the actual OCA email sending logic
-            // This would typically call a service that handles the email sending
-            // For now, we'll return a success response
+            // Prepare data for the email
+            $emailData = [
+                'plan_ids' => $request->plan_ids ?? [],
+            ];
+
+            // Dispatch the job to send OCA email
+            SendSavingsOCAEmailJob::dispatch($quoteUuId, $emailData);
+
+            LoggerService::info('SavingsQuoteController - sendOCAEmail job dispatched');
 
             return response()->json([
-                'success' => 'OCA email sent successfully to '.$request->customer_email,
+                'success' => true,
+                'message' => 'OCA email has been queued for sending to '.$quote->email,
             ]);
         } catch (\Exception $e) {
             LoggerService::error('SavingsQuoteController - sendOCAEmail failed', exception: $e);
 
             return response()->json([
-                'error' => 'Failed to send OCA email',
+                'success' => false,
+                'error' => 'Failed to send OCA email: '.$e->getMessage(),
             ], 500);
         }
     }
