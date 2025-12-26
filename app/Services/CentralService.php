@@ -1812,7 +1812,7 @@ class CentralService extends BaseService
             })->first() ?? null;
 
             $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
-                ? $emailData->policySchedule->watermarkedDocumentUrl ?? ''
+                ? $emailData->policySchedule->watermarked_doc_url ?? ''
                 : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
 
             LoggerService::info('timing to check policy schedule: '.now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
