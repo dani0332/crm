@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PrivateClientConfigService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -24,6 +25,7 @@ trait PrivateClient
     private const OPERATOR_NOT_LIKE = 'not like';
     private const OPERATOR_IS_NULL = 'is null';
     private const OPERATOR_IS_NOT_NULL = 'is not null';
+    private const PCP_CHUNK_SIZE = 100;
 
     private function isLOBEligibleForPCP(int $quoteTypeId)
     {
@@ -93,6 +95,194 @@ trait PrivateClient
 
         // Apply PCP tags
         return $this->applyPcpTagsToLeadAndCustomer($model, $version);
+    }
+
+    public function reEvaluatePrivateClient(array $data): array
+    {
+        $quoteTypeId = (int) $data['quote_type_id'];
+
+        if (! $this->isLOBEligibleForPCP($quoteTypeId)) {
+            LoggerService::warning('LOB not eligible for PCP re-evaluation.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return [
+                'processed' => 0,
+                'tagged' => 0,
+                'untagged' => 0,
+                'failures' => [
+                    [
+                        'quote_type_id' => $quoteTypeId,
+                        'reason' => 'ineligible_quote_type',
+                    ],
+                ],
+            ];
+        }
+
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
+
+        if (! $quoteType || ! class_exists($modelClass)) {
+            LoggerService::warning('Unable to resolve quote type for PCP re-evaluation.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+                'modelClass' => $modelClass,
+            ]);
+
+            return [
+                'processed' => 0,
+                'tagged' => 0,
+                'untagged' => 0,
+                'failures' => [
+                    [
+                        'quote_type_id' => $quoteTypeId,
+                        'reason' => 'model_not_found',
+                    ],
+                ],
+            ];
+        }
+
+        $dateFormat = 'Y-m-d';
+        $createdAtRange = null;
+        $createdAtInput = $data['created_at'] ?? null;
+
+        if (is_array($createdAtInput) && isset($createdAtInput['start'], $createdAtInput['end'])) {
+            try {
+                $start = Carbon::createFromFormat($dateFormat, trim((string) $createdAtInput['start']))->startOfDay();
+                $end = Carbon::createFromFormat($dateFormat, trim((string) $createdAtInput['end']))->endOfDay();
+
+                $createdAtRange = [
+                    'start' => $start->toDateTimeString(),
+                    'end' => $end->toDateTimeString(),
+                ];
+            } catch (Exception $exception) {
+                LoggerService::warning('Invalid created_at filter value received for PCP re-evaluation.', extra: [
+                    'start' => $createdAtInput['start'],
+                    'end' => $createdAtInput['end'],
+                ], exception: $exception);
+            }
+        }
+
+        $hasPcpAssignedFilter = array_key_exists('is_pcp_assigned', $data);
+        $filters = [
+            'lead_uuids' => $data['lead_uuids'] ?? null,
+            'is_policy_booked' => $data['is_policy_booked'] ?? null,
+            'is_pcp_assigned' => $hasPcpAssignedFilter ? $data['is_pcp_assigned'] : null,
+            'has_pcp_assigned_filter' => $hasPcpAssignedFilter,
+            'created_at' => $createdAtRange,
+        ];
+
+        LoggerService::info('Starting PCP re-evaluation.', extra: [
+            'quoteTypeId' => $quoteTypeId,
+            'filters' => array_filter($filters, fn ($value) => $value !== null),
+        ]);
+
+        $results = [
+            'processed' => 0,
+            'tagged' => 0,
+            'untagged' => 0,
+            'failures' => [],
+        ];
+
+        $modelInstance = new $modelClass();
+        $tableColumns = $this->getCachedTableColumns($modelClass, $modelInstance->getTable());
+
+        $query = $modelInstance->newQuery();
+
+        if (in_array('quote_type_id', $tableColumns)) {
+            $query->where('quote_type_id', $quoteTypeId);
+        }
+
+        if (! empty($filters['lead_uuids'])) {
+            $query->whereIn('uuid', $filters['lead_uuids']);
+        }
+
+        if ($filters['is_policy_booked'] !== null && in_array('quote_status_id', $tableColumns)) {
+            $bookedStatus = QuoteStatusEnum::PolicyBooked;
+            if ($filters['is_policy_booked']) {
+                $query->where('quote_status_id', $bookedStatus);
+            }
+            // If is_policy_booked is false, do not apply any filter on quote_status_id.
+        }
+
+        if ($filters['created_at'] !== null && in_array('created_at', $tableColumns)) {
+            $query->whereBetween('created_at', [
+                $filters['created_at']['start'],
+                $filters['created_at']['end'],
+            ]);
+        }
+
+        // Apply PCP assigned filter only if 'is_pcp_assigned' is present in filters and 'pc_qualified' column exists in the table
+        if ($filters['has_pcp_assigned_filter'] && in_array('pc_qualified', $tableColumns)) {
+            $query->where(function ($pcpQuery) use ($filters) {
+                if ($filters['is_pcp_assigned']) {
+                    $pcpQuery->where('pc_qualified', true);
+                } else {
+                    $pcpQuery->where(function ($nestedQuery) {
+                        $nestedQuery->whereNull('pc_qualified')->orWhere('pc_qualified', false);
+                    });
+                }
+            });
+        }
+
+        LoggerService::sql("Re-evaluation Query:",$query);
+
+        $query->orderBy('id')->chunkById(self::PCP_CHUNK_SIZE, function ($leads) use (&$results, $quoteType, $modelClass, $quoteTypeId) {
+            foreach ($leads as $lead) {
+                $results['processed']++;
+
+                try {
+                    $configs = app(PrivateClientConfigService::class)->evaluateConfig($quoteType, $lead->nationality_id);
+
+                    if (empty($configs)) {
+                        LoggerService::warning('No PCP configuration found for quote type.', extra: [
+                            'quoteTypeId' => $quoteTypeId,
+                            'leadUuid' => $lead->uuid,
+                        ]);
+
+                        $results['failures'][] = [
+                            'lead_uuid' => $lead->uuid,
+                            'reason' => 'configuration_not_found',
+                        ];
+
+                        continue;
+                    }
+
+                    $matchesCriteria = $this->doesLeadMatchPcpCriteria($lead, $configs, $modelClass, $quoteTypeId);
+                    $version = $configs->first()?->version;
+                    $pcpUpdated = $matchesCriteria
+                        ? $this->applyPcpTagsToLeadAndCustomer($lead, $version)
+                        : $this->applyPcpTagsToLeadAndCustomer($lead, $version, true);
+
+                    if (! $pcpUpdated) {
+                        $results['failures'][] = [
+                            'lead_uuid' => $lead->uuid,
+                            'reason' => 'pcp_update_failed',
+                        ];
+
+                        continue;
+                    }
+
+                    $matchesCriteria ? $results['tagged']++ : $results['untagged']++;
+                } catch (\Throwable $ex) {
+                    LoggerService::error('Error while re-evaluating PCP.', extra: [
+                        'quoteTypeId' => $quoteTypeId,
+                        'leadUuid' => $lead->uuid,
+                    ], exception: $ex);
+
+                    $results['failures'][] = [
+                        'lead_uuid' => $lead->uuid,
+                        'reason' => 'exception',
+                    ];
+                }
+            }
+        });
+
+        LoggerService::info('Completed PCP re-evaluation.', extra: [
+            'quoteTypeId' => $quoteTypeId,
+            'summary' => $results,
+        ]);
+
+        return $results;
     }
 
     private function findLeadModel(string $modelClass, string $leadUuid, int $quoteTypeId)
@@ -227,82 +417,148 @@ trait PrivateClient
             });
     }
 
-    private function applyPcpTagsToLeadAndCustomer($model, $pcpTagVersion): bool
+    private function applyPcpTagsToLeadAndCustomer($model, ?int $pcpTagVersion, bool $shouldRemove = false): bool
     {
         try {
-            return DB::transaction(function () use ($pcpTagVersion, $model) {
-                LoggerService::info('Applying PCP tag to lead and customer.', extra: [
+            return DB::transaction(function () use ($pcpTagVersion, $model, $shouldRemove) {
+                LoggerService::info($shouldRemove ? 'Removing PCP tag from lead and customer.' : 'Applying PCP tag to lead and customer.', extra: [
                     'leadUuid' => $model->uuid,
                     'pcpTagVersion' => $pcpTagVersion,
                 ]);
-                $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
 
-                $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
+                $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion, $shouldRemove);
 
-                $this->logUpdateResults($updateResults, $customerUpdateResult);
+                $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion, $shouldRemove);
+
+                $this->logUpdateResults($updateResults, $customerUpdateResult, $shouldRemove);
 
                 return true;
             });
         } catch (Exception $ex) {
-            LoggerService::error('Error applying PCP tag.', exception: $ex);
+            LoggerService::error($shouldRemove ? 'Error removing PCP tag.' : 'Error applying PCP tag.', exception: $ex);
 
             return false;
         }
     }
 
-    private function updateLeadAndPersonalQuote($model, int $pcpTagVersion): array
+    private function updateLeadAndPersonalQuote($model, ?int $pcpTagVersion, bool $shouldRemove = false): array
     {
         $wasLeadUpdated = false;
 
-        if (is_null($model->pc_qualified)) {
-            $updateData = ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
+        $updateData = $shouldRemove
+            ? ['pc_qualified' => false, 'pcp_tag_version' => null]
+            : ['pc_qualified' => true, 'pcp_tag_version' => $pcpTagVersion];
+
+        $shouldUpdateLead = $shouldRemove
+            ? ($model->pc_qualified !== false || ! is_null($model->pcp_tag_version))
+            : ($model->pc_qualified !== true || $model->pcp_tag_version !== $pcpTagVersion);
+
+        if ($shouldUpdateLead) {
 
             $model->update($updateData);
             PersonalQuote::where('uuid', $model->uuid)->update($updateData);
 
             $wasLeadUpdated = true;
-            LoggerService::info('PC qualified tag applied successfully on lead.');
+            LoggerService::info($shouldRemove ? 'PCP tag removed on lead.' : 'PC qualified tag applied successfully on lead.', extra: [
+                'leadUuid' => $model->uuid,
+            ]);
         }
 
-        return ['wasUpdated' => $wasLeadUpdated, 'version' => $model->pcp_tag_version];
+        return [
+            'wasUpdated' => $wasLeadUpdated,
+            'version' => $shouldRemove ? null : $pcpTagVersion,
+            'shouldRemove' => $shouldRemove,
+        ];
     }
 
-    private function updateCustomer($model, int $pcpTagVersion): array
+    private function updateCustomer($model, ?int $pcpTagVersion, bool $shouldRemove = false): array
     {
         $customer = Customer::where('id', $model->customer_id)->first();
         $wasCustomerUpdated = false;
+        $retainedExistingTag = false;
 
-        if ($customer && ! $customer->pcp_tag) {
-            $customer->update([
-                'ref_id' => $model->code,
-                'pcp_tag' => true,
-                'pcp_tag_version' => $pcpTagVersion,
-            ]);
+        if ($customer) {
+            if ($shouldRemove) {
+                $hasQualifiedQuotes = $this->customerHasActiveQualifiedQuotes((int) $customer->id);
 
-            $wasCustomerUpdated = true;
-            LoggerService::info('PCP tag applied successfully on customer.', extra: [
-                'customer_id' => $customer->id,
-                'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                'email' => $customer->email,
-            ]);
+                if (! $hasQualifiedQuotes && $customer->pcp_tag) {
+                    $customer->update([
+                        'pcp_tag' => false,
+                        'pcp_tag_version' => null,
+                    ]);
+
+                    $wasCustomerUpdated = true;
+                    LoggerService::info('PCP tag removed successfully on customer.', extra: [
+                        'customer_id' => $customer->id,
+                        'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                        'email' => $customer->email,
+                    ]);
+                } elseif ($hasQualifiedQuotes) {
+                    $retainedExistingTag = true;
+                    LoggerService::info('PCP tag retained on customer because other qualified leads exist.', extra: [
+                        'customer_id' => $customer->id,
+                        'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                        'email' => $customer->email,
+                    ]);
+                }
+            } elseif (! $customer->pcp_tag || $customer->pcp_tag_version !== $pcpTagVersion) {
+                $customer->update([
+                    'ref_id' => $model->code,
+                    'pcp_tag' => true,
+                    'pcp_tag_version' => $pcpTagVersion,
+                ]);
+
+                $wasCustomerUpdated = true;
+                LoggerService::info('PCP tag applied successfully on customer.', extra: [
+                    'customer_id' => $customer->id,
+                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                    'email' => $customer->email,
+                ]);
+            }
         }
 
         return [
             'customer' => $customer,
             'wasUpdated' => $wasCustomerUpdated,
-            'version' => $customer?->pcp_tag_version,
+            'version' => $shouldRemove ? null : $customer?->pcp_tag_version,
+            'shouldRemove' => $shouldRemove,
+            'retainedExistingTag' => $retainedExistingTag,
         ];
     }
 
-    private function logUpdateResults(array $leadResult, array $customerResult): void
+    private function logUpdateResults(array $leadResult, array $customerResult, bool $shouldRemove = false): void
     {
-        if (! $leadResult['wasUpdated']) {
+        if (! $leadResult['wasUpdated'] && ! $shouldRemove) {
             LoggerService::warning('PC qualified tag already applied on lead.', extra: [
                 'applied_tag_version' => $leadResult['version'],
             ]);
         }
 
         $customer = $customerResult['customer'];
+        if ($shouldRemove) {
+            if ($customer && $customerResult['wasUpdated']) {
+                LoggerService::info('PCP tag removed from customer record.', extra: [
+                    'customer_id' => $customer->id,
+                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                    'email' => $customer->email,
+                ]);
+            } elseif ($customer && ($customerResult['retainedExistingTag'] ?? false)) {
+                LoggerService::info('Skipped removing PCP tag because active qualified leads still exist for customer.', extra: [
+                    'customer_id' => $customer->id,
+                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                    'email' => $customer->email,
+                ]);
+            } elseif ($customer && ! $customerResult['wasUpdated']) {
+                LoggerService::warning('PCP tag already removed on customer.', extra: [
+                    'customer_id' => $customer->id,
+                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                    'email' => $customer->email,
+                ]);
+            }
+
+            return;
+        }
+
         if ($customer && ! $customerResult['wasUpdated']) {
             LoggerService::warning('PCP tag already applied on customer.', extra: [
                 'customer_id' => $customer->id,
@@ -311,6 +567,16 @@ trait PrivateClient
                 'applied_tag_version' => $customerResult['version'],
             ]);
         }
+    }
+
+    private function customerHasActiveQualifiedQuotes(int $customerId): bool
+    {
+        return PersonalQuote::where('customer_id', $customerId)
+            ->where('pc_qualified', true)
+            ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+            ->whereNotNull('policy_expiry_date')
+            ->where('policy_expiry_date', '>', now())
+            ->exists();
     }
 
     private function getCachedTableColumns(string $modelClass, string $table): array

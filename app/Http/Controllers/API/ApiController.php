@@ -26,6 +26,7 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\PaymentNotificationRequest;
+use App\Http\Requests\ReEvaluatePrivateClientRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
@@ -66,7 +67,10 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
-    use GenericQueriesAllLobs, PrivateClient;
+    // Use both traits; alias PrivateClient::reEvaluatePrivateClient to avoid future conflicts and enable explicit access.
+    use GenericQueriesAllLobs, PrivateClient {
+        PrivateClient::reEvaluatePrivateClient as privateClientReEvaluate;
+    }
 
     private const REQUIRED_STRING = 'required|string';
 
@@ -462,6 +466,13 @@ class ApiController extends Controller
             );
         }
         LoggerService::info(self::class.': Private client tag exercise has been completed');
+    }
+
+    public function reEvaluatePrivateClient(ReEvaluatePrivateClientRequest $request)
+    {
+        $response = $this->privateClientReEvaluate($request->validated());
+
+        return apiResponse($response, Response::HTTP_OK, 'PCP re-evaluation completed.');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
