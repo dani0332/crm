@@ -20,6 +20,7 @@ class NotificationService extends BaseService
                 'quote_id' => $quoteId,
                 'reason' => 'Quote type must be a string, not numeric',
             ]);
+
             return response()->json(['message' => 'Quote Type Not Valid'], 403);
         }
         $model = null;
@@ -34,6 +35,7 @@ class NotificationService extends BaseService
                 'quote_id' => $quoteId,
                 'reason' => 'Quote not found with provided quoteType and quoteId',
             ]);
+
             return response()->json(['message' => 'Quote Not Found'], 403);
         }
         if ($model->advisor_id === null) {
@@ -42,6 +44,7 @@ class NotificationService extends BaseService
                 'quote_id' => $quoteId,
                 'reason' => 'No advisor assigned to this lead',
             ]);
+
             return response()->json(['message' => 'No Advisor Assign to this Lead'], 403);
         }
 
