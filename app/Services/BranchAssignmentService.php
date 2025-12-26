@@ -120,10 +120,24 @@ class BranchAssignmentService extends BaseService
      */
     public function hasBranchAssignment($quote, $quoteTypeId): bool
     {
+        $advisorPrimaryBranch = $quote->advisor?->primaryBranch() ?? null;
+        $emirateOfYourVisaId = $quote->emirate_of_your_visa_id ?? null;
+        $emirateOfRegistrationId = $quote->latestInsured?->emirate_of_registration_id ?? null;
+        $hasBranch = $advisorPrimaryBranch !== null && ($quoteTypeId == QuoteTypeId::Health ? $emirateOfYourVisaId !== null : $emirateOfRegistrationId !== null);
+
+        LoggerService::info('Branch assignment validation for quote: '.$quote->code.' on sage booking', extra: [
+            'advisorPrimaryBranch' => $advisorPrimaryBranch,
+            'emirateOfYourVisaId' => $emirateOfYourVisaId,
+            'emirateOfRegistrationId' => $emirateOfRegistrationId,
+            'hasBranch' => $hasBranch,
+            'quoteTypeId' => $quoteTypeId,
+            'quoteUuid' => $quote->uuid,
+        ]);
+
         if ($quoteTypeId == QuoteTypeId::Health) {
             $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->emirate_of_your_visa_id !== null;
         } elseif ($quoteTypeId == QuoteTypeId::GroupMedical) {
-            $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->latestInsured?->entity?->emirate_of_registration_id !== null;
+            $hasBranch = $quote->advisor?->primaryBranch()->exists() && $quote->latestInsured?->emirate_of_registration_id !== null;
         } else {
             $hasBranch = $quote->advisor?->primaryBranch()->exists();
         }
