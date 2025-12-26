@@ -43,6 +43,9 @@ trait PersonalQuoteObservable
 
             if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                 $this->handlePolicyBookedOrSentToCustomer($personalQuote);
+            }
+
+            if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicyBooked])) {
                 event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             }
 
