@@ -30,33 +30,4 @@ class CarPlanFactory extends Factory
             'provider_id' => InsuranceProvider::factory(),
         ];
     }
-
-    /**
-     * Indicate that the plan should be inactive.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
-     */
-    public function inactive()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'is_active' => 0,
-            ];
-        });
-    }
-
-    /**
-     * Associate the plan with a specific insurance provider.
-     *
-     * @param  int|InsuranceProvider  $provider
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
-     */
-    public function forProvider($provider)
-    {
-        return $this->state(function (array $attributes) use ($provider) {
-            return [
-                'provider_id' => $provider instanceof InsuranceProvider ? $provider->id : $provider,
-            ];
-        });
-    }
 }
