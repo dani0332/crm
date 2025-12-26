@@ -14,13 +14,13 @@ use App\Models\LeadOcrDataComparison;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Models\OCRResponseData;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Http\Response;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -88,9 +88,6 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 'vat',
                 'policy_issuance_date',
             ])
-            ->whereHas('personalQuote', function ($query) {
-                $query->where('lead_ocr_comparison_processed', false);
-            })
             ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->when($this->uuid, function ($q) {
                 $q->where('uuid', $this->uuid);
@@ -252,6 +249,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
                     // Save data in database
                     $this->saveleadOCRComparisonData($quote->id, $quote->uuid, $leadDataStructure, $ocrDataStructure, $comparisonStructure);
+                    $this->saveOCRData($quote->id, $ocrDataStructure);
 
                     // Update processed flag using the relationship (CRITICAL FIX)
                     $flagUpdated = $this->updateLeadOCRComparisonProcessedFlag($quote);
@@ -310,16 +308,31 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         }
 
         // Save data in database
-        LeadOcrDataComparison::updateOrCreate([
+        LeadOcrDataComparison::create([
             'quoteable_id' => $quoteId,
             'quoteable_type' => QuoteTypes::CAR->modelClass(),
             'uuid' => $quoteUuid,
-        ], [
             'lead_data' => json_encode($leadDataStructure),
-            'ocr_data' => json_encode($ocrDataStructure),
-            'ocr_responses' => json_encode($this->ocrReponseStructure),
             'compairson_data' => json_encode($comparisonStructure),
             'comparison_score' => $comparisonScore,
+            'timestamp' => now()->valueOf(),
+        ]);
+    }
+
+    private function saveOCRData($quoteId, $ocrDataStructure): void
+    {
+        OCRResponseData::updateOrCreate([
+            'quoteable_id' => $quoteId,
+            'quoteable_type' => QuoteTypes::CAR->modelClass(),
+        ], [
+            'ocr_response' => json_encode($this->ocrReponseStructure),
+            'ocr_data' => json_encode($ocrDataStructure),
+        ]);
+
+        LoggerService::info(self::class.'::saveOCRData - OCR Response data saved successfully', extra: [
+            'quote_id' => $quoteId,
+            'ocr_response' => json_encode($this->ocrReponseStructure),
+            'ocr_data' => json_encode($ocrDataStructure),
         ]);
     }
 
@@ -782,8 +795,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $refId = $this->getRefId($quote);
         $isEcom = false;
 
-        $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
-        //$docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
+        //$docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
+        $docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
 
         if (! $docUrl) {
             LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
