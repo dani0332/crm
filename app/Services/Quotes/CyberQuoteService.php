@@ -29,6 +29,9 @@ class CyberQuoteService extends BaseQuoteService
 {
     private const CYBER_BOOKING_TEAM_EMAIL = 'production.approval.team@insurancemarket.ae';
     private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
+    private const CYBER_BOOKING_TEAM_EMAIL_TEST = 'productionapproval@yopmail.com';
+    private const CYBER_BOOKING_TEAM_NAME_TEST = 'Production Approval Team Test';
+
     public function __construct(
         private CustomerInsuredService $customerInsuredService
     ) {
@@ -383,16 +386,15 @@ class CyberQuoteService extends BaseQuoteService
     ): array {
         if ((int) $quote->quote_type_id !== QuoteTypeId::Cyber) {
             return [
-                'cc' => $cc,
                 'recipientEmail' => $recipientEmail,
                 'recipientName' => $recipientName,
             ];
         }
 
         $distribution = $this->getCyberDistributionEmails();
-        $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
+        $isCaptureFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE;
 
-        if ($isBookingFailure) {
+        if ($isCaptureFailure) {
             [$recipientEmail, $recipientName] = $this->getPaContactDetails();
         } elseif (! $recipientEmail && $quote?->advisor) {
             $recipientEmail = $quote->advisor->email;
@@ -400,16 +402,13 @@ class CyberQuoteService extends BaseQuoteService
         }
 
         if (! $recipientEmail) {
+            // this is additional check to get pa contact details if recipient email is not set and this situation can be use for OE user which is not updated by BA yet 26-dec-2025
             [$recipientEmail, $recipientName] = $this->getPaContactDetails();
         }
 
+        // adding advisor email to cc if it is not in recipient email this happened on capture failure situation
         if ($quote?->advisor?->email && $quote->advisor->email !== $recipientEmail) {
             $distribution[] = $quote->advisor->email;
-        }
-
-        $advisorManagerEmail = $this->getAdvisorManagerEmail($quote);
-        if ($advisorManagerEmail && $advisorManagerEmail !== $recipientEmail) {
-            $distribution[] = $advisorManagerEmail;
         }
 
         $distribution = array_values(array_unique(array_filter($distribution)));
@@ -435,18 +434,14 @@ class CyberQuoteService extends BaseQuoteService
         $emails = array_map('trim', explode(',', $configured));
         $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
 
-        return ! empty($emails) ? array_values($emails) : self::FALLBACK_CYBER_FAILURE_DISTRIBUTION;
+        return ! empty($emails) ? array_values($emails) : [];
     }
 
     private function getPaContactDetails(): array
     {
-        // TODO: need to add OE user here; right now we don't have any from Business
-        $paUser = User::activeUser()
-            ->where('name', UserNameEnum::PA)
-            ->first();
-
-        if ($paUser && $paUser->email) {
-            return [$paUser->email, $paUser->name ?? self::CYBER_BOOKING_TEAM_NAME];
+        
+        if(!app()->environment('production')) {
+            return [self::CYBER_BOOKING_TEAM_EMAIL_TEST, self::CYBER_BOOKING_TEAM_NAME_TEST];
         }
 
         return [self::CYBER_BOOKING_TEAM_EMAIL, self::CYBER_BOOKING_TEAM_NAME];

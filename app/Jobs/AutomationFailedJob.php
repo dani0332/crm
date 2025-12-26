@@ -116,7 +116,7 @@ class AutomationFailedJob implements ShouldQueue
                 $this->recipientName
             );
 
-        $cc = $notificationContext['cc'];
+        $ccEmails = $notificationContext['cc'] ?? [];
         $this->recipientEmail = $notificationContext['recipientEmail'];
         $this->recipientName = $notificationContext['recipientName'];
 
@@ -140,6 +140,7 @@ class AutomationFailedJob implements ShouldQueue
             'insurerName' => $this->insuranceProvider?->text ?? '',
             'processInvolved' => $this->processInvolved,
             'cc' => $cc,
+            'ccEmails' => $ccEmails,
             'workflowType' => $this->workflowType,
         ];
 
