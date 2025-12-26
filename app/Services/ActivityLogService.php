@@ -98,7 +98,6 @@ class ActivityLogService extends BaseService
             }
 
             $user = $request->user();
-            $method = $request->method();
             $path = $request->path();
             $route = $request->route();
 
@@ -331,18 +330,13 @@ class ActivityLogService extends BaseService
      */
     private function shouldLogRequest(Request $request): bool
     {
-        // Skip if activity logger is disabled
-        if (!config('activitylog.enabled', true)) {
+        // Skip logging in testing environment or if disabled
+        if (app()->environment('testing') || !config('activitylog.enabled', true)) {
             return false;
         }
 
-        // Skip if route should be excluded from logging
-        if ($this->shouldSkipLogging($request)) {
-            return false;
-        }
-
-        // Skip if user is not authenticated
-        if (!$request->user()) {
+        // Skip if route should be excluded or user is not authenticated
+        if ($this->shouldSkipLogging($request) || !$request->user()) {
             return false;
         }
 
