@@ -183,7 +183,7 @@ trait PrivateClient
             'failures' => [],
         ];
 
-        $modelInstance = new $modelClass();
+        $modelInstance = new $modelClass;
         $tableColumns = $this->getCachedTableColumns($modelClass, $modelInstance->getTable());
 
         $query = $modelInstance->newQuery();
@@ -224,7 +224,7 @@ trait PrivateClient
             });
         }
 
-        LoggerService::sql("Re-evaluation Query:",$query);
+        LoggerService::sql('Re-evaluation Query:', $query);
 
         $query->orderBy('id')->chunkById(self::PCP_CHUNK_SIZE, function ($leads) use (&$results, $quoteType, $modelClass, $quoteTypeId) {
             foreach ($leads as $lead) {
