@@ -11,18 +11,12 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 /**
- * Helper class for setting up test data for payment tests.
- * Handles creation of test entities and permissions setup.
+ * Payment test data helper.
  */
 class PaymentTestDataHelper
 {
     /**
      * Set up test data: InsuranceProvider, CarPlan, and CarQuote.
-     * Creates all necessary test data for payment testing.
-     *
-     * @param  string  $quoteCode  Optional quote code (default: 'CAR-ABCDEF12345')
-     * @param  string  $quoteUuid  Optional quote UUID (default: 'ABCDEF12345')
-     * @return array Returns array with 'insuranceProvider', 'carPlan', 'carQuote', 'quoteCode', 'quoteUuid'
      */
     public static function setupTestData(
         string $quoteCode = 'CAR-ABCDEF12345',
@@ -58,10 +52,6 @@ class PaymentTestDataHelper
 
     /**
      * Set up payment-related permissions for testing.
-     * Creates and assigns required permissions to the Admin role and user.
-     * This includes permissions needed for payment approval/decline operations.
-     *
-     * @param  User  $user  The user to assign permissions to
      */
     public static function setupPaymentPermissions(User $user): void
     {

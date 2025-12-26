@@ -11,19 +11,13 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 
 /**
- * Helper class for building request payloads for payment tests.
- * Handles creation of payloads for payment creation, update, and approval endpoints.
+ * Payment test payload helper.
  */
 class PaymentTestPayloadHelper
 {
     /**
      * Build payment request payload for testing payment creation endpoint.
      * Extracts data from factories and CarQuote to match the endpoint's expected structure.
-     *
-     * @param  CarQuote  $carQuote  The car quote to create payment for
-     * @param  int  $planId  The plan ID
-     * @param  int  $insuranceProviderId  The insurance provider ID
-     * @return array The complete request payload matching endpoint structure
      */
     public static function buildPaymentCreationPayload(
         CarQuote $carQuote,
@@ -76,10 +70,6 @@ class PaymentTestPayloadHelper
 
     /**
      * Build payment approval request payload for testing payment approval endpoint.
-     *
-     * @param  CarQuote  $carQuote  The car quote
-     * @param  PaymentSplits  $paymentSplit  The payment split to approve
-     * @return array The complete request payload matching endpoint structure
      */
     public static function buildApprovePaymentPayload(CarQuote $carQuote, PaymentSplits $paymentSplit): array
     {
@@ -108,10 +98,6 @@ class PaymentTestPayloadHelper
     /**
      * Build payment update request payload for testing payment update endpoint.
      * This payload will update payment to have 2 splits instead of 1.
-     *
-     * @param  CarQuote  $carQuote  The car quote
-     * @param  Payment  $payment  The existing payment to update
-     * @return array The complete request payload matching endpoint structure
      */
     public static function buildPaymentUpdatePayload(CarQuote $carQuote, Payment $payment): array
     {

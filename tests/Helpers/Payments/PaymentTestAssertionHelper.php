@@ -12,19 +12,12 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 
 /**
- * Helper class for payment test assertions.
- * Contains all assertion methods for validating payment-related operations.
+ * Payment test assertion helper.
  */
 class PaymentTestAssertionHelper
 {
     /**
      * Assert that a payment was created correctly in the database.
-     *
-     * @param  Payment  $payment  The payment to validate
-     * @param  CarQuote  $carQuote  The expected car quote
-     * @param  int  $expectedPlanId  The expected plan ID
-     * @param  int  $expectedInsuranceProviderId  The expected insurance provider ID
-     * @param  int  $expectedUserId  The expected user ID who created the payment
      */
     public static function assertPaymentCreatedCorrectly(
         Payment $payment,
@@ -47,10 +40,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that a payment split was created correctly in the database.
-     *
-     * @param  PaymentSplits  $paymentSplit  The payment split to validate
-     * @param  Payment  $payment  The parent payment
-     * @param  float  $expectedAmount  The expected payment amount
      */
     public static function assertPaymentSplitCreatedCorrectly(
         PaymentSplits $paymentSplit,
@@ -67,9 +56,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that observers ran successfully by checking VAT fields.
-     *
-     * @param  Payment  $payment  The payment to check
-     * @param  PaymentSplits  $paymentSplit  The payment split to check
      */
     public static function assertObserversRanSuccessfully(
         Payment $payment,
@@ -87,12 +73,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that a payment was updated correctly in the database.
-     *
-     * @param  Payment  $payment  The payment to validate
-     * @param  CarQuote  $carQuote  The expected car quote
-     * @param  int  $expectedPlanId  The expected plan ID
-     * @param  int  $expectedInsuranceProviderId  The expected insurance provider ID
-     * @param  int  $expectedUserId  The expected user ID who updated the payment
      */
     public static function assertPaymentUpdatedCorrectly(
         Payment $payment,
@@ -123,9 +103,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that a payment split was updated correctly in the database.
-     *
-     * @param  PaymentSplits  $paymentSplit  The payment split to validate
-     * @param  Payment  $payment  The parent payment
      */
     public static function assertPaymentSplitUpdatedCorrectly(
         PaymentSplits $paymentSplit,
@@ -142,12 +119,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that a payment split was approved correctly.
-     *
-     * @param  PaymentSplits  $paymentSplit  The payment split to validate
-     * @param  float  $expectedCollectionAmount  The expected collection amount
-     * @param  string|null  $expectedInsurerReceiptNumber  The expected insurer receipt number (nullable)
-     * @param  int  $expectedUserId  The expected user ID who approved the payment
-     * @param  float|null  $actualAmount  The actual amount (used to determine if status should be PARTIALLY_PAID)
      */
     public static function assertPaymentSplitApprovedCorrectly(
         PaymentSplits $paymentSplit,
@@ -175,9 +146,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that a master payment was updated correctly after split payment approval.
-     *
-     * @param  Payment  $payment  The payment to validate
-     * @param  float  $expectedCapturedAmount  The expected total captured_amount after approval
      */
     public static function assertPaymentCapturedAmountUpdatedCorrectly(
         Payment $payment,
@@ -189,8 +157,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that insurer receipt number validation returns a null validation error.
-     *
-     * @param  \Illuminate\Testing\TestResponse  $response  The HTTP response from the validation endpoint
      */
     public static function assertInsurerReceiptNumberNullValidationError($response): void
     {
@@ -200,8 +166,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that insurer receipt number validation returns "does not exist" response.
-     *
-     * @param  \Illuminate\Testing\TestResponse  $response  The HTTP response from the validation endpoint
      */
     public static function assertInsurerReceiptNumberDoesNotExist($response): void
     {
@@ -214,8 +178,6 @@ class PaymentTestAssertionHelper
 
     /**
      * Assert that insurer receipt number validation returns "already exists" response.
-     *
-     * @param  \Illuminate\Testing\TestResponse  $response  The HTTP response from the validation endpoint
      */
     public static function assertInsurerReceiptNumberAlreadyExists($response): void
     {
