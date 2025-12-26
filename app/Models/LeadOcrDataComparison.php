@@ -16,5 +16,6 @@ class LeadOcrDataComparison extends Model
         'ocr_responses',
         'compairson_data',
         'comparison_score',
+        'timestamp'
     ];
 }
