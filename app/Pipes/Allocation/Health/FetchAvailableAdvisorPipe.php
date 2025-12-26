@@ -20,6 +20,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {
     protected bool $isBuyLeadAdvisor = false;
     protected $buyLeadRequest = null;
+    protected ?array $ruleUserIds = null;
 
     /**
      * Handle the incoming request.
@@ -90,9 +91,15 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $advisors = collect([]);
 
+        $rules = $this->allocationRequest->get('rules');
+        if (! empty($rules) && $rules->isNotEmpty()) {
+            $this->ruleUserIds = $this->allocationRequest->get('ruleUserIds', []);
+
+            LoggerService::info(self::class.'::fetchEligibleAdvisors - rule user ids are: '.json_encode($this->ruleUserIds));
+        }
+
         if ($this->lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($this->lead->isValueLead() || $this->lead->isVolumeLead())) {
             $advisors = $this->fetchAdvisorByType('getBLAdvisorsByStatus', $teamId);
-
         }
 
         if (count($advisors) < 1) {
@@ -132,13 +139,10 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         LoggerService::info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
 
-        $rules = $this->allocationRequest->get('rules');
-        $ruleUserIds = [];
-        if (! empty($rules) && $rules->isNotEmpty()) {
-            $ruleUserIds = $this->allocationRequest->get('ruleUserIds', []);
+        if (! is_null($this->ruleUserIds)) {
             $userIds = array_values(array_intersect(
                 $buyLeadRequestedUserIds,
-                $ruleUserIds
+                $this->ruleUserIds
             ));
 
             LoggerService::info(self::class.'::getBLAdvisorsByStatus - user ids after intersection with rule users are: '.json_encode($userIds));
@@ -170,6 +174,9 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         $advisors = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
             ->where('la.normal_allocation_enabled', true)
+            ->when(! is_null($this->ruleUserIds), function ($q) {
+                $q->whereIn('users.id', $this->ruleUserIds);
+            })
             ->logRawSql()
             ->get();
 
