@@ -12,7 +12,6 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class AdnicStepExecutor
 {
-    public $healthInsurerRequestResponse = null;
     public $healthInsurerRequest = '';
     public $healthInsurerResponse = '';
     public function __construct(
@@ -34,7 +33,7 @@ class AdnicStepExecutor
             'plan_id' => $quote->plan_id,
         ]);
 
-        $policyIssuanceResponse = $this->apiService->issuePolicy($quote, $process, $this->healthInsurerRequestResponse);
+        $policyIssuanceResponse = $this->apiService->issuePolicy($quote, $process, $quote->insurerGenerateQuoteRequestResponse);
 
         if (! $policyIssuanceResponse['status']) {
             LoggerService::error('Policy issuance failed', extra: [
@@ -68,9 +67,7 @@ class AdnicStepExecutor
             'process_id' => $process->id,
         ]);
 
-        $this->healthInsurerRequestResponse = $quote->insurerGenerateQuoteRequestResponse;
-
-        $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process, $this->healthInsurerRequestResponse);
+        $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process, $quote->insurerGenerateQuoteRequestResponse);
 
         if (! $uploadDocumentsResponse['status']) {
             LoggerService::error('Document upload failed', extra: [

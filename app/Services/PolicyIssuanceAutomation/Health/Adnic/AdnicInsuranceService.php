@@ -8,6 +8,7 @@ use App\Enums\AdnicEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
+use App\Models\HealthInsurerRequestResponse;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
@@ -131,6 +132,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
         $response = ['status' => false, 'error' => null, 'message' => null];
 
         $quote = $process->model;
+        $healthRequestResponse = HealthInsurerRequestResponse::find('6881898ab82cdba2ae884b44');
+        $quote->setRelation('insurerGenerateQuoteRequestResponse', $healthRequestResponse);
 
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::ADNIC_HEALTH_POLICY_AUTOMATION);
         LoggerService::info('Execution started', extra: [

@@ -42,9 +42,8 @@ class AdnicApiService
         $splitPayment = $payment?->paymentSplits()->where('payment_method', PaymentMethodsEnum::CreditCard)->first();
 
         $payload = $this->requestBuilder->buildIssuePolicyPayload($quote, $process, $healthInsurerRequestResponse, $splitPayment);
-        $headers = $this->requestBuilder->buildIssuePolicyHeaders();
 
-        $httpResponse = AdnicHttpFacade::post($endPoint, $payload, $headers);
+        $httpResponse = AdnicHttpFacade::post($endPoint, $payload);
         $issuePolicyResponse = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_POLICY);
 
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, AdnicHttpFacade::getBaseUrl().$endPoint, AdnicEnum::STEP_ISSUE_POLICY, $issuePolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
@@ -65,13 +64,13 @@ class AdnicApiService
 
         $issuePolicyResult = $issuePolicyResponse['data'];
         LoggerService::info('API call successful, updating quote and payment', extra: [
-            'policy_number' => $issuePolicyResult?->policyInfo?->policyNo,
-            'policy_start_date' => $issuePolicyResult?->policyInfo?->policyStartDate,
-            'policy_end_date' => $issuePolicyResult?->policyInfo?->policyEndDate,
+            'policy_number' => $issuePolicyResult?->PolicyInfo?->PolicyNo,
+            'policy_start_date' => $issuePolicyResult?->PolicyInfo?->PolicyStartDate,
+            'policy_end_date' => $issuePolicyResult?->PolicyInfo?->PolicyEndDate,
         ]);
 
         $this->quoteUpdater->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-        $this->quoteUpdater->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
+        //$this->quoteUpdater->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
 
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';

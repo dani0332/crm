@@ -4,7 +4,7 @@ namespace App\Models;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class HealthUMAFResponses extends Model
+class HealthUMAFResponse extends Model
 {
     protected $connection = 'mongodb';
     protected $table = 'health-umaf-responses';

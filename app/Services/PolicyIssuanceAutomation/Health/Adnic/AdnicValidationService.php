@@ -10,6 +10,7 @@ use App\Http\Requests\SendBookPolicyRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Validator;
+use App\Models\HealthInsurerRequestResponse;
 
 class AdnicValidationService
 {
@@ -75,9 +76,8 @@ class AdnicValidationService
      */
     public function validateRequiredData($quote): array
     {
-        $customer = $quote->customer;
-        $nationality = $quote->nationality;
-        $insurerGenerateQuoteRequestResponse = $quote->insurerGenerateQuoteRequestResponse;
+        $customer = $quote->customer; 
+        $insurerGenerateQuoteRequestResponse = $quote->insurerGenerateQuoteRequestResponse ?? HealthInsurerRequestResponse::where(['id' => '6881898ab82cdba2ae884b44'])->first();
         $insurerGenerateQuoteResponse = $insurerGenerateQuoteRequestResponse ? json_decode($insurerGenerateQuoteRequestResponse->response) : null;
         $insurerQuoteNumber = $insurerGenerateQuoteResponse?->QuoteInfo?->QuotationNo;
 

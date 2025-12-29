@@ -7,7 +7,7 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\AdnicEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Models\HealthUMAFResponses;
+use App\Models\HealthUMAFResponse;
 
 class AdnicRequestBuilder
 {
@@ -29,7 +29,7 @@ class AdnicRequestBuilder
     {
         $chargeId = $splitPayment?->paymentCharges?->transaction_id ?? null;
 
-        $UMAFDetails = HealthUMAFResponses::where('quote_uuid', $quote->uuid)->first();
+        $UMAFDetails = HealthUMAFResponse::where('quote_uuid', $quote->uuid)->first();
 
         $healthInsurerRequest = json_decode($healthInsurerRequestResponse->request);
         $healthInsurerResponse = json_decode($healthInsurerRequestResponse->response);

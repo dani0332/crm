@@ -12,34 +12,47 @@ class AdnicQuoteUpdaterService
 {
     public function updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult): void
     {
-        $quote->update([
-            'policy_number' => $issuePolicyResult?->policyInfo?->policyNo,
-            'policy_issuance_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate,
-            'policy_start_date' => $issuePolicyResult?->policyInfo?->policyStartDate,
-            'policy_expiry_date' => $issuePolicyResult?->policyInfo?->policyEndDate,
-            'price_vat_applicable' => $issuePolicyResult?->policyInfo?->premiumAmount,
-            'vat' => $issuePolicyResult?->policyInfo?->prmVatAmt,
-            'price_with_vat' => $issuePolicyResult?->policyInfo?->prmPayableAmt,
-            'insurer_quote_number' => $issuePolicyResult?->QuoteRefNo ?? null,
+        $data = [
+            'policy_number' => $issuePolicyResult?->PolicyInfo?->PolicyNo,
+            'policy_start_date' => $issuePolicyResult?->PolicyInfo?->PolicyStartDate,
+            'policy_expiry_date' => $issuePolicyResult?->PolicyInfo?->PolicyEndDate,
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),
-            'insurer_debit_note_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
-            'insurer_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
-            'insurer_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
-        ]);
+            
+            /* 'policy_issuance_date' => $issuePolicyResult?->PolicyInfo?->policyIssuedDate,
+            'price_vat_applicable' => $issuePolicyResult?->PolicyInfo?->premiumAmount,
+            'vat' => $issuePolicyResult?->PolicyInfo?->prmVatAmt,
+            'price_with_vat' => $issuePolicyResult?->PolicyInfo?->FinalPremium,
+            'insurer_quote_number' => $issuePolicyResult?->QuoteRefNo ?? null,
+            'insurer_debit_note_doc_id' => $issuePolicyResult?->PolicyDocumentInfo?->CommisionNoteDocumentId,
+            'insurer_tax_invoice_doc_id' => $issuePolicyResult?->PolicyDocumentInfo?->TaxInvoiceDocumentId,
+            'insurer_policy_doc_id' => $issuePolicyResult?->PolicyDocumentInfo?->PolicyDocumentId, */
+        ];
+
+        // Filter out null values to avoid overwriting existing data
+        $data = array_filter($data, fn ($value) => $value !== null);
+
+        $quote->update($data);
     }
 
     public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePolicyResult): void
     {
-        Payment::where('code', $quoteCode)->update([
-            'commission_vat_applicable' => $issuePolicyResult?->policyInfo?->commissionPayableAmt,
-            'commission' => $issuePolicyResult?->policyInfo?->commissionAmt,
-            'commission_vat' => $issuePolicyResult?->policyInfo?->commissionVatAmt,
-            'commmission_percentage' => $issuePolicyResult?->policyInfo?->CommissionPercentage ?? 0,
-            'insurer_tax_number' => $issuePolicyResult?->policyInfo?->invoiceNo ?? null,
-            'insurer_invoice_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate ?? null,
-            'insurer_commmission_invoice_number' => $issuePolicyResult?->policyInfo?->creditNoteNo ?? null,
-        ]);
+       /*  
+       $data = [
+            'commission_vat_applicable' => $issuePolicyResult?->PolicyInfo?->commissionPayableAmt,
+            'commission' => $issuePolicyResult?->PolicyInfo?->CommissionAmount,
+            'commission_vat' => $issuePolicyResult?->PolicyInfo?->commissionVatAmt,
+            'commmission_percentage' => $issuePolicyResult?->PolicyInfo?->CommissionPercentage ?? 0,
+            'insurer_tax_number' => $issuePolicyResult?->PolicyInfo?->invoiceNo ?? null,
+            'insurer_invoice_date' => $issuePolicyResult?->PolicyInfo?->policyIssuedDate ?? null,
+            'insurer_commmission_invoice_number' => $issuePolicyResult?->PolicyInfo?->creditNoteNo ?? null,
+        ];  
+         // Filter out null values to avoid overwriting existing data
+        $data = array_filter($data, fn ($value) => $value !== null);
+
+        Payment::where('code', $quoteCode)->update($data); 
+        
+        */
     }
 }
