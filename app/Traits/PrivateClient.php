@@ -27,6 +27,8 @@ trait PrivateClient
     private const OPERATOR_IS_NOT_NULL = 'is not null';
     private const PCP_CHUNK_SIZE = 100;
 
+    private array $lastPcpUpdateResult = [];
+
     private function isLOBEligibleForPCP(int $quoteTypeId)
     {
         return in_array($quoteTypeId, [
@@ -110,6 +112,7 @@ trait PrivateClient
                 'processed' => 0,
                 'tagged' => 0,
                 'untagged' => 0,
+                'noChange' => 0,
                 'failures' => [
                     [
                         'quote_type_id' => $quoteTypeId,
@@ -132,6 +135,7 @@ trait PrivateClient
                 'processed' => 0,
                 'tagged' => 0,
                 'untagged' => 0,
+                'noChange' => 0,
                 'failures' => [
                     [
                         'quote_type_id' => $quoteTypeId,
@@ -180,6 +184,7 @@ trait PrivateClient
             'processed' => 0,
             'tagged' => 0,
             'untagged' => 0,
+            'noChange' => 0,
             'failures' => [],
         ];
 
@@ -279,6 +284,14 @@ trait PrivateClient
                             'lead_uuid' => $lead->uuid,
                             'reason' => 'pcp_update_failed',
                         ];
+                        continue;
+                    }
+
+                    $leadUpdated = (bool) ($this->lastPcpUpdateResult['leadUpdated'] ?? false);
+                    $customerUpdated = (bool) ($this->lastPcpUpdateResult['customerUpdated'] ?? false);
+
+                    if (! $leadUpdated && ! $customerUpdated) {
+                        $results['noChange']++;
 
                         continue;
                     }
@@ -441,6 +454,7 @@ trait PrivateClient
     private function applyPcpTagsToLeadAndCustomer($model, ?int $pcpTagVersion, bool $shouldRemove = false): bool
     {
         try {
+            $this->lastPcpUpdateResult = [];
             return DB::transaction(function () use ($pcpTagVersion, $model, $shouldRemove) {
                 LoggerService::info($shouldRemove ? 'Removing PCP tag from lead and customer.' : 'Applying PCP tag to lead and customer.', extra: [
                     'leadUuid' => $model->uuid,
@@ -452,6 +466,13 @@ trait PrivateClient
                 $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion, $shouldRemove);
 
                 $this->logUpdateResults($updateResults, $customerUpdateResult, $shouldRemove);
+
+                $this->lastPcpUpdateResult = [
+                    'leadUpdated' => (bool) ($updateResults['wasUpdated'] ?? false),
+                    'customerUpdated' => (bool) ($customerUpdateResult['wasUpdated'] ?? false),
+                    'retainedExistingTag' => (bool) ($customerUpdateResult['retainedExistingTag'] ?? false),
+                    'shouldRemove' => $shouldRemove,
+                ];
 
                 return true;
             });
@@ -466,21 +487,23 @@ trait PrivateClient
     {
         $wasLeadUpdated = false;
 
-        $updateData = $shouldRemove
-            ? ['pc_qualified' => false, 'pcp_tag_version' => null]
-            : ['pc_qualified' => true, 'pcp_tag_version' => $pcpTagVersion];
+        $desiredLeadState = $shouldRemove
+            ? ['pc_qualified' => 0, 'pcp_tag_version' => null]
+            : ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
 
-        $shouldUpdateLead = $shouldRemove
-            ? ($model->pc_qualified !== false || ! is_null($model->pcp_tag_version))
-            : ($model->pc_qualified !== true || $model->pcp_tag_version !== $pcpTagVersion);
+        $shouldUpdateLead = (int) $model->pc_qualified !== $desiredLeadState['pc_qualified']
+            || $model->pcp_tag_version !== $desiredLeadState['pcp_tag_version'];
 
         if ($shouldUpdateLead) {
+            $model->update($desiredLeadState);
+            $personalQuote = PersonalQuote::where('uuid', $model->uuid)->first();
 
-            $model->update($updateData);
-            PersonalQuote::where('uuid', $model->uuid)
-                ->get()
-                ->each
-                ->update($updateData);
+            if ($personalQuote && (
+                (int) $personalQuote->pc_qualified !== $desiredLeadState['pc_qualified']
+                || $personalQuote->pcp_tag_version !== $desiredLeadState['pcp_tag_version']
+            )) {
+                $personalQuote->update($desiredLeadState);
+            }
 
             $wasLeadUpdated = true;
             LoggerService::info($shouldRemove ? 'PCP tag removed on lead.' : 'PC qualified tag applied successfully on lead.', extra: [
@@ -514,18 +537,24 @@ trait PrivateClient
             if ($shouldRemove) {
                 $hasQualifiedQuotes = $this->customerHasActiveQualifiedQuotes((int) $customer->id);
 
-                if (! $hasQualifiedQuotes && $customer->pcp_tag) {
-                    $customer->update([
-                        'pcp_tag' => false,
+                if (! $hasQualifiedQuotes) {
+                    $desiredCustomerState = [
+                        'pcp_tag' => 0,
                         'pcp_tag_version' => null,
-                    ]);
+                    ];
+                    $shouldUpdateCustomer = (int) $customer->pcp_tag !== $desiredCustomerState['pcp_tag']
+                        || $customer->pcp_tag_version !== $desiredCustomerState['pcp_tag_version'];
 
-                    $wasCustomerUpdated = true;
-                    LoggerService::info('PCP tag removed successfully on customer.', extra: [
-                        'customer_id' => $customer->id,
-                        'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                        'email' => $customer->email,
-                    ]);
+                    if ($shouldUpdateCustomer) {
+                        $customer->update($desiredCustomerState);
+
+                        $wasCustomerUpdated = true;
+                        LoggerService::info('PCP tag removed successfully on customer.', extra: [
+                            'customer_id' => $customer->id,
+                            'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                            'email' => $customer->email,
+                        ]);
+                    }
                 } elseif ($hasQualifiedQuotes) {
                     $retainedExistingTag = true;
                     LoggerService::info('PCP tag retained on customer because other qualified leads exist.', extra: [
@@ -534,19 +563,25 @@ trait PrivateClient
                         'email' => $customer->email,
                     ]);
                 }
-            } elseif (! $customer->pcp_tag || $customer->pcp_tag_version !== $pcpTagVersion) {
-                $customer->update([
+            } else {
+                $desiredCustomerState = [
                     'ref_id' => $model->code,
-                    'pcp_tag' => true,
+                    'pcp_tag' => 1,
                     'pcp_tag_version' => $pcpTagVersion,
-                ]);
+                ];
+                $shouldUpdateCustomer = (int) $customer->pcp_tag !== $desiredCustomerState['pcp_tag']
+                    || $customer->pcp_tag_version !== $desiredCustomerState['pcp_tag_version'];
 
-                $wasCustomerUpdated = true;
-                LoggerService::info('PCP tag applied successfully on customer.', extra: [
-                    'customer_id' => $customer->id,
-                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                    'email' => $customer->email,
-                ]);
+                if ($shouldUpdateCustomer) {
+                    $customer->update($desiredCustomerState);
+
+                    $wasCustomerUpdated = true;
+                    LoggerService::info('PCP tag applied successfully on customer.', extra: [
+                        'customer_id' => $customer->id,
+                        'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                        'email' => $customer->email,
+                    ]);
+                }
             }
         }
 
