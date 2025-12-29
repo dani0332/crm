@@ -36,7 +36,7 @@ class EndingPoliciesReportService extends ManagementReport
         $this->paymentJoin($query, null, 'p', 'leftJoin');
         $query->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->join('quote_type as qt', 'qt.id', '=', 'quote_type_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'insurance_provider_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'personal_quotes.insurance_provider_id')
             ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'p.plan_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
             ->leftJoin('customer as c', 'c.id', '=', 'customer_id')
