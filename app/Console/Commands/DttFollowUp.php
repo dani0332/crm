@@ -76,6 +76,7 @@ class DttFollowUp extends Command
 
             if ($unrepliedCount === 0) {
                 LoggerService::info($logPrefix.' No leads found');
+
                 return false;
             }
 

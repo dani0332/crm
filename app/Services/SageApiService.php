@@ -3652,6 +3652,7 @@ class SageApiService
                                 LoggerService::warning('Sage process has empty request data', extra: [
                                     'SageProcessID' => $sageProcess?->id,
                                 ]);
+
                                 continue;
                             }
 
@@ -3664,6 +3665,7 @@ class SageApiService
                                     'json_error' => json_last_error_msg(),
                                     'request_preview' => substr($sageProcess->request, 0, 200),
                                 ]);
+
                                 continue;
                             }
 
@@ -3674,6 +3676,7 @@ class SageApiService
                                     'has_sagePayload' => isset($sageProcessRequest->sagePayload),
                                     'has_requestPayload' => isset($sageProcessRequest->requestPayload),
                                 ]);
+
                                 continue;
                             }
 
@@ -3685,6 +3688,7 @@ class SageApiService
                                 LoggerService::warning('Sage request missing sageProcessRequestType', extra: [
                                     'SageProcessID' => $sageProcess?->id,
                                 ]);
+
                                 continue;
                             }
 
@@ -3693,6 +3697,7 @@ class SageApiService
                                     LoggerService::warning('Missing model_type or model_id for BOOK_POLICY_REQUEST', extra: [
                                         'SageProcessID' => $sageProcess?->id,
                                     ]);
+
                                     continue;
                                 }
                                 $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
@@ -3703,6 +3708,7 @@ class SageApiService
                                     LoggerService::warning('Model not found for SEND_UPDATE_REQUEST', extra: [
                                         'SageProcessID' => $sageProcess?->id,
                                     ]);
+
                                     continue;
                                 }
                                 SendUpdateSageJob::dispatch($request, $model, $sageRequest, $sageProcess)->onQueue('insly');
@@ -3714,6 +3720,7 @@ class SageApiService
                                     LoggerService::warning('ePTransaction not found for BOOK_EMBEDDED_PRODUCT_REQUEST', extra: [
                                         'SageProcessID' => $sageProcess?->id,
                                     ]);
+
                                     continue;
                                 }
                                 BookEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');

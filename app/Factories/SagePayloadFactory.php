@@ -1294,11 +1294,11 @@ class SagePayloadFactory
             $sageRequest->mainClassInsurance = $sageRequest->quoteType;
         }
         $sageRequest->quoteCode = ! empty($sageRequest->quoteRefId) ? $sageRequest->quoteRefId : ($personalQuote?->code ?? $quote?->code);
-        
-        $insuranceProvider = (isset($sageRequest->insurerID) && $sageRequest->insurerID) 
-            ? InsuranceProvider::find($sageRequest->insurerID) 
+
+        $insuranceProvider = (isset($sageRequest->insurerID) && $sageRequest->insurerID)
+            ? InsuranceProvider::find($sageRequest->insurerID)
             : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
-        
+
         $sageRequest->sageVenderId = $insuranceProvider?->sage_vendor_id;
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;

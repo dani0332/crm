@@ -1704,7 +1704,7 @@ class SendUpdateLogService
                 return ['status' => false, 'message' => $reversalLog.'Broker Invoice Number Generation Failed'];
             }
         }
-        
+
         return $response;
     }
 
