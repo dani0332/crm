@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -36,6 +35,7 @@ use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\RunCQFJobs;
+use App\Jobs\TagPcpCustomerJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -381,11 +381,6 @@ class ApiController extends Controller
         return $this->apiService->triggerAIGWorkflow($request);
     }
 
-    /**
-     * Process the one-time exercise to tag customers as Private Clients based on criteria
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function tagPrivateClients(Request $request)
     {
         LoggerService::info(self::class.': Private client tag exercise has been initiated');
@@ -462,6 +457,20 @@ class ApiController extends Controller
             );
         }
         LoggerService::info(self::class.': Private client tag exercise has been completed');
+    }
+
+    public function tagPcpCustomers(Request $request)
+    {
+        $request->validate([
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
+        ]);
+
+        LoggerService::info(self::class.': PC customer tag exercise has been initiated');
+
+        dispatch(new TagPcpCustomerJob($request->input('uuids')));
+
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
