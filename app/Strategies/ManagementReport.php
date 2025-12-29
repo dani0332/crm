@@ -653,9 +653,9 @@ class ManagementReport
         return $routeName;
     }
 
-    public function paymentJoin($query, $additionalConditions = null, $alias = 'p')
+    public function paymentJoin($query, $additionalConditions = null, $alias = 'p', $joinType = 'join')
     {
-        $query->join("payments as {$alias}", function ($join) use ($additionalConditions, $alias) {
+        $query->{$joinType}("payments as {$alias}", function ($join) use ($additionalConditions, $alias) {
             $join->where(function ($query) use ($alias) {
                 // For Car, Health, Business, Travel quotes - use quote_id
                 $query->where(function ($q) use ($alias) {
