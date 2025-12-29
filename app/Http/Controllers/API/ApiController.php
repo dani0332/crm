@@ -285,7 +285,7 @@ class ApiController extends Controller
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
     {
-        $quoteType = ucfirst($quoteType);
+        $quoteType = ucfirst(strtolower($quoteType));
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         if ($quoteTypeId) {
             LoggerService::startQuoteLogging(QuoteTypes::getName($quoteTypeId)->refId($quoteUuid));
