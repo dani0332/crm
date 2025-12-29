@@ -30,7 +30,7 @@ class PaymentSplitsFactory extends Factory
         ]);
     }
 
-    public function cyberPaymentSplit($code, $id): static
+    public function cyberPaymentSplit($code): static
     {
         return $this->state(fn(array $attributes) => [
             'code' => $code,

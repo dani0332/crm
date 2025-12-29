@@ -57,7 +57,6 @@ it('issues policy and updates quote data on success', function () {
     $client = Mockery::mock(AwnicHttpClient::class);
     $client->shouldReceive('post')->once()->andReturn(makeHttpResponse($responsePayload));
     $client->shouldReceive('getBaseUrl')->andReturn('https://awni.test');
-    app()->instance(AwnicHttpClient::class, $client);
     app()->instance('AwnicHttpClient', $client);
 
     $quoteUpdater = Mockery::mock(AwnicQuoteUpdaterService::class);
@@ -96,7 +95,6 @@ it('returns failure when issue policy API responds with error', function () {
     $client = Mockery::mock(AwnicHttpClient::class);
     $client->shouldReceive('post')->once()->andReturn(makeHttpResponse(['isSuccess' => 'N', 'errorList' => ['ERR']]));
     $client->shouldReceive('getBaseUrl')->andReturn('https://awni.test');
-    app()->instance(AwnicHttpClient::class, $client);
     app()->instance('AwnicHttpClient', $client);
 
     $quoteUpdater = Mockery::mock(AwnicQuoteUpdaterService::class);
@@ -175,7 +173,6 @@ it('uploads documents and records policy issuance log', function () {
     $client = Mockery::mock(AwnicHttpClient::class);
     $client->shouldReceive('post')->andReturn(makeHttpResponse(['isSuccess' => 'Y']));
     $client->shouldReceive('getBaseUrl')->andReturn('https://awni.test');
-    app()->instance(AwnicHttpClient::class, $client);
     app()->instance('AwnicHttpClient', $client);
 
     $service = new AwnicApiService(
@@ -220,8 +217,6 @@ it('logs failure when document upload API fails', function () {
     $client = Mockery::mock(AwnicHttpClient::class);
     $client->shouldReceive('post')->andReturn(makeHttpResponse(['isSuccess' => 'N', 'errorList' => ['ERR']]));
     $client->shouldReceive('getBaseUrl')->andReturn('https://awni.test');
-    app()->instance(AwnicHttpClient::class, $client);
-    app()->instance('AwnicHttpClient', $client);
     app()->instance('AwnicHttpClient', $client);
 
     $service = new AwnicApiService(
@@ -281,7 +276,6 @@ it('uploads policy documents to IMCRM and records log entries', function () {
         makeHttpResponse($payload)
     );
     $client->shouldReceive('getBaseUrl')->andReturn('https://awni.test');
-    app()->instance(AwnicHttpClient::class, $client);
     app()->instance('AwnicHttpClient', $client);
 
     $service = new AwnicApiService(
@@ -324,7 +318,7 @@ it('logs failure when insurer document download fails', function () {
     $client = Mockery::mock(AwnicHttpClient::class);
     $client->shouldReceive('post')->andReturn(makeHttpResponse(['isSuccess' => 'N', 'errorList' => ['ERR']]));
     $client->shouldReceive('getBaseUrl')->andReturn('https://awni.test');
-    app()->instance(AwnicHttpClient::class, $client);
+    app()->instance('AwnicHttpClient', $client);
 
     $service = new AwnicApiService(
         $requestBuilder,

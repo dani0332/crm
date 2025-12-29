@@ -92,7 +92,7 @@ class PersonalQuoteFactory extends Factory
 
             $payment = Payment::factory()->cyberPayment($quote->code, $quote->id)->create();
 
-            PaymentSplits::factory()->cyberPaymentSplit($payment->code, $payment->id)->create();
+            PaymentSplits::factory()->cyberPaymentSplit($payment->code)->create();
 
             $quote->setRelation('cyberPlanDetail', (object) [
                 'coverage' => 500000,
