@@ -215,6 +215,8 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
+        // AML Mapping Reminder:: Tested
+        // TODO:: Logs needs to be updated
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [
                 'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),
@@ -223,7 +225,6 @@ class CentralController extends Controller
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);
 
-            // TODO:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', 'emiratesId')
                 ->emiratesIdNumber($customerProfileRequest->emirates_id_number)
@@ -250,6 +251,7 @@ class CentralController extends Controller
             ]);
         }
 
+        // Reminder:: I believe this code patch is not in used, if it's in used, then it should be update the customerInsured for Entity cases
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
             $entity = Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
             $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
