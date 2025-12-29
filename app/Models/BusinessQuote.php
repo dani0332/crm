@@ -187,23 +187,12 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class);
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Business);
-    }
-
-    // Get all insured records for this quote (multiple AML screenings)
-    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
-    {
-        return $this->hasManyThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id
-            'id', // insured.id
-            'id', // personal_quotes.id
-            'insured_id' // customer_insured.insured_id
-        );
+            ->where('quote_type_id', QuoteTypeId::Business)
+            ->active();
     }
 
     // Get the latest/most recent insured record for this quote
@@ -217,8 +206,8 @@ class BusinessQuote extends Model implements AuditableContract
             'id', // business_quote_requests.id
             'insured_id' // customer_insured.insured_id
         )
-        ->where('customer_insured.is_active', true)
-        ->where('customer_insured.quote_type_id', QuoteTypeId::Business);
+        ->where('customer_insured.quote_type_id', QuoteTypeId::Business)
+        ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
