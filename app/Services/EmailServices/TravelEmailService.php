@@ -301,8 +301,7 @@ class TravelEmailService extends BaseService
                 if ($quotePlansCount > 0) {
                     $this->updateTravelQuoteStatus($lead->uuid);
                 }
-                // Only dispatch automated followup if intro email was successful
-                $this->handleAutomatedFollowup($lead);
+                
             } else {
                 LoggerService::info(self::class." - Intro email failed with code {$responseCode}, skipping automated followup for uuid: {$lead->uuid}");
             }
@@ -558,7 +557,7 @@ class TravelEmailService extends BaseService
             }
 
             // Dispatch automated travel follow-up job with a short delay
-            SendAutomatedTravelFollowup::dispatch($travelQuote->uuid)->delay(now()->addSeconds(10));
+            SendAutomatedTravelFollowup::dispatch($travelQuote->uuid)->delay(now()->addSeconds(60));
 
             LoggerService::info(self::class." - TRAVEL_AUTOMATED_FOLLOWUPS - Dispatched for travel quote: {$travelQuote->uuid}");
         } catch (Exception $e) {

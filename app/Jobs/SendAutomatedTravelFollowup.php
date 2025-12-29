@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class SendAutomatedTravelFollowup implements ShouldQueue
 {
@@ -51,4 +52,10 @@ class SendAutomatedTravelFollowup implements ShouldQueue
             LoggerService::info(self::class." - Automated Travel Followup Switch is off for quote: {$travelQuote->uuid}");
         }
     }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->quoteUuid))->dontRelease()];
+    }
+
 }

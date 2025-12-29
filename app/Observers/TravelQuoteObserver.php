@@ -26,6 +26,7 @@ use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\EmailServices\TravelEmailService;
 
 class TravelQuoteObserver
 {
@@ -97,6 +98,10 @@ class TravelQuoteObserver
                 $travelQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $travelQuote->transaction_approved_at];
+        }
+        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::Quoted) {
+            LoggerService::info(self::class." - Sending automated travel followup for quote uuid: {$travelQuote->uuid}");
+            app(TravelEmailService::class)->sendAutomatedTravelFollowup($travelQuote);
         }
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
