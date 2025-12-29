@@ -36,7 +36,7 @@ class ReEvaluatePrivateClientRequest extends FormRequest
                     QuoteTypes::HOME->id(),*/
                 ]),
             ],
-            'lead_uuids' => ['required_without:created_at', 'array'],
+            'lead_uuids' => ['required_without:created_at', 'array', 'min:1'],
             'lead_uuids.*' => ['string'],
             'is_policy_booked' => ['sometimes', 'boolean'],
             'is_pcp_assigned' => ['sometimes', 'boolean'],
