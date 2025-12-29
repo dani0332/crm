@@ -94,12 +94,11 @@ class InstallmentReportService extends ManagementReport
                 'p.frequency as payment_frequency',
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
-            )
-            ->join('payments as p', function ($join) {
-                $join->on('personal_quotes.code', '=', 'p.code')
-                    ->where('p.frequency', '<>', PaymentFrequency::UPFRONT);
-            })
-            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
+            );
+        $this->paymentJoin($query, function ($join) {
+            $join->where('p.frequency', '<>', PaymentFrequency::UPFRONT);
+        });
+        $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->leftJoin('quote_status as q', 'q.id', '=', 'personal_quotes.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
