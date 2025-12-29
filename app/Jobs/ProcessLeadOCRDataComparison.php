@@ -23,7 +23,6 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class ProcessLeadOCRDataComparison implements ShouldQueue
@@ -176,7 +175,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 continue;
             }
 
-            if ($quote->personalQuote->lead_ocr_comparison_processed && !$this->recalculateComparison) {
+            if ($quote->personalQuote->lead_ocr_comparison_processed && ! $this->recalculateComparison) {
                 LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote already processed, skipping (use recalculate_comparison=true to recalculate)', extra: [
                     'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
@@ -207,7 +206,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                     $document->id,
                     $document->document_type_code
                 )->onQueue('ocr_dedicated')
-                  ->delay(now()->addSeconds(rand(1, 5)));
+                    ->delay(now()->addSeconds(rand(1, 5)));
 
                 $documentsDispatched++;
                 $totalDocumentsDispatched++;

@@ -328,5 +328,4 @@ final class ApplicationStorageEnums extends Enum
 
     // OCR Util Feature Toggle
     public const OCR_UTIL_ENABLED = 'OCR_UTIL_ENABLED';
-
 }

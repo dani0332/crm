@@ -53,11 +53,12 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         }
 
         $document = QuoteDocument::find($this->documentId);
-        
-        if (!$document) {
+
+        if (! $document) {
             LoggerService::info(self::class.' - Document not found, skipping', [
                 'document_id' => $this->documentId,
             ]);
+
             return;
         }
 
@@ -71,10 +72,11 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             'insuranceProvider:id,code',
         ])->find($this->quoteId);
 
-        if (!$quote) {
+        if (! $quote) {
             LoggerService::info(self::class.' - Quote not found, skipping', [
                 'quote_id' => $this->quoteId,
             ]);
+
             return;
         }
 
@@ -84,21 +86,23 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->first();
 
-        if (!$documentType) {
+        if (! $documentType) {
             LoggerService::info(self::class.' - DocumentType not found', [
                 'quote_id' => $quote->id,
                 'document_type_code' => $document->document_type_code,
             ]);
+
             return;
         }
 
         $isDocOCREnabled = OCRDocumentTypeEnum::isOCREnabled($documentType, QuoteTypes::CAR);
 
-        if (!$isDocOCREnabled) {
+        if (! $isDocOCREnabled) {
             LoggerService::info(self::class.' - Document type not OCR enabled', [
                 'quote_id' => $quote->id,
                 'document_type_code' => $document->document_type_code,
             ]);
+
             return;
         }
 
@@ -122,7 +126,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         if ($ocrRecord) {
             $ocrResponseJson = json_decode($ocrRecord->ocr_response, true);
             $ocrDataJson = json_decode($ocrRecord->ocr_data, true);
-            
+
             if (isset($ocrResponseJson[$ocrDocType->value]) && isset($ocrDataJson[$ocrDocType->value])) {
                 $ocrResponseData = $ocrResponseJson[$ocrDocType->value];
                 $ocrDataStructure = $ocrDataJson[$ocrDocType->value];
@@ -133,7 +137,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                 ]);
             } else {
                 $ocrData = $this->callOcrApi($quote, $document, $ocrDocType->value);
-                
+
                 if ($ocrData) {
                     $ocrResponseData = [
                         'status' => 'true',
@@ -145,7 +149,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             }
         } else {
             $ocrData = $this->callOcrApi($quote, $document, $ocrDocType->value);
-            
+
             if ($ocrData) {
                 $ocrResponseData = [
                     'status' => 'true',
@@ -156,7 +160,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             }
         }
 
-        if (!empty($ocrDataStructure)) {
+        if (! empty($ocrDataStructure)) {
             DB::table('temp_ocr_document_results')->updateOrInsert(
                 [
                     'quote_id' => $this->quoteId,
@@ -192,7 +196,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     private function checkAndTriggerAggregation(CarQuote $quote): void
     {
         $totalDocuments = $quote->documents()->whereIn('document_type_code', $this->getOcrDocumentCodes())->count();
-        
+
         $processedDocuments = DB::table('temp_ocr_document_results')
             ->where('quote_id', $this->quoteId)
             ->count();
@@ -207,7 +211,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             LoggerService::info(self::class.' - All documents processed, triggering aggregation', [
                 'quote_id' => $this->quoteId,
             ]);
-            
+
             AggregateQuoteOCRComparison::dispatch($this->quoteId)
                 ->onQueue('default')
                 ->delay(now()->addSeconds(5));
@@ -222,7 +226,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
 
-        if (!$docUrl) {
+        if (! $docUrl) {
             LoggerService::warning(self::class.' - Failed to get document URL', [
                 'quote_uuid' => $quote->uuid,
                 'document_id' => $document->id,
@@ -521,7 +525,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     private function getDrivingLicenseOCRDataStructure(object $ocrData): array
     {
         $personalInfo = $ocrData->personalInformation ?? [];
-        
+
         return [
             'driver_license_number' => $ocrData->licenseNumber ?? null,
             'driver_gender' => $this->formatGender($personalInfo['sex'] ?? null),
@@ -539,7 +543,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     private function getVehicleRegistrationCertificateOCRDataStructure(object $ocrData, int $providerId): array
     {
         $plateInfo = $this->extractPlateCodeNumber($ocrData->trafficPlateNumber ?? null);
-        
+
         return [
             'vehicle_plate_number' => $plateInfo['plate_number'] ?? null,
             'first_registration_date' => $this->formatDate($ocrData->registrationDate ?? null),
@@ -636,6 +640,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         }
 
         $nameParts = explode(' ', trim($fullName));
+
         return $nameParts[0] ?? '';
     }
 
@@ -648,6 +653,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         $nameParts = explode(' ', trim($fullName));
         if (count($nameParts) > 1) {
             array_shift($nameParts);
+
             return implode(' ', $nameParts);
         }
 
@@ -695,7 +701,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
     private function getVehicleColorCode(?string $vehicleColor, int $quoteTypeId, ?int $providerId): ?string
     {
-        if (empty($vehicleColor) || !$providerId) {
+        if (empty($vehicleColor) || ! $providerId) {
             return null;
         }
 
@@ -743,4 +749,3 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         ]);
     }
 }
-

@@ -31,10 +31,11 @@ class AggregateQuoteOCRComparison implements ShouldQueue
     {
         $quote = CarQuote::with(['personalQuote'])->find($this->quoteId);
 
-        if (!$quote || !$quote->personalQuote) {
+        if (! $quote || ! $quote->personalQuote) {
             LoggerService::info(self::class.' - Quote or PersonalQuote not found', [
                 'quote_id' => $this->quoteId,
             ]);
+
             return;
         }
 
@@ -53,6 +54,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             LoggerService::warning(self::class.' - No document results found for aggregation', [
                 'quote_id' => $this->quoteId,
             ]);
+
             return;
         }
 
@@ -72,7 +74,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             $totalFields = count($leadDataStructure[$docType]);
 
             foreach ($leadDataStructure[$docType] as $key => $value) {
-                if (isset($ocrDataStructure[$docType][$key]) && 
+                if (isset($ocrDataStructure[$docType][$key]) &&
                     $leadDataStructure[$docType][$key] === $ocrDataStructure[$docType][$key]) {
                     $matchCount++;
                 }
@@ -81,8 +83,8 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             $comparisonStructure[$docType] = [
                 'count' => $totalFields,
                 'match_count' => $matchCount,
-                'accuracy' => $totalFields > 0 
-                    ? number_format(($matchCount / $totalFields) * 100, 2) 
+                'accuracy' => $totalFields > 0
+                    ? number_format(($matchCount / $totalFields) * 100, 2)
                     : 0,
             ];
 
@@ -97,8 +99,8 @@ class AggregateQuoteOCRComparison implements ShouldQueue
 
         $totalMatches = array_sum(array_column($comparisonStructure, 'match_count'));
         $totalFields = array_sum(array_column($comparisonStructure, 'count'));
-        $comparisonScore = $totalFields > 0 
-            ? number_format(($totalMatches / $totalFields) * 100, 2) 
+        $comparisonScore = $totalFields > 0
+            ? number_format(($totalMatches / $totalFields) * 100, 2)
             : 0;
 
         LoggerService::info(self::class.' - Overall comparison score calculated', [
@@ -109,7 +111,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         ]);
 
         DB::transaction(function () use ($quote, $leadDataStructure, $ocrDataStructure, $comparisonStructure, $comparisonScore, $ocrResponseStructure) {
-            
+
             LeadOcrDataComparison::create([
                 'quoteable_id' => $quote->id,
                 'quoteable_type' => QuoteTypes::CAR->modelClass(),
@@ -129,7 +131,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             ]);
 
             $quote->personalQuote->update([
-                'lead_ocr_comparison_processed' => true
+                'lead_ocr_comparison_processed' => true,
             ]);
 
             DB::table('temp_ocr_document_results')
@@ -157,4 +159,3 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         ]);
     }
 }
-
