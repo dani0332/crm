@@ -285,6 +285,7 @@ class ApiController extends Controller
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
     {
+        $quoteType = ucfirst($quoteType);
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         if ($quoteTypeId) {
             LoggerService::startQuoteLogging(QuoteTypes::getName($quoteTypeId)->refId($quoteUuid));
@@ -295,6 +296,11 @@ class ApiController extends Controller
         ]);
 
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
+
+        if(!$quote) {
+            return response()->json(['success' => false, 'message' => 'Quote not found']);
+        }
+        
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 
@@ -313,7 +319,7 @@ class ApiController extends Controller
             ]);
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
-            $isCyberLob = strtolower($quoteType) === strtolower(QuoteTypes::CYBER->value) && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
+            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
             if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
                 app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
             } else {
