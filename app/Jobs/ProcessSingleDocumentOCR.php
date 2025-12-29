@@ -21,6 +21,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -198,24 +199,48 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     {
         $totalDocuments = $quote->documents()->whereIn('document_type_code', $this->getOcrDocumentCodes())->count();
 
-        $processedDocuments = DB::table('temp_ocr_document_results')
-            ->where('quote_id', $this->quoteId)
-            ->count();
+        $lock = Cache::lock('ocr_aggregation_dispatch_'.$this->quoteId, 10);
 
-        LoggerService::info(self::class.' - Checking aggregation trigger', [
-            'quote_id' => $this->quoteId,
-            'total_documents' => $totalDocuments,
-            'processed_documents' => $processedDocuments,
-        ]);
+        if ($lock->get()) {
+            try {
+                $processedDocuments = DB::table('temp_ocr_document_results')
+                    ->where('quote_id', $this->quoteId)
+                    ->count();
 
-        if ($processedDocuments >= $totalDocuments) {
-            LoggerService::info(self::class.' - All documents processed, triggering aggregation', [
+                LoggerService::info(self::class.' - Checking aggregation trigger', [
+                    'quote_id' => $this->quoteId,
+                    'total_documents' => $totalDocuments,
+                    'processed_documents' => $processedDocuments,
+                ]);
+
+                if ($processedDocuments >= $totalDocuments && $processedDocuments > 0) {
+                    $alreadyDispatched = Cache::get('ocr_aggregation_dispatched_'.$this->quoteId);
+
+                    if ($alreadyDispatched) {
+                        LoggerService::info(self::class.' - Aggregation already dispatched, skipping', [
+                            'quote_id' => $this->quoteId,
+                        ]);
+
+                        return;
+                    }
+
+                    Cache::put('ocr_aggregation_dispatched_'.$this->quoteId, true, now()->addMinutes(10));
+
+                    LoggerService::info(self::class.' - All documents processed, triggering aggregation', [
+                        'quote_id' => $this->quoteId,
+                    ]);
+
+                    AggregateQuoteOCRComparison::dispatch($this->quoteId)
+                        ->onQueue('lead_ocr_data_comparison')
+                        ->delay(now()->addSeconds(5));
+                }
+            } finally {
+                $lock->release();
+            }
+        } else {
+            LoggerService::info(self::class.' - Could not acquire lock for aggregation check, another worker is handling it', [
                 'quote_id' => $this->quoteId,
             ]);
-
-            AggregateQuoteOCRComparison::dispatch($this->quoteId)
-                ->onQueue('default')
-                ->delay(now()->addSeconds(5));
         }
     }
 
