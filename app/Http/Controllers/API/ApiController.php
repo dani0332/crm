@@ -723,7 +723,9 @@ class ApiController extends Controller
             'ip' => $request->ip(),
         ]);
 
-        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate);
+        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate)
+            ->onConnection('redis')
+            ->onQueue('lead_ocr_data_comparison');
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
     }

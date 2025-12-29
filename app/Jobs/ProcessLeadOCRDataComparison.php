@@ -30,6 +30,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     use Queueable;
 
     public $tries = 1;
+    public $timeout = 600;
     protected $startDate;
     protected $endDate;
     protected $uuid;
@@ -37,7 +38,6 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     public function __construct($uuid, $startDate, $endDate)
     {
-        $this->onQueue('lead_ocr_data_comparison');
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->uuid = $uuid;
@@ -135,10 +135,12 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     private function processOcrDocumentsForLeads($carQuotes, array $documentTypeCodes): void
     {
-        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Starting to process OCR documents', extra: [
+        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Starting to dispatch document jobs', extra: [
             'total_quotes' => $carQuotes->count(),
             'document_type_codes' => $documentTypeCodes,
         ]);
+
+        $totalDocumentsDispatched = 0;
 
         foreach ($carQuotes as $quote) {
             LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::LEAD_OCR_DATA_COMPARISON);
@@ -151,9 +153,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 'has_personal_quote' => $quote->personalQuote !== null,
             ]);
 
-            // Skip if no PersonalQuote exists - this would cause infinite loop
             if (! $quote->personalQuote) {
-                LoggerService::error(self::class.'::processOcrDocumentsForLeads - PersonalQuote not found, skipping to prevent infinite loop', extra: [
+                LoggerService::warning(self::class.'::processOcrDocumentsForLeads - PersonalQuote not found, skipping', extra: [
                     'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
                 ]);
@@ -161,133 +162,46 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 continue;
             }
 
-            // try {
-            DB::transaction(function () use ($quote) {
-                $emiratesIdDocumentsFound = 0;
-                $emiratesIdDocumentsProcessed = 0;
-                $emiratesIdDocumentsFailed = 0;
-                $leadDataStructure = [];
-                $ocrDataStructure = [];
-                $comparisonStructure = [];
-
-                foreach ($quote->documents as $document) {
-                    LoggerService::info(self::class.'::processOcrDocumentsForLeads - Checking document', extra: [
-                        'quote_id' => $quote->id,
-                        'document_id' => $document->id,
-                        'document_type_code' => $document->document_type_code,
-                        'doc_name' => $document->doc_name,
-                        'has_doc_url' => (bool) $document->doc_url,
-                        'has_doc_mime_type' => (bool) $document->doc_mime_type,
-                    ]);
-
-                    $documentType = DocumentType::where('code', $document->document_type_code)
-                        ->where('quote_type_id', QuoteTypes::CAR->id())
-                        ->first();
-
-                    if ($documentType) {
-                        // Check if the document type is enabled for OCR
-                        $isDocOCREnabled = OCRDocumentTypeEnum::isOCREnabled($documentType, QuoteTypes::CAR);
-
-                        // Skip if not enabled for OCR
-                        if (! $isDocOCREnabled) {
-                            LoggerService::info(self::class.'::processOcrDocumentsForLeads - Document type is not enabled for OCR', extra: [
-                                'quote_id' => $quote->id,
-                                'quote_uuid' => $quote->uuid,
-                                'document_id' => $document->id,
-                                'document_type_code' => $document->document_type_code,
-                                'document_type_name' => $documentType->name,
-                            ]);
-
-                            continue;
-                        }
-
-                        // Get the OCR document type
-                        $ocrDocType = OCRDocumentTypeEnum::getDocumentType($documentType);
-
-                        LoggerService::info(self::class."::processOcrDocumentsForLeads - Found {$documentType->name} document", extra: [
-                            'quote_id' => $quote->id,
-                            'quote_uuid' => $quote->uuid,
-                            'document_id' => $document->id,
-                            'document_type_code' => $document->document_type_code,
-                            'total_emirates_id_found' => $emiratesIdDocumentsFound,
-                        ]);
-
-                        $this->processOcrDocument($quote, $document, $ocrDocType->value, $leadDataStructure, $ocrDataStructure);
-
-                        // Calculate accuracy of the OCR data
-                        $count = count($leadDataStructure[$ocrDocType->value]);
-                        $matchCount = 0;
-
-                        foreach ($leadDataStructure[$ocrDocType->value] as $key => $value) {
-                            /*if (! isset($ocrDataStructure[$ocrDocType->value][$key])) {
-                                continue;
-                            }*/
-
-                            if (! array_key_exists($key, $ocrDataStructure[$ocrDocType->value] ?? [])) {
-                                continue;
-                            }
-
-                            if ($leadDataStructure[$ocrDocType->value][$key] === $ocrDataStructure[$ocrDocType->value][$key]) {
-                                $matchCount++;
-                            }
-                        }
-
-                        $comparisonStructure[$ocrDocType->value] = [
-                            'count' => $count,
-                            'match_count' => $matchCount,
-                            'accuracy' => $count > 0 ? number_format($matchCount / $count * 100, 2) : 0,
-                        ];
-
-                    } else {
-                        LoggerService::warning(self::class.'::processOcrDocumentsForLeads - DocumentType not found', extra: [
-                            'quote_id' => $quote->id,
-                            'document_id' => $document->id,
-                            'document_type_code' => $document->document_type_code,
-                        ]);
-                    }
-                }
-
-                // Save data in database
-                $this->saveleadOCRComparisonData($quote->id, $quote->uuid, $leadDataStructure, $ocrDataStructure, $comparisonStructure);
-                $this->saveOCRData($quote->id, $ocrDataStructure);
-
-                // Update processed flag using the relationship (CRITICAL FIX)
-                $flagUpdated = $this->updateLeadOCRComparisonProcessedFlag($quote);
-
-                if (! $flagUpdated) {
-                    throw new \RuntimeException("Failed to update lead_ocr_comparison_processed flag for quote {$quote->uuid}");
-                }
-
-                // Reset OCR response structure
-                $this->ocrReponseStructure = [];
-
-                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote processing summary', extra: [
-                    'quote_id' => $quote->id,
-                    'quote_uuid' => $quote->uuid,
-                    'total_documents' => $quote->documents->count(),
-                    'emirates_id_documents_found' => $emiratesIdDocumentsFound,
-                    'emirates_id_documents_processed' => $emiratesIdDocumentsProcessed,
-                    'emirates_id_documents_failed' => $emiratesIdDocumentsFailed,
-                    'flag_updated' => $flagUpdated,
-                ]);
-            });
-            /*} catch (\Exception $e) {
-                // Reset OCR response structure even on failure
-                $this->ocrReponseStructure = [];
-
-                LoggerService::error(self::class.'::processOcrDocumentsForLeads - Failed to process quote', exception: $e, extra: [
+            if ($quote->personalQuote->lead_ocr_comparison_processed) {
+                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote already processed, skipping', extra: [
                     'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
                 ]);
 
-                // Mark as processed anyway to prevent infinite loop on persistent errors
-                // This ensures the quote won't be retried indefinitely
-                $this->markAsProcessedOnError($quote);
-            }*/
+                continue;
+            }
+
+            $documentsDispatched = 0;
+
+            foreach ($quote->documents as $document) {
+                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Dispatching document job', extra: [
+                    'quote_id' => $quote->id,
+                    'quote_uuid' => $quote->uuid,
+                    'document_id' => $document->id,
+                    'document_type_code' => $document->document_type_code,
+                ]);
+
+                ProcessSingleDocumentOCR::dispatch(
+                    $quote->id,
+                    $document->id,
+                    $document->document_type_code
+                )->onQueue('ocr_dedicated')
+                  ->delay(now()->addSeconds(rand(1, 5)));
+
+                $documentsDispatched++;
+                $totalDocumentsDispatched++;
+            }
+
+            LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote document jobs dispatched', extra: [
+                'quote_id' => $quote->id,
+                'quote_uuid' => $quote->uuid,
+                'documents_dispatched' => $documentsDispatched,
+            ]);
         }
 
-        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Completed processing all documents', extra: [
-            'total_quotes_processed' => $carQuotes->count(),
+        LoggerService::info(self::class.'::processOcrDocumentsForLeads - All document jobs dispatched', extra: [
+            'total_quotes' => $carQuotes->count(),
+            'total_documents_dispatched' => $totalDocumentsDispatched,
         ]);
     }
 
