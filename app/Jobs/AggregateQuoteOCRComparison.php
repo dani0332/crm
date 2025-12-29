@@ -22,9 +22,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
     public $timeout = 120;
     public $tries = 2;
 
-    public function __construct(private int $quoteId)
-    {
-    }
+    public function __construct(private int $quoteId) {}
 
     public function handle(): void
     {
