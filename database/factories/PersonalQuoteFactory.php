@@ -55,7 +55,7 @@ class PersonalQuoteFactory extends Factory
 
     public function withCyberDependencies(): static
     {
-        return $this->afterCreating(function (PersonalQuote $quote) {
+        return $this->cyberQuote()->afterCreating(function (PersonalQuote $quote) {
             $nationality = Nationality::factory()->state([
                 'text' => 'United Arab Emirates',
                 'code' => 'AE',
