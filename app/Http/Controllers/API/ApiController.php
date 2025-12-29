@@ -297,10 +297,10 @@ class ApiController extends Controller
 
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
 
-        if(!$quote) {
+        if (! $quote) {
             return response()->json(['success' => false, 'message' => 'Quote not found']);
         }
-        
+
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 
