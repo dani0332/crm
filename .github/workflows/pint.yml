@@ -43,12 +43,15 @@ jobs:
 
       - name: Run Pint Fix
         run: composer pint:fix
-
+      - name: Fetch PR branch only
+        run: |
+          git fetch origin \
+            refs/heads/${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
       - name: Commit and Push Pint Fix
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'chore: apply pint fix'
           branch: ${{ github.head_ref }} # Push only to the PR branch
           push_options: '--force-with-lease'
-          skip_fetch: false # Don't fetch all branches
+          skip_fetch: true # Don't fetch all branches
 
