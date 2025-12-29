@@ -112,23 +112,28 @@ class AggregateQuoteOCRComparison implements ShouldQueue
 
         DB::transaction(function () use ($quote, $leadDataStructure, $ocrDataStructure, $comparisonStructure, $comparisonScore, $ocrResponseStructure) {
 
-            LeadOcrDataComparison::create([
-                'quoteable_id' => $quote->id,
-                'quoteable_type' => QuoteTypes::CAR->modelClass(),
-                'uuid' => $quote->uuid,
-                'lead_data' => json_encode($leadDataStructure),
-                'compairson_data' => json_encode($comparisonStructure),
-                'comparison_score' => $comparisonScore,
-                'timestamp' => now()->valueOf(),
-            ]);
+            $comparisonRecord = LeadOcrDataComparison::updateOrCreate(
+                ['uuid' => $quote->uuid],
+                [
+                    'quoteable_id' => $quote->id,
+                    'quoteable_type' => QuoteTypes::CAR->modelClass(),
+                    'lead_data' => json_encode($leadDataStructure),
+                    'compairson_data' => json_encode($comparisonStructure),
+                    'comparison_score' => $comparisonScore,
+                    'timestamp' => now()->valueOf(),
+                ]
+            );
 
-            OCRResponseData::firstOrCreate([
-                'quoteable_id' => $quote->id,
-                'quoteable_type' => QuoteTypes::CAR->modelClass(),
-            ], [
-                'ocr_response' => json_encode($ocrResponseStructure),
-                'ocr_data' => json_encode($ocrDataStructure),
-            ]);
+            OCRResponseData::updateOrCreate(
+                [
+                    'quoteable_id' => $quote->id,
+                    'quoteable_type' => QuoteTypes::CAR->modelClass(),
+                ],
+                [
+                    'ocr_response' => json_encode($ocrResponseStructure),
+                    'ocr_data' => json_encode($ocrDataStructure),
+                ]
+            );
 
             $quote->personalQuote->update([
                 'lead_ocr_comparison_processed' => true,
@@ -141,6 +146,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             LoggerService::info(self::class.' - Data saved and intermediate results cleaned up', [
                 'quote_id' => $quote->id,
                 'quote_uuid' => $quote->uuid,
+                'record_action' => $comparisonRecord->wasRecentlyCreated ? 'created' : 'updated',
             ]);
         });
 
