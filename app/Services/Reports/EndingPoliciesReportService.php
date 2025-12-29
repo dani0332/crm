@@ -33,7 +33,7 @@ class EndingPoliciesReportService extends ManagementReport
         }
 
         $query = PersonalQuote::query();
-        $this->paymentJoin($query);
+        $this->paymentJoin($query, null, 'p', 'leftJoin');
         $query->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->join('quote_type as qt', 'qt.id', '=', 'quote_type_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'insurance_provider_id')
