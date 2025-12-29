@@ -1978,7 +1978,7 @@ class CentralService extends BaseService
         try {
             $isQuotePolicyAutomationEnabled = true;
             $isCarQuote = $quoteTypeId == QuoteTypeId::Car;
-            
+
             if($isCarQuote){
                 $isQuotePolicyAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
             }
@@ -2191,7 +2191,7 @@ class CentralService extends BaseService
                 $captureAmount = $payment->premium_authorized;
             }
 
-            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code);
+            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code, $quote);
             $responsePremiumAmount = isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null;
 
             $logExtra = [
