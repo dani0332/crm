@@ -34,13 +34,15 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     protected $startDate;
     protected $endDate;
     protected $uuid;
+    protected $recalculateComparison;
     protected $ocrReponseStructure;
 
-    public function __construct($uuid, $startDate, $endDate)
+    public function __construct($uuid, $startDate, $endDate, $recalculateComparison = false)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->uuid = $uuid;
+        $this->recalculateComparison = $recalculateComparison;
     }
 
     public function middleware(): array
@@ -162,13 +164,20 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 continue;
             }
 
-            if ($quote->personalQuote->lead_ocr_comparison_processed) {
-                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote already processed, skipping', extra: [
+            if ($quote->personalQuote->lead_ocr_comparison_processed && !$this->recalculateComparison) {
+                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote already processed, skipping (use recalculate_comparison=true to recalculate)', extra: [
                     'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
                 ]);
 
                 continue;
+            }
+
+            if ($quote->personalQuote->lead_ocr_comparison_processed && $this->recalculateComparison) {
+                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote already processed, recalculating comparison with cached OCR data', extra: [
+                    'quote_id' => $quote->id,
+                    'quote_uuid' => $quote->uuid,
+                ]);
             }
 
             $documentsDispatched = 0;

@@ -491,6 +491,41 @@ curl -X POST https://your-domain.com/api/v1/imcrm/debug/lead-ocr-comparison \
 
 ---
 
+### 3.5. Recalculate Comparison with Cached Data (No New OCR API Calls)
+
+**Use Case:** You've updated comparison formulas and want to recalculate scores WITHOUT paying for new OCR API calls.
+
+```bash
+curl -X POST https://your-domain.com/api/v1/imcrm/debug/lead-ocr-comparison \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Basic YOUR_AUTH" \
+  -d '{
+    "uuid": "958DEW4J",
+    "recalculate_comparison": true
+  }'
+```
+
+**What happens:**
+1. API responds instantly ✅
+2. Job checks if lead was already processed
+3. If `recalculate_comparison=true`, bypasses "already processed" check
+4. Document jobs check `ocr_response_data` table first (CACHE)
+5. Uses cached OCR data (NO API calls!) ✅💰
+6. Recalculates comparison with latest logic
+7. Updates `lead_ocr_data_comparison` with new scores
+
+**Benefits:**
+- ✅ **Zero Cost:** No OCR API calls
+- ✅ **Fast:** Uses cached data
+- ✅ **Safe:** Can test formula changes without re-scanning documents
+- ✅ **Flexible:** Rerun comparisons anytime
+
+**Default Behavior (recalculate_comparison=false or omitted):**
+- Skips leads marked as `lead_ocr_comparison_processed=true`
+- Efficient for bulk date range runs
+
+---
+
 ### 4. Query Results
 
 ```sql
