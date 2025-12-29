@@ -27,6 +27,7 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use App\Services\EmailServices\TravelEmailService;
+use App\Enums\LeadSourceEnum;
 
 class TravelQuoteObserver
 {
@@ -99,9 +100,9 @@ class TravelQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $travelQuote->transaction_approved_at];
         }
-        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::Quoted) {
+        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::Quoted && $travelQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
             LoggerService::info(self::class." - Sending automated travel followup for quote uuid: {$travelQuote->uuid}");
-            app(TravelEmailService::class)->sendAutomatedTravelFollowup($travelQuote);
+            app(TravelEmailService::class)->handleAutomatedFollowup($travelQuote);
         }
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
