@@ -74,6 +74,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedMrIncludeFailedBookings();
         $this->seedLegacyPolicyKeys();
         $this->seedBranchData();
+        $this->seedOcrUtilEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -1194,6 +1195,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_MISREPORT_JOB_WORKFLOW],
             [
                 'value' => $birdWorkflowUrl,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOcrUtilEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_UTIL_ENABLED],
+            [
+                'value' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

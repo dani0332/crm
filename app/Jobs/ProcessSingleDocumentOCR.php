@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\OCRSourceEnum;
@@ -41,6 +42,16 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
     public function handle(): void
     {
+        if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED, useCache: true, cacheTime: now()->addMinute()) != '1') {
+            LoggerService::warning(self::class.' - OCR util processing is disabled, skipping document processing', extra: [
+                'quote_id' => $this->quoteId,
+                'document_id' => $this->documentId,
+                'message' => 'OCR util processing has been disabled via application_storages flag',
+            ]);
+
+            return;
+        }
+
         $document = QuoteDocument::find($this->documentId);
         
         if (!$document) {

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\OCRSourceEnum;
@@ -63,6 +64,17 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
      */
     public function handle(): void
     {
+        if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED, useCache: true, cacheTime: now()->addMinute()) != '1') {
+            LoggerService::warning(self::class.' - OCR util processing is disabled, skipping job execution', extra: [
+                'uuid' => $this->uuid,
+                'start_date' => $this->startDate?->toDateString(),
+                'end_date' => $this->endDate?->toDateString(),
+                'message' => 'OCR util processing has been disabled via application_storages flag',
+            ]);
+
+            return;
+        }
+
         $this->getCarDocuments();
     }
 
