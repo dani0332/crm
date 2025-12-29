@@ -211,23 +211,11 @@ class LifeQuote extends Model implements AuditableContract
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Life);
+            ->where('quote_type_id', QuoteTypeId::Life)
+            ->active();
     }
 
-    // Get all insured records for this quote (multiple AML screenings)
-    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
-    {
-        return $this->hasManyThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id
-            'id', // insured.id
-            'id', // personal_quotes.id
-            'insured_id' // customer_insured.insured_id
-        );
-    }
-
-    // Get the latest/most recent insured record for this quote
+    // Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -238,8 +226,8 @@ class LifeQuote extends Model implements AuditableContract
             'id', // personal_quotes.id (life quotes use personal_quotes table)
             'insured_id' // customer_insured.insured_id
         )
-        ->where('customer_insured.is_active', true)
-        ->where('customer_insured.quote_type_id', QuoteTypeId::Life);
+        ->where('customer_insured.quote_type_id', QuoteTypeId::Life)
+        ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
