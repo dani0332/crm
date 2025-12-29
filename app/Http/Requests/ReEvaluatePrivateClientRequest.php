@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
+use Carbon\Carbon;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -11,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ReEvaluatePrivateClientRequest extends FormRequest
 {
+    private const MAX_CREATED_AT_RANGE_DAYS = 7;
+
     public function authorize(): bool
     {
         return true;
@@ -48,6 +51,33 @@ class ReEvaluatePrivateClientRequest extends FormRequest
         return [
             'quote_type_id.in' => 'Quote type is not eligible for PCP evaluation.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $createdAt = $this->input('created_at');
+
+            if (! is_array($createdAt) || empty($createdAt['start']) || empty($createdAt['end'])) {
+                return;
+            }
+
+            try {
+                $start = Carbon::createFromFormat('Y-m-d', $createdAt['start']);
+                $end = Carbon::createFromFormat('Y-m-d', $createdAt['end']);
+            } catch (\Exception) {
+                return;
+            }
+
+            $rangeDaysInclusive = $start->diffInDays($end) + 1;
+
+            if ($rangeDaysInclusive > self::MAX_CREATED_AT_RANGE_DAYS) {
+                $validator->errors()->add(
+                    'created_at',
+                    "The created_at range may not exceed ".self::MAX_CREATED_AT_RANGE_DAYS." days (inclusive)."
+                );
+            }
+        });
     }
 
     protected function failedValidation(Validator $validator): void
