@@ -232,7 +232,8 @@ class HomeQuote extends Model implements AuditableContract
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Home);
+            ->where('quote_type_id', QuoteTypeId::Home)
+            ->active();
     }
 
     public function amlLogs()

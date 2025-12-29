@@ -419,6 +419,7 @@ class AMLService
      */
     public function getInsuredPersonDetails(string $idType, string $idNumber): ?object
     {
+        // Reminder:: Discussed with Arsalan, is Insured data not found then customer details will also be not found because data already migrated to insured table
         $insuredPersonDetails = Insured::where('id_type', $idType)
             ->when($idType == 'emiratesId', function ($query) use ($idNumber) {
                 $query->emiratesIdNumber($idNumber);
@@ -803,11 +804,11 @@ class AMLService
             return false;
         }
 
-        $insuredPersonDetails = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteDetails->id,
-            'customer_id' => $quoteDetails->customer_id,
-        ])->with(['customer', 'insured'])->latest('updated_at')->first();
+        $insuredPersonDetails = CustomerInsured::active()
+            ->forQuote($quoteTypeId, $quoteDetails->id)
+            ->where('customer_id', $quoteDetails->customer_id)
+            ->with(['customer', 'insured'])
+            ->first();
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$providerCode);
 
@@ -1384,17 +1385,14 @@ class AMLService
     {
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
-        $customerInsured = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId,
-            'customer_id' => $customerId,
-        ])
+        $customerInsured = CustomerInsured::active()
+            ->forQuote($quoteTypeId, $quoteRequestId)
+            ->where('customer_id', $customerId)
             ->with(['customer', 'insured', 'insured.insuredKyc'])
-            ->latest('updated_at')
             ->first();
 
         if (! $customerInsured) {
-            LoggerService::info('No CustomerInsured record found', [
+            LoggerService::info('No active CustomerInsured record found', [
                 'customer_id' => $customerId,
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quoteRequestId,
@@ -1711,6 +1709,7 @@ class AMLService
 
     public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening)
     {
+        // AML Mapping Reminder:: Tested
         LoggerService::info('Processing Insured Data for Screening');
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
@@ -1728,8 +1727,9 @@ class AMLService
 
     private function createOrUpdateInsured($request, bool $isEntity): Insured
     {
+        // AML Mapping Reminder:: Tested
+        // TODO:: Logs needs to be updated
         if ($isEntity) {
-
             LoggerService::info('Entity Details', extra: [
                 'trade_license_no' => $request->trade_license_no,
                 'company_name' => $request->company_name,
@@ -1748,7 +1748,7 @@ class AMLService
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
         } else {
-            // todo: remove get insured details after id_number format is consistent
+            // TODO:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', $request->screening_id_type)
                 ->when($request->screening_id_type == 'emiratesId', function ($query) use ($request) {
@@ -1803,6 +1803,8 @@ class AMLService
 
     public function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
     {
+        // AML Mapping Reminder:: Tested
+        // TODO:: Logs needs to be updated
         LoggerService::info('Updating Insured in Personal Quote', extra: [
             'insured_id' => $insured->id,
         ]);
@@ -1816,8 +1818,10 @@ class AMLService
         return $getPersonalQuote;
     }
 
-    private function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
+    public function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
     {
+        // AML Mapping Reminder:: Tested
+        // TODO:: Logs needs to be updated
         $isCustomerInsuredAssociationUpdated = false;
 
         // Check for orphaned record (without quote mapping) first
@@ -1904,6 +1908,8 @@ class AMLService
 
     private function shouldApplyScreening($insured, bool $isCustomerInsuredAssociationUpdated, $getLastScreening, bool $isEntity): bool
     {
+        // AML Mapping Reminder:: Tested
+        // TODO:: Logs needs to be updated
         if ($insured->wasRecentlyCreated) {
             LoggerService::info('Insured '.($isEntity ? 'Entity' : 'Person').' profile created');
 
@@ -1930,6 +1936,8 @@ class AMLService
     // TODO:: this function is added because universal search and customer members have dependency on customer and entity details.
     private function handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, bool $isEntity): ?int
     {
+        // AML Mapping Reminder:: Tested
+        // TODO:: Logs needs to be updated
         if ($isEntity) {
             return $this->handleEntityData($request, $quoteTypeId, $quote);
         }

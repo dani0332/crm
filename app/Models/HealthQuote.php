@@ -308,6 +308,7 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
+    // TODO: Consider renaming this relation from 'insured' to 'currentlyInsured' for clarity, as the current name may incorrectly suggest association with AML Insured. Update usages throughout the codebase accordingly.
     public function insured()
     {
         return $this->belongsTo(Customer::class, 'currently_insured_id');
@@ -361,22 +362,11 @@ class HealthQuote extends Model implements AuditableContract
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Health);
+            ->where('quote_type_id', QuoteTypeId::Health)
+            ->active();
     }
 
-    public function insuredDetails()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // Foreign key on customer_insured
-            'id',               // Foreign key on insured
-            'id',               // Local key on health_quote_requests
-            'insured_id'        // Local key on customer_insured
-        )->where('quote_type_id', QuoteTypeId::Health);
-    }
-
-    // Get the latest/most recent insured record for this quote
+    // Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -386,8 +376,9 @@ class HealthQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // health_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
-            ->latest('customer_insured.updated_at');
+        )
+        ->where('customer_insured.quote_type_id', QuoteTypeId::Health)
+        ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()

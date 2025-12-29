@@ -86,7 +86,8 @@ class OCRDocumentValidator
             ->select('driver_gender')
             ->first();
 
-        $customerInsured = CustomerInsured::where('quote_request_id', $quoteId)
+        $customerInsured = CustomerInsured::active()
+            ->where('quote_request_id', $quoteId)
             ->first();
 
         if (! $customerInsured) {

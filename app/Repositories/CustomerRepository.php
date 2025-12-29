@@ -53,7 +53,7 @@ class CustomerRepository extends BaseRepository
             } else {
                 if ($filterType == 'insured_first_name') {
                     $customerIds = Customer::where(function ($query) use ($filterValue) {
-                        $query->whereHas('insured', function ($query) use ($filterValue) {
+                        $query->whereHas('insureds', function ($query) use ($filterValue) {
                             $query->where('first_name', $filterValue);
                         });
                         $query->orWhere('insured_first_name', $filterValue);

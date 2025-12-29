@@ -393,6 +393,7 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
+        // AML Mapping Reminder:: Tested
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
@@ -671,6 +672,8 @@ class AMLController extends Controller
 
     public function fetchEntity(Request $request)
     {
+        // AML Mapping Reminder:: Tested
+        // TODO:: Logs needs to be updated
         $entity = Insured::where([
             'customer_type' => CustomerTypeEnum::Entity,
             'trade_license_no' => $request->trade_license,
@@ -685,6 +688,9 @@ class AMLController extends Controller
 
     public function linkEntityDetails(Request $request)
     {
+        // AML Mapping Reminder:: Tested
+        // TODO:: Logs needs to be updated
+
         // Reminder:: This patch add because data should be updated in new structure
         $quoteType = QuoteType::where('id', $request->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $request->quote_request_id);
@@ -696,28 +702,8 @@ class AMLController extends Controller
         $insured = Insured::where('id', $request->entity_id)->first();
         app(AMLService::class)->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
 
-        $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)
-            ->where('insured_id', $insured->id)
-            ->whereNull('quote_type_id')
-            ->whereNull('quote_request_id')
-            ->first();
-
-        if ($customerInsured) {
-            $customerInsured->update([
-                'quote_type_id' => $request->quote_type_id,
-                'quote_request_id' => $request->quote_request_id,
-                'updated_at' => now(),
-            ]);
-        } else {
-            CustomerInsured::updateOrCreate([
-                'quote_type_id' => $request->quote_type_id,
-                'quote_request_id' => $request->quote_request_id,
-            ], [
-                'customer_id' => $quoteObject->customer_id,
-                'insured_id' => $insured->id,
-                'updated_at' => now(),
-            ]);
-        }
+        $request->merge(['customer_id' => $quoteObject->customer_id]);
+        app(AMLService::class)->handleCustomerInsuredMappings($request, $request->quote_type_id, $quoteObject, $insured);
 
         // Reminder:: This code should be remove when new structure will be completly mapped
         $oldStructureEntity = Entity::where('trade_license_no', $insured->trade_license_no)->first();
@@ -759,6 +745,8 @@ class AMLController extends Controller
 
     public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
     {
+        // TODO::Logs needs to be updated
+        // AML Mapping Reminder:: Tested
         LoggerService::startQuoteLogging($request->code, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
             'customer_type' => $request->customer_type,
@@ -767,9 +755,7 @@ class AMLController extends Controller
             'trade_license' => $request->trade_license,
         ]);
 
-        // TODO:: this condition should be move to AMLService class
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
-        // TODO:: this condition should be updated later
         if (empty($request->customer_type) || is_null($request->customer_type) || $request->customer_type == 'null') {
             $isEntity = ! empty($request->trade_license);
         }
@@ -904,6 +890,8 @@ class AMLController extends Controller
 
     public function insuredKycDetailsUpdate(InsuredKycRequest $insuredKycRequest)
     {
+        // AML Mapping Reminder:: Not Tested
+        // TODO:: Logs needs to be updated
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
         $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
@@ -1098,6 +1086,8 @@ class AMLController extends Controller
 
     public function updateAddtionalVehicleDriverDetails(UpdateAdditionalVehicleDriverDetailsRequest $updateAdditionalVehicleDriverDetailsRequest)
     {
+        // AML Mapping Reminder:: Not Tested
+        // TODO:: Logs needs to be updated
         $quoteType = QuoteTypes::getName($updateAdditionalVehicleDriverDetailsRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $updateAdditionalVehicleDriverDetailsRequest->quote_uuid, 'uuid');
 
