@@ -188,6 +188,24 @@ trait PrivateClient
 
         $query = $modelInstance->newQuery();
 
+        $selectedColumns = array_values(array_intersect($tableColumns, [
+            'id',
+            'uuid',
+            'customer_id',
+            'nationality_id',
+            'quote_status_id',
+            'pc_qualified',
+            'pcp_tag_version',
+            'policy_expiry_date',
+            'quote_type_id',
+            'created_at',
+            'code',
+        ]));
+
+        if (! empty($selectedColumns)) {
+            $query->select($selectedColumns);
+        }
+
         if (in_array('quote_type_id', $tableColumns)) {
             $query->where('quote_type_id', $quoteTypeId);
         }
@@ -226,6 +244,7 @@ trait PrivateClient
 
         LoggerService::sql("Re-evaluation Query:",$query);
 
+        // TODO: N+1 here; cache configs per quote type/customer/lead in class props and reuse instead of querying each loop iteration.
         $query->orderBy('id')->chunkById(self::PCP_CHUNK_SIZE, function ($leads) use (&$results, $quoteType, $modelClass, $quoteTypeId) {
             foreach ($leads as $lead) {
                 $results['processed']++;
@@ -456,7 +475,10 @@ trait PrivateClient
         if ($shouldUpdateLead) {
 
             $model->update($updateData);
-            PersonalQuote::where('uuid', $model->uuid)->update($updateData);
+            PersonalQuote::where('uuid', $model->uuid)
+                ->get()
+                ->each
+                ->update($updateData);
 
             $wasLeadUpdated = true;
             LoggerService::info($shouldRemove ? 'PCP tag removed on lead.' : 'PC qualified tag applied successfully on lead.', extra: [
@@ -473,7 +495,16 @@ trait PrivateClient
 
     private function updateCustomer($model, ?int $pcpTagVersion, bool $shouldRemove = false): array
     {
-        $customer = Customer::where('id', $model->customer_id)->first();
+        $customer = Customer::where('id', $model->customer_id)
+            ->select([
+                'id',
+                'first_name',
+                'last_name',
+                'email',
+                'pcp_tag',
+                'pcp_tag_version',
+            ])
+            ->first();
         $wasCustomerUpdated = false;
         $retainedExistingTag = false;
 
@@ -574,8 +605,13 @@ trait PrivateClient
         return PersonalQuote::where('customer_id', $customerId)
             ->where('pc_qualified', true)
             ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-            ->whereNotNull('policy_expiry_date')
-            ->where('policy_expiry_date', '>', now())
+            ->where(function ($query) {
+                $query->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+                    ->orWhere(function ($expiryQuery) {
+                        $expiryQuery->whereNotNull('policy_expiry_date')
+                            ->where('policy_expiry_date', '>', now());
+                    });
+            })
             ->exists();
     }
 
