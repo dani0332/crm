@@ -179,14 +179,14 @@ class UpdateLeadStatusRequest extends FormRequest
                 if ($customerInsured && $customerInsured?->insured?->customer_type == CustomerTypeEnum::Individual) {
                     $insured = $customerInsured?->insured;
                     $customer = Customer::find($quoteObject?->customer_id);
-    
+
                     $customerProfileDetails = [
                         'insured_first_name' => ($insured?->first_name ?? $customer->insured_first_name) ?? null,
                         'insured_last_name' => ($insured?->last_name ?? $customer->insured_last_name) ?? null,
                         'emirates_id_number' => ($insured?->id_type == 'emiratesId') ? $insured?->id_number : ($customer?->emirates_id_number ?? null),
                         'emirates_id_expiry_date' => $customer?->emirates_id_expiry_date ?? null,
                     ];
-    
+
                     if (in_array(null, $customerProfileDetails)) {
                         $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
                     }

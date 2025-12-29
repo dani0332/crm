@@ -58,7 +58,7 @@ class PersonalQuoteStatusRequest extends FormRequest
                 'latestInsured' => function ($query) use ($quoteTypeId) {
                     $query->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
-                'customer'
+                'customer',
             ])->where('uuid', request()->quote_uuid)->where('quote_type_id', $quoteTypeId)->firstOrFail();
 
             $customerProfileDetails = [

@@ -6,7 +6,6 @@ use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\Filterable;
@@ -415,8 +414,8 @@ class PersonalQuote extends Model implements AuditableContract
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
         )
-        ->whereIn('quote_type_id', getPersonalQuoteTypeIds())
-        ->where('customer_insured.is_active', true);
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds())
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
