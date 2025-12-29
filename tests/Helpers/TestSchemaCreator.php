@@ -202,9 +202,12 @@ class TestSchemaCreator
                 $table->id();
                 $table->string('key_name')->unique();
                 $table->text('value')->nullable();
+                $table->boolean('is_active')->default(1);
                 $table->softDeletes();
                 $table->timestamps();
             });
+        } else {
+            self::addColumnIfMissing('application_storage', 'is_active', fn (Blueprint $table) => $table->boolean('is_active')->default(1));
         }
 
         // Create teams table if it doesn't exist
@@ -297,8 +300,35 @@ class TestSchemaCreator
                 $table->softDeletes();
                 $table->timestamps();
             });
-        } else {
-            self::addColumnIfMissing('emirates', 'deleted_at', fn (Blueprint $table) => $table->softDeletes());
+        }
+
+        if (! $schema->hasTable('policy_issuance')) {
+            $schema->create('policy_issuance', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->string('model_type');
+                $table->unsignedBigInteger('model_id');
+                $table->string('quote_type')->nullable();
+                $table->string('status')->nullable();
+                $table->string('completed_step')->nullable();
+                $table->text('message')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (! $schema->hasTable('policy_issuance_logs')) {
+            $schema->create('policy_issuance_logs', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('policy_issuance_id');
+                $table->string('model_type')->nullable();
+                $table->unsignedBigInteger('model_id')->nullable();
+                $table->string('step')->nullable();
+                $table->string('status')->nullable();
+                $table->text('payload')->nullable();
+                $table->text('response')->nullable();
+                $table->string('endPoint')->nullable();
+                $table->timestamps();
+            });
         }
 
         if (! $schema->hasTable('cyber_quote_request')) {
@@ -341,6 +371,9 @@ class TestSchemaCreator
             'insurer_debit_note_doc_id' => fn (Blueprint $table) => $table->string('insurer_debit_note_doc_id')->nullable(),
             'insurer_tax_invoice_doc_id' => fn (Blueprint $table) => $table->string('insurer_tax_invoice_doc_id')->nullable(),
             'insurer_policy_doc_id' => fn (Blueprint $table) => $table->string('insurer_policy_doc_id')->nullable(),
+            'documents' => fn (Blueprint $table) => $table->json('documents')->nullable(),
+            'insurer_api_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('insurer_api_status_id')->nullable(),
+            'api_issuance_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('api_issuance_status_id')->nullable(),
         ];
 
         foreach ($personalQuoteColumns as $column => $callback) {

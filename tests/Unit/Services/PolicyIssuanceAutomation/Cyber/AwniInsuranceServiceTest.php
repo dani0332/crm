@@ -2,23 +2,16 @@
 
 use App\Enums\AwnicEnum;
 use App\Models\PersonalQuote;
-use App\Services\ApplicationStorageService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwniInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicBookPolicyService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicStepExecutor;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicValidationService;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Tests\Helpers\TestSchemaCreator;
-use Tests\Support\FakeApplicationStorageService;
-use Tests\Support\FakePolicyIssuanceProcess;
-use Tests\Support\FakePolicyIssuanceService;
 
 beforeEach(function () {
     TestSchemaCreator::createCyberSchema();
-
-    app()->instance(ApplicationStorageService::class, new FakeApplicationStorageService());
-    app()->instance(PolicyIssuanceService::class, new FakePolicyIssuanceService());
+    seedAwnicApplicationStorage();
 });
 
 afterEach(function () {
@@ -27,8 +20,7 @@ afterEach(function () {
 
 it('executes all AWNIC steps when validation passes', function () {
     $quote = PersonalQuote::factory()->cyberQuote()->withCyberDependencies()->create();
-    dd($quote);
-    $process = new FakePolicyIssuanceProcess($quote);
+    $process = createPolicyIssuanceProcess($quote);
 
     $validation = Mockery::mock(AwnicValidationService::class);
     $validation
@@ -70,7 +62,7 @@ it('executes all AWNIC steps when validation passes', function () {
 
 it('stops execution when validation fails', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = new FakePolicyIssuanceProcess($quote);
+    $process = createPolicyIssuanceProcess($quote);
 
     $validation = Mockery::mock(AwnicValidationService::class);
     $validation
@@ -97,7 +89,7 @@ it('stops execution when validation fails', function () {
 
 it('propagates step failure immediately', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = new FakePolicyIssuanceProcess($quote);
+    $process = createPolicyIssuanceProcess($quote);
 
     $validation = Mockery::mock(AwnicValidationService::class);
     $validation
