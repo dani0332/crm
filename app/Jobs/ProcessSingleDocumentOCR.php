@@ -70,6 +70,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                     ->with(['insuranceProvider:id,code']);
             },
             'insuranceProvider:id,code',
+            'personalQuote:id,uuid,quote_id,quote_type_id,policy_number,policy_start_date,policy_expiry_date,policy_issuance_date',
         ])->find($this->quoteId);
 
         if (! $quote) {
@@ -488,14 +489,14 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     private function getMotorInsurancePolicyScheduleLeadDataStructure($quote): array
     {
         return [
-            'policy_number' => $quote->personalQuote->policy_number,
+            'policy_number' => $quote->personalQuote?->policy_number,
         ];
     }
 
     private function getCertificateOfIssuanceLeadDataStructure($quote): array
     {
         return [
-            'policy_number' => $quote->personalQuote->policy_number,
+            'policy_number' => $quote->personalQuote?->policy_number,
             'policy_start_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_start_date)->format('Y-m-d') : null,
             'policy_expiry_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_expiry_date)->format('Y-m-d') : null,
             'policy_issuance_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_issuance_date)->format('Y-m-d') : null,
