@@ -62,7 +62,7 @@ class AdnicApiService
             return $response;
         }
 
-        $issuePolicyResult = $issuePolicyResponse['data'];
+        $issuePolicyResult = $issuePolicyResponse['data']?->data;
         LoggerService::info('API call successful, updating quote and payment', extra: [
             'policy_number' => $issuePolicyResult?->PolicyInfo?->PolicyNo,
             'policy_start_date' => $issuePolicyResult?->PolicyInfo?->PolicyStartDate,
@@ -207,11 +207,12 @@ class AdnicApiService
             return $validationResult;
         }
 
-        $generatePolicyResponse = json_decode($generatePolicyResponse?->response);
-        $policyDocuments = $generatePolicyResponse?->PolicyDocumentInfo;
+        $generatePolicyResponse = json_decode($generatePolicyResponse?->response); 
+        $policyIssueResponse = $generatePolicyResponse?->data;
+        $policyDocuments = $policyIssueResponse?->PolicyDocumentInfo;
 
-        foreach ($policyDocuments as $docKey => $policyDocument) {
-            $payload = $this->requestBuilder->buildDownloadDocumentPayload($generatePolicyResponse, $policyDocument->PolicyDocumentId);
+        foreach ($policyDocuments as $policyDocumentKey => $policyDocumentId) { 
+            $payload = $this->requestBuilder->buildDownloadDocumentPayload($policyIssueResponse, $policyDocumentId);
 
             $httpResponse = AdnicHttpFacade::post($endPoint, $payload);
             $downloadReponse = $this->responseHandler->parseHttpResponse($httpResponse, AdnicEnum::RESPONSE_DOWNLOAD_DOCUMENT);
@@ -219,7 +220,7 @@ class AdnicApiService
             app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $downloadReponse, AdnicHttpFacade::getBaseUrl().$endPoint, AdnicEnum::STEP_UPLOAD_POLICY_DOCS, $downloadReponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
             if (isset($downloadReponse['status'])) {
-                $docCode = $this->documentHandler->getQuoteDocumentMappingForInsurerDocuments($docKey);
+                $docCode = $this->documentHandler->getQuoteDocumentMappingForInsurerDocuments($policyDocumentKey);
 
                 $documentContent = $downloadReponse['data'];
                 if ($downloadReponse['status'] && $documentContent && isset($documentContent->documentContent, $documentContent->documentName)) {
@@ -229,7 +230,7 @@ class AdnicApiService
                 }
 
                 $uploadedDocumentsToIMCRM->push([
-                    'name' => $docKey,
+                    'name' => $policyDocumentKey,
                     'uploaded' => $quoteDocument?->id ?? false,
                     'status' => $downloadReponse['status'],
                     'message' => $downloadReponse['message'] ?? 'Document Retrieve Failed',

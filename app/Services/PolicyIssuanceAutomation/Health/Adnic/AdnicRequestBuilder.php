@@ -165,7 +165,7 @@ class AdnicRequestBuilder
      */
     public function buildDownloadDocumentPayload($generatePolicyResponse, $docId): array
     {
-        return $payload = [
+        return [
             'PartnerInfo' => [
                 'PartnerId' => $this->httpClient->getPartnerId(),
             ],
