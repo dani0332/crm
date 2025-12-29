@@ -74,7 +74,7 @@ class ReEvaluatePrivateClientRequest extends FormRequest
             if ($rangeDaysInclusive > self::MAX_CREATED_AT_RANGE_DAYS) {
                 $validator->errors()->add(
                     'created_at',
-                    "The created_at range may not exceed ".self::MAX_CREATED_AT_RANGE_DAYS." days (inclusive)."
+                    'The created_at range may not exceed '.self::MAX_CREATED_AT_RANGE_DAYS.' days (inclusive).'
                 );
             }
         });
