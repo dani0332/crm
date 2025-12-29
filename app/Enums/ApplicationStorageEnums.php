@@ -262,6 +262,10 @@ final class ApplicationStorageEnums extends Enum
     public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
     public const DEVICE_BOOK_POLICY_TEMPLATE = 'DEVICE_BOOK_POLICY_TEMPLATE';
 
+    /* Device/Smartphone Email Templates */
+    public const DEVICE_UPDATE_POLICY_TEMPLATE = 'DEVICE_UPDATE_POLICY_TEMPLATE';
+    public const DEVICE_PAYMENT_AUTHORIZED_TEMPLATE = 'DEVICE_PAYMENT_AUTHORIZED_TEMPLATE';
+
     /* Savings Send Policy Template */
     public const SAVINGS_SEND_POLICY_TEMPLATE = 'SAVINGS_SEND_POLICY_TEMPLATE';
     public const NEW_LEAD_POOL_BCC = 'NEW_LEAD_POOL_BCC';

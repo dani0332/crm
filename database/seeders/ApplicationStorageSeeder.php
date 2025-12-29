@@ -1134,20 +1134,44 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedDeviceSmartphonePolicyIssuanceSettings()
     {
+        // Smartphone - New Policy Template ID (Policy Documents Email)
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DEVICE_SEND_POLICY_TEMPLATE],
             [
-                'value' => 0, // TODO:: NGI:: required from Mohamed Jaseem or Waleed Akhtar or Afzal khan or Ahsan Liaqat
+                'value' => 'db6caa9d-d274-41b8-8950-a6fb4b56ae41', // Smartphone - New Policy template
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
             ],
         );
 
+        // Smartphone - Book Policy Template ID (same as New Policy for consistency)
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DEVICE_BOOK_POLICY_TEMPLATE],
             [
-                'value' => 0, // TODO:: NGI:: required from Mohamed Jaseem or Waleed Akhtar or Afzal khan or Ahsan Liaqat
+                'value' => 'db6caa9d-d274-41b8-8950-a6fb4b56ae41', // Smartphone - New Policy template
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        // Smartphone - Update Policy Template ID (Send Update Email)
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_UPDATE_POLICY_TEMPLATE],
+            [
+                'value' => 'cd3ef8ad-f6ad-4e73-89ca-2af81d0eb385', // Smartphone - Update Policy template
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        // Smartphone - Payment Authorized Template Alias (FTC Email)
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DEVICE_PAYMENT_AUTHORIZED_TEMPLATE],
+            [
+                'value' => 'smartphone-payment-authorized', // Smartphone - Payment Authorized template alias
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

@@ -1331,7 +1331,7 @@ class SendUpdateLogService
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
@@ -1450,19 +1450,24 @@ class SendUpdateLogService
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::BUSINESS_SEND_POLICY_TEMPLATE);
             }
         } else {
-            $templateCode = strtoupper($quoteType).'_SEND_POLICY_TEMPLATE';
-            if (
-                $quoteTypeId == QuoteTypeId::Car &&
-                (
-                    app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
-                    $quote->vehicle_use == CarVehicleUse::COMMERCIAL
-                )
-            ) {
-                $emailData->companyName = $quote?->company_name ?? '-';
-                $templateCode = 'COMMERCIAL_'.$templateCode;
+            // Device/Smartphone uses a specific update policy template
+            if ($quoteTypeId == QuoteTypeId::Device) {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_UPDATE_POLICY_TEMPLATE);
+            } else {
+                $templateCode = strtoupper($quoteType).'_SEND_POLICY_TEMPLATE';
+                if (
+                    $quoteTypeId == QuoteTypeId::Car &&
+                    (
+                        app(LeadAllocationService::class)->isCommercialVehicles($quote) ||
+                        $quote->vehicle_use == CarVehicleUse::COMMERCIAL
+                    )
+                ) {
+                    $emailData->companyName = $quote?->company_name ?? '-';
+                    $templateCode = 'COMMERCIAL_'.$templateCode;
+                }
+                $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
+                $templateId = getAppStorageValueByKey(constant($constantName));
             }
-            $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
-            $templateId = getAppStorageValueByKey(constant($constantName));
         }
 
         $emailData->templateId = $templateId;
