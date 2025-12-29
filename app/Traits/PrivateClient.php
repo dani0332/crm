@@ -183,7 +183,7 @@ trait PrivateClient
             'failures' => [],
         ];
 
-        $modelInstance = new $modelClass();
+        $modelInstance = new $modelClass;
         $tableColumns = $this->getCachedTableColumns($modelClass, $modelInstance->getTable());
 
         $query = $modelInstance->newQuery();
@@ -242,7 +242,7 @@ trait PrivateClient
             });
         }
 
-        LoggerService::sql("Re-evaluation Query:",$query);
+        LoggerService::sql('Re-evaluation Query:', $query);
 
         // TODO: N+1 here; cache configs per quote type/customer/lead in class props and reuse instead of querying each loop iteration.
         $query->orderBy('id')->chunkById(self::PCP_CHUNK_SIZE, function ($leads) use (&$results, $quoteType, $modelClass, $quoteTypeId) {
