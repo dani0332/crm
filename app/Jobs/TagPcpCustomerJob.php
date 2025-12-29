@@ -47,24 +47,24 @@ class TagPcpCustomerJob implements ShouldQueue
                 $quotesQuery->whereIn('uuid', $this->uuids);
             }
 
-            $quotesQuery->chunk(200, function ($quotes) {
-                foreach ($quotes as $quote) {
+            $quotes = $quotesQuery->get();
 
-                    $customerData = [
-                        'customer_id' => $quote->customer?->id,
-                        'customer_name' => $quote->customer?->first_name.' '.$quote->customer?->last_name,
-                        'email' => $quote->customer?->email,
-                    ];
+            foreach ($quotes as $quote) {
 
-                    LoggerService::info(self::class.': PC customer tag marking activity started', extra: $customerData);
+                $customerData = [
+                    'customer_id' => $quote->customer?->id,
+                    'customer_name' => $quote->customer?->first_name.' '.$quote->customer?->last_name,
+                    'email' => $quote->customer?->email,
+                ];
 
-                    LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                    $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
-                    LoggerService::endLogging();
+                LoggerService::info(self::class.': PC customer tag marking activity started', extra: $customerData);
 
-                    LoggerService::info(self::class.': PC customer tag marking activity completed', extra: $customerData);
-                }
-            });
+                LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
+                $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
+                LoggerService::endLogging();
+
+                LoggerService::info(self::class.': PC customer tag marking activity completed', extra: $customerData);
+            }
 
             LoggerService::info(self::class.': PC customer tag exercise has been completed');
 
