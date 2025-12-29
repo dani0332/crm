@@ -65,9 +65,19 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         foreach ($documentResults as $result) {
             $docType = $result->doc_type;
 
-            $leadDataStructure[$docType] = json_decode($result->lead_data, true);
-            $ocrDataStructure[$docType] = json_decode($result->ocr_data, true);
-            $ocrResponseStructure[$docType] = json_decode($result->ocr_response, true);
+            $leadDataStructure[$docType] = json_decode($result->lead_data, true) ?? [];
+            $ocrDataStructure[$docType] = json_decode($result->ocr_data, true) ?? [];
+            $ocrResponseStructure[$docType] = json_decode($result->ocr_response, true) ?? [];
+
+            if (empty($leadDataStructure[$docType])) {
+                LoggerService::warning(self::class.' - Invalid or empty lead data for document, skipping comparison', [
+                    'quote_id' => $quote->id,
+                    'document_id' => $result->document_id,
+                    'doc_type' => $docType,
+                ]);
+
+                continue;
+            }
 
             $matchCount = 0;
             $totalFields = count($leadDataStructure[$docType]);
@@ -94,6 +104,14 @@ class AggregateQuoteOCRComparison implements ShouldQueue
                 'matched_fields' => $matchCount,
                 'accuracy' => $comparisonStructure[$docType]['accuracy'].'%',
             ]);
+        }
+
+        if (empty($comparisonStructure)) {
+            LoggerService::warning(self::class.' - No valid documents to compare, all data was corrupted or empty', [
+                'quote_id' => $quote->id,
+            ]);
+
+            return;
         }
 
         $totalMatches = array_sum(array_column($comparisonStructure, 'match_count'));
