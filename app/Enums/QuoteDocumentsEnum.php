@@ -14,6 +14,7 @@ final class QuoteDocumentsEnum extends Enum
     public const CAR_TAX_CREDIT = 'CTC';
     public const CAR_TAX_CREDIT_RAISE_BY_BUYER = 'CTCRBB';
     public const CAR_EMIRATE_ID = 'CEID';
+    public const COMPANY_CAR_EMIRATE_ID = 'EID_CAR';
     public const DRIVING_LICENSE = 'DL';
     public const FINAL_TERMS_AND_CONDITIONS = 'CTC';
     public const POLICY_HANDBOOK = 'PHB';

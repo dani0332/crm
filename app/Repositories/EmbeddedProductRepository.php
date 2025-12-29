@@ -64,6 +64,7 @@ use finfo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use Throwable;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -581,7 +582,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $sukoonMedexService = app(SukoonMedexService::class);
                 $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
                 $sukoonMedexService->processPurchaseFlow();
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
 
@@ -601,7 +602,7 @@ class EmbeddedProductRepository extends BaseRepository
             try {
                 $context = EpEcbService::buildContext($transaction->id, $quoteId, $quoteTypeId, $quoteObject->code);
                 dispatch(new EpPurchaseFlowJob($context));
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
         }
@@ -1365,6 +1366,12 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchGenerateEPRenewal($batchName)
     {
         $batch = RenewalBatch::where('name', $batchName)->first();
+        if (! $batch) {
+            LoggerService::info("fn:fetchGenerateEPRenewal - RenewalBatch not found for name: {$batchName}");
+
+            return;
+        }
+
         $capturedStartDate = Carbon::createFromFormat('Y-m-d', $batch->start_date)->subMonths(16)->startOfMonth()->format('Y-m-d H:i:s');
         $capturedEndDate = Carbon::createFromFormat('Y-m-d', $batch->end_date)->subMonths(10)->endOfMonth()->format('Y-m-d H:i:s');
 
