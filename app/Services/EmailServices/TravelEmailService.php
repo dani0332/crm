@@ -301,7 +301,7 @@ class TravelEmailService extends BaseService
                 if ($quotePlansCount > 0) {
                     $this->updateTravelQuoteStatus($lead->uuid);
                 }
-                
+
             } else {
                 LoggerService::info(self::class." - Intro email failed with code {$responseCode}, skipping automated followup for uuid: {$lead->uuid}");
             }
