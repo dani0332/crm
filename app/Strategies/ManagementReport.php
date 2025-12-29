@@ -669,22 +669,22 @@ class ManagementReport
                         ->where(function ($subQuery) use ($alias) {
                             $subQuery->where(function ($q) use ($alias) {
                                 // Car quotes - quote_type_id = 1
-                                $q->whereColumn('personal_quotes.quote_type_id', '=', DB::raw(QuoteTypeId::Car))
+                                $q->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car)
                                     ->where("{$alias}.paymentable_type", '=', 'App\Models\CarQuote');
                             })
                                 ->orWhere(function ($q) use ($alias) {
                                     // Health quotes - quote_type_id = 3
-                                    $q->whereColumn('personal_quotes.quote_type_id', '=', DB::raw(QuoteTypeId::Health))
+                                    $q->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
                                         ->where("{$alias}.paymentable_type", '=', 'App\Models\HealthQuote');
                                 })
                                 ->orWhere(function ($q) use ($alias) {
                                     // Business quotes - quote_type_id = 5
-                                    $q->whereColumn('personal_quotes.quote_type_id', '=', DB::raw(QuoteTypeId::Business))
+                                    $q->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Business)
                                         ->where("{$alias}.paymentable_type", '=', 'App\Models\BusinessQuote');
                                 })
                                 ->orWhere(function ($q) use ($alias) {
                                     // Travel quotes - quote_type_id = 8
-                                    $q->whereColumn('personal_quotes.quote_type_id', '=', DB::raw(QuoteTypeId::Travel))
+                                    $q->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Travel)
                                         ->where("{$alias}.paymentable_type", '=', 'App\Models\TravelQuote');
                                 });
                         });
