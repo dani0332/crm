@@ -353,6 +353,22 @@ class TestSchemaCreator
             });
         }
 
+        if (! $schema->hasTable('quote_documents')) {
+            $schema->create('quote_documents', function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_documentable_type');
+                $table->unsignedBigInteger('quote_documentable_id');
+                $table->string('document_type_code')->nullable();
+                $table->string('document_type_text')->nullable();
+                $table->string('doc_name')->nullable();
+                $table->string('doc_url')->nullable();
+                $table->string('doc_mime_type')->nullable();
+                $table->string('doc_uuid')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
         $personalQuoteColumns = [
             'plan_id' => fn (Blueprint $table) => $table->unsignedBigInteger('plan_id')->nullable(),
             'customer_id' => fn (Blueprint $table) => $table->unsignedBigInteger('customer_id')->nullable(),

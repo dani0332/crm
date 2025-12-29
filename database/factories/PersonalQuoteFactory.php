@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\PaymentMethodsEnum;
 use App\Models\Customer;
@@ -98,13 +99,12 @@ class PersonalQuoteFactory extends Factory
                 'planName' => 'Gold Plan',
             ]);
 
-            $quote->documents = [
-                [
-                    'document_type_code' => 'CYB_EID',
-                    'doc_url' => 'https://example.com/documents/eid.pdf',
-                    'doc_name' => 'EmiratesId.pdf',
-                ],
-            ];
+            $quote->documents()->create([
+                'document_type_code' => DocumentTypeCode::CYB_EID,
+                'doc_name' => 'EmiratesId.pdf',
+                'doc_url' => 'documents/eid.pdf',
+                'doc_mime_type' => 'application/pdf',
+            ]);
         });
     }
 }
