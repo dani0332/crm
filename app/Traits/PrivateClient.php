@@ -284,6 +284,7 @@ trait PrivateClient
                             'lead_uuid' => $lead->uuid,
                             'reason' => 'pcp_update_failed',
                         ];
+
                         continue;
                     }
 
@@ -455,6 +456,7 @@ trait PrivateClient
     {
         try {
             $this->lastPcpUpdateResult = [];
+
             return DB::transaction(function () use ($pcpTagVersion, $model, $shouldRemove) {
                 LoggerService::info($shouldRemove ? 'Removing PCP tag from lead and customer.' : 'Applying PCP tag to lead and customer.', extra: [
                     'leadUuid' => $model->uuid,
