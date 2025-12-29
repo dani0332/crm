@@ -200,6 +200,7 @@ trait PrivateClient
             'quote_type_id',
             'created_at',
             'code',
+            'policy_sum_assured_currency_id'
         ]));
 
         if (! empty($selectedColumns)) {
