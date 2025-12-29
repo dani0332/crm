@@ -1,0 +1,153 @@
+<?php
+
+namespace Tests\Support\Schemas;
+
+use Illuminate\Database\Schema\Blueprint;
+
+class CyberSchema
+{
+    public function register(): void
+    {
+        $this->ensureTables();
+        $this->ensurePersonalQuoteColumns();
+        $this->ensurePaymentColumns();
+        $this->ensurePaymentSplitColumns();
+    }
+
+    private function ensureTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'customer' => function (Blueprint $table) {
+                $table->id();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->date('dob')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->timestamps();
+            },
+            'emirates' => function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->boolean('is_active')->default(true);
+                $table->softDeletes();
+                $table->timestamps();
+            },
+            'policy_issuance' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->string('model_type');
+                $table->unsignedBigInteger('model_id');
+                $table->string('quote_type')->nullable();
+                $table->string('status')->nullable();
+                $table->string('completed_step')->nullable();
+                $table->text('message')->nullable();
+                $table->timestamps();
+            },
+            'policy_issuance_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('policy_issuance_id');
+                $table->string('model_type')->nullable();
+                $table->unsignedBigInteger('model_id')->nullable();
+                $table->string('step')->nullable();
+                $table->string('status')->nullable();
+                $table->text('payload')->nullable();
+                $table->text('response')->nullable();
+                $table->string('endPoint')->nullable();
+                $table->timestamps();
+            },
+            'cyber_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id');
+                $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
+                $table->unsignedBigInteger('coverage_id')->nullable();
+                $table->timestamps();
+            },
+            'payment_splits' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->index();
+                $table->string('payment_method')->nullable();
+                $table->string('reference')->nullable();
+                $table->decimal('price_vat_applicable', 12, 2)->nullable();
+                $table->decimal('price_vat', 12, 2)->nullable();
+                $table->timestamps();
+            },
+            'quote_documents' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_documentable_type');
+                $table->unsignedBigInteger('quote_documentable_id');
+                $table->string('document_type_code')->nullable();
+                $table->string('document_type_text')->nullable();
+                $table->string('doc_name')->nullable();
+                $table->string('doc_url')->nullable();
+                $table->string('doc_mime_type')->nullable();
+                $table->string('doc_uuid')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            },
+        ]);
+    }
+
+    private function ensurePersonalQuoteColumns(): void
+    {
+        $columns = [
+            'plan_id' => fn (Blueprint $table) => $table->unsignedBigInteger('plan_id')->nullable(),
+            'customer_id' => fn (Blueprint $table) => $table->unsignedBigInteger('customer_id')->nullable(),
+            'nationality_id' => fn (Blueprint $table) => $table->unsignedBigInteger('nationality_id')->nullable(),
+            'policy_start_date' => fn (Blueprint $table) => $table->date('policy_start_date')->nullable(),
+            'policy_expiry_date' => fn (Blueprint $table) => $table->date('policy_expiry_date')->nullable(),
+            'policy_issuance_date' => fn (Blueprint $table) => $table->date('policy_issuance_date')->nullable(),
+            'policy_number' => fn (Blueprint $table) => $table->string('policy_number')->nullable(),
+            'policy_issuance_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('policy_issuance_status_id')->nullable(),
+            'price_vat_applicable' => fn (Blueprint $table) => $table->decimal('price_vat_applicable', 12, 2)->nullable(),
+            'price_with_vat' => fn (Blueprint $table) => $table->decimal('price_with_vat', 12, 2)->nullable(),
+            'vat' => fn (Blueprint $table) => $table->decimal('vat', 12, 2)->nullable(),
+            'insurer_quote_number' => fn (Blueprint $table) => $table->string('insurer_quote_number')->nullable(),
+            'quote_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('quote_status_id')->nullable(),
+            'quote_status_date' => fn (Blueprint $table) => $table->timestamp('quote_status_date')->nullable(),
+            'insurer_debit_note_doc_id' => fn (Blueprint $table) => $table->string('insurer_debit_note_doc_id')->nullable(),
+            'insurer_tax_invoice_doc_id' => fn (Blueprint $table) => $table->string('insurer_tax_invoice_doc_id')->nullable(),
+            'insurer_policy_doc_id' => fn (Blueprint $table) => $table->string('insurer_policy_doc_id')->nullable(),
+            'documents' => fn (Blueprint $table) => $table->json('documents')->nullable(),
+            'insurer_api_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('insurer_api_status_id')->nullable(),
+            'api_issuance_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('api_issuance_status_id')->nullable(),
+        ];
+
+        foreach ($columns as $column => $callback) {
+            SchemaUtils::addColumnIfMissing('personal_quotes', $column, $callback);
+        }
+    }
+
+    private function ensurePaymentColumns(): void
+    {
+        $columns = [
+            'commission_vat_applicable' => fn (Blueprint $table) => $table->decimal('commission_vat_applicable', 12, 2)->nullable(),
+            'commission' => fn (Blueprint $table) => $table->decimal('commission', 12, 2)->nullable(),
+            'commission_vat' => fn (Blueprint $table) => $table->decimal('commission_vat', 12, 2)->nullable(),
+            'commmission_percentage' => fn (Blueprint $table) => $table->decimal('commmission_percentage', 12, 2)->nullable(),
+            'insurer_tax_number' => fn (Blueprint $table) => $table->string('insurer_tax_number')->nullable(),
+            'insurer_invoice_date' => fn (Blueprint $table) => $table->date('insurer_invoice_date')->nullable(),
+            'insurer_commmission_invoice_number' => fn (Blueprint $table) => $table->string('insurer_commmission_invoice_number')->nullable(),
+            'price_vat_applicable' => fn (Blueprint $table) => $table->decimal('price_vat_applicable', 12, 2)->nullable(),
+            'price_vat' => fn (Blueprint $table) => $table->decimal('price_vat', 12, 2)->nullable(),
+        ];
+
+        foreach ($columns as $column => $callback) {
+            SchemaUtils::addColumnIfMissing('payments', $column, $callback);
+        }
+    }
+
+    private function ensurePaymentSplitColumns(): void
+    {
+        $columns = [
+            'price_vat_applicable' => fn (Blueprint $table) => $table->decimal('price_vat_applicable', 12, 2)->nullable(),
+            'price_vat' => fn (Blueprint $table) => $table->decimal('price_vat', 12, 2)->nullable(),
+        ];
+
+        foreach ($columns as $column => $callback) {
+            SchemaUtils::addColumnIfMissing('payment_splits', $column, $callback);
+        }
+    }
+}
+
