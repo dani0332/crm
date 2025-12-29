@@ -6,8 +6,6 @@ on:
       - develop
       - main
     types: [opened, reopened, edited, synchronize]
-    paths:
-      - '**.vue'
 
 jobs:
   build:
@@ -45,7 +43,10 @@ jobs:
 
       - name: Run Pint Fix
         run: composer pint:fix
-
+      - name: Fetch PR branch only
+        run: |
+          git fetch origin \
+            refs/heads/${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
       - name: Commit and Push Pint Fix
         uses: stefanzweifel/git-auto-commit-action@v5
         with:

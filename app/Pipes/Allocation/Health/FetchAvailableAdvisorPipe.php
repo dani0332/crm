@@ -105,6 +105,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
         $eligibleUsers = [];
+
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class."::fetchAdvisorByType - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
@@ -123,11 +124,26 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         LoggerService::info(self::class."::getBLAdvisorByStatus - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
+        $rules = $this->allocationRequest->get('rules');
+        $ruleUserIds = [];
+        if (! empty($rules) && $rules->isNotEmpty()) {
+            $ruleUserIds = $this->allocationRequest->get('ruleUserIds', []);
+        }
+
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(
             $this->allocationRequest->getQuoteType(),
             $this->allocationRequest->isSIC(),
             $this->lead->isValueLead()
         );
+
+        LoggerService::info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
+
+        $userIds = array_values(array_intersect(
+            $buyLeadRequestedUserIds,
+            $ruleUserIds
+        ));
+
+        LoggerService::info(self::class.'::getBLAdvisorsByStatus - user ids after intersection with rule users are: '.json_encode($userIds));
 
         $advisors = $this->getAdvisorBaseQuery($status, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor], true)
             ->when($this->lead->isValueLead(), function ($q) {
@@ -135,7 +151,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             }, function ($q) {
                 $q->isVolumeUser($this->allocationRequest->getQuoteType());
             })
-            ->whereIn('users.id', $buyLeadRequestedUserIds)
+            ->whereIn('users.id', $userIds)
             ->logRawSql()
             ->get();
 

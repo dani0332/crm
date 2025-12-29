@@ -40,6 +40,7 @@ class SavingsQuoteController extends Controller
                     $this->savingsQuoteService->getData(forExport: true, getTotalCount: true);
 
         $data = $query->simplePaginate(10)->withQueryString();
+        $this->savingsQuoteService->postProcessSavingsQuote($data);
 
         return inertia('SavingsQuote/Index', [
             'quotes' => $data,
