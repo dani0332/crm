@@ -604,14 +604,9 @@ trait PrivateClient
     {
         return PersonalQuote::where('customer_id', $customerId)
             ->where('pc_qualified', true)
-            ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-            ->where(function ($query) {
-                $query->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
-                    ->orWhere(function ($expiryQuery) {
-                        $expiryQuery->whereNotNull('policy_expiry_date')
-                            ->where('policy_expiry_date', '>', now());
-                    });
-            })
+            ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->whereNotNull('policy_expiry_date')
+            ->where('policy_expiry_date', '>', now())
             ->exists();
     }
 
