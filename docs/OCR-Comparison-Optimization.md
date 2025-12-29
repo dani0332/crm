@@ -78,15 +78,15 @@ Benefits:
 
 ## Key Improvements Summary
 
-| Aspect | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **API Response Time** | 75+ seconds | <1 second | **75x faster** ⚡ |
-| **User Experience** | Timeout/waiting | Instant response | **Excellent** ✅ |
-| **Scalability** | 1 lead at a time | 100+ leads parallel | **Unlimited** 🚀 |
-| **Queue Isolation** | None | Dedicated queues | **Protected** 🛡️ |
-| **Processing Speed** | Sequential (1 doc/time) | Parallel (2 docs/time) | **2x faster** 📊 |
-| **Cost Optimization** | No caching | Smart caching | **$0 on reruns** 💰 |
-| **Production Safety** | Impacts main app | Fully isolated | **Safe** ✅ |
+| Aspect                | Before                  | After                  | Improvement         |
+| --------------------- | ----------------------- | ---------------------- | ------------------- |
+| **API Response Time** | 75+ seconds             | <1 second              | **75x faster** ⚡   |
+| **User Experience**   | Timeout/waiting         | Instant response       | **Excellent** ✅    |
+| **Scalability**       | 1 lead at a time        | 100+ leads parallel    | **Unlimited** 🚀    |
+| **Queue Isolation**   | None                    | Dedicated queues       | **Protected** 🛡️    |
+| **Processing Speed**  | Sequential (1 doc/time) | Parallel (2 docs/time) | **2x faster** 📊    |
+| **Cost Optimization** | No caching              | Smart caching          | **$0 on reruns** 💰 |
+| **Production Safety** | Impacts main app        | Fully isolated         | **Safe** ✅         |
 
 ---
 
@@ -102,6 +102,7 @@ Benefits:
 **Purpose:** Lightweight dispatcher - fetches quotes and dispatches document jobs
 
 **What it does:**
+
 1. Queries `PolicyBooked` car quotes by UUID or date range
 2. Filters quotes that haven't been processed (`lead_ocr_comparison_processed = false`)
 3. Identifies OCR-enabled documents (IDC, DL, RC, TI, TIB, MPS, PC)
@@ -110,6 +111,7 @@ Benefits:
 6. Runs on isolated queue to not impact renewals/policy issuance
 
 **Key Code:**
+
 ```php
 ProcessLeadOCRDataComparison::dispatch($uuid, $startDate, $endDate)
     ->onConnection('redis')  // Force async (not sync!)
@@ -117,6 +119,7 @@ ProcessLeadOCRDataComparison::dispatch($uuid, $startDate, $endDate)
 ```
 
 **Why isolated queue?**
+
 - Handles 100+ dispatcher jobs without impacting critical business operations
 - 3 workers process dispatchers in parallel
 - Clear separation from renewals, policy issuance, insly workflows
@@ -134,31 +137,29 @@ ProcessLeadOCRDataComparison::dispatch($uuid, $startDate, $endDate)
 **Purpose:** Process single document OCR (heavy work)
 
 **What it does:**
+
 1. **Checks cache first** (cost optimization!)
    - Queries `ocr_response_data` table
    - If data exists for this document type → uses cached data (NO API CALL)
    - Skips expensive OCR API call entirely
-   
 2. **Calls OCR API if needed**
    - Only if no cache exists
    - Takes 20-30 seconds per document
    - External OCR service endpoint
-   
 3. **Extracts data structures**
    - Lead data from database (Emirates ID, Driving License, Registration, etc.)
    - OCR data from API response
    - Document type-specific field extraction
-   
 4. **Stores intermediate results**
    - Saves to `temp_ocr_document_results` table
    - Allows parallel processing without blocking
    - Each document job is completely independent
-   
 5. **Triggers aggregation**
    - Checks if all documents for quote are complete
    - Dispatches `AggregateQuoteOCRComparison` when ready
 
 **Key Code:**
+
 ```php
 ProcessSingleDocumentOCR::dispatch($quoteId, $documentId)
     ->onQueue('ocr_dedicated')  // Isolated queue with 2 workers
@@ -166,12 +167,14 @@ ProcessSingleDocumentOCR::dispatch($quoteId, $documentId)
 ```
 
 **Why only 2 workers?**
+
 - Prevents overwhelming external OCR API
 - Controls concurrent API call costs
 - Safe for production (conservative approach)
 - Can scale to 3-4 workers if needed
 
 **Cost Savings:**
+
 - First run: Calls OCR API (pays full cost)
 - Subsequent runs: Uses cache (pays $0)
 - Smart caching at document-type level
@@ -187,32 +190,29 @@ ProcessSingleDocumentOCR::dispatch($quoteId, $documentId)
 **Purpose:** Aggregate all document results and finalize comparison
 
 **What it does:**
+
 1. **Retrieves intermediate results**
    - Reads all documents from `temp_ocr_document_results` for the quote
    - Each document has lead_data and ocr_data
-   
 2. **Calculates field-by-field comparison**
    - Compares lead data vs OCR data for each field
    - Tracks matched vs total fields per document type
    - Example: Emirates ID has 14 fields → 4 matched = 28.57% accuracy
-   
 3. **Calculates accuracy percentages**
    - Per document type (DL: 0%, IDC: 28.57%, TI: 100%, etc.)
    - Overall quote accuracy (total matched / total fields)
-   
 4. **Saves final results**
    - `lead_ocr_data_comparison` table: Comparison results with accuracy scores
    - `ocr_response_data` table: Raw OCR responses for caching
-   
 5. **Marks as processed**
    - Sets `personal_quotes.lead_ocr_comparison_processed = true`
    - Prevents reprocessing on subsequent runs (cost savings!)
-   
 6. **Cleans up**
    - Deletes intermediate results from `temp_ocr_document_results`
    - Keeps database clean and efficient
 
 **Aggregation Logic:**
+
 ```php
 // Per document accuracy
 $accuracy = ($matchedFields / $totalFields) * 100;
@@ -232,6 +232,7 @@ $comparisonScore = ($totalMatches / $totalFields) * 100;
 **File:** `config/horizon.php`
 
 **Why Horizon?**
+
 - Already running in your environment
 - Beautiful web UI for monitoring (`/queue-dashboard`)
 - Auto-scaling workers
@@ -247,13 +248,13 @@ $comparisonScore = ($totalMatches / $totalFields) * 100;
         'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
         'maxProcesses' => 3,
     ],
-    
+
     // OCR dispatcher queue (isolated)
     'supervisor-local-shared' => [
         'queue' => ['shared', 'lead_ocr_data_comparison'],
         'maxProcesses' => 3,  // 3 dispatchers in parallel
     ],
-    
+
     // OCR heavy work queue (throttled)
     'supervisor-local-ocr-dedicated' => [
         'queue' => ['ocr_dedicated'],
@@ -266,13 +267,14 @@ $comparisonScore = ($totalMatches / $totalFields) * 100;
 
 **3-Tier Queue Strategy:**
 
-| Queue | Purpose | Workers | Speed | Jobs |
-|-------|---------|---------|-------|------|
-| `lead_ocr_data_comparison` | Dispatchers | 3 | Fast | ProcessLeadOCRDataComparison |
-| `ocr_dedicated` | OCR API calls | 2 | Slow (20-30s) | ProcessSingleDocumentOCR |
-| `default` | Aggregation | 3+ | Fast | AggregateQuoteOCRComparison |
+| Queue                      | Purpose       | Workers | Speed         | Jobs                         |
+| -------------------------- | ------------- | ------- | ------------- | ---------------------------- |
+| `lead_ocr_data_comparison` | Dispatchers   | 3       | Fast          | ProcessLeadOCRDataComparison |
+| `ocr_dedicated`            | OCR API calls | 2       | Slow (20-30s) | ProcessSingleDocumentOCR     |
+| `default`                  | Aggregation   | 3+      | Fast          | AggregateQuoteOCRComparison  |
 
 **Why 3 tiers?**
+
 - **Tier 1 (Dispatcher):** Isolated from main app, can handle 100+ leads
 - **Tier 2 (OCR Work):** Throttled to protect external API, runs heavy work
 - **Tier 3 (Aggregation):** Fast finalization, doesn't need isolation
@@ -299,6 +301,7 @@ $comparisonScore = ($totalMatches / $totalFields) * 100;
 ```
 
 **Example Data:**
+
 ```json
 {
   "lead_data": {
@@ -330,6 +333,7 @@ $comparisonScore = ($totalMatches / $totalFields) * 100;
 ```
 
 **Cache Logic:**
+
 ```
 First Run:
   - OCR API called for each document → Full cost
@@ -342,6 +346,7 @@ Second Run (same lead):
 ```
 
 **Cost Impact:**
+
 - Without cache: 100 leads × 6 docs × $0.10/call = $60 per run
 - With cache: First run $60, subsequent runs $0
 - **Massive savings on reruns/testing**
@@ -357,6 +362,7 @@ ALTER TABLE personal_quotes ADD COLUMN lead_ocr_comparison_processed BOOLEAN DEF
 ```
 
 **Flow:**
+
 ```
 1. Lead processed → Flag set to TRUE
 2. API called again with same UUID → Skipped (already processed)
@@ -372,6 +378,7 @@ ALTER TABLE personal_quotes ADD COLUMN lead_ocr_comparison_processed BOOLEAN DEF
 **Purpose:** Temporary staging table for parallel document processing
 
 **Why needed?**
+
 - Documents process in parallel on different workers
 - Each finishes at different times (async)
 - Need to collect all results before calculating final scores
@@ -389,18 +396,20 @@ CREATE TABLE temp_ocr_document_results (
     processed_at TIMESTAMP,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    
+
     UNIQUE KEY (quote_id, document_id)
 );
 ```
 
 **Lifecycle:**
+
 1. **Created:** When `ProcessSingleDocumentOCR` completes
 2. **Stored:** Until all documents for quote are done
 3. **Read:** By `AggregateQuoteOCRComparison` to calculate scores
 4. **Deleted:** Immediately after aggregation completes
 
 **Example Timeline:**
+
 ```
 15:05:40 - Document 1 (DL) finishes → Saved to temp table
 15:05:50 - Document 2 (IDC) finishes → Saved to temp table
@@ -417,17 +426,18 @@ CREATE TABLE temp_ocr_document_results (
 
 ## Document Types Processed
 
-| Code | Name | Fields Compared | Typical Match Rate |
-|------|------|-----------------|-------------------|
-| IDC | Emirates ID Card | 14 | 28-40% |
-| DL | Driving License | 10 | 0-30% |
-| RC | Registration Certificate | 5 | 0-20% |
-| TI | Tax Invoice | 7 | 80-100% ✅ |
-| TIB | Tax Invoice (Buyer) | 5 | 60-80% |
-| MPS | Motor Policy Schedule | 1 | 0-50% |
-| PC | Certificate of Issuance | 4 | 40-60% |
+| Code | Name                     | Fields Compared | Typical Match Rate |
+| ---- | ------------------------ | --------------- | ------------------ |
+| IDC  | Emirates ID Card         | 14              | 28-40%             |
+| DL   | Driving License          | 10              | 0-30%              |
+| RC   | Registration Certificate | 5               | 0-20%              |
+| TI   | Tax Invoice              | 7               | 80-100% ✅         |
+| TIB  | Tax Invoice (Buyer)      | 5               | 60-80%             |
+| MPS  | Motor Policy Schedule    | 1               | 0-50%              |
+| PC   | Certificate of Issuance  | 4               | 40-60%             |
 
 **Why different match rates?**
+
 - **Tax Invoice (TI):** System-generated, high accuracy (100%)
 - **Emirates ID (IDC):** Manual entry, OCR quality varies (28%)
 - **Driving License (DL):** Manual entry, format variations (0-30%)
@@ -454,15 +464,17 @@ curl -X POST https://your-domain.com/api/v1/imcrm/debug/lead-ocr-comparison \
 ```
 
 **Response (Instant!):**
+
 ```json
 {
-    "data": null,
-    "message": "Lead vs OCR data comparison job has been initiated",
-    "status": 200
+  "data": null,
+  "message": "Lead vs OCR data comparison job has been initiated",
+  "status": 200
 }
 ```
 
 **What happens:**
+
 1. API responds in <1 second ✅
 2. Job queued to `lead_ocr_data_comparison` queue
 3. Horizon picks up job and starts processing
@@ -483,6 +495,7 @@ curl -X POST https://your-domain.com/api/v1/imcrm/debug/lead-ocr-comparison \
 ```
 
 **What happens:**
+
 1. API responds instantly ✅
 2. Job fetches all PolicyBooked quotes in March 2025
 3. Dispatches document jobs for each quote
@@ -506,6 +519,7 @@ curl -X POST https://your-domain.com/api/v1/imcrm/debug/lead-ocr-comparison \
 ```
 
 **What happens:**
+
 1. API responds instantly ✅
 2. Job checks if lead was already processed
 3. If `recalculate_comparison=true`, bypasses "already processed" check
@@ -515,12 +529,14 @@ curl -X POST https://your-domain.com/api/v1/imcrm/debug/lead-ocr-comparison \
 7. Updates `lead_ocr_data_comparison` with new scores
 
 **Benefits:**
+
 - ✅ **Zero Cost:** No OCR API calls
 - ✅ **Fast:** Uses cached data
 - ✅ **Safe:** Can test formula changes without re-scanning documents
 - ✅ **Flexible:** Rerun comparisons anytime
 
 **Default Behavior (recalculate_comparison=false or omitted):**
+
 - Skips leads marked as `lead_ocr_comparison_processed=true`
 - Efficient for bulk date range runs
 
@@ -530,7 +546,7 @@ curl -X POST https://your-domain.com/api/v1/imcrm/debug/lead-ocr-comparison \
 
 ```sql
 -- Get comparison results for March 2025
-SELECT 
+SELECT
     uuid,
     comparison_score,
     JSON_EXTRACT(compairson_data, '$.IDC.accuracy') as emirates_id_accuracy,
@@ -550,7 +566,7 @@ WHERE comparison_score < 50.00
 ORDER BY comparison_score ASC;
 
 -- Check if OCR responses are cached
-SELECT 
+SELECT
     COUNT(*) as cached_leads,
     MIN(created_at) as first_cached,
     MAX(created_at) as last_cached
@@ -558,7 +574,7 @@ FROM ocr_response_data
 WHERE quoteable_type = 'App\\Models\\CarQuote';
 
 -- Check for any stuck intermediate results (should be empty!)
-SELECT 
+SELECT
     quote_id,
     COUNT(*) as documents_stuck,
     MAX(processed_at) as last_processed
@@ -574,6 +590,7 @@ GROUP BY quote_id;
 ### Real-World Example (Lead 958DEW4J)
 
 **Test Run:**
+
 - **Lead:** 958DEW4J
 - **Documents:** 8 (DL, IDC, RC, MPS, PC, PC, TI, TIB)
 - **OCR API Time:** 67 seconds total (8 documents × ~8s average)
@@ -598,11 +615,13 @@ GROUP BY quote_id;
 #### Scenario: 100 Leads in March 2025
 
 **Assumptions:**
+
 - 100 leads × 6 documents average = 600 documents
 - Each OCR API call = 25 seconds average
 - 2 workers on `ocr_dedicated` queue
 
 **Processing Time:**
+
 ```
 Sequential (old): 600 docs × 25s = 15,000s = 4.17 hours ❌
 Parallel (new):   600 docs ÷ 2 workers × 25s = 7,500s = 2.08 hours ✅
@@ -611,12 +630,14 @@ Improvement: 2x faster
 ```
 
 **API Response:**
+
 ```
 Old: Wait 4.17 hours for response (timeout!) ❌
 New: Response in <1 second, processing in background ✅
 ```
 
 **Cost:**
+
 ```
 First Run:  600 documents × OCR API call = Full cost
 Second Run: 600 documents × Database read = $0 (cached) ✅
@@ -628,6 +649,7 @@ Third Run:  $0 (already processed flag skips everything)
 ### Scaling Options
 
 #### Current Setup (Conservative & Safe)
+
 ```
 Workers: 2
 Time for 600 docs: ~2 hours
@@ -635,6 +657,7 @@ Safe for production: ✅
 ```
 
 #### Option 1: Moderate Scaling
+
 ```
 Workers: 3
 Time for 600 docs: ~1.4 hours
@@ -642,6 +665,7 @@ Recommendation: Safe after testing with 2 workers
 ```
 
 #### Option 2: Aggressive Scaling
+
 ```
 Workers: 4
 Time for 600 docs: ~1 hour
@@ -649,6 +673,7 @@ Recommendation: Verify OCR API rate limits first
 ```
 
 **How to scale:**
+
 ```php
 // In config/horizon.php
 'supervisor-prod-ocr-dedicated' => [
@@ -666,6 +691,7 @@ Recommendation: Verify OCR API rate limits first
 **URL:** `http://your-app-url/queue-dashboard`
 
 **What you can see:**
+
 - ✅ Real-time job processing
 - ✅ Queue depths (how many jobs waiting)
 - ✅ Job throughput (jobs/minute)
@@ -674,6 +700,7 @@ Recommendation: Verify OCR API rate limits first
 - ✅ Job metrics (average time, success rate)
 
 **Monitoring Tips:**
+
 - Watch `ocr_dedicated` queue depth - should stay low
 - Check `lead_ocr_data_comparison` queue - should process quickly
 - Monitor failed jobs - retry or investigate
@@ -683,6 +710,7 @@ Recommendation: Verify OCR API rate limits first
 ### 2. Logs (Comprehensive Logging)
 
 **Application Logs:**
+
 ```bash
 tail -f storage/logs/laravel-*.log
 
@@ -698,6 +726,7 @@ tail -f storage/logs/laravel-*.log | grep "958DEW4J"
 ```
 
 **Log Entries Include:**
+
 - API call initiated
 - Quotes fetched with document counts
 - Each document job dispatched
@@ -709,6 +738,7 @@ tail -f storage/logs/laravel-*.log | grep "958DEW4J"
 - Cleanup confirmations
 
 **Example Log Flow:**
+
 ```
 [INFO] Lead vs OCR data comparison is going to be initiated
 [INFO] Car quotes with OCR documents fetched (total: 1)
@@ -730,7 +760,7 @@ tail -f storage/logs/laravel-*.log | grep "958DEW4J"
 
 ```sql
 -- Check processing progress (intermediate results)
-SELECT 
+SELECT
     quote_id,
     COUNT(*) as documents_processed,
     GROUP_CONCAT(doc_type) as doc_types,
@@ -740,7 +770,7 @@ GROUP BY quote_id
 ORDER BY last_processed DESC;
 
 -- Check completion rate
-SELECT 
+SELECT
     COUNT(*) as total_leads_processed,
     AVG(comparison_score) as avg_accuracy,
     MIN(comparison_score) as min_accuracy,
@@ -749,7 +779,7 @@ FROM lead_ocr_data_comparison
 WHERE created_at >= '2025-03-01';
 
 -- Find leads that might be stuck
-SELECT 
+SELECT
     pq.quote_id,
     cq.uuid,
     pq.lead_ocr_comparison_processed,
@@ -795,10 +825,12 @@ doppler run -- php artisan horizon
 ### Issue: API Response Still Slow (Not Instant)
 
 **Symptoms:**
+
 - API taking 5+ seconds to respond
 - Jobs running synchronously
 
 **Diagnosis:**
+
 ```bash
 # Check queue connection
 doppler run -- php artisan config:show queue.default
@@ -806,6 +838,7 @@ doppler run -- php artisan config:show queue.default
 ```
 
 **Solution:**
+
 - Verify `->onConnection('redis')` is in ApiController
 - Restart Horizon: `php artisan horizon:terminate && php artisan horizon`
 - Check Doppler env vars: `QUEUE_CONNECTION` should be set appropriately
@@ -815,11 +848,13 @@ doppler run -- php artisan config:show queue.default
 ### Issue: Documents Not Processing
 
 **Symptoms:**
+
 - API responds instantly ✅
 - But no logs showing document processing
 - Jobs sitting in queue
 
 **Diagnosis:**
+
 ```bash
 # Check if Horizon is running
 ps aux | grep horizon
@@ -829,6 +864,7 @@ ps aux | grep horizon
 ```
 
 **Solutions:**
+
 1. Start Horizon: `doppler run -- php artisan horizon`
 2. Check Redis: `redis-cli ping` (should return PONG)
 3. Check Horizon logs in dashboard for errors
@@ -839,11 +875,13 @@ ps aux | grep horizon
 ### Issue: Aggregation Not Happening
 
 **Symptoms:**
+
 - All 8 documents processed
 - But no final comparison score saved
 - `temp_ocr_document_results` has data stuck
 
 **Diagnosis:**
+
 ```sql
 -- Check for stuck results
 SELECT quote_id, COUNT(*) as docs, MAX(processed_at)
@@ -855,6 +893,7 @@ doppler run -- php artisan queue:failed
 ```
 
 **Solutions:**
+
 1. Check failed jobs: `php artisan queue:failed`
 2. Manually trigger aggregation:
    ```php
@@ -869,10 +908,12 @@ doppler run -- php artisan queue:failed
 ### Issue: High Memory Usage
 
 **Symptoms:**
+
 - Workers crashing with out-of-memory errors
 - Slow processing
 
 **Solutions:**
+
 1. Add memory limit to Horizon config:
    ```php
    'memory' => 512,  // MB
@@ -886,16 +927,19 @@ doppler run -- php artisan queue:failed
 ### Issue: OCR API Timeouts
 
 **Symptoms:**
+
 - Jobs failing with timeout errors
 - Logs show "OCR API call failed" or timeouts
 
 **Diagnosis:**
+
 ```bash
 # Check logs for timeout patterns
 tail -f storage/logs/laravel-*.log | grep "timeout"
 ```
 
 **Solutions:**
+
 1. Check OCR API health (external service)
 2. Increase job timeout (currently 120s):
    ```php
@@ -909,9 +953,11 @@ tail -f storage/logs/laravel-*.log | grep "timeout"
 ### Issue: Slow Processing (Taking Too Long)
 
 **Symptoms:**
+
 - 100 leads taking 4+ hours instead of 2 hours
 
 **Diagnosis:**
+
 ```sql
 -- Check average OCR API response time from logs
 -- Look for patterns in slow documents
@@ -921,6 +967,7 @@ SELECT COUNT(*) FROM ocr_response_data;  -- Should have data
 ```
 
 **Solutions:**
+
 1. **Verify caching is working:** Check `ocr_response_data` table
 2. **Increase workers (after testing):**
    ```php
@@ -953,6 +1000,7 @@ SELECT COUNT(*) FROM ocr_response_data;  -- Should have data
 ### Deployment Steps
 
 #### 1. Update Codebase
+
 ```bash
 # Pull latest code
 git pull origin your-branch
@@ -962,6 +1010,7 @@ composer install --no-dev
 ```
 
 #### 2. Run Database Migrations (if needed)
+
 ```bash
 # Check migrations status
 doppler run -- php artisan migrate:status
@@ -971,6 +1020,7 @@ doppler run -- php artisan migrate:status
 ```
 
 #### 3. Update Horizon Configuration
+
 ```bash
 # Horizon config is already updated in config/horizon.php
 # Verify it's correct:
@@ -978,6 +1028,7 @@ cat config/horizon.php | grep ocr_dedicated
 ```
 
 #### 4. Restart Horizon
+
 ```bash
 # Gracefully terminate Horizon
 doppler run -- php artisan horizon:terminate
@@ -991,6 +1042,7 @@ doppler run -- php artisan horizon
 #### 5. Deploy to Environments
 
 **Staging:**
+
 ```bash
 # Deploy code
 # Restart Horizon
@@ -998,6 +1050,7 @@ doppler run -- php artisan horizon
 ```
 
 **UAT:**
+
 ```bash
 # Deploy code
 # Restart Horizon
@@ -1005,6 +1058,7 @@ doppler run -- php artisan horizon
 ```
 
 **Production:**
+
 ```bash
 # Deploy code
 # Restart Horizon
@@ -1021,8 +1075,8 @@ doppler run -- php artisan horizon
   - All supervisors running
   - `ocr_dedicated` queue showing 2 workers
   - `lead_ocr_data_comparison` queue active
-  
 - [ ] Test API endpoint
+
   ```bash
   # Should respond instantly
   curl -X POST https://prod-domain/api/v1/imcrm/debug/lead-ocr-comparison \
@@ -1031,21 +1085,24 @@ doppler run -- php artisan horizon
   ```
 
 - [ ] Monitor logs for errors
+
   ```bash
   tail -f storage/logs/laravel-*.log | grep -E "ERROR|FAILED"
   ```
 
 - [ ] Check database
+
   ```sql
   -- Verify data is being saved
-  SELECT COUNT(*) FROM lead_ocr_data_comparison 
+  SELECT COUNT(*) FROM lead_ocr_data_comparison
   WHERE created_at > NOW() - INTERVAL 1 HOUR;
-  
+
   -- Verify no stuck temp data
   SELECT COUNT(*) FROM temp_ocr_document_results;  -- Should be 0
   ```
 
 - [ ] Run for 1 day of leads first
+
   ```bash
   {
     "start_date": "2025-03-01",
@@ -1054,6 +1111,7 @@ doppler run -- php artisan horizon
   ```
 
 - [ ] Validate results manually
+
   - Pick 2-3 leads
   - Check comparison scores make sense
   - Verify OCR data looks correct
@@ -1072,10 +1130,12 @@ doppler run -- php artisan horizon
 ### What Stayed the Same:
 
 1. **Document Type Filtering**
+
    - Same OCR-enabled document types (IDC, DL, RC, TI, TIB, MPS, PC)
    - Same filtering logic via `OCRDocumentTypeEnum`
 
 2. **Data Extraction**
+
    - Emirates ID: Same 14 fields extracted
    - Driving License: Same 10 fields extracted
    - Registration Certificate: Same 5 fields extracted
@@ -1083,11 +1143,13 @@ doppler run -- php artisan horizon
    - All extraction methods unchanged
 
 3. **Comparison Logic**
+
    - Same field-by-field comparison algorithm
    - Same accuracy calculation: (matched / total) × 100
    - Same comparison structure and data format
 
 4. **Database Tables**
+
    - `lead_ocr_data_comparison`: Same schema
    - `ocr_response_data`: Same schema
    - `personal_quotes`: Only added flag, no other changes
@@ -1114,12 +1176,14 @@ doppler run -- php artisan horizon
 ### 1. Production Safety 🛡️
 
 **Before:**
+
 - OCR processing blocked critical operations
 - Renewals delayed during OCR runs
 - Policy issuance queue backed up
 - Risk to core business
 
 **After:**
+
 - Complete isolation via dedicated queues
 - Zero impact on renewals/policy issuance
 - OCR work throttled to 2 workers max
@@ -1130,12 +1194,14 @@ doppler run -- php artisan horizon
 ### 2. Scalability 🚀
 
 **Before:**
+
 - 1 lead at a time
 - 100 leads = 4+ hours sequential
 - Cannot scale horizontally
 - Timeout on large batches
 
 **After:**
+
 - 100+ leads in parallel
 - 100 leads = 2 hours with 2 workers
 - Horizontal scaling: add more workers
@@ -1146,17 +1212,20 @@ doppler run -- php artisan horizon
 ### 3. Cost Efficiency 💰
 
 **Before:**
+
 - No caching
 - Repeated OCR API calls for same documents
 - Full cost every run
 
 **After:**
+
 - Smart caching at document-type level
 - First run: Full cost
 - Subsequent runs: $0 (cache hit)
 - Testing/debugging: $0 (already processed flag)
 
 **Example Savings:**
+
 ```
 100 leads × 6 docs × $0.10 = $60 per run
 
@@ -1174,16 +1243,19 @@ With caching:
 ### 4. User Experience ⚡
 
 **Before:**
+
 ```
 User clicks button → Wait 75+ seconds → Timeout? → Frustration
 ```
 
 **After:**
+
 ```
 User clicks button → Response in <1 second → "Processing..." → Done!
 ```
 
 **UX Improvements:**
+
 - Instant feedback
 - Can continue using app
 - Progress tracking via Horizon
@@ -1194,12 +1266,14 @@ User clicks button → Response in <1 second → "Processing..." → Done!
 ### 5. Monitoring & Observability 📊
 
 **Before:**
+
 - Basic logs
 - No progress tracking
 - Hard to debug failures
 - No visibility into queue health
 
 **After:**
+
 - Comprehensive logging (LoggerService)
 - Real-time Horizon dashboard
 - Job metrics (throughput, success rate)
@@ -1213,11 +1287,13 @@ User clicks button → Response in <1 second → "Processing..." → Done!
 ### 6. Fault Tolerance 🔧
 
 **Before:**
+
 - One document fails → entire batch fails
 - No retries
 - Lost progress on timeout
 
 **After:**
+
 - Independent document jobs
 - 3 retry attempts with backoff
 - One failure doesn't affect others
@@ -1240,22 +1316,23 @@ A **production-ready, enterprise-grade OCR comparison system** with:
 ✅ **Horizontal scalability** (easily add more workers)  
 ✅ **Fault tolerance** (independent jobs, retries, partial results)  
 ✅ **Comprehensive monitoring** (Horizon UI + detailed logs)  
-✅ **Production safety** (throttled workers, dedicated queues)  
+✅ **Production safety** (throttled workers, dedicated queues)
 
 ### Performance Comparison
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| API Response | 75+ sec | <1 sec | **75x faster** |
-| 100 Leads Processing | 4+ hours | 2 hours | **2x faster** |
-| User Experience | Timeout/Poor | Instant/Great | **Excellent** |
-| Production Safety | High Risk | Low Risk | **Safe** |
-| Cost Efficiency | No cache | Smart cache | **90% savings** |
-| Scalability | 1 lead/time | 100+ parallel | **Unlimited** |
+| Metric               | Before       | After         | Improvement     |
+| -------------------- | ------------ | ------------- | --------------- |
+| API Response         | 75+ sec      | <1 sec        | **75x faster**  |
+| 100 Leads Processing | 4+ hours     | 2 hours       | **2x faster**   |
+| User Experience      | Timeout/Poor | Instant/Great | **Excellent**   |
+| Production Safety    | High Risk    | Low Risk      | **Safe**        |
+| Cost Efficiency      | No cache     | Smart cache   | **90% savings** |
+| Scalability          | 1 lead/time  | 100+ parallel | **Unlimited**   |
 
 ### Architecture Excellence
 
 This implementation follows Laravel best practices:
+
 - ✅ Proper job queuing with ShouldQueue
 - ✅ Queue isolation strategy
 - ✅ Horizon for monitoring
