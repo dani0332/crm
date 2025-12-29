@@ -298,7 +298,7 @@ class TravelEmailService extends BaseService
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
             // Only update status if email was successfully sent
             if (in_array($responseCode, [200, 201])) {
-                if ( $quotePlansCount > 0 &&  in_array($lead->quote_status_id, [QuoteStatusEnum::NewLead, QuoteStatusEnum::Qualified])) {
+                if ($quotePlansCount > 0 && in_array($lead->quote_status_id, [QuoteStatusEnum::NewLead, QuoteStatusEnum::Qualified])) {
                     $this->updateTravelQuoteStatus($lead->uuid);
                 }
 
