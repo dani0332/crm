@@ -193,6 +193,7 @@ trait PrivateClient
             'uuid',
             'customer_id',
             'nationality_id',
+            'policy_sum_assured_currency_id',
             'quote_status_id',
             'pc_qualified',
             'pcp_tag_version',
