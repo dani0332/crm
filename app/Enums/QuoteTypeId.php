@@ -47,35 +47,16 @@ final class QuoteTypeId extends Enum
 
     /**
      * Get display name for quote type ID
-     * Handles special formatting cases for display purposes
-     *
-     * @param int|null $quoteTypeId
-     * @return string|null
      */
     public static function getDisplayName(?int $quoteTypeId): ?string
     {
-        if ($quoteTypeId === null) {
-            return null;
-        }
-
         $options = self::getOptions();
-        $name = $options[$quoteTypeId] ?? null;
+        return $options[$quoteTypeId] ?? null;
 
-        if ($name === null) {
-            return null;
-        }
-
-        // Handle special formatting cases
-        return match ($name) {
-            'GroupMedical' => 'Group Medical',
-            default => $name,
-        };
     }
 
     /**
      * Get all quote type IDs for claim documents
-     * Returns array of quote type IDs that should be included in claim documents response
-     *
      * @return array
      */
     public static function getClaimDocumentQuoteTypes(): array
