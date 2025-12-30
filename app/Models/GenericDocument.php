@@ -36,6 +36,14 @@ class GenericDocument extends Model
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function businessTypeOfInsurance()
+    {
+        return $this->belongsTo(BusinessTypeOfInsurance::class, 'business_type_of_insurance_id');
+    }
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function documentable()

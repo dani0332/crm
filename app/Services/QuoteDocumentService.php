@@ -1132,9 +1132,14 @@ class QuoteDocumentService extends BaseService
     {
         $documentType = GenericDocumentType::byCode(GenericDocumentTypeCode::CLAIM_FORM->value)
             ->with(['morphDocuments' => function ($query) {
-                $query->with(['insuranceProvider']);
+                $query->with(['insuranceProvider', 'businessTypeOfInsurance']);
             }])
             ->first();
+
+        // Fallback to empty response structure if no document type or documents are found
+        if (!$documentType || $documentType->morphDocuments->isEmpty()) {
+            return $this->getEmptyClaimDocumentsResponseStructure();
+        }
 
         $grouped = $this->groupClaimDocumentsByQuoteType($documentType->morphDocuments);
         
@@ -1184,13 +1189,36 @@ class QuoteDocumentService extends BaseService
         $grouped = $this->getEmptyClaimDocumentsResponseStructure();
 
         foreach ($documents as $document) {
+            if (!$document->insuranceProvider) {
+                continue;
+            }
+
             $quoteTypeId = $document->quote_type_id ?? null;
+            
+            // Skip if quote_type_id is null
+            if ($quoteTypeId === null) {
+                continue;
+            }
+
             $lob = QuoteTypeId::getDisplayName($quoteTypeId);
             
+            // If LOB not found or not in grouped structure, skip this document
+            if (!$lob || !isset($grouped[$lob])) {
+                continue;
+            }
+
+            $docUrl = $document->path ? storageUrl().$document->path : '';
+
             $grouped[$lob]['docs'][] = [
                 'insuranceProviderId' => $document->insuranceProvider->id,
                 'insuranceProviderCode' => $document->insuranceProvider->code ?? '',
-                'docUrl' => storageUrl().$document->path,
+                'businessTypeOfInsuranceId' => $document->business_type_of_insurance_id,
+                'businessTypeOfInsurance' => $document->businessTypeOfInsurance ? [
+                    'id' => $document->businessTypeOfInsurance->id,
+                    'text' => $document->businessTypeOfInsurance->text ?? null,
+                    'code' => $document->businessTypeOfInsurance->code ?? null,
+                ] : null,
+                'docUrl' => $docUrl,
                 'docTitle' => $document->name
             ];
         }
