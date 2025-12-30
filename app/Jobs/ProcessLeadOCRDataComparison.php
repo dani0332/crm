@@ -23,7 +23,6 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class ProcessLeadOCRDataComparison implements ShouldQueue
@@ -1078,27 +1077,10 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     }
 
     /**
-     * Release the cache lock to allow subsequent job runs
-     */
-    private function releaseCacheLock(): void
-    {
-        Cache::forget('lead_ocr_data_comparison');
-
-        LoggerService::info(self::class.' - Cache lock released', extra: [
-            'uuid' => $this->uuid,
-            'start_date' => $this->startDate?->toDateString(),
-            'end_date' => $this->endDate?->toDateString(),
-        ]);
-    }
-
-    /**
      * Handle job failure
      */
     public function failed(\Throwable $exception): void
     {
-        // Release cache lock on failure
-        $this->releaseCacheLock();
-
         LoggerService::error(self::class.' - Job failed', extra: [
             'uuid' => $this->uuid,
             'start_date' => $this->startDate?->toDateString(),
