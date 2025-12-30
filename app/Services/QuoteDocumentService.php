@@ -7,6 +7,7 @@ use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeText;
+use App\Enums\GenericDocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -21,7 +22,10 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BorLog;
 use App\Models\CarPlanPolicyWording;
+use App\Models\Claim;
 use App\Models\DocumentType;
+use App\Models\GenericDocument;
+use App\Models\GenericDocumentType;
 use App\Models\HealthPlanPolicyWording;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
@@ -1118,6 +1122,80 @@ class QuoteDocumentService extends BaseService
             $filePathAzure,
             $fileMimeType,
         );
+    }
+
+    /**
+     * Get claim documents grouped by quote type and insurance provider
+     *
+     * @return array
+     */
+    public function getClaimDocuments(): array
+    {
+        $documents = GenericDocument::byDocumentTypeCode(GenericDocumentTypeCode::CLAIM_FORM->value)
+            ->byDocumentableType(Claim::class)
+            ->with(['genericDocumentType', 'insuranceProvider'])
+            ->get();
+
+        return $this->groupClaimDocumentsByQuoteType($documents);
+    }
+
+    /**
+     * Get empty response structure with all quote types for claim documents
+     *
+     * @return array
+     */
+    private function getEmptyClaimDocumentsResponseStructure(): array
+    {
+        $structure = [];
+
+        // Get all quote types from enum
+        $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
+        foreach ($quoteTypeIds as $quoteTypeId) {
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+            if ($lob) {
+                $structure[$lob] = [
+                    'quoteTypeId' => $quoteTypeId,
+                    'docs' => []
+                ];
+            }
+        }
+
+        return $structure;
+    }
+
+    /**
+     * Group claim documents by quote type and insurance provider
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $documents
+     * @return array
+     */
+    private function groupClaimDocumentsByQuoteType($documents): array
+    {
+        $grouped = $this->getEmptyClaimDocumentsResponseStructure();
+
+        foreach ($documents as $document) {
+            $quoteTypeId = $document->quote_type_id ?? null;
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+            
+            if (!$lob || !isset($grouped[$lob])) {
+                continue;
+            }
+            
+            if (!$document->insuranceProvider) {
+                continue;
+            }
+
+            $docUrl = $document->path ? storageUrl().$document->path : '';
+
+            $grouped[$lob]['docs'][] = [
+                'insuranceProviderId' => $document->insuranceProvider->id,
+                'insuranceProviderCode' => $document->insuranceProvider->code ?? '',
+                'docUrl' => $docUrl,
+                'docTitle' => $document->name
+            ];
+        }
+
+        return $grouped;
     }
 
 }
