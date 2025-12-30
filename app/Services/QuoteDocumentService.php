@@ -654,111 +654,130 @@ class QuoteDocumentService extends BaseService
             if (file_exists($sourceFilePath)) {
                 unlink($sourceFilePath);
             }
+        }
+    }
 
-            $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt');
-            if (file_exists($qpdfLogPath)) {
+    /**
+     * Watermark a PDF while preserving form appearances:
+     * - Decrypts the source (blank password) to a temp copy and logs qpdf output.
+     * - Preprocesses with qpdf (force v1.4) for FPDI compatibility and logs output.
+     * - Builds a watermark-only PDF (FPDI) sized per page; no original content rewritten here.
+     * - Overlays the watermark PDF onto the preprocessed original via qpdf overlay to keep fields intact.
+     * - Stores the watermarked media; cleans up temp artifacts in finally.
+     */
+    private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
+    {
+        $watermarkOverlayPath = storage_path('temp/watermark_'.$uuid.'.pdf');
+
+        try {
+            // Preprocess the PDF with qpdf for FPDI compatibility
+            $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+            $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
+
+            $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+            $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
+                escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
+
+            shell_exec($decryptCommand);
+
+            if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+
+                if (strpos($logOutput, 'invalid password') !== false) {
+                    /** PDF has password, falling back to original document*/
+
+                    // Copy the original file to the output path
+                    copy($sourceFilePath, $outputPath);
+
+                    return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+
+                } else {
+                    throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+                }
+            }
+
+            // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
+            $qpdfCommand = 'qpdf '.
+                '--no-warn '. // Suppress warnings
+                '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
+                escapeshellarg($decryptedTempPath).' '.
+                escapeshellarg($tempFilePath).' > '.
+                escapeshellarg($qpdfLogPath).' 2>&1';
+
+            shell_exec($qpdfCommand);
+
+            if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+                LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
+                throw new \Exception('qpdf preprocessing failed');
+            }
+
+            // region Build watermark overlay PDF (keeps form field appearances intact)
+            $pdf = new Fpdi;
+            $pageCount = $pdf->setSourceFile($tempFilePath);
+
+            $watermarkImagePath = public_path('images/watermark1.png');
+            $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
+
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $templateId = $pdf->importPage($pageNo);
+                $size = $pdf->getTemplateSize($templateId);
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+
+                // Add watermark as overlay (on top)
+                if ($size['orientation'] === 'P') {
+                    $pdf->Image(
+                        $watermarkImagePath,
+                        0, 0, $size['width'], $size['height'],
+                        '', '', '', false, 300, '', false, false, 0
+                    );
+                } else {
+                    $pdf->Image(
+                        $watermarkImageAA4Path,
+                        0, 0, $size['width'], $size['height'],
+                        '', '', '', false, 300, '', false, false, 0
+                    );
+                }
+
+            }
+
+            $pdf->Output($watermarkOverlayPath, 'F');
+            // endregion
+
+            // Apply the watermark overlay using qpdf to preserve form fields/annotations
+            $overlayCommand = 'qpdf --overlay '.escapeshellarg($watermarkOverlayPath).' -- '.
+                escapeshellarg($tempFilePath).' '.
+                escapeshellarg($outputPath).' >> '.
+                escapeshellarg($qpdfLogPath).' 2>&1';
+
+            shell_exec($overlayCommand);
+
+            // Check if the output file was created successfully
+            if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+                LoggerService::error("qpdf overlay failed for UUID: $uuid. Output: $logOutput");
+                throw new \Exception('qpdf overlay failed');
+            }
+
+            return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+        } finally {
+            if (file_exists($watermarkOverlayPath)) {
+                unlink($watermarkOverlayPath);
+            }
+
+            $qpdfLogPath ??= null;
+            if ($qpdfLogPath && file_exists($qpdfLogPath)) {
                 unlink($qpdfLogPath);
             }
 
-            $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
             if (file_exists($decryptedTempPath)) {
                 unlink($decryptedTempPath);
             }
 
-            $tempFilePath = storage_path('temp/preprocessed_'.$docName);
             if (file_exists($tempFilePath)) {
                 unlink($tempFilePath);
             }
-
         }
-    }
-
-    private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
-    {
-        // Preprocess the PDF with qpdf for FPDI compatibility
-        $tempFilePath = storage_path('temp/preprocessed_'.$docName);
-        $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
-
-        $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
-        $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
-            escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
-
-        shell_exec($decryptCommand);
-
-        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
-            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
-
-            if (strpos($logOutput, 'invalid password') !== false) {
-                /** PDF has password, falling back to original document*/
-
-                // Copy the original file to the output path
-                copy($sourceFilePath, $outputPath);
-
-                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
-
-            } else {
-                throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
-            }
-        }
-
-        // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
-        $qpdfCommand = 'qpdf '.
-            '--no-warn '. // Suppress warnings
-            '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
-            escapeshellarg($decryptedTempPath).' '.
-            escapeshellarg($tempFilePath).' > '.
-            escapeshellarg($qpdfLogPath).' 2>&1';
-
-        $output = shell_exec($qpdfCommand);
-
-        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
-            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
-            LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
-            throw new \Exception('qpdf preprocessing failed');
-        }
-
-        // region Apply watermark with FPDI
-        $pdf = new Fpdi;
-        $pageCount = $pdf->setSourceFile($tempFilePath);
-
-        $watermarkImagePath = public_path('images/watermark1.png');
-        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-
-            // Layer the original page content first
-            $pdf->useTemplate($templateId);
-
-            // Add watermark as overlay (on top)
-            if ($size['orientation'] === 'P') {
-                $pdf->Image(
-                    $watermarkImagePath,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
-            } else {
-                $pdf->Image(
-                    $watermarkImageAA4Path,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
-            }
-
-        }
-
-        $pdf->Output($outputPath, 'F');
-        // endregion
-
-        // Check if the output file was created successfully
-        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
-            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
-            throw new \Exception('FPDI watermarking failed');
-        }
-
-        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
     /**
