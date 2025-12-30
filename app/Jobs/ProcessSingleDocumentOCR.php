@@ -614,8 +614,8 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             'price_with_vat' => $this->formatNumber($priceWithVat),
             'price_vat_applicable' => $this->formatNumber($priceVatApplicable),
             'vat' => $this->formatNumber($vatAmount),
-            'policy_issuance_date' => $ocrData->issuanceDate ? Carbon::parse($ocrData->issuanceDate)->format('Y-m-d') : null,
-            'insurer_invoice_date' => $ocrData->invoiceDate ? Carbon::parse($ocrData->invoiceDate)->format('Y-m-d') : null,
+            'policy_issuance_date' => ($ocrData->issuanceDate ?? null) ? Carbon::parse($ocrData->issuanceDate)->format('Y-m-d') : null,
+            'insurer_invoice_date' => ($ocrData->invoiceDate ?? null) ? Carbon::parse($ocrData->invoiceDate)->format('Y-m-d') : null,
             'tax_invoice_number' => $ocrData->taxInvoiceNumber ?? null,
             'insurer_tax_number' => $ocrData->taxInvoiceNumber ?? null,
         ];
