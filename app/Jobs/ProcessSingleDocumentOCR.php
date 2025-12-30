@@ -604,10 +604,8 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
     private function getTaxInvoiceOCRDataStructure(object $ocrData, $quote): array
     {
-        $payment = $quote->payments->first() ?? null;
-        $taxInvoiceNumber = $ocrData->taxInvoiceNumber ?? ($payment?->insurer_tax_number ?? null);
-        $priceVatApplicable = $ocrData->price->baseAmount ?? $quote->price_vat_applicable;
-        $priceWithVat = $ocrData->price->totalAmount ?? $quote->price_with_vat;
+        $priceVatApplicable = $ocrData->price->baseAmount ?? null;
+        $priceWithVat = $ocrData->price->totalAmount ?? null;
 
         $vatPercentage = app(\App\Services\ApplicationStorageService::class)->getValueByKey(\App\Enums\ApplicationStorageEnums::VAT_VALUE);
         $vatAmount = $priceVatApplicable * $vatPercentage / 100;
@@ -616,29 +614,29 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             'price_with_vat' => $this->formatNumber($priceWithVat),
             'price_vat_applicable' => $this->formatNumber($priceVatApplicable),
             'vat' => $this->formatNumber($vatAmount),
-            'policy_issuance_date' => Carbon::parse($ocrData->issuanceDate ?? $quote->policy_issuance_date)->format('Y-m-d'),
+            'policy_issuance_date' => $ocrData->issuanceDate ? Carbon::parse($ocrData->issuanceDate)->format('Y-m-d') : null,
             'insurer_invoice_date' => $ocrData->invoiceDate ? Carbon::parse($ocrData->invoiceDate)->format('Y-m-d') : null,
-            'tax_invoice_number' => $taxInvoiceNumber,
-            'insurer_tax_number' => $taxInvoiceNumber,
+            'tax_invoice_number' => $ocrData->taxInvoiceNumber ?? null,
+            'insurer_tax_number' => $ocrData->taxInvoiceNumber ?? null,
         ];
     }
 
     private function getTaxInvoiceRaisedByBuyerOCRDataStructure(object $ocrData, $quote): array
     {
         $payment = $quote->payment;
-        $commissionVat = $ocrData->commission->VAT ?? ($payment?->comission_vat ?: 0);
-        $commissionTotal = $ocrData->commission->totalAmount ?? $payment?->comission;
-        $commissionVatApplicable = $ocrData->commission->baseAmount ?? $payment?->commission_vat_applicable;
+        $commissionVat = $ocrData->commission->VAT ?? null;
+        $commissionTotal = $ocrData->commission->totalAmount ?? null;
+        $commissionVatApplicable = $ocrData->commission->baseAmount ?? null;
         $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05 : 0);
         $commissionWithoutVat = $commissionTotal - $commissionVat;
         $premiumWithoutVat = $payment?->total_price / $commissionPercentageDivisor;
-        $commissionPercentage = roundNumber((($commissionWithoutVat / $premiumWithoutVat) * 100)) ?? $payment?->comission_percentage;
+        $commissionPercentage = roundNumber((($commissionWithoutVat / $premiumWithoutVat) * 100));
 
         return [
             'commission_vat' => $this->formatNumber($commissionVat),
             'commission' => $this->formatNumber($commissionTotal),
             'commmission_percentage' => $commissionPercentage,
-            'insurer_commmission_invoice_number' => $ocrData->taxInvoiceNumber ?? $payment?->insurer_commmission_invoice_number,
+            'insurer_commmission_invoice_number' => $ocrData->taxInvoiceNumber ?? null,
             'commission_vat_applicable' => $this->formatNumber($commissionVatApplicable),
         ];
     }
