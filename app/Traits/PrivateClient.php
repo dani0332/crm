@@ -479,9 +479,6 @@ trait PrivateClient
     {
         $wasLeadUpdated = false;
 
-        $desiredLeadState = $shouldRemove
-            ? ['pc_qualified' => 0, 'pcp_tag_version' => null]
-            : ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
         if (is_null($model->pc_qualified)) {
             $updateData = ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
 
