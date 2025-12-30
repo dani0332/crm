@@ -604,8 +604,8 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
     private function getTaxInvoiceOCRDataStructure(object $ocrData, $quote): array
     {
-        $priceVatApplicable = $ocrData->price->baseAmount ?? null;
-        $priceWithVat = $ocrData->price->totalAmount ?? null;
+        $priceVatApplicable = $ocrData->price?->baseAmount ?? null;
+        $priceWithVat = $ocrData->price?->totalAmount ?? null;
 
         $vatPercentage = app(\App\Services\ApplicationStorageService::class)->getValueByKey(\App\Enums\ApplicationStorageEnums::VAT_VALUE);
         $vatAmount = $priceVatApplicable * $vatPercentage / 100;
@@ -624,9 +624,9 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     private function getTaxInvoiceRaisedByBuyerOCRDataStructure(object $ocrData, $quote): array
     {
         $payment = $quote->payment;
-        $commissionVat = $ocrData->commission->VAT ?? null;
-        $commissionTotal = $ocrData->commission->totalAmount ?? null;
-        $commissionVatApplicable = $ocrData->commission->baseAmount ?? null;
+        $commissionVat = $ocrData->commission?->VAT ?? null;
+        $commissionTotal = $ocrData->commission?->totalAmount ?? null;
+        $commissionVatApplicable = $ocrData->commission?->baseAmount ?? null;
         $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05 : 0);
         $commissionWithoutVat = $commissionTotal - $commissionVat;
         $premiumWithoutVat = $payment?->total_price / $commissionPercentageDivisor;
