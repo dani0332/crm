@@ -2030,7 +2030,7 @@ class SendEmailCustomerService extends BaseService
         $emailData = (object)[
             'recipientEmail' => $itSupportEmail,
             'recipientName' => "IT Support AFIA",
-            'managerIds' => $baseManagers->pluck('id')->filter()->values()->all(),
+            'managerIds' => $baseManagers->pluck('id')->filter()->values()->implode(","),
             'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
             'timestamp' => now()->toDateTimeString(),
         ];
