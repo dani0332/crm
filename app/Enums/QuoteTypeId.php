@@ -67,7 +67,6 @@ final class QuoteTypeId extends Enum
 
         // Handle special formatting cases
         return match ($name) {
-            'TradeCredit' => 'Trade Credit',
             'GroupMedical' => 'Group Medical',
             default => $name,
         };
@@ -92,7 +91,6 @@ final class QuoteTypeId extends Enum
             self::Travel,
             self::Pet,
             self::Cycle,
-            self::TradeCredit,
             self::GroupMedical,
             self::CompanyCar,
         ];
