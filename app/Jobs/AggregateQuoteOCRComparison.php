@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AggregateQuoteOCRComparison implements ShouldQueue
@@ -171,10 +172,20 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             'comparison_score' => $comparisonScore.'%',
             'documents_processed' => $documentResults->count(),
         ]);
+
+        // Clear aggregation cache to allow recalculation
+        Cache::forget('ocr_aggregation_dispatched_'.$this->quoteId);
+        
+        LoggerService::info(self::class.' - Aggregation cache cleared', [
+            'quote_id' => $this->quoteId,
+        ]);
     }
 
     public function failed(\Throwable $exception): void
     {
+        // Clear aggregation cache to allow retry
+        Cache::forget('ocr_aggregation_dispatched_'.$this->quoteId);
+        
         LoggerService::error(self::class.' - Aggregation job failed', extra: [
             'quote_id' => $this->quoteId,
             'attempts' => $this->attempts(),
