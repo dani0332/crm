@@ -147,6 +147,13 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                         'reason' => 'Success',
                     ];
                     $ocrDataStructure = $this->getOcrDataStructure($ocrDocType->value, $ocrData, $quote);
+                } else {
+                    $ocrResponseData = [
+                        'status' => 'false',
+                        'response' => json_encode([]),
+                        'reason' => 'OCR API failed or document URL unavailable',
+                    ];
+                    $ocrDataStructure = [];
                 }
             }
         } else {
@@ -159,36 +166,44 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                     'reason' => 'Success',
                 ];
                 $ocrDataStructure = $this->getOcrDataStructure($ocrDocType->value, $ocrData, $quote);
+            } else {
+                $ocrResponseData = [
+                    'status' => 'false',
+                    'response' => json_encode([]),
+                    'reason' => 'OCR API failed or document URL unavailable',
+                ];
+                $ocrDataStructure = [];
             }
         }
 
-        if (! empty($ocrDataStructure)) {
-            DB::table('temp_ocr_document_results')->updateOrInsert(
-                [
-                    'quote_id' => $this->quoteId,
-                    'document_id' => $this->documentId,
-                ],
-                [
-                    'doc_type' => $ocrDocType->value,
-                    'lead_data' => json_encode($leadDataStructure),
-                    'ocr_data' => json_encode($ocrDataStructure),
-                    'ocr_response' => json_encode($ocrResponseData),
-                    'processed_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
+        DB::table('temp_ocr_document_results')->updateOrInsert(
+            [
+                'quote_id' => $this->quoteId,
+                'document_id' => $this->documentId,
+            ],
+            [
+                'doc_type' => $ocrDocType->value,
+                'lead_data' => json_encode($leadDataStructure),
+                'ocr_data' => json_encode($ocrDataStructure),
+                'ocr_response' => json_encode($ocrResponseData),
+                'processed_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
 
+        if (! empty($ocrDataStructure)) {
             LoggerService::info(self::class.' - Document processing completed', [
                 'quote_id' => $quote->id,
                 'document_id' => $document->id,
                 'doc_type' => $ocrDocType->value,
             ]);
         } else {
-            LoggerService::warning(self::class.' - No OCR data extracted', [
+            LoggerService::warning(self::class.' - Document processing completed with no OCR data (failed or skipped)', [
                 'quote_id' => $quote->id,
                 'document_id' => $document->id,
                 'doc_type' => $ocrDocType->value,
+                'ocr_response_status' => $ocrResponseData['status'] ?? 'unknown',
             ]);
         }
 
