@@ -42,30 +42,4 @@ class GenericDocument extends Model
     {
         return $this->morphTo();
     }
-
-    /**
-     * Scope to filter by document type code
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $code
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeByDocumentTypeCode($query, string $code)
-    {
-        return $query->whereHas('genericDocumentType', function ($q) use ($code) {
-            $q->where('code', $code);
-        });
-    }
-
-    /**
-     * Scope to filter by documentable type
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $type
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeByDocumentableType($query, string $type)
-    {
-        return $query->where('documentable_type', $type);
-    }
 }
