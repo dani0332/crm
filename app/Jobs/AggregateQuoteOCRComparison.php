@@ -175,7 +175,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
 
         // Clear aggregation cache to allow recalculation
         Cache::forget('ocr_aggregation_dispatched_'.$this->quoteId);
-        
+
         LoggerService::info(self::class.' - Aggregation cache cleared', [
             'quote_id' => $this->quoteId,
         ]);
@@ -185,7 +185,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
     {
         // Clear aggregation cache to allow retry
         Cache::forget('ocr_aggregation_dispatched_'.$this->quoteId);
-        
+
         LoggerService::error(self::class.' - Aggregation job failed', extra: [
             'quote_id' => $this->quoteId,
             'attempts' => $this->attempts(),
