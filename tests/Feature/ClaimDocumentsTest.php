@@ -50,7 +50,7 @@ test('get claim documents returns documents for Home quote type', function () {
     ]);
 
     // Make API request
-    $response = $this->getJson('/api/v1/claim-douments');
+    $response = $this->getJson('/api/v1/claim-documents');
 
     // Assert response structure
     $response->assertStatus(200)
@@ -103,7 +103,7 @@ test('get claim documents returns empty docs for Travel quote type when no docum
     ]);
 
     // Make API request
-    $response = $this->getJson('/api/v1/claim-douments');
+    $response = $this->getJson('/api/v1/claim-documents');
 
     $response->assertStatus(200);
     $data = $response->json('data');
@@ -125,7 +125,7 @@ test('get claim documents returns empty structure when no documents exist', func
     ]);
 
     // Make API request
-    $response = $this->getJson('/api/v1/claim-douments');
+    $response = $this->getJson('/api/v1/claim-documents');
 
     $response->assertStatus(200);
     $data = $response->json('data');
@@ -177,7 +177,7 @@ test('get claim documents includes business type of insurance only for Business 
         'name' => 'HomeWithType.pdf',
     ]);
 
-    $response = $this->getJson('/api/v1/claim-douments');
+    $response = $this->getJson('/api/v1/claim-documents');
 
     $response->assertStatus(200);
     
