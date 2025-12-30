@@ -23,6 +23,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class ProcessLeadOCRDataComparison implements ShouldQueue
@@ -63,18 +64,23 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
      */
     public function handle(): void
     {
-        if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED, useCache: true, cacheTime: now()->addMinute()) != '1') {
-            LoggerService::warning(self::class.' - OCR util processing is disabled, skipping job execution', extra: [
-                'uuid' => $this->uuid,
-                'start_date' => $this->startDate?->toDateString(),
-                'end_date' => $this->endDate?->toDateString(),
-                'message' => 'OCR util processing has been disabled via application_storages flag',
-            ]);
+        try {
+            if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED, useCache: true, cacheTime: now()->addMinute()) != '1') {
+                LoggerService::warning(self::class.' - OCR util processing is disabled, skipping job execution', extra: [
+                    'uuid' => $this->uuid,
+                    'start_date' => $this->startDate?->toDateString(),
+                    'end_date' => $this->endDate?->toDateString(),
+                    'message' => 'OCR util processing has been disabled via application_storages flag',
+                ]);
 
-            return;
+                return;
+            }
+
+            $this->getCarDocuments();
+        } finally {
+            // Always release the cache lock when job completes (success or failure)
+            $this->releaseCacheLock();
         }
-
-        $this->getCarDocuments();
     }
 
     public function getCarDocuments()
@@ -1066,6 +1072,40 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     private function formatNumber($number): ?string
     {
         return $number !== null ? number_format($number, 2) : null;
+    }
+
+    /**
+     * Release the cache lock to allow subsequent job runs
+     */
+    private function releaseCacheLock(): void
+    {
+        Cache::forget('lead_ocr_data_comparison');
+        
+        LoggerService::info(self::class.' - Cache lock released', extra: [
+            'uuid' => $this->uuid,
+            'start_date' => $this->startDate?->toDateString(),
+            'end_date' => $this->endDate?->toDateString(),
+        ]);
+    }
+
+    /**
+     * Handle job failure
+     */
+    public function failed(\Throwable $exception): void
+    {
+        // Release cache lock on failure
+        $this->releaseCacheLock();
+
+        LoggerService::error(self::class.' - Job failed', extra: [
+            'uuid' => $this->uuid,
+            'start_date' => $this->startDate?->toDateString(),
+            'end_date' => $this->endDate?->toDateString(),
+            'exception' => $exception->getMessage(),
+            'exception_trace' => $exception->getTraceAsString(),
+            'exception_code' => $exception->getCode(),
+            'exception_file' => $exception->getFile(),
+            'exception_line' => $exception->getLine(),
+        ]);
     }
 
 }
