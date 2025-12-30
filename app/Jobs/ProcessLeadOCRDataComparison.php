@@ -374,16 +374,28 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             ->first();
 
         if ($ocrRecord) {
-            $ocrData = json_decode($ocrRecord->ocr_response, true)[$ocrDocType];
-            $ocrDataStructure[$ocrDocType] = json_decode($ocrRecord->ocr_data, true)[$ocrDocType];
+            $ocrResponseJson = json_decode($ocrRecord->ocr_response, true);
+            $ocrDataJson = json_decode($ocrRecord->ocr_data, true);
 
-            LoggerService::info(self::class.'::processOcrDocument - OCR data already exists in database', extra: [
+            if (isset($ocrResponseJson[$ocrDocType]) && isset($ocrDataJson[$ocrDocType])) {
+                $ocrData = $ocrResponseJson[$ocrDocType];
+                $ocrDataStructure[$ocrDocType] = $ocrDataJson[$ocrDocType];
+
+                LoggerService::info(self::class.'::processOcrDocument - OCR data already exists in database', extra: [
+                    'quote_id' => $quote->id,
+                    'ocr_response' => $ocrData,
+                    'ocr_data' => $ocrDataStructure[$ocrDocType],
+                ]);
+
+                return true;
+            }
+
+            LoggerService::warning(self::class.'::processOcrDocument - Cached OCR data exists but document type not found', extra: [
                 'quote_id' => $quote->id,
-                'ocr_response' => $ocrData,
-                'ocr_data' => $ocrDataStructure[$ocrDocType],
+                'document_type' => $ocrDocType,
+                'has_ocr_response' => ! is_null($ocrResponseJson),
+                'has_ocr_data' => ! is_null($ocrDataJson),
             ]);
-
-            return true;
         }
 
         // Fetch OCR data from API
