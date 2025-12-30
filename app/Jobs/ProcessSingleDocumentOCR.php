@@ -43,7 +43,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
     public function handle(): void
     {
-        if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED, useCache: true, cacheTime: now()->addMinute()) != '1') {
+        if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
             LoggerService::warning(self::class.' - OCR util processing is disabled, skipping document processing', extra: [
                 'quote_id' => $this->quoteId,
                 'document_id' => $this->documentId,

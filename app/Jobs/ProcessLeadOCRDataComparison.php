@@ -65,7 +65,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     public function handle(): void
     {
         try {
-            if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED, useCache: true, cacheTime: now()->addMinute()) != '1') {
+            if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
                 LoggerService::warning(self::class.' - OCR util processing is disabled, skipping job execution', extra: [
                     'uuid' => $this->uuid,
                     'start_date' => $this->startDate?->toDateString(),
@@ -78,8 +78,11 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
             $this->getCarDocuments();
         } finally {
-            // Always release the cache lock when job completes (success or failure)
-            $this->releaseCacheLock();
+            LoggerService::info(self::class.' - Job completed', extra: [
+                'uuid' => $this->uuid,
+                'start_date' => $this->startDate?->toDateString(),
+                'end_date' => $this->endDate?->toDateString(),
+            ]);
         }
     }
 

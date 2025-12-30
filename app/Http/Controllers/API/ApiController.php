@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -728,6 +729,10 @@ class ApiController extends Controller
             'user_agent' => $request->userAgent(),
             'ip' => $request->ip(),
         ]);
+
+        if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
+            return apiResponse(null, Response::HTTP_OK, 'OCR util processing is disabled');
+        }
 
         // Atomically set cache lock - returns false if key already exists
         if (! Cache::add('lead_ocr_data_comparison', true, now()->addMinutes(10))) {
