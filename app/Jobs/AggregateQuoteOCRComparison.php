@@ -8,7 +8,6 @@ use App\Models\CarQuote;
 use App\Models\LeadOcrDataComparison;
 use App\Models\OCRResponseData;
 use App\Services\Logger\LoggerService;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -174,11 +173,16 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         ]);
     }
 
-    public function failed(Exception $exception): void
+    public function failed(\Throwable $exception): void
     {
-        LoggerService::error(self::class.' - Aggregation job failed', exception: $exception, extra: [
+        LoggerService::error(self::class.' - Aggregation job failed', extra: [
             'quote_id' => $this->quoteId,
             'attempts' => $this->attempts(),
+            'exception' => $exception->getMessage(),
+            'exception_trace' => $exception->getTraceAsString(),
+            'exception_code' => $exception->getCode(),
+            'exception_file' => $exception->getFile(),
+            'exception_line' => $exception->getLine(),
         ]);
     }
 }

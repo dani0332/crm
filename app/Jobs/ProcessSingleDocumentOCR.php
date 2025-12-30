@@ -16,7 +16,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -311,7 +310,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                     'doc_type' => $docType,
                 ]);
 
-                return (object) $responseData;
+                return json_decode(json_encode($responseData));
             }
 
             LoggerService::warning(self::class.' - OCR API call failed', [
@@ -627,9 +626,9 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     private function getTaxInvoiceRaisedByBuyerOCRDataStructure(object $ocrData, $quote): array
     {
         $payment = $quote->payment;
-        $commissionVat = $ocrData->commission['VAT'] ?? ($payment?->comission_vat ?: 0);
-        $commissionTotal = $ocrData->commission['totalAmount'] ?? $payment?->comission;
-        $commissionVatApplicable = $ocrData->commission['baseAmount'] ?? $payment?->commission_vat_applicable;
+        $commissionVat = $ocrData->commission->VAT ?? ($payment?->comission_vat ?: 0);
+        $commissionTotal = $ocrData->commission->totalAmount ?? $payment?->comission;
+        $commissionVatApplicable = $ocrData->commission->baseAmount ?? $payment?->commission_vat_applicable;
         $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05 : 0);
         $commissionWithoutVat = $commissionTotal - $commissionVat;
         $premiumWithoutVat = $payment?->total_price / $commissionPercentageDivisor;
@@ -782,12 +781,17 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         return $number !== null ? number_format($number, 2) : null;
     }
 
-    public function failed(Exception $exception): void
+    public function failed(\Throwable $exception): void
     {
-        LoggerService::error(self::class.' - Job failed after all retries', exception: $exception, extra: [
+        LoggerService::error(self::class.' - Job failed after all retries', extra: [
             'quote_id' => $this->quoteId,
             'document_id' => $this->documentId,
             'attempts' => $this->attempts(),
+            'exception' => $exception->getMessage(),
+            'exception_trace' => $exception->getTraceAsString(),
+            'exception_code' => $exception->getCode(),
+            'exception_file' => $exception->getFile(),
+            'exception_line' => $exception->getLine(),
         ]);
     }
 }
