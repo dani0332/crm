@@ -13,7 +13,7 @@ final class PolicyIssuanceEnum extends Enum
     const API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL = 'Auto Issued';
 
     // Policy Issuance Automation Job Statuses
-    const PENDING_STATUS = 'pending1';
+    const PENDING_STATUS = 'pending';
     const PROCESSING_STATUS = 'processing';
     const TIMEOUT_STATUS = 'timeout';
     const COMPLETED_STATUS = 'completed';

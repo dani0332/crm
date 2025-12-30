@@ -576,6 +576,16 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid')->where(['execution_method' => AdnicEnum::STEP_GENERATE_QUOTE, 'status' => 'passed'])->latest();
     }
 
+    public function healthUmafResponse()
+    {
+        return $this->hasOne(HealthUMAFResponse::class, 'quote_uuid', 'uuid');
+    }
+
+    public function isSTPCase()
+    {
+        return (bool) $this->healthUmafResponse?->stp_rating['is_stp'];
+    }
+
     public function isBookingFailed()
     {
         return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;

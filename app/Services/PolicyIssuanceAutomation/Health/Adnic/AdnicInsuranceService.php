@@ -95,13 +95,15 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
     public function createPolicyIssuanceSchedule($quote, $insurer)
     {
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::ADNIC_HEALTH_POLICY_AUTOMATION);
+        $isSTPCase = $quote->isSTPCase();
         LoggerService::info('Policy issuance schedule initiated', extra: [
             'insurer_id' => $insurer->id,
             'insurer_code' => $insurer->code,
             'automation_enabled' => $this->isPolicyIssuanceAutomationEnabled(),
+            'isSTPCase' => $isSTPCase,
         ]);
 
-        if ($this->isPolicyIssuanceAutomationEnabled()) {
+        if ($this->isPolicyIssuanceAutomationEnabled() && $isSTPCase) {
             (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, QuoteTypes::HEALTH->value, self::class);
         } else {
             LoggerService::warning('Automation is disabled', extra: [
@@ -132,8 +134,8 @@ class AdnicInsuranceService implements PolicyIssuanceInterface
         $response = ['status' => false, 'error' => null, 'message' => null];
 
         $quote = $process->model;
-        $healthRequestResponse = HealthInsurerRequestResponse::find('6881898ab82cdba2ae884b44');
-        $quote->setRelation('insurerGenerateQuoteRequestResponse', $healthRequestResponse);
+        //$healthRequestResponse = HealthInsurerRequestResponse::find('6881898ab82cdba2ae884b44');
+        //$quote->setRelation('insurerGenerateQuoteRequestResponse', $healthRequestResponse);
 
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::ADNIC_HEALTH_POLICY_AUTOMATION);
         LoggerService::info('Execution started', extra: [

@@ -2365,6 +2365,10 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS STP Case</dt>
+                <dd>{{ quote.isSTPCase ? 'Yes' : 'No' }}</dd>
+              </div>
             </dl>
           </div>
 
