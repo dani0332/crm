@@ -81,18 +81,14 @@ final class QuoteTypeId extends Enum
     public static function getClaimDocumentQuoteTypes(): array
     {
         return [
-            self::Car,
-            self::Home,
-            self::Health,
-            self::Life,
-            self::Business,
-            self::Bike,
             self::Yacht,
             self::Travel,
             self::Pet,
             self::Cycle,
-            self::GroupMedical,
-            self::CompanyCar,
+            self::Life,
+            self::Home,
+            self::Health,
+            self::Business,
         ];
     }
 }
