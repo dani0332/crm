@@ -729,11 +729,10 @@ class ApiController extends Controller
             'ip' => $request->ip(),
         ]);
 
-        if (Cache::has('lead_ocr_data_comparison')) {
+        // Atomically set cache lock - returns false if key already exists
+        if (!Cache::add('lead_ocr_data_comparison', true, now()->addMinutes(10))) {
             return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job is already running');
         }
-
-        Cache::put('lead_ocr_data_comparison', true, now()->addMinutes(10));
 
         ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate, $recalculateComparison)
             ->onConnection('redis')
