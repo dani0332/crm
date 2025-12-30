@@ -171,6 +171,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'roles' => 'required',
             'password' => 'required',
+            'manager' => 'required',
             'products' => 'required',
             'teams' => 'required',
             'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
