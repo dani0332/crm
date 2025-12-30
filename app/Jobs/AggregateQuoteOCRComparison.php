@@ -3,12 +3,12 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use Exception;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\LeadOcrDataComparison;
 use App\Models\OCRResponseData;
 use App\Services\Logger\LoggerService;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
