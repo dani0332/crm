@@ -492,14 +492,14 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             'price_with_vat' => $this->formatNumber($quote->price_with_vat),
             'price_vat_applicable' => $this->formatNumber($quote->price_vat_applicable),
             'vat' => $this->formatNumber($quote->vat),
-            'policy_issuance_date' => Carbon::parse($quote->policy_issuance_date)->format('Y-m-d'),
+            'policy_issuance_date' => $quote->policy_issuance_date ? Carbon::parse($quote->policy_issuance_date)->format('Y-m-d') : null,
         ];
 
         $payment = $quote->payment;
 
         if ($payment) {
             $result = array_merge($result, [
-                'insurer_invoice_date' => Carbon::parse($payment->insurer_invoice_date)->format('Y-m-d'),
+                'insurer_invoice_date' => $payment->insurer_invoice_date ? Carbon::parse($payment->insurer_invoice_date)->format('Y-m-d') : null,
                 'insurer_tax_number' => $payment->insurer_tax_number ?? null,
                 'tax_invoice_number' => $payment->tax_invoice_number ?? null,
             ]);
@@ -537,9 +537,9 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     {
         return [
             'policy_number' => $quote->personalQuote?->policy_number,
-            'policy_start_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_start_date)->format('Y-m-d') : null,
-            'policy_expiry_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_expiry_date)->format('Y-m-d') : null,
-            'policy_issuance_date' => $quote->personalQuote ? Carbon::parse($quote->personalQuote->policy_issuance_date)->format('Y-m-d') : null,
+            'policy_start_date' => ($quote->personalQuote?->policy_start_date) ? Carbon::parse($quote->personalQuote->policy_start_date)->format('Y-m-d') : null,
+            'policy_expiry_date' => ($quote->personalQuote?->policy_expiry_date) ? Carbon::parse($quote->personalQuote->policy_expiry_date)->format('Y-m-d') : null,
+            'policy_issuance_date' => ($quote->personalQuote?->policy_issuance_date) ? Carbon::parse($quote->personalQuote->policy_issuance_date)->format('Y-m-d') : null,
         ];
     }
 
