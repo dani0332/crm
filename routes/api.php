@@ -131,6 +131,7 @@ Route::prefix('v1')->group(function () {
     // upload to metlife API route
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
 
+    Route::get('/claim-douments', [QuoteDocumentController::class, 'getClaimDocuments']);
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
