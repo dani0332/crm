@@ -22,7 +22,6 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BorLog;
 use App\Models\CarPlanPolicyWording;
-use App\Models\Claim;
 use App\Models\DocumentType;
 use App\Models\GenericDocument;
 use App\Models\GenericDocumentType;
@@ -1131,12 +1130,23 @@ class QuoteDocumentService extends BaseService
      */
     public function getClaimDocuments(): array
     {
-        $documents = GenericDocument::byDocumentTypeCode(GenericDocumentTypeCode::CLAIM_FORM->value)
-            ->byDocumentableType(Claim::class)
-            ->with(['genericDocumentType', 'insuranceProvider'])
-            ->get();
+        $documentType = GenericDocumentType::byCode(GenericDocumentTypeCode::CLAIM_FORM->value)
+            ->with(['morphDocuments' => function ($query) {
+                $query->with(['insuranceProvider']);
+            }])
+            ->first();
 
-        return $this->groupClaimDocumentsByQuoteType($documents);
+        $grouped = $this->groupClaimDocumentsByQuoteType($documentType->morphDocuments);
+        
+        // Ensure all quote types are present in response even if empty
+        $emptyStructure = $this->getEmptyClaimDocumentsResponseStructure();
+        foreach ($emptyStructure as $lob => $structure) {
+            if (!isset($grouped[$lob])) {
+                $grouped[$lob] = $structure;
+            }
+        }
+
+        return $grouped;
     }
 
     /**
@@ -1177,20 +1187,10 @@ class QuoteDocumentService extends BaseService
             $quoteTypeId = $document->quote_type_id ?? null;
             $lob = QuoteTypeId::getDisplayName($quoteTypeId);
             
-            if (!$lob || !isset($grouped[$lob])) {
-                continue;
-            }
-            
-            if (!$document->insuranceProvider) {
-                continue;
-            }
-
-            $docUrl = $document->path ? storageUrl().$document->path : '';
-
             $grouped[$lob]['docs'][] = [
                 'insuranceProviderId' => $document->insuranceProvider->id,
                 'insuranceProviderCode' => $document->insuranceProvider->code ?? '',
-                'docUrl' => $docUrl,
+                'docUrl' => storageUrl().$document->path,
                 'docTitle' => $document->name
             ];
         }
