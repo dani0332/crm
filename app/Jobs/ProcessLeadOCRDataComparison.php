@@ -114,6 +114,13 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             ->whereHas('documents', function ($q) use ($documentTypeCodes) {
                 $q->whereIn('document_type_code', $documentTypeCodes);
             })
+            ->when(!$this->recalculateComparison, function ($q) {
+                // Skip already processed leads unless recalculate is requested
+                $q->whereHas('personalQuote', function ($subQ) {
+                    $subQ->where('lead_ocr_comparison_processed', 0)
+                        ->orWhereNull('lead_ocr_comparison_processed');
+                });
+            })
             ->with([
                 'documents' => function ($q) use ($documentTypeCodes) {
                     $q->whereIn('document_type_code', $documentTypeCodes)
@@ -127,7 +134,10 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 },
                 'insuranceProvider:id,code',
                 'personalQuote:id,uuid,quote_id,quote_type_id,lead_ocr_comparison_processed',
-            ]);
+            ])
+            ->orderBy('transaction_approved_at', 'asc') // Consistent ordering: oldest first
+            ->orderBy('id', 'asc') // Secondary sort for same-timestamp records
+            ->limit(50); // Safety limit: maximum 50 leads total
 
         $carQuotes = $carQuotes->get();
 

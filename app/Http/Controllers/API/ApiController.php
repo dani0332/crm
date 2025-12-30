@@ -61,6 +61,7 @@ use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -727,6 +728,12 @@ class ApiController extends Controller
             'user_agent' => $request->userAgent(),
             'ip' => $request->ip(),
         ]);
+
+        if (Cache::has('lead_ocr_data_comparison')) {
+            return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job is already running');
+        }
+
+        Cache::put('lead_ocr_data_comparison', true, now()->addMinutes(10));
 
         ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate, $recalculateComparison)
             ->onConnection('redis')
