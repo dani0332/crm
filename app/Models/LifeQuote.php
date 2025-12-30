@@ -226,8 +226,8 @@ class LifeQuote extends Model implements AuditableContract
             'id', // personal_quotes.id (life quotes use personal_quotes table)
             'insured_id' // customer_insured.insured_id
         )
-        ->where('customer_insured.quote_type_id', QuoteTypeId::Life)
-        ->where('customer_insured.is_active', true);
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Life)
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()

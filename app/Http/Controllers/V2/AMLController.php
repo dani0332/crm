@@ -41,7 +41,6 @@ use App\Models\BusinessQuoteType;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
-use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Insured;
