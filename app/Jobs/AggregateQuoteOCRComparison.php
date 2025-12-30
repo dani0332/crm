@@ -82,7 +82,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             $totalFields = count($leadDataStructure[$docType]);
 
             foreach ($leadDataStructure[$docType] as $key => $value) {
-                if (isset($ocrDataStructure[$docType][$key]) &&
+                if (array_key_exists($key, $ocrDataStructure[$docType]) &&
                     $leadDataStructure[$docType][$key] === $ocrDataStructure[$docType][$key]) {
                     $matchCount++;
                 }
