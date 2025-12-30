@@ -268,5 +268,59 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        // Create insurance_provider table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('insurance_provider')) {
+            Schema::connection('sqlite')->create('insurance_provider', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->unsignedBigInteger('payment_gateway_id')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
+        // Create generic_document_types table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('generic_document_types')) {
+            Schema::connection('sqlite')->create('generic_document_types', function ($table) {
+                $table->id();
+                $table->string('code')->unique();
+                $table->string('text');
+                $table->text('description')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create business_type_of_insurance table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('business_type_of_insurance')) {
+            Schema::connection('sqlite')->create('business_type_of_insurance', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text');
+                $table->timestamps();
+            });
+        }
+
+        // Create generic_documents table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('generic_documents')) {
+            Schema::connection('sqlite')->create('generic_documents', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('generic_document_type_id')->nullable();
+                $table->string('uuid')->nullable();
+                $table->string('documentable_type');
+                $table->unsignedBigInteger('documentable_id');
+                $table->integer('quote_type_id')->nullable();
+                $table->string('name')->nullable();
+                $table->string('path')->nullable();
+                $table->string('mime_type')->nullable();
+                $table->unsignedBigInteger('created_by_id')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->unsignedBigInteger('business_type_of_insurance_id')->nullable();
+                $table->timestamps();
+                $table->index(['documentable_type', 'documentable_id']);
+            });
+        }
     }
 }
