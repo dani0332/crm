@@ -569,15 +569,15 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
         return [
             'driver_license_number' => $ocrData->licenseNumber ?? null,
-            'driver_gender' => $this->formatGender($personalInfo->sex ?? null),
+            'driver_gender' => $this->formatGender($personalInfo?->sex ?? null),
             'driver_license_issue_date' => $this->formatDate($ocrData->issueDate ?? null),
             'driver_license_expiry_date' => $this->formatDate($ocrData->expiryDate ?? null),
             'driver_license_issue_place' => $this->getIssuancePlaceCode($ocrData->placeOfIssue ?? null),
             'traffic_code_number' => $ocrData->trafficCodeNumber ?? null,
-            'driver_first_name' => $this->extractFirstName($personalInfo->fullName ?? ''),
-            'driver_last_name' => $this->extractLastName($personalInfo->fullName ?? ''),
-            'driver_dob' => $this->formatDate($personalInfo->dateOfBirth ?? null),
-            'nationality_id' => $this->getNationalityId($personalInfo->nationality ?? null),
+            'driver_first_name' => $this->extractFirstName($personalInfo?->fullName ?? ''),
+            'driver_last_name' => $this->extractLastName($personalInfo?->fullName ?? ''),
+            'driver_dob' => $this->formatDate($personalInfo?->dateOfBirth ?? null),
+            'nationality_id' => $this->getNationalityId($personalInfo?->nationality ?? null),
         ];
     }
 
