@@ -158,6 +158,7 @@ class TravelRenewalService extends AllocationService
 
     public function createTravelRenewalPayload($quote, $batch, $policyDates, $destinationIds, $members, $customer)
     {
+        // TODO:: this relationship is not correct, it should not be fetched through customer, it should be picked from the quote itself
         return [
             'firstName' => trim($quote->first_name),
             'lastName' => trim($quote->last_name),

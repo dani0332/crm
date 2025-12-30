@@ -28,6 +28,7 @@ class MDX extends EmbeddedProduct
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         }
 
+        // TODO:: It should not be fetched through customer, it should be picked from the quote itself
         $customerInsured = $quoteObject->customer?->customerInsured()
             ->where('quote_request_id', $quoteObject->id)
             ->where('quote_type_id', $quoteTypeId)
@@ -39,6 +40,7 @@ class MDX extends EmbeddedProduct
             $lastName = $quoteObject->last_name ?? '';
             $emiratesIdNumber = '';
         } else {
+            // TODO:: Need to confirm with Jawad regading this fallback to customer insured
             $firstName = ($customerInsured?->insured?->first_name ?? $quoteObject->customer?->insured_first_name) ?? '';
             $lastName = ($customerInsured?->insured?->last_name ?? $quoteObject->customer?->insured_last_name) ?? '';
             $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $quoteObject->customer?->emirates_id_number) ?? '';

@@ -773,6 +773,7 @@ class SukoonMedexService
             $firstName = $quote->first_name ?? '';
             $lastName = $quote->last_name ?? '';
         } else {
+            // TODO:: Need to confirm with Jawad regading this fallback to customer insured
             $firstName = ($latestInsuredData?->first_name ?? $quote->customer?->insured_first_name) ?? '';
             $lastName = ($latestInsuredData?->last_name ?? $quote->customer?->insured_last_name) ?? '';
         }

@@ -495,6 +495,7 @@ class SearchService extends BaseService
      */
     private function applyInsuredNameSearch($query, $request): void
     {
+        // TODO:: It should not be from customer insured, it should be picked from the insured table
         $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
         // Use FULLTEXT search
         $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->insured_name)]);

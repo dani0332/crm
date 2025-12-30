@@ -66,7 +66,7 @@ class CustomerRepository extends BaseRepository
                 }
             }
 
-            $carQuotes = CarQuote::with(['advisor', 'customer', 'customer.insured'])
+            $carQuotes = CarQuote::with(['advisor', 'customer', 'customer.insureds'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -82,7 +82,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $homeQuotes = HomeQuote::with(['advisor', 'customer', 'customer.insured'])
+            $homeQuotes = HomeQuote::with(['advisor', 'customer', 'customer.insureds'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -98,7 +98,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $healthQuotes = HealthQuote::with(['advisor', 'customer', 'customer.insured'])
+            $healthQuotes = HealthQuote::with(['advisor', 'customer', 'customer.insureds'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -114,7 +114,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $lifeQuotes = LifeQuote::with(['advisor', 'customer', 'customer.insured'])
+            $lifeQuotes = LifeQuote::with(['advisor', 'customer', 'customer.insureds'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -130,7 +130,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $businessQuotes = BusinessQuote::with(['advisor', 'customer', 'customer.insured'])
+            $businessQuotes = BusinessQuote::with(['advisor', 'customer', 'customer.insureds'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -145,7 +145,7 @@ class CustomerRepository extends BaseRepository
                     'business_type_of_insurance_id'])
                 ->orderBy('created_at', 'desc');
 
-            $travelQuotes = TravelQuote::with(['advisor', 'customer', 'customer.insured'])
+            $travelQuotes = TravelQuote::with(['advisor', 'customer', 'customer.insureds'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -161,7 +161,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $personalQuotes = PersonalQuote::with(['advisor', 'customer', 'customer.insured'])
+            $personalQuotes = PersonalQuote::with(['advisor', 'customer', 'customer.insureds'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
