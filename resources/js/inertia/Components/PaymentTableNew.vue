@@ -671,7 +671,10 @@ const editPaymentModal = async (
     const splitPayment = payment?.payment_splits?.find(
       split => split.id === split_payment_id,
     );
-    const paymentMethods = [paymentMethodsEnums.InsurerPayment, paymentMethodsEnums.InsurerPaymentLink];
+    const paymentMethods = [
+      paymentMethodsEnums.InsurerPayment,
+      paymentMethodsEnums.InsurerPaymentLink,
+    ];
     if (
       payment.collection_type === collectionTypeEnum.INSURER &&
       splitPayment &&
