@@ -1080,7 +1080,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     private function releaseCacheLock(): void
     {
         Cache::forget('lead_ocr_data_comparison');
-        
+
         LoggerService::info(self::class.' - Cache lock released', extra: [
             'uuid' => $this->uuid,
             'start_date' => $this->startDate?->toDateString(),

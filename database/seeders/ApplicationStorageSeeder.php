@@ -63,7 +63,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAutoCaptureEPPayments();
         $this->seedEnableVoiceAIIntegration();
         $this->seedSla();
-        //$this->seedTravelAutomatedFollowUps();
+        // $this->seedTravelAutomatedFollowUps();
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
