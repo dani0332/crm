@@ -1209,18 +1209,24 @@ class QuoteDocumentService extends BaseService
 
             $docUrl = $document->path ? storageUrl().$document->path : '';
 
-            $grouped[$lob]['docs'][] = [
+            $docData = [
                 'insuranceProviderId' => $document->insuranceProvider->id,
                 'insuranceProviderCode' => $document->insuranceProvider->code ?? '',
-                'businessTypeOfInsuranceId' => $document->business_type_of_insurance_id,
-                'businessTypeOfInsurance' => $document->businessTypeOfInsurance ? [
-                    'id' => $document->businessTypeOfInsurance->id,
-                    'text' => $document->businessTypeOfInsurance->text ?? null,
-                    'code' => $document->businessTypeOfInsurance->code ?? null,
-                ] : null,
                 'docUrl' => $docUrl,
                 'docTitle' => $document->name
             ];
+
+            // Only include business_type_of_insurance for Business LOB (quote_type_id = 5)
+            if ($quoteTypeId === QuoteTypeId::Business) {
+                $docData['businessTypeOfInsuranceId'] = $document->business_type_of_insurance_id;
+                $docData['businessTypeOfInsurance'] = $document->businessTypeOfInsurance ? [
+                    'id' => $document->businessTypeOfInsurance->id,
+                    'text' => $document->businessTypeOfInsurance->text ?? null,
+                    'code' => $document->businessTypeOfInsurance->code ?? null,
+                ] : null;
+            }
+
+            $grouped[$lob]['docs'][] = $docData;
         }
 
         return $grouped;
