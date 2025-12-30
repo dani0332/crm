@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use Exception;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\OCRSourceEnum;
@@ -781,9 +782,9 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         return $number !== null ? number_format($number, 2) : null;
     }
 
-    public function failed(\Throwable $exception): void
+    public function failed(Exception $exception): void
     {
-        LoggerService::warning(self::class.' - Job failed after all retries', [
+        LoggerService::error(self::class.' - Job failed after all retries', exception: $exception, extra: [
             'quote_id' => $this->quoteId,
             'document_id' => $this->documentId,
             'attempts' => $this->attempts(),

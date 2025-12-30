@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use Exception;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\LeadOcrDataComparison;
@@ -173,10 +174,11 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         ]);
     }
 
-    public function failed(\Throwable $exception): void
+    public function failed(Exception $exception): void
     {
-        LoggerService::warning(self::class.' - Aggregation job failed', [
+        LoggerService::error(self::class.' - Aggregation job failed', exception: $exception, extra: [
             'quote_id' => $this->quoteId,
+            'attempts' => $this->attempts(),
         ]);
     }
 }
