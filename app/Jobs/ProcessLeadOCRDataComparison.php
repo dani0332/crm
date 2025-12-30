@@ -120,7 +120,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             ->whereHas('documents', function ($q) use ($documentTypeCodes) {
                 $q->whereIn('document_type_code', $documentTypeCodes);
             })
-            ->when(!$this->recalculateComparison, function ($q) {
+            ->when(! $this->recalculateComparison, function ($q) {
                 // Skip already processed leads unless recalculate is requested
                 $q->whereHas('personalQuote', function ($subQ) {
                     $subQ->where('lead_ocr_comparison_processed', 0)
