@@ -687,4 +687,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
     }
+
+    public function amlAutomation()
+    {
+        return $this->hasOne(AmlAutomation::class, 'code', 'code');
+    }
 }

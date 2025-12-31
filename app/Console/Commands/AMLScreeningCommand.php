@@ -92,7 +92,10 @@ class AMLScreeningCommand extends Command
                 $query->whereNull('aml_status')
                     ->orWhere('aml_status', AMLStatusCode::AMLPending);
             })
-            ->whereNotIn('code', $quoteModel::from('aml_automation')->select('code'));
+            ->whereDoesntHave('amlAutomation', function ($query) {
+                $query->where('status', AmlAutomationStatus::QUEUE_STATUS);
+            });
+        
 
         // For PersonalQuote (Cyber), also filter by quote_type_id
         if ($quoteType === QuoteTypes::CYBER) {
