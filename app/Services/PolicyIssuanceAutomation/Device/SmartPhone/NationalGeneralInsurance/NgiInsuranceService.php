@@ -364,59 +364,62 @@ class NgiInsuranceService implements PolicyIssuanceInterface
      */
     public function updateQuoteApiIssuanceStatusAndAllocate($quote, $newInsurerApiStatus = null, $newApiIssuanceStatus = null): void
     {
-        // TODO:: NGI:: need to confirm this function with Bilal we might need some changes in this function or sub function calls made from here written in this file.
-        LoggerService::info('Starting updateQuoteApiIssuanceStatusAndAllocate for Device/Smartphone', extra: [
-            'quote_code' => $quote->code,
-        ]);
 
-        $policyIssuanceAutomation = $quote->policyIssuance;
-        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
-        $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
+        LoggerService::info('Disabled updateQuoteApiIssuanceStatusAndAllocate for Device/Smartphone, please execute it from common function updateAPIIssuanceAndInsurerStatus defined in PolicyIssuanceService class for this LOB', extra: []);
 
-        $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
-        $insurerApiStatus = $quote?->insurer_api_status;
-        $apiIssuanceStatus = $quote?->api_issuance_status;
+    //     // TODO:: NGI:: need to confirm this function with Bilal we might need some changes in this function or sub function calls made from here written in this file.
+    //     LoggerService::info('Starting updateQuoteApiIssuanceStatusAndAllocate for Device/Smartphone', extra: [
+    //         'quote_code' => $quote->code,
+    //     ]);
 
-        $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
+    //     $policyIssuanceAutomation = $quote->policyIssuance;
+    //     $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+    //     $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
 
-        LoggerService::info('Current status check', extra: [
-            'quote_code' => $quote->code,
-            'isInsurerApiStatusAlreadyFailed' => $isInsurerApiStatusAlreadyFailed,
-        ]);
+    //     $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
+    //     $insurerApiStatus = $quote?->insurer_api_status;
+    //     $apiIssuanceStatus = $quote?->api_issuance_status;
 
-        // If Quote API issuance status is not already set, then set insurer api and api issuance status
-        if (! $apiIssuanceStatus) {
-            if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
-                $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-            } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
-                if (! $insurerApiStatus) {
-                    $newInsurerApiStatus = PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
-                }
-                $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
-            }
-        }
+    //     $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
 
-        LoggerService::info('Status determination complete', extra: [
-            'quote_code' => $quote->code,
-            'insurerApiStatus' => $insurerApiStatus,
-            'apiIssuanceStatus' => $apiIssuanceStatus,
-            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
-            'isPolicyBooked' => $isPolicyBooked,
-            'isPolicyBookingFailed' => $isPolicyBookingFailed,
-            'newInsurerApiStatus' => $newInsurerApiStatus,
-            'newApiIssuanceStatus' => $newApiIssuanceStatus,
-        ]);
+    //     LoggerService::info('Current status check', extra: [
+    //         'quote_code' => $quote->code,
+    //         'isInsurerApiStatusAlreadyFailed' => $isInsurerApiStatusAlreadyFailed,
+    //     ]);
 
-        // Update statuses
-        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
-        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+    //     // If Quote API issuance status is not already set, then set insurer api and api issuance status
+    //     if (! $apiIssuanceStatus) {
+    //         if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
+    //             $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+    //         } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
+    //             if (! $insurerApiStatus) {
+    //                 $newInsurerApiStatus = PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+    //             }
+    //             $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
+    //         }
+    //     }
 
-        // Allocate lead and send notifications
-        $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
+    //     LoggerService::info('Status determination complete', extra: [
+    //         'quote_code' => $quote->code,
+    //         'insurerApiStatus' => $insurerApiStatus,
+    //         'apiIssuanceStatus' => $apiIssuanceStatus,
+    //         'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
+    //         'isPolicyBooked' => $isPolicyBooked,
+    //         'isPolicyBookingFailed' => $isPolicyBookingFailed,
+    //         'newInsurerApiStatus' => $newInsurerApiStatus,
+    //         'newApiIssuanceStatus' => $newApiIssuanceStatus,
+    //     ]);
 
-        LoggerService::info('updateQuoteApiIssuanceStatusAndAllocate completed', extra: [
-            'quote_code' => $quote->code,
-        ]);
+    //     // Update statuses
+    //     $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
+    //     $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+
+    //     // Allocate lead and send notifications
+    //     $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
+
+    //     LoggerService::info('updateQuoteApiIssuanceStatusAndAllocate completed', extra: [
+    //         'quote_code' => $quote->code,
+    //     ]);
     }
 
     /**
@@ -455,54 +458,54 @@ class NgiInsuranceService implements PolicyIssuanceInterface
         }
     }
 
-    /**
-     * Allocate lead and send notifications after policy booking
-     *
-     * @param  mixed  $quote
-     * @param  bool  $isInsurerApiStatusAlreadyFailed
-     */
-    private function allocateLead($quote, $isInsurerApiStatusAlreadyFailed): void
-    {
-        LoggerService::info('Allocating lead for Device/Smartphone', extra: [
-            'quote_code' => $quote->code,
-        ]);
+    // /**
+    //  * Allocate lead and send notifications after policy booking
+    //  *
+    //  * @param  mixed  $quote
+    //  * @param  bool  $isInsurerApiStatusAlreadyFailed
+    //  */
+    // private function allocateLead($quote, $isInsurerApiStatusAlreadyFailed): void
+    // {
+    //     LoggerService::info('Allocating lead for Device/Smartphone', extra: [
+    //         'quote_code' => $quote->code,
+    //     ]);
 
-        $advisorId = $quote?->advisor_id;
-        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+    //     $advisorId = $quote?->advisor_id;
+    //     $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
 
-        LoggerService::info('Advisor assignment check', extra: [
-            'quote_code' => $quote->code,
-            'advisorId' => $advisorId,
-        ]);
+    //     LoggerService::info('Advisor assignment check', extra: [
+    //         'quote_code' => $quote->code,
+    //         'advisorId' => $advisorId,
+    //     ]);
 
-        if ($advisorId) {
-            // Send failure notification if not already failed
-            if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
-                // Uses service method that handles failure type determination
-                app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
-                    $quote->id,
-                    $quote->insurer_api_status_id
-                );
+    //     if ($advisorId) {
+    //         // Send failure notification if not already failed
+    //         if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
+    //             // Uses service method that handles failure type determination
+    //             app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
+    //                 $quote->id,
+    //                 $quote->insurer_api_status_id
+    //             );
 
-                LoggerService::info('Automation failed - failure notification dispatched', extra: [
-                    'quote_code' => $quote->code,
-                    'insurer_api_status' => $quote->insurer_api_status_id,
-                ]);
-            }
+    //             LoggerService::info('Automation failed - failure notification dispatched', extra: [
+    //                 'quote_code' => $quote->code,
+    //                 'insurer_api_status' => $quote->insurer_api_status_id,
+    //             ]);
+    //         }
 
-            // Send policy documents if policy is booked
-            if ($isPolicyBooked) {
-                $data = new \stdClass;
-                $data->model_type = QuoteTypes::DEVICE->value;
-                $data->quote_id = $quote->id;
+    //         // Send policy documents if policy is booked
+    //         if ($isPolicyBooked) {
+    //             $data = new \stdClass;
+    //             $data->model_type = QuoteTypes::DEVICE->value;
+    //             $data->quote_id = $quote->id;
 
-                LoggerService::info('Dispatching SendBookPolicyDocumentsJob', extra: [
-                    'quote_code' => $quote->code,
-                    'advisor_id' => $advisorId,
-                ]);
+    //             LoggerService::info('Dispatching SendBookPolicyDocumentsJob', extra: [
+    //                 'quote_code' => $quote->code,
+    //                 'advisor_id' => $advisorId,
+    //             ]);
 
-                SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
-            }
-        }
-    }
+    //             SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
+    //         }
+    //     }
+    // }
 }

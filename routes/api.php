@@ -4,7 +4,6 @@ use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
-use App\Http\Controllers\API\V1\DeviceFailureController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
@@ -29,10 +28,6 @@ Route::middleware(['basicAuth'])->group(function () {
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
-    Route::prefix('device')->group(function () {
-        Route::post('/failure-email', [DeviceFailureController::class, 'failureEmail'])
-            ->name('device.failure-email');
-    });
     Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
     Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
     Route::post('/imcrm/analyze-health', [ApiController::class, 'analyseHealthData']);

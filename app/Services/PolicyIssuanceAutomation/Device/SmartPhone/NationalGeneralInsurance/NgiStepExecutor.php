@@ -46,14 +46,15 @@ class NgiStepExecutor
                 QuoteTypes::DEVICE->value,
                 PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
-                'Policy Creation'
+                NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE
             );
 
-            // Trigger failure email for Policy Issuance API failure
-            app(DeviceFailureEmailService::class)->sendFailureEmail(
-                $quote->id,
-                DeviceFailureTypeEnum::ISSUE_POLICY
-            );
+            // TODO:: NGI:: DEVICE FAILURE EMAIL SERVICE -> SEND FAILURE EMAIL & SEND FAILURE EMAIL FROM STATUS (all calls are commented)
+            // // Trigger failure email for Policy Issuance API failure
+            // app(DeviceFailureEmailService::class)->sendFailureEmail(
+            //     $quote->id,
+            //     DeviceFailureTypeEnum::ISSUE_POLICY
+            // );
 
             return $createPolicyResponse;
         }
@@ -135,14 +136,14 @@ class NgiStepExecutor
                 QuoteTypes::DEVICE->value,
                 PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
-                'Send And Book Policy'
+                NgiEnum::STEP_BOOK_POLICY
             );
-
-            // Trigger failure email for Booking Details API failure
-            app(DeviceFailureEmailService::class)->sendFailureEmail(
-                $quote->id,
-                DeviceFailureTypeEnum::BOOK_POLICY
-            );
+            // TODO:: NGI:: DEVICE FAILURE EMAIL SERVICE -> SEND FAILURE EMAIL & SEND FAILURE EMAIL FROM STATUS (all calls are commented)
+            // // Trigger failure email for Booking Details API failure
+            // app(DeviceFailureEmailService::class)->sendFailureEmail(
+            //     $quote->id,
+            //     DeviceFailureTypeEnum::BOOK_POLICY
+            // );
 
             return $triggerBookPolicyResponse;
         }

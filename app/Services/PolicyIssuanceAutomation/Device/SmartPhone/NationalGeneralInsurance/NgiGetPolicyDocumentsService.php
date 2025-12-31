@@ -254,11 +254,11 @@ class NgiGetPolicyDocumentsService
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                 NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
             );
-
-            $this->deviceFailureEmailService->sendFailureEmail(
-                $process->model->id,
-                DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS
-            );
+            // TODO:: NGI:: DEVICE FAILURE EMAIL SERVICE -> SEND FAILURE EMAIL & SEND FAILURE EMAIL FROM STATUS (all calls are commented)
+            // $this->deviceFailureEmailService->sendFailureEmail(
+            //     $process->model->id,
+            //     DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS
+            // );
         }
     }
 }

@@ -330,31 +330,31 @@ class DeviceFailureEmailService
         ]);
     }
 
-    /**
-     * Trigger failure email from insurer API status ID
-     * Used by PolicyIssuanceService and NgiInsuranceService
-     *
-     * @param  string|null  $completedStep  Fallback to determine failure type
-     */
-    public function sendFailureEmailFromStatus(
-        int $quoteId,
-        ?int $insurerApiStatusId,
-        ?string $completedStep = null
-    ): bool {
-        $failureType = $this->determineFailureTypeFromStatus($insurerApiStatusId, $completedStep);
+    // /**
+    //  * Trigger failure email from insurer API status ID
+    //  * Used by PolicyIssuanceService and NgiInsuranceService
+    //  *
+    //  * @param  string|null  $completedStep  Fallback to determine failure type
+    //  */
+    // public function sendFailureEmailFromStatus(
+    //     int $quoteId,
+    //     ?int $insurerApiStatusId,
+    //     ?string $completedStep = null
+    // ): bool {
+    //     $failureType = $this->determineFailureTypeFromStatus($insurerApiStatusId, $completedStep);
 
-        if (! $failureType) {
-            LoggerService::warning("{$this->logPrefix} Could not determine failure type", extra: [
-                'quoteId' => $quoteId,
-                'insurerApiStatusId' => $insurerApiStatusId,
-                'completedStep' => $completedStep,
-            ]);
+    //     if (! $failureType) {
+    //         LoggerService::warning("{$this->logPrefix} Could not determine failure type", extra: [
+    //             'quoteId' => $quoteId,
+    //             'insurerApiStatusId' => $insurerApiStatusId,
+    //             'completedStep' => $completedStep,
+    //         ]);
 
-            return false;
-        }
+    //         return false;
+    //     }
 
-        return $this->sendFailureEmail($quoteId, $failureType);
-    }
+    //     return $this->sendFailureEmail($quoteId, $failureType);
+    // }
 
     /**
      * Determine failure type from insurer API status or completed step

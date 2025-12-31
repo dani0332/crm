@@ -301,14 +301,15 @@ class PolicyIssuanceService
             $insurerPolicyAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         }
 
-        // Trigger failure email for Device/NGI quotes (stuck for 15+ minutes)
-        if ($quoteType === QuoteTypes::DEVICE->value && $insuranceProvider->code === InsuranceProviderEnum::NGI->value) {
-            app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
-                $quote->id,
-                $insurerApiStatus,
-                $policyIssuance->completed_step
-            );
-        }
+        // // Trigger failure email for Device/NGI quotes (stuck for 15+ minutes)
+        // if ($quoteType === QuoteTypes::DEVICE->value && $insuranceProvider->code === InsuranceProviderEnum::NGI->value) {
+        //     // TODO:: NGI:: DEVICE FAILURE EMAIL SERVICE -> SEND FAILURE EMAIL & SEND FAILURE EMAIL FROM STATUS (all calls are commented)
+        //     app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
+        //         $quote->id,
+        //         $insurerApiStatus,
+        //         $policyIssuance->completed_step
+        //     );
+        // }
 
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Completed processing for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
     }
@@ -387,7 +388,7 @@ class PolicyIssuanceService
         ]);
 
         $statusAPIFailed = null;
-        if ($quoteType === QuoteTypes::CAR->value && $processInvolved) {
+        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
@@ -427,25 +428,29 @@ class PolicyIssuanceService
         $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
 
         if (
-            $quoteType === QuoteTypes::CAR->value &&
+            in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::DEVICE->value]) &&
             (! empty($statusAPIFailed) && ! empty($processInvolved)) &&
             ! $isPolicyBooked
         ) {
             $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
+            [$jobQuoteTypeId, $workflowType, $recipientUser] = $this->resolveAutomationFailureRouting($quoteType, $processInvolved);
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob', extra: [
                 'actionRequired' => $actionRequired,
                 'statusAPIFailed' => $statusAPIFailed,
                 'processInvolved' => $processInvolved,
+                'jobQuoteTypeId' => $jobQuoteTypeId,
+                'workflowType' => $workflowType,
+                'recipientUser' => $recipientUser,
             ]);
             AutomationFailedJob::dispatch(
                 $quote->id,
-                QuoteTypeId::Car,
+                $jobQuoteTypeId,
                 $actionRequired,
                 $statusAPIFailed,
                 $processInvolved,
-                WorkflowTypeEnum::CAR_AUTOMATION_FAILED,
-                UserNameEnum::PA_USER
+                $workflowType,
+                $recipientUser
             )->onQueue('policy-issuance-automation');
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
         }
@@ -467,6 +472,22 @@ class PolicyIssuanceService
         }
     }
 
+    private function resolveAutomationFailureRouting(string $quoteType, string $processInvolved): array
+    {
+        $isDevice = $quoteType === QuoteTypes::DEVICE->value;
+
+        $quoteTypeId = $isDevice ? QuoteTypeId::Device : QuoteTypeId::Car;
+        $workflowType = $isDevice ? WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED : WorkflowTypeEnum::CAR_AUTOMATION_FAILED;
+        $recipientUser = UserNameEnum::PA_USER;
+
+        if ($isDevice && $processInvolved !== PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY) {
+            // For Device non-booking failures we notify the assigned SIC advisor directly.
+            $recipientUser = null;
+        }
+
+        return [$quoteTypeId, $workflowType, $recipientUser];
+    }
+
     public function getInsurerAPIStatuses($status = null, $onlyKeys = false)
     {
         $statuses = [
@@ -476,6 +497,7 @@ class PolicyIssuanceService
             PolicyIssuanceEnum::PIA_OCR_PROCESSING_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_OCR_PROCESSING_API_FAILED,
             PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED,
             PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID => PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED,
+            PolicyIssuanceEnum::PIA_AUTO_CAPTURE_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_AUTO_CAPTURE_FAILED,
         ];
 
         if ($onlyKeys) {
