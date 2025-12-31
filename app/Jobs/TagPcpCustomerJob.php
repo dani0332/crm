@@ -35,12 +35,13 @@ class TagPcpCustomerJob implements ShouldQueue
         try {
             $quotesQuery = PersonalQuote::with('customer')
                 ->where('pc_qualified', true)
-                ->whereRelation('customer', 'pcp_tag', false)
+                ->whereHas('customer', fn ($q) => $q->whereNull('pcp_tag')
+                    ->orWhere('pcp_tag', false)
+                )
                 ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                 ->whereNotNull('policy_expiry_date')
                 ->where('policy_expiry_date', '>', now())
-                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht])
-                ->orderBy('created_at', 'asc');
+                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
 
             // Add uuids to query if provided
             if (! empty($this->uuids)) {
