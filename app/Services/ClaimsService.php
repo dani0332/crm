@@ -135,7 +135,10 @@ class ClaimsService extends BaseService
                 'insuranceProvider:id,code,text',
                 'claimRequestType:id,code,text',
                 'claimRequestDetails' => function ($query) {
-                    $query->with('serviceType:id,code,text');
+                    $query->with([
+                        'serviceType:id,code,text',
+                        'tpaOption:id,code,text',
+                    ]);
                 },
                 'personalQuote' => function ($query) {
                     $query->with('advisor:id,name', 'insuranceProvider:id,code,text');

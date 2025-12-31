@@ -20,6 +20,7 @@ enum ClaimsEnum: string
     case CLAIM_REQUEST_TYPES_KEY = 'claim-request-types';
     case CLAIM_SERVICE_TYPES_KEY = 'claim-service-types';
     case CLAIM_STATUS_ACCESS_TYPES_KEY = 'claim-status-access-types';
+    case CLAIM_TPA_OPTIONS_KEY = 'claim-tpa-options';
 
     // Claim Types Codes
     case CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE = 'own-damage-claim';
