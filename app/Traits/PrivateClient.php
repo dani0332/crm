@@ -194,6 +194,9 @@ trait PrivateClient
 
         $query = $modelInstance->newQuery();
 
+        $query->whereNotNull('policy_expiry_date')
+            ->where('policy_expiry_date', '>', now());
+
         $selectedColumns = array_values(array_intersect($tableColumns, [
             'id',
             'uuid',
