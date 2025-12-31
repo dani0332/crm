@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\LeadOcrDataComparison;
@@ -82,7 +83,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             $totalFields = count($leadDataStructure[$docType]);
 
             // Special handling for Tax Invoice: tax_invoice_number and insurer_tax_number
-            if ($docType === 'TI') {
+            if ($docType === OCRDocumentTypeEnum::TAX_INVOICE->value) {
                 $hasTaxInvoiceFields = isset($leadDataStructure[$docType]['tax_invoice_number'])
                     || isset($leadDataStructure[$docType]['insurer_tax_number']);
 
