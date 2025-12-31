@@ -81,15 +81,64 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             $matchCount = 0;
             $totalFields = count($leadDataStructure[$docType]);
 
-            foreach ($leadDataStructure[$docType] as $key => $leadValue) {
-                if (! array_key_exists($key, $ocrDataStructure[$docType])) {
-                    continue;
+            // Special handling for Tax Invoice: tax_invoice_number and insurer_tax_number
+            if ($docType === 'TI') {
+                $hasTaxInvoiceFields = isset($leadDataStructure[$docType]['tax_invoice_number'])
+                    || isset($leadDataStructure[$docType]['insurer_tax_number']);
+
+                // If both tax_invoice_number and insurer_tax_number exist, count them as 1 field
+                if ($hasTaxInvoiceFields && isset($leadDataStructure[$docType]['tax_invoice_number'])
+                    && isset($leadDataStructure[$docType]['insurer_tax_number'])) {
+                    $totalFields--; // Reduce by 1 since we're treating both as 1 logical field
                 }
 
-                $ocrValue = $ocrDataStructure[$docType][$key];
+                foreach ($leadDataStructure[$docType] as $key => $leadValue) {
+                    // Skip insurer_tax_number - we'll handle it together with tax_invoice_number
+                    if ($key === 'insurer_tax_number') {
+                        continue;
+                    }
 
-                if ($this->valuesMatch($leadValue, $ocrValue)) {
-                    $matchCount++;
+                    // Special handling for tax_invoice_number
+                    if ($key === 'tax_invoice_number') {
+                        $ocrTaxInvoiceNumber = $ocrDataStructure[$docType]['tax_invoice_number'] ?? null;
+                        $leadTaxInvoiceNumber = $leadValue;
+                        $leadInsurerTaxNumber = $leadDataStructure[$docType]['insurer_tax_number'] ?? null;
+
+                        // Check if OCR's tax_invoice_number matches EITHER lead's tax_invoice_number OR insurer_tax_number
+                        $taxInvoiceMatch = $this->valuesMatch($leadTaxInvoiceNumber, $ocrTaxInvoiceNumber)
+                            || $this->valuesMatch($leadInsurerTaxNumber, $ocrTaxInvoiceNumber);
+
+                        if ($taxInvoiceMatch) {
+                            $matchCount++;
+                        }
+
+                        // Both fields (tax_invoice_number + insurer_tax_number) counted as 1 match
+                        continue;
+                    }
+
+                    // Normal comparison for other fields
+                    if (! array_key_exists($key, $ocrDataStructure[$docType])) {
+                        continue;
+                    }
+
+                    $ocrValue = $ocrDataStructure[$docType][$key];
+
+                    if ($this->valuesMatch($leadValue, $ocrValue)) {
+                        $matchCount++;
+                    }
+                }
+            } else {
+                // Normal comparison for all other document types
+                foreach ($leadDataStructure[$docType] as $key => $leadValue) {
+                    if (! array_key_exists($key, $ocrDataStructure[$docType])) {
+                        continue;
+                    }
+
+                    $ocrValue = $ocrDataStructure[$docType][$key];
+
+                    if ($this->valuesMatch($leadValue, $ocrValue)) {
+                        $matchCount++;
+                    }
                 }
             }
 
