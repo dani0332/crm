@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\LeadOcrDataComparison;
@@ -81,15 +82,62 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             $matchCount = 0;
             $totalFields = count($leadDataStructure[$docType]);
 
-            foreach ($leadDataStructure[$docType] as $key => $leadValue) {
-                if (! array_key_exists($key, $ocrDataStructure[$docType])) {
-                    continue;
+            // Special handling for Tax Invoice: tax_invoice_number and insurer_tax_number
+            if ($docType === OCRDocumentTypeEnum::TAX_INVOICE->value) {
+                $hasTaxInvoiceNumber = array_key_exists('tax_invoice_number', $leadDataStructure[$docType]);
+                $hasInsurerTaxNumber = array_key_exists('insurer_tax_number', $leadDataStructure[$docType]);
+
+                // If both tax_invoice_number and insurer_tax_number exist, count them as 1 field
+                if ($hasTaxInvoiceNumber && $hasInsurerTaxNumber) {
+                    $totalFields--; // Reduce by 1 since we're treating both as 1 logical field
                 }
 
-                $ocrValue = $ocrDataStructure[$docType][$key];
+                // Handle tax invoice number comparison (if either field exists)
+                if ($hasTaxInvoiceNumber || $hasInsurerTaxNumber) {
+                    $ocrTaxInvoiceNumber = $ocrDataStructure[$docType]['tax_invoice_number'] ?? null;
+                    $leadTaxInvoiceNumber = $leadDataStructure[$docType]['tax_invoice_number'] ?? null;
+                    $leadInsurerTaxNumber = $leadDataStructure[$docType]['insurer_tax_number'] ?? null;
 
-                if ($this->valuesMatch($leadValue, $ocrValue)) {
-                    $matchCount++;
+                    // Check if OCR's tax_invoice_number matches EITHER lead's tax_invoice_number OR insurer_tax_number
+                    // Note: null === null is considered a match (both missing is correct)
+                    $taxInvoiceMatch = $this->valuesMatch($leadTaxInvoiceNumber, $ocrTaxInvoiceNumber)
+                        || $this->valuesMatch($leadInsurerTaxNumber, $ocrTaxInvoiceNumber);
+
+                    if ($taxInvoiceMatch) {
+                        $matchCount++;
+                    }
+                }
+
+                // Process other fields normally, skipping tax_invoice_number and insurer_tax_number
+                foreach ($leadDataStructure[$docType] as $key => $leadValue) {
+                    // Skip both tax invoice fields - already handled above
+                    if ($key === 'tax_invoice_number' || $key === 'insurer_tax_number') {
+                        continue;
+                    }
+
+                    // Normal comparison for other fields
+                    if (! array_key_exists($key, $ocrDataStructure[$docType])) {
+                        continue;
+                    }
+
+                    $ocrValue = $ocrDataStructure[$docType][$key];
+
+                    if ($this->valuesMatch($leadValue, $ocrValue)) {
+                        $matchCount++;
+                    }
+                }
+            } else {
+                // Normal comparison for all other document types
+                foreach ($leadDataStructure[$docType] as $key => $leadValue) {
+                    if (! array_key_exists($key, $ocrDataStructure[$docType])) {
+                        continue;
+                    }
+
+                    $ocrValue = $ocrDataStructure[$docType][$key];
+
+                    if ($this->valuesMatch($leadValue, $ocrValue)) {
+                        $matchCount++;
+                    }
                 }
             }
 
