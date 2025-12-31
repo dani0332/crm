@@ -84,8 +84,8 @@ class AggregateQuoteOCRComparison implements ShouldQueue
 
             // Special handling for Tax Invoice: tax_invoice_number and insurer_tax_number
             if ($docType === OCRDocumentTypeEnum::TAX_INVOICE->value) {
-                $hasTaxInvoiceNumber = isset($leadDataStructure[$docType]['tax_invoice_number']);
-                $hasInsurerTaxNumber = isset($leadDataStructure[$docType]['insurer_tax_number']);
+                $hasTaxInvoiceNumber = array_key_exists('tax_invoice_number', $leadDataStructure[$docType]);
+                $hasInsurerTaxNumber = array_key_exists('insurer_tax_number', $leadDataStructure[$docType]);
 
                 // If both tax_invoice_number and insurer_tax_number exist, count them as 1 field
                 if ($hasTaxInvoiceNumber && $hasInsurerTaxNumber) {
