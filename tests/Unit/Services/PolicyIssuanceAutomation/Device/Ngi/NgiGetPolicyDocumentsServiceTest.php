@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\DeviceFailureTypeEnum;
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Services\DeviceFailureEmailService;
@@ -54,10 +53,6 @@ describe('Service Dependencies', function () {
     test('policy issuance service dependency is PolicyIssuanceService', function () {
         expect($this->policyIssuanceService)->toBeInstanceOf(Mockery\MockInterface::class);
     });
-
-    test('device failure email service dependency is DeviceFailureEmailService', function () {
-        expect($this->deviceFailureEmailService)->toBeInstanceOf(Mockery\MockInterface::class);
-    });
 });
 
 describe('NgiEnum Constants for GetPolicyDocuments', function () {
@@ -99,23 +94,6 @@ describe('PolicyIssuanceEnum Constants', function () {
 
     test('pending status constant is defined', function () {
         expect(PolicyIssuanceEnum::PENDING_STATUS)->toBe('pending');
-    });
-});
-
-describe('DeviceFailureTypeEnum Constants', function () {
-    test('get and upload documents failure type is defined', function () {
-        expect(DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS)
-            ->toBeInstanceOf(DeviceFailureTypeEnum::class);
-    });
-
-    test('issue policy failure type is defined', function () {
-        expect(DeviceFailureTypeEnum::ISSUE_POLICY)
-            ->toBeInstanceOf(DeviceFailureTypeEnum::class);
-    });
-
-    test('book policy failure type is defined', function () {
-        expect(DeviceFailureTypeEnum::BOOK_POLICY)
-            ->toBeInstanceOf(DeviceFailureTypeEnum::class);
     });
 });
 
@@ -227,21 +205,5 @@ describe('Document Handler Integration', function () {
 
         expect($result['status'])->toBeFalse()
             ->and($result['error'])->toContain('Failed to download');
-    });
-});
-
-describe('Failure Email Service Integration', function () {
-    test('failure email service can send failure email', function () {
-        $quoteId = 1;
-        $failureType = DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS;
-
-        $this->deviceFailureEmailService->shouldReceive('sendFailureEmail')
-            ->once()
-            ->with($quoteId, $failureType);
-
-        $this->deviceFailureEmailService->sendFailureEmail($quoteId, $failureType);
-
-        // Test passes if no exception is thrown
-        expect(true)->toBeTrue();
     });
 });

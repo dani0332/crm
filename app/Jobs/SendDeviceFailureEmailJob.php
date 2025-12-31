@@ -41,12 +41,12 @@ class SendDeviceFailureEmailJob implements ShouldQueue
      */
     public function handle(DeviceFailureEmailService $service): void
     {
-        $service->executeFailureEmail(
-            $this->quoteId,
-            $this->failureType,
-            $this->providerCode,
-            $this->attempts()
-        );
+        // $service->executeFailureEmail(
+        //     $this->quoteId,
+        //     $this->failureType,
+        //     $this->providerCode,
+        //     $this->attempts()
+        // );
     }
 
     /**
