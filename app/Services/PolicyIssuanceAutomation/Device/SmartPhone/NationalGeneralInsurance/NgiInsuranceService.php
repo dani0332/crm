@@ -13,7 +13,6 @@ use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Services\ApplicationStorageService;
-use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Exception;
@@ -457,55 +456,4 @@ class NgiInsuranceService implements PolicyIssuanceInterface
             $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
         }
     }
-
-    // /**
-    //  * Allocate lead and send notifications after policy booking
-    //  *
-    //  * @param  mixed  $quote
-    //  * @param  bool  $isInsurerApiStatusAlreadyFailed
-    //  */
-    // private function allocateLead($quote, $isInsurerApiStatusAlreadyFailed): void
-    // {
-    //     LoggerService::info('Allocating lead for Device/Smartphone', extra: [
-    //         'quote_code' => $quote->code,
-    //     ]);
-
-    //     $advisorId = $quote?->advisor_id;
-    //     $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
-
-    //     LoggerService::info('Advisor assignment check', extra: [
-    //         'quote_code' => $quote->code,
-    //         'advisorId' => $advisorId,
-    //     ]);
-
-    //     if ($advisorId) {
-    //         // Send failure notification if not already failed
-    //         if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
-    //             // Uses service method that handles failure type determination
-    //             app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
-    //                 $quote->id,
-    //                 $quote->insurer_api_status_id
-    //             );
-
-    //             LoggerService::info('Automation failed - failure notification dispatched', extra: [
-    //                 'quote_code' => $quote->code,
-    //                 'insurer_api_status' => $quote->insurer_api_status_id,
-    //             ]);
-    //         }
-
-    //         // Send policy documents if policy is booked
-    //         if ($isPolicyBooked) {
-    //             $data = new \stdClass;
-    //             $data->model_type = QuoteTypes::DEVICE->value;
-    //             $data->quote_id = $quote->id;
-
-    //             LoggerService::info('Dispatching SendBookPolicyDocumentsJob', extra: [
-    //                 'quote_code' => $quote->code,
-    //                 'advisor_id' => $advisorId,
-    //             ]);
-
-    //             SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
-    //         }
-    //     }
-    // }
 }

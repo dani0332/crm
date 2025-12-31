@@ -18,7 +18,6 @@ use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
-use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
@@ -300,16 +299,6 @@ class PolicyIssuanceService
             // TODO:: This should be updated with the new function in PolicyIssuanceService
             $insurerPolicyAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         }
-
-        // // Trigger failure email for Device/NGI quotes (stuck for 15+ minutes)
-        // if ($quoteType === QuoteTypes::DEVICE->value && $insuranceProvider->code === InsuranceProviderEnum::NGI->value) {
-        //     // TODO:: NGI:: DEVICE FAILURE EMAIL SERVICE -> SEND FAILURE EMAIL & SEND FAILURE EMAIL FROM STATUS (all calls are commented)
-        //     app(DeviceFailureEmailService::class)->sendFailureEmailFromStatus(
-        //         $quote->id,
-        //         $insurerApiStatus,
-        //         $policyIssuance->completed_step
-        //     );
-        // }
 
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Completed processing for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
     }

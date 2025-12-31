@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
-use App\Enums\DeviceFailureTypeEnum;
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use App\Models\PolicyIssuance;
-use App\Services\DeviceFailureEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
@@ -31,8 +29,7 @@ class NgiGetPolicyDocumentsService
         private readonly NgiValidationService $validationService,
         private readonly NgiApiService $apiService,
         private readonly NgiDocumentHandler $documentHandler,
-        private readonly PolicyIssuanceService $policyIssuanceService,
-        private readonly DeviceFailureEmailService $deviceFailureEmailService
+        private readonly PolicyIssuanceService $policyIssuanceService
     ) {}
 
     /**
@@ -254,11 +251,6 @@ class NgiGetPolicyDocumentsService
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                 NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM
             );
-            // TODO:: NGI:: DEVICE FAILURE EMAIL SERVICE -> SEND FAILURE EMAIL & SEND FAILURE EMAIL FROM STATUS (all calls are commented)
-            // $this->deviceFailureEmailService->sendFailureEmail(
-            //     $process->model->id,
-            //     DeviceFailureTypeEnum::GET_AND_UPLOAD_DOCUMENTS
-            // );
         }
     }
 }

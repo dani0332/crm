@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Services\DeviceFailureEmailService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiApiService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiDocumentHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsService;
@@ -17,14 +16,12 @@ beforeEach(function () {
     $this->apiService = Mockery::mock(NgiApiService::class);
     $this->documentHandler = Mockery::mock(NgiDocumentHandler::class);
     $this->policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
-    $this->deviceFailureEmailService = Mockery::mock(DeviceFailureEmailService::class);
 
     $this->service = new NgiGetPolicyDocumentsService(
         $this->validationService,
         $this->apiService,
         $this->documentHandler,
-        $this->policyIssuanceService,
-        $this->deviceFailureEmailService
+        $this->policyIssuanceService
     );
 });
 
