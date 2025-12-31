@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
@@ -39,7 +40,8 @@ class TagPcpCustomerJob implements ShouldQueue
                 )
                 ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                 ->whereNotNull('policy_expiry_date')
-                ->where('policy_expiry_date', '>', now());
+                ->where('policy_expiry_date', '>', now())
+                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
 
             // Add uuids to query if provided
             if (! empty($this->uuids)) {
