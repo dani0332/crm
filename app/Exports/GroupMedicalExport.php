@@ -3,8 +3,10 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
+use App\Services\BranchAssignmentService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -35,11 +37,14 @@ class GroupMedicalExport implements CsvExportableInterface
             'LAST NAME',
             'LEAD STATUS',
             'ADVISOR',
+            'OE / AE',
+            'BRANCH',
             'PREMIUM',
             'COMPANY NAME',
             'POLICY NUMBER',
             'LOST REASON',
             'SOURCE',
+            'IMCRM SUB-SOURCE',
             'CREATED DATE',
             'ADVISOR ASSIGNED DATE',
             'LAST MODIFIED DATE',
@@ -54,17 +59,23 @@ class GroupMedicalExport implements CsvExportableInterface
 
     public function map($quote): array
     {
+        $emirateOfRegistrationId = $quote->latestInsured?->emirate_of_registration_id ?? null;
+        $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
+
         return [
             $quote->code,
             $quote->first_name,
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
+            optional($quote->supportUser)->name,
+            $branch,
             $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->company_name,
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             $quote->source,
+            optional($quote->subSource)->text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),

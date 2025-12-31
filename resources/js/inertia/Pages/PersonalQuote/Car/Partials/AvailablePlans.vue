@@ -59,6 +59,8 @@ const insurerAvailableTrimsOptions = computed(() => {
 const toggleLoader = ref(false);
 const toggleManualLoader = ref(false);
 const showInsurerError = ref(false);
+const showCarValueError = ref(false);
+const carValueErrorMessage = ref('');
 
 const planForm = useForm({
   car_quote_uuid: usePage().props.record.uuid,
@@ -85,6 +87,29 @@ watch(
   () => planForm.actual_premium,
   () => {
     planForm.discounted_premium = planForm.actual_premium;
+  },
+  { immediate: true },
+);
+
+watch(
+  () => planForm.car_value,
+  newValue => {
+    // Don't validate empty values in real-time (let form submission handle required validation)
+    if (newValue === null || newValue === undefined || newValue === '') {
+      showCarValueError.value = false;
+      carValueErrorMessage.value = '';
+      return;
+    }
+
+    const numValue = Number(newValue);
+    if (numValue <= 0 || numValue > 99999999) {
+      showCarValueError.value = true;
+      carValueErrorMessage.value =
+        'Please enter a valid vehicle value between AED 1 and AED 99,999,999';
+    } else {
+      showCarValueError.value = false;
+      carValueErrorMessage.value = '';
+    }
   },
   { immediate: true },
 );
@@ -151,6 +176,26 @@ const onUpdatePlan = () => {
     return;
   }
 
+  // Validate car value
+  if (
+    !planForm.car_value ||
+    planForm.car_value <= 0 ||
+    planForm.car_value > 99999999
+  ) {
+    showCarValueError.value = true;
+    carValueErrorMessage.value =
+      'Please enter a valid vehicle value between AED 1 and AED 99,999,999';
+    notification.error({
+      title:
+        'Please enter a valid vehicle value between AED 1 and AED 99,999,999',
+      position: 'top',
+    });
+    return;
+  } else {
+    showCarValueError.value = false;
+    carValueErrorMessage.value = '';
+  }
+
   let addons = [];
   let tempAddons = planForm.addons;
   tempAddons.forEach(addon => {
@@ -201,6 +246,23 @@ const onToggleManual = () => {
   setTimeout(() => {
     toggleManualLoader.value = false;
   }, 300);
+};
+
+// Handle addon option toggle with radio button behavior
+const onToggleAddonOption = (addonCode, selectedOption) => {
+  const addon = planForm.addons.find(addon => addon.code === addonCode);
+  if (!addon) return;
+  if (selectedOption.isSelected) {
+    addon.carAddonOption.forEach(option => {
+      if (option.id !== selectedOption.id) {
+        option.isSelected = false;
+      }
+    });
+  } else {
+    addon.carAddonOption.forEach(option => {
+      option.isSelected = false;
+    });
+  }
 };
 
 const readOnlyMode = reactive({
@@ -350,6 +412,9 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                 size="sm"
                 type="number"
                 :disabled="page.props.lockLeadSectionsDetails.plan_selection"
+                :error="showCarValueError ? carValueErrorMessage : ''"
+                min="1"
+                max="99999999"
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -459,6 +524,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                     :disabled="!planForm.is_manual_update"
                     color="success"
                     class="mt-2"
+                    @change="onToggleAddonOption(addon.code, option)"
                   />
                 </div>
               </template>

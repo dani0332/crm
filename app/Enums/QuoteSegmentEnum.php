@@ -11,6 +11,8 @@ enum QuoteSegmentEnum: string
     case NON_SIC = 'non-sic';
     case SIC_REVIVAL = 'sic-revival';
     case AIG = 'aig';
+    case FIC = 'fic';
+    case NON_FIC = 'non-fic';
 
     public function label()
     {
@@ -20,6 +22,8 @@ enum QuoteSegmentEnum: string
             self::NON_SIC => 'Non SIC Ecom leads',
             self::SIC_REVIVAL => 'Revival Leads',
             self::AIG => 'AIG Leads',
+            self::FIC => 'FIC Leads',
+            self::NON_FIC => 'Non FIC Leads',
         };
     }
 
@@ -30,6 +34,9 @@ enum QuoteSegmentEnum: string
             self::SIC_REVIVAL => 'Revival',
             self::NON_SIC => 'Non-SIC',
             self::AIG => 'AIG',
+            self::FIC => 'FIC',
+            self::NON_FIC => 'Non-FIC',
+
         };
     }
 
@@ -39,6 +46,10 @@ enum QuoteSegmentEnum: string
         $caseList = collect(self::cases());
         if ($quoteTypeId == QuoteTypeId::Health) {
             $caseList = collect($caseList)->whereNotIn('value', self::SIC_REVIVAL->value);
+        }
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+            $caseList = collect($caseList)->whereNotIn('value', [self::FIC->value, self::NON_FIC->value]);
         }
         foreach ($caseList as $case) {
             $values[] = [

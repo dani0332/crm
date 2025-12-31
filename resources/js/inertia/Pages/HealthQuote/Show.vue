@@ -4,6 +4,8 @@ import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: Object,
@@ -20,8 +22,8 @@ const props = defineProps({
   teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
-  documentType: Object,
   cdnPath: String,
+  documentType: Object,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
@@ -39,6 +41,7 @@ const props = defineProps({
   quoteRequest: Object,
   can: Object,
   paymentMethods: Object,
+  storageUrl: String,
   sendPolicy: Boolean,
   insuranceProviders: Array,
   planTypes: Array,
@@ -52,7 +55,6 @@ const props = defineProps({
   paymentLink: String,
   quoteType: String,
   paymentTooltipEnum: Object,
-  storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   amlStatusName: String,
@@ -69,6 +71,9 @@ const props = defineProps({
   noteDocumentType: Array,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  isAUHLead: Boolean,
+  branchOptions: Object,
+  hasPecTag: Boolean,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -144,6 +149,7 @@ const modals = reactive({
   activityConfirm: false,
   planFilters: false,
   sendConfirm: false,
+  memberPrincipal: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -195,6 +201,10 @@ const confirmDeleteData = reactive({
   member: null,
   activity: null,
   contact: null,
+});
+
+const confirmPrincipalData = reactive({
+  member: null,
 });
 
 const cleanObj = obj => useCleanObj(obj);
@@ -319,6 +329,17 @@ const salaryBandsOptions = computed(() => {
   }));
 });
 
+const memberHealthRegulationAuthority = computed(() => {
+  return memberForm.emirate_of_your_visa_id ===
+    props.branchOptions.find(b => b.branch === 'Abu Dhabi')?.id
+    ? 'DoH'
+    : 'DHA';
+});
+
+const memberPecErrorMessage = computed(() => {
+  return `Please confirm the member's health declaration to proceed, as required under ${memberHealthRegulationAuthority.value} regulations.`;
+});
+
 const onTeamAssign = () => {
   if (!assignSubteam.value) {
     notification.error({
@@ -393,6 +414,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
   lostReason: page.props.quote.lost_reason_id || null,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const onLeadStatus = () => {
@@ -426,6 +448,10 @@ const memberDetailsTable = reactive({
     {
       text: 'Member Name',
       value: 'first_name',
+    },
+    {
+      text: 'Policy PEC Flag',
+      value: 'is_pec_marked',
     },
     {
       text: 'Gender',
@@ -481,6 +507,8 @@ const memberForm = useForm({
     page.props.quote.customer_type ?? page.props.customerTypeEnum.Individual,
   customer_member_id: null,
   quoteId: page.props.quote.uuid,
+  pec: null,
+  is_principal: null,
 });
 
 const rules = {
@@ -501,6 +529,10 @@ function onEditMember(data) {
   memberActionEdit.value = true;
   modals.member = true;
 
+  updateMemberForm(data);
+}
+
+function updateMemberForm(data) {
   memberForm.id = data.id;
   memberForm.gender = data.gender;
   memberForm.dob = data.dob;
@@ -512,6 +544,8 @@ function onEditMember(data) {
   memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
+  memberForm.pec = data.is_pec_marked ? 1 : 2;
+  memberForm.is_principal = data.is_principal;
 
   // set initialEditCategoryId to member_category_id when any member is edited
   initialEditCategoryId.value = data.member_category_id;
@@ -532,31 +566,50 @@ const memberFieldReq = reactive({
   dob: false,
 });
 
+const memberPecValidationError = ref('');
+
 const membersDetailsUpdated = ref(false);
 
 const onMemberSubmit = isValid => {
+  // Reset previous error messages
+  memberFieldReq.nationality = false;
+  memberFieldReq.dob = false;
+  memberPecValidationError.value = '';
+
   if (memberForm.nationality_id == null) {
     memberFieldReq.nationality = true;
-  } else {
-    memberFieldReq.nationality = false;
   }
   if (memberForm.dob == null) {
     memberFieldReq.dob = true;
-  } else {
-    memberFieldReq.dob = false;
   }
-  if (!isValid) return;
+
+  // Validate PEC selection (must be 1 or 2, not null/undefined)
+  if (memberForm.pec == null || memberForm.pec == undefined) {
+    memberPecValidationError.value = memberPecErrorMessage.value;
+    return;
+  }
+
+  if (
+    !isValid ||
+    memberFieldReq.nationality ||
+    memberFieldReq.dob ||
+    memberPecValidationError.value
+  )
+    return;
   if (memberActionEdit.value) {
     memberForm.put(`/health-quote-update-member`, {
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Member Updated',
-          position: 'top',
-        });
-        memberForm.reset();
-        onLoadAvailablePlansData();
-        // location.reload();
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages.error) {
+          notification.success({
+            title: 'Member Updated',
+            position: 'top',
+          });
+          memberForm.reset();
+          onLoadAvailablePlansData();
+          // location.reload();
+        }
       },
       onError: errors => {
         notification.error({
@@ -573,13 +626,16 @@ const onMemberSubmit = isValid => {
     memberForm.post(`/health-quote-add-member`, {
       // new mavonic endpoint
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Member Added',
-          position: 'top',
-        });
-        onLoadAvailablePlansData();
-        // location.reload();
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages.error) {
+          notification.success({
+            title: 'Member Added',
+            position: 'top',
+          });
+          onLoadAvailablePlansData();
+          // location.reload();
+        }
       },
       onError: errors => {
         notification.error({
@@ -601,6 +657,16 @@ const memberDelete = id => {
   memberForm.customer_member_id = id;
 };
 
+const memberPrincipal = data => {
+  // Update member form as we need to call update Kapi Api with all data
+  updateMemberForm(data);
+  memberForm.is_principal = 1;
+
+  modals.memberPrincipal = true;
+  confirmPrincipalData.member = data.id;
+  memberForm.customer_member_id = data.id;
+};
+
 const memberDeleteConfirmed = () => {
   memberForm.post(
     `/health-quote-delete-member`,
@@ -615,12 +681,43 @@ const memberDeleteConfirmed = () => {
         onLoadAvailablePlansData();
         // location.reload();
       },
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not updated',
+          position: 'top',
+        });
+      },
       onFinish: () => {
         modals.memberConfirm = false;
         membersDetailsUpdated.value = true;
       },
     },
   );
+};
+
+const memberPrincipalConfirmed = () => {
+  memberForm.put(`/health-quote-update-member`, {
+    preserveScroll: true,
+    onSuccess: response => {
+      const flash_messages = response.props.flash;
+      if (!flash_messages.error) {
+        notification.success({
+          title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
+          position: 'top',
+        });
+        onLoadAvailablePlansData();
+      }
+    },
+    onError: errors => {
+      notification.error({
+        title: errors.error || 'Some error occurred while processing request',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.memberPrincipal = false;
+    },
+  });
 };
 
 const onRecieveMembersDetailsReview = () => {
@@ -1197,7 +1294,7 @@ const activityForm = useForm({
   parentType: 'Health',
   quoteType: 3,
   title: null,
-  description: null,
+  description: '',
   due_date: null,
   assignee_id: page.props?.auth?.user?.id,
   status: null,
@@ -1231,11 +1328,7 @@ const activityEdit = data => {
   activityForm.uuid = data.uuid;
   activityForm.title = data.title;
   activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
+  activityForm.due_date = useformatDateTimeForPicker(data.due_date);
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -1500,7 +1593,8 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.quote.id,
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
-  emirates_id_number: page.props.quote.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.quote.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
@@ -1712,6 +1806,8 @@ const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
   createReusableTemplate();
 const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
   createReusableTemplate();
+const [PrincipalMemberButtonTemplate, PrincipalMemberButtonReuseTemplate] =
+  createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
 
@@ -1859,6 +1955,8 @@ const onAddUpdate = () => {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const isLocked = page.props.quote.is_quote_locked ?? false;
 </script>
 
 <template>
@@ -1880,6 +1978,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
           tag="div"
         >
           Private Client
+        </x-button>
+        <x-button v-if="hasPecTag" size="sm" color="#DC2626" tag="div">
+          PEC
         </x-button>
       </template>
 
@@ -1914,10 +2015,18 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('health.edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled && !isLocked"
+            :href="route('health.edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">
+          <x-button
+            v-else
+            :disabled="isDisabled || isLocked"
+            size="sm"
+            tag="div"
+          >
             Edit
           </x-button>
         </LeadEditBtnTemplate>
@@ -1945,6 +2054,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -2115,9 +2225,60 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote.advisor_id_text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">OE/AE</dt>
+                <dd>{{ quote?.support_user_name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote?.sub_source?.text ||
+                    quote.sub_source_text ||
+                    quote.sub_source_id ||
+                    'N/A'
+                  }}
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option_description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  {{
+                    quote?.sub_source_option?.text ||
+                    quote.sub_source_option_text ||
+                    quote.sub_source_options_id ||
+                    'N/A'
+                  }}
+                </div>
+              </div>
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
@@ -2614,7 +2775,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               @click.prevent="onAddMemberModal"
               size="sm"
               color="orange"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isLocked"
               v-if="readOnlyMode.isDisable === true"
             >
               Add Member
@@ -2640,7 +2801,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               color="primary"
               outlined
               @click.prevent="onEditMember(item)"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isLocked"
               v-if="readOnlyMode.isDisable === true"
             >
               Edit
@@ -2652,12 +2813,24 @@ const applyEmiratesIdNumMasking = emiratesId =>
               color="error"
               outlined
               @click.prevent="memberDelete(item.id)"
-              :disabled="isDisabled"
-              v-if="readOnlyMode.isDisable === true"
+              :disabled="isDisabled || isLocked"
+              v-if="readOnlyMode.isDisable === true && !item.is_principal"
             >
               Delete
             </x-button>
           </DeleteMemberButtonTemplate>
+          <PrincipalMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="memberPrincipal(item)"
+              v-if="!item.is_principal"
+              :disabled="isLocked"
+            >
+              Make Principal
+            </x-button>
+          </PrincipalMemberButtonTemplate>
           <DataTable
             table-class-name="tablefixed overflow-auto"
             :headers="memberDetailsTable.columns"
@@ -2668,6 +2841,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
           >
             <template #item-first_name="{ first_name, last_name }">
               {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
+            </template>
+
+            <template #item-is_pec_marked="{ is_pec_marked }">
+              <div class="text-center">
+                <x-tag size="sm" :color="is_pec_marked ? 'error' : 'success'">
+                  {{ is_pec_marked ? 'Yes' : 'No' }}
+                </x-tag>
+              </div>
             </template>
 
             <template #item-gender="{ gender }">
@@ -2736,6 +2917,27 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   </template>
                 </x-tooltip>
                 <DeleteMemberButtonReuseTemplate v-else :item="item" />
+
+                <x-tooltip
+                  v-if="page.props.lockLeadSectionsDetails.member_details"
+                  position="left"
+                  align="center"
+                  class="yoyo-tip"
+                >
+                  <PrincipalMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
+                  <template #tooltip>
+                    <div class="whitespace-normal text-xs">
+                      This lead is now locked as the policy has been booked. If
+                      changes are needed such midterm deletion of member or
+                      marital status change, go to 'Send Update', select 'Add
+                      Update', and choose 'Endorsement Financial'
+                    </div>
+                  </template>
+                </x-tooltip>
+                <PrincipalMemberButtonReuseTemplate v-else :item="item" />
               </div>
             </template>
           </DataTable>
@@ -2747,6 +2949,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             show-close
             backdrop
             is-form
+            persistent
             @submit="onMemberSubmit"
           >
             <div
@@ -2775,7 +2978,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </div>
               </div>
             </div>
-            <div class="grid md:grid-cols-2 gap-4 md:pb-16">
+            <div class="grid md:grid-cols-2 gap-4">
               <input type="hidden" :value="memberForm.id" />
               <x-input
                 maxLength="60"
@@ -2850,6 +3053,29 @@ const applyEmiratesIdNumMasking = emiratesId =>
               />
             </div>
 
+            <!-- PEC Field -->
+            <div class="md:col-span-2" data-member-pec-field>
+              <div class="mb-3">
+                <ToolTip
+                  title="Does the member need to declare any chronic or pre-existing medical conditions, pregnancy, plans to conceive, or fertility treatment?"
+                  tooltip="Any ongoing or past health issues that may or may not require regular treatment or medical attention."
+                  class="w-full"
+                />
+              </div>
+              <div>
+                <x-form-group v-model="memberForm.pec">
+                  <x-radio :value="1" label="Yes" />
+                  <x-radio :value="2" label="No" />
+                </x-form-group>
+                <div
+                  v-if="memberPecValidationError"
+                  class="mt-2 text-sm text-red-600 border border-red-200 bg-red-50 rounded-md p-2"
+                >
+                  {{ memberPecValidationError }}
+                </div>
+              </div>
+            </div>
+
             <template #secondary-action>
               <x-button
                 size="sm"
@@ -2921,6 +3147,61 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   :loading="memberForm.processing"
                 >
                   Delete
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
+
+          <!-- Modal to make member principal -->
+          <x-modal
+            v-model="modals.memberPrincipal"
+            title="Confirm Principal Member"
+            show-close
+            backdrop
+          >
+            <div
+              v-if="isManualPlansCount > 0"
+              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+              role="alert"
+            >
+              <div class="flex">
+                <div class="py-1">
+                  <svg
+                    class="fill-current h-6 w-6 text-read-900 mr-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                  <p class="text-sm">
+                    Please revist all manual plan(s) and update the per member
+                    price
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p>Are you sure you want to make this member principal?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.memberPrincipal = false"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  @click.prevent="memberPrincipalConfirmed"
+                  :loading="memberForm.processing"
+                >
+                  Confirm
                 </x-button>
               </div>
             </template>
@@ -3002,6 +3283,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         show-close
         backdrop
         is-form
+        persistent
         @submit="onAdditionalContactSubmit"
       >
         <div class="grid gap-4">
@@ -3381,7 +3663,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   size="sm"
                   color="emerald"
                   @click.prevent="modals.createPlan = true"
-                  :disabled="isDisabled"
+                  :disabled="isDisabled || isLocked"
                 >
                   Add Plan
                 </x-button>
@@ -3483,6 +3765,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   actualPremium,
                   policyFee,
                   basmah,
+                  icpFee,
                   vat,
                   loadingPrice,
                   adjustedPrice,
@@ -3493,6 +3776,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     actualPremium +
                       (policyFee || 0) +
                       (basmah || 0) +
+                      (icpFee || 0) +
                       vat +
                       (loadingPrice || 0) +
                       (adjustedPrice || 0),
@@ -3856,6 +4140,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with_id,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <BookPolicy
       v-if="
         canAny([
@@ -3982,6 +4288,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onActivitySubmit"
     >
       <div class="grid gap-4">
@@ -3990,6 +4297,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           label="Title"
           :rules="[isRequired]"
           class="w-full"
+          required
         />
 
         <x-textarea
@@ -3997,6 +4305,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
           label="Description"
           :adjust-to-text="false"
           class="w-full"
+          :rules="[isRequired]"
+          required
         />
 
         <x-select
@@ -4006,6 +4316,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           :rules="[isRequired]"
           placeholder="Select Assignee"
           class="w-full"
+          required
         />
 
         <date-picker
@@ -4015,6 +4326,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           class="w-full"
           withTime
           :timezone="'UTC'"
+          required
         />
       </div>
 

@@ -13,11 +13,11 @@ use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LifeQuote;
-use App\Models\LifeQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\PolicyIssuance;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
@@ -32,16 +32,17 @@ use App\Observers\CustomerObserver;
 use App\Observers\CycleQuoteObserver;
 use App\Observers\HealthQuoteDetailObserver;
 use App\Observers\HealthQuoteObserver;
-use App\Observers\LifeQuoteDetailObserver;
 use App\Observers\LifeQuoteObserver;
 use App\Observers\PaymentObserver;
 use App\Observers\PaymentSplitsObserver;
 use App\Observers\PersonalQuoteObserver;
 use App\Observers\PetQuoteObserver;
+use App\Observers\PolicyIssuanceObserver;
 use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
+use App\Services\BranchAssignmentService;
 use App\Services\CsvExportService;
 use App\Services\EmailExportService;
 use App\Services\LeadsCountService;
@@ -65,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
         // Register new CSV export services
         $this->app->singleton(CsvExportService::class);
         $this->app->singleton(EmailExportService::class);
+
+        // Register Branch Assignment Service
+        $this->app->singleton(BranchAssignmentService::class);
     }
 
     /**
@@ -81,7 +85,6 @@ class AppServiceProvider extends ServiceProvider
         BusinessQuote::observe(BusinessQuoteObserver::class);
         CarQuoteRequestDetail::observe(CarQuoteDetailObserver::class);
         HealthQuoteRequestDetail::observe(HealthQuoteDetailObserver::class);
-        LifeQuoteRequestDetail::observe(LifeQuoteDetailObserver::class);
         TravelQuoteRequestDetail::observe(TravelQuoteDetailObserver::class);
         BusinessQuoteRequestDetail::observe(BusinessQuoteDetailObserver::class);
         PetQuote::observe(PetQuoteObserver::class);
@@ -94,6 +97,8 @@ class AppServiceProvider extends ServiceProvider
         PaymentSplits::observe(PaymentSplitsObserver::class);
         CustomerAddress::observe(CustomerAddressObserver::class);
         SendUpdateLog::observe(SendUpdateLogObserver::class);
+        // TODO: this PolicyIssuanceObserver is not for PROD.
+        PolicyIssuance::observe(PolicyIssuanceObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

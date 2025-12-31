@@ -30,7 +30,7 @@ class RenewalHomeFailedValidationExport implements FromCollection, WithStrictNul
             $firstRow->email = 'Customer e-mail';
             $firstRow->mobile_no = 'Customer Mobile';
             $firstRow->quote_type = 'Insurance Type';
-            $firstRow->current_insurance_provider = 'Insurance Provider';
+            $firstRow->current_insurance_provider = 'Current Insurance Provider';
             $firstRow->advisor = 'Advisor Email';
             $firstRow->policy_number = 'Policy Number';
             $firstRow->start_date = 'Policy Start Date';

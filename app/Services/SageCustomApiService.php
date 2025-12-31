@@ -17,6 +17,8 @@ class SageCustomApiService
 {
     use SageLoggable;
 
+    const CLASSNAME = 'sageCustomApiService';
+
     private mixed $sageCustomApiPassword;
     private mixed $sageCustomApiUserName;
     private string $sageBaseUrl;
@@ -183,39 +185,39 @@ class SageCustomApiService
                 // total_payments = 1 means upfront payment
                 if ($payment->frequency == PaymentFrequency::UPFRONT) {
                     echo '########## Start of Upfront createAPInvoicePrem for : '.$quote->code.'##########';
-                    LoggerService::info('########## Start of Upfront createAPInvoicePrem for : '.$quote->code.'##########');
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - ########## Start of Upfront createAPInvoicePrem for: '.$quote->code.' ##########');
                     $isLiveApiCallStep5 = true;
                     if (isset($sageLogArray[5]) && $sageLogArray[5]['status'] == 'success') {
-                        LoggerService::info('SAGE API:  createAPInvoicePrem  Sent Already for '.$quote->uuid);
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: createAPInvoicePrem sent already for: '.$quote->uuid);
                         $isLiveApiCallStep5 = false;
                         $postedResponse = json_decode($sageLogArray[5]['response'], true);
                     } else {
-                        LoggerService::info('SAGE API:  Send createAPInvoicePrem  for '.$quote->uuid);
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: Send createAPInvoicePrem for: '.$quote->uuid);
                         $createAPInvoicePrem = SagePayloadFactory::createAPInvoicePrem($sageRequest);
                         $resp = (new SageApiService)->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
                         $postedResponse = json_decode($resp, true);
                     }
 
                     if (! empty($postedResponse['BatchNumber'])) {
-                        LoggerService::info('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAr - '.$postedResponse['BatchNumber'].' completed successfully');
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : readyToPostInvoiceAr - '.$postedResponse['BatchNumber'].' completed successfully');
                         if ($isLiveApiCallStep5) {
-                            $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 5, 13);
+                            $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, $quote, 5, 13);
                         }
 
                         $isLiveApiCallStep6 = true;
                         if (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == 'success') {
-                            LoggerService::info('SAGE API:  readyToPostInvoiceAP  Sent Already for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  readyToPostInvoiceAP  Sent Already for '.$quote->uuid);
                             $isLiveApiCallStep6 = false;
                             $readyToPostResponse = json_decode($sageLogArray[6]['response'], true);
                         } else {
-                            LoggerService::info('SAGE API:  Send readyToPostInvoiceAP  for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  Send readyToPostInvoiceAP  for '.$quote->uuid);
                             $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($postedResponse['BatchNumber']);
                             $readyToPostResponse = (new SageApiService)->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
                         }
 
                         if ($readyToPostResponse !== '') {
-                            LoggerService::error('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed');
-                            $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, 6, 13, 'fail');
+                            LoggerService::error(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed');
+                            $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, 6, 13, 'fail');
                             $returnMessage['status'] = false;
                             $returnMessage['message'] = 'Error while making AP invoice ready to post to sage';
 
@@ -226,29 +228,29 @@ class SageCustomApiService
 
                             return $returnMessage;
                         } else {
-                            LoggerService::info('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' completed successfully');
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' completed successfully');
                             if ($isLiveApiCallStep6) {
-                                $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, 6, 13);
+                                $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, 6, 13);
                             }
                         }
 
                         $isLiveApiCallStep7 = true;
                         if (isset($sageLogArray[7]) && $sageLogArray[7]['status'] == 'success') {
-                            LoggerService::info('SAGE API:  aPPostInvoices  Sent Already for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  aPPostInvoices  Sent Already for '.$quote->uuid);
                             $isLiveApiCallStep7 = false;
                             $postedResponse = json_decode($sageLogArray[7]['response'], true);
                         } else {
-                            LoggerService::info('SAGE API:  Send aPPostInvoices  for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  Send aPPostInvoices  for '.$quote->uuid);
                             $aPPostInvoices = SagePayloadFactory::aPPostInvoices($postedResponse['BatchNumber']);
                             $resp = (new SageApiService)->postToSage300($aPPostInvoices['endPoint'], $aPPostInvoices['payload']);
                             $postedResponse = json_decode($resp, true);
                         }
 
                         if (isset($postedResponse['error'])) {
-                            LoggerService::error('SAGE API: '.$quote->uuid.' : aPPostInvoices failed');
+                            LoggerService::error(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : aPPostInvoices failed');
                             $returnMessage['status'] = false;
                             $returnMessage['message'] = 'Error while making AP invoices Posted to sage';
-                            $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, 7, 13, 'fail');
+                            $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, $quote, 7, 13, 'fail');
 
                             $errorMessage = $postedResponse['error']['message']['value'] ?? null;
                             LoggerService::error('SAGE API : '.$errorMessage);
@@ -256,14 +258,14 @@ class SageCustomApiService
 
                             return $returnMessage;
                         } else {
-                            LoggerService::info('SAGE API: '.$quote->uuid.' : aPPostInvoices completed successfully');
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : aPPostInvoices completed successfully');
                             if ($isLiveApiCallStep7) {
-                                $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, 7, 13);
+                                $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, $quote, 7, 13);
                             }
                         }
                     } else {
-                        LoggerService::error('SAGE API: '.$quote->uuid.' : createAPInvoicePrem  failed');
-                        $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 5, 13, 'fail');
+                        LoggerService::error(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : createAPInvoicePrem  failed');
+                        $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, $quote, 5, 13, 'fail');
                         $returnMessage['message'] = 'Ap invoice prem failed from sage';
                         $returnMessage['status'] = false;
 
@@ -273,18 +275,18 @@ class SageCustomApiService
 
                         return $returnMessage;
                     }
-                    LoggerService::info('  ########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - ########## End of Upfront createAPInvoicePrem for: '.$quote->code.' ##########');
                     echo '  ########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ########## ';
                 } else {
                     echo '  ########## Start of NON Upfront createAPInvoicePrem for : '.$quote->code.' ########## ';
-                    LoggerService::info('  ########## Start of NON Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - ########## Start of NON Upfront createAPInvoicePrem for: '.$quote->code.' ##########');
                     $isLiveApiCallStep6 = true;
                     if (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == 'success') {
-                        LoggerService::info('SAGE API:  createAPInvoiceSplitPayments  Sent Already for '.$quote->uuid);
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  createAPInvoiceSplitPayments  Sent Already for '.$quote->uuid);
                         $isLiveApiCallStep6 = false;
                         $postedResponse = json_decode($sageLogArray[6]['response'], true);
                     } else {
-                        LoggerService::info('SAGE API:  Send createAPInvoiceSplitPayments  for '.$quote->uuid);
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  Send createAPInvoiceSplitPayments  for '.$quote->uuid);
                         $createAPInvoicePrem = SagePayloadFactory::createAPInvoiceSplitPayments($sageRequest, $paymentSplits);
                         $resp = (new SageApiService)->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
                         $postedResponse = json_decode($resp, true);
@@ -294,12 +296,12 @@ class SageCustomApiService
                         $apBatchNumber = $postedResponse['BatchNumber'];
                         echo $apBatchNumber.'<br/>';
                         $url = 'AP/APInvoiceBatches('.$apBatchNumber.')';
-                        LoggerService::info('SAGE API: '.$quote->uuid.' : createAPInvoiceSplitPayments - '.$apBatchNumber.' completed successfully');
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : createAPInvoiceSplitPayments - '.$apBatchNumber.' completed successfully');
                         if ($isLiveApiCallStep6) {
-                            $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 6, 15);
+                            $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, $quote, 6, 15);
                         }
 
-                        LoggerService::info('SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
                         $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
 
                         if ($aPInvoicePaymentsScheduleResponse['status']) {
@@ -328,11 +330,11 @@ class SageCustomApiService
                         // 7
                         $isLiveApiCallStep7 = true;
                         if (isset($sageLogArray[7]) && $sageLogArray[7]['status'] == 'success') {
-                            LoggerService::info('SAGE API:  Patch Request  Sent Already for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  Patch Request  Sent Already for '.$quote->uuid);
                             $isLiveApiCallStep7 = false;
                             $postedResponse = json_decode($sageLogArray[7]['response'], true);
                         } else {
-                            LoggerService::info('SAGE API:  Send Patch Request  for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  Send Patch Request  for '.$quote->uuid);
                             $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
                             $postedResponse['response'] = $resp;
                         }
@@ -340,8 +342,8 @@ class SageCustomApiService
                         $postedResponse['endPoint'] = $resp['url'];
                         $postedResponse['payload'] = $aPInvoicePaymentsSchedule;
                         if (! $resp['status']) {
-                            LoggerService::error('SAGE API: '.$quote->uuid.' : Patch Request failed');
-                            $this->logSageApiCall($postedResponse, $postedResponse, $quote, 7, 15, 'fail');
+                            LoggerService::error(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : Patch Request failed');
+                            $this->logSageApiCall($postedResponse, $postedResponse, $quote, $quote, 7, 15, 'fail');
                             $returnMessage['status'] = false;
                             $returnMessage['message'] = 'Error while making AP split payments patch to sage';
 
@@ -351,25 +353,25 @@ class SageCustomApiService
 
                             return $returnMessage;
                         }
-                        LoggerService::info('SAGE API: '.$quote->uuid.' : Patch Request completed successfully');
+                        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : Patch Request completed successfully');
                         if ($isLiveApiCallStep7) {
-                            $this->logSageApiCall($postedResponse, $postedResponse, $quote, 7, 15);
+                            $this->logSageApiCall($postedResponse, $postedResponse, $quote, $quote, 7, 15);
                         }
 
                         $isLiveApiCallStep8 = true;
                         if (isset($sageLogArray[8]) && $sageLogArray[8]['status'] == 'success') {
-                            LoggerService::info('SAGE API:  readyToPostInvoiceAP  Sent Already for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  readyToPostInvoiceAP  Sent Already for '.$quote->uuid);
                             $isLiveApiCallStep8 = false;
                             $readyToPostResponse = json_decode($sageLogArray[8]['response'], true);
                         } else {
-                            LoggerService::info('SAGE API:  Send readyToPostInvoiceAP  for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  Send readyToPostInvoiceAP  for '.$quote->uuid);
                             $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($apBatchNumber);
                             $readyToPostResponse = (new SageApiService)->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
                         }
 
                         if ($readyToPostResponse !== '') {
-                            LoggerService::error('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed');
-                            $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, 8, 15, 'fail');
+                            LoggerService::error(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed');
+                            $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, 8, 15, 'fail');
                             $returnMessage['status'] = false;
                             $returnMessage['message'] = 'Error while making AP invoice ready to post to sage';
 
@@ -380,29 +382,29 @@ class SageCustomApiService
 
                             return $returnMessage;
                         } else {
-                            LoggerService::info('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' completed successfully');
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' completed successfully');
                             if ($isLiveApiCallStep8) {
-                                $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, 8, 15);
+                                $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $quote, 8, 15);
                             }
                         }
 
                         $isLiveApiCallStep9 = true;
                         if (isset($sageLogArray[9]) && $sageLogArray[9]['status'] == 'success') {
-                            LoggerService::info('SAGE API:  aPPostInvoices  Sent Already for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  aPPostInvoices  Sent Already for '.$quote->uuid);
                             $isLiveApiCallStep9 = false;
                             $postedResponse = json_decode($sageLogArray[9]['response'], true);
                         } else {
-                            LoggerService::info('SAGE API:  Send aPPostInvoices  for '.$quote->uuid);
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API:  Send aPPostInvoices  for '.$quote->uuid);
                             $aPPostInvoices = SagePayloadFactory::aPPostInvoices($postedResponse['BatchNumber']);
                             $resp = (new SageApiService)->postToSage300($aPPostInvoices['endPoint'], $aPPostInvoices['payload']);
                             $postedResponse = json_decode($resp, true);
                         }
 
                         if (isset($postedResponse['error'])) {
-                            LoggerService::error('SAGE API: '.$quote->uuid.' : aPPostInvoices failed');
+                            LoggerService::error(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : aPPostInvoices failed');
                             $returnMessage['status'] = false;
                             $returnMessage['message'] = 'Error while making AP invoices Posted to sage';
-                            $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, 9, 15, 'fail');
+                            $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, $quote, 9, 15, 'fail');
 
                             $errorMessage = $postedResponse['error']['message']['value'] ?? null;
                             LoggerService::error('SAGE API : '.$errorMessage);
@@ -410,15 +412,15 @@ class SageCustomApiService
 
                             return $returnMessage;
                         } else {
-                            LoggerService::info('SAGE API: '.$quote->uuid.' : aPPostInvoices completed successfully');
+                            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : aPPostInvoices completed successfully');
                             if ($isLiveApiCallStep9) {
-                                $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, 9, 15);
+                                $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, $quote, 9, 15);
                             }
                         }
 
                     } else {
-                        LoggerService::error('SAGE API: '.$quote->uuid.' : createAPInvoicePrem  failed');
-                        $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 6, 14, 'fail');
+                        LoggerService::error(self::CLASSNAME.' fn: '.__FUNCTION__.' - SAGE API: '.$quote->uuid.' : createAPInvoicePrem  failed');
+                        $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, $quote, 6, 14, 'fail');
                         $returnMessage['message'] = 'Ap invoice prem failed from sage';
                         $returnMessage['status'] = false;
 
@@ -428,13 +430,13 @@ class SageCustomApiService
 
                         return $returnMessage;
                     }
-                    LoggerService::info('  ########## End of NON Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
+                    LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - ########## End of NON Upfront createAPInvoicePrem for: '.$quote->code.' ##########');
                     echo '  ########## End of NON Upfront createAPInvoicePrem for : '.$quote->code.' ########## ';
                 }
             }
         } catch (Throwable $e) {
             echo $e->getMessage();
-            LoggerService::error('Exception in postOpenedAPInvoices: '.$e->getMessage(), [
+            LoggerService::error(self::CLASSNAME.' fn: '.__FUNCTION__.' - Exception in postOpenedAPInvoices: '.$e->getMessage(), [
                 'stack_trace' => $e->getTraceAsString(),
             ]);
         }

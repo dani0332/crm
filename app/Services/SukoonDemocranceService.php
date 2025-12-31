@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -610,7 +610,7 @@ class SukoonDemocranceService
             'execution_method' => $parentFunction,
             'quote_data' => json_encode($this->currentQuote),
             'quote_uuid' => $this->currentQuote->uuid,
-            'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'),
+            'provider_id' => InsuranceProvider::where('code', InsuranceProviderEnum::OIC->value)->value('id'),
             'call_type' => 'EmbeddedProduct',
         ];
         InsurerRequestResponse::create($logData);

@@ -19,6 +19,10 @@ const quoteStatusEnum = inject('quoteStatusEnum');
 const quoteTypeId = inject('quoteTypeId');
 const lostReasons = inject('lostReasons');
 const quoteType = inject('quoteType');
+const business_type_of_insurance_id = inject(
+  'business_type_of_insurance_id',
+  null,
+);
 
 const { isRequired } = useRules();
 
@@ -51,11 +55,19 @@ const updateList = async data => {
       data,
     });
     emit('UpdateLeadsCount', data);
+    // Handle message display - string or array
+    let messageTitle;
+    if (typeof response.data.message === 'string') {
+      messageTitle = response.data.message;
+    } else if (Array.isArray(response.data.message)) {
+      // Join array messages with line breaks or separator
+      messageTitle = response.data.message.join('<br>');
+    } else {
+      messageTitle = 'Operation completed successfully';
+    }
+
     notification.success({
-      title:
-        typeof response.data.message != 'string'
-          ? response.data.message[0]
-          : response.data.message,
+      title: messageTitle,
       position: 'top',
     });
     router.reload();
@@ -163,7 +175,8 @@ const handleConfirmation = result => {
   resolveConfirm(result);
 };
 
-const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
+const getUrl = (url, quoteTypeId) =>
+  useGetShowPageRoute(url, quoteTypeId, business_type_of_insurance_id);
 const formatDate = date => {
   if (!date) return '';
   let parsedDate;
@@ -197,6 +210,19 @@ const formatDate = date => {
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
   return useDateFormat(date, 'DD-MMM-YYYY').value;
 };
+const getInsuranceType = (planId, insurance_provider_plan) => {
+  if (!planId) return null;
+
+  if (insurance_provider_plan?.sub_type?.code === 'term') {
+    return `Fixed Term Insurance`;
+  }
+
+  if (insurance_provider_plan?.sub_type?.code === 'wol') {
+    return 'Whole of Life Insurance';
+  }
+
+  return null;
+};
 </script>
 <template>
   <div
@@ -220,6 +246,14 @@ const formatDate = date => {
         business_type_of_insurance,
         stale_at,
         previous_policy_expiry_date,
+        sum_insured_value,
+        dob,
+        nationality_text,
+        insurance_tenure_text,
+        insurance_provider_plan,
+        age,
+        plan_id,
+        has_pec_tag,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
@@ -236,9 +270,38 @@ const formatDate = date => {
     >
       <div class="flex flex-col">
         <stale-leads-badge :date="stale_at" :position="'bottom'" />
-        <span class="font-semibold text-sm">
-          {{ first_name }} {{ last_name }}
-        </span>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-semibold text-sm">
+            {{ first_name }} {{ last_name }}
+          </span>
+          <x-button
+            v-if="has_pec_tag && quoteType === 'Health'"
+            size="xs"
+            color="#DC2626"
+            tag="div"
+            class="text-[10px] px-1 py-0.5"
+          >
+            PEC
+          </x-button>
+        </div>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
+        <p class="text-xs">
+          {{ getInsuranceType(plan_id, insurance_provider_plan) }}
+        </p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="money" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ Number(sum_insured_value).toLocaleString() }}</p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="globe" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ nationality_text }}</p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="person" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ age }}</p>
       </div>
 
       <div
@@ -267,7 +330,7 @@ const formatDate = date => {
         <p class="text-xs">{{ company_name }}</p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div v-if="quoteType != 'Life'" class="flex items-center gap-2">
         <x-tooltip placement="left">
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
@@ -310,7 +373,7 @@ const formatDate = date => {
         </x-tooltip>
         <p class="text-xs">{{ updated_at }}</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div v-if="quoteType != 'Life'" class="flex items-center gap-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="1em"
@@ -346,6 +409,7 @@ const formatDate = date => {
     backdrop
     @update:modelValue="handleConfirmation(false)"
     is-form
+    persistent
     @submit="onSubmit"
   >
     <x-select

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
@@ -39,6 +38,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -48,10 +48,12 @@ use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BusinessQuoteController extends Controller
 {
@@ -97,8 +99,26 @@ class BusinessQuoteController extends Controller
         $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+        $this->businessQuoteService->postProcessBusinessQuotes($quotes);
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
-        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+
+        // Support users and assignment permissions for LeadAssignment component
+        $supportUsers = app(UserService::class)->getSupportUsers([
+            'product_filter' => QuoteTypes::CORPLINE,
+            'include_role_in_name' => true,
+            'return_format' => 'collection',
+        ]);
+
+        $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)
+            && Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD)
+            && Auth::user()->hasProduct(QuoteTypes::CORPLINE->value);
+
+        $canAssignLeadAdvisor = auth()->user()->isAdmin()
+            || $isManagerORDeputy
+            || Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
+
+        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
+
         // PD Revert
         // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
         $totalCount = 0;
@@ -107,7 +127,21 @@ class BusinessQuoteController extends Controller
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays', 'insurerAMLStatus'));
+        $subSources = app(LookupService::class)->getSubSource();
+
+        return inertia('CorpLineQuote/Index', compact(
+            'quotes',
+            'renewalBatches',
+            'dropdownSource',
+            'isManualAllocationAllowed',
+            'canAssignClientSupport',
+            'canAssignLeadAdvisor',
+            'supportUsers',
+            'totalCount',
+            'authorizedDays',
+            'insurerAMLStatus',
+            'subSources'
+        ));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -134,6 +168,7 @@ class BusinessQuoteController extends Controller
         $renewalAdvisors = $this->businessQuoteService->getRenewalAdvisors();
         $this->businessQuoteService->fillData();
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $subSources = app(LookupService::class)->getSubSource();
 
         $model = $this->genericModel;
 
@@ -142,6 +177,12 @@ class BusinessQuoteController extends Controller
             'dropdownSource' => $dropdownSource,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
+            'subSources' => $subSources,
+            'leadSourceParams' => [
+                'type' => $request->input('type'),
+                'subSource' => $request->input('subSourceId'),
+                'subSourceOption' => $request->input('subSourceOptionsId'),
+            ],
         ]);
     }
 
@@ -193,10 +234,7 @@ class BusinessQuoteController extends Controller
         $latestKycLog = KycLog::withTrashed()
             ->where('quote_request_id', $record->id)
             ->where('quote_type_id', QuoteTypes::BUSINESS->id())
-            ->where(function ($aml) {
-                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
-                $aml->orWhereNull('screening_type');
-            })
+            ->standardAmlFilters()
             ->latest()->first();
         @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(self::TYPE_ID, $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::CORPLINE);
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
@@ -234,8 +272,10 @@ class BusinessQuoteController extends Controller
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Business);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
+        $nationalities = Nationality::getActiveNationalities();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -277,6 +317,7 @@ class BusinessQuoteController extends Controller
 
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business));
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -323,6 +364,8 @@ class BusinessQuoteController extends Controller
             'companyTypes' => $companyType,
             'UBOsDetails' => $UBODetails,
             'UBORelations' => $UBORelations,
+            'membersDetails' => $membersDetail,
+            'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
             'emirates' => Emirate::where('is_active', 1)->select('id', 'text')->get(),
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
@@ -355,11 +398,14 @@ class BusinessQuoteController extends Controller
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('CorpLineQuote/Form', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,
             'dropdownSource' => $dropdownSource,
+            'subSources' => $subSources,
+            'leadSourceParams' => [],
             'leadStatuses' => $dropdownSource['quote_status_id'],
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
@@ -419,6 +465,8 @@ class BusinessQuoteController extends Controller
             ['id' => QuoteStatusEnum::AdditionalInformationRequested, 'title' => quoteStatusCode::ADDITIONAL_INFORMATION_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::AdditionalInformationRequested, $request)],
             ['id' => QuoteStatusEnum::QuoteRequested, 'title' => quoteStatusCode::QUOTE_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::QuoteRequested, $request)],
             ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::PaymentLinkSentToCustomer, 'title' => quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PaymentLinkSentToCustomer, $request)],
+            ['id' => QuoteStatusEnum::PaymentInitiated, 'title' => quoteStatusCode::PaymentInitiated, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PaymentInitiated, $request)],
             ['id' => QuoteStatusEnum::FinalizingTerms, 'title' => quoteStatusCode::FINALIZING_TERMS, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::FinalizingTerms, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
@@ -433,8 +481,10 @@ class BusinessQuoteController extends Controller
             QuoteStatusEnum::AdditionalInformationRequested => 3,
             QuoteStatusEnum::QuoteRequested => 4,
             QuoteStatusEnum::Quoted => 5,
-            QuoteStatusEnum::FinalizingTerms => 6,
-            QuoteStatusEnum::PolicyIssued => 7,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 6,
+            QuoteStatusEnum::PaymentInitiated => 7,
+            QuoteStatusEnum::FinalizingTerms => 8,
+            QuoteStatusEnum::PolicyIssued => 9,
         ];
 
         $renewals = [
@@ -443,8 +493,10 @@ class BusinessQuoteController extends Controller
             QuoteStatusEnum::PendingRenewalInformation => 2,
             QuoteStatusEnum::QuoteRequested => 3,
             QuoteStatusEnum::Quoted => 4,
-            QuoteStatusEnum::FinalizingTerms => 5,
-            QuoteStatusEnum::PolicyIssued => 6,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::FinalizingTerms => 7,
+            QuoteStatusEnum::PolicyIssued => 8,
         ];
 
         if ($areBothTeamsPresent || $isManagerOrDeputy) {

@@ -11,6 +11,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -46,6 +47,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.last_name',
                 'bqr.email',
                 'bqr.mobile_no',
+                'n.TEXT AS nationality_id_text',
+                'bqr.dob',
                 'bqr.company_name AS business_company_name',
                 'bqr.company_address AS business_company_address',
                 'bqr.brief_details',
@@ -54,6 +57,8 @@ class BusinessQuoteService extends BaseService
                 'bti.TEXT AS business_type_of_insurance_id_text',
                 'bqr.advisor_id',
                 'u.name as advisor_id_text',
+                'bqr.support_user_id',
+                'su.name as support_user_name',
                 'bqr.previous_advisor_id',
                 'uadv.name AS previous_advisor_id_text',
                 'bqr.quote_status_id',
@@ -86,11 +91,20 @@ class BusinessQuoteService extends BaseService
                 'insured_kyc.id as insured_kyc_id',
                 'c.insured_first_name as customer_insured_first_name',
                 'c.insured_last_name as customer_insured_last_name',
-                'c.emirates_id_number',
+                // 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
+                // Sub-source and notes fields
+                'bqr.sub_source_id',
+                'bqr.sub_source_options_id',
+                'bqr.additional_notes',
+                'ss.text as sub_source_text',
+                'ss.description as sub_source_description',
+                'sso.text as sub_source_option_text',
+                'sso.description as sub_source_option_description',
                 'i.first_name as insured_first_name',
                 'i.last_name as insured_last_name',
+                DB::raw('IF(i.id_type = "emiratesId", i.id_number, "") as emirates_id_number'),
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -129,8 +143,13 @@ class BusinessQuoteService extends BaseService
                         WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                         ELSE insurer_aml_status
                     END AS insurer_aml_status_display
-                ')
+                '),
+                'ub.branch_id as advisor_primary_branch_id',
+                'b.name as lead_branch_name',
+                'b.id as lead_branch_id',
+                'bqr.is_branch_applicable',
             )
+            ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
@@ -138,6 +157,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'bqr.transaction_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
+            ->leftJoin('users as su', 'su.id', '=', 'bqr.support_user_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
@@ -153,7 +173,25 @@ class BusinessQuoteService extends BaseService
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            // Sub-source lookup joins
+            ->leftJoin('lookups as ss', 'ss.id', '=', 'bqr.sub_source_id')
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'bqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+    }
+
+    public function postProcessBusinessQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::Business));
+
+            return $quote;
+        });
     }
 
     public function getEntity($id)
@@ -239,6 +277,11 @@ class BusinessQuoteService extends BaseService
     {
         $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
+        // Log sub-source parameters
+        LoggerService::info('BusinessQuoteService create - Sub-source parameters', [
+            'sub_source_id' => $request->sub_source_id ?? null,
+            'sub_source_options_id' => $request->sub_source_options_id ?? null,
+        ]);
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -253,9 +296,18 @@ class BusinessQuoteService extends BaseService
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
+            // Sub-source fields (CAPI will ignore if unsupported)
+            'subSourceId' => $request->sub_source_id ?? null,
+            'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'additionalNotes' => $request->additional_notes ?? null,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
+
+            if (Auth::user()->hasRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
+                $dataArr['supportUserId'] = Auth::user()->id;
+            } else {
+                $dataArr['advisorId'] = Auth::user()->id;
+            }
         }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
@@ -376,6 +428,10 @@ class BusinessQuoteService extends BaseService
                     ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
         }
+        // Filter by support user (OE/AE)
+        if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
+            $this->query->whereIn('bqr.support_user_id', $request->support_user_id);
+        }
         if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
             $this->query->whereIn('bqr.renewal_batch_id', $request->renewal_batches);
         }
@@ -388,7 +444,7 @@ class BusinessQuoteService extends BaseService
             $this->query->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
 
-        $this->whereBasedOnRole($this->query, 'bqr');
+        $this->whereBasedOnRole($this->query, 'bqr', quoteTypeCode::Business);
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
                 $this->query->whereNotNull('bqr.previous_quote_policy_number');
@@ -431,7 +487,7 @@ class BusinessQuoteService extends BaseService
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
+                    if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
@@ -448,6 +504,20 @@ class BusinessQuoteService extends BaseService
                     $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
                 }
             }
+        }
+
+        // Apply authorize_date filter
+        if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
+            $startDate = Carbon::parse($request->authorize_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->authorize_date[1])->endOfDay();
+            $this->query->whereBetween('py.authorized_at', [$startDate, $endDate]);
+        }
+
+        // Apply captured_date filter
+        if (! empty($request->captured_date) && is_array($request->captured_date) && count($request->captured_date) >= 2) {
+            $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
+            $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
+            $this->query->whereBetween('py.captured_at', [$startDate, $endDate]);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');
@@ -494,6 +564,12 @@ class BusinessQuoteService extends BaseService
     {
         $businessQuote = BusinessQuote::where('uuid', $id)->first();
         if ($businessQuote) {
+            // Log sub-source parameters for updates
+            LoggerService::info('BusinessQuoteService update - Sub-source parameters', [
+                'uuid' => $id,
+                'sub_source_id' => $request->sub_source_id ?? null,
+                'sub_source_options_id' => $request->sub_source_options_id ?? null,
+            ]);
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
             $businessQuote->company_name = $request->company_name;
@@ -503,6 +579,17 @@ class BusinessQuoteService extends BaseService
             $businessQuote->premium = $request->premium;
             $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
             $businessQuote->number_of_employees = $request->number_of_employees;
+            // Persist sub-source fields locally on Business LOB
+            if ($request->has('sub_source_id')) {
+                $businessQuote->sub_source_id = $request->sub_source_id;
+            }
+            if ($request->has('sub_source_options_id')) {
+                $businessQuote->sub_source_options_id = $request->sub_source_options_id;
+            }
+
+            if ($request->has('additional_notes')) {
+                $businessQuote->additional_notes = $request->additional_notes;
+            }
             if (isset($request->group_medical_type_id)) {
                 $businessQuote->group_medical_type_id = $request->group_medical_type_id;
             }
@@ -739,5 +826,55 @@ class BusinessQuoteService extends BaseService
 
         // Return first two words for lengthy names (more than 3 words)
         return $words[0].' '.$words[1];
+    }
+
+    /**
+     * Assign support user to quotes for business LOB
+     */
+    public function assignSupportUser(array $leadIds, int $supportUserId, string $modelType): ?string
+    {
+        $updatedLeadIds = [];
+
+        foreach ($leadIds as $leadId) {
+            // Remove any type suffix if present (e.g., "123|business" -> "123")
+            $id = explode('|', $leadId)[0];
+
+            // Get the quote object using the trait method
+            $quote = $this->getQuoteObject(QuoteTypes::BUSINESS->value, $id);
+            if ($quote) {
+                $quote->support_user_id = $supportUserId;
+                $quote->save();
+                $updatedLeadIds[] = $id;
+            }
+        }
+
+        // Send a single email for all assigned leads
+        if (! empty($updatedLeadIds) && $supportUserId) {
+            try {
+                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
+                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
+                    \Illuminate\Support\Facades\Auth::id(),
+                    $supportUserId,
+                    $updatedLeadIds,
+                    $quoteType
+                )->delay(now()->addSeconds(5));
+
+            } catch (\Exception $e) {
+                LoggerService::error('Failed to dispatch support user assignment email job. Message: '.$e->getMessage(), [
+                    'support_user_id' => $supportUserId,
+                    'lead_ids' => $updatedLeadIds,
+                    'model_type' => $modelType,
+                ]);
+            }
+        }
+
+        // Return success message if any leads were updated
+        if (! empty($updatedLeadIds)) {
+            $supportUserName = \App\Models\User::find($supportUserId)->name;
+
+            return $modelType.' Leads has been Assigned To '.$supportUserName;
+        }
+
+        return null;
     }
 }

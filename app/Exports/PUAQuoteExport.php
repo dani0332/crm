@@ -15,9 +15,10 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
 
     protected $data;
 
-    public function __construct()
+    public function __construct($requestParams = [])
     {
-        $this->data = app(CarQuoteService::class)->exportPUAAuthorized();
+
+        $this->data = app(CarQuoteService::class)->exportPUAAuthorized($requestParams);
     }
 
     public function collection()

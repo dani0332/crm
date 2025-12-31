@@ -35,6 +35,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isPlanDetailEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const propsDataReactive = ref(props.data);
@@ -90,6 +94,7 @@ const sendDocumentLoader = ref(false);
 const viewDocumentLoader = ref(false);
 const downloadDocumentLoader = ref(false);
 const addDocumentLoader = ref(false);
+const bookEPOnSageLoader = ref(false);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
@@ -142,6 +147,10 @@ const sendDcoument = id => {
 
 const downloadFile = download => {
   const save = document.createElement('a');
+  const documentPath = download.is_watermarked
+    ? download.watermarked_doc_path
+    : download.path;
+
   if (typeof save.download !== 'undefined') {
     // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
     // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
@@ -150,7 +159,7 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      download.path;
+      documentPath;
     save.target = '_blank';
     save.download = download.name;
     save.dispatchEvent(new MouseEvent('click'));
@@ -160,7 +169,7 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      download.path; // so that it opens new tab for IE11
+      documentPath; // so that it opens new tab for IE11
   }
 
   downloadLoader.value = true;
@@ -196,6 +205,49 @@ const viewDocument = id => {
       viewDocumentLoader.value = false;
     });
 };
+const rescheduleEPBooking = async item => {
+  try {
+    let epTransactionId = getFirstPriceWithTransaction(item.prices)
+      ?.transactions[0]?.id;
+    if (!epTransactionId) {
+      notification.error({
+        title: 'System failed to schedule booking of Embedded Product',
+        position: 'top',
+      });
+      return;
+    }
+    bookEPOnSageLoader.value = true;
+    const response = await axios.post(
+      route('embedded-products.reschedule-sage-booking'),
+      {
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+        epTransactionId: epTransactionId,
+        insuranceProviderId: item.insurance_provider_id,
+      },
+    );
+    bookEPOnSageLoader.value = false;
+    if (response.data.success) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.visit(location.href);
+    } else {
+      notification.error({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.visit(location.href);
+    }
+  } catch (err) {
+    bookEPOnSageLoader.value = false;
+    notification.error({
+      title: 'Embedded Product Booking Failed',
+      position: 'top',
+    });
+  }
+};
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
@@ -225,6 +277,18 @@ const epTable = reactive({
     {
       text: 'Payment Status',
       value: 'payment_status',
+    },
+    {
+      text: 'Api Status',
+      value: 'policy_status',
+    },
+    {
+      text: 'Sage AR Receipt ID',
+      value: 'sage_ar_payment_receipt_id',
+    },
+    {
+      text: 'Sage Status',
+      value: 'sage_status',
     },
     {
       text: 'Actions',
@@ -262,19 +326,7 @@ const ppDoc = str => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
-  let providerCode = props.quote.plan_provider_code;
-  if (
-    props.modelType.toLowerCase() ==
-    page.props.quoteTypeCodeEnum.Bike.toLowerCase()
-  ) {
-    providerCode = props.quote.car_plan?.insurance_provider?.code;
-  } else if (
-    props.modelType.toLowerCase() ==
-    page.props.quoteTypeCodeEnum.Home.toLowerCase()
-  ) {
-    providerCode = props.quote.insurance_provider?.code;
-  }
-
+  const providerCode = getProviderCode();
   let paymentLink =
     page.props.epLink +
     '/' +
@@ -293,6 +345,22 @@ const onCopyText = () => {
     });
 };
 
+const getProviderCode = () => {
+  let providerCode = props.quote.plan_provider_code;
+  if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Bike.toLowerCase()
+  ) {
+    providerCode = props.quote.car_plan?.insurance_provider?.code;
+  } else if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Home.toLowerCase()
+  ) {
+    providerCode = props.quote.insurance_provider?.code;
+  }
+  return providerCode;
+};
+
 const getFirstPriceWithTransaction = prices => {
   return prices.find(
     price => price.transactions && price.transactions.length > 0,
@@ -306,6 +374,18 @@ const paymentStatus = id => {
 };
 
 const toggleProduct = (ep, event) => {
+  if (!props.quote.plan_id) {
+    // Revert the checkbox state
+    if (ep.transactions?.[0]) {
+      ep.transactions[0].is_selected = !event.target.checked;
+    }
+    notification.error({
+      title: 'Please select a plan',
+      position: 'top',
+    });
+    return;
+  }
+
   let removeIdFromSelection = [];
   propsDataReactive.value?.forEach(item => {
     if (item.id === ep.embedded_product_id) {
@@ -342,6 +422,8 @@ const toggleProduct = (ep, event) => {
     quote_uuid: props.quote.uuid,
     id: id,
     modelType: props.modelType,
+    planId: props.quote.plan_id,
+    insuranceProviderCode: getProviderCode(),
   };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
@@ -417,7 +499,7 @@ const onVoidSubmit = isValid => {
       voidPaymentForm.processing = false;
     });
 };
-const hasAnyRole = roles => useHasAnyRole(roles);
+
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
@@ -540,7 +622,7 @@ const onAddDocumentSubmit = event => {
             {{ short_code + '-' + props.code }}
           </template>
 
-          <template #item-prices="{ prices }">
+          <template #item-prices="{ prices, is_disabled }">
             <div v-if="prices.length > 0" class="flex gap-3">
               <div v-for="(priceItem, index) in prices" :key="index">
                 <x-tag v-if="priceItem.transactions.length" color="primary">
@@ -548,14 +630,7 @@ const onAddDocumentSubmit = event => {
                     v-model="priceItem.transactions[0].is_selected"
                     @change="toggleProduct(priceItem, $event)"
                     color="primary"
-                    :disabled="
-                      priceItem.transactions[0]?.payment_status_id ==
-                        paymentStatusEnum.AUTHORISED ||
-                      priceItem.transactions[0]?.payment_status_id ==
-                        paymentStatusEnum.CAPTURED ||
-                      priceItem.transactions[0]?.payment_status_id ==
-                        paymentStatusEnum.PARTIAL_CAPTURED
-                    "
+                    :disabled="is_disabled"
                   />
                   {{
                     (
@@ -574,6 +649,26 @@ const onAddDocumentSubmit = event => {
                 getFirstPriceWithTransaction(prices)?.transactions[0]
                   ?.payment_status_id,
               )
+            }}
+          </template>
+
+          <template #item-sage_ar_payment_receipt_id="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.sage_ar_payment_receipt_id ?? '-'
+            }}
+          </template>
+          <template #item-sage_status="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.sage_status ?? '-'
+            }}
+          </template>
+
+          <template #item-policy_status="{ prices }">
+            {{
+              getFirstPriceWithTransaction(prices)?.transactions[0]
+                ?.policy_status ?? '-'
             }}
           </template>
 
@@ -650,7 +745,10 @@ const onAddDocumentSubmit = event => {
                         embeddedProductTypeEnum.NON_INSURANCE &&
                       getFirstPriceWithTransaction(item.prices)?.transactions[0]
                         ?.payments[0]?.payment_gateway_id ==
-                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP))
+                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP) ||
+                    (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id == paymentStatusEnum.CAPTURED &&
+                      can(permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE)))
                 "
                 size="xs"
                 color="#ff5e00"
@@ -676,13 +774,19 @@ const onAddDocumentSubmit = event => {
           </template>
         </DataTable>
         <x-modal
-          v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+          v-if="
+            canAny([
+              permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
+              permissionsEnum.EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
+            ])
+          "
           title="Cancel Payment"
           v-model="modals.cancelPayment"
           size="md"
           show-close
           backdrop
           is-form
+          persistent
           @submit="onActivitySubmit"
         >
           <div class="grid gap-4">
@@ -730,6 +834,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onVoidSubmit"
         >
           <div>
@@ -791,13 +896,24 @@ const onAddDocumentSubmit = event => {
             hide-footer
             :loading="viewDocumentLoader"
           >
+            <template #item-document_type="item">
+              <div
+                class="flex flex-row gap-3"
+                :class="item.is_watermarked ? 'text-primary' : 'text-secondary'"
+              >
+                {{ item.document_type }}
+              </div>
+            </template>
+
             <template #item-actions="item">
               <div class="flex flex-row gap-3">
                 <x-button
                   size="xs"
                   color="primary"
                   outlined
-                  :href="item.url"
+                  :href="
+                    item.is_watermarked ? item.watermarked_doc_url : item.url
+                  "
                   target="_blank"
                 >
                   View
@@ -823,6 +939,7 @@ const onAddDocumentSubmit = event => {
           show-close
           backdrop
           is-form
+          persistent
           @submit="onAddDocumentSubmit"
         >
           <template #header>

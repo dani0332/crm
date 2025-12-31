@@ -43,6 +43,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -73,6 +74,7 @@ class PetQuoteController extends Controller
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
@@ -82,6 +84,7 @@ class PetQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : PetQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
             'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
+            'subSources' => $subSources,
         ]);
     }
 
@@ -90,9 +93,24 @@ class PetQuoteController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('Pet create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
+
         $data = PetQuoteRepository::getFormOptions();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('PetQuote/Form', $data);
     }
@@ -145,7 +163,7 @@ class PetQuoteController extends Controller
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::PET->id());
         $personalPlans = PersonalPlanRepository::get();
@@ -187,6 +205,7 @@ class PetQuoteController extends Controller
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
+        // dd($insuranceProviders);
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
@@ -248,8 +267,12 @@ class PetQuoteController extends Controller
         $data = PetQuoteRepository::getFormOptions();
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
 
+        $subSources = app(LookupService::class)->getSubSource();
+
         return inertia('PetQuote/Form', array_merge($data, [
             'quote' => $quote,
+            'subSources' => $subSources,
+            'leadSourceParams' => [],
         ]));
     }
 
@@ -295,6 +318,8 @@ class PetQuoteController extends Controller
             ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::InNegotiation, $request)],
             ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::PaymentPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PaymentLinkSentToCustomer, 'title' => quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::PaymentLinkSentToCustomer, $request)],
+            ['id' => QuoteStatusEnum::PaymentInitiated, 'title' => quoteStatusCode::PaymentInitiated, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::PaymentInitiated, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
 
@@ -304,7 +329,9 @@ class PetQuoteController extends Controller
             QuoteStatusEnum::FollowedUp => 2,
             QuoteStatusEnum::PaymentPending => 3,
             QuoteStatusEnum::TransactionApproved => 4,
-            QuoteStatusEnum::PolicyIssued => 5,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::PolicyIssued => 7,
         ];
 
         $renewals = [
@@ -313,7 +340,9 @@ class PetQuoteController extends Controller
             QuoteStatusEnum::FollowedUp => 2,
             QuoteStatusEnum::PaymentPending => 3,
             QuoteStatusEnum::TransactionApproved => 4,
-            QuoteStatusEnum::PolicyIssued => 5,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::PolicyIssued => 7,
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();

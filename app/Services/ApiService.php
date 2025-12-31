@@ -2,20 +2,28 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\DocumentNotificationEvent;
 use App\Http\Requests\AIGWorkflowRequest;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
+use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\AIGWorkflowJob;
+use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
+use App\Jobs\SendHealthSICWAFollowupJob;
+use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -28,6 +36,8 @@ use InvalidArgumentException;
 
 class ApiService
 {
+    private const LEAD_NOT_FOUND = 'Lead not found!';
+    private const QUOTE_NOT_FOUND = 'Quote not found!';
     public function fetchSignupUrl($request)
     {
         try {
@@ -89,7 +99,7 @@ class ApiService
 
     public function isLeadAllocationEndpointDisabled()
     {
-        return config('services.lead_allocation.disabled');
+        return config('constants.DISABLE_LEAD_ALLOCATION_ENDPOINT') == '1';
     }
 
     public function processAssignLead(AssignLeadRequest $request)
@@ -166,6 +176,7 @@ class ApiService
         if (isset($request->quoteTypeId) && $request->quoteTypeId == QuoteTypes::HEALTH->id()) {
 
             LoggerService::info('------ Health SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
+
             SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
             LoggerService::info('------ Health SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
 
@@ -189,7 +200,7 @@ class ApiService
             if (! $lead) {
                 LoggerService::warning("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
-                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
             }
 
             if ($lead->sic_flow_enabled) {
@@ -254,7 +265,7 @@ class ApiService
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
         if ((isset($rest['advisorId']) && $rest['advisorId'] == 0) || (isset($rest['tierId']) && $rest['tierId'] == 0)) {
-            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : 'Allocation failed: '.$responsePayload['message'];
+            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : $responsePayload['message'];
         }
 
         return [
@@ -262,6 +273,11 @@ class ApiService
                 'tierId' => $responsePayload['tierId'] ?? 0,
                 'tierName' => $responsePayload['tierName'] ?? null,
                 'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
+                'isAIAdvisor' => $responsePayload['isAIAdvisor'] ?? false,
+                'advisorName' => $responsePayload['advisorName'] ?? null,
+                'advisorEmail' => $responsePayload['advisorEmail'] ?? null,
+                'advisorPhone' => $responsePayload['advisorPhone'] ?? null,
+                'advisorLandLine' => $responsePayload['advisorLandLine'] ?? null,
                 'status' => $status,
             ],
             'message' => $message,
@@ -278,7 +294,7 @@ class ApiService
         $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
         }
 
         if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
@@ -302,10 +318,16 @@ class ApiService
 
     public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)
     {
+        LoggerService::startQuoteLogging($request->quoteUuid);
+        LoggerService::info('------ Request received to send Apply Now email for lead ------');
         $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
 
         if (! $lead) {
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, self::LEAD_NOT_FOUND);
+        }
+
+        if ($lead->isAUHLead() || ($lead->isAUHLead(false) && $lead->isLeadSourceRevivalOrInsuranceWallet())) {
+            return apiResponse(null, Response::HTTP_OK, 'AUH and Revival/Insurance Wallet Leads are not allowed to send OCA Email!');
         }
 
         if (! $lead->isApplyNowEmailSent()) {
@@ -313,6 +335,8 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_OK, 'Email Sent');
         }
+
+        LoggerService::info('------ Apply Now email already sent for lead ------');
 
         return apiResponse(null, Response::HTTP_OK, 'Email Already Sent!');
     }
@@ -327,7 +351,7 @@ class ApiService
 
         $quote = $model::where('uuid', $data['quoteUUID'])->first();
         if (! $quote) {
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+            return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
         }
 
         // Sync Courier Quote with MACRM if Policy Issued
@@ -362,7 +386,7 @@ class ApiService
                 if (! $quote) {
                     info("Quote not found with uuid: {$quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
-                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
                 }
             }
 
@@ -415,7 +439,7 @@ class ApiService
             if (! $quote) {
                 LoggerService::info('Quote not found');
 
-                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+                return apiResponse(null, Response::HTTP_NOT_FOUND, self::QUOTE_NOT_FOUND);
             }
 
             // Atomic update - only proceeds if travel_aig_flow_executed_at is null
@@ -440,6 +464,138 @@ class ApiService
             LoggerService::error('Travel AIG workflow trigger failed', exception: $e);
 
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Travel AIG workflow trigger failed!');
+        }
+    }
+
+    public function triggerSICWhatsapp(SICWhatsappRequest $request)
+    {
+        //  Implement triggerSICWhatsapp
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        switch ($quoteType) {
+            case QuoteTypes::HEALTH:
+                $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
+                if (! $lead) {
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, self::LEAD_NOT_FOUND);
+                }
+                if (getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid)) {
+                    if (! app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)) {
+                        SendHealthSICWAFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(50));
+                    } else {
+                        LoggerService::info('SIC Health Followups WA already executed');
+
+                        return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow already executed for this lead!');
+                    }
+                } else {
+                    return apiResponse(null, Response::HTTP_OK, 'WhatsApp consent not given for this lead!');
+                }
+                break;
+            default:
+                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+
+        return apiResponse(null, Response::HTTP_OK, 'SIC WhatsApp workflow triggered successfully!');
+    }
+
+    public function documentNotification(DocumentNotificationRequest $request)
+    {
+        try {
+            $notificationData = [
+                'quoteUID' => $request->quoteUID,
+                'status' => $request->status,
+            ];
+
+            event(new DocumentNotificationEvent($notificationData));
+
+            return apiResponse(null, Response::HTTP_OK, 'Document notification received!');
+        } catch (Exception $e) {
+            LoggerService::error('Document notification processing failed', exception: $e);
+
+            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Document notification processing failed!');
+        }
+    }
+
+    public function missingDocsReminder($quoteUuid)
+    {
+        try {
+            LoggerService::info(self::class.': Missing docs reminder has been initiated');
+            if (app(BirdService::class)->isFollowupExecuted($quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
+                LoggerService::info(self::class.': Missing docs reminder already executed');
+
+                return ['success' => true, 'message' => 'Missing docs reminder already executed'];
+            }
+            $quote = CarQuote::where('uuid', $quoteUuid)->first();
+            LoggerService::startQuoteLogging($quoteUuid);
+            if (! $quote) {
+                LoggerService::info(self::class.': Quote not found');
+
+                return ['success' => false, 'message' => 'Quote not found'];
+            }
+            CarMissingDocReminderJob::dispatch($quoteUuid)->delay(now()->addSeconds(50));
+
+            return ['success' => true, 'message' => 'Missing docs reminder has been sent to the customer'];
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Missing docs reminder failed', exception: $e);
+
+            return ['success' => false, 'message' => 'Missing docs reminder failed: '.$e->getMessage()];
+        }
+    }
+    public function verifyMissingDocs($quoteUuid, $quoteType)
+    {
+        try {
+            LoggerService::info(self::class.': Verify missing docs has been initiated');
+            switch ($quoteType) {
+                case QuoteTypes::CAR->value:
+                    $quote = CarQuote::where('uuid', $quoteUuid)->first();
+                    if (! $quote) {
+                        LoggerService::info(self::class.': Quote not found');
+
+                        return ['success' => false, 'message' => 'Quote not found', 'isDocumentMissing' => null];
+                    }
+                    $requiredDocuments = [
+                        DocumentTypeCode::EMIRATES_ID,
+                        DocumentTypeCode::REGISTRATION_CARD_MULKIYA,
+                        DocumentTypeCode::DRIVING_LICENSE,
+                    ];
+                    $leadDocuments = $quote->documents()
+                        ->whereIn('document_type_code', $requiredDocuments)
+                        ->get()
+                        ->keyBy('document_type_code');
+
+                    // Check if all required documents are present and complete
+                    $missingOrIncomplete = collect($requiredDocuments)->map(function ($docType) use ($leadDocuments) {
+                        $doc = $leadDocuments->get($docType);
+
+                        return ['document_type_code' => $docType, 'is_complete' => $doc ? true : false];
+                    })->values();
+
+                    if ($missingOrIncomplete->every(function ($item) {
+                        return $item['is_complete'];
+                    })) {
+                        return ['success' => true, 'message' => 'All documents are present and complete', 'isDocumentMissing' => false, 'missingDocuments' => $missingOrIncomplete];
+                    } else {
+                        return ['success' => false, 'message' => 'Missing documents ', 'isDocumentMissing' => true, 'missingDocuments' => $missingOrIncomplete];
+                    }
+
+                    break;
+                default:
+                    LoggerService::warning(self::class.': Unsupported quote type for verify missing docs', ['quote_type' => $quoteType]);
+
+                    return [
+                        'success' => false,
+                        'message' => 'Unsupported quote type. Missing docs verification is only available for CAR quotes.',
+                        'isDocumentMissing' => null,
+                        'missingDocuments' => null,
+                    ];
+            }
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Verify missing docs failed', exception: $e);
+
+            return [
+                'success' => false,
+                'message' => 'Verify missing docs failed: '.$e->getMessage(),
+                'isDocumentMissing' => null,
+                'missingDocuments' => null,
+            ];
         }
     }
 }

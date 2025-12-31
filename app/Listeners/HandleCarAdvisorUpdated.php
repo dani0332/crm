@@ -66,7 +66,7 @@ class HandleCarAdvisorUpdated
         if ($lead->sic_flow_enabled) {
 
             info('Lead is SIC enabled so send SIC notification to advisor against: '.$lead->uuid);
-            $user = (new UserService)->getUserById($lead->advisor_id);
+            $user = app(UserService::class)->getUserById($lead->advisor_id);
             $responseCode = $this->carEmailService->sendSICNotificationToAdvisor($lead, $user);
 
             if (in_array($responseCode, [200, 201])) {
@@ -88,8 +88,10 @@ class HandleCarAdvisorUpdated
                 info('SIC workflow key not found');
             }
         }
-
-        SendCarOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+        // Only dispatch the job if either intro email should not be suppressed OR the source is RENEWAL_UPLOAD
+        if (! $lead->isSuppressIntroEmail() || $lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+            SendCarOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+        }
 
         info('SMS sending code reached');
     }

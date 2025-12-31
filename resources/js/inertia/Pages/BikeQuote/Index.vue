@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -12,14 +13,22 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: { type: Array, default: () => [] },
 });
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const loader = reactive({
   table: false,
   export: false,
 });
+
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 
 const serverOptions = ref({
   page: 1,
@@ -50,6 +59,8 @@ let availableFilters = {
   insurer_commmission_invoice_number: '',
   advisor_assigned_date: [],
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -161,6 +172,7 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor' },
+  { text: 'BRANCH', value: 'branch_name' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
@@ -181,12 +193,16 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source' },
 ];
 
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 
 const advisorOptionsFilter = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -411,7 +427,7 @@ const insurerAMLStatusOption = computed(() => {
           v-if="can(permissionsEnum.BikeQuotesCreate)"
           size="sm"
           color="#ff5e00"
-          :href="route('bike-quotes-create')"
+          @click="createLeadModal = true"
         >
           <!-- href="/personal-quotes/bike/create" -->
           Create Lead
@@ -490,6 +506,22 @@ const insurerAMLStatusOption = computed(() => {
           label="Advisor Assigned Date"
           range
           format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
         <x-select
           v-model="filters.quote_status_id"
@@ -602,6 +634,7 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
+
         <x-select
           v-model="filters.previous_quote_policy_number"
           placeholder="Search by Renewal"
@@ -726,6 +759,7 @@ const insurerAMLStatusOption = computed(() => {
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
+          :canAssignLeadAdvisor="permissionAssignLeads"
           :quoteType="quoteType"
           @success="onLeadAssigned"
         />
@@ -804,6 +838,11 @@ const insurerAMLStatusOption = computed(() => {
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
       </template>
+      <template #item-sub_source="item">
+        <p>
+          {{ item?.sub_source?.text ?? '' }}
+        </p>
+      </template>
     </DataTable>
 
     <Pagination
@@ -814,6 +853,14 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="bike-quotes-create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

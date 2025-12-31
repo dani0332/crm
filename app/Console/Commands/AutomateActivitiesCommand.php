@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\TeamNameEnum;
@@ -17,6 +18,7 @@ use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -41,7 +43,7 @@ class AutomateActivitiesCommand extends Command
      */
     public function handle()
     {
-        info('------------------- Automate Activities Command Started At: '.now().' -------------------');
+        LoggerService::info('------------------- Automate Activities Command Started At: '.now().' -------------------');
 
         $quoteTypeDetails = [
             CarQuote::class => [
@@ -66,6 +68,7 @@ class AutomateActivitiesCommand extends Command
                 'eligible_for_automate' => true,
                 'quote_type_id' => QuoteTypeId::Business,
                 'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
+                'group_medical_renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
             ],
             TravelQuote::class => [
                 'eligible_for_automate' => false,
@@ -97,7 +100,7 @@ class AutomateActivitiesCommand extends Command
         ];
 
         foreach ($quoteTypeDetails as $quoteClass => $quoteTypeDetail) {
-            info('------------------- ActivitiesAutomate - Updating Cold Activities for : '.$quoteClass.' -------------------');
+            LoggerService::info('------------------- ActivitiesAutomate - Updating Cold Activities for : '.$quoteClass.' -------------------');
             $coldActivitiesCount = 0;
             Activities::where(function ($query) use ($quoteTypeDetail) {
                 if (is_array($quoteTypeDetail['quote_type_id'])) {
@@ -129,10 +132,10 @@ class AutomateActivitiesCommand extends Command
                     }
                 });
 
-            info('------------------- ActivitiesAutomate - Updated Cold Activities for : '.$quoteClass.' - count: '.$coldActivitiesCount.' -------------------');
+            LoggerService::info('------------------- ActivitiesAutomate - Updated Cold Activities for : '.$quoteClass.' - count: '.$coldActivitiesCount.' -------------------');
 
             if ($quoteTypeDetail['eligible_for_automate'] == true) {
-                info('------------------- ActivitiesAutomate - Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
+                LoggerService::info('------------------- ActivitiesAutomate - Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
                 $followupCount = 0;
                 $quoteClass::whereHas('activities', function ($activityQuery) {
                     $activityQuery->where('due_date', '<', Carbon::now());
@@ -195,6 +198,12 @@ class AutomateActivitiesCommand extends Command
                                         $renewalTeamID = isset($quoteTypeDetail['multiple_lobs']) ?
                                             $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['renewal_team'] : $quoteTypeDetail['renewal_team'];
 
+                                        // Check if this is a Group Medical business quote (business_type_of_insurance_id = 5)
+                                        if (isset($quoteTypeDetail['group_medical_renewal_team']) &&
+                                            $quoteDetail->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                                            $renewalTeamID = $quoteTypeDetail['group_medical_renewal_team'];
+                                        }
+
                                         return $query->where('team_id', $renewalTeamID ?? null);
                                     })->first();
 
@@ -227,9 +236,9 @@ class AutomateActivitiesCommand extends Command
                             Activities::insert($activitiesToCreate);
                         }
                     });
-                info('------------------- Follow-up Activities created for : '.$quoteClass.' - count: '.$followupCount.' -------------------');
+                LoggerService::info('------------------- Follow-up Activities created for : '.$quoteClass.' - count: '.$followupCount.' -------------------');
             }
         }
-        info('------------------- Automate Activities Command Finished At: '.now().' -------------------');
+        LoggerService::info('------------------- Automate Activities Command Finished At: '.now().' -------------------');
     }
 }

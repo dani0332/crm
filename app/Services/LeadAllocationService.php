@@ -39,9 +39,9 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class LeadAllocationService extends BaseService
 {
@@ -72,6 +72,7 @@ class LeadAllocationService extends BaseService
                 'u.name as userName',
                 'lead_allocation.buy_lead_max_capacity as BLMaxCapacity',
                 'lead_allocation.buy_lead_allocation_count as BLAllocationCount',
+                'lead_allocation.buy_lead_cat_a_allocation_count as BLCATAAllocationCount',
                 'lead_allocation.buy_lead_status as BLStatus',
                 'lead_allocation.normal_allocation_enabled as normalAllocationEnabled',
                 'lead_allocation.buy_lead_reset_capacity as blResetCap'])
@@ -245,8 +246,9 @@ class LeadAllocationService extends BaseService
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 DB::commit();
 
-                Haystack::build()
-                    ->addJob(new GetQuotePlansJob($lead))
+                Bus::batch([
+                    new GetQuotePlansJob($lead),
+                ])
                     ->then(function () use ($lead) {
                         if (
                             in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])

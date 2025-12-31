@@ -305,14 +305,7 @@ const expandNotes = ref(false);
         </div>
       </template>
       <template #body>
-        <div
-          v-if="
-            props.reportable.quote_status_id !=
-              page.props.quoteStatusEnum.PolicyCancelled ||
-            page.props.linkedQuoteDetails.childLeadsCount == 0
-          "
-          class="mt-4 flex justify-end"
-        >
+        <div class="mt-4 flex justify-end">
           <x-button
             v-if="can(permissionsEnum.SEND_UPDATE_CREATE)"
             size="sm"

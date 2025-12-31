@@ -14,23 +14,44 @@ jobs:
       fail-fast: true
       matrix:
         php: [8.2]
+
     steps:
-      - name: Clone repository
+      - name: Checkout PR branch
         uses: actions/checkout@v4
-      - name: Install PHP
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0 # Required to push back to the PR branch
+
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: json, dom, curl, libxml, mbstring
+          extensions: json, dom, curl, libxml, mbstring, pdo, pdo_sqlite
           coverage: none
 
       - name: Install Composer dependencies
-        run: composer install
+        run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Run Pint
+      - name: Copy environment file
+        run: cp .env.example .env || true
+
+      - name: Generate application key
+        run: php artisan key:generate || true
+
+      - name: Run Tests
+        run: vendor/bin/pest
+
+      - name: Run Pint Fix
         run: composer pint:fix
-
-      - name: Push changes
+      - name: Fetch PR branch only
+        run: |
+          git fetch origin \
+            refs/heads/${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
+      - name: Commit and Push Pint Fix
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: pint fix
+          commit_message: 'chore: apply pint fix'
+          branch: ${{ github.head_ref }} # Push only to the PR branch
+          push_options: '--force-with-lease'
+          skip_fetch: true # Don't fetch all branches
+

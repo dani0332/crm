@@ -144,7 +144,7 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
             'description' => $row[2] ?? null,
             'value' => $row[3] ?? null,
             'type' => $row[4] ?? null,
-            'is_northern' => $row[5] ?? null,
+            'emirate_type' => $row[5] ?? null,
             'plan_code' => $row[6] ?? null,
         ];
 

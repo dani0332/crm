@@ -23,11 +23,11 @@ class BookPolicyOnSageJob implements ShouldQueue
 
     public $tries = 1;
     public $timeout = 80;
-    private $sageRequest;
-    private $quote;
-    private $request;
-    private $sageProcess;
-    private $lockPostfix;
+    public $sageRequest;
+    public $quote;
+    public $request;
+    public $sageProcess;
+    public $lockPostfix;
 
     /**
      * Create a new job instance.
@@ -47,7 +47,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     public function handle()
     {
         LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::SAGE_POLICY_BOOKING);
-        LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Started');
+        LoggerService::info('--------------------------------Sage Policy Booking Job execution started--------------------------------');
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
 
@@ -59,52 +59,62 @@ class BookPolicyOnSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - sage conflict - updating status to pending');
+                    LoggerService::info('Sage conflict detected while booking policy on Sage - updating status to pending');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
                 } else {
-                    LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - booking failed - updating status to failed');
+                    LoggerService::info('Booking policy on Sage failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
 
                     (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
                 }
 
             } else {
-                LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - policy booked - updating status to completed');
+                LoggerService::info('Policy booked on Sage - updating status to completed');
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'BookPolicyOnSageJob : '.$this->quote->code);
             }
 
-            LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished', extra : ['Response' => json_encode($response)]);
+            LoggerService::info('Booking policy on Sage completed', extra: ['Response' => json_encode($response)]);
         } else {
-            LoggerService::info('job:BookPolicyOnSageJob - Process Skipped - Sage Process ID : '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
+            LoggerService::info('Booking policy on Sage skipped', extra: ['SageProcessID' => $this->sageProcess->id, 'Status' => $this->sageProcess->status]);
         }
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for  code -'.$this->quote->code.'Insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info('Schedule Sage processes triggered for insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info('--------------------------------Sage Policy Booking Job execution completed--------------------------------');
     }
 
     public function failed(Throwable $exception)
     {
         $message = $exception->getMessage();
         $code = $exception->getCode();
-
-        if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
-            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
+        $sageProcessStatus = SageEnum::SAGE_PROCESS_FAILED_STATUS;
+        if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE) || $this->isFailedDueToAttemptsOrTimeout($message)) {
+            $sageProcessStatus = SageEnum::SAGE_PROCESS_TIMEOUT_STATUS;
+            if ($this->isFailedDueToAttemptsOrTimeout($message)) {
+                // Set status to pending instead of failed when job has been attempted too many times
+                $sageProcessStatus = SageEnum::SAGE_PROCESS_PENDING_STATUS;
+            }
+            LoggerService::info('Booking policy on Sage failed', extra: [
+                'ErrorCode' => $code,
+                'ErrorMessage' => $message,
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         } else {
-            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
+            LoggerService::warning('Booking policy on Sage failed', extra: [
+                'ErrorCode' => $code,
+                'ErrorMessage' => $message,
+                'errorTraceMessage' => $exception->getTraceAsString(),
+            ]);
         }
 
-        if ($this->isFailedDueToAttemptsOrTimeout($message)) {
-            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message);
-        } else {
-            LoggerService::error('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message);
-        }
+        LoggerService::info('Updating Sage Process status to '.$sageProcessStatus, extra: ['SageProcessID' => $this->sageProcess->id]);
+        (new SageApiService)->updateSageProcessStatus($this->sageProcess, $sageProcessStatus, $message);
 
-        LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
+        LoggerService::info('Updating Quote status to POLICY_BOOKING_FAILED', extra: ['QuoteCode' => $this->quote->code]);
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' Insurer - '.$this->sageRequest->insurerID);
-
+        LoggerService::info('Schedule Sage processes triggered for insurer - '.$this->sageRequest->insurerID);
     }
 
     public function middleware()

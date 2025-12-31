@@ -78,9 +78,12 @@ class ReportService extends BaseService
             }
 
             $query = PersonalQuote::query()->select(
+                'utm_id',
                 'utm_source',
                 'utm_medium',
                 'utm_campaign',
+                'utm_term',
+                'utm_content',
                 DB::raw('COUNT(personal_quote_details.id) as leads_count'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN 1 ELSE NULL END) as authorized'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
@@ -113,9 +116,12 @@ class ReportService extends BaseService
             $records = $query->get();
 
             $records->map(function ($item) use ($groupBy) {
+                $item['utm_id'] = in_array('utm_id', $groupBy) ? $item['utm_id'] : '';
                 $item['utm_source'] = in_array('utm_source', $groupBy) ? $item['utm_source'] : '';
                 $item['utm_medium'] = in_array('utm_medium', $groupBy) ? $item['utm_medium'] : '';
                 $item['utm_campaign'] = in_array('utm_campaign', $groupBy) ? $item['utm_campaign'] : '';
+                $item['utm_term'] = in_array('utm_term', $groupBy) ? $item['utm_term'] : '';
+                $item['utm_content'] = in_array('utm_content', $groupBy) ? $item['utm_content'] : '';
 
                 return $item;
             });
@@ -518,13 +524,63 @@ class ReportService extends BaseService
             $query->whereIn('q.advisor_id', $request->advisors);
         }
 
-        if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
-            $query->orderBy($request->sortBy, $request->sortType);
+        // Define available sort columns based on LOB type
+        $availableSortColumns = ['team']; // Available for all LOBs
+
+        if ($lob == QuoteTypes::HEALTH->value) {
+            $availableSortColumns = array_merge($availableSortColumns, [
+                'new_lead',
+                'allocated',
+                'quoted',
+                'followed_up',
+                'in_negotiation',
+                'payment_pending',
+                'renewal_terms_recevied',
+                'application_pending',
+                'application_submitted',
+                'missing_documents',
+            ]);
+        } elseif ($lob == QuoteTypes::CORPLINE->value) {
+            $availableSortColumns = array_merge($availableSortColumns, [
+                'new_lead',
+                'allocated',
+                'quoted',
+                'followed_up',
+                'proposal_form_requested',
+                'proposal_form_received',
+                'pending_renewal_information',
+                'additional_information_requested',
+                'quotes_requested',
+                'finalizing_terms',
+            ]);
         } else {
+            // For PET, CYCLE, YACHT, SAVINGS, HOME LOBs that include in_negotiation and payment_pending
+            $availableSortColumns = array_merge($availableSortColumns, [
+                'new_lead',
+                'allocated',
+                'quoted',
+                'followed_up',
+                'in_negotiation',
+                'payment_pending',
+            ]);
+        }
+
+        // Apply sorting with validation
+        if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
+            // Only apply sorting if the column exists for this LOB
+            if (in_array($request->sortBy, $availableSortColumns)) {
+                $query->orderBy($request->sortBy, $request->sortType);
+            } else {
+                // Fallback to default sorting if invalid column
+                $query->orderBy('team', 'asc');
+            }
+        } else {
+            // Default sorting when no sort parameters provided
             $query->orderBy('team', 'asc');
         }
 
         return $query;
+
     }
 
     public function getDefaultFiltersForTotalPremium()
@@ -613,7 +669,7 @@ class ReportService extends BaseService
             quoteTypeCode::Health => ['table' => 'health_quote_request', 'quoteTypeId' => null],
             quoteTypeCode::Business => ['table' => 'business_quote_request', 'quoteTypeId' => null],
             quoteTypeCode::Travel => ['table' => 'travel_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Life => ['table' => 'life_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Life => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Life],
             quoteTypeCode::Pet => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Pet],
             quoteTypeCode::Yacht => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Yacht],
             quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],

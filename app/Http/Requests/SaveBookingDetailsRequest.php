@@ -42,7 +42,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'commission_vat_not_applicable' => 'required|numeric',
             'vat_on_commission' => 'required|numeric',
             'total_commission' => 'required|numeric',
-            'total_vat_amount' => 'sometimes|numeric',
+            'total_vat_amount' => 'sometimes|numeric|min:0|regex:/^[0-9]+(\.[0-9]+)?$/',
             'price_vat_applicable' => 'sometimes|numeric',
             'price_vat_not_applicable' => 'sometimes|numeric',
             'total_price' => 'sometimes|numeric',
@@ -72,7 +72,7 @@ class SaveBookingDetailsRequest extends FormRequest
         if ($validatedCatForPrices) {
             if (! in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Life, QuoteTypeId::Savings, QuoteTypeId::Business, QuoteTypeId::Health])) {
                 $rules['price_vat_applicable'] = ['required', 'numeric', new NotZero];
-                $rules['total_vat_amount'] = 'required|numeric';
+                $rules['total_vat_amount'] = 'required|numeric|min:0|regex:/^[0-9]+(\.[0-9]+)?$/';
             }
 
             if ($this->sendUpdate->quote_type_id == QuoteTypeId::Life) {
@@ -80,7 +80,7 @@ class SaveBookingDetailsRequest extends FormRequest
             }
 
             if (request()->input('price_vat_applicable') !== 0) {
-                $rules['total_vat_amount'] = 'required|numeric';
+                $rules['total_vat_amount'] = 'required|numeric|min:0|regex:/^[0-9]+(\.[0-9]+)?$/';
             }
         }
 
@@ -106,6 +106,19 @@ class SaveBookingDetailsRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'total_vat_amount.min' => 'The total VAT amount must not be negative.',
+            'total_vat_amount.regex' => 'The total VAT amount must contain only numbers and decimal point.',
+        ];
     }
 
     public function withValidator($validator)

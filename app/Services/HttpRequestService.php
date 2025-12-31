@@ -8,6 +8,8 @@ class HttpRequestService extends BaseService
 {
     public function processRequest($data, $creds)
     {
+        LoggerService::info('HttpRequestService - processRequest - data - ', $data);
+
         $authBasic = base64_encode($creds['apiUserName'].':'.$creds['apiPassword']);
 
         $kenClient = new \GuzzleHttp\Client;
@@ -28,8 +30,18 @@ class HttpRequestService extends BaseService
 
             return $statusCode;
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $response = json_decode((string) $e->getResponse()->getBody());
+            $responseObj = $e->getResponse();
+            $statusCode = $responseObj ? $responseObj->getStatusCode() : null;
+            $response = $responseObj ? json_decode((string) $responseObj->getBody()) : null;
 
+            if (isset($statusCode) && $statusCode === 404) {
+                LoggerService::warning('HttpRequestService - processRequest - 404 Not Found - ', [
+                    'status_code' => $statusCode,
+                    'response' => $response,
+                ], $e);
+            } else {
+                LoggerService::error('HttpRequestService - processRequest - error - ', [], $e);
+            }
             if (isset($response->error)) {
                 $response = $response->error;
             }

@@ -4,6 +4,27 @@ export const useRoundIt = (num, decimalPlaces = 2) => {
   return Math.round(n) / p;
 };
 
+/**
+ * Format a Date object to YYYY-MM-DD string format
+ * Uses UTC methods to avoid timezone-related date shifts
+ * @param {Date|string} date - Date object or date string to format
+ * @returns {string} - Date in YYYY-MM-DD format, empty string if invalid
+ */
+export const useFormatDateToYMD = date => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+
+  // Use UTC methods to avoid timezone issues when parsing ISO strings
+  return (
+    d.getUTCFullYear() +
+    '-' +
+    String(d.getUTCMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getUTCDate()).padStart(2, '0')
+  );
+};
+
 export const useCleanObj = reactive => {
   Object.keys(reactive).forEach(key => {
     if (
@@ -200,8 +221,23 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
 
 export const setQueryStringFilters = (params, filters) => {
   for (const [key] of Object.entries(params)) {
+    const val = params[key];
+    // Only convert to integer if it's a valid number, not an empty string,
+    // and converting it back to string matches original (preserves leading zeros, floats, etc)
+    params[key] =
+      val !== '' && !isNaN(val) && String(parseInt(val, 10)) === String(val)
+        ? parseInt(val, 10)
+        : val;
+
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
+    } else if (key.includes('[') && key.includes(']')) {
+      const baseKey = key.substring(0, key.indexOf('['));
+      if (!filters[baseKey]) {
+        filters[baseKey] = [];
+      }
+      const index = key.substring(key.indexOf('[') + 1, key.indexOf(']'));
+      filters[baseKey][index] = params[key];
     } else {
       filters[key] = params[key];
     }
@@ -325,19 +361,66 @@ export const parseDate = dateString => {
   throw new Error('Invalid date format');
 };
 
+// Helper function to format date for input
+export const formatDateForInput = date => {
+  if (!date || date === '' || date === 'null' || date === 'undefined')
+    return null;
+
+  try {
+    // If date is already in YYYY-MM-DD format, return as is
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+
+    // Handle DD-MM-YYYY format (common in the system)
+    if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(date)) {
+      const [day, month, year] = date.split('-');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Handle DD/MM/YYYY format
+    if (typeof date === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+      const [day, month, year] = date.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Handle YYYY/MM/DD format
+    if (typeof date === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(date)) {
+      return date.replace(/\//g, '-');
+    }
+
+    // Try to parse as Date object for other formats
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return null;
+    }
+
+    // Convert to YYYY-MM-DD format
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    return null;
+  }
+};
+
 export function getQuoteType(id, returnType = 'code') {
   const types = {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
-    2: { code: 'HOM', id: 'home', link: '/quotes' },
+    2: { code: 'HOM', id: 'home', link: '/personal-quotes' },
     3: { code: 'HEA', id: 'health', link: '/quotes' },
-    4: { code: 'LIF', id: 'life', link: '/quotes' },
+    4: { code: 'LIF', id: 'life', link: '/personal-quotes' },
     5: { code: 'BUS', id: 'business', link: '/quotes' },
     6: { code: 'BIK', id: 'bike', link: '/personal-quotes' },
     7: { code: 'YAC', id: 'yacht', link: '/personal-quotes' },
     8: { code: 'TRA', id: 'travel', link: '/quotes' },
     9: { code: 'PET', id: 'pet', link: '/personal-quotes' },
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
+    11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
     18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
+    102: { code: 'BUS', id: 'amt', link: '/medical' },
   };
   return types[id] ? types[id][returnType] : '';
 }
@@ -362,7 +445,8 @@ export const calculateDaysDifference = (start_date, end_date) => {
     const end = new Date(end_date);
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    // add 1 to the difference to include the end date n start date
+    return diffDays + 1;
   }
   return 0;
 };
@@ -394,6 +478,8 @@ export const getQuoteTypeId = (quoteTypes, quoteType) => {
 // Function to log quote export and open the URL
 export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
+  let isSuccess = false;
+
   return axios
     .post('/quotes/export-logs/create', payload)
     .then(async res => {
@@ -403,6 +489,7 @@ export const logAndExportQuotes = async payload => {
         data: payload.data || null,
       })
         .then(resp => {
+          isSuccess = true;
           return resp.data;
         })
         .catch(err => {
@@ -415,8 +502,8 @@ export const logAndExportQuotes = async payload => {
       throw err;
     })
     .finally(() => {
-      // Cleanup operations if needed
-      if (payload.exportType !== 'email') {
+      // Only redirect if the export was successful and it's not an email export
+      if (isSuccess && payload.exportType !== 'email') {
         window.open(payload.url);
       }
     });
@@ -430,6 +517,36 @@ export const getIp = async () => {
   } catch (err) {
     return null;
   }
+};
+
+// Function to calculate age
+export const calculateAge = birthDateString => {
+  const birthDate = new Date(birthDateString);
+
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  const dayDifference = today.getDate() - birthDate.getDate();
+
+  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+    age--;
+  }
+
+  return age;
+};
+
+// Function to calculate BMI
+export const calculateBMI = (heightInCm, weightInKg) => {
+  if (!heightInCm || !weightInKg) {
+    return 0;
+  }
+
+  const heightInMeters = heightInCm / 100;
+  const bmi = weightInKg / heightInMeters ** 2;
+
+  return parseFloat(bmi.toFixed(2));
 };
 
 export const resolveUserStatusText = statusId => {
@@ -473,6 +590,7 @@ export const validateField = (form, fieldValue, errorField, validationRule) => {
 };
 
 export const applyEmiratesNumberMasking = emiratesId => {
+  if (!emiratesId) return emiratesId;
   let emiratesIDNumber = emiratesId.replace(/\D/g, '');
   if (emiratesIDNumber?.length > 15) {
     emiratesIDNumber = emiratesIDNumber.substring(0, 15); // Limit to 15 characters
@@ -499,9 +617,194 @@ export const applyEmiratesNumberMasking = emiratesId => {
   return emiratesIDNumber;
 };
 
+export const applyScreeningIdNumberMasking = screeningId => {
+  // Handle null, undefined, or empty values
+  if (!screeningId || typeof screeningId !== 'string') {
+    return screeningId ?? null;
+  }
+
+  let screeningIdNumber = screeningId.replace(/\D/g, '');
+  if (screeningIdNumber?.length > 15) {
+    screeningIdNumber = screeningIdNumber.substring(0, 15); // Limit to 15 characters
+  }
+  if (screeningIdNumber?.length <= 3) {
+    screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
+  } else if (screeningIdNumber?.length <= 7) {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{0,})/,
+      '$1-$2-$3',
+    );
+  } else if (screeningIdNumber?.length <= 13) {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{7})(\d{0,})/,
+      '$1-$2-$3-$4',
+    );
+  } else {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{7})(\d{1,})/,
+      '$1-$2-$3-$4',
+    );
+  }
+
+  return screeningIdNumber;
+};
+
 export const useGenerateOptions = (items, valueKey, labelKey) => {
   return items.map(item => ({
     value: item[valueKey],
     label: item[labelKey],
   }));
+};
+
+export const useformatDateTimeForPicker = dateTimeString => {
+  if (!dateTimeString) return null;
+
+  // Handle format: DD-MM-YYYY HH:mm:ss from server
+  const [datePart, timePart] = dateTimeString.split(' ');
+  if (!datePart || !timePart) return null;
+
+  const [day, month, year] = datePart.split('-');
+  const [hours, minutes, seconds] = timePart.split(':');
+
+  // Create a date object but compensate for timezone to preserve exact time display
+  // The server sends local time, but DatePicker with utc="preserve" still converts
+  const date = new Date(
+    parseInt(year),
+    parseInt(month) - 1, // Month is 0-indexed
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes),
+    parseInt(seconds) || 0,
+  );
+
+  // Get timezone offset and compensate by subtracting it
+  // This ensures the DatePicker displays the exact time from server
+  const timezoneOffsetMinutes = date.getTimezoneOffset();
+  const compensatedDate = new Date(
+    date.getTime() - timezoneOffsetMinutes * 60000,
+  );
+
+  return compensatedDate;
+};
+// prevent charaters, accepts only numbers, comma, and decimal point
+export const preventInvalidInputs = (
+  event,
+  allowComma = false,
+  allowDecimal = false,
+) => {
+  const key = event.key;
+
+  const controlKeys = [
+    'Backspace',
+    'Delete',
+    'ArrowLeft',
+    'ArrowRight',
+    'Tab',
+    'Enter',
+    'Home',
+    'End',
+  ];
+  if (controlKeys.includes(key)) return;
+
+  // Allow comma if specified
+  if (allowComma && key === ',') return;
+
+  // Allow dot (.)
+  if (allowDecimal && key === '.') return;
+
+  // Allow digits 0-9
+  if (/^[0-9]$/.test(key)) return;
+
+  // Block everything else
+  event.preventDefault();
+};
+
+export const numberFormat = (price, decimals = 2) => {
+  price = parseFloat(price);
+  return price.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+// life lob specific function
+export const useFormattedNumberField = (source, fieldName) => {
+  return computed({
+    get() {
+      const val = source[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
+    },
+    set(newVal) {
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      source[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
+
+// Helper function to create formatted fields for rider arrays
+export const useFormattedRiderField = (ridersArray, index, fieldName) => {
+  return computed({
+    get() {
+      const rider = ridersArray.value[index];
+      if (!rider) return '';
+      const val = rider[fieldName];
+      return val != null ? Number(val).toLocaleString('en-US') : '';
+    },
+    set(newVal) {
+      const rider = ridersArray.value[index];
+      if (!rider) return;
+      const cleaned = cleanFormattedValueToFloat(newVal);
+      const num = parseFloat(cleaned);
+      rider[fieldName] = isNaN(num) || cleaned === '' ? 0 : num;
+    },
+  });
+};
+
+export const cleanFormattedValueToFloat = value => {
+  if (typeof value !== 'string') return 0;
+
+  // Remove commas
+  const cleaned = value.replace(/,/g, '');
+
+  // Parse to float
+  const num = parseFloat(cleaned);
+
+  // If NaN or empty, return 0
+  return isNaN(num) ? 0 : num;
+};
+
+export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) => {
+  if (!createdAtString || !cutoffDate) return false;
+
+  const match = createdAtString.match(
+    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
+  );
+  if (!match) return false;
+
+  const [_, day, monthStr, year, hour, min, ampm] = match;
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+  let h = parseInt(hour, 10);
+  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
+  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
+
+  const createdDate = new Date(
+    parseInt(year),
+    months[monthStr.toLowerCase().slice(0, 3)],
+    parseInt(day),
+    h,
+    parseInt(min),
+  );
+
+  return createdDate >= cutoffDate;
 };

@@ -23,6 +23,8 @@ const { isRequired } = useRules();
 const isSagmentVolumeEmpty = ref(false);
 const isSagmentValueEmpty = ref(false);
 
+const isModalOpen = ref(false);
+
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
@@ -104,10 +106,29 @@ const setBatchYear = () => {
   return batchForm.batchMonth.year;
 };
 
+const validateSegment = () => {
+  let isValid = true;
+  if (batchForm.segment_volume.length === 0) {
+    notification.error({
+      title: 'Segment Volume is required',
+      position: 'top',
+    });
+    isValid = false;
+  }
+  if (batchForm.segment_value.length === 0) {
+    notification.error({
+      title: 'Segment Value is required',
+      position: 'top',
+    });
+    isValid = false;
+  }
+  return isValid;
+};
 function onSubmit(isValid) {
   let valid = validateSlabs();
+  let segmentValid = validateSegment();
 
-  if (!isValid || !valid) return;
+  if (!isValid || !valid || !segmentValid) return;
 
   batchForm.clearErrors();
   batchForm.month = setBatchMonth();
@@ -339,84 +360,46 @@ onMounted(() => {
         <p class="text-xl text-white">Segments</p>
       </div>
       <div class="p-4">
-        <table class="w-full border-collapse border rounded">
-          <thead>
-            <tr class="border">
-              <th scope="col" class="p-3 border">Segment Type</th>
-              <th scope="col" colspan="4" class="p-3 border">Advisors</th>
+        <table class="w-full border-collapse border rounded-lg">
+          <thead class="bg-primary text-white">
+            <tr class="border bg-primary text-white">
+              <th scope="col" class="border py-1 px-2">Segment Type</th>
+              <th scope="col" class="border py-1 px-2">
+                Segment Volume <span class="text-red-600">*</span>
+              </th>
+              <th scope="col" class="border py-1 px-2">
+                Segment Value <span class="text-red-600">*</span>
+              </th>
+              <th scope="col" class="border py-1 px-2">Action</th>
             </tr>
           </thead>
           <tbody>
             <tr class="border">
-              <th scope="row" class="w-40 border-r">
-                Segment Volume <span class="required">*</span>
-              </th>
-              <td class="">
-                <x-select
-                  class="p-2"
-                  v-model="batchForm.segment_volume"
-                  name="segment_volume"
-                  placeholder="Please select Segment Volume"
-                  :options="
-                    carAdvisors.map(item => ({
-                      value: item.id,
-                      label: item.name,
-                    }))
-                  "
-                  filterable
-                  filterPlaceholder="Filter Segment Volume...."
-                  multiple
-                  truncate
-                  required
-                  :rules="[isRequired]"
-                >
-                  <template #content-footer>
-                    <ui-select-actions
-                      @select-all="
-                        batchForm.segment_volume = carAdvisors.map(
-                          item => item.id,
-                        )
-                      "
-                      @clear="batchForm.segment_volume = []"
-                    />
-                  </template>
-                </x-select>
+              <td class="p-3 border font-medium text-center">Advisors</td>
+              <td class="p-3 border text-center">
+                <div v-for="value in batchForm.segment_volume">
+                  <span class="text-sm">{{
+                    carAdvisors.find(item => item.id === value).name
+                  }}</span>
+                </div>
               </td>
-            </tr>
-            <tr class="border">
-              <th scope="row" class="border-r">
-                Segment Value <span class="required">*</span>
-              </th>
-              <td>
-                <x-select
-                  class="p-2"
-                  v-model="batchForm.segment_value"
-                  name="segment_value"
-                  placeholder="Please select Segment Value"
-                  :options="
-                    carAdvisors.map(item => ({
-                      value: item.id,
-                      label: item.name,
-                    }))
-                  "
-                  filterable
-                  filterPlaceholder="Filter Segment Value...."
-                  multiple
-                  truncate
-                  required
-                  :rules="[isRequired]"
+              <td class="p-3 border text-center">
+                <div v-for="value in batchForm.segment_value">
+                  <span class="text-sm">{{
+                    carAdvisors.find(item => item.id === value).name
+                  }}</span>
+                </div>
+              </td>
+              <td class="p-3 border text-center">
+                <x-button
+                  size="sm"
+                  color="primary"
+                  tag="div"
+                  outlined
+                  @click="isModalOpen = true"
                 >
-                  <template #content-footer>
-                    <ui-select-actions
-                      @select-all="
-                        batchForm.segment_value = carAdvisors.map(
-                          item => item.id,
-                        )
-                      "
-                      @clear="batchForm.segment_value = []"
-                    />
-                  </template>
-                </x-select>
+                  Edit
+                </x-button>
               </td>
             </tr>
           </tbody>
@@ -438,4 +421,53 @@ onMounted(() => {
       </x-button>
     </div>
   </x-form>
+  <x-modal
+    v-model="isModalOpen"
+    showHeader
+    title="Edit Segments"
+    persistent
+    @close="isModalOpen = false"
+    show-close
+  >
+    <div class="grid grid-cols-2 gap-4">
+      <x-select
+        label="Segment Volume"
+        v-model="batchForm.segment_volume"
+        name="segment_volume"
+        placeholder="Please select Segment Volume"
+        :options="
+          carAdvisors.map(item => ({ value: item.id, label: item.name }))
+        "
+        filterable
+        multiple
+        truncate
+        required
+        :rules="[isRequired]"
+      />
+      <x-select
+        label="Segment Value"
+        v-model="batchForm.segment_value"
+        name="segment_value"
+        placeholder="Please select Segment Value"
+        :options="
+          carAdvisors.map(item => ({ value: item.id, label: item.name }))
+        "
+        filterable
+        multiple
+        truncate
+        required
+        :rules="[isRequired]"
+      />
+    </div>
+    <div class="flex justify-end gap-3 mt-3">
+      <x-button
+        class="w-[100px]"
+        size="md"
+        color="primary"
+        @click="isModalOpen = false"
+      >
+        Add
+      </x-button>
+    </div>
+  </x-modal>
 </template>

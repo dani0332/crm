@@ -1,7 +1,75 @@
 <script setup>
+import BookPolicyOverrideCommissionLimitModal from '@/inertia/Components/BookPolicyOverrideCommissionLimitModal.vue';
+import { h, defineComponent } from 'vue';
 const can = permission => useCan(permission);
 
 const { isRequired } = useRules();
+
+// Field Loader component for OCR loading indicators
+const FieldLoader = defineComponent({
+  props: {
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  setup(props, { slots }) {
+    return () =>
+      h('div', { class: 'relative' }, [
+        slots.default && slots.default(),
+        props.loading &&
+          h(
+            'div',
+            {
+              class:
+                'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10',
+            },
+            [
+              h('div', {
+                class:
+                  'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full',
+              }),
+            ],
+          ),
+      ]);
+  },
+});
+
+// Helper function to check if a document type is currently being processed
+const localIsDocTypeLoading = docType => {
+  let result = false;
+  let source = 'none';
+
+  // Handle both function and string types for backwards compatibility
+  if (typeof props.ocrLoadingDocType === 'function') {
+    result = props.ocrLoadingDocType(docType);
+    source = 'function';
+  }
+  // Check the reactive Set if available
+  else if (
+    props.ocrLoadingDocTypes &&
+    props.ocrLoadingDocTypes.has &&
+    props.ocrLoadingDocTypes.has(docType)
+  ) {
+    result = true;
+    source = 'reactiveSet';
+  }
+  // Check the function prop if available
+  else if (typeof props.isDocTypeLoading === 'function') {
+    result = props.isDocTypeLoading(docType);
+    source = 'functionProp';
+  }
+  // Fall back to old string comparison
+  else {
+    result = props.ocrLoadingDocType === docType;
+    source = 'stringComparison';
+  }
+
+  return result;
+};
+
+const page = usePage();
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 
 const props = defineProps({
   sendUpdateLog: {
@@ -58,6 +126,16 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
+  isEndorsementBookingActionDisabled: Boolean,
+  showOcrNotification: {
+    required: false,
+    type: Boolean,
+    default: false,
+  },
+  isDocTypeLoading: {
+    type: Function,
+    required: false,
+  },
 });
 
 const state = reactive({
@@ -65,7 +143,6 @@ const state = reactive({
   reversalSectionEdit: false,
 });
 
-const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
@@ -73,6 +150,8 @@ const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const commissionPercentageExceedsLimit = ref(false);
+const showCommissionPercentageExceedsLimitAlert = ref(false);
 
 const dateToYMD = date => {
   if (date) {
@@ -355,6 +434,7 @@ const calculatePriceDetailsForATIB = () => {
 
 const calculateCommission = () => {
   ignoreCheckDiscount.value = false;
+  commissionPercentageExceedsLimit.value = false;
   if (
     [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
       props.sendUpdateLog?.option?.code,
@@ -420,10 +500,15 @@ const calculateCommission = () => {
         if (page.props.isTapEnabled) {
           const brokerCommission = props.bookingDetails?.brokerCommission;
           const brokerCommMinPer = brokerCommission
-            ? roundValue(brokerCommission.commission_percentage_min)
+            ? Math.max(
+                (Number(brokerCommission?.fixed_commission) ?? 0) - 2.5,
+                0,
+              )
             : null;
           const brokerCommMaxPer = brokerCommission
-            ? roundValue(brokerCommission.commission_percentage_max)
+            ? brokerCommission?.fixed_commission
+              ? Number(brokerCommission?.fixed_commission) + 2.5
+              : 0
             : null;
           if (
             commissionPercentage > 0 &&
@@ -437,16 +522,28 @@ const calculateCommission = () => {
               !(
                 Number(commissionPercentage) >= Number(brokerCommMinPer) &&
                 Number(commissionPercentage) <= Number(brokerCommMaxPer)
-              )
+              ) &&
+              can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
+            ) {
+              commissionPercentageExceedsLimit.value = true;
+            }
+            if (
+              brokerCommMinPer != null &&
+              brokerCommMaxPer != null &&
+              !(
+                Number(commissionPercentage) >= Number(brokerCommMinPer) &&
+                Number(commissionPercentage) <= Number(brokerCommMaxPer)
+              ) &&
+              !can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT)
             ) {
               notification.error({
                 title:
-                  'The commission amount you entered is outside the permitted range.',
+                  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.',
                 position: 'top',
               });
               bookingDetailsForm.setError({
                 commission_vat_applicable:
-                  'The commission amount you entered is outside the permitted range.',
+                  'The commission percentage exceeds the allowed maximum or falls below the minimum threshold.',
               });
               bookingDetailsForm.commission_vat_applicable =
                 commissionPercentage = null;
@@ -487,6 +584,42 @@ const calculateCommission = () => {
   }
 };
 
+const calculateTotalPriceOnVatChange = () => {
+  if (Number(bookingDetailsForm.total_vat_amount) < 0) {
+    notification.error({
+      title: 'Please enter a valid Total VAT Amount',
+      position: 'top',
+    });
+    bookingDetailsForm.total_vat_amount = '0.00';
+    return;
+  }
+
+  const totalVat = Number(bookingDetailsForm.total_vat_amount) || 0;
+  const priceVatApplicable =
+    Number(bookingDetailsForm.price_vat_applicable) || 0;
+  const priceVatNotApplicable =
+    Number(bookingDetailsForm.price_vat_not_applicable) || 0;
+
+  let priceWithVat = priceVatApplicable + priceVatNotApplicable + totalVat;
+  bookingDetailsForm.price_with_vat = convertToNegative(priceWithVat);
+};
+
+const preventInvalidVatInput = event => {
+  const charCode = event.which ? event.which : event.keyCode;
+  const char = String.fromCharCode(charCode);
+
+  if (!/^[0-9.]$/.test(char)) {
+    event.preventDefault();
+    return false;
+  }
+
+  const currentValue = bookingDetailsForm.total_vat_amount || '';
+  if (char === '.' && currentValue.includes('.')) {
+    event.preventDefault();
+    return false;
+  }
+};
+
 const isReversalNegative = ref(false);
 
 // this function is used to convert the value to negative if the isNegativeValue is true.
@@ -516,6 +649,16 @@ function thousandSeparator(value) {
 
 const saveBookingDetail = isValid => {
   if (!isValid) return;
+  if (
+    commissionPercentageExceedsLimit.value &&
+    can(permissionsEnum.OVERRIDE_COMMISSION_LIMIT) &&
+    !showCommissionPercentageExceedsLimitAlert.value
+  ) {
+    showCommissionPercentageExceedsLimitAlert.value = true;
+    return;
+  } else {
+    showCommissionPercentageExceedsLimitAlert.value = false;
+  }
   // it will check payment related condition.
   let childOptions = [
     sendUpdateStatusEnum.MPC,
@@ -750,6 +893,19 @@ const modals = reactive({
 const confirmationCheck = ref(false);
 const isStating = ref(false);
 
+const isAUHEnable = computed(() => {
+  if (
+    props.isEndorsementBookingActionDisabled &&
+    [sendUpdateStatusEnum.SNBU, sendUpdateStatusEnum.SU].includes(
+      props.updateBtn,
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+});
+
 const sendUpdatePermissionCheck = computed(() => {
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
     return !can(permissionsEnum.BOOK_UPDATE_BUTTON);
@@ -838,7 +994,6 @@ const sendUpdateValidation = () => {
         let responseError = errors.response.data.errors.error;
         Object.keys(responseError).forEach(function (key) {
           if (
-            responseError[key] === 'Please select Addons' ||
             responseError[key] === 'Please select Emirate' ||
             responseError[key] === 'Please select Seating capacity'
           ) {
@@ -1848,15 +2003,24 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <DatePicker
-                    v-model="bookingDetailsForm.invoice_date"
-                    name="issuance_date"
-                    :disabled="!state.isEdit"
-                    placeholder="Enter Insurer Invoice date"
-                    :rules="[isRequired]"
-                    size="xs"
-                    no-margin
-                  />
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+                      )
+                    "
+                  >
+                    <DatePicker
+                      v-model="bookingDetailsForm.invoice_date"
+                      name="issuance_date"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Insurer Invoice date"
+                      :rules="[isRequired]"
+                      size="xs"
+                      no-margin
+                    />
+                  </FieldLoader>
                   <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </div>
               </div>
@@ -1900,15 +2064,24 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-input
-                    maxlength="60"
-                    v-model="bookingDetailsForm.insurer_tax_invoice_number"
-                    class="!mb-0 w-full"
-                    :disabled="!state.isEdit"
-                    placeholder="Enter insurer Tax Invoice Number"
-                    :rules="[isRequired]"
-                    size="xs"
-                  />
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+                      )
+                    "
+                  >
+                    <x-input
+                      maxlength="60"
+                      v-model="bookingDetailsForm.insurer_tax_invoice_number"
+                      class="!mb-0 w-full"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter insurer Tax Invoice Number"
+                      :rules="[isRequired]"
+                      size="xs"
+                    />
+                  </FieldLoader>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1956,17 +2129,26 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-input
-                    maxlength="60"
-                    v-model="
-                      bookingDetailsForm.insurer_commission_invoice_number
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+                      )
                     "
-                    class="!mb-0 w-full"
-                    :disabled="!state.isEdit"
-                    placeholder="Enter Commission Tax Invoice No"
-                    :rules="[isRequired]"
-                    size="xs"
-                  />
+                  >
+                    <x-input
+                      maxlength="60"
+                      v-model="
+                        bookingDetailsForm.insurer_commission_invoice_number
+                      "
+                      class="!mb-0 w-full"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Commission Tax Invoice No"
+                      :rules="[isRequired]"
+                      size="xs"
+                    />
+                  </FieldLoader>
                 </div>
               </div>
               <div
@@ -2025,21 +2207,30 @@ watch(
                   </x-tooltip>
                 </div>
                 <div v-if="isPriceVatApplicableEditable">
-                  <x-input
-                    type="number"
-                    min="0"
-                    add
-                    step="any"
-                    v-model="bookingDetailsForm.price_vat_applicable"
-                    @change="calculateCommission"
-                    class="!mb-0 w-full"
-                    :class="isNegativeValue ? ' icon-padding' : ''"
-                    :disabled="!state.isEdit"
-                    placeholder="Enter Price"
-                    :rules="[isRequired]"
-                    size="xs"
-                    :icon-left="isNegativeValue ? 'minus' : ''"
-                  />
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+                      )
+                    "
+                  >
+                    <x-input
+                      type="number"
+                      min="0"
+                      add
+                      step="any"
+                      v-model="bookingDetailsForm.price_vat_applicable"
+                      @change="calculateCommission"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Price"
+                      :rules="[isRequired]"
+                      size="xs"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                  </FieldLoader>
                 </div>
                 <div v-else>
                   <span>N/A</span>
@@ -2184,18 +2375,28 @@ watch(
                       bookingDetailsForm.isCommissionDisabled
                     "
                   >
-                    <x-input
-                      v-model="bookingDetailsForm.commission_vat_applicable"
-                      class="!mb-0 w-full"
-                      :class="isNegativeValue ? ' icon-padding' : ''"
-                      :disabled="
-                        !state.isEdit || disableCommissionVatApplicable
+                    <FieldLoader
+                      :loading="
+                        props.showOcrNotification &&
+                        localIsDocTypeLoading(
+                          ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER
+                            ?.value,
+                        )
                       "
-                      placeholder="Enter Commission Amount"
-                      size="xs"
-                      :icon-left="isNegativeValue ? 'minus' : ''"
-                      @change="calculateCommission"
-                    />
+                    >
+                      <x-input
+                        v-model="bookingDetailsForm.commission_vat_applicable"
+                        class="!mb-0 w-full"
+                        :class="isNegativeValue ? ' icon-padding' : ''"
+                        :disabled="
+                          !state.isEdit || disableCommissionVatApplicable
+                        "
+                        placeholder="Enter Commission Amount"
+                        size="xs"
+                        :icon-left="isNegativeValue ? 'minus' : ''"
+                        @change="calculateCommission"
+                      />
+                    </FieldLoader>
                     <template #tooltip>
                       {{
                         bookingDetailsForm.isCommissionDisabled
@@ -2204,23 +2405,36 @@ watch(
                       }}
                     </template>
                   </x-tooltip>
-                  <x-input
+                  <FieldLoader
                     v-else
-                    type="number"
-                    min="0"
-                    add
-                    step="any"
-                    v-model="bookingDetailsForm.commission_vat_applicable"
-                    @change="calculateCommission"
-                    class="!mb-0 w-full"
-                    :class="isNegativeValue ? ' icon-padding' : ''"
-                    :disabled="!state.isEdit || disableCommissionVatApplicable"
-                    placeholder="Enter Commission Amount"
-                    :rules="[isRequired]"
-                    size="xs"
-                    :error="bookingDetailsForm.errors.commission_vat_applicable"
-                    :icon-left="isNegativeValue ? 'minus' : ''"
-                  />
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+                      )
+                    "
+                  >
+                    <x-input
+                      type="number"
+                      min="0"
+                      add
+                      step="any"
+                      v-model="bookingDetailsForm.commission_vat_applicable"
+                      @change="calculateCommission"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="
+                        !state.isEdit || disableCommissionVatApplicable
+                      "
+                      placeholder="Enter Commission Amount"
+                      :rules="[isRequired]"
+                      size="xs"
+                      :error="
+                        bookingDetailsForm.errors.commission_vat_applicable
+                      "
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                  </FieldLoader>
                 </div>
               </div>
               <div
@@ -2350,12 +2564,33 @@ watch(
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
-                  <span>{{
-                    bookingDetailsForm.total_vat_amount !== '0.00'
-                      ? thousandSeparator(bookingDetailsForm.total_vat_amount)
-                      : 'N/A'
-                  }}</span>
+                <div v-if="can(permissionsEnum.POLICY_DETAILS_ADD_VAT)">
+                  <x-input
+                    type="number"
+                    min="0"
+                    add
+                    step="any"
+                    v-model="bookingDetailsForm.total_vat_amount"
+                    @change="calculateTotalPriceOnVatChange"
+                    @keypress="preventInvalidVatInput"
+                    class="!mb-0 w-full"
+                    :disabled="
+                      !can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ||
+                      !state.isEdit
+                    "
+                    placeholder="Enter Total VAT Amount"
+                    :rules="[isRequired]"
+                    size="xs"
+                  />
+                </div>
+                <div v-else>
+                  <span>
+                    {{
+                      bookingDetailsForm.total_vat_amount !== '0.00'
+                        ? thousandSeparator(bookingDetailsForm.total_vat_amount)
+                        : 'N/A'
+                    }}
+                  </span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2436,7 +2671,8 @@ watch(
                   props.updateBtn &&
                   (isLackingPayment ||
                     disableMainBtn ||
-                    isTapCaptureProcessStart)
+                    isTapCaptureProcessStart ||
+                    isAUHEnable)
                 "
               >
                 <div>
@@ -2462,7 +2698,9 @@ watch(
                             ? disableMainBtn
                             : isTapCaptureProcessStart
                               ? 'Update booking already in queued.'
-                              : 'Action Needed: Please revise payment details to reflect plan changes.'
+                              : isAUHEnable
+                                ? 'Abu Dhabi policy financials will be recorded manually and not entered in Sage'
+                                : 'Action Needed: Please revise payment details to reflect plan changes.'
                         }}
                       </span>
                     </template>
@@ -2505,6 +2743,13 @@ watch(
               </x-button>
             </template>
           </div>
+          <BookPolicyOverrideCommissionLimitModal
+            :showCommissionPercentageExceedsLimitAlert="
+              showCommissionPercentageExceedsLimitAlert
+            "
+            :bpForm="bookingDetailsForm"
+            @modalClosed="showCommissionPercentageExceedsLimitAlert = false"
+          />
         </x-form>
       </template>
     </Collapsible>

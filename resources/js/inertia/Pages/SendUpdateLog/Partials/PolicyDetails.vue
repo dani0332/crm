@@ -1,5 +1,36 @@
 <script setup>
+import { h, defineComponent } from 'vue';
 const { isRequired } = useRules();
+
+// Field Loader component for OCR loading indicators
+const FieldLoader = defineComponent({
+  props: {
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  setup(props, { slots }) {
+    return () =>
+      h('div', { class: 'relative' }, [
+        slots.default && slots.default(),
+        props.loading &&
+          h(
+            'div',
+            {
+              class:
+                'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10',
+            },
+            [
+              h('div', {
+                class:
+                  'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full',
+              }),
+            ],
+          ),
+      ]);
+  },
+});
 
 const props = defineProps({
   sendUpdateLog: {
@@ -27,6 +58,22 @@ const props = defineProps({
     required: true,
   },
   isEditDisabledForQueuedBooking: Boolean,
+  ocrLoadingDocType: {
+    type: [String, null],
+    default: null,
+  },
+  showOcrNotification: {
+    type: Boolean,
+    default: false,
+  },
+  ocrLoadingDocTypes: {
+    type: Object,
+    default: () => new Set(),
+  },
+  isDocTypeLoading: {
+    type: Function,
+    required: false,
+  },
 });
 
 const state = reactive({
@@ -35,6 +82,35 @@ const state = reactive({
 
 const page = usePage();
 const notification = useToast();
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
+
+// Helper function to check if a document type is currently being processed
+const localIsDocTypeLoading = docType => {
+  let result = false;
+
+  // Handle both function and string types for backwards compatibility
+  if (typeof props.ocrLoadingDocType === 'function') {
+    result = props.ocrLoadingDocType(docType);
+  }
+  // Check the reactive Set if available
+  else if (
+    props.ocrLoadingDocTypes &&
+    props.ocrLoadingDocTypes.has &&
+    props.ocrLoadingDocTypes.has(docType)
+  ) {
+    result = true;
+  }
+  // Check the function prop if available
+  else if (typeof props.isDocTypeLoading === 'function') {
+    result = props.isDocTypeLoading(docType);
+  }
+  // Fall back to old string comparison
+  else {
+    result = props.ocrLoadingDocType === docType;
+  }
+
+  return result;
+};
 
 const dateToYMD = date => {
   if (date) {
@@ -420,13 +496,23 @@ const rules = {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
+                  <FieldLoader
                     v-if="isCPD || isCIR"
-                    :disabled="!state.isEdit"
-                    v-model="policyDetailsForm.policy_number"
-                    placeholder="Enter policy number"
-                    class="w-full"
-                  />
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE
+                          ?.value,
+                      )
+                    "
+                  >
+                    <x-input
+                      :disabled="!state.isEdit"
+                      v-model="policyDetailsForm.policy_number"
+                      placeholder="Enter policy number"
+                      class="w-full"
+                    />
+                  </FieldLoader>
                   <span v-else>{{ policyDetailsForm.policy_number }}</span>
                 </dd>
               </div>
@@ -477,14 +563,24 @@ const rules = {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <DatePicker
+                  <FieldLoader
                     v-if="isCPD || isCIR"
-                    v-model="policyDetailsForm.start_date"
-                    name="start_date"
-                    :disabled="!state.isEdit"
-                    placeholder="dd-mm-yyyy"
-                    class="w-full"
-                  />
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE
+                          ?.value,
+                      )
+                    "
+                  >
+                    <DatePicker
+                      v-model="policyDetailsForm.start_date"
+                      name="start_date"
+                      :disabled="!state.isEdit"
+                      placeholder="dd-mm-yyyy"
+                      class="w-full"
+                    />
+                  </FieldLoader>
                   <span v-else>{{
                     dateFormat(policyDetailsForm.start_date)
                   }}</span>
@@ -507,15 +603,25 @@ const rules = {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <DatePicker
-                    v-model="policyDetailsForm.expiry_date"
-                    name="expiry_date"
-                    :rules="[rules.expiry_date]"
-                    :disabled="!state.isEdit"
-                    placeholder="dd-mm-yyyy"
-                    class="w-full"
-                    :custom-error="policyDetailsForm.errors.expiry_date"
-                  />
+                  <FieldLoader
+                    :loading="
+                      props.showOcrNotification &&
+                      localIsDocTypeLoading(
+                        ocrDocumentTypeEnum?.MOTOR_INSURANCE_POLICY_SCHEDULE
+                          ?.value,
+                      )
+                    "
+                  >
+                    <DatePicker
+                      v-model="policyDetailsForm.expiry_date"
+                      name="expiry_date"
+                      :rules="[rules.expiry_date]"
+                      :disabled="!state.isEdit"
+                      placeholder="dd-mm-yyyy"
+                      class="w-full"
+                      :custom-error="policyDetailsForm.errors.expiry_date"
+                    />
+                  </FieldLoader>
                 </dd>
               </div>
 

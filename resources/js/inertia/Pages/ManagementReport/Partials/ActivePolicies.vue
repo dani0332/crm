@@ -36,6 +36,11 @@ const tableHeader = reactive([
       'The active policy count of the insurer its corresponding line of business',
   },
   {
+    text: 'PEC Policy Count',
+    value: 'pec_count',
+    tooltip: 'The count of policies with Pre-Existing Condition (PEC) flag',
+  },
+  {
     text: 'Price (VAT applicable)',
     value: 'price_with_vat',
     tooltip:
@@ -54,6 +59,7 @@ const isIntegerColumn = key => {
   // For example, check if the key corresponds to an integer column
   return [
     'active_policy_count',
+    'pec_count',
     'price_with_vat',
     'price_without_vat',
   ].includes(key);

@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use Carbon\Carbon;
-use Config;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -78,5 +78,10 @@ class CarQuoteRequestDetail extends Model implements AuditableContract
                 return $this->next_followup_date ? Carbon::parse($this->next_followup_date)->format('d-m-Y') : null;
             }
         );
+    }
+
+    public function driverNationality()
+    {
+        return $this->belongsTo(Nationality::class, 'driver_nationality_id');
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsPlanUpdateRequest;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Repositories\LostReasonRepository;
+use App\Services\LookupService;
 use App\Services\Quotes\SavingsQuoteService;
 use Illuminate\Http\Request;
 
@@ -30,6 +31,7 @@ class SavingsQuoteController extends Controller
         $quoteStatuses = $this->savingsQuoteService->getQuoteStatuses([QuoteStatusEnum::Lost]);
         $renewalBatches = $this->savingsQuoteService->getRenewalBatches();
         $authorizedDays = $this->savingsQuoteService->getPaymentAuthorizedDays();
+        $subSources = app(LookupService::class)->getSubSource();
 
         $query = $this->savingsQuoteService->getData();
 
@@ -38,6 +40,7 @@ class SavingsQuoteController extends Controller
                     $this->savingsQuoteService->getData(forExport: true, getTotalCount: true);
 
         $data = $query->simplePaginate(10)->withQueryString();
+        $this->savingsQuoteService->postProcessSavingsQuote($data);
 
         return inertia('SavingsQuote/Index', [
             'quotes' => $data,
@@ -47,12 +50,21 @@ class SavingsQuoteController extends Controller
             'totalCount' => $count,
             'authorizedDays' => intval($authorizedDays->value),
             'investmentFrequencies' => $this->savingsQuoteService->getInvestmentFrequencies(),
+            'subSources' => $subSources,
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $data = $this->savingsQuoteService->getFormOptions();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('SavingsQuote/Form', $data);
     }
@@ -72,6 +84,10 @@ class SavingsQuoteController extends Controller
     {
         $data = $this->savingsQuoteService->getFormOptions();
         $quote = $this->savingsQuoteService->getOne($uuid);
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [];
 
         return inertia('SavingsQuote/Form', array_merge($data, [
             'quote' => $quote,

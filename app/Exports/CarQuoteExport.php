@@ -6,8 +6,12 @@ use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
+use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -26,7 +30,21 @@ class CarQuoteExport implements CsvExportableInterface
      */
     public function collection(array $requestParams = []): Collection
     {
-        return $this->carQuoteService->getGridData(requestParams: $requestParams)->get();
+        $startTime = microtime(true);
+
+        $query = $this->carQuoteService->getGridData(requestParams: $requestParams);
+
+        $beforeGet = microtime(true);
+        $collection = $query->get();
+        $querySeconds = round(microtime(true) - $beforeGet, 3);
+
+        LoggerService::info('CarQuoteExport.collection done', extra: [
+            'rows' => $collection->count(),
+            'query_seconds' => $querySeconds,
+            'total_seconds' => round(microtime(true) - $startTime, 3),
+        ]);
+
+        return $collection;
     }
 
     /**
@@ -73,10 +91,13 @@ class CarQuoteExport implements CsvExportableInterface
             'TIER NAME',
             'VISIT COUNT',
             'FOLLOW UP DATE',
+            'API ISSUANCE STATUS',
+            'INSURER API STATUS',
             'LAST MODIFIED DATE',
             'UPDATED BY',
             'ADDITIONAL NOTES',
             'ADVISOR',
+            'BRANCH',
             'POLICY NUMBER',
             'POLICY EXPIRY DATE',
             'IS GCC STANDARD',
@@ -95,6 +116,9 @@ class CarQuoteExport implements CsvExportableInterface
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
             'PRIVATE CLIENT',
+            'INSURER',
+            'IMCRM SUB-SOURCE',
+            'REPAIR TYPE',
         ];
     }
 
@@ -103,6 +127,8 @@ class CarQuoteExport implements CsvExportableInterface
      */
     public function map($quote): array
     {
+        $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car));
+
         return [
             $quote->code,
             $quote->batch?->name,
@@ -133,10 +159,13 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->tier?->name,
             $quote->quoteViewCount?->visit_count,
             $quote->carQuoteRequestDetail?->next_followup_date_formatted ?? '',
+            $quote->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($quote->api_issuance_status_id) : 'N/A',
+            $quote->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($quote->insurer_api_status_id) : 'N/A',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->updated_by,
             $quote->additional_notes,
             $quote->advisor?->name,
+            $branchName,
             $quote->policy_number,
             $quote->policy_expiry_date ? date(config('constants.datetime_format'), strtotime($quote->policy_expiry_date)) : '',
             $quote->is_gcc_standard ? 'Yes' : 'No',
@@ -155,6 +184,9 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->getSegments($quote, QuoteTypeId::Car) ?? '',
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
             $quote->customer?->pcp_tag_formatted ?? '',
+            $quote->insuranceProvider?->text ?? '',
+            $quote->subSource?->text ?? '',
+            $quote->plan?->repair_type ?? '',
         ];
     }
 

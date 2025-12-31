@@ -17,7 +17,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
+        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) '$(DEPLOYMENT_NOTIFICATION_KEY)' \
         --header 'Content-Type: application/json' \
         --data '{"message": {"text": "Building Project on $(Build.DefinitionName) is Initiated, Please wait..."}}'
 
@@ -30,7 +30,7 @@ steps:
       sed -i "s/imcrmdev/imcrmstage/g" "$(System.DefaultWorkingDirectory)/docker/nginx.conf"
       doppler --token $(IMCRM_TOKEN) run -- sh -c 'sudo docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .'
        if [ $? -ne 0 ]; then
-        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
+        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) '$(DEPLOYMENT_NOTIFICATION_KEY)' \
          --header 'Content-Type: application/json' \
          --data '{"message": {"text": "Building Project Failed on $(Build.DefinitionName), Logs in Postman with BuildID $(Build.BuildId)..."}}'
        # Add additional actions like notifications or logging here
@@ -46,7 +46,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
+        curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) '$(DEPLOYMENT_NOTIFICATION_KEY)' \
         --header 'Content-Type: application/json' \
         --data '{"message": {"text": "Building Project on $(Build.DefinitionName) is Completed, Deploying now..."}}'
 

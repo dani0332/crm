@@ -62,6 +62,8 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::PolicyDocumentsPending,
             QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::Lost,
             QuoteStatusEnum::Fake,
@@ -76,6 +78,8 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::PolicyDocumentsPending,
             QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
@@ -93,7 +97,8 @@ class UpdateStaleLeads extends Command
                 ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
                 ->where('quote_status_date', '>=', Carbon::parse('2023-05-23')->startOfDay())
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
-                    $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+                    $businessQuote->where('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical))
+                        ->where('quote_status_date', '>=', Carbon::parse('2024-10-01')->startOfDay());
                 })
                 ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);

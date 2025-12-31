@@ -21,6 +21,7 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
                 'CURRENTLY INSURED WITH',
                 'LINE OF BUSINESS',
                 'ADVISOR',
+                'OE/AE',
                 'PRIVATE CLIENT',
             ];
         } else {
@@ -45,6 +46,7 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
             $row->insurance_provider ?? $this->notAvailable,
             $row->quote_type ?? $this->notAvailable,
             $row->advisor_name ?? $this->notAvailable,
+            $row->support_user_name ?? $this->notAvailable,
             $row->pcp_tag_formatted ?? $this->notAvailable,
         ];
     }

@@ -18,9 +18,12 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HomeQuoteService;
+use App\Services\Logger\LoggerService;
+use App\Services\LookupService;
 use App\Services\Reports\RenewalBatchReportService;
 use Illuminate\Http\Request;
 
@@ -28,13 +31,14 @@ class HomeQuoteController extends Controller
 {
     public function index()
     {
-        $homeQuotes = HomeQuoteRepository::getData();
+        $homeQuotes = HomeQuoteRepository::getData(requestParams: request()->all());
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::HOME->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::HOME->id())->get();
 
         $user = auth()->user();
         $isManualAllocationAllowed = $user->isAdmin() || $user->isManagerOrDeputy();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('HomeQuote/Index', [
             'quotes' => $homeQuotes,
@@ -43,12 +47,28 @@ class HomeQuoteController extends Controller
             'isManualAllocationAllowed' => $isManualAllocationAllowed,
             'renewalBatches' => $renewalBatches,
             'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
+            'subSources' => $subSources,
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('Home create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
+
         $data = HomeQuoteRepository::getFormOptions();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('HomeQuote/Form', $data);
     }
@@ -73,6 +93,7 @@ class HomeQuoteController extends Controller
             abort(404, 'No Quote Found. Please check your details and try again.');
         }
 
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home));
         $quoteWithData = HomeQuoteRepository::getShowFormOptions($quote);
 
         return inertia('HomeQuote/Show', $quoteWithData);
@@ -82,11 +103,14 @@ class HomeQuoteController extends Controller
     {
         $data = HomeQuoteRepository::getFormOptions();
         $quote = HomeQuoteRepository::getBy('uuid', $uuid);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia(
             'HomeQuote/Form',
             [
                 ...$data,
+                'subSources' => $subSources,
+                'leadSourceParams' => [],
                 'quote' => $quote,
             ]
         );
@@ -158,6 +182,8 @@ class HomeQuoteController extends Controller
             ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::InNegotiation, $request)],
             ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PaymentPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PaymentLinkSentToCustomer, 'title' => quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PaymentLinkSentToCustomer, $request)],
+            ['id' => QuoteStatusEnum::PaymentInitiated, 'title' => quoteStatusCode::PaymentInitiated, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PaymentInitiated, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
 

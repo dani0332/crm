@@ -1,27 +1,24 @@
 <script setup>
-import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive, ref, nextTick } from 'vue';
 import NProgress from 'nprogress';
-import { computed } from 'vue';
-import { time } from 'highcharts';
+import { computed, onMounted, ref } from 'vue';
 import {
-  ImageGalleryModal,
   AmlApprovalModal,
-  RetryPaymentModal,
-  DeleteSplitPaymentModal,
   DeleteParentPaymentModal,
+  DeleteSplitPaymentModal,
+  ImageGalleryModal,
+  RetryPaymentModal,
   VoidPaymentModal,
 } from './PaymentComponents/PaymentModal/index.js';
 
 // New Flow Implementation
-import { usePayment } from '../Composables/usePayment';
 import { useAMLKYC } from '../Composables/useAMLKYC';
+import { usePayment } from '../Composables/usePayment';
 import {
-  PaymentTableHeader,
+  CreatePaymentForm,
   PaymentHeader,
   PaymentRow,
   PaymentSplitRow,
-  CreatePaymentForm,
+  PaymentTableHeader,
 } from './PaymentComponents/index.js';
 
 // Assign barrel-imported components to prevent IDE from showing them as unused
@@ -34,6 +31,7 @@ const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
+const collectionTypeEnum = page.props.collectionTypeEnum;
 
 const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
@@ -41,6 +39,7 @@ const can = permission => useCan(permission);
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 
 const { filterCCPayments } = usePayment();
 const { isAmlVerified, isKycVerified } = useAMLKYC();
@@ -139,6 +138,20 @@ const isCreditCardViewReplicated = ref(false);
 const isTransactionCaptureButtonEnabled = ref(true);
 const capturePaymentValidationErrorMessage = ref('');
 const selectedPaymentForEdit = ref(null);
+const showInsurerReceiptNumberInputField = ref(false);
+const isInsurerReceiptNumberExistsModalOpen = ref(false);
+const insurerReceiptNumberCheckInProcess = ref(false);
+
+// Short: is life plan details enabled
+const isLifePlanDetailsEnabled = computed(() => {
+  return (
+    props.quoteType === quoteTypeCodeEnum.Life &&
+    props.isPlanDetailSectionEnabled
+  );
+});
+
+// for life only
+const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -148,6 +161,14 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.SAVINGS,
 ]; //Ecommerce LOBs
+
+if (
+  !isLifePlanDetailsEnabled.value &&
+  props.quoteType === quoteTypeCodeEnum.Life
+) {
+  quoteTypesToCheck.push(quoteTypeCodeEnum.Life);
+}
+
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
@@ -158,6 +179,18 @@ const showLackingPayment = () => {
       position: 'top',
       timeout: 5000,
     });
+  }
+};
+
+const getInitalAmountForLifeLOB = () => {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
+    const premiumInAED =
+      Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
+    return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
+  } else {
+    return (
+      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
+    );
   }
 };
 
@@ -176,6 +209,11 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
+} else if (
+  props.quoteType === quoteTypeCodeEnum.Life &&
+  !props.isPlanDetailSectionEnabled
+) {
+  initialAmount.value = getInitalAmountForLifeLOB();
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -235,6 +273,11 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
+} else if (
+  !isLifePlanDetailsEnabled.value &&
+  props.quoteType === quoteTypeCodeEnum.Life
+) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
@@ -316,11 +359,13 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
     try {
       const response = await axios.post('/generate-payment-link-new', {
         quoteId: props.quoteRequest.id,
+        quoteUuid: props.quoteRequest.uuid,
         modelType: props.quoteType,
         paymentCode: code,
         splitPaymentId: splitPaymentId,
         isInertia: true,
         new_payment_structure: true,
+        isPlanDetailEnabled: props.isPlanDetailEnabled,
       });
 
       if (response.data.success) {
@@ -407,6 +452,27 @@ const addPaymentModal = async () => {
     return;
   }
 
+  // Check exchange rate only after confirming a plan is selected
+  if (
+    !isLifePlanDetailsEnabled.value &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
+    const planCurrency =
+      props.quoteRequest?.quote_customer_plan?.plan?.currency;
+    if (
+      planDetail.value &&
+      planCurrency &&
+      exchangeRate.value == 0 &&
+      planCurrency !== 'AED'
+    ) {
+      notification.error({
+        title: 'Please update the Exchange Rate in the Available Plan Section.',
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   createPaymentModal.value = true;
   await new Promise(resolve => setTimeout(resolve, 200));
   createPaymentFormRef.value.resetPaymentMethodsForm();
@@ -445,9 +511,9 @@ const addPaymentModal = async () => {
       props.quoteSubType != quoteTypeCodeEnum.CORPLINE) ||
     !createPaymentFormRef.value.isBrokerHavePermission()
   ) {
-    paymentFormUpdateData.collection_type = 'insurer';
+    paymentFormUpdateData.collection_type = collectionTypeEnum.INSURER;
   } else {
-    paymentFormUpdateData.collection_type = 'broker';
+    paymentFormUpdateData.collection_type = collectionTypeEnum.BROKER;
   }
 
   paymentFormUpdateData.amount = '';
@@ -458,7 +524,24 @@ const addPaymentModal = async () => {
   paymentFormUpdateData.collection_date = new Date();
   createPaymentModal.value = true;
 
-  paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
+  // Special handling for life quotes - map payment term to frequency
+  if (
+    !isLifePlanDetailsEnabled.value &&
+    props.quoteRequest?.life_quote?.payment_term
+  ) {
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      4: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentFormUpdateData.frequency =
+      paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
+  } else {
+    paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
+  }
+
   paymentFormUpdateData.discount = '';
   paymentFormUpdateData.credit_approval = '';
   createPaymentFormRef.value.updateTotalPayments([{ value: '1', label: '1' }]);
@@ -466,6 +549,12 @@ const addPaymentModal = async () => {
   createPaymentFormRef.value.updatePaymentForm(paymentFormUpdateData);
   createPaymentFormRef.value.handleCollectionTypeChange();
   createPaymentFormRef.value.calculatePaymentBreakup();
+
+  // Trigger frequency change for life quotes to update payment schedule
+  if (props.quoteType === quoteTypeCodeEnum.Life) {
+    createPaymentFormRef.value.handleFrequencyChange();
+  }
+
   createPaymentFormRef.value.applyPermissions();
 };
 
@@ -490,6 +579,44 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
+const closeInsurerReceiptNumberExistsModal = () => {
+  isInsurerReceiptNumberExistsModalOpen.value = false;
+};
+
+const checkInsurerReceiptNumber = () => {
+  if (
+    showInsurerReceiptNumberInputField.value &&
+    paymentMethodsFormReplicated.value.insurer_receipt_number
+  ) {
+    insurerReceiptNumberCheckInProcess.value = true;
+    axios
+      .post(`/payments/${props.quoteType}/check-insurer-receipt-number`, {
+        insurer_receipt_number:
+          paymentMethodsFormReplicated.value.insurer_receipt_number,
+      })
+      .then(res => {
+        if (res.data.status) {
+          createPaymentFormRef.value?.submitPaymentForm();
+        } else {
+          isInsurerReceiptNumberExistsModalOpen.value = true;
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title:
+            err?.response?.data?.message ||
+            'Insurer receipt number check failed',
+          position: 'top',
+        });
+      })
+      .finally(() => {
+        insurerReceiptNumberCheckInProcess.value = false;
+      });
+  } else {
+    createPaymentFormRef.value?.submitPaymentForm();
+  }
+};
+
 /**
  * Opens the payment modal for editing a payment
  * Loads payment data, initializes form, and sets appropriate view/edit state
@@ -507,6 +634,8 @@ const editPaymentModal = async (
   capture_approval,
 ) => {
   isTransactionCaptureButtonEnabled.value = true;
+  showInsurerReceiptNumberInputField.value = false;
+  isInsurerReceiptNumberExistsModalOpen.value = false;
   selectedPaymentForEdit.value = payment;
 
   if (
@@ -523,7 +652,7 @@ const editPaymentModal = async (
   }
 
   if (
-    payment.collection_type === 'insurer' &&
+    payment.collection_type === collectionTypeEnum.INSURER &&
     isEditPaymentEnabled(payment) &&
     split_payment_id == 0 &&
     sr_no == 0 &&
@@ -537,12 +666,31 @@ const editPaymentModal = async (
     return false;
   }
 
+  // Check and enable insurer receipt number input field
+  if (split_payment_id) {
+    const splitPayment = payment?.payment_splits?.find(
+      split => split.id === split_payment_id,
+    );
+    const paymentMethods = [
+      paymentMethodsEnums.InsurerPayment,
+      paymentMethodsEnums.InsurerPaymentLink,
+    ];
+    if (
+      payment.collection_type === collectionTypeEnum.INSURER &&
+      splitPayment &&
+      paymentMethods.includes(splitPayment.payment_method.code)
+    ) {
+      showInsurerReceiptNumberInputField.value = true;
+    }
+  }
+
   isTransactionCaptureButtonEnabled.value = true;
 
   // Payment Capture Validation for GIG
   if (
     capture_approval == 1 &&
     payment?.insurance_provider?.code == 'AXA' &&
+    !props.sendUpdate?.id &&
     (props.quoteType === quoteTypeCodeEnum.Bike ||
       props.quoteType === quoteTypeCodeEnum.Car ||
       props.quoteType === quoteTypeCodeEnum.Home ||
@@ -691,6 +839,11 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Home
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
+    } else if (
+      !isLifePlanDetailsEnabled.value &&
+      props.quoteType === quoteTypeCodeEnum.Life
+    ) {
+      initialAmount.value = getInitalAmountForLifeLOB();
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -707,6 +860,13 @@ const setPlanDetail = () => {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
+  } else if (
+    !isLifePlanDetailsEnabled.value &&
+    props.quoteType === quoteTypeCodeEnum.Life
+  ) {
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
   } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
@@ -714,12 +874,7 @@ const setPlanDetail = () => {
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
-    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
-    if (props.sendUpdate) {
-      initalPlanDetails =
-        props.quoteRequest.insurance_provider_details ??
-        props.quoteRequest.insurance_provider;
-    }
+    initalPlanDetails = props.quoteRequest?.car_plan;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else {
@@ -873,6 +1028,7 @@ const fetchInsurerAMLStatus = async () => {
         quoteRequestId: props.quoteRequest.id,
         quoteType: page.props.quoteTypeId,
         insurerAMLStatus: props.quoteRequest.insurer_aml_status,
+        insuranceProviderId: props.quoteRequest?.insurance_provider_id,
       },
     });
     NProgress.done();
@@ -883,47 +1039,6 @@ const fetchInsurerAMLStatus = async () => {
         timeout: 5000,
       });
     }
-  }
-};
-
-const triggerPostPrepayment = async splitPayment => {
-  console.log(' triggerPostPrepayment : ', splitPayment.id);
-  let quoteStatusId = props.quoteRequest.quote_status_id;
-  let isPolicyBooked =
-    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
-  if (!isPolicyBooked) {
-    notification.warning({
-      title:
-        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
-      position: 'top',
-    });
-  }
-  try {
-    NProgress.start();
-    const response = await axios.post(route('can-post-premium-prepayment'), {
-      paymentSplitId: splitPayment.id,
-      quoteRequestId: props.quoteRequest.id,
-      quoteType: page.props.quoteType,
-      sendUpdateId: props.sendUpdate?.id,
-    });
-    NProgress.done();
-    if (response.data.success) {
-      notification.success({
-        title: 'Post Prepayment to Sage Process Started',
-        position: 'top',
-      });
-      router.reload({
-        only: ['payments'],
-      });
-    }
-  } catch (error) {
-    let errorMessages = error.response.data.errors;
-    Object.keys(errorMessages).forEach(function (key) {
-      notification.error({
-        title: errorMessages[key],
-        position: 'top',
-      });
-    });
   }
 };
 
@@ -1067,6 +1182,9 @@ watch(
                       :paymentMethodsForm="paymentMethodsFormReplicated"
                       :sendUpdateStatusEnum="sendUpdateStatusEnum"
                       :quoteType="quoteType"
+                      :isAbuDhabiBranch="
+                        page.props?.bookPolicyDetails?.isAbuDhabiBranch
+                      "
                       @view-payment="
                         (payment, splitId, splitNo, action) =>
                           editPaymentModal(payment, splitId, splitNo, action)
@@ -1083,7 +1201,6 @@ watch(
                         (jobId, message) =>
                           retrySplitPaymentModal(jobId, message)
                       "
-                      @post-prepayment="triggerPostPrepayment"
                     />
                   </template>
                 </template>
@@ -1108,6 +1225,7 @@ watch(
           "
           show-close
           backdrop
+          persistent
         >
           <CreatePaymentForm
             ref="createPaymentFormRef"
@@ -1144,6 +1262,16 @@ watch(
               isTransactionCaptureButtonEnabled
             "
             :selectedPaymentForEdit="selectedPaymentForEdit"
+            :showInsurerReceiptNumberInputField="
+              showInsurerReceiptNumberInputField
+            "
+            :insurerReceiptNumberCheckInProcess="
+              insurerReceiptNumberCheckInProcess
+            "
+            :isInsurerReceiptNumberExistsModalOpen="
+              isInsurerReceiptNumberExistsModalOpen
+            "
+            :isLifePlanDetailsEnabled="isLifePlanDetailsEnabled"
             @cancel-modal="createPaymentModal = !createPaymentModal"
             @aml-verification="openAmlVerificationModal"
             @update-plan-detail="updatePlanDetail"
@@ -1154,6 +1282,10 @@ watch(
             @update-create-payment-modal="value => (createPaymentModal = value)"
             @update-total-amount="value => (totalAmount = value)"
             @update-total-price="value => (totalPrice = value)"
+            @check-insurer-receipt-number="checkInsurerReceiptNumber"
+            @close-insurer-receipt-number-exists-modal="
+              closeInsurerReceiptNumberExistsModal
+            "
           />
 
           <!-- Image Gallery Modal -->
@@ -1342,5 +1474,9 @@ watch(
 .manage-payment-table-parent-div::-webkit-scrollbar {
   width: 6px;
   background-color: #c1c1c1;
+}
+.receipt-number-exists-modal-container {
+  max-height: 270px;
+  max-width: 630px;
 }
 </style>

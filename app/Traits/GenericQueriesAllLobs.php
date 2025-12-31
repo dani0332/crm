@@ -2,29 +2,42 @@
 
 namespace App\Traits;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BranchEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\Customer;
+use App\Models\InsuranceProvider;
+use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
+use App\Models\User;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
+use App\Services\BrokerCommissionService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -264,6 +277,8 @@ trait GenericQueriesAllLobs
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
+        $isAbuDhabiBranch = $this->isAbuDhabiBranch($quoteType, $record);
+
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
         $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
@@ -273,7 +288,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['editButton'] = false;
         $bookPolicyDetails['sendPolicyType'] = null;
         $bookPolicyDetails['text'] = 'Send and Book Policy';
-        @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record);
+        @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record, $isAbuDhabiBranch);
         $bookPolicyDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
         $bookPolicyDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
         $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payment);
@@ -302,29 +317,28 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
-            if (! empty($quoteDocuments)) {
-                $isAllRequiredDocumentUploaded = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $quoteType, $record);
-                if ($isAllRequiredDocumentUploaded) {
-                    $bookPolicyDetails['sendButton'] = true;
-                    $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
-                    $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
-                }
-                if ($bookPolicyDetails['sendButton']) {
-                    $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
-                    $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
-                    if ($taxDocumentsCount == count($taxDocuments)) {
-                        $bookPolicyDetails['editButton'] = true;
-                        $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
+            $quoteType = strtolower(QuoteTypes::CAR->value) == strtolower($quoteType) && $record->registration_type == CarRegistrationType::COMPANY ? quoteTypeCode::CompanyCar : $quoteType;
+            $areSendPolicyDocsUploaded = app(DocumentTypeRepository::class)->fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record);
+            $bookPolicyDetails['disabled'] = $areSendPolicyDocsUploaded['disabled'];
+            $bookPolicyDetails['sendButton'] = true;
+            $bookPolicyDetails['requiredDocuments'] = $areSendPolicyDocsUploaded['requiredDocuments'];
+            $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
+            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
+            if ($bookPolicyDetails['sendButton']) {
+                $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
+                $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
+                if ($taxDocumentsCount == count($taxDocuments)) {
+                    $bookPolicyDetails['editButton'] = true;
+                    $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
 
-                        if ($areBookingDetailsFilled) {
-                            $isMainLead = $this->checkMainLead($record, $quoteType);
-                            if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
-                                $bookPolicyDetails['bookButton'] = true;
-                                $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
-                                $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
-                            } else {
-                                $bookPolicyDetails['policyCancelled'] = true;
-                            }
+                    if ($areBookingDetailsFilled) {
+                        $isMainLead = $this->checkMainLead($record, $quoteType);
+                        if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
+                            $bookPolicyDetails['bookButton'] = true;
+                            $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
+                            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
+                        } else {
+                            $bookPolicyDetails['policyCancelled'] = true;
                         }
                     }
                 }
@@ -335,6 +349,8 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
+        // Check if this is an Abu Dhabi quote lead
+        $bookPolicyDetails['isAbuDhabiBranch'] = $isAbuDhabiBranch;
 
         return $bookPolicyDetails;
     }
@@ -378,7 +394,7 @@ trait GenericQueriesAllLobs
      *
      * @return array
      */
-    private function transactionPaymentStatus($payment, $quote)
+    private function transactionPaymentStatus($payment, $quote, $isAbuDhabiBranch = false)
     {
         // If no payment has been created for the lead, return an unpaid payment status along with the relevant tooltip
         if (! $payment) {
@@ -393,7 +409,7 @@ trait GenericQueriesAllLobs
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
         $updateRequired = in_array($quote->quote_status_id, $statusesTriggeringUpdate) && is_null($payment->transaction_payment_status);
-        if ($updateRequired) {
+        if ($updateRequired && ! $isAbuDhabiBranch) {
             $this->updatePaymentAllocationStatus($quote);
         }
 
@@ -736,7 +752,7 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * Check if the payment is split and all payment splits are paid.
+     * Check if the payment is split and all payment splits are paid or not fully paid
      * This method checks if the given payment has a frequency of split payments
      * and verifies if all associated payment splits have a payment status of 'paid'.
      *
@@ -782,5 +798,148 @@ trait GenericQueriesAllLobs
         ];
 
         return in_array($lead_status_id, $skipStatus);
+    }
+
+    public function getPaymentAuthorisedDays()
+    {
+        $paymentAuthorisedDays = intval(ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->value('value'));
+
+        return intval($paymentAuthorisedDays ?? 0);
+    }
+
+    public function getRenewalBaches()
+    {
+        return app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+    }
+
+    /**
+     * Check if the insurance provider is supported for this payment gateway
+     *
+     * @param  int  $insuranceProviderId
+     * @param  object  $quoteModel
+     * @param  string  $type
+     * @return bool
+     */
+    public function checkInsuranceProviderPaymentGateway($insuranceProviderId, $quoteModel, $type)
+    {
+        $insurerProvider = InsuranceProvider::where('id', $insuranceProviderId)->first();
+        $quoteTypeId = QuoteTypes::getIdFromValue($type);
+        $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
+        $planId = $quoteModel->plan_id ?? null;
+        [,,, $isPaymentLinkEnabled] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+        if ($isPaymentLinkEnabled) {
+            return true;
+        }
+
+        return $insurerProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL;
+    }
+
+    public function isAbuDhabiBranch($quoteType, $record)
+    {
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $advisor = User::with('primaryBranch')->find($record?->advisor_id);
+        $emirate = null;
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emirate = $record?->emirate_of_your_visa_id ?? null;
+        } elseif (
+            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
+            && $record?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+        ) {
+            $emirate = $record?->latestInsured?->emirate_of_registration_id ?? null;
+            $quoteTypeId = QuoteTypeId::GroupMedical;
+        }
+
+        if ($record?->is_branch_applicable == 0) {
+            return false;
+        }
+
+        if (isset($record?->lead_branch_id) && $record?->lead_branch_id) {
+            return $record?->lead_branch_id == BranchEnum::ABU_DHABI->value;
+        }
+
+        $branch = $record?->branch ?? app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
+
+        LoggerService::info('Branch check for Quote', extra: [
+            'ref_id' => $record?->code,
+            'branch_id' => $branch?->id,
+            'is_abu_dhabi_branch' => $branch?->id == BranchEnum::ABU_DHABI->value,
+        ]);
+
+        return $branch?->id == BranchEnum::ABU_DHABI->value;
+    }
+
+    /**
+     * Format dates from various input types to display format (d/m/Y) with comprehensive error handling
+     *
+     * @param  mixed  $date  Date input (string, DateTime, Carbon, or null)
+     * @return string Formatted date in d/m/Y format or empty string on error
+     */
+    protected function formatDateToDisplay($date): string
+    {
+        if (! $date) {
+            return '';
+        }
+
+        if (is_string($date)) {
+            try {
+                if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $date)) {
+                    $dateObj = Carbon::createFromFormat('d-m-Y', $date);
+
+                    return $dateObj->format('d/m/Y');
+                }
+
+                $dateObj = Carbon::parse($date);
+
+                return $dateObj->format('d/m/Y');
+            } catch (\Exception $e) {
+                LoggerService::warning('Failed to format date', extra: [
+                    'date_input' => $date,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return '';
+            }
+        }
+
+        if ($date instanceof \DateTime || $date instanceof Carbon) {
+            try {
+                return $date->format('d/m/Y');
+            } catch (\Exception $e) {
+                LoggerService::warning('Failed to format date object', extra: [
+                    'date_class' => get_class($date),
+                    'error' => $e->getMessage(),
+                ]);
+
+                return '';
+            }
+        }
+
+        LoggerService::warning('Unexpected date type for formatting', extra: [
+            'date_type' => gettype($date),
+            'date_value' => $date,
+        ]);
+
+        return '';
+    }
+
+    public function getNationalityId(?string $nationality): ?int
+    {
+        if (empty($nationality)) {
+            return null;
+        }
+
+        $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
+            ->orWhere('code', $nationality)
+            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+            ->first();
+
+        return $nationalityRecord?->id;
+    }
+
+    public function getNationalityById($nationalityId): ?string
+    {
+        $nationalityRecord = Nationality::find($nationalityId);
+
+        return $nationalityRecord?->text;
     }
 }

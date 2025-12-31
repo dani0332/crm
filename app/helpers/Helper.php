@@ -23,6 +23,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
@@ -194,6 +195,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where('quote_status_id', $statusId)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
+        })
+        ->when($modelType == LifeQuote::class, function ($query) {
+            $query->with([
+                'nationality' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                },
+                'insuranceTenure' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                }]);
         });
 
     $modelQuery = $modelType::when($modelType == BusinessQuote::class, function ($query) {
@@ -208,6 +218,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where('advisor_id', auth()->user()->id)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
+        })
+        ->when($modelType == LifeQuote::class, function ($query) {
+            $query->with([
+                'nationality' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                },
+                'insuranceTenure' => function ($subquery) {
+                    $subquery->select('id', 'text');
+                }]);
         });
 
     // Reminder: previous quote id is not available in personal quote
@@ -242,6 +261,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
         }
+        if ($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('sum_insured_value');
+        }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
@@ -252,6 +274,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
+        if ($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->sum('sum_insured_value');
         }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
@@ -327,45 +352,45 @@ function getDataAgainstSearchTerm($modelType, $request)
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             }
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                     ->whereNotNull('previous_quote_id')
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                     ->whereNull('previous_quote_id')
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                     ->get();
             }
         }
     } else {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                 ->whereNotNull('previous_quote_id')
                 ->where('advisor_id', Auth::user()->id)
                 ->get();
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])
                 ->whereNull('previous_quote_id')
                 ->where('advisor_id', Auth::user()->id)
                 ->get();
         } else {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])->get();
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [sanitizeFulltextSearchTerm($request->term)])->get();
         }
     }
 
@@ -519,6 +544,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::YACHT->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
+            QuoteTypes::LIFE->value,
         ]);
     }
 }
@@ -539,6 +565,9 @@ if (! function_exists('getBase64FileInfo')) {
 if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
+        // Normalize NBSP/narrow NBSP to plain spaces so they can be handled like regular whitespace
+        $fileName = str_replace(["\u{00A0}", "\u{202F}"], ' ', $fileName);
+
         // Remove any Unicode control characters, including non-breaking spaces
         $fileName = preg_replace('/[\x{00}-\x{1F}\x{7F}\x{A0}]/u', '', $fileName);
 
@@ -573,7 +602,11 @@ if (! function_exists('getQueryForLogWithBindings')) {
 if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
-        return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+        // Sanitize mobile number: remove all non-digit characters
+        $mobile = preg_replace('/[^0-9]/', '', trim($mobile));
+
+        // Remove leading 971 or 0, then add +971 prefix
+        return preg_replace('/^(?:971|0)?/', '+971', $mobile);
     }
 }
 
@@ -583,8 +616,8 @@ if (! function_exists('formatMobileNoWithoutPlus')) {
         // Remove spaces from the mobile number
         $mobile = str_replace(' ', '', $mobile);
 
-        // If the number starts with +971, 971, 92, or 91, return it as is
-        if (preg_match('/^(?:\+?971|92|91)/', $mobile)) {
+        // If the number starts with +971, 971,+92, 92, or +91 91, return it as is
+        if (preg_match('/^(?:\+?971|971|\+?92|\+?91|92|91)/', $mobile)) {
             return ltrim($mobile, '+'); // Remove '+' if present, but keep the number unchanged
         }
 
@@ -695,15 +728,35 @@ if (! function_exists('addDaysExcludeWeekend')) {
 }
 
 if (! function_exists('getIMLogo')) {
+    /**
+     * Get Insurance Market logo URL
+     *
+     * @param  bool  $isPDF  Whether to return local path for PDF generation
+     * @param  bool  $latest  Whether to use the high-resolution logo version
+     * @return string Logo URL or local path
+     */
     function getIMLogo($isPDF = false, $latest = false)
     {
         $imLogo = 'images/logo-new.png';
 
         if ($latest) {
-            $imLogo = 'images/im_logo_24k-hi.png';
+            $imLogo = 'images/im_logo_25k-hi.png';
         }
 
-        return $isPDF ? public_path($imLogo) : asset($imLogo);
+        // For PDF: use local file path, For web: use new GPTW certified CDN logo
+        return $isPDF ? public_path($imLogo) : 'https://cdn.alfred.ae/media/assets/im-logo-gptw-1.png';
+    }
+}
+
+if (! function_exists('getFavicon')) {
+    /**
+     * Get Insurance Market favicon URL
+     *
+     * @return string CDN URL of the favicon
+     */
+    function getFavicon()
+    {
+        return 'https://cdn.alfred.ae/media/assets/im-favicon-48x48.png';
     }
 }
 if (! function_exists('mimeContentType')) {
@@ -983,6 +1036,14 @@ if (! function_exists('getCardViewRequestFilters')) {
         if ($request->has('private_client') && $request->filled('private_client')) {
             $partialQuery->filterByPrivateClient($request->private_client);
         }
+
+        if ($modelType == HealthQuote::class && $request->has('pec_flag') && $request->pec_flag != 'all') {
+            if ($request->pec_flag == 1) {
+                $partialQuery->hasPecTag();
+            } else {
+                $partialQuery->whereNull('pec_marked_at');
+            }
+        }
     }
 }
 
@@ -1039,13 +1100,22 @@ if (! function_exists('getAppStorageValueByKey')) {
     function getAppStorageValueByKey($keyName, $default = false, bool $useCache = false, $cacheTime = null)
     {
         $getStorageValue = function () use ($keyName, $default) {
-            $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+            try {
+                $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
-            if (! $query) {
-                return $default;
+                if (! $query) {
+                    return $default;
+                }
+
+                return $query->value;
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Handle missing table gracefully (e.g., during tests)
+                // This can happen when the application_storage table doesn't exist yet
+                if (str_contains($e->getMessage(), 'no such table')) {
+                    return $default;
+                }
+                throw $e;
             }
-
-            return $query->value;
         };
 
         if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {
@@ -1097,7 +1167,9 @@ if (! function_exists('isValidDate')) {
     {
         return ! empty($date)
             && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
+            && $date != '0000-00-00'
+            && strtolower($date) != 'nan'
+            && strtolower($date) != 'null';
     }
 }
 
@@ -1228,15 +1300,6 @@ if (! function_exists('transformKeys')) {
     }
 }
 
-if (! function_exists('isValidDate')) {
-    function isValidDate($date): bool
-    {
-        return ! empty($date)
-            && $date != '0000-00-00 00:00:00'
-            && $date != '0000-00-00';
-    }
-}
-
 if (! function_exists('getAssignmentTypeText')) {
     function getAssignmentTypeText($assignmentType)
     {
@@ -1246,19 +1309,19 @@ if (! function_exists('getAssignmentTypeText')) {
                 $assignmentText = 'System Assigned';
                 break;
             case 2:
-                $assignmentText = 'System ReAssigned';
+                $assignmentText = 'System Reassigned';
                 break;
             case 3:
                 $assignmentText = 'Manual Assigned';
                 break;
             case 4:
-                $assignmentText = 'Manual ReAssigned';
+                $assignmentText = 'Manual Reassigned';
                 break;
             case 5:
                 $assignmentText = 'Bought Lead';
                 break;
             case 6:
-                $assignmentText = 'ReAssigned as Bought Lead';
+                $assignmentText = 'Reassigned as Bought Lead';
                 break;
             case 7:
                 $assignmentText = 'Self Assigned';
@@ -1334,7 +1397,41 @@ if (! function_exists('getManagersByUser')) {
 if (! function_exists('roundNumber')) {
     function roundNumber($number, $precision = 2)
     {
+        if (is_string($number)) {
+            $number = is_numeric($number) ? (float) $number : 0;
+        }
+
+        if (! is_numeric($number)) {
+            return 0;
+        }
+
         return round($number, $precision);
+    }
+}
+
+if (! function_exists('sanitizeFulltextSearchTerm')) {
+    function sanitizeFulltextSearchTerm($term)
+    {
+        // Remove common problematic characters that can break Boolean syntax
+        $term = preg_replace('/[\'"\\\<>()~@]/', ' ', $term);
+
+        // Replace multiple spaces with single space
+        $term = preg_replace('/\s+/', ' ', trim($term));
+
+        // Remove special characters except alphanumeric
+        $term = preg_replace('/[^a-zA-Z0-9\s]/', '', $term);
+
+        // If term is empty after sanitization, return original term
+        if (empty(trim($term))) {
+            return $term;
+        }
+
+        // Add wildcard for prefix matching if term doesn't end with one
+        if (! str_ends_with($term, '*')) {
+            $term .= '*';
+        }
+
+        return $term;
     }
 }
 
@@ -1657,8 +1754,56 @@ if (! function_exists('isTapEnabled')) {
 if (! function_exists('userHasProduct')) {
     function userHasProduct($product)
     {
-        $productIds = auth()->user()->products->pluck('product_id');
+        $productIds = auth()->user()->products->pluck('id');
 
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
+    }
+}
+
+if (! function_exists('convertFromCamelCase')) {
+    function convertFromCamelCase($string): string
+    {
+        return preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
+    }
+}
+
+/**
+ * Get the user's IP address with proper handling of proxies and load balancers
+ *
+ * @param  Request  $request
+ * @return string
+ */
+if (! function_exists('getUserIpAddress')) {
+    function getUserIpAddress(Request $request): string
+    {
+        // Check for IP from shared internet
+        if (! empty($request->server('HTTP_CLIENT_IP'))) {
+            return $request->server('HTTP_CLIENT_IP');
+        }
+        // Check for IP passed from proxy
+        elseif (! empty($request->server('HTTP_X_FORWARDED_FOR'))) {
+            // Can contain multiple IPs, get the first one
+            $forwardedIps = explode(',', $request->server('HTTP_X_FORWARDED_FOR'));
+
+            return trim($forwardedIps[0]);
+        }
+        // Check for IP from remote address
+        elseif (! empty($request->server('REMOTE_ADDR'))) {
+            return $request->server('REMOTE_ADDR');
+        }
+
+        // Fallback to Laravel's built-in method
+        return $request->ip();
+    }
+}
+
+if (! function_exists('formatEmiratesIdNumber')) {
+    function formatEmiratesIdNumber($idNumber): string
+    {
+        $eidNumber = str_replace('-', '', $idNumber);
+        $formattedIdNumber = substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
+            .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
+
+        return $formattedIdNumber;
     }
 }

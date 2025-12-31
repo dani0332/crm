@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -12,6 +13,8 @@ defineProps({
   insuranceProviders: Array,
   travelPlans: Array,
   insurerAMLStatus: Object,
+  assignmentTypes: Object,
+  subSources: { type: Array, default: () => [] },
 });
 
 let params = useUrlSearchParams('history');
@@ -35,8 +38,18 @@ const rules = {
 const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
+
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments?.filter(
@@ -83,7 +96,12 @@ const filters = reactive({
   insurance_provider_ids: [],
   plan_name: [],
   travel_start_date: '',
+  travel_end_date: '',
+  assignment_type: '',
   private_client: 'all',
+  age_group: 'all',
+  authorize_date: '',
+  captured_date: '',
 });
 
 const loader = reactive({
@@ -111,6 +129,7 @@ const tableHeader = [
   { text: 'AML Status', value: 'aml_status' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_text' },
   { text: 'ADVISOR', value: 'advisor.name' },
+  { text: 'BRANCH', value: 'branch_name' },
   {
     text: 'ADVISOR REQUESTED',
     value: 'sic_advisor_requested',
@@ -150,7 +169,9 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch.name' },
+  { text: 'Age Group', value: 'age_group' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -342,25 +363,68 @@ function onAssignLead(isValid) {
   }
 }
 
-function setQueryStringFilters() {
+function setQueryFilters() {
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status_id',
+    'insurer_aml_status',
+    'advisor_id',
+    'renewal_batches',
+    'payment_status_id',
+    'amlStatus',
+    'insurance_provider_ids',
+    'plan_name',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
   for (const [key, value] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = value;
-    } else {
-      // Handle different data types appropriately
-      if (key.includes('_id') && !isNaN(parseInt(value))) {
-        // ID fields should be integers
-        filters[key] = parseInt(value);
-      } else if (key === 'page' && !isNaN(parseInt(value))) {
-        // Page should be integer
-        filters[key] = parseInt(value);
-      } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
-        // Boolean-like fields
-        filters[key] = parseInt(value);
-      } else {
-        // Keep as string for dates, text fields, etc.
-        filters[key] = value;
+    // Check for indexed array format like authorize_date[0], authorize_date[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
       }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status_id[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
+    } else {
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -596,6 +660,48 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+const calculateAge = dateOfBirth => {
+  if (!dateOfBirth) return 0;
+
+  const today = new Date();
+  let birthDate;
+
+  // Handle both DD-MM-YYYY and YYYY-MM-DD formats
+  if (typeof dateOfBirth === 'string' && dateOfBirth.includes('-')) {
+    const parts = dateOfBirth.split('-');
+
+    // Check if first part is a 4-digit year (YYYY-MM-DD format)
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD format
+      const [year, month, day] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      // DD-MM-YYYY format
+      const [day, month, year] = parts;
+      birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+  } else {
+    birthDate = new Date(dateOfBirth);
+  }
+
+  // Check if the date is valid
+  if (isNaN(birthDate.getTime())) {
+    return 0;
+  }
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
 </script>
 
 <template>
@@ -622,16 +728,14 @@ const insurerAMLStatusOption = computed(() => {
             Cards View
           </x-button>
         </Link>
-        <Link :href="route('travel.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </div>
     </div>
     <x-divider class="my-4" />
@@ -881,6 +985,22 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
 
         <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
@@ -1051,6 +1171,34 @@ const insurerAMLStatusOption = computed(() => {
             { value: 1, label: 'Yes' },
             { value: 'no', label: 'No' },
             { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <DatePicker
+          v-model="filters.travel_end_date"
+          label="Travel End Date"
+          format="dd-MM-yyyy"
+        />
+
+        <x-select
+          v-model="filters.assignment_type"
+          name="assignment_type"
+          class="w-full"
+          placeholder="Search by Assignment Type"
+          :options="assignmentTypes"
+          label="Assignment Type"
+          filterable
+        />
+        <ComboBox
+          v-model="filters.age_group"
+          label="Age group"
+          placeholder="Search by age group"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: '0_64', label: '0 - 64' },
+            { value: '65_plus', label: '65 and above' },
+            { value: 'both', label: 'Both' },
           ]"
           class="w-full"
           :single="true"
@@ -1249,6 +1397,11 @@ const insurerAMLStatusOption = computed(() => {
       <template #item-aml_status="{ aml_status }">
         <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
       </template>
+      <template #item-age_group="item">
+        <span v-if="item.child || item.parent"> Both </span>
+        <span v-else-if="calculateAge(item.dob) < 65"> 0 - 64 </span>
+        <span v-else-if="calculateAge(item.dob) >= 65"> 65 and above </span>
+      </template>
     </DataTable>
 
     <Pagination
@@ -1259,6 +1412,14 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="travel.create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

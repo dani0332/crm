@@ -121,7 +121,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
     protected function mapQuoteData(array $row): array
     {
         $data = [
-            'is_northern' => $row[0] ?? null,
+            'emirate_type' => $row[0] ?? null,
             'min_age' => $row[1] ?? null,
             'max_age' => $row[2] ?? null,
             'gender' => $row[3] ?? '',

@@ -4,11 +4,14 @@ namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Services\BranchAssignmentService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -33,6 +36,13 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchCreate($data)
     {
+        // Log sub-source parameters
+        LoggerService::info('YachtQuoteRepository fetchCreate - Sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         $quoteData = [
             'quoteTypeId' => intval(QuoteTypes::YACHT->id()),
             'mobileNo' => $data['mobile_no'],
@@ -47,6 +57,9 @@ class YachtQuoteRepository extends BaseRepository
             'use' => $data['use'],
             'operatorExperience' => $data['operator_experience'],
             'assetValue' => $data['asset_value'],
+            'subSourceId' => $data['sub_source_id'],
+            'subSourceOptionsId' => $data['sub_source_options_id'],
+            'additionalNotes' => $data['notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
@@ -68,10 +81,19 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for updates
+        LoggerService::info('YachtQuoteRepository fetchUpdate - Sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::YACHT->id())->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'company_name', 'company_address', 'asset_value', 'gender', 'dob', 'nationality_id']);
+            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'company_name', 'company_address',
+                'asset_value', 'gender', 'dob', 'nationality_id', 'sub_source_id', 'sub_source_options_id',
+                'notes']);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);
@@ -114,6 +136,7 @@ class YachtQuoteRepository extends BaseRepository
             ->with([
                 'yachtQuote',
                 'advisor',
+                'advisor.primaryBranch',
                 'transactionType',
                 'nationality',
                 'quoteDetail.lostReason',
@@ -142,6 +165,7 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -159,6 +183,7 @@ class YachtQuoteRepository extends BaseRepository
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht));
 
         return $quote;
     }
@@ -180,6 +205,7 @@ class YachtQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
@@ -187,6 +213,8 @@ class YachtQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::YACHT->id());
             },
             'customer',
+            'subSource',
+            'branch:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -218,6 +246,30 @@ class YachtQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
+        // Apply authorize_date filter
+        $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
+            $authorizeDates = $this->getFilterValue('authorize_date', $requestParams);
+            if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
+                $startDate = Carbon::parse($authorizeDates[0])->startOfDay();
+                $endDate = Carbon::parse($authorizeDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('authorized_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
+        // Apply captured_date filter
+        $query->when(! empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
+            $capturedDates = $this->getFilterValue('captured_date', $requestParams);
+            if (is_array($capturedDates) && count($capturedDates) >= 2) {
+                $startDate = Carbon::parse($capturedDates[0])->startOfDay();
+                $endDate = Carbon::parse($capturedDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('captured_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         if ($forTotalLeadsCount) {
@@ -226,7 +278,21 @@ class YachtQuoteRepository extends BaseRepository
             return 0;
         }
 
-        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        if (! $forTotalLeadsCount && ! $forExport) {
+            $this->postProcessYachtQuotes($result);
+        }
+
+        return $result;
+    }
+
+    private function postProcessYachtQuotes($quotes)
+    {
+        return $quotes->map(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Yacht));
+
+            return $item;
+        });
     }
 
     /**
@@ -261,7 +327,7 @@ class YachtQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');

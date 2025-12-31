@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -20,6 +21,7 @@ use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CurrencyTypeRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -235,6 +237,8 @@ class LifeQuoteController extends Controller
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
+            'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
         ]);
     }
 

@@ -57,16 +57,11 @@ export const usePayment = () => {
     );
   };
 
-  const hasAnyCCSplitPayment = payments => {
-    // Check if the first payment in the array has any Credit Card split payments
-    if (payments.length > 0) {
-      const paymentSplits = payments[0].payment_splits;
-      return paymentSplits.some(
-        item =>
-          item.payment_method.code === page.props.paymentMethodsEnum.CreditCard,
-      );
-    }
-    return false;
+  const hasAnyCCSplitPayment = payment => {
+    return payment?.payment_splits?.some(
+      item =>
+        item.payment_method.code === page.props.paymentMethodsEnum.CreditCard,
+    );
   };
 
   const getCaptureValidStatuses = paymentSplitRec => {
@@ -124,6 +119,42 @@ export const usePayment = () => {
     return '';
   };
 
+  /**
+   * Checks if any master payment in the given payments array has an authorized/settled status.
+   * Returns an object with hasAuthorized (boolean) and statusText (string or null).
+   * Breaks on first matching master payment.
+   */
+  const hasAuthorizedSplit = payments => {
+    const authorizedStatuses = [
+      paymentStatusEnum.AUTHORISED,
+      paymentStatusEnum.PAID,
+      paymentStatusEnum.CAPTURED,
+      paymentStatusEnum.PARTIAL_CAPTURED,
+      paymentStatusEnum.PARTIALLY_PAID,
+    ];
+
+    if (!Array.isArray(payments)) {
+      return {
+        hasAuthorized: false,
+        statusText: null,
+      };
+    }
+
+    for (const payment of payments) {
+      if (authorizedStatuses.includes(payment.payment_status_id)) {
+        return {
+          hasAuthorized: true,
+          statusText: formatString(payment.payment_status?.text),
+        };
+      }
+    }
+
+    return {
+      hasAuthorized: false,
+      statusText: null,
+    };
+  };
+
   return {
     formatDate,
     formatAmount,
@@ -134,5 +165,6 @@ export const usePayment = () => {
     verifyCreditApproved,
     hasAnyCCSplitPayment,
     paymentAllocationStatusTooltip,
+    hasAuthorizedSplit,
   };
 };

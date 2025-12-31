@@ -61,8 +61,13 @@ class ReAssignLeads implements ShouldQueue
     public function handle()
     {
         info(self::class."::handle - Reassignment {$this->quoteType->value} job started at : ".now());
-        if (! $this->shouldProceed() && ! now()->isWeekend()) {
-            info('Reassignment job is not proceeding as per business timings');
+        if (! $this->shouldProceed() || now()->isWeekend()) {
+            LoggerService::info('Reassignment job is not proceeding as per business timings or today is weekend', extra: [
+                'shouldProceed' => $this->shouldProceed(),
+                'isWeekend' => now()->isWeekend(),
+                'quoteType' => $this->quoteType->value,
+                'advisorId' => $this->advisorId,
+            ]);
 
             return false;
         }

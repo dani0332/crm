@@ -2,6 +2,7 @@
 
 namespace App\Strategies;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
@@ -11,13 +12,16 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\Lookup;
 use App\Models\Team;
 use App\Services\ApplicationStorageService;
+use App\Services\LookupService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -86,6 +90,31 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $subSources = app(LookupService::class)->getSubSource()
+            ->sortBy('id')
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'text' => $item->text,
+                    'code' => $item->code,
+                    'description' => $item->description,
+                    'childs' => $item->childs
+                        ->where('is_active', 1)
+                        ->sortBy('text')
+                        ->map(function ($c) {
+                            return [
+                                'id' => $c->id,
+                                'text' => $c->text,
+                                'description' => $c->description,
+                            ];
+                        })
+                        ->values()
+                        ->toArray(),
+                ];
+            })
+            ->values()
+            ->toArray();
+
         return [
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
@@ -94,10 +123,18 @@ class ManagementReport
             'transactionTypes' => $transactionTypes,
             'departments' => $departments,
             'lobs' => $lobs,
+            'subSources' => $subSources,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
     {
+        if (! Auth::check()) {
+            $user = $request['user'] ?? null;
+            unset($request['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+
+        }
         $this->applyDateFilters($query, $request, $endorsementsQuery);
 
         if (isset($request['transactionType'])) {
@@ -136,6 +173,18 @@ class ManagementReport
     {
         if (! empty($request['leadSources'])) {
             $query->whereIn('personal_quotes.source', $request['leadSources']);
+        }
+
+        // Sub Source filter: allow filtering by codes sent from UI
+        if (! empty($request['subSources'])) {
+            $codes = is_array($request['subSources']) ? $request['subSources'] : [$request['subSources']];
+            $query->whereIn('personal_quotes.sub_source_id', $codes);
+        }
+
+        // Sub Source Option filter: gate to Sales Detail only (for now)
+        if (! empty($request['sub_source_options_id'])) {
+            $ids = is_array($request['sub_source_options_id']) ? $request['sub_source_options_id'] : [$request['sub_source_options_id']];
+            $query->whereIn('personal_quotes.sub_source_options_id', $ids);
         }
 
         $departments = $request['department_id'] ?? [];
@@ -189,27 +238,63 @@ class ManagementReport
             }, fn ($q) => $q->whereIn('pcp_tag', $pcpTag));
         });
 
+        if ($request['lob'] && in_array(quoteTypeCode::Health, $request['lob']) && isset($request['pec_flag']) && $request['pec_flag'] !== 'all') {
+            if ($request['pec_flag'] == '1') {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.id', 'personal_quotes.quote_id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
+                        ->whereNotNull('health_quote_request.pec_marked_at');
+                });
+            } else {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('health_quote_request')
+                        ->whereColumn('health_quote_request.id', 'personal_quotes.quote_id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
+                        ->whereNull('health_quote_request.pec_marked_at');
+                });
+            }
+        }
+
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
 
-    protected function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null)
+    protected function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null, $isEndorsements = false)
     {
         if ($request[$filterKey] != null) {
             if (is_array($request[$filterKey])) {
                 $dates = [];
                 foreach ($request[$filterKey] as $key => $dateString) {
-                    $carbonDate = Carbon::parse($dateString);
-                    if ($key == 0) {
-                        $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                    // Validate date before parsing
+                    if (isValidDate($dateString)) {
+                        $carbonDate = Carbon::parse($dateString);
+                        if ($key == 0) {
+                            $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        } else {
+                            $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        }
                     } else {
-                        $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        // Provide default date if null
+                        if ($key == 0) {
+                            $dates[$key] = today()->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        } else {
+                            $dates[$key] = today()->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        }
                     }
                 }
                 $request[$filterKey] = $dates;
             } else {
-                $carbonDate = Carbon::parse($request[$filterKey]);
-                $dates = $carbonDate->startOfDay();
-                $request[$filterKey] = $dates;
+                // Validate date before parsing
+                if (isValidDate($request[$filterKey])) {
+                    $carbonDate = Carbon::parse($request[$filterKey]);
+                    $dates = $carbonDate->startOfDay();
+                    $request[$filterKey] = $dates;
+                } else {
+                    // Provide default date if null
+                    $request[$filterKey] = today()->startOfDay();
+                }
             }
         }
         $dateRange = $request[$filterKey] ?? [
@@ -223,7 +308,38 @@ class ManagementReport
                     ->orWhereBetween($secondOptionalFieldName, $dateRange);
             });
         } else {
-            $query->whereBetween($fieldName, $dateRange);
+            $includeFailedBookings = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS);
+            $failedBookingDateFrom = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::MR_FAILED_BOOKING_DATE_FROM);
+
+            if ($isEndorsements && $includeFailedBookings && $filterKey == 'policyBookDate') {
+
+                $query->where(function ($query) use ($fieldName, $dateRange, $failedBookingDateFrom) {
+                    $query->whereBetween($fieldName, $dateRange)
+                        ->orWhere(function ($query) use ($failedBookingDateFrom, $dateRange) {
+                            $query->where('send_update_logs.status', SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED)
+                                ->whereExists(function ($query) use ($failedBookingDateFrom, $dateRange) {
+                                    $query->select(DB::raw(1))
+                                        ->from('send_update_status_logs')
+                                        ->whereColumn('send_update_status_logs.send_update_log_id', 'send_update_logs.id')
+                                        ->where('send_update_status_logs.current_status', SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED)
+                                        ->where('send_update_status_logs.created_at', '>=', $failedBookingDateFrom)
+                                        ->whereBetween('send_update_status_logs.created_at', $dateRange);
+                                });
+                        });
+                });
+
+            } elseif ($includeFailedBookings && $filterKey == 'policyBookDate') {
+                $query->where(function ($query) use ($fieldName, $dateRange, $failedBookingDateFrom) {
+                    $query->whereBetween($fieldName, $dateRange)
+                        ->orWhere(function ($query) use ($failedBookingDateFrom, $dateRange) {
+                            $query->whereBetween('personal_quotes.quote_status_date', $dateRange)
+                                ->where('personal_quotes.quote_status_date', '>=', $failedBookingDateFrom)
+                                ->where('personal_quotes.quote_status_id', QuoteStatusEnum::POLICY_BOOKING_FAILED);
+                        });
+                });
+            } else {
+                $query->whereBetween($fieldName, $dateRange);
+            }
         }
     }
 
@@ -236,7 +352,7 @@ class ManagementReport
     {
         if ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
             $field = $endorsementsQuery ? 'send_update_logs.booking_date' : 'personal_quotes.policy_booking_date';
-            $this->getDateFilter($query, $request, $field, 'policyBookDate');
+            $this->getDateFilter($query, $request, $field, 'policyBookDate', null, $endorsementsQuery);
         } elseif ($this->isReportType($request, ManagementReportTypeEnum::APPROVED_TRANSACTIONS)) {
             $this->getDateFilter($query, $request, 'p.payment_due_date', 'paymentDueDate', 'ps.due_date');
         } elseif ($this->isReportType($request, ManagementReportTypeEnum::PAID_TRANSACTIONS)) {
@@ -272,7 +388,7 @@ class ManagementReport
                 if ($this->isReportType($request, ManagementReportTypeEnum::APPROVED_TRANSACTIONS)) {
                     $this->getDateFilter($query, $request, 'send_update_logs.invoice_date', 'paymentDueDate', 'ps.due_date');
                 } elseif ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
-                    $this->getDateFilter($query, $request, 'send_update_logs.booking_date', 'policyBookDate');
+                    $this->getDateFilter($query, $request, 'send_update_logs.booking_date', 'policyBookDate', null, true);
                 } elseif ($this->isReportType($request, ManagementReportTypeEnum::PAID_TRANSACTIONS)) {
                     $this->getDateFilter($query, $request, 'ps.verified_at', 'paymentDate');
                 }
@@ -282,7 +398,7 @@ class ManagementReport
                 if ($this->isReportType($request, ManagementReportTypeEnum::ACTIVE_POLICIES)) {
                     $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
                     $query->where(function ($query) use ($dateFilter) {
-                        $query->where('policy_start_date', '>=', $dateFilter)
+                        $query->where('personal_quotes.policy_start_date', '>=', $dateFilter)
                             ->orWhere('p.policy_expiry_date', '<=', $dateFilter);
                     });
                 }

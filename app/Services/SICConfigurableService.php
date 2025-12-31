@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypeId;
+use App\Models\Emirate;
 use App\Models\HealthPlanType;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
@@ -46,6 +47,7 @@ class SICConfigurableService extends BaseService
             HealthPlanType::class => 'health_plan_types',
             Nationality::class => 'nationalities',
             MemberCategory::class => 'member_categories',
+            Emirate::class => 'emirates',
             // Add more model classes and their aliases as needed
         ];
         // Initialize an array to hold grouped data
@@ -80,6 +82,7 @@ class SICConfigurableService extends BaseService
                 'quote_type_id' => QuoteTypeId::Health,
                 'is_nationality' => $request['is_nationality'],
                 'is_member_category' => $request['is_member_category'],
+                'is_emirate_of_visa' => $request['is_emirate_of_visa'],
             ];
             if (empty($sicConfigurable)) {
                 $sicConfigurable = SICConfig::create($payload);
@@ -97,6 +100,10 @@ class SICConfigurableService extends BaseService
 
             if (isset($request['member_categories'])) {
                 $this->syncData($request['member_categories'], $sicConfigurable->id, MemberCategory::class);
+            }
+
+            if (isset($request['emirates'])) {
+                $this->syncData($request['emirates'], $sicConfigurable->id, Emirate::class);
             }
 
             return $sicConfigurable;

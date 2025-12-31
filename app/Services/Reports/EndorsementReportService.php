@@ -2,13 +2,19 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EndorsementStatusEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Exports\Reports\EndorsementReportExport;
+use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
+use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -21,19 +27,19 @@ class EndorsementReportService extends ManagementReport
 
     private $reportDateRange;
 
-    public function getReportData(Request $request)
+    public function getReportQueryBuilder(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDORSEMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
-            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['policyBookDate'][0]) && isValidDate($request['policyBookDate'][0]) ? Carbon::parse($request['policyBookDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                Carbon::parse($request['policyBookDate'][1])->toDateString();
+                (isset($request['policyBookDate'][1]) && isValidDate($request['policyBookDate'][1]) ? Carbon::parse($request['policyBookDate'][1])->toDateString() : today()->toDateString());
         } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
+            $this->reportDateRange = (isset($request['paymentDueDate'][0]) && isValidDate($request['paymentDueDate'][0]) ? Carbon::parse($request['paymentDueDate'][0])->toDateString() : today()->toDateString())
                 .' - '.
-                Carbon::parse($request['paymentDueDate'][1])->toDateString();
+                (isset($request['paymentDueDate'][1]) && isValidDate($request['paymentDueDate'][1]) ? Carbon::parse($request['paymentDueDate'][1])->toDateString() : today()->toDateString());
         }
 
         // lookupQuery
@@ -46,6 +52,12 @@ class EndorsementReportService extends ManagementReport
                 EndorsementStatusEnum::CORRECTION_OF_POLICY_DETAILS,
             ])
             ->pluck('id')->toArray();
+
+        $statues = [SendUpdateLogStatusEnum::UPDATE_BOOKED];
+        $includeFailedBookings = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS);
+        if ($includeFailedBookings) {
+            $statues[] = SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED;
+        }
 
         $query = SendUpdateLog::query()
             ->select(
@@ -128,6 +140,17 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.status',
                 'ps.sage_reciept_id',
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag'),
+                'tqr.coverage_code as travel_coverage_code',
+                'tqr.days_cover_for as travel_days_cover_for',
+                'tqr.direction_code as travel_direction_code',
+                'cli.text as travel_currently_located_in_id_text',
+                'tqr.region_cover_for_id as travel_region_cover_for_id',
+                'n.text as travel_destination_id_text',
+                'ls.text as sub_source',
+                'sso.text as sub_source_option'
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -147,7 +170,24 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
-            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
+            })
+            ->leftJoin('travel_quote_request as tqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'tqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Travel);
+            })
+            ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
+            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
+            ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
+            ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
+            ->whereIn('send_update_logs.status', $statues)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
         $this->applyFilters($query, $request);
@@ -220,6 +260,17 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.status',
                 DB::raw("'N/A' as sage_reciept_id"),
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with',
+                DB::raw('CASE WHEN hqr.id IS NULL THEN "N/A" WHEN hqr.pec_marked_at IS NOT NULL THEN "Yes" ELSE "No" END as pec_flag'),
+                'tqr.coverage_code as travel_coverage_code',
+                'tqr.days_cover_for as travel_days_cover_for',
+                'tqr.direction_code as travel_direction_code',
+                'cli.text as travel_currently_located_in_id_text',
+                'tqr.region_cover_for_id as travel_region_cover_for_id',
+                'n.text as travel_destination_id_text',
+                'ls.text as sub_source',
+                'sso.text as sub_source_option'
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -237,7 +288,24 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
             ->leftJoin('customer as c', 'c.id', '=', 'personal_quotes.customer_id')
-            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->leftJoin('insurance_provider as ciw', 'personal_quotes.currently_insured_with_id', '=', 'ciw.id')
+            ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
+            ->leftJoin('car_quote_request as cqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'cqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car);
+            })
+            ->leftJoin('health_quote_request as hqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'hqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
+            })
+            ->leftJoin('travel_quote_request as tqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'tqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Travel);
+            })
+            ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
+            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
+            ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
+            ->whereIn('send_update_logs.status', $statues)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
@@ -264,11 +332,22 @@ class EndorsementReportService extends ManagementReport
         $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
 
+        return $query;
+    }
+
+    public function getReportData(Request $request)
+    {
+
+        $query = $this->getReportQueryBuilder($request);
+
+        LoggerService::sql(self::class.' - Endorsement Report Query', $query);
+
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
 
-            return (new EndorsementReportExport($data))->download("Endorsement Report {$this->reportDateRange}.xlsx");
+            return $data;
+
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -280,7 +359,7 @@ class EndorsementReportService extends ManagementReport
         }
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
 
@@ -294,8 +373,43 @@ class EndorsementReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->commmission_percentage = is_numeric($item->commmission_percentage) ? number_format($item->commmission_percentage, 2) : 0;
             $item->status = ucwords(str_replace('_', ' ', strtolower($item->status)));
+            $item->currently_insured_with_text = $item->quote_type_id == QuoteTypeId::Car
+                ? ($item->currently_insured_with_text ?? $item->currently_insured_with ?? 'N/A')
+                : ($item->currently_insured_with_text ?? 'N/A');
+            $item->insurer_tax_invoice_date = ! empty($item->insurer_tax_invoice_date) ? Carbon::parse($item->insurer_tax_invoice_date)->format(config('constants.DATE_DISPLAY_SLASH_FORMAT')) : null;
+
+            if ($item->quote_type_id == QuoteTypeId::Travel) {
+                $item->travel_coverage = $item->source == LeadSourceEnum::RENEWAL_UPLOAD
+                    ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP
+                    : ($item->travel_coverage_code != null
+                        ? $item->travel_coverage_code
+                        : ($item->travel_days_cover_for !== null && $item->travel_days_cover_for <= 92
+                            ? TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP
+                            : ($item->travel_days_cover_for !== null
+                                ? TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP.
+                                '/'.
+                                TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP
+                                : 'N/A')));
+
+                $item->traveling_where = $item->travel_direction_code !== null
+                    ? $item->travel_direction_code
+                    : (
+                        ($item->travel_currently_located_in_id_text == TravelQuoteEnum::LOCATION_UAE_TEXT &&
+                            $item->travel_region_cover_for_id != TravelQuoteEnum::REGION_COVER_ID_UAE
+                        ) ? TravelQuoteEnum::TRAVEL_UAE_OUTBOUND
+                        : (
+                            ($item->travel_destination_id_text == TravelQuoteEnum::LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                                $item->travel_region_cover_for_id == TravelQuoteEnum::REGION_COVER_ID_UAE
+                            ) ? TravelQuoteEnum::TRAVEL_UAE_INBOUND
+                            : 'N/A'
+                        )
+                    );
+            } else {
+                $item->travel_coverage = 'N/A';
+                $item->traveling_where = 'N/A';
+            }
         });
     }
 

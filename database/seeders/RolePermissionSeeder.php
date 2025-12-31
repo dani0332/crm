@@ -19,15 +19,30 @@ class RolePermissionSeeder extends Seeder
         // $this->searchModulePermissions();
         // $this->createBusinessIntelligenceUnitRole();
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
+        $this->addRetryPrePaymentPermission();
         $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
+        // $this->addBridgerSkipPermission();
         $this->addBridgerSkipPermission();
+        $this->addPaymentVerificationLowerAmountPermission();
         $this->addPostPrepaymentButtonPermission();
         $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
         $this->addRenewalsUploadPermission();
         // $this->addPolicyDetailsAddVatPermission();
         $this->addNationalityAllocationConfigPermission();
+        $this->addBorDocumentUploadPermission();
+        $this->addPlanDetailsEditPermission();
+        $this->addOverrideCommissionPermission();
+        $this->addAssignClientSupportPermission();
+        $this->addSupportSpecialistRoles();
+        $this->addLeadsByEmailPermission();
+        $this->addEmbeddedProductPaymentCancelAdminPermission();
+
+        $this->addExportHomePuaUpdatesPermission();
+        $this->addUtmReportExportPermission();
+        $this->addEditLastYearDetailsPermission();
+        $this->addBranchesPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -152,6 +167,17 @@ class RolePermissionSeeder extends Seeder
         ]);
     }
 
+    private function addPaymentVerificationLowerAmountPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::PAYMENT_VERIFICATION_LOWER_AMOUNT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function addInsurerPaymentLinkPermission(): void
     {
         Permission::firstOrCreate([
@@ -242,5 +268,244 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addRetryPrePaymentPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RETRY_PREPAYMENT_BUTTON,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPlanDetailsEditPermission(): void
+    {
+        $permission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::PLAN_DETAILS_EDIT,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
+        }
+    }
+
+    private function addOverrideCommissionPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::OVERRIDE_COMMISSION_LIMIT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addAssignClientSupportPermission(): void
+    {
+        // Create ASSIGN_CLIENT_SUPPORT permission
+        $clientSupportPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::ASSIGN_CLIENT_SUPPORT,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // Create ASSIGN_LEAD_ADVISOR permission
+        $leadAdvisorPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::ASSIGN_LEAD_ADVISOR,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+
+        if ($adminRole) {
+            // Assign ASSIGN_CLIENT_SUPPORT permission to Admin role
+            if (! $adminRole->hasPermissionTo($clientSupportPermission)) {
+                $adminRole->givePermissionTo($clientSupportPermission);
+            }
+
+            // Assign ASSIGN_LEAD_ADVISOR permission to Admin role
+            if (! $adminRole->hasPermissionTo($leadAdvisorPermission)) {
+                $adminRole->givePermissionTo($leadAdvisorPermission);
+            }
+        }
+    }
+
+    private function addSupportSpecialistRoles(): void
+    {
+        $supportRoles = [
+            RolesEnum::CLIENTSUPPORT,
+            RolesEnum::CLIENTSUPPORTLEAD,
+        ];
+
+        foreach ($supportRoles as $roleName) {
+            Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function addLeadsByEmailPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::LEADS_BY_EMAIL,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addEmbeddedProductPaymentCancelAdminPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_MANUAL_OVERRIDE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $engineeringRole = Role::where('name', RolesEnum::Engineering)->first();
+
+        if ($engineeringRole && ! $engineeringRole->hasPermissionTo($permission)) {
+            $engineeringRole->givePermissionTo($permission);
+        }
+    }
+
+    private function addBorDocumentUploadPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::BOR_DOCUMENT_UPLOAD,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        // Assign to Admin and Engineering roles initially
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
+        }
+    }
+
+    private function addExportHomePuaUpdatesPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EXPORT_HOME_PUA_UPDATES,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Assign to Admin and Engineering roles initially
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
+        }
+    }
+
+    private function addUtmReportExportPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::UtmReportExport,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Assign to Admin role by default
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
+        }
+    }
+
+    /**
+     * Create the 'edit-last-year-details' permission.
+     * This permission is NOT granted by default and requires HM approval.
+     */
+    private function addEditLastYearDetailsPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EDIT_LAST_YEAR_DETAILS,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addBranchesPermission(): void
+    {
+        $branchesPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::BRANCHES,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $branchAssignmentsPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::BRANCH_ASSIGNMENTS,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($branchesPermission)) {
+                    $role->givePermissionTo($branchesPermission);
+                }
+
+                if (! $role->hasPermissionTo($branchAssignmentsPermission)) {
+                    $role->givePermissionTo($branchAssignmentsPermission);
+                }
+            }
+        }
     }
 }

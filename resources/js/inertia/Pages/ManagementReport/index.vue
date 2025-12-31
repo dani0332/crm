@@ -6,6 +6,10 @@ import Installment from './Partials/Installment.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
 import SalesSummary from './Partials/SaleSummary.vue';
 import Transaction from './Partials/Transaction.vue';
+import {
+  PEC_FLAG_OPTIONS,
+  PRIVATE_CLIENT_OPTIONS,
+} from '@/constants/reportOptions';
 
 const props = defineProps({
   reportData: Object,
@@ -15,6 +19,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const notification = useToast();
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : null;
@@ -52,12 +57,15 @@ const filters = reactive({
   teams: [],
   subTeams: [],
   leadSources: [],
+  subSources: [],
+  sub_source_options_id: [],
   includeCancelledPolicies: 'Yes',
   groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
   export: 0, //false
   page: 1,
   lob: [],
+  pec_flag: 'all',
 });
 
 const filterkeys = () => {
@@ -107,6 +115,7 @@ const filterkeys = () => {
 const loaders = reactive({
   table: false,
   subTeams: false,
+  export: false,
 });
 
 const selectedReport = computed(() => {
@@ -147,6 +156,36 @@ const teams = computed(() => {
   }));
 });
 
+const subSourceOptions = computed(() => {
+  const sources = props.filterOptions?.subSources || [];
+  return sources.map(source => ({
+    value: source.id,
+    label: source.text,
+    suffix: source.description || source.tooltip || '',
+  }));
+});
+
+const subSourceOptionOptions = computed(() => {
+  const parents = props.filterOptions?.subSources || [];
+  const selected = new Set(filters.subSources || []);
+  const options = [];
+  parents.forEach(p => {
+    if (selected.has(p.id) && Array.isArray(p.childs)) {
+      p.childs.forEach(c =>
+        options.push({
+          value: c.id,
+          label: c.text,
+          suffix: c.description || '',
+        }),
+      );
+    }
+  });
+  const seen = new Set();
+  return options.filter(o =>
+    seen.has(o.value) ? false : (seen.add(o.value), true),
+  );
+});
+
 const disabledGroupBy = computed(() => {
   return filters.reportCategory == 'Sales Summary' ? true : false;
 });
@@ -181,6 +220,7 @@ const transactionTypes = ref(props.filterOptions?.transactionTypes);
 
 const groupBy = reactive([
   { label: 'Advisor', value: 'advisor' },
+  { label: 'OE/AE', value: 'support_user' },
   { label: 'Policy Issuer', value: 'policy_issuer' },
   { label: 'Customer Group', value: 'customer_group' },
   { label: 'Insurer', value: 'insurer' },
@@ -283,13 +323,48 @@ const onSubmit = isValid => {
   });
 };
 
-const onDataExport = flag => {
+const onDataExport = async (flag, exportType = 'download') => {
   filterkeys();
   filters.export = flag;
   filters.page = 1;
   const data = useGenerateQueryString(filters);
   const url = route('management-report-export');
-  window.open(url + '?' + useObjToUrl(data));
+
+  // Add exportType to URL parameters
+  const urlParams = useObjToUrl(data);
+  const separator = urlParams ? '&' : '';
+  const exportTypeParam = `exportType=${exportType}`;
+  const finalUrl = `${url}?${urlParams}${separator}${exportTypeParam}`;
+
+  if (exportType === 'email') {
+    // For email exports, show success message instead of opening window
+    loaders.export = true;
+    const exportResponse = await axios
+      .get(finalUrl)
+      .then(resp => {
+        console.log('resp.data.message', resp.data.message);
+        if (resp.data.message) {
+          notification.success({
+            title: resp.data.message,
+            position: 'top',
+          });
+        }
+        loaders.export = false;
+      })
+      .catch(err => {
+        notification.error({
+          title: err.response?.data?.message || 'Unable to start an export',
+          position: 'top',
+        });
+        setTimeout(() => {
+          loaders.export = false;
+        }, 1000);
+        throw err;
+      });
+  } else {
+    // For direct download, open in new window
+    window.open(finalUrl);
+  }
 };
 
 function onReset() {
@@ -411,8 +486,7 @@ watch(
         <DatePicker
           v-model="filters.policyBookDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -431,8 +505,7 @@ watch(
         <DatePicker
           v-model="filters.paymentDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -451,8 +524,7 @@ watch(
         <DatePicker
           v-model="filters.paymentDueDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -471,8 +543,7 @@ watch(
         <DatePicker
           v-model="filters.policyExpiredDate"
           placeholder="Select Start & End Date"
-          range
-          :max-range="31"
+          :range="{ maxRange: 90 }"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -551,6 +622,7 @@ watch(
           </template>
         </x-select>
       </div>
+
       <div>
         <x-tooltip position="top">
           <label
@@ -621,6 +693,90 @@ watch(
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
+            IMCRM SUB-SOURCE
+          </label>
+          <template #tooltip>
+            Select one or more IMCRM SUB-SOURCE values
+          </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.subSources"
+          placeholder="Search by IMCRM SUB-SOURCE"
+          :options="subSourceOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.subSources = subSourceOptions.map(item => item.value)
+              "
+              @clear="filters.subSources = []"
+            />
+          </template>
+        </x-select>
+      </div>
+      <div v-if="subSourceOptionOptions.length > 0">
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
+            SUB SOURCE OPTION
+          </label>
+          <template #tooltip>
+            Select one or more SUB SOURCE OPTION values
+          </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.sub_source_options_id"
+          placeholder="Search by SUB SOURCE OPTION"
+          :options="subSourceOptionOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_source_options_id = subSourceOptionOptions.map(
+                  o => o.value,
+                )
+              "
+              @clear="filters.sub_source_options_id = []"
+            />
+          </template>
+        </x-select>
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
             Include Cancelled Policies
           </label>
           <template #tooltip>
@@ -637,8 +793,6 @@ watch(
           class="w-full"
         />
       </div>
-    </div>
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div v-if="disabledGroupBy">
         <x-tooltip position="top">
           <label
@@ -727,6 +881,24 @@ watch(
           </template>
         </x-select>
       </div>
+
+      <x-field
+        label="Policy PEC Flag"
+        v-if="
+          filters.reportCategory != 'Sales Summary' &&
+          filters.lob.includes('Health')
+        "
+      >
+        <x-select
+          v-model="filters.pec_flag"
+          placeholder="Select PEC Flag"
+          :options="PEC_FLAG_OPTIONS"
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter PEC Flag...."
+        />
+      </x-field>
+
       <x-field
         label="Private Client"
         v-if="
@@ -742,12 +914,7 @@ watch(
           :single="false"
           v-model="filters.pcp_tag"
           placeholder="Search by Private Client tag"
-          :options="[
-            { value: 'all', label: 'All' },
-            { value: 1, label: 'Yes' },
-            { value: 'no', label: 'No' },
-            { value: 0, label: 'Ex-Pc' },
-          ]"
+          :options="PRIVATE_CLIENT_OPTIONS"
           deselect-all
         />
       </x-field>
@@ -759,9 +926,19 @@ watch(
         size="sm"
         color="#48bb78"
         @click.prevent="onDataExport(1)"
-        :disabled="loaders.table"
+        :disabled="loaders.export"
       >
         Export to Excel
+      </x-button>
+      <x-button
+        v-if="can(permissionsEnum.EXTRACT_REPORT)"
+        size="sm"
+        color="#48bb78"
+        @click.prevent="onDataExport(1, 'email')"
+        :disabled="loaders.export"
+        :loading="loaders.export"
+      >
+        Export via email
       </x-button>
       <x-button
         size="sm"

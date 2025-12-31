@@ -2,8 +2,13 @@
 import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import PaymentNotification from '../Components/PaymentNotification.vue';
-import OcrNotification from '../Components/OcrNotification.vue';
+import DocumentNotification from '../Components/DocumentNotification.vue';
 const page = usePage();
+
+const props = defineProps({
+  hideHeader: { type: Boolean, default: false },
+  noSidebarOffset: { type: Boolean, default: false },
+});
 
 const createLink = link => {
   if (link.children.length > 0) {
@@ -166,10 +171,15 @@ const isReceiveNotificationsEnabled = computed(() => {
 
     <XNotifications inject-key="toast">
       <article
-        :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
+        :class="
+          !minimizeSidebar && !noSidebarOffset
+            ? 'lg:pl-[var(--sidebar-width)]'
+            : ''
+        "
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all"
       >
         <header
+          v-if="!hideHeader"
           class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center border-b bg-white"
         >
           <div
@@ -393,6 +403,7 @@ const isReceiveNotificationsEnabled = computed(() => {
 
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
           <ToastArea />
+          <DocumentNotification />
           <div
             v-if="bannerInfo.total_count > 0"
             class="w-full h-10 rounded bg-error-50 border border-error-500 mb-3 flex items-center justify-center text-sm max-[500px]:h-auto"

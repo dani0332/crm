@@ -4,7 +4,10 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
@@ -14,6 +17,7 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
+use App\Services\SageApiEmbeddedProductService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -130,16 +134,24 @@ class EmbeddedProductController extends Controller
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
-        EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
+        $result = EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
 
-        return redirect()->back()->with('success', 'Certificate send Successfully');
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message'] ?? 'Certificate send successfully');
+        } else {
+            return redirect()->back()->with('error', $result['message'] ?? 'Certificate send failed');
+        }
     }
 
     public function syncDocument(AlfredProtectDocumentSyncRequest $request)
     {
-        EmbeddedProductRepository::syncDocument($request->validated());
+        $result = EmbeddedProductRepository::syncDocument($request->validated());
 
-        return redirect()->back()->with('success', 'Re-gerating resquest processing');
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message'] ?? 'Re-gerating request processing');
+        } else {
+            return redirect()->back()->with('error', $result['message'] ?? 'Re-gerating request failed');
+        }
     }
 
     /**
@@ -173,6 +185,10 @@ class EmbeddedProductController extends Controller
             ],
             'ep_enums' => EmbeddedProductEnum::asArray(),
             'sync_statuses' => CourierSyncStatusEnum::withLabels(),
+            'sage_statuses' => SageEmbeddedProductEnum::withLabels(),
+            // BenSampo enums expose withLabels() helpers (built from asArray())
+            'payment_statuses' => PaymentStatusEnum::withLabels(),
+            'policy_statuses' => EmbeddedTransactionEnum::withLabels(),
         ]);
     }
 
@@ -262,5 +278,23 @@ class EmbeddedProductController extends Controller
             'ok' => true,
             'message' => 'Re-syncing Request Submitted Successfully. Please Wait for the process to complete.',
         ]);
+    }
+
+    public function scheduleEPSageBooking(Request $request)
+    {
+        try {
+            $scheduledResponse = (new SageApiEmbeddedProductService)->scheduleBookingOfEmbeddedProduct($request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => $scheduledResponse['message'],
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+
     }
 }

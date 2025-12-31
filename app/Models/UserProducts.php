@@ -12,5 +12,5 @@ class UserProducts extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'user_products';
-    protected $fillable = ['user_id', 'team_id'];
+    protected $fillable = ['user_id', 'product_id'];
 }

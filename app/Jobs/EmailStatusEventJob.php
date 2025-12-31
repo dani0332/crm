@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class EmailStatusEventJob implements ShouldQueue
 {
@@ -36,12 +37,14 @@ class EmailStatusEventJob implements ShouldQueue
     public function handle()
     {
         try {
-
+            if (DB::getDefaultConnection() !== 'mysql') {
+                DB::setDefaultConnection('mysql');
+            }
             if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
 
                 $isEmailMessage = EmailStatus::latest()->where('msg_id', $this->emailData->message_id)->first();
-
-                if (! empty($isEmailMessage->quote_type_id) && ! empty($isEmailMessage->quote_id) && $isEmailMessage->quote_type_id == QuoteTypes::HOME->id()) {
+                $quoteTypeIds = [QuoteTypes::HOME->id(), QuoteTypes::LIFE->id()];
+                if (! empty($isEmailMessage->quote_type_id) && ! empty($isEmailMessage->quote_id) && in_array($isEmailMessage->quote_type_id, $quoteTypeIds)) {
                     if ($isEmailMessage->email_status == ProcessStatusCode::UNSUBSCRIBED) {
                         info('EmailStatusEventJob - status is already unsubscribe-request for msg_id: '.$this->emailData->message_id.' | Time: '.now());
 
@@ -49,6 +52,7 @@ class EmailStatusEventJob implements ShouldQueue
                     }
                     info('EmailStatusEventJob - update status for home quote : msg_id: '.$this->emailData->message_id.' - status: '.$this->emailData->status.' | Time: '.now());
                     app(EmailStatusService::class)->updateEmailStatus($isEmailMessage, $this->emailData->status);
+                    Cache::forget("email_statuses_{$isEmailMessage->quote_type_id}_{$isEmailMessage->quote_id}");
 
                     return true;
                 }
@@ -72,11 +76,10 @@ class EmailStatusEventJob implements ShouldQueue
                         $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
                         $newEmailStatus->save();
 
-                        Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
-
                         info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
                         $this->storeEmailStatusEvent($emailStatusData);
+                        Cache::forget("email_statuses_{$emailStatusData->quote_type_id}_{$emailStatusData->quote_id}");
                     } else {
                         info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                     }

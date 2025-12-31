@@ -1,12 +1,13 @@
 <script setup>
-import { reactive } from 'vue';
 import { createReusableTemplate } from '@vueuse/core';
+import { reactive } from 'vue';
+import SelectPlan from '../../Components/SelectPlan.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import SelectPlan from '../../Components/SelectPlan.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: Object,
@@ -774,6 +775,7 @@ const getIncludedBenefitsTooltip = fieldText =>
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -878,6 +880,39 @@ const getIncludedBenefitsTooltip = fieldText =>
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
+
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source?.description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.sub_source?.text || 'N/A' }}</div>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option?.description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
+              </div>
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
@@ -949,7 +984,7 @@ const getIncludedBenefitsTooltip = fieldText =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL INFORMATION</dt>
-                <dd>{{ quote?.savings_quote?.additional_notes }}</dd>
+                <dd>{{ quote?.savings_quote?.additional_notes || 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INVESTMENT FREQUENCY</dt>
@@ -2039,6 +2074,12 @@ const getIncludedBenefitsTooltip = fieldText =>
       :expanded="sectionExpanded"
       quoteType="savings"
       :bookPolicyDetails="bookPolicyDetails"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      lob="savings"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy

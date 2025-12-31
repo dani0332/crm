@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\SLAActionTypeEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePrimaryContactRequest;
@@ -16,7 +17,9 @@ use App\Services\CentralService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
+use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Database\Eloquent\Model;
 
 class PersonalQuoteController extends Controller
 {
@@ -30,7 +33,7 @@ class PersonalQuoteController extends Controller
         $response = PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
 
         // Update payment allocation status when lead status changes when lead status as Policy Issue
-        app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
+        app(CentralService::class)->updatePaymentAllocation($quoteType, $request->quote_uuid);
 
         if (! $response['activity_created']) {
             return back()->with('message', 'Status updated successfully');
@@ -41,6 +44,7 @@ class PersonalQuoteController extends Controller
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
+        $documentService = app(QuoteDocumentService::class);
         $files = request()->file('files');
         $responses = collect();
 
@@ -65,14 +69,20 @@ class PersonalQuoteController extends Controller
             return back()->with('error', implode(', ', $errors));
         }
 
-        if ($request->document_type_code === DocumentTypeCode::HPD) {
-            $quote = $this->getQuoteObject($request->quote_type, $quoteId);
+        $quote = $this->getQuoteObject($request->quote_type, $quoteId);
+
+        $docTypes = $documentService->bringProofDocumentForAllLobs();
+        if (in_array($request->document_type_code, $docTypes)) {
             if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink()) {
-                app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
+                $documentService->updateQuoteAndPaymentStatusToPaymentPending($quote);
             }
         }
 
         app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);
+
+        if ($quote && $quote instanceof Model) {
+            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::DOCUMENTS_UPLOAD);
+        }
 
         return back()->with('message', 'All files uploaded successfully');
     }

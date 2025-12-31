@@ -28,9 +28,11 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
+use Illuminate\Http\Request;
 
 class JetskiQuoteController extends Controller
 {
@@ -44,6 +46,7 @@ class JetskiQuoteController extends Controller
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('JetskiQuote/Index', [
             'quotes' => $quotes->simplePaginate(10)->withQueryString(),
@@ -52,15 +55,31 @@ class JetskiQuoteController extends Controller
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
             'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
+            'subSources' => $subSources,
         ]);
     }
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function create()
+    public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('Jetski create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
+
         $data = JetskiQuoteRepository::getFormOptions();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('JetskiQuote/Form', $data);
     }
@@ -87,13 +106,15 @@ class JetskiQuoteController extends Controller
     public function edit($uuid)
     {
         $data = JetskiQuoteRepository::getFormOptions();
-
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia(
             'JetskiQuote/Form',
             array_merge($data, [
                 'quote' => $quote,
+                'subSources' => $subSources,
+                'leadSourceParams' => [],
             ])
         );
     }
@@ -111,6 +132,7 @@ class JetskiQuoteController extends Controller
         /* End - Temporarily adding for correcting historic data */
 
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
+        $quote->load('subSource', 'subSourceOption');
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();

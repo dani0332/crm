@@ -3,6 +3,8 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
+use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Traits\ModernCsvExportable;
@@ -43,8 +45,12 @@ class HealthQuotesExport implements CsvExportableInterface
             'Ref-ID',
             'FIRST NAME',
             'LAST NAME',
+            'EMIRATE OF VISA',
+            'POLICY PEC FLAG',
             'LEAD STATUS',
             'ADVISOR',
+            'OE/AE',
+            'BRANCH',
             'ADVISOR EMAIL',
             'WC ADVISOR',
             'CREATED DATE',
@@ -66,7 +72,6 @@ class HealthQuotesExport implements CsvExportableInterface
             'Gender',
             'Nationality',
             'Age Bands',
-            'Emirates of Visa',
             'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
             'TYPE OF PLAN',
             'Provider Name',
@@ -79,17 +84,24 @@ class HealthQuotesExport implements CsvExportableInterface
             'PAYMENT STATUS',
             'ADVISOR CAR TEAM(s)',
             'PRIVATE CLIENT',
+            'IMCRM SUB-SOURCE',
         ];
     }
 
     public function map($quote): array
     {
+        $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id));
+
         return [
             $quote->code,
             $quote->first_name,
             $quote->last_name,
+            $quote->emirate?->text,
+            $quote->has_pec_tag ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
             $quote->advisor?->name,
+            $quote->supportUser?->name ?? '',
+            $branchName,
             $quote->advisor?->email,
             $quote->wcAdvisor?->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
@@ -111,11 +123,10 @@ class HealthQuotesExport implements CsvExportableInterface
             $this->genderOptions[$quote->gender] ?? '',
             $quote->nationality?->text,
             Carbon::parse($quote->dob)->age,
-            $quote->emirate?->text,
             $quote->customer_type,
             $quote->plan?->text,
             $quote->insuranceProvider?->text,
-            $quote->renewalBatch?->name,
+            $quote->renewalBatchModel?->name,
             $quote->previous_policy_expiry_date_formatted,
             $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
             $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
@@ -124,6 +135,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->payment_status?->payment_status_text ?? 'N/A',
             $quote->car_teams ?? 'N/A',
             $quote->customer->pcp_tag_formatted ?? '',
+            $quote->subSource?->text,
         ];
     }
 

@@ -49,6 +49,7 @@ use App\Services\BikeQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\EmailStatusService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -76,29 +77,48 @@ class BikeQuoteController extends Controller
      */
     public function index()
     {
-        $personalQuotes = BikeQuoteRepository::getData();
+        $personalQuotes = BikeQuoteRepository::getData()->simplePaginate(10)->withQueryString();
+        BikeQuoteRepository::postProcessBikeQuote($personalQuotes);
+
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('BikeQuote/Index', [
-            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
+            'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
             'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
+            'subSources' => $subSources,
         ]);
     }
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function create()
+    public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('Bike create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
+
         $data = BikeQuoteRepository::getFormOptions();
         $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('BikeQuote/Form', array_merge($data, ['quoteStatusEnums' => $quoteStatusEnums]));
     }
@@ -128,6 +148,7 @@ class BikeQuoteController extends Controller
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
         $bikeQuoteRequestDetail = $quote->bikeQuote ?? null;
         $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia(
             'BikeQuote/Form',
@@ -135,6 +156,8 @@ class BikeQuoteController extends Controller
                 'quote' => $quote,
                 'bikeQuoteDetail' => $bikeQuoteRequestDetail,
                 'quoteStatusEnums' => $quoteStatusEnums,
+                'subSources' => $subSources,
+                'leadSourceParams' => [],
             ])
         );
     }
@@ -164,7 +187,7 @@ class BikeQuoteController extends Controller
             })->values();
         }
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BIKE->id());
         $personalPlans = PersonalPlanRepository::get();
@@ -211,7 +234,7 @@ class BikeQuoteController extends Controller
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
-        $quote->load(['carPlan.insuranceProvider']);
+        $quote->load(['carPlan.insuranceProvider', 'subSource', 'subSourceOption']);
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,

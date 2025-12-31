@@ -281,6 +281,7 @@ onMounted(() => {
               label: item.name,
             }))
           "
+          :canAssignLeadAdvisor="canAssignLead"
           :quoteType="'tmlead'"
           @success="onLeadAssigned"
         />

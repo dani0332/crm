@@ -6,6 +6,8 @@ use App\Enums\EmbeddedProductEnum;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
+use App\Strategies\EmbeddedProducts\COU;
+use App\Strategies\EmbeddedProducts\ECB;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\ExcelExportable;
@@ -22,12 +24,18 @@ class EmbeddedProductReport
     {
         $this->embeddedProduct = $embeddedProduct;
         $this->filters = $filters;
+        $isECB = $embeddedProduct->short_code === EmbeddedProductEnum::ECB;
+        $isCourier = $embeddedProduct->short_code === EmbeddedProductEnum::COURIER;
         $isTravel = $embeddedProduct->short_code === EmbeddedProductEnum::TRAVEL;
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($this->embeddedProduct->short_code);
         if ($isTravel) {
             $this->epStrategy = new TravelAnnual;
         } elseif ($isAlfredProtect) {
             $this->epStrategy = new AlfredProtect;
+        } elseif ($isECB) {
+            $this->epStrategy = new ECB;
+        } elseif ($isCourier) {
+            $this->epStrategy = new COU;
         } else {
             $this->epStrategy = new EmbeddedProductStrategy;
         }

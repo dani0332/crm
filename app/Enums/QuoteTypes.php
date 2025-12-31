@@ -71,6 +71,7 @@ enum QuoteTypes: string
     case CAR_REVIVAL = 'CarRevival';
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
+    case CAR_CAT_A = 'CAR_CAT_A';
 
     public function id(): string
     {
@@ -218,6 +219,7 @@ enum QuoteTypes: string
             self::CYCLE => 'CYC-',
             self::JETSKI => 'JSK-',
             self::SAVINGS => 'SAV-',
+            default => null,
         };
     }
 
@@ -302,7 +304,7 @@ enum QuoteTypes: string
     public function advisorRoles()
     {
         return match ($this) {
-            self::CAR => [RolesEnum::CarAdvisor],
+            self::CAR => [RolesEnum::CarAdvisor, RolesEnum::CarRevivalAdvisor],
             self::HEALTH => [RolesEnum::HealthAdvisor, RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor],
             self::BIKE => [RolesEnum::BikeAdvisor],
             self::TRAVEL => [RolesEnum::TravelAdvisor],
@@ -314,6 +316,7 @@ enum QuoteTypes: string
             self::HOME => [RolesEnum::HomeAdvisor],
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
+            self::CAR_REVIVAL => [RolesEnum::CarRevivalAdvisor],
             self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             default => [],
         };
@@ -414,6 +417,41 @@ enum QuoteTypes: string
             self::CAR_BIKE => [],
             self::SAVINGS => [],
             default => [],
+        };
+    }
+
+    public function getTeams()
+    {
+        return match ($this) {
+            self::BUSINESS => [
+                self::CORPLINE,
+                self::GROUP_MEDICAL,
+            ],
+            default => [$this],
+        };
+    }
+
+    public function isGroupMedical(Model $quote): bool
+    {
+        return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+    }
+
+    public function modelClass(): string
+    {
+        return match ($this) {
+            self::CAR => CarQuote::class,
+            self::HOME => HomeQuote::class,
+            self::HEALTH => HealthQuote::class,
+            self::LIFE => LifeQuote::class,
+            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => BusinessQuote::class,
+            self::BIKE => BikeQuote::class,
+            self::YACHT => YachtQuote::class,
+            self::TRAVEL => TravelQuote::class,
+            self::PET => PetQuote::class,
+            self::CYCLE => CycleQuote::class,
+            self::JETSKI => JetskiQuote::class,
+            self::SAVINGS => SavingsQuote::class,
+            default => PersonalQuote::class,
         };
     }
 

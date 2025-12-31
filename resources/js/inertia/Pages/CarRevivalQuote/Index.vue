@@ -79,6 +79,7 @@ const advisorOptions = computed(() => {
     <div v-if="quotesSelected.length > 0" class="mb-4">
       <LeadAssignment
         :selected="quotesSelected.map(e => e.id)"
+        :canAssignLeadAdvisor="quotesSelected.length > 0"
         :advisors="advisorOptions"
         model_type="car"
       />

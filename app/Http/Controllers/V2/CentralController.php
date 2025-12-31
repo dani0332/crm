@@ -15,21 +15,19 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
-use App\Exports\CarQuoteExportWithEmailMobile;
 use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
 use App\Exports\LifeQuotesExport;
-use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
-use App\Exports\PUAQuoteExport;
-use App\Exports\PUAUpdatesExport;
 use App\Exports\RetentionReportExport;
 use App\Exports\RMQuotesExport;
 use App\Exports\TravelQuoteExport;
+use App\Factories\PUAExportFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
@@ -44,7 +42,9 @@ use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\PostPrepaymentToSageRequest;
+use App\Http\Requests\PUAExportValidationRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\RetryPrepaymentRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
@@ -54,7 +54,6 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
-use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
@@ -64,6 +63,7 @@ use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\InsuranceProvider;
 use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -71,19 +71,23 @@ use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\ManualCommissionUpdateService;
 use App\Services\NotificationService;
+use App\Services\PaymentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SLA\SLAService;
 use App\Services\SplitPaymentService;
+use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -114,6 +118,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::LIFE->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
         ])) {
@@ -127,8 +132,6 @@ class CentralController extends Controller
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                 return app(CarQuoteExportWithPlans::class)->download(ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL));
-            } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
-                return app(CarQuoteExportWithEmailMobile::class)->download(ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE));
             } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
                 return app(CarQuoteExportWithMakeModelTrims::class)->download(ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS));
             }
@@ -168,6 +171,16 @@ class CentralController extends Controller
                 if ($request['exportType'] == 'email') {
                     return app(CarQuoteExport::class)->emailCSV('Car-List', $request->all());
                 }
+
+                LoggerService::info(self::class.' - exportLeads Car download start', extra: [
+                    'exportType' => $request['exportType'] ?? 'download',
+                    'created_at_start' => $request->get('created_at_start'),
+                    'created_at_end' => $request->get('created_at_end'),
+                    'segment_filter' => $request->get('segment_filter'),
+                    'registration_type' => $request->get('registration_type'),
+                    'sic_advisor_requested' => $request->get('sic_advisor_requested'),
+                    'private_client' => $request->get('private_client'),
+                ]);
 
                 return app(CarQuoteExport::class)->download('Car-List');
 
@@ -210,9 +223,17 @@ class CentralController extends Controller
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);
 
+            // todo: remove get insured details after id_number format is consistent
+            $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
+                ->where('id_type', 'emiratesId')
+                ->emiratesIdNumber($customerProfileRequest->emirates_id_number)
+                ->first();
+            $idNumber = $insured?->id_number ?? $customerProfileRequest->emirates_id_number;
+
             $insuredPersonDetails = Insured::updateOrCreate([
                 'id_type' => 'emiratesId',
-                'id_number' => $customerProfileRequest->emirates_id_number,
+                'id_number' => $idNumber,
+                'customer_type' => $customerProfileRequest->customer_type,
             ], [
                 'first_name' => $customerProfileRequest->insured_first_name,
                 'last_name' => $customerProfileRequest->insured_last_name,
@@ -248,6 +269,12 @@ class CentralController extends Controller
             }
         }
 
+        $quoteType = QuoteTypes::getName($customerProfileRequest->quote_type_id);
+        $quote = $this->getQuoteObject($quoteType->value, $customerProfileRequest->quote_request_id);
+        if ($quote) {
+            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT);
+        }
+
         return redirect()->back();
     }
 
@@ -256,17 +283,13 @@ class CentralController extends Controller
      */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
-        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        $response = app(CentralService::class)->updateLastYearPolicy($request);
 
-        if (! $quote) {
-            return redirect()->back()->with('error', 'Error Updating Policy Details.');
+        if (! $response['status']) {
+            return redirect()->back()->with('error', $response['message']);
         }
 
-        $quote->update([
-            'renewal_batch' => $request->renewal_batch,
-        ]);
-
-        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
+        return redirect()->back()->with('success', 'Last Year Policy Details have been updated successfully.');
     }
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
@@ -276,40 +299,11 @@ class CentralController extends Controller
         try {
             LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
-            $paymentInformation = [
-                'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
-                'transaction_payment_status' => $validatedData['transaction_payment_status'],
-                'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
-                'broker_invoice_number' => $validatedData['broker_invoice_number'],
-                'insurer_invoice_date' => $validatedData['invoice_date'],
-                'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
-                'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
-                'commmission_percentage' => $validatedData['commission_percentage'],
-                'commission_vat' => $validatedData['vat_on_commission'],
-                'commission' => $validatedData['total_commission'],
-                'invoice_description' => $validatedData['invoice_description'],
-            ];
+            $updateBookingDetailsResponse = app(CentralService::class)->updateBookingDetails($validatedData, $bookPolicyRequest);
 
-            $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-
-            $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
-            $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
-
-            if ($isDuplicateOrCIRLead && empty($payment)) {
-                $payment = Payment::where([
-                    'paymentable_id' => $quote->id,
-                    'paymentable_type' => $quote->getMorphClass(),
-                ])->mainLeadPayment()->first();
+            if (! $updateBookingDetailsResponse['status']) {
+                return back()->with('error', $updateBookingDetailsResponse['message']);
             }
-
-            $payment->update($paymentInformation);
-            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
-
-            $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
-            if (! $response['status']) {
-                return back()->with('error', $response['message']);
-            }
-            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
@@ -343,6 +337,7 @@ class CentralController extends Controller
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
+
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
@@ -350,6 +345,16 @@ class CentralController extends Controller
             }
 
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
+
+            if (! $response['status']) {
+                return response()->json([
+                    'errors' => [
+                        'message' => [
+                            $response['message'],
+                        ],
+                    ],
+                ], 422);
+            }
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -382,9 +387,24 @@ class CentralController extends Controller
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_PLAN);
         LoggerService::info("Select plan for Ecom lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
 
+        $errorsMessages = (new CentralService)->validateIsPlanSelectable($quoteType, $request->all());
+        if (! empty($errorsMessages)) {
+            return response()->json(['errors' => $errorsMessages], 422);
+        }
+
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
+        $quote = $this->getQuoteObject($quoteType, $uuid);
+        if ($quote) {
+            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::AVAILABLE_PLAN_SELECTED);
+
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
+            }
+        }
+
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
+        app(TravelQuoteService::class)->updateCustomerProfileDetails($quoteType, $uuid);
 
         return response()->json(['plan' => $response]);
     }
@@ -599,6 +619,16 @@ class CentralController extends Controller
     {
         $healthQuote = HealthQuote::where('uuid', $request->quote_uuid)->first();
 
+        if (! $healthQuote) {
+            LoggerService::warning(self::class.' - sendOCBEmail - Health quote not found', extra: [
+                'quote_uuid' => $request->quote_uuid,
+            ]);
+
+            return response()->json(['error' => 'Health quote not found'], 404);
+        }
+
+        LoggerService::startQuoteLogging($healthQuote);
+
         $previousAdvisor = null;
         if (isset($healthQuote) && ! empty($healthQuote->previous_advisor_id)) {
             $previousAdvisor = app(UserService::class)->getUserById($healthQuote->previous_advisor_id);
@@ -608,10 +638,13 @@ class CentralController extends Controller
         // Fetch all quote plans
         $listQuotePlans = app(HealthQuoteService::class)->getQuotePlans($request->quote_uuid);
         if (! isset($listQuotePlans)) {
+            LoggerService::warning(self::class.' - sendOCBEmail - No plans returned from service');
+
             return response()->json(['error' => 'OCB Health Plan Not Found'], 404);
         }
         if (! empty($request->selected_plans) && is_array($request->selected_plans)) {
             if (! isset($listQuotePlans->quote->plans)) {
+                LoggerService::warning(self::class.' - sendOCBEmail - Plans not available in quote object');
                 $listQuotePlans = 'Plans not available!';
             } else {
                 $allPlans = $listQuotePlans->quote->plans;
@@ -637,16 +670,20 @@ class CentralController extends Controller
             $listQuotePlans = $randomPlans;
         }
 
-        LoggerService::info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+        LoggerService::info(self::class.' - sendOCBEmail - OCB email plans fetched');
 
         $emailTemplateId = (int) ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->value('value');
 
         if (! isset($emailTemplateId)) {
+            LoggerService::warning(self::class.' - sendOCBEmail - Invalid email template ID');
+
             return response()->json(['error' => 'Invalid email template ID'], 400);
         }
         $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
         $emailData = app(SendEmailCustomerService::class)->buildEmailData($healthQuote, $listQuotePlans, $previousAdvisor, $request, $emailTemplateId);
+
+        LoggerService::info(self::class.' - sendOCBEmail - Email data built successfully');
 
         $responseCode = app(SendEmailCustomerService::class)->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'health-quote-one-click-buy');
         if ($responseCode == 201) {
@@ -654,19 +691,18 @@ class CentralController extends Controller
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $healthQuote->quote_status_date = now();
                 $healthQuote->save();
-                $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
-                // Send Automated Followup Email Job if Health Auto-Followups is enabled.
-                if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
-                    $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
-                    LoggerService::info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
-                }
+
+                LoggerService::info(self::class.' - sendOCBEmail - Quote status updated to QUOTED', extra: [
+                    'new_status' => QuoteStatusEnum::Quoted,
+                ]);
             }
-            LoggerService::info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+            LoggerService::info(self::class.' - sendOCBEmail - OCB Email sent successfully & Quote Status Changed to "QUOTED"');
 
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            LoggerService::info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
+            LoggerService::warning(self::class.' - sendOCBEmail - Email sending failed', extra: [
+                'response_code' => $responseCode,
+            ]);
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
@@ -679,13 +715,31 @@ class CentralController extends Controller
 
         return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
-    public function exportPUAUpdates(Request $request)
+    public function exportPUAUpdates(PUAExportValidationRequest $request, string $quoteType)
     {
-        if (! auth()->user()->can(PermissionsEnum::EXPORT_CAR_PUA_UPDATES)) {
-            return response()->json(['message' => 'User Has No Permission to Download PUA Updates.'], 403);
+        // Log all request data
+        LoggerService::info('PUA Export Request - All Data', [
+            'request_all' => $request->all(),
+            'quote_type' => $quoteType,
+        ]);
+
+        // Validate quote type using the factory
+        if (! PUAExportFactory::isValidQuoteType($quoteType)) {
+            return response()->json(['message' => "Invalid quote type: {$quoteType}"], 400);
         }
 
-        $zipFileName = 'PUA-UPDATES.zip';
+        // Dynamic permission check based on quote type
+        $permission = match ($quoteType) {
+            'Car' => PermissionsEnum::EXPORT_CAR_PUA_UPDATES,
+            'Home' => PermissionsEnum::EXPORT_HOME_PUA_UPDATES,
+            default => PermissionsEnum::EXPORT_CAR_PUA_UPDATES, // Fallback to car permission
+        };
+
+        if (! auth()->user()->can($permission)) {
+            return response()->json(['message' => "User Has No Permission to Download {$quoteType} PUA Updates."], 403);
+        }
+
+        $zipFileName = "PUA-UPDATES-{$quoteType}.zip";
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new \ZipArchive;
 
@@ -694,15 +748,26 @@ class CentralController extends Controller
         }
 
         try {
-            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA-AUTHORIZED.xlsx');
-            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('NON-PUA-AUTHORIZED.xlsx');
-            $puaUpdatesExport = app(PUAUpdatesExport::class)->download('PUA-UPDATES.xlsx');
+            $exports = PUAExportFactory::createExports($quoteType, $request->all());
 
-            $files = [
-                ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => 'PUA-AUTHORIZED.xlsx'],
-                ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => 'NON-PUA-AUTHORIZED.xlsx'],
-                ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => 'PUA-UPDATES.xlsx'],
-            ];
+            $files = [];
+
+            if (! empty($exports)) {
+                LoggerService::info('PUA export starting', ['quote_type' => $quoteType]);
+                $puaUpdateExport = $exports['pua_quote']->download("{$quoteType}-PUA-AUTHORIZED.xlsx");
+                $nonPuaUpdateExport = $exports['non_pua_quote']->download("{$quoteType}-NON-PUA-AUTHORIZED.xlsx");
+                $puaUpdatesExport = $exports['pua_updates']->download("{$quoteType}-PUA-UPDATES.xlsx");
+
+                $files = [
+                    ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => "{$quoteType}-PUA-AUTHORIZED.xlsx"],
+                    ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => "{$quoteType}-NON-PUA-AUTHORIZED.xlsx"],
+                    ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => "{$quoteType}-PUA-UPDATES.xlsx"],
+                ];
+            } else {
+                $zip->close();
+
+                return response()->json(['message' => "No PUA exports available for {$quoteType} quote type."], 400);
+            }
 
             foreach ($files as $file) {
                 if (file_exists($file['path'])) {
@@ -712,7 +777,18 @@ class CentralController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error processing exports: '.$e->getMessage()], 500);
+            $appTrace = collect($e->getTrace())
+                ->filter(function ($trace) {
+                    // Check if any value in the trace contains 'App/' or 'app/'
+                    return collect($trace)->contains(function ($value) {
+                        return is_string($value) && (str_contains($value, 'App/') || str_contains($value, 'app/'));
+                    });
+                })
+                ->values(); // Re-index the array
+
+            LoggerService::error('PUA Export Error - App Trace:', $appTrace->toArray());
+
+            return response()->json(['message' => 'Error processing exports: '.$e->getMessage().' file:'.$e->getFile().'line:'.$e->getLine()], 500);
         }
 
         $zip->close();
@@ -736,14 +812,17 @@ class CentralController extends Controller
         ];
 
         $response = ['status' => false, 'message' => ''];
+        $insuranceProvider = InsuranceProvider::where('id', $request->insuranceProviderId)->first();
+        // only for those insurer where TAP enabled.
+        $providerName = InsuranceProvidersEnum::getTextByCode($insuranceProvider->code);
         if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
-            $responseMessage = 'GIG server connection issue. Please check API logs for details of the error';
+            $responseMessage = $providerName.' server connection issue. Please check API logs for details of the error';
 
             if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
                 $insurerAMLScreeningResponse = AML::where([
                     'quote_type_id' => $request->quoteType,
                     'quote_request_id' => $request->quoteRequestId,
-                    'screening_type' => 'INSURER_'.InsuranceProvidersEnum::AXA,
+                    'screening_type' => 'INSURER_'.$insuranceProvider->code,
                 ])->latest()->first();
 
                 $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];
@@ -791,8 +870,9 @@ class CentralController extends Controller
 
     public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
     {
+        $request = $postPrepaymentToSageRequest->safe();
+
         try {
-            $request = $postPrepaymentToSageRequest->safe();
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
             $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
             $sendUpdateLog = null;
@@ -839,19 +919,64 @@ class CentralController extends Controller
         return response()->json($response);
     }
 
+    public function checkInsurerReceiptNumber($quoteType, Request $request)
+    {
+        $validatedRequest = (object) $request->validate([
+            'insurer_receipt_number' => 'required|string',
+        ]);
+
+        $response = app(CentralService::class)->checkInsurerReceiptNumber($quoteType, $validatedRequest->insurer_receipt_number);
+
+        return response()->json($response);
+    }
+
     public function getPlansPaymentGateway(GetPlansPaymentGatewayRequest $request, $quoteType, $quoteCcode)
     {
-        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids, context: ['ref_id' => $quoteCcode]);
+        LoggerService::startQuoteLogging($quoteCcode);
+        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids);
         try {
             $result = app(CentralService::class)->getPlansPaymentGateway($request, $quoteType);
 
-            LoggerService::info('getPlansPaymentGateway response: ', extra: $result, context: ['ref_id' => $quoteCcode]);
+            LoggerService::info('getPlansPaymentGateway response: ', extra: $result);
 
             return response()->json(['plans' => $result]);
         } catch (\Throwable $th) {
-            LoggerService::error('getPlansPaymentGateway error: ', exception: $th, context: ['ref_id' => $quoteCcode]);
+            LoggerService::error('getPlansPaymentGateway error: ', exception: $th);
 
             return response()->json(['error' => $th->getMessage()], 500);
         }
+    }
+
+    public function retryPrepaymentCreation(RetryPrepaymentRequest $request)
+    {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_PREPAYMENT_POSTING);
+        $request = $request->safe();
+        $paymentCode = $request->paymentCode;
+        $srNo = $request->srNo;
+        LoggerService::info("retryPrepaymentCreation called for payment code : {$paymentCode} and sr no : {$srNo}");
+        $data = [
+            'quote_type' => $request->quoteType,
+            'quote_request_id' => $request->quoteRequestId,
+            'payment_split_id' => $request->paymentSplitId,
+            'payment_code' => $paymentCode,
+            'sr_no' => $srNo,
+        ];
+        $result = app(PaymentService::class)->retryCreatePrepayment($data);
+        if ($result['success']) {
+            return redirect()->back()->with([
+                'success' => $result['message'],
+            ]);
+        }
+
+        return redirect()->back()->with([
+            'error' => $result['message'],
+        ]);
+    }
+
+    public function updateCommissionForLeads()
+    {
+        $response = app(ManualCommissionUpdateService::class)->updateCommissionForLeads();
+
+        return $response;
     }
 }

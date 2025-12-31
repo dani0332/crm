@@ -1,16 +1,30 @@
 <script setup>
+import { nextTick } from 'vue';
 const props = defineProps({
   dropdownSource: Object,
   model: String,
   genderOptions: Object,
+  emirateEnum: Object,
   quote: {
     type: Object,
     default: {},
   },
+  subSources: { type: Array, default: () => [] },
+  leadSourceParams: { type: Object, default: () => ({}) },
 });
 
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, maxCharacters } = useRules();
 const isEmptyField = ref(false);
+const pecValidationError = ref('');
+const page = usePage();
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
+const rolesEnum = page.props.rolesEnum;
+const teamNamesEnum = page.props.teamNamesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -29,6 +43,51 @@ const genderSelect = computed(() => {
     value: status,
     label: props.genderOptions[status],
   }));
+});
+
+// Sub-source computed properties
+const subSourceOptions = computed(() => {
+  return (
+    props.subSources?.map(source => ({
+      value: source.id,
+      label: source.text,
+      suffix: source.description || null,
+    })) || []
+  );
+});
+
+const subSourceOptionOptions = computed(() => {
+  if (!quoteForm.sub_source_id) return [];
+  const selectedSubSource = props.subSources?.find(
+    source => source.id == quoteForm.sub_source_id,
+  );
+  const pcpOnlyOptions = ['pcp-cross-sell', 'pcp-customer-referral'];
+  return (
+    selectedSubSource?.childs?.map(child => ({
+      value: child.id,
+      label: child.text,
+      suffix: child.description || null,
+      disabled:
+        !isPcpSubSourceOptionAllowed.value &&
+        pcpOnlyOptions.includes(String(child.code)),
+    })) || []
+  );
+});
+
+const isReferralType = computed(() => {
+  return (
+    props.leadSourceParams?.type === 'referral' ||
+    props.quote?.source === 'IMCRM'
+  );
+});
+
+// Role-based permissions for sub-source fields
+const canEditSubSourceFields = computed(() => {
+  return hasAnyRole([
+    rolesEnum.HealthManager,
+    rolesEnum.Admin,
+    rolesEnum.LeadPool,
+  ]);
 });
 
 const quoteForm = useForm({
@@ -60,6 +119,23 @@ const quoteForm = useForm({
   has_worldwide_cover: props.quote?.has_worldwide_cover || null,
   has_home: props.quote?.has_home || null,
   plan_type_id: props.quote?.health_plan_type_id || null,
+  pec: props.quote?.pec || null,
+  // Sub-source fields from CreateLeadModal
+  sub_source_id:
+    parseInt(
+      props.quote?.sub_source_id || props.leadSourceParams?.subSource || 0,
+    ) || null,
+  sub_source_options_id:
+    parseInt(
+      props.quote?.sub_source_options_id ||
+        props.leadSourceParams?.subSourceOption ||
+        0,
+    ) || null,
+
+  additional_notes: (() => {
+    let notes = props.quote?.additional_notes || '';
+    return notes;
+  })(),
 });
 
 const memberCategorySalaryMapping = {
@@ -82,6 +158,16 @@ const salaryBrandMapping = {
 
 const selectedSalaryBand = computed(() => {
   return route().current().includes('edit');
+});
+
+const healthRegulationAuthority = computed(() => {
+  return quoteForm.emirate_of_your_visa_id === props.emirateEnum.ABU_DHABI
+    ? 'DoH'
+    : 'DHA';
+});
+
+const pecErrorMessage = computed(() => {
+  return `Please confirm the customer's health declaration to proceed, as required under ${healthRegulationAuthority.value} regulations.`;
 });
 
 watch(
@@ -114,14 +200,41 @@ watch(
   { immediate: true },
 );
 
+const pecRules = computed(() => {
+  return [isRequired];
+});
+
+// Watch for sub_source_id changes to reset dependent fields
+watch(
+  () => quoteForm.sub_source_id,
+  () => {
+    quoteForm.sub_source_options_id = null;
+  },
+);
+
 function onSubmit(isValid) {
+  isEmptyField.value = false;
+  pecValidationError.value = '';
+
   if (quoteForm.nationality_id == null) {
     isEmptyField.value = true;
-  } else {
-    isEmptyField.value = false;
   }
 
-  if (!isValid) return;
+  // Only validate PEC field on create page, not on edit page
+  if (!isEdit.value && (quoteForm.pec == null || quoteForm.pec == undefined)) {
+    pecValidationError.value = pecErrorMessage.value;
+
+    // Scroll to PEC field if validation fails
+    nextTick(() => {
+      const pecElement = document.querySelector('[data-pec-field]');
+      if (pecElement) {
+        pecElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+    return;
+  }
+
+  if (!isValid || isEmptyField.value || pecValidationError.value) return;
 
   quoteForm.clearErrors();
 
@@ -167,6 +280,57 @@ function onSubmit(isValid) {
             </li>
           </ul>
         </x-alert>
+
+        <!-- Sub-source fields (conditional display based on referral type) -->
+        <x-select
+          v-if="isReferralType"
+          label="IMCRM SUB-SOURCE"
+          v-model="quoteForm.sub_source_id"
+          :options="subSourceOptions"
+          class="w-full"
+          placeholder="Select IMCRM SUB-SOURCE"
+          filterable
+          filterPlaceholder="Filter IMCRM SUB-SOURCE...."
+          :disabled="!canEditSubSourceFields"
+          :rules="[isRequired]"
+          required
+          :error="quoteForm.errors.sub_source_id"
+          tooltip="Manually created lead in IMCRM"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+
+        <x-select
+          v-if="isReferralType && quoteForm.sub_source_id"
+          label="SUB SOURCE OPTIONS"
+          v-model="quoteForm.sub_source_options_id"
+          :options="subSourceOptionOptions"
+          class="w-full"
+          placeholder="Select Sub Source Option"
+          filterable
+          filterPlaceholder="Filter Sub Source Option...."
+          :disabled="!canEditSubSourceFields"
+          :rules="subSourceOptionOptions.length > 0 ? [isRequired] : []"
+          :required="subSourceOptionOptions.length > 0"
+          :error="quoteForm.errors.sub_source_options_id"
+          tooltip="Type of referral lead"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.suffix" placement="right">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{ item.suffix }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
 
         <x-input
           v-model="quoteForm.first_name"
@@ -396,6 +560,37 @@ function onSubmit(isValid) {
             color="primary"
           />
         </div>
+
+        <div v-if="!isEdit" data-pec-field>
+          <div class="mb-3">
+            <ToolTip
+              title="Does the member need to declare any chronic or pre-existing medical conditions, pregnancy, plans to conceive, or fertility treatment?"
+              tooltip="Any ongoing or past health issues that may or may not require regular treatment or medical attention."
+              class="w-full"
+            />
+          </div>
+          <div>
+            <x-form-group v-model="quoteForm.pec">
+              <x-radio :value="1" label="Yes" />
+              <x-radio :value="2" label="No" />
+            </x-form-group>
+            <div
+              v-if="pecValidationError"
+              class="mt-2 text-sm text-red-600 border border-red-200 bg-red-50 rounded-md p-2"
+            >
+              {{ pecValidationError }}
+            </div>
+          </div>
+        </div>
+
+        <x-textarea
+          v-model="quoteForm.additional_notes"
+          label="ADDITIONAL NOTES"
+          :error="quoteForm.errors.additional_notes"
+          :disabled="!canEditSubSourceFields"
+          class="w-full sm:col-span-2"
+          rows="3"
+        />
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

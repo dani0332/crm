@@ -5,9 +5,11 @@ namespace App\Repositories;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
+use App\Services\BranchAssignmentService;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +26,7 @@ class BusinessQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance']
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'subSource']
         )->orderBy('created_at', 'desc');
     }
 
@@ -45,7 +47,12 @@ class BusinessQuoteRepository extends BaseRepository
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
+            'advisor.primaryBranch',
+            'supportUser',
             'businessTypeOfInsurance',
+            'subSource',
+            'branch:id,name',
+            'latestInsured.entity',
         ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
@@ -72,6 +79,12 @@ class BusinessQuoteRepository extends BaseRepository
         $this->adjustQueryByDateFilters($query, 'business_quote_request', $requestParams);
         $query->orderBy('business_quote_request.created_at', 'desc');
 
+        // Apply sub_source_id filter when present
+        if (! empty($requestParams['sub_source_id'])) {
+            $values = (array) $requestParams['sub_source_id'];
+            $query->whereIn('business_quote_request.sub_source_id', $values);
+        }
+
         if ($forTotalLeadsCount) {
             return $query->count();
         }
@@ -88,6 +101,8 @@ class BusinessQuoteRepository extends BaseRepository
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
+                'advisor.primaryBranch',
+                'supportUser',
                 'previousAdvisor',
                 'businessQuoteRequestDetail.lostReason',
                 'customer',
@@ -97,6 +112,7 @@ class BusinessQuoteRepository extends BaseRepository
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
                 'latestInsured.insuredKyc:id,insured_id',
+                'latestInsured.entity',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
@@ -113,6 +129,8 @@ class BusinessQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
+                'nationality',
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -120,6 +138,13 @@ class BusinessQuoteRepository extends BaseRepository
             ->firstOrFail();
 
         $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
+
+        if (isset($quote->latestInsured)) {
+            $quote->emirates_id_number = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
+        }
+
+        $emirateOfRegistrationId = $quote->latestInsured?->emirate_of_registration_id ?? null;
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
 
         return $quote;
     }
@@ -131,7 +156,7 @@ class BusinessQuoteRepository extends BaseRepository
     public function fetchGetDataOfBusiness()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance'])->orderBy('created_at', 'desc')->Paginate();
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'customer'])->orderBy('created_at', 'desc')->Paginate();
     }
 
 }

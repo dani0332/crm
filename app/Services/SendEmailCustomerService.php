@@ -6,11 +6,11 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Jobs\OCAHealthFollowupEmailJob;
@@ -338,16 +338,21 @@ class SendEmailCustomerService extends BaseService
     public function sendRenewalsOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-            LoggerService::info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+            LoggerService::info(self::class.' - sendRenewalsOcbEmail - Starting email sending process', extra: [
+                'email_template_id' => $emailTemplateId,
+                'tag' => $tag,
+            ]);
 
+            $attachments = [];
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
             if ($emailAttachments) {
-                LoggerService::info('fn: sendRenewalsOcbEmail - emailAttachments exists');
+                LoggerService::info(self::class.' - sendRenewalsOcbEmail - Processing email attachments', extra: [
+                    'attachments_count' => count($emailAttachments),
+                ]);
 
-                $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
                     $attachments[] = [
                         'url' => $emailAttachment,
@@ -357,7 +362,9 @@ class SendEmailCustomerService extends BaseService
             }
 
             if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
-                LoggerService::info('fn: sendRenewalsOcbEmail - pdfAttachment exists');
+                LoggerService::info(self::class.' - sendRenewalsOcbEmail - Processing PDF attachment', extra: [
+                    'pdf_name' => $emailData->pdfAttachment->name,
+                ]);
 
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
@@ -379,10 +386,8 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => ! empty($attachments) ? $attachments : null,
             ];
-
-            LoggerService::info('fn: attachments count: '.count($attachments));
 
             $ccAdvisor = [];
             if (isset($emailData->advisorEmail) && isset($emailData->advisorName)) {
@@ -412,12 +417,23 @@ class SendEmailCustomerService extends BaseService
 
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
 
+            LoggerService::info(self::class.' - sendRenewalsOcbEmail - Calling sendMail method');
+
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+
+            LoggerService::info(self::class.' - sendRenewalsOcbEmail - Email sent successfully', extra: [
+                'response_code' => $responseCode,
+                'is_email_sent' => $isEmailSent,
+            ]);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
-            LoggerService::info($responseDetail);
+
+            LoggerService::warning(self::class.' - sendRenewalsOcbEmail - Email sending failed with exception', extra: [
+                'error_code' => $responseCode,
+                'error_message' => $ex->getMessage(),
+            ]);
+
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
@@ -643,6 +659,11 @@ class SendEmailCustomerService extends BaseService
 
             return;
         }
+        if ($healthQuote->isSuppressIntroEmail()) {
+            LoggerService::info('sendRMIntroEmail: Health quote is suppressed, skipping RM Intro Email');
+
+            return;
+        }
 
         $dataArr = [
             'quoteUID' => $quoteUuid,
@@ -814,8 +835,8 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        LoggerService::info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called', extra: [
-            'payload' => json_encode($emailData),
+        LoggerService::info('Policy documents email sending started for quote code: '.$emailData->code, extra: [
+            'template_id' => $emailData->emailTemplateId,
         ]);
 
         $isEmailSent = 0;
@@ -823,7 +844,7 @@ class SendEmailCustomerService extends BaseService
         $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId);
+            LoggerService::info('Processing attachments for policy documents for quote code: '.$emailData->code);
 
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
@@ -832,7 +853,11 @@ class SendEmailCustomerService extends BaseService
                 foreach ($documents as $document) {
                     $path = ! empty($document->watermarked_doc_url) ? $document->watermarked_doc_url : $document->doc_url;
                     if (empty($path)) {
-                        LoggerService::warning("Main lead document not found for document ID: {$document->id} Quote Code: {$emailData->code} Error Code: 404");
+                        LoggerService::warning('Main lead document not found for quote code: '.$emailData->code, extra: [
+                            'document_id' => $document->id,
+                            'watermarked_url' => $document->watermarked_doc_url ?? null,
+                            'doc_url' => $document->doc_url ?? null,
+                        ]);
 
                         continue;
                     }
@@ -850,8 +875,11 @@ class SendEmailCustomerService extends BaseService
 
             if ($emailData->quoteTypeId == QuoteTypeId::Savings) {
                 if (! empty($emailData->policyWordingHandbook)) {
+                    $policyHandbookUrl = str_starts_with($emailData->policyWordingHandbook['watermarked_doc_url'], 'https:')
+                                ? $emailData->policyWordingHandbook['watermarked_doc_url']
+                                : config('constants.AZURE_IM_STORAGE_URL').$emailData->policyWordingHandbook['watermarked_doc_url'];
                     $attachments[] = [
-                        'url' => $this->encodeUrl(config('constants.AZURE_IM_STORAGE_URL').$emailData->policyWordingHandbook['watermarked_doc_url']),
+                        'url' => $this->encodeUrl($policyHandbookUrl),
                         'name' => 'InsuranceMarket.ae™ '.$emailData->policyWordingHandbook['document_type_text'].' for Policy Number '.$emailData->policy_number.'.'.pathinfo($emailData->policyWordingHandbook['watermarked_doc_url'], PATHINFO_EXTENSION),
                     ];
                 }
@@ -866,8 +894,6 @@ class SendEmailCustomerService extends BaseService
                 $newLeadPool = ApplicationStorage::where('key_name', ApplicationStorageEnums::NEW_LEAD_POOL_BCC)->first();
                 $bodyData['bcc'][] = ['email' => $newLeadPool->value];
             }
-
-            LoggerService::info('Quote Code: '.$emailData->code.' Attachments: '.json_encode($attachments));
 
             $headers = [
                 'Accept' => 'application/json',
@@ -895,6 +921,7 @@ class SendEmailCustomerService extends BaseService
                     'insuranceType' => $emailData->insuranceType,
                     'planName' => $emailData->planName,
                     'refID' => $emailData->code,
+                    'isHealthAUH' => $emailData->isHealthAUH,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
@@ -917,8 +944,6 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalBcc->value,
                 ];
             }
-
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
 
             if ($emailData->advisorEmail) {
                 $bodyData['cc'][] = [
@@ -945,9 +970,14 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
+            if ($this->appEnv == EnvEnum::PRODUCTION && $emailData->quoteTypeId == QuoteTypeId::Travel) {
+                $bodyData['bcc'][] = [
+                    'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
+                ];
+            }
+
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            // Its a temp log and will be removed iin future
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- body '.$body);
+            LoggerService::info('Policy documents email payload for quote code: '.$emailData->code.' ---- body '.$body);
 
             $client = new \GuzzleHttp\Client;
             $clientResponse = $client->post(
@@ -959,27 +989,27 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
-            // temporarily added.
-            LoggerService::info('email response for '.$emailData->code, extra: [
-                'response' => json_encode($clientResponse),
-                'getStatusCode' => $clientResponse->getStatusCode(),
-                'responseBody' => $clientResponse->getBody(),
-            ]);
-            $message = json_decode($clientResponse->getBody()->getContents());
+            $responseBody = trim($clientResponse->getBody()->getContents());
+            $message = json_decode($responseBody);
             if (isset($message->messageId)) {
                 $messageId = $message->messageId;
             }
             $responseCode = $clientResponse->getStatusCode();
+            $response = "{$responseCode} {$responseBody}";
             $isEmailSent = 1;
-            LoggerService::info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientResponse->getBody()->getContents()));
-            LoggerService::info('Quote Code: '.$emailData->code.' Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
+
+            LoggerService::info('Policy documents email sent successfully for quote code: '.$emailData->code, extra: [
+                'message_id' => $messageId,
+                'response_code' => $responseCode,
+            ]);
         } catch (Exception $ex) {
-            $response = '';
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
-            LoggerService::error($responseDetail);
-            LoggerService::error('Quote Code: '.$emailData->code.' Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
+            $response = "{$responseCode} {$ex->getMessage()}";
+            LoggerService::error('Failed to send policy documents email for quote code: '.$emailData->code, extra: [
+                'error_code' => $responseCode,
+                'error_message' => $ex->getMessage(),
+                'message_id' => $messageId ?? null,
+            ]);
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
@@ -1057,10 +1087,16 @@ class SendEmailCustomerService extends BaseService
             'emailTemplateId' => $emailTemplateId,
             'tag' => $tag,
         ]);
+
         $messageId = null;
-        $subject = $emailData->clientFullName.'\'s Savings with Alfred - '.$emailData->code;
+        $response = null;
+        $isEmailSent = 0;
+        $responseCode = 0;
+        $subject = $emailData->customerName.'\'s Savings with Alfred - '.$emailData->code;
 
         try {
+            LoggerService::info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
             $headers = [
@@ -1084,7 +1120,7 @@ class SendEmailCustomerService extends BaseService
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->carQuoteId.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
+                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->code.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
@@ -1106,7 +1142,7 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
-                    'name' => $emailData->clientFullName,
+                    'name' => $emailData->customerName,
                 ]],
                 'templateId' => (int) $emailTemplateId,
                 'params' => $emailData,
@@ -1170,6 +1206,12 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
 
+            if ($this->appEnv == EnvEnum::PRODUCTION && $quoteTypeId == QuoteTypeId::Travel) {
+                $body['bcc'][] = [
+                    'email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_ENQUIRIES_EMAIL),
+                ];
+            }
+
             LoggerService::info('Send Policy Update email payload', extra: ['payload' => json_encode($body)]);
 
             $client = new \GuzzleHttp\Client;
@@ -1197,12 +1239,13 @@ class SendEmailCustomerService extends BaseService
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
+            $quoteCdbId = isset($emailData->code) ? $emailData->code : null;
             LoggerService::error('Send Update Email failed', extra: [
                 'Code/Message' => $responseCode,
                 'CustomerEmail' => $emailData->customerEmail,
                 'QuoteCdbId' => $quoteCdbId,
                 'Class' => get_class(),
+                'line' => $ex->getLine(),
             ], exception: $ex);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
@@ -1397,63 +1440,118 @@ class SendEmailCustomerService extends BaseService
     {
         $advisor = User::find($healthQuote->advisor_id);
         $insurerPlans = [];
+
         foreach ($plans as $plan) {
+            // Safely extract premium data with null checks
             $premium = 0;
             $discountPremium = 0;
-            if (isset($plan->ratesPerCopay) && ! empty($plan->ratesPerCopay)) {
+            if (isset($plan->ratesPerCopay) && is_array($plan->ratesPerCopay) && ! empty($plan->ratesPerCopay)) {
                 foreach ($plan->ratesPerCopay as $rate) {
-                    if (isset($rate->premium)) {
+                    if (isset($rate->premium) && isset($rate->discountPremium)) {
                         $premium = $rate->premium;
                         $discountPremium = $rate->discountPremium;
                         break;
                     }
                 }
             }
-            $regionCoverText = null;
-            $annualLimitText = null;
-            $medicineText = null;
-            $outpatientConsultationText = null;
-            if (isset($plan->benefits->regionCover) && ! empty($plan->benefits->regionCover)) {
+
+            // Initialize benefit texts
+            $regionCoverText = '';
+            $annualLimitText = '';
+            $medicineText = '';
+            $outpatientConsultationText = '';
+
+            // Get outpatient consultation text from coPayments if available (with proper null safety)
+            if (isset($plan->coPayments) && is_array($plan->coPayments) && count($plan->coPayments) > 0) {
+                $firstCopay = $plan->coPayments[0] ?? null;
+                if ($firstCopay && isset($firstCopay->text)) {
+                    $outpatientConsultationText = $firstCopay->text;
+                }
+            }
+
+            // Extract region cover from benefits
+            if (isset($plan->benefits) && isset($plan->benefits->regionCover) && is_array($plan->benefits->regionCover) && ! empty($plan->benefits->regionCover)) {
                 foreach ($plan->benefits->regionCover as $regionCover) {
-                    $regionCoverText = $regionCover->value;
-                    break;
-                }
-            }
-            if (isset($plan->benefits->feature) && ! empty($plan->benefits->feature)) {
-                foreach ($plan->benefits->feature as $annualLimit) {
-                    $annualLimitText = $annualLimit->text;
-                    break;
-                }
-            }
-            if (isset($plan->benefits->outpatient) && ! empty($plan->benefits->outpatient)) {
-                foreach ($plan->benefits->outpatient as $outPatient) {
-                    if ($outPatient->code === 'medicine') {
-                        $medicineText = $outPatient->value;
-                    }
-                }
-            }
-            if (isset($plan->benefits->feature) && ! empty($plan->benefits->feature)) {
-                foreach ($plan->benefits->feature as $outpatientConsultation) {
-                    if ($outpatientConsultation->code === 'outpatientConsultation') {
-                        $outpatientConsultationText = $outpatientConsultation->value;
+                    if (isset($regionCover->value)) {
+                        $regionCoverText = $regionCover->value ?? '';
+                        break;
                     }
                 }
             }
 
+            // Extract annual limit from features
+            if (isset($plan->benefits) && isset($plan->benefits->feature) && is_array($plan->benefits->feature) && ! empty($plan->benefits->feature)) {
+                foreach ($plan->benefits->feature as $feature) {
+                    if (isset($feature->code) && $feature->code === 'annualLimit') {
+                        $annualLimitText = $feature->value ?? $feature->text ?? '';
+                        break;
+                    }
+                }
+            }
+
+            // Extract medicine text from outpatient benefits
+            if (isset($plan->benefits) && isset($plan->benefits->outpatient) && is_array($plan->benefits->outpatient) && ! empty($plan->benefits->outpatient)) {
+                foreach ($plan->benefits->outpatient as $outPatient) {
+                    if (isset($outPatient->code) && $outPatient->code === 'medicine') {
+                        $medicineText = $outPatient->value ?? '';
+                        break;
+                    }
+                }
+            }
+
+            // Build hospital and clinic data from healthNetwork with comprehensive null checks
+            $hospitalData = ['count' => 0, 'text' => ''];
+            $clinicData = ['count' => 0, 'text' => ''];
+
+            if (isset($plan->healthNetwork) && is_object($plan->healthNetwork)) {
+                // Safely get counts
+                $hospitalData['count'] = isset($plan->healthNetwork->noOfHospitals) ? (int) $plan->healthNetwork->noOfHospitals : 0;
+                $clinicData['count'] = isset($plan->healthNetwork->noOfClinics) ? (int) $plan->healthNetwork->noOfClinics : 0;
+
+                // Build hospital and clinic text from featured facilities
+                if (isset($plan->healthNetwork->featuredFacilities) && is_array($plan->healthNetwork->featuredFacilities) && ! empty($plan->healthNetwork->featuredFacilities)) {
+                    $hospitals = [];
+                    $clinics = [];
+
+                    foreach ($plan->healthNetwork->featuredFacilities as $facility) {
+                        if (! isset($facility->type) || ! isset($facility->text)) {
+                            continue;
+                        }
+
+                        $facilityType = strtoupper(trim($facility->type));
+                        $facilityText = trim($facility->text);
+
+                        if ($facilityType === 'HOSPITAL') {
+                            $hospitals[] = $facilityText;
+                        } elseif ($facilityType === 'CLINIC' || $facilityType === 'CLINC') {
+                            $clinics[] = $facilityText;
+                        }
+                    }
+
+                    $hospitalData['text'] = ! empty($hospitals) ? implode(', ', $hospitals) : '';
+                    $clinicData['text'] = ! empty($clinics) ? implode(', ', $clinics) : '';
+                }
+            }
+
+            // Build the plan array with all null safety checks
             $insurerPlans[] = [
-                'planCode' => $plan->eligibilityName ? $plan->eligibilityName : 'N/A',
-                'eligibilityName' => $plan->eligibilityName ? $plan->eligibilityName : 'N/A',
-                'name' => $plan->providerName ? $plan->providerName : 'N/A',
-                'total' => $discountPremium ? number_format($discountPremium, 2) : '',
-                'providerCode' => strtolower($plan->providerCode),
+                'id' => $plan->id ?? null,
+                'name' => $plan->name ?? 'N/A',
+                'providerName' => $plan->providerName ?? 'N/A',
+                'eligibilityName' => $plan->eligibilityName ?? 'N/A',
+                'planCode' => $plan->planCode ?? 'N/A',
+                'providerCode' => isset($plan->providerCode) ? strtolower($plan->providerCode) : '',
+                'total' => $discountPremium > 0 ? number_format($discountPremium, 2) : '0.00',
                 'planBenefit' => [
                     'annualLimit' => ['text' => $annualLimitText],
-                    'regionsCovered' => ['text' => $regionCoverText],
-                    'medicine' => ['text' => $medicineText],
                     'outpatientConsultation' => ['text' => $outpatientConsultationText],
+                    'medicine' => ['text' => $medicineText],
+                    'regionsCovered' => ['text' => $regionCoverText],
                 ],
-                'buyNowLink' => $this->getPlanBuyNowLink($plan, $healthQuote->uuid),
-                'buynowURL' => $this->getPlanBuyNowLink($plan, $healthQuote->uuid),
+                'hospital' => $hospitalData,
+                'clinic' => $clinicData,
+                'buyNowLink' => $this->getPlanBuyNowLink($plan, $healthQuote->uuid ?? ''),
+                'buynowURL' => $this->getPlanBuyNowLink($plan, $healthQuote->uuid ?? ''),
             ];
         }
 
@@ -1462,55 +1560,120 @@ class SendEmailCustomerService extends BaseService
         $emailData->totalPlans = count($insurerPlans);
         $emailData->isReAssignment = ! empty($previousAdvisor);
         $emailData->isRenewal = true;
-        $emailData->policyNumber = $healthQuote->previous_quote_policy_number;
-        $carbonDate = Carbon::parse($healthQuote->previous_policy_expiry_date)->format('jS F Y');
-        $emailData->renewalDueDate = $carbonDate;
+        $emailData->policyNumber = $healthQuote->previous_quote_policy_number ?? null;
+
+        // Safely handle previous policy expiry date
+        $renewalDueDate = '';
+        if (isset($healthQuote->previous_policy_expiry_date) && ! empty($healthQuote->previous_policy_expiry_date)) {
+            try {
+                $carbonDate = Carbon::parse($healthQuote->previous_policy_expiry_date);
+                $renewalDueDate = $carbonDate->format('jS F Y');
+            } catch (\Exception $e) {
+                $renewalDueDate = '';
+            }
+        }
+        $emailData->renewalDueDate = $renewalDueDate;
 
         return $emailData;
     }
 
     private function buildCommonEmailData($healthQuote, $advisor, $previousAdvisor, $request, $emailTemplateId)
     {
-        $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
+        // Null safety for advisor
+        if (! $advisor) {
+            $advisor = new \stdClass;
+            $advisor->id = null;
+            $advisor->name = '';
+            $advisor->email = '';
+            $advisor->mobile_no = '';
+            $advisor->landline_no = '';
+        }
 
-        $isRevivalLead = $healthQuote->source == LeadSourceEnum::REVIVAL || $healthQuote->source == LeadSourceEnum::REVIVAL_PAID || $healthQuote->source == LeadSourceEnum::REVIVAL_REPLIED;
+        $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
+        $mobileNoWithoutSpaces = ! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : '';
+
+        $isRevivalLead = isset($healthQuote->source) && ($healthQuote->source == LeadSourceEnum::REVIVAL || $healthQuote->source == LeadSourceEnum::REVIVAL_PAID || $healthQuote->source == LeadSourceEnum::REVIVAL_REPLIED);
         $currentInsurer = null;
-        if (isset($healthQuote->currently_insured_with_id)) {
+        if (isset($healthQuote->currently_insured_with_id) && ! empty($healthQuote->currently_insured_with_id)) {
             $currentInsurer = InsuranceProvider::find($healthQuote->currently_insured_with_id);
         }
 
-        return (object) [
-            'clientFullName' => $healthQuote->first_name.' '.$healthQuote->last_name,
-            'customerName' => $healthQuote->first_name.' '.$healthQuote->last_name,
-            'customerEmail' => $healthQuote->email,
-            'customerId' => $request->customer_id,
-            'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
+        // Build advisor details with null safety
+        $advisorDetails = [
+            'id' => $advisor->id ?? null,
+            'name' => $advisor->name ?? '',
+            'email' => $advisor->email ?? '',
+            'landlineNo' => isset($advisor->landline_no) && ! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '',
+            'mobileNo' => isset($advisor->mobile_no) && ! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : '',
             'whatsAppNumber' => $whatsAppNumber,
-            'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
-            'advisorDetails' => [
-                'name' => (! empty($advisor->name) ? $advisor->name : ''),
-                'email' => (! empty($advisor->email) ? $advisor->email : ''),
-                'mobileNo' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
-                'landlineNo' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
-            ],
-            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
-            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
-            'healthQuoteId' => $healthQuote->code,
-            'quoteId' => $healthQuote->code,
+            'mobileNoWithoutSpaces' => $mobileNoWithoutSpaces,
+            'profilePicture' => $advisor->profile_photo_path ?? '',
+        ];
+
+        LoggerService::info(self::class.' - buildCommonEmailData - Advisor details built successfully', extra: [
+            'advisor_details' => $advisorDetails,
+        ]);
+
+        // Build previous advisor details with comprehensive null safety
+        $previousAdvisorDetails = [];
+        if (! empty($previousAdvisor) && is_object($previousAdvisor)) {
+            $prevWhatsAppNumber = isset($previousAdvisor->mobile_no) && ! empty($previousAdvisor->mobile_no) ? formatMobileNo($previousAdvisor->mobile_no) : '';
+            $prevMobileNoWithoutSpaces = isset($previousAdvisor->mobile_no) && ! empty($previousAdvisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($previousAdvisor->mobile_no)) : '';
+
+            $previousAdvisorDetails = [
+                'id' => $previousAdvisor->id ?? null,
+                'name' => $previousAdvisor->name ?? '',
+                'email' => $previousAdvisor->email ?? '',
+                'landLine' => isset($previousAdvisor->landline_no) && ! empty($previousAdvisor->landline_no) ? formatLandlineDisplay($previousAdvisor->landline_no) : '',
+                'mobilePhone' => isset($previousAdvisor->mobile_no) && ! empty($previousAdvisor->mobile_no) ? formatMobileNoDisplay($previousAdvisor->mobile_no) : '',
+                'whatsAppNumber' => $prevWhatsAppNumber,
+                'mobileNoWithoutSpaces' => $prevMobileNoWithoutSpaces,
+                'profilePicture' => $previousAdvisor->profile_photo_path ?? '',
+            ];
+        }
+
+        // Build customer full name with null safety
+        $firstName = $healthQuote->first_name ?? '';
+        $lastName = $healthQuote->last_name ?? '';
+        $customerFullName = trim($firstName.' '.$lastName);
+
+        // Build quote UUID safely
+        $quoteUuid = $healthQuote->uuid ?? '';
+        $quoteCode = $healthQuote->code ?? '';
+
+        return (object) [
+            'clientFullName' => $customerFullName,
+            'customerName' => $customerFullName,
+            'customerEmail' => $healthQuote->email ?? '',
+            'customerId' => $request->customer_id ?? null,
+            'mobilePhone' => isset($advisor->mobile_no) && ! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : '',
+            'whatsAppNumber' => $whatsAppNumber,
+            'landLine' => isset($advisor->landline_no) && ! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '',
+            'advisorDetails' => $advisorDetails,
+            'advisorEmail' => $advisor->email ?? '',
+            'advisorName' => $advisor->name ?? '',
+            'healthQuoteId' => $quoteCode,
+            'quoteId' => $quoteCode,
             'quoteTypeId' => QuoteTypeId::Health,
-            'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
-            'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment
-            'requestAdvisorLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.'/?assignAdvisor=true'),
-            'assignmentType' => getAssignmentTypeText($healthQuote->assignment_type),
-            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
+            'currentInsurer' => $currentInsurer && isset($currentInsurer->text) ? $currentInsurer->text : null,
+            'emirateOfYourVisaId' => $healthQuote->emirate_of_your_visa_id ?? null,
+            'quotePlanLink' => ! empty($quoteUuid) ? url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteUuid.($isRevivalLead ? '?dla=true' : '')) : '', // DLA = Disable Lead Assignment
+            'requestAdvisorLink' => ! empty($quoteUuid) ? url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteUuid.'/?assignAdvisor=true') : '',
+            'assignmentType' => isset($healthQuote->assignment_type) ? getAssignmentTypeText($healthQuote->assignment_type) : '',
+            'previousAdvisorDetails' => $previousAdvisorDetails,
             'isReAssignment' => ! empty($previousAdvisor),
-            'templateId' => $emailTemplateId,
+            'templateId' => $emailTemplateId ?? null,
         ];
     }
 
     public function buildEmailData($lead, $plans, $previousAdvisor, $request, $emailTemplateId)
     {
+        LoggerService::info(self::class.' - buildEmailData - Building email data', extra: [
+            'has_plans' => isset($plans) && is_array($plans),
+            'plans_count' => is_array($plans) ? count($plans) : 0,
+            'email_template_id' => $emailTemplateId,
+        ]);
+
         if (isset($plans) && is_array($plans)) {
             return $this->buildPlansEmailData($lead, $plans, $previousAdvisor, $request, $emailTemplateId);
         } else {
@@ -1522,7 +1685,23 @@ class SendEmailCustomerService extends BaseService
 
     private function getPlanBuyNowLink($plan, $uuid)
     {
-        $buyNowLink = url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$uuid.'/payment', ['providerCode' => $plan->providerCode, 'planId' => $plan->id, 'selectedCopayId' => $plan->selectedCopayId]);
+        // Null safety checks for plan properties
+        $providerCode = $plan->providerCode ?? '';
+        $planId = $plan->id ?? null;
+        $selectedCopayId = $plan->selectedCopayId ?? null;
+
+        if (empty($uuid) || empty($providerCode) || empty($planId) || empty($selectedCopayId)) {
+            return '';
+        }
+
+        $baseUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$uuid.'/payment/';
+        $queryParams = http_build_query([
+            'planId' => $planId,
+            'providerCode' => strtoupper($providerCode),
+            'selectedCopayId' => $selectedCopayId,
+        ]);
+
+        $buyNowLink = $baseUrl.'?'.$queryParams;
 
         return $buyNowLink;
     }
@@ -1668,6 +1847,7 @@ class SendEmailCustomerService extends BaseService
             $workflowType = WorkflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER;
         }
 
+        $bccEmails = $this->getBCCEmails($quoteType, $quote->source);
         $payload = [
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
@@ -1685,6 +1865,7 @@ class SendEmailCustomerService extends BaseService
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'businessTypeInsurance' => $shortenedBusinessType ?? null,
             'workflowType' => $workflowType,
+            'bccEmails' => $bccEmails,
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
@@ -1694,6 +1875,145 @@ class SendEmailCustomerService extends BaseService
         } else {
             LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
         }
-
     }
+
+    public function sendSupportUserAssignmentEmail($emailData)
+    {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SUPPORT_USER_ASSIGNMENT);
+
+        // Convert leads array to HTML list
+        $leads = collect($emailData->get('params')['leads'] ?? []);
+        $quotesHtml = '';
+
+        if ($leads->isNotEmpty()) {
+            $quotesHtml = $leads->map(function ($lead) {
+                $url = $lead['lead_url'] ?? '#';
+                $refId = $lead['code'] ?? 'Lead';
+
+                return "<li><a href='{$url}' target='_blank'>{$refId}</a></li>";
+            })->pipe(function ($items) {
+                return '<ul>'.$items->implode('').'</ul>';
+            });
+        }
+
+        $birdEmailData = (object) [
+            'supportUserEmail' => $emailData->get('to')['email'] ?? '',
+            'supportUserName' => $emailData->get('to')['name'] ?? '',
+            'assignerName' => $emailData->get('params')['assignerName'] ?? '',
+            'assignerEmail' => $emailData->get('params')['assignerEmail'] ?? '',
+            'ccEmails' => $emailData->get('cc') ?? [],
+            'quoteTypeName' => $emailData->get('params')['quoteTypeName'] ?? '',
+            'quotes' => $quotesHtml,
+            'workflowType' => WorkflowTypeEnum::OE_ASSIGNMENT,
+        ];
+
+        $oeAssignmentEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OE_ASSIGNMENT_WORKFLOW)->first();
+
+        if ($oeAssignmentEvent) {
+            info('Support User (OE) Assignment: workflow trigger on BIRD, BIRD_OE_ASSIGNMENT_WORKFLOW value: '.$oeAssignmentEvent->value);
+            $response = app(BirdService::class)->triggerWebHookRequest($oeAssignmentEvent->value, $birdEmailData);
+        } else {
+            LoggerService::error('Support User (OE) Assignment: BIRD_OE_ASSIGNMENT_WORKFLOW not found in ApplicationStorage. Bird request has not been triggered.');
+        }
+    }
+
+    public function getBCCEmails(string $quoteType, string $source)
+    {
+        $bccEmails = [];
+
+        switch ($quoteType) {
+            case QuoteTypes::HOME->value:
+                $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::HOME_LEAD_POOL_BCC);
+                if ($source === LeadSourceEnum::CPA_AUSTRALIA_HOME) {
+                    $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_HOME_BCC_EMAILS)));
+                }
+                break;
+            case QuoteTypes::SAVINGS->value:
+                $bccEmails[] = getAppStorageValueByKey(ApplicationStorageEnums::SAVINGS_LEAD_POOL_BCC);
+                if ($source === LeadSourceEnum::CPA_AUSTRALIA_SAVINGS) {
+                    $bccEmails = array_merge($bccEmails, explode(',', getAppStorageValueByKey(ApplicationStorageEnums::CPA_AUSTRALIA_SAVINGS_BCC_EMAILS)));
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return $bccEmails;
+    }
+
+    public function sendCarIntroEmailWithAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $advisor = User::where('id', $quote->advisor_id)->first() ?? null;
+            $emailData = $this->buildEmailDataForBirdFlow($quote, $advisor, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+        } else {
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook URL not found in storage with Ref-ID:'.$quote->uuid.' | Time:'.now());
+        }
+
+        return true;
+    }
+
+    public function sendCarIntroEmailWithoutAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $emailData = $this->buildEmailDataForBirdFlow($quote, null, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl);
+        } else {
+            LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook URL not found in storage');
+        }
+
+        return true;
+    }
+
+    public function buildEmailDataForBirdFlow($lead, $advisor, $workflowType)
+    {
+        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+
+        return (object) [
+            'quoteUID' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'refID' => $lead->code,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'companyName' => $lead->company_name ?? '',
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorDetails' => $advisor ?? null,
+            'documentUrl' => $documentUrl ?? null,
+            'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => $workflowType,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'createdAt' => $lead->created_at,
+        ];
+    }
+
+    public function sendCarIntroEmailWithAIAdvisor($quote)
+    {
+        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
+        if (! empty($carIntroEmailWorkflowUrl)) {
+            $aiAdvisor = $quote->aiAdvisor;
+            $emailData = $this->buildEmailDataForBirdFlow($quote, $aiAdvisor, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
+            LoggerService::info("sendCarIntroEmailWithAIAdvisor - Webhook request sent to: {$carIntroEmailWorkflowUrl} with Ref-ID: {$quote->uuid}");
+        } else {
+            LoggerService::info("sendCarIntroEmailWithAIAdvisor - Webhook URL not found in storage with Ref-ID: {$quote->uuid}");
+        }
+
+        return true;
+    }
+
 }

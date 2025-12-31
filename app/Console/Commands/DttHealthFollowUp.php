@@ -7,9 +7,10 @@ use App\Enums\QuoteTypeId;
 use App\Jobs\Revival\HealthRevivalFollowUpEmailJob;
 use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Illuminate\Support\Facades\Bus;
 
 class DttHealthFollowUp extends Command
 {
@@ -34,7 +35,7 @@ class DttHealthFollowUp extends Command
     {
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_HEALTH_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            info('DTT_HEALTH is not enabled from cms');
+            LoggerService::info('DTT_HEALTH is not enabled from cms');
 
             return false;
         }
@@ -76,7 +77,7 @@ class DttHealthFollowUp extends Command
 
             if ($today->isWeekend()) {
 
-                info($logPrefix.' today is Weekend UUID: '.$item->uuid);
+                LoggerService::info($logPrefix.' today is Weekend UUID: '.$item->uuid);
 
                 $created_at = Carbon::parse($item->created_at)->addDays(1);
                 DttRevival::where('uuid', $item->uuid)->update(['created_at' => $created_at]);
@@ -92,7 +93,7 @@ class DttHealthFollowUp extends Command
 
             if ($today->isWeekend()) {
 
-                info($logPrefix.' today is Weekend UUID: '.$item->uuid);
+                LoggerService::info($logPrefix.' today is Weekend UUID: '.$item->uuid);
 
                 $created_at = Carbon::parse($item->created_at)->addDays(1);
                 DttRevival::where('uuid', $item->uuid)->update(['created_at' => $created_at]);
@@ -104,31 +105,31 @@ class DttHealthFollowUp extends Command
 
         }
 
-        info($logPrefix.'count - '.$revivalLeads->count().' - leads - '.$revivalLeads->pluck('uuid')->toJson());
+        LoggerService::info($logPrefix.'count - '.$revivalLeads->count().' - leads - '.$revivalLeads->pluck('uuid')->toJson());
 
         $jobs = [];
+        $delayCounter = 0;
         foreach ($revivalLeads as $item) {
-            $jobs[] = new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']);
+            $jobs[] = (new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']))->delay(now()->addSeconds(10 + $delayCounter));
+            $delayCounter += 10;
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
-
+            Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
+                    LoggerService::info($logPrefix.' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix.' one of batch is failed.');
+                    LoggerService::info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix.' everything done');
+                    LoggerService::info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(10)
+                ->name('Health Revival Follow Up Email Jobs')
                 ->dispatch();
         } else {
-            info($logPrefix.'No HealthRevivalFollowUpEmailJobs Found');
+            LoggerService::info($logPrefix.'No HealthRevivalFollowUpEmailJobs Found');
         }
     }
 }

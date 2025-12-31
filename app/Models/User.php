@@ -38,6 +38,8 @@ class User extends Authenticatable implements AuditableContract
         'email',
         'password',
         'profile_photo_path',
+        'is_ai_user',
+        'rm_category_id',
     ];
 
     /**
@@ -89,14 +91,14 @@ class User extends Authenticatable implements AuditableContract
 
     public function getCreatedAtAttribute($table)
     {
-        $date_time_format = env('DATETIME_FORMAT');
+        $date_time_format = config('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
     public function getUpdatedAtAttribute($table)
     {
-        $date_time_format = env('DATETIME_FORMAT');
+        $date_time_format = config('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
@@ -193,6 +195,11 @@ class User extends Authenticatable implements AuditableContract
         }
 
         return $isAdvisor;
+    }
+
+    public function isSupportUser()
+    {
+        return $this->hasRole(RolesEnum::CLIENTSUPPORT);
     }
 
     public function isSpecificTeamAdvisor($teamType)
@@ -377,12 +384,29 @@ class User extends Authenticatable implements AuditableContract
 
     public function products()
     {
-        return $this->hasMany(UserProducts::class);
+        return $this->belongsToMany(
+            Team::class,
+            'user_products',
+            'user_id',
+            'product_id',
+            'id',
+            'id'
+        );
+    }
+
+    public function hasProduct(...$products)
+    {
+        return $this->products->whereIn('name', $products)->isNotEmpty();
     }
 
     public function department()
     {
         return $this->belongsTo(Department::class)->select('id', 'name');
+    }
+
+    public function rmCategory()
+    {
+        return $this->belongsTo(Lookup::class, 'rm_category_id', 'id');
     }
 
     public function advisors()
@@ -398,6 +422,11 @@ class User extends Authenticatable implements AuditableContract
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
+    }
+
+    public function statusLogs()
+    {
+        return $this->hasMany(UserStatusAuditLog::class, 'user_id');
     }
 
     public function isValueUser(QuoteTypes $quoteType): bool
@@ -447,5 +476,37 @@ class User extends Authenticatable implements AuditableContract
     public function scopeChs($query)
     {
         return $query->where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL);
+    }
+
+    public function getFirstFromLeadAllocation($quoteTypeId)
+    {
+        return $this->hasOne(LeadAllocation::class, 'user_id', 'id')->where('quote_type_id', $quoteTypeId)->first();
+    }
+
+    public function scopeAi($query)
+    {
+        $query->where('is_ai_user', true);
+    }
+
+    public static function getAiAdvisor()
+    {
+        return self::ai()->first();
+    }
+
+    public function isAi(): bool
+    {
+        return $this->is_ai_user ?? false;
+    }
+
+    public function userBranches()
+    {
+        return $this->hasMany(UserBranch::class, 'user_id', 'id');
+    }
+
+    public function primaryBranch()
+    {
+        return $this->hasOne(UserBranch::class, 'user_id', 'id')
+            ->where('is_primary', 1)
+            ->where('status', 1);
     }
 }

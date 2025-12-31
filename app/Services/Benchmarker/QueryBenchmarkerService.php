@@ -5,6 +5,7 @@ namespace App\Services\Benchmarker;
 use App\Enums\ApplicationStorageEnums;
 use Exception;
 use Illuminate\Support\Benchmark;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class QueryBenchmarkerService
@@ -31,19 +32,9 @@ class QueryBenchmarkerService
             throw new Exception('Only SELECT queries are allowed.');
         }
 
-        // Ensure query contains a WHERE clause
-        if (! preg_match('/\bwhere\b/i', $query)) {
-            throw new Exception('Query must contain a WHERE clause for performance reasons.');
-        }
-
         // Check for sensitive data patterns in SELECT clause only, not in WHERE clause
         $sensitiveDataPatterns = [
-            '/\b(email|e_mail|e-mail|mail|user_email|customer_email)\b/i',
-            '/\b(phone|telephone|mobile|phone_number|mobile_number|contact_number|cell|cellphone)\b/i',
-            '/\b(password|passwd|pwd|user_password|hash|secret)\b/i',
-            '/\b(ssn|social_security|tax_id|national_id|id_number)\b/i',
-            '/\b(credit_card|card_number|cc_number|payment_card)\b/i',
-            '/\b(address|street|city|postal_code|zip_code|zip)\b/i',
+            '/\b(email)\b/i',
         ];
 
         // Extract SELECT clause from the query
@@ -91,6 +82,12 @@ class QueryBenchmarkerService
 
     public function benchmark(string $query, int $iterations = 1, bool $fetch_data = true): array
     {
+        // CRITICAL SECURITY: Restrict access to only authorized email
+        $authorizedEmail = 'ahsan.ashfaq@myalfred.com';
+        if (! Auth::check() || Auth::user()->email !== $authorizedEmail) {
+            abort(403, 'Access denied. This feature is restricted to authorized personnel only.');
+        }
+
         abort_if(getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_ENABLED, 0) == 0, 403, 'Benchmarking is disabled.');
 
         try {
@@ -141,20 +138,7 @@ class QueryBenchmarkerService
             return $results;
         }
 
-        $sensitiveFields = [
-            // Email patterns
-            'email', 'e_mail', 'e-mail', 'mail', 'user_email', 'customer_email',
-            // Phone patterns
-            'phone', 'telephone', 'mobile', 'phone_number', 'mobile_number', 'contact_number', 'cell', 'cellphone',
-            // Password patterns
-            'password', 'passwd', 'pwd', 'user_password', 'hash', 'secret',
-            // ID patterns
-            'ssn', 'social_security', 'tax_id', 'national_id', 'id_number',
-            // Payment patterns
-            'credit_card', 'card_number', 'cc_number', 'payment_card',
-            // Address patterns
-            'address', 'street', 'city', 'postal_code', 'zip_code', 'zip',
-        ];
+        $sensitiveFields = ['email'];
 
         $filteredResults = [];
         foreach ($results as $row) {

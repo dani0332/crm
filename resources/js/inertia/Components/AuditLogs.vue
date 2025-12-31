@@ -28,6 +28,10 @@ const props = defineProps({
     required: false,
     type: String,
   },
+  quoteTypeId: {
+    required: false,
+    type: [String, Number],
+  },
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
@@ -54,6 +58,7 @@ const onLoadAuditLogData = async () => {
     auditableId: props.id,
     code: props.quoteCode,
     jsonData: true,
+    quote_type_id: props.quoteTypeId,
   };
 
   let url = props.url ?? '/auditlogs';
@@ -64,6 +69,7 @@ const onLoadAuditLogData = async () => {
       quote_type: props.quoteType,
       code: props.quoteCode,
       jsonData: true,
+      quote_type_id: props.quoteTypeId,
     };
     url = '/audits/get-quote-audits';
   }

@@ -15,6 +15,7 @@ final class EmbeddedProductEnum extends Enum
     const COURIER = 'COU';
     const RDX = 'RDX';
     const MDX = 'MDX';
+    const ECB = 'ECB';
 
     // used in report for source
     const SRC_CAR_EMBEDDED_PRODUCT = 'CAR_EMBEDDED_PRODUCT';
@@ -25,6 +26,14 @@ final class EmbeddedProductEnum extends Enum
             'AP1',
             'AP2',
             'AP3',
+        ];
+    }
+
+    public static function getSukoonMedexCodes(): array
+    {
+        return [
+            self::MDX,
+            self::RDX,
         ];
     }
 }

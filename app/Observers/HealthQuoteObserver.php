@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -11,13 +13,20 @@ use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\OCAHealthFollowupEmailJob;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
+use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
+use App\Services\Logger\LoggerService;
+use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -47,7 +56,7 @@ class HealthQuoteObserver
         ) {
             // Trigger the event for transaction approval
             HealthTransactionApproved::dispatch($healthQuote);
-            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
+            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at, 'is_quote_locked' => true];
         }
 
         if (isset($dirty['advisor_id'])) {
@@ -61,6 +70,8 @@ class HealthQuoteObserver
 
                 HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
                 $healthQuote->markLeadAllocationPassed();
+
+                app(SLAService::class)->initiateSLATracking(QuoteTypes::HEALTH, $healthQuote);
             } catch (Exception $e) {
                 Log::error('HealthQuoteObserver - handle health update advisor failed', [
                     'error' => $e->getMessage(),
@@ -76,6 +87,20 @@ class HealthQuoteObserver
             if ($healthQuote->quote_status_id === QuoteStatusEnum::ApplicationSubmitted) {
                 SendApplicationSubmittedEmailJob::dispatch($healthQuote);
             }
+            $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::ApplicationPending];
+            if (in_array($healthQuote->quote_status_id, $eligibleStatuses)) {
+                $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
+                // Send Automated Followup Email Job if Health Auto-Followups is enabled.
+                if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
+                    $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
+                    if ($healthQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
+                        LoggerService::info('OCAHealthFollowupEmailJob dispatched ');
+                    }
+
+                }
+            }
+
         }
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
@@ -84,8 +109,6 @@ class HealthQuoteObserver
             });
             $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
         }
-
-        $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
@@ -96,7 +119,23 @@ class HealthQuoteObserver
                     'uuid' => $healthQuote->uuid,
                 ]);
             }
+
+            try {
+                HealthQuote::withoutEvents(function () use ($healthQuote, &$dirty) {
+                    $branch = app(BranchAssignmentService::class)->getBranch($healthQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $healthQuote->emirate_of_your_visa_id);
+                    $healthQuote->update([
+                        'branch_id' => $branch?->id,
+                    ]);
+                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                });
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - save branch data failed', [
+                    'uuid' => $healthQuote->uuid,
+                ], exception: $e);
+            }
         }
+
+        $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
             info("Quote status changed to {$healthQuote->quote_status_id} | Ref-ID: {$healthQuote->uuid} | Time: ".now());
@@ -107,7 +146,7 @@ class HealthQuoteObserver
             in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $healthQuote->customer,
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
@@ -119,9 +158,14 @@ class HealthQuoteObserver
             isset($dirty['quote_status_id']) &&
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            SendPolicyIssueWhatsappMessageJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH->id())->onQueue('insly');
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
+        }
+
+        if (isset($dirty['quote_status_id'])) {
+            app(SLAService::class)->meetSLAOnStatusUpdate($healthQuote);
         }
     }
 }

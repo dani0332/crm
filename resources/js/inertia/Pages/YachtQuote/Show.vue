@@ -5,6 +5,8 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: Object,
@@ -396,6 +398,43 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
+              </div>
+
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source?.description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.sub_source?.text || 'N/A' }}</div>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option?.description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL NOTES</dt>
+                <dd>{{ quote?.notes || 'N/A' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -884,6 +923,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quote-type="quoteType"
       :expanded="sectionExpanded"
     />
+
     <LastYearPolicyDetail
       v-if="
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
@@ -996,6 +1036,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <BookPolicy
       v-if="
         canAny([
@@ -1018,6 +1080,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
       @onAddUpdate="onAddUpdate"
+    />
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
 
     <AuditLogs

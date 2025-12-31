@@ -2,17 +2,26 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\RolesEnum;
+use App\Facades\AllocationConfigurer;
+use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
 
 class CycleAllocation extends BaseAllocation
 {
     protected function fetchAdvisor(int $onlineStatus)
     {
-        $emails = $this->getAdvisorEmails(ApplicationStorageEnums::CYCLE_ADVISORS);
+        $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
 
-        return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CycleAdvisor])
-            ->whereIn('users.email', $emails)
-            ->first();
+        if (count($emails) > 0) {
+            LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", ['emails' => $emails]);
+
+            return $this->getAdvisorsByEmailsOrIds($onlineStatus, $this->quoteType->advisorRoles(), $emails);
+        }
+
+        $this->skipRuleUsers = true;
+
+        $advisorIds = AllocationConfigurer::getCommonEligibleAdvisorIds($this->quoteType);
+
+        return $this->getAdvisorsByEmailsOrIds($onlineStatus, $this->quoteType->advisorRoles(), null, $advisorIds);
     }
 }

@@ -28,6 +28,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -82,6 +83,9 @@ class AdvisorConversionReportService extends BaseService
             $query = $this->getPersonsalQuoteQuery($lob);
             $query = $this->applyFilters($query, $filters);
         }
+
+        LoggerService::sql(self::class.' - Advisor Conversion Report Query', $query);
+
         $query = $query->get();
 
         // map operation to calculate gross and net conversions of records
@@ -393,6 +397,7 @@ class AdvisorConversionReportService extends BaseService
                     quoteTypeCode::Car,
                     quoteTypeCode::Health,
                     quoteTypeCode::Travel,
+                    quoteTypeCode::Life,
                 ],
             ],
         ];
@@ -625,8 +630,8 @@ class AdvisorConversionReportService extends BaseService
             })->when(! empty($filters->travel_coverage) && $filters->travel_coverage != '', function ($sq) use ($filters) {
                 $sq->where('travel_quote_request.coverage_code', $filters->travel_coverage);
             })->when(isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false', function ($sq) use ($isTravelQuote) {
-                $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
-                $sq->where($table, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+                $sourceCol = $isTravelQuote ? 'travel_quote_request.source' : 'personal_quotes.source';
+                $sq->where($sourceCol, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             });
         });
     }
@@ -652,6 +657,10 @@ class AdvisorConversionReportService extends BaseService
             })
             ->when($lob === quoteTypeCode::Car, function ($q) {
                 $q->filterBySegment(request()->segment_filter, QuoteTypeId::Car);
+            })
+            ->when($lob === quoteTypeCode::Life, function ($q) {
+
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Life);
             })
             ->when($freshLoad || isset($filters->advisorAssignedDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('personal_quote_details.advisor_assigned_date', [$startDate, $endDate]);

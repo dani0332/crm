@@ -5,6 +5,7 @@ const props = defineProps({
   batches: Array,
   pagination: Object,
   transactionTypes: Array,
+  renewalBatches: Array,
 });
 
 const page = usePage();
@@ -13,7 +14,7 @@ const notification = useNotifications('toast');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-const { isRequired } = useRules();
+const { isRequired, maxDateRangeArray } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const cleanObj = obj => useCleanObj(obj);
@@ -25,9 +26,11 @@ const filters = reactive({
     useDateFormat(new Date(), 'YYYY-MM-DD').value,
     useDateFormat(new Date(), 'YYYY-MM-DD').value,
   ],
+  lead_created_at: [],
   page: 1,
   transaction_type_id: [],
   quote_batch_id: [],
+  renewal_batch: null,
   quote_status_id: [],
   payment_status_id: [],
   sale_leads: null,
@@ -54,14 +57,6 @@ const reportButtonCon = computed(() => {
   if (filters.report == null) {
     data.disable = true;
     data.msg = 'Please select the report type';
-  } else if (filters.quoteId || filters.email || filters.mobile_no) {
-    data.disable = false;
-  } else if (
-    filters.chat_initiated_at == null ||
-    filters.chat_initiated_at == []
-  ) {
-    data.disable = true;
-    data.msg = 'Please select the Start Date and End Date ';
   }
 
   return data;
@@ -97,6 +92,27 @@ const paymentStatus = computed(() => {
   );
 });
 
+const renewalBatches = computed(() => {
+  return props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+});
+
+// Determine if the current quote type is non-motor
+const isNonMotor = computed(() => {
+  const nonMotorTypes = ['Bike', 'Home', 'Health', 'Travel'];
+  return nonMotorTypes.includes(filters.quoteType);
+});
+
+// Reset renewal_batch when quote type changes
+watch(
+  () => filters.quoteType,
+  () => {
+    filters.renewal_batch = isNonMotor.value ? [] : null;
+  },
+);
+
 const quoteSegments = page.props.quoteSegments;
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
@@ -118,7 +134,12 @@ const chatMessages = ref({
 
 const tableHeader = reactive([
   { text: 'Ref-ID', value: 'code' },
-  { text: 'Created At', value: 'created_at', sortable: true },
+  {
+    text: 'AI Interaction Start Date',
+    value: 'chat_initiated_at',
+    sortable: true,
+  },
+  // { text: 'Lead Created At', value: 'lead_created_at', sortable: true },
   { text: 'Actions', value: 'action' },
 ]);
 
@@ -142,7 +163,8 @@ watch(
   },
 );
 
-function onSubmit() {
+function onSubmit(isValid) {
+  if (!isValid) return;
   if (filters.quoteId || filters.email || filters.mobile_no) {
     filters.chat_initiated_at = [];
   }
@@ -175,6 +197,14 @@ function setQueryStringFilters() {
       const index = parseInt(key.match(/\[(\d+)\]/)?.[1], 10);
       if (!isNaN(index)) {
         filters.chat_initiated_at[index] = value.split('T')[0]; // Remove time part
+      }
+    } else if (key.startsWith('lead_created_at[')) {
+      const index = parseInt(key.match(/\[(\d+)\]/)?.[1], 10);
+      if (!isNaN(index)) {
+        filters.lead_created_at[index] = useDateFormat(
+          value,
+          'YYYY-MM-DD hh:mm:ss',
+        ).value; // Remove time part
       }
     } else if (Array.isArray(value)) {
       filters[key] = value;
@@ -245,24 +275,46 @@ const exportReport = async (exportType = 'download') => {
     if (!filters.report) {
       notification.error({
         position: 'top',
-        title: 'Export Error',
+        title: 'Export Error!',
         text: 'Please select a report type before exporting.',
       });
       return;
     }
 
-    const days = calculateDaysDifference(
-      filters.chat_initiated_at[0],
-      filters.chat_initiated_at[1],
-    );
+    // Check chat_initiated_at date range
+    if (filters.chat_initiated_at && filters.chat_initiated_at.length === 2) {
+      const chatDays = calculateDaysDifference(
+        filters.chat_initiated_at[0],
+        filters.chat_initiated_at[1],
+      );
 
-    if (days > 30) {
-      notification.error({
-        position: 'top',
-        title: 'Export Error',
-        message: 'Maximum 30 days are allowed.',
-      });
-      return;
+      if (chatDays > 31) {
+        notification.error({
+          position: 'top',
+          title: 'Export Error!',
+          message:
+            'Maximum 31 days are allowed for Chat Initiated At date range.',
+        });
+        return;
+      }
+    }
+
+    // Check lead_created_at date range
+    if (filters.lead_created_at && filters.lead_created_at.length === 2) {
+      const leadDays = calculateDaysDifference(
+        filters.lead_created_at[0],
+        filters.lead_created_at[1],
+      );
+
+      if (leadDays > 31) {
+        notification.error({
+          position: 'top',
+          title: 'Export Error',
+          message:
+            'Maximum 31 days are allowed for Lead Created At date range.',
+        });
+        return;
+      }
     }
 
     const data = {
@@ -337,102 +389,193 @@ const exportReport = async (exportType = 'download') => {
         placeholder="Search by Ref-ID"
         label="Ref-ID"
       />
-      <x-field label="Quote Type" required>
-        <combo-box
-          v-model="filters.quoteType"
-          :options="[
-            { label: 'Car', value: 'Car' },
-            { label: 'Health', value: 'Health' },
-            { label: 'Travel', value: 'Travel' },
-            { label: 'Bike', value: 'Bike' },
-            { label: 'Home', value: 'Home' },
-          ]"
-          placeholder="Select a Quote Type"
-          class="w-full"
-          single
-        >
-        </combo-box>
-      </x-field>
-      <div>
-        <x-tooltip position="top">
-          <label
-            class="font-medium text-gray-800 text-sm decoration-primary-600"
-          >
-            Select Start & End Date <span class="text-red-500">*</span>
-          </label>
-          <template #tooltip> Maximum 30 days are allowed </template>
-        </x-tooltip>
-        <DatePicker
-          class="py-1"
-          v-model="filters.chat_initiated_at"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="31"
-          size="md"
-          model-type="yyyy-MM-dd"
-          :rules="
-            filters.quoteId || filters.email || filters.mobile_no
-              ? []
-              : [isRequired]
-          "
-          :onlySelect="true"
-        />
-      </div>
-      <x-field label="Transaction Type">
-        <combo-box
-          v-model="filters.transaction_type_id"
-          :options="transactionTypes"
-          placeholder="Search by Transaction type"
-          class="w-full"
-        >
-        </combo-box>
-      </x-field>
-      <x-field label="Batch">
-        <combo-box
-          v-model="filters.quote_batch_id"
-          :options="leadBatches"
-          placeholder="Search by Batch"
-          class="w-full"
-        >
-        </combo-box>
-      </x-field>
-      <x-field label="Lead Status">
-        <combo-box
-          v-model="filters.quote_status_id"
-          :options="leadStatus"
-          placeholder="Select the Lead status"
-          class="w-full"
-        >
-        </combo-box>
-      </x-field>
-      <x-field label="Payment Status">
-        <combo-box
-          v-model="filters.payment_status_id"
-          :options="paymentStatus"
-          placeholder="Search by Payment status"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Sale leads">
-        <x-select
-          v-model="filters.sale_leads"
-          :options="[
-            { value: null, label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          placeholder="Search by Sale leads"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Segment">
-        <x-select
-          v-model="filters.segment"
-          :options="quoteSegments"
-          placeholder="Search by SIC"
-          class="w-full"
-        />
-      </x-field>
+      <x-select
+        v-model="filters.quoteType"
+        :options="[
+          { label: 'Car', value: 'Car' },
+          { label: 'Health', value: 'Health' },
+          { label: 'Travel', value: 'Travel' },
+          { label: 'Bike', value: 'Bike' },
+          { label: 'Home', value: 'Home' },
+        ]"
+        placeholder="Select a Quote Type"
+        class="w-full"
+        single
+        label="Quote Type"
+        required
+      />
+
+      <DatePicker
+        label="Interaction Start and End Date"
+        v-model="filters.chat_initiated_at"
+        placeholder="Select Start & End Date"
+        range
+        size="md"
+        model-type="yyyy-MM-dd"
+        :rules="
+          filters.quoteId || filters.email || filters.mobile_no
+            ? []
+            : [maxDateRangeArray(31)]
+        "
+        :onlySelect="true"
+        tooltip="Date range of customer interaction with InstantAlfred (Maximum 31 days allowed)"
+      />
+      <DatePicker
+        v-model="filters.lead_created_at"
+        placeholder="Select Lead Created Start & End Date"
+        range
+        size="md"
+        label="Lead Created Start & End Date"
+        text-input
+        time-picker-inline
+        enableTimePicker
+        withTime
+        :rules="[maxDateRangeArray(31)]"
+        tooltip="Lead creation date range (Maximum 31 days allowed)"
+      />
+
+      <x-select
+        v-model="filters.transaction_type_id"
+        :options="transactionTypes"
+        placeholder="Search by Transaction type"
+        class="w-full"
+        multiple
+        truncate
+        filterable
+        filterPlaceholder="Filter Transaction Type...."
+        label="Transaction Type"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.transaction_type_id = transactionTypes.map(
+                item => item.value,
+              )
+            "
+            @clear="filters.transaction_type_id = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.quote_batch_id"
+        :options="leadBatches"
+        placeholder="Search by Batch"
+        class="w-full"
+        multiple
+        truncate
+        filterable
+        filterPlaceholder="Filter Batch...."
+        label="Batch"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.quote_batch_id = leadBatches.map(item => item.value)
+            "
+            @clear="filters.quote_batch_id = []"
+          />
+        </template>
+      </x-select>
+
+      <!-- Renewal Batch - Dropdown for Non-Motor (Bike, Home, Health, Travel) -->
+      <x-select
+        v-if="isNonMotor"
+        v-model="filters.renewal_batch"
+        :options="renewalBatches"
+        placeholder="Search by Renewal Batch"
+        class="w-full"
+        label="Renewal Batch"
+        filterable
+        filterPlaceholder="Filter Renewal Batch...."
+        multiple
+        truncate
+        virtual-list
+        :virtual-list-item-height="34"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.renewal_batch = renewalBatches.map(item => item.id)
+            "
+            @clear="filters.renewal_batch = []"
+          />
+        </template>
+      </x-select>
+
+      <!-- Renewal Batch - Input field for Car -->
+      <x-input
+        v-else
+        v-model="filters.renewal_batch"
+        placeholder="Search by Renewal Batch"
+        type="text"
+        class="w-full"
+        label="Renewal Batch"
+      />
+
+      <x-select
+        v-model="filters.quote_status_id"
+        :options="leadStatus"
+        placeholder="Select the Lead status"
+        class="w-full"
+        multiple
+        truncate
+        filterable
+        filterPlaceholder="Filter Lead Status...."
+        label="Lead Status"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.quote_status_id = leadStatus.map(item => item.value)
+            "
+            @clear="filters.quote_status_id = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.payment_status_id"
+        :options="paymentStatus"
+        placeholder="Search by Payment status"
+        class="w-full"
+        multiple
+        truncate
+        filterable
+        filterPlaceholder="Filter Payment Status...."
+        label="Payment Status"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.payment_status_id = paymentStatus.map(item => item.value)
+            "
+            @clear="filters.payment_status_id = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.sale_leads"
+        :options="[
+          { value: null, label: 'All' },
+          { value: 'Yes', label: 'Yes' },
+          { value: 'No', label: 'No' },
+        ]"
+        placeholder="Search by Sale leads"
+        class="w-full"
+        label="Sale leads"
+      >
+      </x-select>
+
+      <x-select
+        v-model="filters.segment"
+        :options="quoteSegments"
+        placeholder="Search by SIC"
+        class="w-full"
+        label="Segment"
+      />
+
       <x-field label="Report Category">
         <x-select
           v-model="filters.report"
@@ -552,7 +695,7 @@ const exportReport = async (exportType = 'download') => {
     hide-rows-per-page
     hide-footer
   >
-    <template #item-created_at="item">
+    <template #item-chat_initiated_at="item">
       <span>
         {{ dateFormat(item.chat_initiated_at.split(' ')[0]) }}
       </span>

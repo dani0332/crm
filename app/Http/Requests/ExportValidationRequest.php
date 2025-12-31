@@ -59,6 +59,14 @@ class ExportValidationRequest extends FormRequest
                 ];
             } elseif ($this->has('transaction_approved_dates')) {
                 $rules['transaction_approved_dates.*'] = 'required|date';
+            } elseif ($this->filled('renewal_batch')) {
+                // If renewal batch is provided, no other date fields are required
+                $rules = [
+                    'created_at_start' => 'nullable|date',
+                    'created_at_end' => 'nullable|date',
+                    'policy_expiry_date' => 'nullable|date',
+                    'policy_expiry_date_end' => 'nullable|date',
+                ];
             } else {
                 $rules = [
                     'created_at_start' => 'nullable|required_without:policy_expiry_date,policy_expiry_date_end|date',
@@ -102,8 +110,8 @@ class ExportValidationRequest extends FormRequest
                 $quoteType = $this->route('quoteType');
                 $isEmailExport = $this->input('exportType') === 'email';
 
-                if ((ucfirst($quoteType) == QuoteTypes::CAR->value) || $quoteType == RetentionReportEnum::RETENTION) {
-                    $diffInDays = 31;
+                if ((ucfirst($quoteType) == QuoteTypes::CAR->value)) {
+                    $diffInDays = 15;
                 }
 
                 if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {

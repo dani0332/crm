@@ -60,17 +60,16 @@ class BuyLeadsExport implements FromCollection, WithHeadings, WithMapping, WithS
         if ($this->type === 'detailed') {
             return [
                 'RefID',
-                'Team Type',
                 'Advisor Requested',
                 'Assignment Type',
                 'Lead Created At',
-                'Premium',
+                'Source',
                 'Advisor',
                 'Lead Status',
                 'Cost',
                 'Teams',
-                'Re-assigned At',
-                'Log Created At',
+                'Department',
+                'Advisor Code',
             ];
         }
 
@@ -97,17 +96,16 @@ class BuyLeadsExport implements FromCollection, WithHeadings, WithMapping, WithS
         if ($this->type === 'detailed') {
             return [
                 $row->RefID ?? '',
-                $row->TeamType ?? '',
                 $row->advisor_requested ?? '',
                 $row->assignment_type ?? '',
                 $row->lead_created_at ?? '',
-                $row->premium ?? '',
+                $row->source ?? '',
                 $row->advisor ?? '',
                 $row->lead_status ?? '',
                 $row->cost ?? '',
                 $row->teams ?? '',
-                $row->re_assigned_at ?? '',
-                $row->created_at ?? '',
+                $row->department ?? '',
+                $row->advisor_code ?? '',
             ];
         }
 

@@ -7,6 +7,7 @@ use App\Enums\GenderEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -14,6 +15,7 @@ use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\SavingsQuote;
+use App\Services\BranchAssignmentService;
 use App\Services\HttpRequestService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
@@ -32,12 +34,13 @@ class SavingsQuoteService extends BaseQuoteService
         $this->httpService = $httpService;
     }
 
-    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
+    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false, bool $getQuery = false)
     {
         $query = $this->baseQuery()->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
@@ -47,10 +50,14 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.investmentFrequency',
             'savingsQuote.tenure',
             'nationality',
+            'subSource:id,text',
+            'branch:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
-            ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
+            ->when(empty(request('booking_date')), function ($query) {
+                $query->filterByCreatedAt(request('created_at_start'), request('created_at_end'));
+            })
             ->when(request('investment_frequency'), function ($q) {
                 $q->whereHas('savingsQuote', function ($sq) {
                     $sq->where('investment_criteria_id', request('investment_frequency'));
@@ -66,7 +73,20 @@ class SavingsQuoteService extends BaseQuoteService
             exit;
         }
 
+        if ($getQuery) {
+            return $query;
+        }
+
         return $query->resolveData($paginted, $forExport, $getTotalCount);
+    }
+
+    public function postProcessSavingsQuote($quotes)
+    {
+        return $quotes->map(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Savings));
+
+            return $item;
+        });
     }
 
     public function getFormOptions()
@@ -85,6 +105,12 @@ class SavingsQuoteService extends BaseQuoteService
         $sourceName = config('constants.SOURCE_NAME');
         $appUrl = config('constants.APP_URL');
 
+        // Log sub-source parameters
+        LoggerService::info('SavingsQuoteService create - Sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+        ]);
+
         $data = [
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
@@ -100,7 +126,7 @@ class SavingsQuoteService extends BaseQuoteService
             'currencyId' => (int) $data['currency_id'],
             'investmentAmount' => (float) $data['investment_amount'],
             'investmentCriteriaId' => (int) $data['investment_frequency'],
-            'additionalNotes' => $data['additional_notes'],
+            'additionalNotes' => $data['notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
@@ -109,6 +135,9 @@ class SavingsQuoteService extends BaseQuoteService
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
+            // Sub-source fields
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
         ];
 
         // Make API request to save the savings quote
@@ -128,6 +157,9 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.purpose',
             'savingsQuote.investmentFrequency',
             'savingsQuote.tenure',
+            'subSource',
+            'subSourceOption',
+            'branch:id,name',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -139,6 +171,7 @@ class SavingsQuoteService extends BaseQuoteService
                     'quoteStatus',
                     'currentlyInsuredWith',
                     'advisor',
+                    'advisor.primaryBranch',
                     'paymentStatus',
                     'quoteDetail',
                     'quoteDetail.lostReason',
@@ -190,14 +223,17 @@ class SavingsQuoteService extends BaseQuoteService
 
     public function update(string $uuid, array $data)
     {
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
+                'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['updated_by_id'] = Auth::id();
+
             $quote->update($quoteData);
 
             $quote->savingsQuote()->updateOrCreate(
@@ -212,6 +248,7 @@ class SavingsQuoteService extends BaseQuoteService
     public function getShowData(string $uuid)
     {
         $quote = $this->getOne($uuid, true);
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Savings));
         $data = $this->getShowCommonData($quote);
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::SAVINGS_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::SAVINGS) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));

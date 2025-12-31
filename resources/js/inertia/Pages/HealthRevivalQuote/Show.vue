@@ -614,6 +614,7 @@ const leadStatusForm = useForm({
   notes: page.props.quote.notes || null,
   trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quote.lost_reason_id || null,
+  current_quote_status_id: page.props.quote.quote_status_id || null,
 });
 
 const genderText = gender =>
@@ -680,7 +681,7 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100,
+      width: 230,
     },
     {
       text: 'Price',
@@ -690,6 +691,10 @@ const plansTable = reactive({
     {
       text: 'Basmah',
       value: 'basmah',
+    },
+    {
+      text: 'ICP Fee',
+      value: 'icpFee',
     },
     {
       text: 'Policy Fee (if applicable)',
@@ -1070,6 +1075,7 @@ const onMarkPlanAsManual = (plan, loadingPrice) => {
         (element.actualPremium +
           (element.policyFee || 0) +
           (element.basmah || 0) +
+          (element.icpFee || 0) +
           (loadingPrice || 0)) *
         0.05;
       element.loadingPrice = Number(loadingPrice);
@@ -2182,7 +2188,7 @@ const updateProfileDetails = isValid => {
           :hide-footer="listQuotePlansFiltered.length < 15"
         >
           <template #item-copayName="item">
-            <span class="copay-max">{{ item.copayName }}</span>
+            <p class="copay-max">{{ item.copayName }}</p>
           </template>
           <template #item-planTypeId="item">
             <span class="copay-max">{{ item.plan_type }}</span>
@@ -2223,6 +2229,7 @@ const updateProfileDetails = isValid => {
               actualPremium,
               policyFee,
               basmah,
+              icpFee,
               vat,
               loadingPrice,
             }"
@@ -2232,6 +2239,7 @@ const updateProfileDetails = isValid => {
                 actualPremium +
                   (policyFee || 0) +
                   (basmah || 0) +
+                  (icpFee || 0) +
                   vat +
                   (loadingPrice || 0),
               )

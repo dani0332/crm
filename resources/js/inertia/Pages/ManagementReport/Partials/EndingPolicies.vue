@@ -33,6 +33,10 @@ const tableHeader = reactive([
     tooltip: 'The insurer of the expiring policy',
   },
   {
+    text: 'Currently Insured With',
+    value: 'currently_insured_with_text',
+  },
+  {
     text: 'Line Of Business',
     value: 'line_of_business',
     tooltip: 'The line of business of the expiring policy',
@@ -122,6 +126,31 @@ const tableHeader = reactive([
     text: 'Notes ',
     value: 'notes',
     tooltip: 'Any notes added within lead level will reflect here.',
+  },
+  {
+    text: 'Policy PEC Flag',
+    value: 'pec_flag',
+    tooltip: 'Indicates if the policy has Pre-Existing Condition (PEC) flag',
+  },
+  {
+    text: 'Travel Coverage',
+    value: 'travel_coverage',
+    tooltip: 'The coverage of the travel policy',
+  },
+  {
+    text: 'Traveling Where',
+    value: 'traveling_where',
+    tooltip: 'The traveling where of the travel policy',
+  },
+  {
+    text: 'IMCRM SUB-SOURCE',
+    value: 'sub_source',
+    tooltip: 'The IMCRM SUB-SOURCE (lookup) of the lead',
+  },
+  {
+    text: 'SUB SOURCE OPTIONS',
+    value: 'sub_source_option',
+    tooltip: 'The SUB SOURCE OPTION of the lead',
   },
 ]);
 

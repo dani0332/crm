@@ -2,11 +2,14 @@
 
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
+use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
+use App\Http\Controllers\API\V1\LifeController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,6 +34,8 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/send-health-apply-now-email', [ApiController::class, 'sendHealthApplyNowEmail'])->name('sendHealthApplyNowEmail');
     // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
+    Route::post('/imcrm/trigger-sic-whatsapp', [ApiController::class, 'triggerSICWhatsapp'])->name('triggerSICWhatsapp');
+    Route::post('/imcrm/run-cqf-jobs', [ApiController::class, 'runCQFJobs']);
 
     // FTC email tracking routes
     Route::post('ftc/{quoteType}/{uuid}', [FtcEmailLogController::class, 'store']);
@@ -40,15 +45,48 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('duplicate-entires', [ApiController::class, 'duplicateEntries']);
     Route::post('/cache/forget', [ApiController::class, 'forgetCache']);
     Route::post('/imcrm/trigger-aig-workflow', [ApiController::class, 'triggerAIGWorkflow'])->name('triggerAIGWorkflow');
+    // life
+    Route::post('life/send-oca-email', [LifeController::class, 'sendOCAEmail'])->name('lifeSendOCAEmail');
     Route::post('/imcrm/trigger-travel-aig-workflow', [ApiController::class, 'triggerTravelAIGWorkflow'])->name('triggerTravelAIGWorkflow');
 
     Route::get('/home/renewal-ocb-attachment', [ApiController::class, 'homeRenewalOCBAttachment'])->name('homeRenewalOCBAttachment');
+    Route::get('/quotes/{quoteType}/get-plans-pdf-url', [GenericLobController::class, 'getPlansPdfUrl'])->name('getPlansPdfUrl');
+    Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
+    Route::post('send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);
 
+    // BOR (Broker on Record) API Routes
+    Route::prefix('bor')->group(function () {
+
+        Route::get('details/{bor_ref_id}', [BorController::class, 'getBorLog'])->name('bor.get-bor-log');
+        Route::get('completion-email-trigger/{bor_ref_id}', [BorController::class, 'borCompletionEmailTrigger'])->name('bor.completion-email-trigger');
+        Route::post('generate-pdf', [BorController::class, 'generatePdf'])->name('bor.generate-pdf');
+        Route::post('upload-document', [BorController::class, 'uploadDocument'])->name('bor.upload-document');
+        Route::delete('delete-document', [BorController::class, 'deleteDocument'])->name('bor.delete-document');
+
+        Route::get('document-types', [BorController::class, 'getDocumentTypes'])->name('bor.get-document-types');
+        // Signature routes
+        Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
+    });
+
+    // Missing docs reminder and verify missing docs routes
+    Route::prefix('imcrm')->group(function () {
+        Route::post('/missing-docs-reminder/{quoteUuid}', [ApiController::class, 'missingDocsReminder'])->name('missingDocsReminder');
+        Route::get('/verify-missing-docs/{quoteUuid}/{quoteType}', [ApiController::class, 'verifyMissingDocs'])->name('verifyMissingDocs');
+    });
+
+    Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
+
+    Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
+        ->name('pc-customer-assignment');
+    Route::post('/remove-pc-qualified', [ApiController::class, 'removePcQualified'])->name('remove-pc-qualified');
+
+    Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
 });
+
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
-Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClientss'])->name('tagPrivateClientss');
+// Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClients'])->name('tagPrivateClientss');
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
@@ -56,6 +94,7 @@ Route::post('/bird-outbound-emails-status', [ApiController::class, 'birdOutbound
 Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
 Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
+Route::post('/email-status/update-customer-replied', [ApiController::class, 'updateCustomerRepliedStatus'])->name('updateCustomerRepliedStatus');
 
 Route::prefix('v1')->group(function () {
 
@@ -73,13 +112,28 @@ Route::prefix('v1')->group(function () {
     Route::delete('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'destroy']);
     Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
     Route::post('quotes/{quoteType}/export-plans-pdf', [GenericLobController::class, 'exportPlansPdf'])->name('exportPlansPdf');
+    Route::get('quotes/{quoteType}/export-plans-pdf-link', [GenericLobController::class, 'exportPlansPdfLink'])->name('exportPlansPdfLink');
+
+    // BOR SSE
+    Route::get('bor/details/sse/{bor_ref_id}', [BorController::class, 'getBorLogSSE'])->name('bor.get-bor-log-sse');
+
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
+
+    Route::get('quotes/{quoteTypeId}/{quoteId}/email-status/export', [ApiController::class, 'exportEmailStatusLogs'])->name('exportEmailStatusLogs');
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
+    Route::get('/renewals/validation-failed-download/{id}', [ApiController::class, 'downloadValidationFailedFile'])->name('downloadValidationFailedFile');
+
+    // User management routes
+    Route::get('users/first-manager/{email}', [UserController::class, 'getFirstManager'])->name('getFirstManager');
+
+    // upload to metlife API route
+    Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
 });
+
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);

@@ -19,6 +19,7 @@ use App\Pipes\Allocation\Car\FetchTierUsersPipe;
 use App\Pipes\Allocation\Car\FinalizeEligibleAdvisorPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\ResetNationalityConfigPipe;
 use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -50,8 +51,12 @@ class ReAssignCarLeadsJob implements ShouldQueue
     {
         LoggerService::info('-------- Reassignment car job started ---------');
 
-        if (! $this->shouldProceed() && ! now()->isWeekend()) {
-            LoggerService::info('Reassignment job is not proceeding as per business timings');
+        if (! $this->shouldProceed() || now()->isWeekend()) {
+            LoggerService::info('Reassignment job is not proceeding as per business timings or today is weekend', extra: [
+                'shouldProceed' => $this->shouldProceed(),
+                'isWeekend' => now()->isWeekend(),
+                'advisorId' => $this->advisorId,
+            ]);
 
             return false;
         }
@@ -86,6 +91,9 @@ class ReAssignCarLeadsJob implements ShouldQueue
                     EvaluateTierPipe::class,
                     ValidateNationalityConfigPipe::class,
                     FetchTierUsersPipe::class,
+                    ApplyRuleExclusionPipe::class,
+                    FetchEligibleAdvisorsPipe::class,
+                    ResetNationalityConfigPipe::class,
                     ApplyRuleExclusionPipe::class,
                     FetchEligibleAdvisorsPipe::class,
                     FinalizeEligibleAdvisorPipe::class,
@@ -134,7 +142,8 @@ class ReAssignCarLeadsJob implements ShouldQueue
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', $exemptedLeadSources)
             ->where('quote_status_id', QuoteStatusEnum::NewLead)
-            ->where('is_renewal_tier_email_sent', 0);
+            ->where('is_renewal_tier_email_sent', 0)
+            ->where('ai_advisor_required', false);
 
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {

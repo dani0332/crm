@@ -9,28 +9,38 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SLAActionTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
+use App\Http\Requests\MemberDeleteRequest;
 use App\Http\Requests\MemberDetailRequest;
+use App\Models\HealthQuote;
 use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
+use App\Services\SLA\SLAService;
 use Illuminate\Http\Request;
 
 class HealthQuoteController extends Controller
 {
     protected $healthQuoteService;
+    protected $slaService;
 
-    public function __construct(HealthQuoteService $healthQuoteService)
+    public function __construct(HealthQuoteService $healthQuoteService, SLAService $slaService)
     {
         $this->healthQuoteService = $healthQuoteService;
+        $this->slaService = $slaService;
     }
 
     public function healthPlanCreateQuote(Request $request)
     {
+        $logPrefix = 'HealthQuoteController - healthPlanCreateQuote - ';
+        LoggerService::startQuoteLogging($request->quoteUID);
+        LoggerService::info($logPrefix.'request - ', $request->all());
         $request->validate([
             'quoteUID' => 'required',
             'formData' => 'required|array',
@@ -70,7 +80,11 @@ class HealthQuoteController extends Controller
             'memberPremiumBreakdown' => $membersBreakDown,
         ];
 
+        LoggerService::info($logPrefix.'planData - ', $planData);
+
         $response = $this->healthQuoteService->renewalCreatePlan($planData);
+
+        LoggerService::info($logPrefix.'response - ', $response);
 
         return $response;
     }
@@ -107,10 +121,14 @@ class HealthQuoteController extends Controller
         $response = $this->healthQuoteService->healthPlanModifyV2($request);
 
         $message = '';
-        if ($response['message'] && $response['message'] === 'health quote plan updated successfully') {
+        // Safely check if 'message' key exists and its value
+        if (is_array($response) && isset($response['message']) && $response['message'] === 'health quote plan updated successfully') {
             $message = 'Plan has been updated';
         } else {
-            if (isset($response->message)) {
+            // Use array syntax if $response is array, object syntax if object, else fallback to value
+            if (is_array($response) && isset($response['message'])) {
+                $responseMessage = $response['message'];
+            } elseif (is_object($response) && isset($response->message)) {
                 $responseMessage = $response->message;
             } else {
                 $responseMessage = $response;
@@ -149,9 +167,22 @@ class HealthQuoteController extends Controller
         return $message;
     }
 
+    private function meetSLA(Request|MemberDetailRequest $request, SLAActionTypeEnum $actionType): void
+    {
+        $lead = HealthQuote::whereUuid($request->quoteId)->first();
+        if ($lead) {
+            $this->slaService->meetSLAOnEdit($lead, $actionType);
+        }
+    }
+
     public function healthQuoteAddMember(MemberDetailRequest $request)
     {
         $request->validated();
+
+        $quote = HealthQuote::where('uuid', $request->quoteId)->first();
+        if ($quote?->is_quote_locked) {
+            return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
 
         $response = $this->healthQuoteService->healthQuoteAddMember($request);
 
@@ -167,12 +198,19 @@ class HealthQuoteController extends Controller
             $message = 'Request not processed. '.json_encode($responseMessage);
         }
 
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_ADD);
+
         return redirect()->back();
     }
 
     public function healthQuoteUpdateMember(MemberDetailRequest $request)
     {
         $request->validated();
+
+        $quote = HealthQuote::where('uuid', $request->quoteId)->first();
+        if ($quote?->is_quote_locked) {
+            return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
 
         $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
 
@@ -188,10 +226,12 @@ class HealthQuoteController extends Controller
             $message = 'Request not processed. '.json_encode($responseMessage);
         }
 
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_EDIT);
+
         return redirect()->back();
     }
 
-    public function healthQuoteDeleteMember(Request $request)
+    public function healthQuoteDeleteMember(MemberDeleteRequest $request)
     {
         $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
 
@@ -206,6 +246,8 @@ class HealthQuoteController extends Controller
             }
             $message = 'Request not processed. '.json_encode($responseMessage);
         }
+
+        $this->meetSLA($request, SLAActionTypeEnum::MEMBER_DETAILS_DELETE);
 
         return redirect()->back();
     }

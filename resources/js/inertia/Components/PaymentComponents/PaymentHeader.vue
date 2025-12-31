@@ -208,14 +208,7 @@ const downloadProformaPayment = async () => {
           </x-tooltip>
         </template>
       </template>
-      <div
-        v-if="
-          !page.props.linkedQuoteDetails ||
-          quoteRequest.quote_status_id !=
-            page.props.quoteStatusEnum.PolicyCancelled ||
-          page.props.linkedQuoteDetails?.childLeadsCount == 0
-        "
-      >
+      <div>
         <template v-if="payments.length > 0">
           <div
             class="flex justify-between items-center gap-2"

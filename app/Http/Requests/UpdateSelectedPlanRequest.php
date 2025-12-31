@@ -3,7 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
-use App\Services\SplitPaymentService;
+use App\Models\HealthQuote;
+use App\Rules\ValidateAuthorizedPayment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSelectedPlanRequest extends FormRequest
@@ -42,13 +43,18 @@ class UpdateSelectedPlanRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $quoteType = request()->quoteType;
-        $insuranceProviderId = request()->insurance_provider_id;
-        $planId = request()->plan_id;
         $code = request()->code;
 
         $validator->after(function ($validator) use ($code) {
-            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code);
+            $rule = new ValidateAuthorizedPayment($code);
+            $rule->validate($validator, $code);
+
+            if (strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
+                $quote = HealthQuote::where('code', request()->code)->first();
+                if ($quote?->is_quote_locked) {
+                    $validator->errors()->add('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+                }
+            }
         });
     }
 }

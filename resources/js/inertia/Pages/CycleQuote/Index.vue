@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment.vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 
 defineProps({
   quotes: Object,
@@ -16,14 +17,22 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  subSources: { type: Array, default: () => [] },
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const notification = useNotifications('toast');
 const loader = reactive({
   table: false,
   export: false,
 });
+
+const createLeadModal = ref(false);
+
+const onLeadConfirmed = () => {
+  createLeadModal.value = false;
+};
 
 let availableFilters = {
   code: '',
@@ -54,6 +63,8 @@ let availableFilters = {
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   private_client: 'all',
+  authorize_date: '',
+  captured_date: '',
 };
 
 const filters = reactive(availableFilters);
@@ -67,7 +78,9 @@ const permissionsEnum = page.props.permissionsEnum;
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
-// const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 
 const isAllowed = computed(() => {
   return !hasAnyRole([
@@ -132,6 +145,11 @@ const tableHeader = ref([
   },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
+    text: 'BRANCH',
+    value: 'branch_name',
+    is_active: true,
+  },
+  {
     text: 'CREATED DATE',
     value: 'created_at',
     is_active: true,
@@ -170,6 +188,7 @@ const tableHeader = ref([
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
 ]);
 
 function onSubmit(isValid) {
@@ -500,7 +519,7 @@ const insurerAMLStatusOption = computed(() => {
             v-if="canAny([permissionsEnum.CycleQuotesCreate])"
             size="sm"
             color="#ff5e00"
-            :href="route('cycle-quotes-create')"
+            @click="createLeadModal = true"
           >
             Create Lead
           </x-button>
@@ -778,6 +797,22 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
 
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
@@ -877,6 +912,7 @@ const insurerAMLStatusOption = computed(() => {
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
+          :canAssignLeadAdvisor="!can(permissionsEnum.VIEW_ALL_LEADS)"
           :quoteType="quoteType"
           @success="onLeadAssigned"
         />
@@ -961,6 +997,14 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="cycle-quotes-create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

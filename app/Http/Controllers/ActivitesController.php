@@ -80,7 +80,7 @@ class ActivitesController extends Controller
         if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         } else {
-            return redirect()->to('/quotes/'.strtolower($quoteType).'/'.$request->entityUId)->with('success', ' Activity has been Created');
+            return redirect()->back()->with('success', ' Activity has been Created');
         }
     }
 
@@ -182,6 +182,7 @@ class ActivitesController extends Controller
         $record = $this->activitiesService->getActivityById($request->activity_id);
         if (isset($record)) {
             $record->status = $record->status == 0 ? 1 : 0;
+            $record->is_cold = 0;
             $record->save();
         }
     }

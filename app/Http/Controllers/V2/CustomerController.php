@@ -7,11 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerAdditionalContactRequest;
 use App\Http\Requests\CustomerRequest;
 use App\Http\Requests\CustomerUploadRequest;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Repositories\CustomerRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\BerlinService;
 use App\Services\SendEmailCustomerService;
+use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
@@ -71,7 +72,7 @@ class CustomerController extends Controller
         $customer->update($customerRequest->validated());
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $customer,
                 'CUSTOMER_UPDATE',
                 'customer-update-myalfred-we'
@@ -103,5 +104,15 @@ class CustomerController extends Controller
         }
 
         return redirect('customer-upload')->with('success', 'Upload customers records has been stored');
+    }
+
+    public function listByEmail(Request $request)
+    {
+        $leads = CustomerRepository::getDataByContacts($request->all());
+
+        return inertia('Customer/Contacts', [
+            'leads' => $leads,
+            'userId' => auth()->id(),
+        ]);
     }
 }

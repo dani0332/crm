@@ -1,10 +1,13 @@
 <script setup>
 import { computed } from 'vue';
+import CreateLeadModal from '../../Components/CreateLeadModal.vue';
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  supportUsers: Array,
   renewalBatches: Array,
   teams: Object,
   userMaxCap: Number,
@@ -20,14 +23,22 @@ defineProps({
   authorizedDays: Number,
   assignmentTypes: Object,
   insurerAMLStatus: Array,
+  emirates: Array,
+  subSources: { type: Array, default: () => [] },
+  canAssignClientSupport: Boolean,
+  canAssignLeadAdvisor: Boolean,
 });
 
 const page = usePage();
+const teamNamesEnum = page.props.teamNamesEnum;
 const notification = useToast();
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const isPcpSubSourceOptionAllowed = ref(
+  useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
+);
 const quoteSegments = page.props.quoteSegments;
 
 const loader = reactive({
@@ -39,6 +50,11 @@ const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+const createLeadModal = ref(false);
+
+const manualAssignmentSuccess = () => {
+  quotesSelected.value = [];
+};
 
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -65,6 +81,8 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
+  { text: 'POLICY PEC FLAG', value: 'has_pec_tag', is_active: true },
   {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
@@ -78,6 +96,8 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
+  { text: 'OE/AE', value: 'support_user.name', is_active: true },
+  { text: 'BRANCH', value: 'branch_name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   {
     text: 'ADVISOR REQUESTED',
@@ -146,12 +166,17 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch.name', is_active: true },
+  {
+    text: 'Renewal Batch',
+    value: 'renewal_batch_model.name',
+    is_active: true,
+  },
   {
     text: 'Private Client',
     value: 'customer.pcp_tag_formatted',
     is_active: true,
   },
+  { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -178,6 +203,7 @@ const filters = reactive({
   quote_status: [],
   insurer_aml_status: [],
   advisors: [],
+  support_user_id: [],
   is_ecommerce: '',
   is_renewal: '',
   previous_quote_policy_number: '',
@@ -200,6 +226,10 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   private_client: 'all',
+  emirate_of_your_visa_id: [],
+  pec_flag: 'all',
+  authorize_date: '',
+  captured_date: '',
 });
 
 const canExport = ref(false);
@@ -245,6 +275,13 @@ const advisorOptions = computed(() => {
     value: advisor.id,
     label: advisor.name,
   }));
+});
+
+const supportUserOptions = computed(() => {
+  const list = Array.isArray(page.props.supportUsers)
+    ? page.props.supportUsers
+    : [];
+  return list.map(user => ({ value: user.id, label: user.name }));
 });
 
 const renewalBatchOptions = computed(() => {
@@ -374,24 +411,66 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
+  // Define which fields should have integer values
+  const integerFields = [
+    'quote_status',
+    'insurer_aml_status',
+    'advisors',
+    'renewal_batches',
+    'payment_status',
+    'emirate_of_your_visa_id',
+    'sub_source_id',
+    'page',
+  ];
+
+  // Group array parameters
+  const arrayParams = {};
+  const singleParams = {};
+
   for (const [key, value] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = value;
-    } else {
-      // Handle different data types appropriately
-      if (key.includes('_id') && !isNaN(parseInt(value))) {
-        // ID fields should be integers
-        filters[key] = parseInt(value);
-      } else if (key === 'page' && !isNaN(parseInt(value))) {
-        // Page should be integer
-        filters[key] = parseInt(value);
-      } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
-        // Boolean-like fields
-        filters[key] = parseInt(value);
-      } else {
-        // Keep as string for dates, text fields, etc.
-        filters[key] = value;
+    // Check for indexed array format like authorize_date[0], authorize_date[1]
+    const arrayMatch = key.match(/^(.+)\[(\d+)\]$/);
+
+    if (arrayMatch) {
+      const [, fieldName, index] = arrayMatch;
+      if (!arrayParams[fieldName]) {
+        arrayParams[fieldName] = [];
       }
+      arrayParams[fieldName][parseInt(index)] = value;
+    } else if (key.includes('[]')) {
+      // Handle simple array format like quote_status[]
+      const fieldName = key.substring(0, key.length - 2);
+      arrayParams[fieldName] = Array.isArray(value) ? value : [value];
+    } else {
+      // Single parameters
+      singleParams[key] = value;
+    }
+  }
+
+  // Process array parameters
+  for (const [fieldName, values] of Object.entries(arrayParams)) {
+    // Filter out undefined values and convert to correct type
+    const cleanValues = values.filter(v => v !== undefined);
+
+    if (integerFields.includes(fieldName)) {
+      filters[fieldName] = cleanValues
+        .map(v => parseInt(v))
+        .filter(v => !isNaN(v));
+    } else {
+      filters[fieldName] = cleanValues;
+    }
+  }
+
+  // Process single parameters
+  for (const [key, value] of Object.entries(singleParams)) {
+    if (integerFields.includes(key) && !isNaN(parseInt(value))) {
+      filters[key] = parseInt(value);
+    } else if (key === 'is_ecommerce' && (value === '0' || value === '1')) {
+      // Boolean-like fields
+      filters[key] = parseInt(value);
+    } else {
+      // Keep as string for dates, text fields, enums, etc.
+      filters[key] = value;
     }
   }
 }
@@ -692,6 +771,9 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
+
+// Handle lead creation from modal
+const onLeadConfirmed = leadData => {};
 </script>
 
 <template>
@@ -730,16 +812,14 @@ const insurerAMLStatusOption = computed(() => {
           </x-button>
         </Link>
 
-        <Link :href="route('health.create')">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            tag="div"
-            v-if="readOnlyMode.isDisable === true"
-          >
-            Create Lead
-          </x-button>
-        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          v-if="readOnlyMode.isDisable === true"
+          @click="createLeadModal = true"
+        >
+          Create Lead
+        </x-button>
       </template>
     </StickyHeader>
 
@@ -853,6 +933,28 @@ const insurerAMLStatusOption = computed(() => {
                 )
               "
               @clear="filters.quote_status = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.support_user_id"
+          name="support_user_id"
+          label="OE/AE"
+          placeholder="Search by OE/AE"
+          :options="supportUserOptions"
+          filterable
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.support_user_id = supportUserOptions.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.support_user_id = []"
             />
           </template>
         </x-select>
@@ -1005,6 +1107,22 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <DatePicker
+          v-model="filters.authorize_date"
+          label="Payment Authorised Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.captured_date"
+          label="Payment Captured Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
         <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
@@ -1075,6 +1193,26 @@ const insurerAMLStatusOption = computed(() => {
           ]"
           class="w-full"
           :single="true"
+        />
+        <ComboBox
+          v-model="filters.pec_flag"
+          label="Policy PEC Flag"
+          placeholder="Search by PEC flag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.emirate_of_your_visa_id"
+          label="Emirate of Visa"
+          placeholder="Search by Emirate of Visa"
+          :options="emirates"
+          class="w-full"
+          :single="false"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -1157,42 +1295,20 @@ const insurerAMLStatusOption = computed(() => {
         class="mb-4"
       >
         <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assign_team"
-                label="Assign Subteam"
-                :options="subTeamsOptions"
-                placeholder="Select Subteam"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-                filterable
-                v-if="readOnlyMode.isDisable === true"
-              />
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-                filterable
-                v-if="readOnlyMode.isDisable === true"
-              />
-
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
+          <LeadAssignment
+            :selected="quotesSelected.map(e => e.id)"
+            :advisors="advisorOptions"
+            :supportUsers="
+              $page.props.supportUsers?.map(u => ({
+                value: u.id,
+                label: u.name,
+              })) || []
+            "
+            :canAssignClientSupport="$page.props.canAssignClientSupport"
+            :canAssignLeadAdvisor="$page.props.canAssignLeadAdvisor"
+            quoteType="health"
+            @success="manualAssignmentSuccess"
+          />
         </div>
       </div>
     </Transition>
@@ -1220,6 +1336,13 @@ const insurerAMLStatusOption = computed(() => {
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-has_pec_tag="{ has_pec_tag }">
+        <div class="text-center">
+          <x-tag size="sm" :color="has_pec_tag ? 'error' : 'success'">
+            {{ has_pec_tag ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>
@@ -1276,6 +1399,15 @@ const insurerAMLStatusOption = computed(() => {
         from: quotes.from,
         to: quotes.to,
       }"
+    />
+
+    <!-- Create Lead Modal -->
+    <CreateLeadModal
+      v-model="createLeadModal"
+      route-name="health.create"
+      :sub-sources="subSources"
+      :is-pcp-allowed="isPcpSubSourceOptionAllowed"
+      @confirmed="onLeadConfirmed"
     />
   </div>
 </template>

@@ -75,7 +75,7 @@ class CapiRequestService
                         ['car_quote_request_id' => $carQuote->id],
                         [
                             'advisor_assigned_date' => now(),
-                            'advisor_assigned_by_id' => auth()->id() ?? User::where('name', UserNameEnum::System)->first(),
+                            'advisor_assigned_by_id' => auth()->id() ?? User::where('name', UserNameEnum::System)->value('id'),
                         ]
                     );
 
@@ -94,7 +94,7 @@ class CapiRequestService
                     ['health_quote_request_id' => $healthQuote->id],
                     [
                         'advisor_assigned_date' => now(),
-                        'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                        'advisor_assigned_by_id' => auth()->id() ?? User::where('name', UserNameEnum::System)->value('id'),
                     ]
                 );
             }

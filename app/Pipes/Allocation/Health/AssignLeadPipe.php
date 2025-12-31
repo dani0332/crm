@@ -13,7 +13,7 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Closure;
 use Exception;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Illuminate\Support\Facades\Bus;
 
 class AssignLeadPipe extends BaseAllocationPipe
 {
@@ -23,6 +23,14 @@ class AssignLeadPipe extends BaseAllocationPipe
     public function handle(AllocationRequest $request, Closure $next)
     {
         $this->setRequest($request);
+
+        $advisor = $this->allocationRequest->getAdvisor();
+
+        if (! $advisor) {
+            LoggerService::info('No advisor available in AssignLeadPipe - cannot proceed with assignment');
+            $this->allocationRequest->markAsFailed();
+            $this->throw('Advisor not found', self::OK);
+        }
 
         $this->assign(function ($isReAssignment, $previousAdvisorId) {
             $this->sendIntroEmail($isReAssignment, $previousAdvisorId);
@@ -41,8 +49,11 @@ class AssignLeadPipe extends BaseAllocationPipe
         try {
             $lead = $this->lead;
 
-            Haystack::build()
-                ->addJob(new GetQuotePlansJob($lead))
+            Bus::batch(
+                [
+                    new GetQuotePlansJob($lead),
+                ]
+            )
                 ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::PCP])) {
                         IntroEmailJob::dispatch(

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\Modelable;
+use App\Traits\Optionable;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,8 +14,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class BaseModel extends Model implements AuditableContract
 {
-    use Auditable , HasFactory, Modelable;
-    use SoftDeletes;
+    use Auditable , HasFactory, Modelable, Optionable, SoftDeletes;
 
     public $isGetList = false;
     public $APIController = null;
@@ -24,8 +24,15 @@ class BaseModel extends Model implements AuditableContract
         parent::boot();
         static::creating(function ($model) {
             if (Auth::check()) {
-                $model->created_by = Auth::user()->email;
-                $model->updated_by = Auth::user()->email;
+                $schemaBuilder = $model->getConnection()->getSchemaBuilder();
+
+                if ($schemaBuilder->hasColumn($model->getTable(), 'created_by')) {
+                    $model->created_by = Auth::user()->email;
+                }
+
+                if ($schemaBuilder->hasColumn($model->getTable(), 'updated_by')) {
+                    $model->updated_by = Auth::user()->email;
+                }
             }
         });
         static::updating(function ($model) {

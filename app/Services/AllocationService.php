@@ -14,6 +14,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
 use App\Models\Tier;
+use App\Models\User;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -85,11 +86,11 @@ class AllocationService extends BaseService
         }
     }
 
-    public function addAllocationCounts($userId, $quoteTypeId = null, bool $isBuyLead = false)
+    public function addAllocationCounts($userId, $quoteTypeId = null, bool $isBuyLead = false, bool $isCatABuyLead = false)
     {
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
         if (! empty($allocationRecord)) {
-            $allocationRecord->adjustAssignmentCounts($isBuyLead);
+            $allocationRecord->adjustAssignmentCounts($isBuyLead, isCatABuyLead: $isCatABuyLead);
         } else {
             LoggerService::info('Allocation record not found against advisor');
         }
@@ -106,7 +107,7 @@ class AllocationService extends BaseService
         );
     }
 
-    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null, bool $isBuyLead = false)
+    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null, bool $isBuyLead = false, bool $isCatABuyLead = false)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -127,7 +128,7 @@ class AllocationService extends BaseService
         $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor
-        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes, $isBuyLead);
+        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes, $isBuyLead, $isCatABuyLead);
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
@@ -135,7 +136,7 @@ class AllocationService extends BaseService
             $previousAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
-            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
+            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes, $isCatABuyLead);
         }
     }
 
@@ -318,7 +319,7 @@ class AllocationService extends BaseService
             $tier = $request->getTier();
 
             return [
-                'advisorId' => $lead->advisor_id,
+                'advisorId' => $lead?->advisor_id,
                 'message' => 'Tier evaluated successfully',
                 'status' => Response::HTTP_OK,
                 'tierId' => $tier->id,
@@ -326,20 +327,37 @@ class AllocationService extends BaseService
             ];
         }
 
-        if ($request->isAllocated() || $request->isSameAdvisor()) {
-            $message = 'Advisor assigned successfully!';
+        $isAllocated = $request->isAllocated();
+        $isSameAdvisor = $request->isSameAdvisor();
+        $isAlreadyAssigned = ! empty($lead?->advisor_id);
 
-            if ($request->isSameAdvisor()) {
+        if ($isAllocated || $isSameAdvisor || $isAlreadyAssigned) {
+            $advisor = $request->getAdvisor() ?? $lead?->advisor;
+
+            // priority order - isAllocated (new assignment) > isSameAdvisor > already assigned
+            if ($isAllocated) {
+                $message = 'Advisor assigned successfully!';
+            } elseif ($isSameAdvisor) {
                 $message = 'Found same advisor as previous advisor so further allocation is skipped';
+            } else {
+                $message = $advisor?->isAi() ? 'Advisor Assignment in progress' : 'Advisor already assigned';
             }
 
+            $landLine = (! empty($advisor?->landline_no) ? formatLandlineDisplay($advisor->landline_no) : '');
+            $whatsAppNumber = ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
+
             $data = [
-                'advisorId' => $request->getAdvisor()?->id ?? $lead?->advisor_id,
+                'advisorId' => $advisor?->id ?? $lead?->advisor_id,
+                'isAIAdvisor' => $advisor?->isAi(),
+                'advisorName' => $advisor?->name,
+                'advisorEmail' => $advisor?->email,
+                'advisorPhone' => $whatsAppNumber,
+                'advisorLandLine' => $landLine,
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
 
-            $tier = $request->getTier();
+            $tier = $request->getTier() ?? $lead->tier;
 
             if ($tier) {
                 $data['tierId'] = $tier->id;
@@ -358,5 +376,80 @@ class AllocationService extends BaseService
             'message' => $exception ? $exception->getMessage() : 'Lead allocation failed',
             'status' => $exception ? $exception->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR,
         ];
+    }
+
+    public function getBusinessStartTime(): string
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_TIME, useCache: true);
+    }
+
+    public function getBusinessEndTime(): string
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_END_TIME, useCache: true);
+    }
+
+    public function isBusinessHours(): bool
+    {
+        try {
+            $startTime = Carbon::createFromFormat('H:i', $this->getBusinessStartTime());
+            $endTime = Carbon::createFromFormat('H:i', $this->getBusinessEndTime());
+
+            $currentTime = now();
+            $isWeekend = $currentTime->isWeekend();
+            $isWithinTimeRange = $currentTime->between($startTime, $endTime);
+
+            $isBusinessHours = ! $isWeekend && $isWithinTimeRange;
+
+            LoggerService::info(self::class.' - isBusinessHours: Business hours calculation', extra: [
+                'start_time' => $startTime->format('H:i'),
+                'end_time' => $endTime->format('H:i'),
+                'current_time' => $currentTime->format('H:i'),
+                'is_weekend' => $isWeekend,
+                'is_within_time_range' => $isWithinTimeRange,
+                'is_business_hours' => $isBusinessHours,
+            ]);
+
+            return $isBusinessHours;
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.' - isBusinessHours: Error checking business hours', exception: $e);
+
+            return false;
+        }
+    }
+
+    public function isMaxCapReached(User $advisor, $quoteTypeId): bool
+    {
+        $leadAllocation = $advisor->getFirstFromLeadAllocation($quoteTypeId);
+
+        if (! $leadAllocation) {
+            LoggerService::warning(self::class.' - isMaxCapReached: Advisor has no leadAllocation record', extra: [
+                'advisor_id' => $advisor->id,
+                'advisor_name' => $advisor->name,
+            ]);
+
+            return true;
+        }
+
+        $allocationCount = $leadAllocation->allocation_count;
+        $maxCapacity = $leadAllocation->max_capacity;
+
+        $isAdvisorAvailable = $allocationCount < $maxCapacity || $maxCapacity == -1;
+
+        return ! $isAdvisorAvailable;
+    }
+
+    public function getValidAdvisorStatuses(): array
+    {
+        $isBusinessHours = $this->isBusinessHours();
+
+        LoggerService::info(self::class.' - getValidAdvisorStatuses: Business hours check', extra: [
+            'is_business_hours' => $isBusinessHours,
+        ]);
+
+        if ($isBusinessHours) {
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE];
+        } else {
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE, UserStatusEnum::MANUAL_OFFLINE];
+        }
     }
 }

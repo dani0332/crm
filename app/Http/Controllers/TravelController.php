@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -14,6 +15,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -39,11 +41,13 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -101,12 +105,15 @@ class TravelController extends Controller
         $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
         $gridData = $this->travelQuoteService->getGridData();
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+        $this->travelQuoteService->postProcessTravelQuotes($quotes);
+
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
+        $subSources = $this->lookupService->getSubSource();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
@@ -128,6 +135,9 @@ class TravelController extends Controller
             'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
             'travelPlans' => TravelPlan::all(),
             'insurerAMLStatus' => $insurerAMLStatus,
+            'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Travel),
+            'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+            'subSources' => $subSources,
         ]);
     }
 
@@ -269,12 +279,13 @@ class TravelController extends Controller
         $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($record, self::TYPE);
 
         $insuranceProvider = $record?->plan?->insuranceProvider ?? $record->insuranceProvider;
-        if ($insuranceProvider?->code === InsuranceProvidersEnum::ALNC) {
+        if ($insuranceProvider?->code === InsuranceProviderEnum::ALNC->value) {
             $travelType = $record->direction_code === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND ? TravelQuoteEnum::ALLIANCE_OUT_BOUND : TravelQuoteEnum::ALLIANCE_IN_BOUND;
             $record->days_cover_for = (new AllianceInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
         }
 
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
+        $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -356,7 +367,7 @@ class TravelController extends Controller
             'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
-            'isAllianceProvider' => $insuranceProvider?->code === InsuranceProvidersEnum::ALNC,
+            'isAllianceProvider' => $insuranceProvider?->code === InsuranceProviderEnum::ALNC->value,
             'customerAddressData' => $customerAddressData,
         ]);
     }
@@ -396,6 +407,13 @@ class TravelController extends Controller
         }
 
         $model = $this->genericModel;
+        $subSources = $this->lookupService->getSubSource();
+
+        LoggerService::info('Travel create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
 
         return inertia('TravelQuote/Form', [
             'model' => json_encode($model->properties),
@@ -405,6 +423,12 @@ class TravelController extends Controller
             'dropdownSource' => $dropdownSource,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
+            'subSources' => $subSources,
+            'leadSourceParams' => [
+                'type' => $request->input('type'),
+                'subSource' => $request->input('subSourceId'),
+                'subSourceOption' => $request->input('subSourceOptionsId'),
+            ],
         ]);
     }
 
@@ -479,6 +503,8 @@ class TravelController extends Controller
             ? $courierQuoteResponse['data']['status']
             : 'Pending';
 
+        $subSources = $this->lookupService->getSubSource();
+
         return inertia('TravelQuote/Form', [
             'quote' => $record,
             'quotePlans' => $quotePlans,
@@ -491,6 +517,8 @@ class TravelController extends Controller
             'fields' => $fields,
             'customerAddressData' => $customerAddressData,
             'courierQuoteStatus' => $courierQuoteStatus,
+            'subSources' => $subSources,
+            'leadSourceParams' => [], // Empty for edit mode
         ]);
     }
 
@@ -567,6 +595,7 @@ class TravelController extends Controller
             'id' => $planId,
             'vat' => $vat,
             'insurerQuoteNo' => $insurerQuoteNo,
+            'per_member_price' => $this->travelQuoteService->getPerMemberPrice($planId),
         ];
 
         return response()->json($data, 200);

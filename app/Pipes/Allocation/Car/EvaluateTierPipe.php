@@ -5,8 +5,7 @@ namespace App\Pipes\Allocation\Car;
 use App\Enums\CarPlanType;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
-use App\Enums\InsuranceProvidersEnum;
-use App\Enums\PaymentStatusEnum;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Models\CarMake;
@@ -83,7 +82,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
     {
         LoggerService::info("lead payment status is : {$this->lead->payment_status_id} and tier id is : {$this->lead->tier_id} and sic advisor requested is : {$this->lead->sic_advisor_requested}");
 
-        if (($this->lead->payment_status_id == PaymentStatusEnum::AUTHORISED || $this->lead->sic_advisor_requested == 1) && $this->lead->tier_id == TiersIdEnum::TIER_R) {
+        if (($this->lead->isPaymentAuthorizedOrDeclined() || $this->lead->sic_advisor_requested == 1) && $this->lead->tier_id == TiersIdEnum::TIER_R) {
             LoggerService::info('SIC lead payment is made and tier is Tier R');
             $tier = $this->findRenewalLeadTier();
             if (! empty($tier) && $tier->id != $this->lead->tier_id) {
@@ -246,7 +245,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
                 LoggerService::info(self::class.'- Commercial lead. No valuation');
             }
 
-            $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
+            $axaProvider = InsuranceProvider::where('code', InsuranceProviderEnum::AXA->value)->first();
 
             $axaValuation = array_filter($valuations, function ($provider) use ($axaProvider) {
                 return $provider->providerId == $axaProvider->id;

@@ -4,11 +4,13 @@ namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -34,6 +36,13 @@ class CycleQuoteRepository extends BaseRepository
      */
     public function fetchCreate($data)
     {
+        // Log sub-source parameters for Cycle quotes
+        LoggerService::info('Cycle fetchCreate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         $quoteData = [
             'quoteTypeId' => intval(QuoteTypes::CYCLE->id()),
             'mobileNo' => $data['mobile_no'],
@@ -56,6 +65,10 @@ class CycleQuoteRepository extends BaseRepository
             'dob' => $data['dob'],
             'gender' => $data['gender'],
             'nationalityId' => $data['nationality_id'],
+            // Sub-source fields
+            'subSourceId' => $data['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
+            'additionalNotes' => $data['notes'] ?? null,
         ];
 
         LoggerService::info('cycleQuote:'.json_encode($quoteData));
@@ -80,14 +93,17 @@ class CycleQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
             'renewalBatchModel',
+            'subSource',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::CYCLE->id());
             },
             'customer',
+            'branch:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -123,6 +139,30 @@ class CycleQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
+        // Apply authorize_date filter
+        $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
+            $authorizeDates = $this->getFilterValue('authorize_date', $requestParams);
+            if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
+                $startDate = Carbon::parse($authorizeDates[0])->startOfDay();
+                $endDate = Carbon::parse($authorizeDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('authorized_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
+        // Apply captured_date filter
+        $query->when(! empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
+            $capturedDates = $this->getFilterValue('captured_date', $requestParams);
+            if (is_array($capturedDates) && count($capturedDates) >= 2) {
+                $startDate = Carbon::parse($capturedDates[0])->startOfDay();
+                $endDate = Carbon::parse($capturedDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('captured_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         if ($forTotalLeadsCount) {
@@ -131,7 +171,21 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        if (! $forTotalLeadsCount && ! $forExport) {
+            $this->postProcessCycleQuote($result);
+        }
+
+        return $result;
+    }
+
+    private function postProcessCycleQuote($query)
+    {
+        return $query->map(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Cycle));
+
+            return $item;
+        });
     }
 
     /**
@@ -166,7 +220,7 @@ class CycleQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where(function ($query) {
                     $query->where('advisor_id', \auth()->user()->id);
@@ -182,10 +236,20 @@ class CycleQuoteRepository extends BaseRepository
      */
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for Cycle quote updates
+        LoggerService::info('Cycle fetchUpdate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::CYCLE->id())->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'asset_value', 'gender', 'dob', 'nationality_id']);
+            $quoteData = Arr::only($data, [
+                'first_name', 'last_name', 'email', 'mobile_no', 'asset_value', 'gender', 'dob', 'nationality_id',
+                'sub_source_id', 'sub_source_options_id', 'notes',
+            ]);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);
@@ -232,6 +296,7 @@ class CycleQuoteRepository extends BaseRepository
                 'cycleQuote',
                 'cycleQuote.yearOfManufacture',
                 'advisor',
+                'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
@@ -265,6 +330,7 @@ class CycleQuoteRepository extends BaseRepository
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -284,6 +350,7 @@ class CycleQuoteRepository extends BaseRepository
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
         }
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Cycle));
 
         return $quote;
     }

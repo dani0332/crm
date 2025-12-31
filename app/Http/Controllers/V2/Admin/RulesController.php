@@ -8,7 +8,6 @@ use App\Models\Rule;
 use App\Models\RuleType;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class RulesController extends Controller
 {
@@ -38,6 +37,7 @@ class RulesController extends Controller
             'ruleUsers',
             'ruleType',
             'leadSource',
+            'quoteType',
         ]);
 
         return inertia('Admin/AllocationConfig/Rules/Index', [
@@ -50,6 +50,7 @@ class RulesController extends Controller
      */
     public function create()
     {
+
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
@@ -78,7 +79,7 @@ class RulesController extends Controller
      */
     public function show($id)
     {
-        $rule = Rule::with('ruleType')->with('ruleUsers')->findOrFail($id);
+        $rule = Rule::with('ruleType')->with(['ruleUsers',  'quoteType'])->findOrFail($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [
             'rule' => $rule,
@@ -99,6 +100,7 @@ class RulesController extends Controller
                 'ruleUsers',
                 'ruleType',
                 'leadSource',
+                'quoteType',
             ]),
         ]);
     }
@@ -106,7 +108,7 @@ class RulesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(RuleRequest $request, $id)
     {
         $rule = Rule::findOrFail($id);
         $rule->update($request->except('rule_users'));

@@ -3,6 +3,7 @@
 namespace App\Builders;
 
 use App\Enums\CarRegistrationType;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
@@ -36,6 +37,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'sic_advisor_requested',
             'premium',
             'source',
+            'sub_source_id',
             'paid_at',
             'payment_gateway',
             'uae_license_held_for_id',
@@ -74,6 +76,12 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'company_name as car_company_name',
             'lead_assignment_trigger',
             'customer_id',
+            'insurance_provider_id',
+            'api_issuance_status_id',
+            'insurer_api_status_id',
+            'plan_id',
+            'branch_id',
+            'is_branch_applicable',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -90,9 +98,14 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'paymentStatus:id,text',
             'quoteViewCount:quote_id,quote_type_id,user_id,visit_count',
             'advisor:id,name',
+            'advisor.primaryBranch',
+            'branch:id,name',
             'carTypeInsurance:id,text',
             'customer:id,pcp_tag',
             'quoteTags:quote_uuid,name',
+            'insuranceProvider:id,text',
+            'subSource:id,text',
+            'plan:id,repair_type',
         ]);
     }
 
@@ -167,6 +180,42 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', $getFilterValue('insurer_commission_tax_invoice_number'));
             })
             ->filterByDateRange('booking_date', 'policy_booking_date', requestParams: $requestParams)
+            ->when($hasFilterValue('authorize_date'), function ($query) use ($getFilterValue) {
+                $authorizedAtRange = $getFilterValue('authorize_date');
+
+                // Handle authorize_date as an array of two dates [start_date, end_date]
+                if (is_array($authorizedAtRange) && count($authorizedAtRange) >= 2) {
+                    $startDate = $authorizedAtRange[0];
+                    $endDate = $authorizedAtRange[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                $this->parseDate($startDate, true),
+                                $this->parseDate($endDate, false),
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when($hasFilterValue('captured_date'), function ($query) use ($getFilterValue) {
+                $capturedAtRange = $getFilterValue('captured_date');
+
+                // Handle captured_date as an array of two dates [start_date, end_date]
+                if (is_array($capturedAtRange) && count($capturedAtRange) >= 2) {
+                    $startDate = $capturedAtRange[0];
+                    $endDate = $capturedAtRange[1];
+
+                    if ($startDate && $endDate) {
+                        $query->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                                $this->parseDate($startDate, true),
+                                $this->parseDate($endDate, false),
+                            ]);
+                        });
+                    }
+                }
+            })
             ->when($this->shouldApplyDatesFilter($requestParams) && ! $hasFilterValue('created_at_start'), function ($query) {
                 $query->filterByToday();
             })
@@ -187,6 +236,34 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when($hasFilterValue('company_name'), function ($query) use ($getFilterValue) {
                 $query->where('company_name', $getFilterValue('company_name'));
+            })
+            ->when($hasFilterValue('api_issuance_status_id'), function ($query) use ($getFilterValue) {
+                $apiIssuanceStatusIds = (array) $getFilterValue('api_issuance_status_id');
+
+                $hasBlank = in_array(GenericRequestEnum::API_ISSUANCE_STATUS_ID_BLANK, $apiIssuanceStatusIds);
+                $otherIds = array_diff($apiIssuanceStatusIds, [GenericRequestEnum::API_ISSUANCE_STATUS_ID_BLANK]);
+
+                $query->where(function ($q) use ($hasBlank, $otherIds) {
+                    if ($hasBlank) {
+                        $q->where(function ($subQuery) {
+                            $subQuery->whereNull('api_issuance_status_id')
+                                ->orWhere('api_issuance_status_id', '');
+                        });
+                    }
+
+                    if (! empty($otherIds)) {
+                        if ($hasBlank) {
+                            $q->orWhereIn('api_issuance_status_id', $otherIds);
+                        } else {
+                            $q->whereIn('api_issuance_status_id', $otherIds);
+                        }
+                    }
+                });
+            })
+            ->when($hasFilterValue('insurer_api_status_id'), function ($query) use ($getFilterValue) {
+                $insurerApiStatusIds = (array) $getFilterValue('insurer_api_status_id');
+
+                $query->whereIn('insurer_api_status_id', $insurerApiStatusIds);
             });
     }
 

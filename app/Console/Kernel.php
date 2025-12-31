@@ -9,6 +9,8 @@ use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
+use App\Jobs\SLAMonitoringJob;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -27,7 +29,12 @@ class Kernel extends ConsoleKernel
         Commands\Dtt::class,
         Commands\DttFollowUp::class,
         Commands\UpdateUserStatus::class,
-        Commands\QuoteAllocation::class,
+        Commands\RetryCarAllocation::class,
+        Commands\RetryCarRevivalAllocation::class,
+        Commands\RetryHealthAllocation::class,
+        Commands\RetryTravelAllocation::class,
+        Commands\RetryBikeAllocation::class,
+        Commands\RetryAllocation::class,
         Commands\LeadsReassignment::class,
         Commands\ResetLeadAllocationCounts::class,
         Commands\QuoteSyncUpdateCommand::class,
@@ -38,6 +45,8 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
+        Commands\CaptureEPPaymentsCommand::class,
+        Commands\MisReportCommand::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
@@ -87,7 +96,19 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('AddBatchNumberNonMotors:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(5);
 
-        $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryCarAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryCarRevivalAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryHealthAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryTravelAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryBikeAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType="Group Medical"')->name('retry_allocation:cron:group_medical')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Home')->name('retry_allocation:cron:home')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Life')->name('retry_allocation:cron:life')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=CorpLine')->name('retry_allocation:cron:corpline')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Cycle')->name('retry_allocation:cron:cycle')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Pet')->name('retry_allocation:cron:pet')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Yacht')->name('retry_allocation:cron:yacht')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Savings')->name('retry_allocation:cron:savings')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
@@ -98,10 +119,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(5)
             ->onSuccess(function (Stringable $output) {
-                info('----------- QuoteSyncJob Completed -----------'.$output);
+                LoggerService::info('----------- QuoteSyncJob Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- QuoteSyncJob Failed -----------'.$output);
+                LoggerService::info('----------- QuoteSyncJob Failed -----------'.$output);
             });
 
         $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(30);
@@ -126,11 +147,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:48')->onOneServer()->withoutOverlapping();
 
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
-        $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
+        // $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:50')->onOneServer()->withoutOverlapping();
+        $schedule->command('leads:process-car-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('03:00')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
+        $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyThreeMinutes()->onOneServer()->withoutOverlapping(4);
         $schedule->command('aml-screening-automation:run')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('aml-screening-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
@@ -140,6 +162,57 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
+
+        $schedule->command('ep:capture-payments')
+            ->everyThirtyMinutes()
+            ->onOneServer()
+            ->withoutOverlapping(30)
+            ->onSuccess(function (Stringable $output) {
+                LoggerService::info('----------- CaptureEPPaymentsJob Completed -----------', extra: [
+                    'output' => $output,
+                ]);
+            })
+            ->onFailure(function (Stringable $output) {
+                LoggerService::info('----------- CaptureEPPaymentsJob Failed -----------', extra: [
+                    'output' => $output,
+                ]);
+            });
+        $schedule->job(new SLAMonitoringJob)->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+
+        // Schedule MIS Report command with environment-specific configurations
+        $this->scheduleWithEnvironment(
+            $schedule,
+            'mis-report:run',
+            default: fn ($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
+            environments: ['staging' => fn ($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
+        );
+    }
+
+    /**
+     * Schedule a command with environment-specific configurations.
+     *
+     * @param  string|class-string  $command  Command string (e.g., 'command:name') or command class name
+     * @param  \Closure  $default  Default schedule configuration callback
+     * @param  array<string, \Closure>  $environments  Environment-specific schedule configurations
+     * @return \Illuminate\Console\Scheduling\Event
+     */
+    protected function scheduleWithEnvironment(
+        Schedule $schedule,
+        string $command,
+        \Closure $default,
+        array $environments = []
+    ) {
+        $event = $schedule->command($command);
+
+        $currentEnvironment = app()->environment();
+
+        // Check if there's an environment-specific configuration
+        if (isset($environments[$currentEnvironment])) {
+            return $environments[$currentEnvironment]($event);
+        }
+
+        // Apply default configuration
+        return $default($event);
     }
 
     /**

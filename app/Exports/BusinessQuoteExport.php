@@ -3,8 +3,10 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
+use App\Services\BranchAssignmentService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -39,6 +41,8 @@ class BusinessQuoteExport implements CsvExportableInterface
             'POLICY NUMBER',
             'LOST REASON',
             'ADVISOR',
+            'OE/AE',
+            'BRANCH',
             'LEAD STATUS',
             'CREATED DATE',
             'ADVISOR ASSIGNED DATE',
@@ -53,11 +57,14 @@ class BusinessQuoteExport implements CsvExportableInterface
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'IMCRM SUB-SOURCE',
         ];
     }
 
     public function map($quote): array
     {
+        $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Business));
+
         return [
             $quote->code,
             $quote->first_name,
@@ -68,6 +75,8 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             optional($quote->advisor)->name,
+            $quote->supportUser?->name,
+            $branch,
             optional($quote->quoteStatus)->text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
@@ -82,6 +91,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            optional($quote->subSource)->text,
         ];
     }
 

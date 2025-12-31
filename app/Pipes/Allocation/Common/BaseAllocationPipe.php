@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
+use App\Services\NationalityAllocationService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
@@ -80,6 +81,11 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->allocationRequest->markAsAIG();
         }
 
+        if (! $lead->isAIAdviserRequired() && $lead->isAIAdvisorAssigned()) {
+            $this->allocationRequest->setAsReassignmentJob();
+            $this->allocationRequest->overrideAdvisorId();
+        }
+
         return $lead;
     }
 
@@ -140,7 +146,7 @@ abstract class BaseAllocationPipe extends AllocationService
         return QuoteBatches::latest()->first();
     }
 
-    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles, bool $isBuyLead = false)
+    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles, bool $isBuyLead = false, bool $isCATA = false)
     {
         return User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
@@ -149,9 +155,15 @@ abstract class BaseAllocationPipe extends AllocationService
             ->where('users.status', $onlineStatus)
             ->when(
                 $isBuyLead,
-                function ($q) {
-                    $q->where(function ($query) {
-                        $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')->orWhere('la.buy_lead_max_capacity', -1);
+                function ($q) use ($isCATA) {
+                    $q->where(function ($query) use ($isCATA) {
+                        if ($isCATA) {
+                            $query->whereRaw('la.buy_lead_cat_a_allocation_count < la.buy_lead_max_capacity');
+                        } else {
+                            $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity');
+                        }
+
+                        $query->orWhere('la.buy_lead_max_capacity', -1);
                     });
                 },
                 function ($q) {
@@ -193,6 +205,10 @@ abstract class BaseAllocationPipe extends AllocationService
 
         if (! $this->allocationRequest->isReassignmentJob()) {
             $statuses[] = UserStatusEnum::UNAVAILABLE;
+        }
+
+        if (! $this->isBusinessHours()) {
+            $statuses[] = UserStatusEnum::MANUAL_OFFLINE;
         }
 
         return $statuses;
@@ -265,6 +281,10 @@ abstract class BaseAllocationPipe extends AllocationService
         $this->lead->advisor_id = $advisor->id;
         $this->lead->assignment_type = $assignmentType;
 
+        if ($advisor->isAi()) {
+            $this->lead->ai_advisor_assigned_at = now();
+        }
+
         $quoteBatch = $this->getQuoteBatch();
         $this->lead->quote_batch_id = $quoteBatch->id;
 
@@ -325,10 +345,11 @@ abstract class BaseAllocationPipe extends AllocationService
                 LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
 
                 $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
+                $isCatABuyLead = $this->allocationRequest->get('hasCatABuyLeadRequest', false);
 
                 match ($assignmentType) {
-                    AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, $quoteTypeId, $this->allocationRequest->isBuyLead()),
-                    default => $this->adjustAllocationCounts($advisor->id, $this->lead, $previousAdvisorId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId, $this->allocationRequest->isBuyLead()),
+                    AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, $quoteTypeId, $this->allocationRequest->isBuyLead(), $isCatABuyLead),
+                    default => $this->adjustAllocationCounts($advisor->id, $this->lead, $previousAdvisorId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId, $this->allocationRequest->isBuyLead(), $isCatABuyLead),
                 };
             }
 
@@ -376,5 +397,34 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->throw('Eligible Advisor is already assigned to this lead', self::OK);
         }
 
+    }
+
+    public function resolveExcludedAdvisorIds()
+    {
+        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->allocationRequest->getQuoteType());
+
+        if (empty($excludedAdvisorIds)) {
+            return;
+        }
+
+        $this->allocationRequest->excludedAdvisorIds($excludedAdvisorIds);
+    }
+
+    protected function getUserIdsFromRuleRecords($matchedRuleRecords): array
+    {
+        // Get the lead source users from the first matched rule record.
+        $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
+
+        // Check if the lead source users contain a comma (,) indicating multiple users.
+        if (str_contains($leadSourceUsers, ',')) {
+            // If there are multiple users, split the string by commas, convert each part to an integer, and store them in an array.
+            $userIds = array_map('intval', explode(',', $leadSourceUsers));
+        } else {
+            // If there's only one user, cast it to an integer and store it in a single-element array.
+            $userIds = [(int) $leadSourceUsers];
+        }
+
+        // Return the array of user IDs.
+        return $userIds;
     }
 }

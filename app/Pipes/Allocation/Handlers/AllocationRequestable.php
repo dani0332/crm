@@ -25,7 +25,7 @@ trait AllocationRequestable
         $this->set('advisor', $advisor);
     }
 
-    public function getAdvisor()
+    public function getAdvisor(): ?User
     {
         return $this->get('advisor');
     }
@@ -91,5 +91,10 @@ trait AllocationRequestable
     public function hasExcludedAdvisorIds()
     {
         return ! empty($this->getExcludedAdvisorIds());
+    }
+
+    public function resetNationalityConfig()
+    {
+        $this->set('nationality_config', null);
     }
 }

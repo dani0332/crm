@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\BerlinService;
@@ -82,7 +82,7 @@ class CustomersImport implements OnEachRow
                 ]);
                 $updateCustomer->save();
             }
-            MAWelcomeJob::dispatch($updateCustomer, 'CORPORATE', 'corporate-myalfred-we');
+            ExtendCustomerSubscriptionViaSQS::dispatch($updateCustomer, 'CORPORATE', 'corporate-myalfred-we');
 
             $newQuoteCustomer = new QuoteCustomer;
             $newQuoteCustomer->cdb_id = $this->CDBId;

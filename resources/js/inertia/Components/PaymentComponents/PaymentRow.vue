@@ -12,6 +12,7 @@ const paymentGatewayEnum = page.props.paymentGatewayEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const paymentMethodsEnum = page.props.paymentMethodsEnum;
+const genericRequestEnum = page.props.genericRequestEnum;
 
 const {
   formatDate,
@@ -107,7 +108,7 @@ const getCaptureOption = computed(() => {
   // Return 'capture' if all conditions are met, otherwise return 'approve'
   if (
     (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
-    (isCaptureButtonEnabled && hasAnyCCSplitPayment(props.payments))
+    (isCaptureButtonEnabled && hasAnyCCSplitPayment(payment))
   ) {
     return 'capture';
   }
@@ -140,6 +141,7 @@ const getCaptureValidation = computed(() => {
 });
 
 const shouldProcessUpdate = () => {
+  const insuredApiStatus = props.quoteRequest?.insurer_api_status_id || null;
   const payment = props.payment;
   const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
   const calculatedTotal =
@@ -183,11 +185,18 @@ const shouldProcessUpdate = () => {
     isInsurer &&
     isGIGProvider &&
     enabledQuoteTypesForInsurer.includes(props.quoteType) &&
-    hasAnyCCSplitPayment(props.payments) &&
+    hasAnyCCSplitPayment(payment) &&
     !shouldSendUpdate
   ) {
-    isInsurerAmlCleared =
-      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    if (
+      insuredApiStatus === genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID
+    ) {
+      isInsurerAmlCleared = true;
+    } else {
+      isInsurerAmlCleared =
+        insurerAMLStatus ===
+        page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    }
     if (isTravelQuote) {
       isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
     } else {
@@ -202,7 +211,7 @@ const shouldProcessUpdate = () => {
       isAmlCleared &&
       isKycVerified(props.quoteRequest, props.quoteType, props.payments) &&
       isTotalPriceMatching &&
-      hasAnyCCSplitPayment(props.payments) &&
+      hasAnyCCSplitPayment(payment) &&
       !shouldSendUpdate &&
       hasPayments &&
       isInsurer
@@ -226,13 +235,17 @@ const shouldProcessUpdate = () => {
 // Validate the upfront capture logic
 const validateUpfrontCapture = paymentRecord => {
   let paymentSplitRec = paymentRecord.payment_splits[0];
-  if (paymentSplitRec.payment_method.code === paymentMethodsEnum.CreditCard)
+  if (paymentSplitRec.payment_method?.code === paymentMethodsEnum.CreditCard)
     return getCaptureValidStatuses(paymentSplitRec);
   const isIPPending =
-    paymentSplitRec.payment_method.code === paymentMethodsEnum.InsurerPayment &&
-    paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
+    paymentSplitRec.payment_method?.code ===
+      paymentMethodsEnum.InsurerPayment &&
+    (paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING ||
+      (paymentSplitRec.payment_status_id === paymentStatusEnum.PARTIALLY_PAID &&
+        paymentRecord.collection_type === 'insurer'));
   const isCAPayment =
-    paymentSplitRec.payment_method.code === paymentMethodsEnum.CreditApproval &&
+    paymentSplitRec.payment_method?.code ===
+      paymentMethodsEnum.CreditApproval &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
   const isPaidPayment =
     paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
@@ -268,13 +281,15 @@ const validateSplitPaymentsCapture = paymentRecord => {
     );
   } else {
     let ipPaymentStatus = paymentRecord.payment_splits.filter(
-      item => item.payment_method.code === paymentMethodsEnum.InsurerPayment,
+      item => item.payment_method?.code === paymentMethodsEnum.InsurerPayment,
     );
     if (ipPaymentStatus.length > 0) {
       let ipPending = ipPaymentStatus.filter(
         item =>
           item.payment_status_id === paymentStatusEnum.PENDING ||
-          item.payment_status_id === paymentStatusEnum.PAID,
+          item.payment_status_id === paymentStatusEnum.PAID ||
+          (item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID &&
+            paymentRecord.collection_type === 'insurer'),
       );
       return ipPending.length === ipPaymentStatus.length;
     } else {
@@ -292,9 +307,9 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
   } else if (
-    (paymentRecord.payment_splits[0].payment_method.code ===
+    (paymentRecord.payment_splits[0].payment_method?.code ===
       paymentMethodsEnum.InsurerPayment ||
-      paymentRecord.payment_splits[0].payment_method.code ===
+      paymentRecord.payment_splits[0].payment_method?.code ===
         paymentMethodsEnum.PostDatedCheque) &&
     paymentRecord.payment_splits[0].payment_status_id ===
       paymentStatusEnum.PENDING
@@ -446,12 +461,7 @@ const amlAndKycTooltip = computed(() => {
             Delete
           </x-button>
         </template>
-        <template
-          v-if="
-            can(permissionEnum.ApprovePayments) &&
-            (!isChildPaymentDeletable || index > 0)
-          "
-        >
+        <template v-if="can(permissionEnum.ApprovePayments)">
           <x-button
             v-if="getCaptureOption === 'capture' && getCaptureValidation"
             size="xs"

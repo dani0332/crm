@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\BranchEnum;
 use App\Enums\BusinessTypeOfInsuranceEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
@@ -9,10 +10,14 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\Audit\LogAllocation;
-use App\Jobs\MAWelcomeJob;
+use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
+use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -60,18 +65,24 @@ class BusinessQuoteObserver
                     $businessTypeInsurance = QuoteTypes::CORPLINE->value;
                     break;
             }
-            if ($businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
-                info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} | Time: ".now());
-                info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Ref-ID: {$businessQuote->uuid}  | Time: ".now());
+
+            if (! $businessQuote->isSuppressIntroEmail() && $businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
+                LoggerService::info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} ");
+                LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Ref-ID: {$businessQuote->uuid}  ");
 
                 $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-                info(self::class." Sending {$emailType} email to customer for  {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
+                LoggerService::info(self::class." Sending {$emailType} email to customer for  {$businessTypeInsurance} quote {$businessQuote->uuid} ");
                 $shortenedBusinessType = app(BusinessQuoteService::class)->formatInsuranceName($businessQuote->businessTypeOfInsurance->code ?? '');
                 app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $shortenedBusinessType ?? []);
-                info(self::class." | {$emailType} email sent to customer for {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
+                LoggerService::info(self::class." | {$emailType} email sent to customer for {$businessTypeInsurance} quote {$businessQuote->uuid} ");
 
             } else {
-                info(self::class." - lead source: {$businessQuote->source} |  Advisor ID: {$businessQuote->advisor_id}  | businessTypeInsurance:{ $businessTypeInsurance} | Ref-ID: {$businessQuote->uuid} Time: ".now());
+                LoggerService::info(self::class.' introductory email not sent for quote ', [
+                    'quote_status_id' => $businessQuote->quote_status_id,
+                    'source' => $businessQuote->source,
+                    'business_type_of_insurance_id' => $businessQuote->business_type_of_insurance_id,
+                    'ref_id' => $businessQuote->uuid,
+                ]);
             }
 
         }
@@ -92,8 +103,6 @@ class BusinessQuoteObserver
             $dirty = [...$dirty, 'stale_at' => $businessQuote->stale_at];
         }
 
-        $this->syncQuote($businessQuote, $dirty);
-
         if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($businessQuote->uuid, QuoteTypeId::Business, $dirty);
@@ -103,13 +112,51 @@ class BusinessQuoteObserver
                     'uuid' => $businessQuote->uuid,
                 ]);
             }
+
+            try {
+                // Determine the correct quote type based on business type of insurance
+                $quoteTypeId = QuoteTypeId::Business;
+                $emirateOfRegistrationId = null;
+                if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                    $quoteTypeId = QuoteTypeId::GroupMedical;
+                    $emirateOfRegistrationId = $businessQuote->latestInsured?->emirate_of_registration_id ?? null;
+                }
+
+                app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, $quoteTypeId);
+                BusinessQuote::withoutEvents(function () use ($businessQuote, $quoteTypeId, $emirateOfRegistrationId, &$dirty) {
+
+                    $shouldValidateBranch = true;
+                    if ($quoteTypeId === QuoteTypeId::Business) {
+                        $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($businessQuote, QuoteTypes::BUSINESS->value);
+                    }
+
+                    $branch_id = null;
+                    if ($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirateOfRegistrationId);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+
+                    $businessQuote->update([
+                        'branch_id' => $branch_id,
+                    ]);
+                    $dirty = [...$dirty, 'branch_id' => $branch_id];
+                });
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - save branch data failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
         }
+
+        $this->syncQuote($businessQuote, $dirty);
 
         if (
             isset($dirty['quote_status_id']) &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
-            MAWelcomeJob::dispatch(
+            ExtendCustomerSubscriptionViaSQS::dispatch(
                 $businessQuote->customer,
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
@@ -120,6 +167,7 @@ class BusinessQuoteObserver
             isset($dirty['quote_status_id']) &&
             $businessQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            SendPolicyIssueWhatsappMessageJob::dispatch($businessQuote->uuid, QuoteTypes::BUSINESS->id())->onQueue('insly');
             $payment = $businessQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($businessQuote, $payment, QuoteTypes::BUSINESS->value);
 

@@ -1,6 +1,4 @@
 <script setup>
-import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
-
 const notification = useToast();
 
 defineProps({
@@ -39,8 +37,8 @@ let availableFilters = {
   product: '',
   expiry_date: '',
   page: 1,
-  policy_expiry_date_start: '',
-  policy_expiry_date_end: '',
+  previous_policy_expiry_date_start: '',
+  previous_policy_expiry_date_end: '',
   mobile_no: '',
 };
 
@@ -63,7 +61,6 @@ function onSubmit(isValid) {
       preserveScroll: true,
       onBefore: () => (loader.table = true),
       onSuccess: () => {
-        setExportStrings();
         loader.table = false;
       },
     });
@@ -95,12 +92,9 @@ function setQueryStringFilters() {
   }
 }
 
-function setExportStrings() {
+function handleExport() {
   let queryParams = window.location.search;
-  let exportLink = document.getElementById('export_link');
-  if (exportLink != null) {
-    exportLink.href = '/renewals/search/export' + queryParams;
-  }
+  window.open('/renewals/search/export' + queryParams, '_blank');
 }
 
 function getProductName(id) {
@@ -115,7 +109,6 @@ function getProductName(id) {
 }
 onMounted(() => {
   setQueryStringFilters();
-  setExportStrings();
 });
 const source_type_list = [
   { text: 'All', value: '' },
@@ -123,29 +116,40 @@ const source_type_list = [
 ];
 const tableHeader = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 const tableHeader2 = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
-  { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
-  { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
+  { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
+  { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
+  { text: 'PREVIOUS GROSS PREMIUM', value: 'previous_quote_policy_premium' },
+  { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 
 const businessHeaders = [
   { text: 'Ref ID', value: 'code' },
+  { text: 'Customer ID', value: 'customer_id' },
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'SUB TYPE', value: 'subtype' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
+  { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 
 const can = permission => useCan(permission);
@@ -165,14 +169,14 @@ const permissionsEnum = page.props.permissionsEnum;
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.policy_expiry_date_start"
-          name="policy_expiry_date_start"
-          label="Policy Expiry Date Start"
+          v-model="filters.previous_policy_expiry_date_start"
+          name="previous_policy_expiry_date_start"
+          label="Previous Policy Expiry Date Start"
         />
         <DatePicker
-          v-model="filters.policy_expiry_date_end"
-          name="policy_expiry_date_end"
-          label="Renewal Expiry End Date"
+          v-model="filters.previous_policy_expiry_date_end"
+          name="previous_policy_expiry_date_end"
+          label="Previous Policy Expiry End"
         />
 
         <x-select
@@ -220,33 +224,31 @@ const permissionsEnum = page.props.permissionsEnum;
           v-model="filters.previous_quote_policy_number"
           type="search"
           name="previous_quote_policy_number"
-          label="Policy Number"
+          label="Previous Policy Number"
           class="w-full"
           placeholder="Search by Policy Number"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_NO_CONTACTINFO)"
+            id="export_link"
+            size="sm"
+            color="emerald"
+            @click="handleExport"
+          >
+            Export
+          </x-button>
+        </div>
+        <div class="flex gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
-    <div
-      class="flex justify-end gap-3 mb-4 mt-4"
-      v-if="can(permissionsEnum.EXPORT_NO_CONTACTINFO)"
-    >
-      <a
-        id="export_link"
-        target="_blank"
-        class="border appearance-none rounded-md shadow-sm py-2 text-sm px-4 cursor-pointer"
-        href=""
-        size="sm"
-        color="emerald"
-      >
-        Export
-      </a>
-    </div>
 
     <DataTable
       table-class-name="tablefixed"
@@ -295,6 +297,12 @@ const permissionsEnum = page.props.permissionsEnum;
             ? currently_insured_with.text
             : currently_insured_with
         }}
+      </template>
+      <template #item-pc_qualified="{ pc_qualified }">
+        {{ pc_qualified == 1 ? 'Yes' : 'No' }}
+      </template>
+      <template #item-customer_pcp_tag="{ customer }">
+        {{ customer?.pcp_tag == 1 ? 'Yes' : 'No' }}
       </template>
     </DataTable>
 

@@ -66,6 +66,7 @@ const loaders = reactive({
   submit: false,
   table: false,
   search: false,
+  reset: false,
 });
 
 const statusText = statusId => resolveUserStatusText(statusId);
@@ -100,6 +101,14 @@ const tableHeader = ref([
     width: '100',
     tooltip:
       'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
+  },
+  {
+    text: 'BL-CAT-A Assigned',
+    value: 'BLCATAAllocationCount',
+    sortable: true,
+    width: '100',
+    tooltip:
+      'The BL CAT-A ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
   },
   { text: 'BL Reset CAP', value: 'blResetCap', sortable: true, width: '100' },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
@@ -370,8 +379,8 @@ function onReset() {
     method: 'get',
     data: {},
     preserveScroll: true,
-    onBefore: () => (loaders.search = true),
-    onSuccess: () => (loaders.search = false),
+    onBefore: () => (loaders.reset = true),
+    onSuccess: () => (loaders.reset = false),
   });
 }
 
@@ -572,7 +581,7 @@ onMounted(() => {
           size="md"
           color="primary"
           type="submit"
-          :loading="loaders.search"
+          :loading="loaders.reset"
           @click.prevent="onReset()"
         >
           Reset

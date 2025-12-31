@@ -15,6 +15,7 @@ use App\Models\CycleQuote;
 use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
+use App\Models\LifeQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\SavingsQuote;
@@ -264,11 +265,16 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
-        /* Temp Code - assign email for particular Policy id/number */
-        if ($policyID == 40523841) {
-            $email = 'soniax711@gmail.com';
+        /*  assign customer email for particular Policy id/number */
+
+        $tempCustomerEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_EMAIL);
+        $tempCustomerPolicyId = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_POLICY_OID);
+
+        if (! $email && $policyID == $tempCustomerPolicyId) {
+            $email = $tempCustomerEmail;
         }
-        /* Temp Code - assign email for particular Policy id/number */
+
+        /*  assign customer email for particular Policy id/number */
 
         if (empty($email)) {
             return [
@@ -418,8 +424,18 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::LIFE->value:
-                            $obj->lifeQuoteRequestDetail()->updateOrCreate(
-                                ['life_quote_request_id' => $obj->id],
+                            $lifeQuoteData = Arr::only($payLoad, (new LifeQuote)->allowedColumns());
+                            if (isset($payLoad['uuid'])) {
+                                $lifeQuoteData['uuid'] = $payLoad['uuid'];
+                            } elseif (isset($obj->uuid)) {
+                                $lifeQuoteData['uuid'] = $obj->uuid;
+                            }
+                            $obj->lifeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                $lifeQuoteData
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
@@ -555,15 +571,16 @@ class InslyDetailRepository extends BaseRepository
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
 
-        /* Temp Code - assign email for particular Policy id/number */
+        /* assign customer email for particular Policy id/number */
 
-        $tempEmail = 'soniax711@gmail.com';
-        $tempPolicyId = 40523841;
-        if ($tempPolicyId == $policy['policy_oid']) {
-            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        $tempCustomerEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_EMAIL);
+        $tempCustomerPolicyId = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_POLICY_OID);
+
+        if ($tempCustomerPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempCustomerEmail, []];
         }
 
-        /* Temp Code - assign email for particular Policy id/number */
+        /* assign customer email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
@@ -700,8 +717,20 @@ class InslyDetailRepository extends BaseRepository
         $hostUrl = config('constants.APP_URL');
         if ($url) {
             $parsedUrl = parse_url($url);
+            $pathArray = explode('/', $parsedUrl['path']);
+            // remove empty values and reset indexes
+            $pathArray = array_values(array_filter($pathArray, function ($value) {
+                return ! empty($value) || $value === 0;
+            }));
+            $quoteType = $pathArray[1] ?? null;
+            $uuid = $pathArray[2] ?? null;
+            if (! $quoteType || ! $uuid) {
+                return null;
+            }
+            $isPersonalQuote = checkPersonalQuotes(ucfirst($quoteType));
+            $path = $isPersonalQuote ? '/personal-quotes/'.strtolower($quoteType).'/'.$uuid : '/quotes/'.strtolower($quoteType).'/'.$uuid;
 
-            return $hostUrl.$parsedUrl['path'];
+            return $hostUrl.$path;
         }
 
         return null;

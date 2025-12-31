@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Services\MetLife\MetLifeValidationService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -31,6 +33,7 @@ class DeleteQuoteDocumentRequest extends FormRequest
             'quote_uuid' => 'required',
             'doc_name' => 'required',
             'doc_uuid' => 'required|exists:quote_documents,doc_uuid',
+            'provider_code' => 'nullable|string|max:10',
         ];
     }
 
@@ -45,9 +48,16 @@ class DeleteQuoteDocumentRequest extends FormRequest
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
 
-            // validate if payment is authorized
-            if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
-                $validator->errors()->add('type', 'Documents can be deleted once payment is authorized.');
+            $metLifeValidator = new MetLifeValidationService;
+
+            // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
+            if ($metLifeValidator->shouldValidatePayment(request()->provider_code)) {
+                // validate if payment is authorized
+                if (empty($quote->payment) ||
+                    ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
+                    $quote->payment->payment_gateway_id != PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK)) {
+                    $validator->errors()->add('type', 'Documents can be deleted once payment is authorized.');
+                }
             }
         });
     }

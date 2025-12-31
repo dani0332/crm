@@ -15,4 +15,5 @@ final class AMLScreeningTypeEnum extends Enum
 {
     const BRIDGER = 'BRIDGER';
     const INSURER_AXA = 'INSURER_AXA';
+    const INSURER_RSA = 'INSURER_RSA';
 }

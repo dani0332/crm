@@ -1,5 +1,10 @@
 <script setup>
 import { usePagination, useRowsPerPage } from 'use-vue3-easy-data-table';
+import {
+  PEC_FLAG_OPTIONS,
+  INCLUDE_UNASSIGNED_LEADS_OPTIONS,
+  SIC_PUA_OPTIONS,
+} from '@/constants/reportOptions';
 
 const props = defineProps({
   reportData: Array,
@@ -38,6 +43,8 @@ let unassignedDate = ref([]);
 let initialAsAtDate = ref('');
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
+let quoteSegments = reactive(page.props.quoteSegments ?? []);
+let filteredQuoteSegments = ref([]);
 
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
@@ -99,10 +106,7 @@ const displayBy = ref([
   { label: 'External Lead Source (UTM)', value: 'external_lead_source' },
 ]);
 
-const includeUnassignedLeads = ref([
-  { label: 'Yes', value: 'yes' },
-  { label: 'No', value: 'no' },
-]);
+const includeUnassignedLeads = ref(INCLUDE_UNASSIGNED_LEADS_OPTIONS);
 
 const displayByActive = ref(false);
 
@@ -227,6 +231,14 @@ const filters = reactive({
   createdAtDate: props.createdAtDate || '',
   page: 1,
   includeUnassignedLeads: props.includeUnassignedLeads || 'no',
+  pec_flag: 'all',
+});
+
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('pec_flag')) {
+    filters.pec_flag = urlParams.get('pec_flag');
+  }
 });
 
 function onSubmit(isValid) {
@@ -326,6 +338,63 @@ const downloadPdf = isValid => {
   }
 };
 
+const onDataExport = async (exportType = 'download') => {
+  if (canExportReport.value === true) {
+    exportLoader.value = true;
+    const payload = cleanFilters(filters);
+
+    try {
+      // Add exportType to payload
+      const data = { ...payload, exportType };
+      console.log('data', data);
+      const url = route('conversion-as-at-export');
+
+      // Add exportType to URL parameters
+      const urlParams = useObjToUrl(data);
+      const finalUrl = `${url}?${urlParams}`;
+
+      if (exportType === 'email') {
+        // For email exports, show success message instead of opening window
+        const exportResponse = await axios
+          .get(finalUrl)
+          .then(resp => {
+            if (resp.data.message) {
+              notification.success({
+                title: resp.data.message,
+                position: 'top',
+              });
+            }
+          })
+          .catch(err => {
+            notification.error({
+              title: err.response.data.message
+                ? err.response.data.message
+                : 'Unable to start an export',
+              position: 'top',
+            });
+            throw err;
+          });
+      } else {
+        // For direct download, open in new window
+        window.open(finalUrl);
+        notification.success({
+          title: 'Export initiated',
+          position: 'top',
+        });
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+    } finally {
+      exportLoader.value = false;
+    }
+  } else {
+    notification.error({
+      title: 'Please generate report first',
+      position: 'top',
+    });
+  }
+};
+
 const cleanFilters = filters => {
   Object.keys(filters).forEach(
     key =>
@@ -340,7 +409,10 @@ const cleanFilters = filters => {
 const quoteTypes = page.props.quoteTypes;
 
 function onLobChange(updateDisplayFilter = true) {
-  if (updateDisplayFilter) filters.displayBy = '';
+  if (updateDisplayFilter) {
+    filters.displayBy = '';
+    filters.pec_flag = 'all';
+  }
   canExportReport.value = false;
 
   const quote = quoteTypes[filters.lob];
@@ -365,6 +437,16 @@ function onLobChange(updateDisplayFilter = true) {
       value: option,
     });
   });
+
+  if (filters.lob == props.quoteTypeIdEnum.Life) {
+    filteredQuoteSegments.value = page.props.quoteSegments.filter(segment => {
+      const allowedSegments = ['all', 'fic', 'non-fic'];
+      return allowedSegments.includes(segment.value);
+    });
+  } else {
+    filteredQuoteSegments.value = [];
+    filters.segment_filter = '';
+  }
 }
 
 const minDate = computed(() => {
@@ -436,8 +518,7 @@ onMounted(() => {
           v-model="filters.startEndDate"
           label="Advisor Assigned Date*"
           placeholder="Specify Advisor Assigned Date*"
-          range
-          :max-range="30"
+          :range="{ maxRange: 30 }"
           :maxDate="new Date()"
           :rules="[isRequired]"
           size="sm"
@@ -465,16 +546,23 @@ onMounted(() => {
           filterable
           filterPlaceholder="Filter Display by...."
         />
+
+        <x-select
+          v-if="filters.lob == props.quoteTypeIdEnum.Health"
+          v-model="filters.pec_flag"
+          placeholder="Select PEC Flag"
+          label="Policy PEC Flag"
+          :options="PEC_FLAG_OPTIONS"
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter PEC Flag...."
+        />
         <x-select
           v-if="filters.lob == props.quoteTypeIdEnum.Car"
           v-model="filters.tag"
           placeholder="SIC/PUA"
           label="SIC/PUA"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 'sic', label: 'SIC' },
-            { value: 'non-sic', label: 'PUA' },
-          ]"
+          :options="SIC_PUA_OPTIONS"
           class="w-full"
           filterable
           filterPlaceholder="Filter SIC/PUA...."
@@ -506,13 +594,26 @@ onMounted(() => {
           filterable
           filterPlaceholder="Filter Include Unassigned Leads...."
         />
+
+        <x-select
+          v-if="
+            can(permissionsEnum.SEGMENT_FILTER) &&
+            filters.lob == props.quoteTypeIdEnum.Life
+          "
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="filteredQuoteSegments"
+          filterable
+          filterPlaceholder="Filter Segment...."
+        />
+
         <DatePicker
           v-if="filters.includeUnassignedLeads == 'yes'"
           v-model="filters.createdAtDate"
           label="Lead Created Date*"
           placeholder="Specify Lead Created Date"
-          range
-          :max-range="30"
+          :range="{ maxRange: 30 }"
           :maxDate="new Date()"
           :rules="[isRequired]"
           size="sm"
@@ -527,6 +628,16 @@ onMounted(() => {
           </p>
         </div>
         <div class="flex gap-3">
+          <x-button
+            v-if="can(permissionsEnum.EXTRACT_REPORT)"
+            size="sm"
+            color="#48bb78"
+            @click.prevent="onDataExport('email')"
+            :disabled="loaders.export"
+            :loading="exportLoader"
+          >
+            Export via email
+          </x-button>
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset

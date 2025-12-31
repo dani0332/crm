@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -13,6 +14,8 @@ use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Services\BranchAssignmentService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Config;
@@ -31,6 +34,13 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchCreate($request)
     {
+        // Log sub-source parameters for Pet quotes
+        LoggerService::info('Pet fetchCreate called with sub-source parameters', [
+            'sub_source_id' => $request['sub_source_id'] ?? null,
+            'sub_source_options_id' => $request['sub_source_options_id'] ?? null,
+            'notes' => $request['notes'] ?? null,
+        ]);
+
         $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
         $dataArr = [
@@ -59,6 +69,10 @@ class PetQuoteRepository extends BaseRepository
             'gender' => $request['customer_gender'], // Reminder:: this is customer gender
             'dob' => $request['dob'],
             'nationalityId' => $request['nationality_id'],
+            // Sub-source fields
+            'subSourceId' => $request['sub_source_id'] ?? null,
+            'subSourceOptionsId' => $request['sub_source_options_id'] ?? null,
+            'additionalNotes' => $request['notes'] ?? null,
         ];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
@@ -72,11 +86,19 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
+        // Log sub-source parameters for Pet quote updates
+        LoggerService::info('Pet fetchUpdate called with sub-source parameters', [
+            'sub_source_id' => $data['sub_source_id'] ?? null,
+            'sub_source_options_id' => $data['sub_source_options_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'gender', 'dob', 'nationality_id',
+                'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;
@@ -116,15 +138,18 @@ class PetQuoteRepository extends BaseRepository
             'petQuote.petType:id,text',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'subSource',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::PET->id());
             },
             'quoteDetail',
             'customer',
+            'branch:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -164,6 +189,31 @@ class PetQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        // Apply authorize_date filter
+        $query->when(! empty($this->getFilterValue('authorize_date', $requestParams)), function ($q) use ($requestParams) {
+            $authorizeDates = $this->getFilterValue('authorize_date', $requestParams);
+            if (is_array($authorizeDates) && count($authorizeDates) >= 2) {
+                $startDate = Carbon::parse($authorizeDates[0])->startOfDay();
+                $endDate = Carbon::parse($authorizeDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('authorized_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
+        // Apply captured_date filter
+        $query->when(! empty($this->getFilterValue('captured_date', $requestParams)), function ($q) use ($requestParams) {
+            $capturedDates = $this->getFilterValue('captured_date', $requestParams);
+            if (is_array($capturedDates) && count($capturedDates) >= 2) {
+                $startDate = Carbon::parse($capturedDates[0])->startOfDay();
+                $endDate = Carbon::parse($capturedDates[1])->endOfDay();
+                $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                    $paymentQuery->whereBetween('captured_at', [$startDate, $endDate]);
+                });
+            }
+        });
+
         $query->orderBy('personal_quotes.'.($this->getFilterValue('sortBy', $requestParams) ?? 'created_at'), $this->getFilterValue('sortType', $requestParams) ?? 'desc');
 
         if ($forTotalLeadsCount) {
@@ -172,7 +222,21 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        if (! $forTotalLeadsCount && ! $forExport) {
+            $this->postProcessPetQuote($result);
+        }
+
+        return $result;
+    }
+
+    private function postProcessPetQuote($query)
+    {
+        return $query->map(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Pet));
+
+            return $item;
+        });
     }
 
     /**
@@ -217,6 +281,7 @@ class PetQuoteRepository extends BaseRepository
                 'petQuote.petType:id,text',
                 'plans:id,text',
                 'advisor',
+                'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
@@ -255,6 +320,8 @@ class PetQuoteRepository extends BaseRepository
                     $entityMapping->with('entity');
                 },
                 'quoteDetail',
+                'subSource', 'subSourceOption',
+                'branch:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -275,6 +342,7 @@ class PetQuoteRepository extends BaseRepository
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
         }
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Pet));
 
         return $quote;
     }
@@ -305,7 +373,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail']
+            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail', 'customer']
         )->orderBy('created_at', 'desc');
     }
 }

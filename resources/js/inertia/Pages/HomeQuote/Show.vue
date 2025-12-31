@@ -1,6 +1,13 @@
 <script setup>
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import {
+  applyEmiratesNumberMasking,
+  useIsQuoteCreatedAfterCutoff,
+} from '@/inertia/Composables/utilities.js';
 
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import OcrLogs from '@/inertia/Components/OcrLogs.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -57,6 +64,7 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   quoteStatuses: Object,
+  homeCutOffDate: String,
 });
 
 const page = usePage();
@@ -514,6 +522,10 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
   onLoadAvailablePlansData();
+  window.addEventListener('ocr-notification', handleOcrNotification);
+});
+onUnmounted(() => {
+  window.removeEventListener('ocr-notification', handleOcrNotification);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -1021,42 +1033,11 @@ const isPlanDetailEnabled = computed(() => {
 // New computed property to check lead date
 const shouldShowPlanDetailsSection = computed(() => {
   // First check if lead is created before the cutoff date
-  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
-  const str = page.props.quote.created_at;
+  const cutoffDate = props.homeCutOffDate
+    ? new Date(props.homeCutOffDate)
+    : new Date('2025-04-10 21:30:00');
 
-  const match = str.match(
-    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
-  );
-  if (!match) return false;
-
-  const [_, day, monthStr, year, hour, min, ampm] = match;
-  const months = {
-    jan: 0,
-    feb: 1,
-    mar: 2,
-    apr: 3,
-    may: 4,
-    jun: 5,
-    jul: 6,
-    aug: 7,
-    sep: 8,
-    oct: 9,
-    nov: 10,
-    dec: 11,
-  };
-  let h = parseInt(hour, 10);
-  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
-  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
-
-  const createdDate = new Date(
-    parseInt(year),
-    months[monthStr.toLowerCase().slice(0, 3)],
-    parseInt(day),
-    h,
-    parseInt(min),
-  );
-
-  if (createdDate >= cutoffDate) {
+  if (useIsQuoteCreatedAfterCutoff(page.props.quote.created_at, cutoffDate)) {
     return false;
   }
 
@@ -1080,10 +1061,93 @@ const shouldShowPlanDetailsSection = computed(() => {
     hasRequiredValueFields
   );
 });
+
+// OCR loader state (align with Car implementation)
+const ocrLoadingDocType = ref(null);
+const ocrLoadingDocTypes = reactive(new Set());
+const isDocTypeLoading = docType => ocrLoadingDocTypes.has(docType);
+const hasOcrInProgress = computed(() => ocrLoadingDocTypes.size > 0);
+const ocrDocumentTypeEnum = usePage().props.ocrDocumentTypeEnum;
+// Check if all required policy fields are filled (moved from OcrNotification to avoid duplicates)
+const checkRequiredPolicyFields = () => {
+  const quote = usePage().props?.quote;
+  if (!quote) return false;
+  const requiredFields = [
+    { field: 'policy_number', property: 'quote_policy_number' },
+    { field: 'policy_start_date', property: 'quote_policy_start_date' },
+    { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
+    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
+  ];
+  return requiredFields.every(item => {
+    const value = quote[item.field] || quote[item.property];
+    return value !== null && value !== undefined && String(value).trim() !== '';
+  });
+};
+// Reload keys for forced component re-renders after OCR
+const policyDetailReloadKey = ref(0);
+const bookPolicyReloadKey = ref(0);
+function handleOcrNotification(event) {
+  const { docType, status, userId } = event.detail || {};
+  const currentUserId = usePage().props.auth.user.id;
+  // Only process notifications for the current user
+  if (userId !== currentUserId) {
+    return;
+  }
+  // For 'start' status, add document type to loading set
+  if (status === 'start') {
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.add(docType);
+      // Also set the old ref for backwards compatibility
+      ocrLoadingDocType.value = docType;
+    }
+  } else {
+    // For 'end' or 'fail' status, remove document type from loading set and reload data
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+    ];
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.delete(docType);
+    }
+    router.reload({
+      onSuccess: () => {
+        // Clear both the old ref and the reactive Set for immediate UI update
+        ocrLoadingDocType.value = null;
+        ocrLoadingDocTypes.clear();
+        policyDetailReloadKey.value++;
+        bookPolicyReloadKey.value++;
+        // Check policy fields completion after data reload (only for CERTIFICATE_OF_ISSUANCE)
+        if (
+          status === 'end' &&
+          !event.detail?.error &&
+          docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+        ) {
+          const allFieldsFilled = checkRequiredPolicyFields();
+          if (!allFieldsFilled) {
+            notification.info({
+              title: 'Some required fields are still missing in Policy details',
+              position: 'top',
+            });
+          }
+        }
+      },
+      preserveState: true,
+      preserveScroll: true,
+      only: ['payments', 'bookPolicyDetails', 'quote', 'quoteDocuments'],
+    });
+  }
+}
 </script>
 
 <template>
   <div>
+    <OcrNotification />
     <Head title="Home Detail" />
     <StickyHeader>
       <template v-slot:header>
@@ -1095,7 +1159,7 @@ const shouldShowPlanDetailsSection = computed(() => {
           Stale for {{ countDays }}
         </p>
         <x-button
-          v-if="quote?.customer.pcp_tag == true"
+          v-if="quote?.customer?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"
@@ -1162,6 +1226,7 @@ const shouldShowPlanDetailsSection = computed(() => {
       show-close
       backdrop
       is-form
+      persistent
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
@@ -1334,6 +1399,38 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
+              <!-- Sub-source fields -->
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      IMCRM SUB-SOURCE
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source?.description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.sub_source?.text || 'N/A' }}</div>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB SOURCE OPTION
+                    </label>
+                    <template #tooltip>{{
+                      quote?.sub_source_option?.description || 'N/A'
+                    }}</template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.sub_source_option?.text || 'N/A' }}</div>
+              </div>
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
@@ -1411,7 +1508,7 @@ const shouldShowPlanDetailsSection = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL NOTES</dt>
-                <dd>{{ quote.additional_notes }}</dd>
+                <dd>{{ quote.notes }}</dd>
               </div>
             </dl>
           </div>
@@ -1452,6 +1549,24 @@ const shouldShowPlanDetailsSection = computed(() => {
                   }}
                 </dd>
               </div>
+              <!-- Previous Contents AED for Renewal Leads -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  quote?.source === $page.props.leadSource.RENEWAL_UPLOAD &&
+                  quote?.home_quote?.previous_contents_aed
+                "
+              >
+                <dt class="font-medium text-blue-600">PREVIOUS CONTENTS AED</dt>
+                <dd class="text-blue-600 font-medium">
+                  {{
+                    Number(
+                      quote?.home_quote?.previous_contents_aed,
+                    ).toLocaleString()
+                  }}
+                  AED
+                </dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS BUILDING</dt>
                 <dd>{{ quote?.home_quote?.building_value ? 'Yes' : 'No' }}</dd>
@@ -1459,6 +1574,24 @@ const shouldShowPlanDetailsSection = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BUILDING AED</dt>
                 <dd>{{ quote?.home_quote?.building_value }}</dd>
+              </div>
+              <!-- Previous Building AED for Renewal Leads -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  quote?.source === $page.props.leadSource.RENEWAL_UPLOAD &&
+                  quote?.home_quote?.previous_building_aed
+                "
+              >
+                <dt class="font-medium">PREVIOUS BUILDING AED</dt>
+                <dd class="font-medium">
+                  {{
+                    Number(
+                      quote?.home_quote?.previous_building_aed,
+                    ).toLocaleString()
+                  }}
+                  AED
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS PERSONAL BELONGINGS</dt>
@@ -1481,10 +1614,38 @@ const shouldShowPlanDetailsSection = computed(() => {
                   }}
                 </dd>
               </div>
+              <!-- Previous Personal Belongings AED for Renewal Leads -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  quote?.source === $page.props.leadSource.RENEWAL_UPLOAD &&
+                  quote?.home_quote?.previous_personal_belongings_aed
+                "
+              >
+                <dt class="font-medium">PREVIOUS PERSONAL BELONGINGS AED</dt>
+                <dd class="font-medium">
+                  {{
+                    Number(
+                      quote?.home_quote?.previous_personal_belongings_aed,
+                    ).toLocaleString()
+                  }}
+                  AED
+                </dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CLAIM HISTORY</dt>
                 <dd>
                   {{ quote?.home_quote?.has_claimed_losses ? 'Yes' : 'No' }}
+                </dd>
+              </div>
+              <!-- Enquiry Count for Renewal Leads -->
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.source === $page.props.leadSource.RENEWAL_UPLOAD"
+              >
+                <dt class="font-medium">ENQUIRY COUNT</dt>
+                <dd class="">
+                  {{ quote?.home_quote?.enquiry_count || 0 }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2252,11 +2413,16 @@ const shouldShowPlanDetailsSection = computed(() => {
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
+      :key="policyDetailReloadKey"
       :quote="quote"
       modelType="home"
       :expanded="sectionExpanded"
       :policyIssuanceStatus="policyIssuanceStatus"
       :payments="payments"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <QuoteDocument
@@ -2271,6 +2437,28 @@ const shouldShowPlanDetailsSection = computed(() => {
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+    <BorLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :customerData="{
+        customerType: quote.customer_type,
+        firstName: quote.first_name,
+        lastName: quote.last_name,
+        companyName: quote.company_name,
+        currentlyInsuredWith: quote.currently_insured_with,
+      }"
+      :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
+      :insuranceProviders="insuranceProviders"
+      :expanded="sectionExpanded"
+      :documentTypes="documentTypes"
+    />
+
+    <CustomerAcceptanceLogsSection
+      :leadId="quote.id"
+      :lob="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <BookPolicy
       v-if="
         canAny([
@@ -2279,12 +2467,17 @@ const shouldShowPlanDetailsSection = computed(() => {
           permissionEnum.VIEW_ALL_LEADS,
         ])
       "
+      :key="bookPolicyReloadKey"
       :quote="quote"
       quoteType="home"
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
+      :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <SendUpdates
@@ -2327,6 +2520,13 @@ const shouldShowPlanDetailsSection = computed(() => {
       :quote-type="quoteType"
     />
 
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+
     <AuditLogs
       :id="$page.props.quote.id"
       :quote-type="quoteType"
@@ -2340,6 +2540,13 @@ const shouldShowPlanDetailsSection = computed(() => {
     />
 
     <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />
+
+    <OcrLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props?.quote?.id"
+      :expanded="sectionExpanded"
+    />
 
     <LeadHistory :quote="$page.props.quote" />
 

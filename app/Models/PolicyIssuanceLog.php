@@ -21,4 +21,9 @@ class PolicyIssuanceLog extends Model
         'created_at',
         'updated_at',
     ];
+
+    public function policyIssuance()
+    {
+        return $this->belongsTo(PolicyIssuance::class);
+    }
 }

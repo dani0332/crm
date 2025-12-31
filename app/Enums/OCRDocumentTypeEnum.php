@@ -11,18 +11,32 @@ enum OCRDocumentTypeEnum: string
     case TAX_INVOICE_RAISED_BY_BUYER = 'TIB';
     case CERTIFICATE_OF_ISSUANCE = 'PC';
     case MOTOR_INSURANCE_POLICY_SCHEDULE = 'MPS';
-    case ID_CARD = 'IDC';
+    case ID_CARD = 'IDC'; // Emirates ID
     case VISA = 'VI';
     case PASSPORT = 'PP';
+    case REGISTRATION_CERTIFICATE = 'RC'; // Car Registration Certificate - Mulkiya
+    case POLICY_SCHEDULE = 'PS';
 
     public static function getDocumentType(DocumentType $documentType): ?self
     {
         return match ($documentType->code) {
             'DL_CAR' => self::DRIVING_LICENSE,
+            'DL' => self::DRIVING_LICENSE,
             'TI' => self::TAX_INVOICE,
             'CPC' => self::CERTIFICATE_OF_ISSUANCE,
             'CTIRBB' => self::TAX_INVOICE_RAISED_BY_BUYER,
             'CPS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE,
+            'CEID' => self::ID_CARD,
+            'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
+            'EID_CAR' => self::ID_CARD,
+
+            'PS' => self::POLICY_SCHEDULE,
+            'GH_PS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Group Health Policy Schedule
+            // Send Update document types
+            'SUTAXINV' => self::TAX_INVOICE, // Send Update Tax Invoice
+            'SUTAXINVRB' => self::TAX_INVOICE_RAISED_BY_BUYER, // Send Update Tax Invoice Raised Buyer
+            'SUPC' => self::CERTIFICATE_OF_ISSUANCE, // Send Update Policy Certificate
+            'SUPS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Send Update Policy Schedule
             default => null,
         };
     }
@@ -41,6 +55,21 @@ enum OCRDocumentTypeEnum: string
                 self::TAX_INVOICE,
                 self::TAX_INVOICE_RAISED_BY_BUYER,
                 self::CERTIFICATE_OF_ISSUANCE,
+                self::MOTOR_INSURANCE_POLICY_SCHEDULE,
+                self::ID_CARD,
+                self::REGISTRATION_CERTIFICATE,
+                self::DRIVING_LICENSE,
+            ],
+            QuoteTypes::GROUP_MEDICAL => [
+                self::TAX_INVOICE,
+                self::TAX_INVOICE_RAISED_BY_BUYER,
+                self::POLICY_SCHEDULE,
+                self::MOTOR_INSURANCE_POLICY_SCHEDULE,
+            ],
+            QuoteTypes::HOME => [
+                self::TAX_INVOICE,
+                self::TAX_INVOICE_RAISED_BY_BUYER,
+                self::POLICY_SCHEDULE,
                 self::MOTOR_INSURANCE_POLICY_SCHEDULE,
             ],
             default => [],

@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Optionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Cache;
 
 class Nationality extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, Optionable;
 
     protected $table = 'nationality';
     public $access = [
@@ -29,6 +31,9 @@ class Nationality extends BaseModel
             'invoicing' => ['id', 'code', 'text'],
         ],
     ];
+    public $casts = [
+        'rsa_country_code' => 'string',
+    ];
 
     public function delete()
     {
@@ -40,5 +45,12 @@ class Nationality extends BaseModel
     public function scopeWithActive($query)
     {
         return $query->where('is_active', 1);
+    }
+
+    public static function getActiveNationalities()
+    {
+        return Cache::remember('active_nationalities', now()->addHours(24), function () {
+            return Nationality::where('is_active', 1)->select('id', 'text')->get();
+        });
     }
 }

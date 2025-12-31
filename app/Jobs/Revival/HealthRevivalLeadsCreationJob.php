@@ -12,22 +12,22 @@ use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\HealthQuote;
 use App\Models\QuoteBatches;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
-class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
+class HealthRevivalLeadsCreationJob implements ShouldQueue
 {
-    use AddPremiumAllLobs, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
+    use AddPremiumAllLobs, Batchable, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable;
 
     public $tries = 3;
     public $timeout = 300;
@@ -210,13 +210,25 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $emailData->tag = 'health-revival-initial-email';
                 $emailData->templateType = 'revivalHealthInitial';
 
-                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+                if ($healthQuote->isAUHLead(false) && $healthQuote->isLeadSourceRevivalOrInsuranceWallet()) {
+                    // skip email for AUH and Revival/Insurance Wallet
+                    LoggerService::info('HealthRevivalLeadsCreationJob - Skipping email for AUH and Revival/Insurance Wallet for uuid: '.$healthQuote->uuid);
+                    $response = 201;
+                } else {
+                    $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
+                }
                 if ($response == 201) {
                     info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
                     $healthRevival->update(['email_sent' => true]);
+
+                    $quoteStatusId = ($healthQuote->isAUHLead(false) && $healthQuote->isLeadSourceRevivalOrInsuranceWallet())
+                        ? QuoteStatusEnum::NewLead
+                        : QuoteStatusEnum::Quoted;
+
                     // update child lead
-                    HealthQuote::find($healthQuote->id)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+                    HealthQuote::find($healthQuote->id)->update(['quote_status_id' => $quoteStatusId]);
+
                     // update parent lead
                     HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {

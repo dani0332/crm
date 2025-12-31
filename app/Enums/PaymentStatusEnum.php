@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
+use Illuminate\Support\Str;
 
 /**
  * @method static static OptionOne()
@@ -28,4 +29,35 @@ final class PaymentStatusEnum extends Enum
     public const CREDIT_APPROVED = 16;
     public const PARTIALLY_PAID = 17;
     public const PAYMENT_LINK_REQUESTED = 18;
+
+    public static function getPaidStatuses()
+    {
+        return [
+            self::AUTHORISED,
+            self::PAID,
+            self::CAPTURED,
+        ];
+    }
+
+    public static function getDeclinedOrFailedStatuses()
+    {
+        return [
+            self::DECLINED,
+            self::FAILED,
+        ];
+    }
+
+    /**
+     * Build [{ value, label }] for dropdowns using asArray() as the source of truth.
+     */
+    public static function withLabels(): array
+    {
+        return collect(self::asArray())
+            ->map(fn ($value, string $name) => [
+                'value' => $value,
+                'label' => Str::title(Str::lower(str_replace('_', ' ', $name))),
+            ])
+            ->values()
+            ->toArray();
+    }
 }

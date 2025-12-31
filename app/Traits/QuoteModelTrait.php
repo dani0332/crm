@@ -8,7 +8,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -16,10 +15,10 @@ use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuotePlanDetail;
-use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
+use App\Services\BuyLeads\BuyLeadService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -28,7 +27,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, Logable, QuoteAllocatable;
+    use Filterable, Logable, Optionable, QuoteAllocatable, QuotePaymentable;
 
     /**
      * @return mixed|void
@@ -128,7 +127,25 @@ trait QuoteModelTrait
                         ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
                 });
-            });
+            })->when($segmentFilter === QuoteSegmentEnum::FIC->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
+            })
+                ->when($segmentFilter === QuoteSegmentEnum::NON_FIC->value, function ($query) use ($alias, $quoteTypeId) {
+                    $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                        $query->distinct()
+                            ->select('quote_uuid')
+                            ->from('quote_tags')
+                            ->where('quote_tags.name', QuoteSegmentEnum::FIC->tag())
+                            ->where('quote_tags.quote_type_id', $quoteTypeId);
+                    });
+                });
         }
     }
 
@@ -211,6 +228,11 @@ trait QuoteModelTrait
         );
     }
 
+    public function isCatABuyLeadApplicable(QuoteTypes $quoteType): bool
+    {
+        return ! $this->isStale() && $this->source == LeadSourceEnum::REVIVAL && in_array($this->nationality_id, BuyLeadService::getNationalitiesIds($quoteType));
+    }
+
     public function getForeignKey()
     {
         return Str::snake(Str::singular($this->getTable())).'_id';
@@ -289,7 +311,7 @@ trait QuoteModelTrait
         }
 
         return CarQuotePlanDetail::where('quote_uuid', $this->uuid)
-            ->whereIn('pua_type', PuaEnum::TAGS)
+            ->whereNotNull('pua_premium')
             ->where('plan_id', $this->plan_id)
             ->exists();
     }
@@ -427,5 +449,22 @@ trait QuoteModelTrait
             ->pluck('name')
             ->map(fn ($name) => strtolower($name))
             ->toArray();
+    }
+
+    public function isSuppressIntroEmail(): bool
+    {
+        $excludedQuoteStatuses = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        return in_array($this->quote_status_id, $excludedQuoteStatuses);
     }
 }

@@ -44,6 +44,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -74,6 +75,7 @@ class YachtQuoteController extends Controller
         $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('YachtQuote/Index', [
             'quotes' => $personalQuotes,
@@ -83,15 +85,31 @@ class YachtQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : YachtQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
             'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
+            'subSources' => $subSources,
         ]);
     }
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function create()
+    public function create(Request $request)
     {
+        // Log parameters from CreateLeadModal
+        LoggerService::info('Yacht create method called with parameters', [
+            'type' => $request->input('type'),
+            'subSourceId' => $request->input('subSourceId'),
+            'subSourceOptionsId' => $request->input('subSourceOptionsId'),
+        ]);
+
         $data = YachtQuoteRepository::getFormOptions();
+        $subSources = app(LookupService::class)->getSubSource();
+
+        $data['subSources'] = $subSources;
+        $data['leadSourceParams'] = [
+            'type' => $request->input('type'),
+            'subSource' => $request->input('subSourceId'),
+            'subSourceOption' => $request->input('subSourceOptionsId'),
+        ];
 
         return inertia('YachtQuote/Form', $data);
     }
@@ -121,9 +139,12 @@ class YachtQuoteController extends Controller
     {
         $data = YachtQuoteRepository::getFormOptions();
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
+        $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('YachtQuote/Form', array_merge($data, [
             'quote' => $quote,
+            'subSources' => $subSources,
+            'leadSourceParams' => [],
         ]));
     }
 
@@ -140,6 +161,7 @@ class YachtQuoteController extends Controller
         /* End - Temporarily adding for correcting historic data */
 
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
+        $quote->load('subSource', 'subSourceOption');
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
@@ -157,7 +179,7 @@ class YachtQuoteController extends Controller
 
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::YACHT->id());
         $personalPlans = PersonalPlanRepository::get();
@@ -288,6 +310,8 @@ class YachtQuoteController extends Controller
             ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::InNegotiation, $request)],
             ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PaymentPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PaymentLinkSentToCustomer, 'title' => quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PaymentLinkSentToCustomer, $request)],
+            ['id' => QuoteStatusEnum::PaymentInitiated, 'title' => quoteStatusCode::PaymentInitiated, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PaymentInitiated, $request)],
             ['id' => QuoteStatusEnum::FinalizingTerms, 'title' => quoteStatusCode::FINALIZING_TERMS, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::FinalizingTerms, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];

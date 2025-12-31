@@ -43,7 +43,8 @@ class InstantChatDetailedExport implements CsvExportableInterface
         return [
             'QUOTE TYPE',
             'REF ID',
-            'CREATED AT',
+            'LEAD CREATED DATE',
+            'DATE OF FIRST INTERACTION',
             'MESSAGE',
             'ROLE',
             'EMPLOYEE FLAG',
@@ -55,6 +56,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
             'OUTPUT TOKENS USAGE',
             'TOTAL TOKENS USED',
             'SEGMENT',
+            'RENEWAL BATCH',
             'LEAD ASSIGNMENT TRIGGER',
         ];
     }
@@ -64,6 +66,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
         // Handle both array (from MongoDB) and object data structures
         $quoteType = is_array($chat) ? ($chat['quote_type'] ?? 'N/A') : ($chat->quote_type ?? 'N/A');
         $quoteId = is_array($chat) ? ($chat['quote_id'] ?? 'N/A') : ($chat->quote_id ?? 'N/A');
+        $leadCreatedDate = is_array($chat) ? ($chat['lead_created_at'] ?? 'N/A') : ($chat->lead_created_at ?? 'N/A');
         $createdAt = is_array($chat) ? ($chat['created_at'] ?? 'N/A') : ($chat->created_at ?? 'N/A');
         $msg = is_array($chat) ? ($chat['msg'] ?? 'N/A') : ($chat->msg ?? 'N/A');
         $role = is_array($chat) ? ($chat['role'] ?? 'N/A') : ($chat->role ?? 'N/A');
@@ -71,6 +74,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
         return [
             $quoteType,
             strtoupper(substr($quoteType, 0, 3)).'-'.$quoteId,
+            $leadCreatedDate,
             $createdAt,
             $msg,
             $role,
@@ -85,6 +89,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
             is_array($chat) ? ($chat['completion_tokens'] ?? 'N/A') : (isset($chat->completion_tokens) ? $chat->completion_tokens : 'N/A'),
             is_array($chat) ? ($chat['total_tokens'] ?? 'N/A') : (isset($chat->total_tokens) ? $chat->total_tokens : 'N/A'),
             is_array($chat) ? ($chat['segment'] ?? 'N/A') : ($chat->segment ?? 'N/A'),
+            is_array($chat) ? ($chat['renewal_batch_id_text'] ?? 'N/A') : ($chat->renewal_batch_id_text ?? 'N/A'),
             is_array($chat) ? ($chat['lead_assignment_trigger_text'] ?? 'N/A') : ($chat->lead_assignment_trigger_text ?? 'N/A'),
         ];
     }
@@ -132,7 +137,7 @@ class InstantChatDetailedExport implements CsvExportableInterface
         // Pass through any other parameters that might be relevant
         $passThroughParams = [
             'quoteId', 'email', 'mobile_no', 'transaction_type_id',
-            'quote_batch_id', 'quote_status_id', 'payment_status_id',
+            'quote_batch_id', 'renewal_batch_id', 'quote_status_id', 'payment_status_id',
             'assigment_type', 'sale_leads', 'segment',
         ];
 
