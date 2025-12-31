@@ -101,6 +101,7 @@ trait PrivateClient
 
     public function evaluatePrivateClient(array $data): array
     {
+
         $quoteTypeId = (int) $data['quote_type_id'];
 
         if (! $this->isLOBEligibleForPCP($quoteTypeId)) {
@@ -275,9 +276,7 @@ trait PrivateClient
 
                     $matchesCriteria = $this->doesLeadMatchPcpCriteria($lead, $configs, $modelClass, $quoteTypeId);
                     $version = $configs->first()?->version;
-                    $pcpUpdated = $matchesCriteria
-                        ? $this->applyPcpTagsToLeadAndCustomer($lead, $version)
-                        : $this->applyPcpTagsToLeadAndCustomer($lead, $version, true);
+                    $pcpUpdated = $this->updatePcpTagsForLeadAndCustomerAfterEvaluation($lead, $version, shouldRemoveTag:  ! $matchesCriteria);
 
                     if (! $pcpUpdated) {
                         $results['failures'][] = [
@@ -538,150 +537,142 @@ trait PrivateClient
         }
     }
 
-
-        $shouldUpdateLead = (int) $model->pc_qualified !== $desiredLeadState['pc_qualified']
-            || $model->pcp_tag_version !== $desiredLeadState['pcp_tag_version'];
-
-        if ($shouldUpdateLead) {
-            $model->update($desiredLeadState);
-            $personalQuote = PersonalQuote::where('uuid', $model->uuid)->first();
-
-            if ($personalQuote && (
-                (int) $personalQuote->pc_qualified !== $desiredLeadState['pc_qualified']
-                || $personalQuote->pcp_tag_version !== $desiredLeadState['pcp_tag_version']
-            )) {
-                $personalQuote->update($desiredLeadState);
-            }
-
-            $wasLeadUpdated = true;
-            LoggerService::info($shouldRemove ? 'PCP tag removed on lead.' : 'PC qualified tag applied successfully on lead.', extra: [
-                'leadUuid' => $model->uuid,
-            ]);
-        }
-
-        return [
-            'wasUpdated' => $wasLeadUpdated,
-            'version' => $shouldRemove ? null : $pcpTagVersion,
-            'shouldRemove' => $shouldRemove,
-        ];
-    }
-
-    private function updateCustomer($model, ?int $pcpTagVersion, bool $shouldRemove = false): array
+    private function updatePcpTagsForLeadAndCustomerAfterEvaluation($model, ?int $pcpTagVersion, bool $shouldRemoveTag): bool
     {
-        $customer = Customer::where('id', $model->customer_id)
-            ->select([
-                'id',
-                'first_name',
-                'last_name',
-                'email',
-                'pcp_tag',
-                'pcp_tag_version',
-            ])
-            ->first();
-        $wasCustomerUpdated = false;
-        $retainedExistingTag = false;
+        try {
+            $this->lastPcpUpdateResult = [];
 
-        if ($customer) {
-            if ($shouldRemove) {
-                $hasQualifiedQuotes = $this->customerHasActiveQualifiedQuotes((int) $customer->id);
+            return DB::transaction(function () use ($pcpTagVersion, $model, $shouldRemoveTag) {
+                LoggerService::info($shouldRemoveTag ? 'Removing PCP tag from lead and customer.' : 'Applying PCP tag to lead and customer.', extra: [
+                    'leadUuid' => $model->uuid,
+                    'pcpTagVersion' => $pcpTagVersion,
+                ]);
 
-                if (! $hasQualifiedQuotes) {
-                    $desiredCustomerState = [
-                        'pcp_tag' => 0,
-                        'pcp_tag_version' => null,
-                    ];
-                    $shouldUpdateCustomer = (int) $customer->pcp_tag !== $desiredCustomerState['pcp_tag']
-                        || $customer->pcp_tag_version !== $desiredCustomerState['pcp_tag_version'];
+                //region Lead Update
+                $leadUpdated = false;
+                $desiredLeadState = $shouldRemoveTag
+                    ? ['pc_qualified' => 0, 'pcp_tag_version' => null]
+                    : ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
 
-                    if ($shouldUpdateCustomer) {
-                        $customer->update($desiredCustomerState);
+                $model->fill($desiredLeadState);
+                $shouldUpdateLead = $model->isDirty(['pc_qualified', 'pcp_tag_version']);
 
-                        $wasCustomerUpdated = true;
-                        LoggerService::info('PCP tag removed successfully on customer.', extra: [
-                            'customer_id' => $customer->id,
-                            'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                            'email' => $customer->email,
+                if ($shouldUpdateLead) {
+                    $model->save();
+                    $personalQuote = PersonalQuote::where('uuid', $model->uuid)->first();
+
+                    if ($personalQuote) {
+                        $personalQuote->fill($desiredLeadState);
+                        if ($personalQuote->isDirty(['pc_qualified', 'pcp_tag_version'])) {
+                            $personalQuote->save();
+                        }
+                    }
+
+                    $leadUpdated = true;
+                    LoggerService::info($shouldRemoveTag ? 'PCP tag removed on lead.' : 'PC qualified tag applied successfully on lead.', extra: [
+                        'leadUuid' => $model->uuid,
+                    ]);
+                }
+                //endregion
+
+                // Customer update
+                $customer = Customer::where('id', $model->customer_id)
+                    ->select([
+                        'id',
+                        'first_name',
+                        'last_name',
+                        'email',
+                        'pcp_tag',
+                        'pcp_tag_version',
+                    ])
+                    ->first();
+
+                $customerUpdated = false;
+                $retainedExistingTag = false;
+                $customerLogContext = $customer ? [
+                    'leadUuid' => $model->uuid,
+                    'customer_id' => $customer->id,
+                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
+                    'email' => $customer->email,
+                ] : [];
+
+                if ($customer) {
+                    $desiredCustomerState = null;
+                    $customerUpdateLogMessage = null;
+
+                    if ($shouldRemoveTag) {
+                        $hasQualifiedQuotes = $this->customerHasActiveQualifiedQuotes((int) $customer->id);
+
+                        if (! $hasQualifiedQuotes) {
+                            $desiredCustomerState = [
+                                'pcp_tag' => 0,
+                                'pcp_tag_version' => null,
+                            ];
+                            $customerUpdateLogMessage = 'PCP tag removed successfully on customer.';
+                        } else {
+                            $retainedExistingTag = true;
+                            LoggerService::info('PCP tag retained on customer because other qualified leads exist.', extra: $customerLogContext);
+                        }
+                    } else {
+                        $desiredCustomerState = [
+                            'ref_id' => $model->code,
+                            'pcp_tag' => 1,
+                            'pcp_tag_version' => $pcpTagVersion,
+                        ];
+                        $customerUpdateLogMessage = 'PCP tag applied successfully on customer.';
+                    }
+
+                    if (is_array($desiredCustomerState)) {
+                        $customer->fill($desiredCustomerState);
+                        $shouldUpdateCustomer = $customer->isDirty(['pcp_tag', 'pcp_tag_version']);
+
+                        if ($shouldUpdateCustomer) {
+                            $customer->save();
+
+                            $customerUpdated = true;
+                            LoggerService::info($customerUpdateLogMessage, extra: $customerLogContext);
+                        }
+                    }
+                }
+
+                // Log final results similar to original helper
+                if (! $leadUpdated && ! $shouldRemoveTag) {
+                    LoggerService::warning('PC qualified tag already applied on lead.', extra: [
+                        'applied_tag_version' => $pcpTagVersion,
+                    ]);
+                }
+
+                if ($shouldRemoveTag) {
+                    if ($customer && $customerUpdated) {
+                        LoggerService::info('PCP tag removed from customer record.', extra: $customerLogContext);
+                    } elseif ($customer && $retainedExistingTag) {
+                        LoggerService::info('Skipped removing PCP tag because active qualified leads still exist for customer.', extra: $customerLogContext);
+                    } elseif ($customer && ! $customerUpdated) {
+                        LoggerService::warning('PCP tag already removed on customer.', extra: $customerLogContext);
+                    }
+                } else {
+                    if ($customer && ! $customerUpdated) {
+                        LoggerService::warning('PCP tag already applied on customer.', extra: [
+                            ...$customerLogContext,
+                            'applied_tag_version' => $customer->pcp_tag_version,
                         ]);
                     }
-                } elseif ($hasQualifiedQuotes) {
-                    $retainedExistingTag = true;
-                    LoggerService::info('PCP tag retained on customer because other qualified leads exist.', extra: [
-                        'customer_id' => $customer->id,
-                        'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                        'email' => $customer->email,
-                    ]);
                 }
-            } else {
-                $desiredCustomerState = [
-                    'ref_id' => $model->code,
-                    'pcp_tag' => 1,
-                    'pcp_tag_version' => $pcpTagVersion,
+
+                // Store results for summary aggregation in re-evaluation
+                $this->lastPcpUpdateResult = [
+                    'leadUpdated' => (bool) $leadUpdated,
+                    'customerUpdated' => (bool) $customerUpdated,
+                    'retainedExistingTag' => (bool) $retainedExistingTag,
+                    'shouldRemove' => (bool) $shouldRemoveTag,
                 ];
-                $shouldUpdateCustomer = (int) $customer->pcp_tag !== $desiredCustomerState['pcp_tag']
-                    || $customer->pcp_tag_version !== $desiredCustomerState['pcp_tag_version'];
 
-                if ($shouldUpdateCustomer) {
-                    $customer->update($desiredCustomerState);
+                return true;
+            });
+        } catch (Exception $ex) {
+            LoggerService::error($shouldRemoveTag ? 'Error removing PCP tag.' : 'Error applying PCP tag.', exception: $ex);
 
-                    $wasCustomerUpdated = true;
-                    LoggerService::info('PCP tag applied successfully on customer.', extra: [
-                        'customer_id' => $customer->id,
-                        'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                        'email' => $customer->email,
-                    ]);
-                }
-            }
-        }
-
-        return [
-            'customer' => $customer,
-            'wasUpdated' => $wasCustomerUpdated,
-            'version' => $shouldRemove ? null : $customer?->pcp_tag_version,
-            'shouldRemove' => $shouldRemove,
-            'retainedExistingTag' => $retainedExistingTag,
-        ];
-    }
-
-    private function logUpdateResults(array $leadResult, array $customerResult, bool $shouldRemove = false): void
-    {
-        if (! $leadResult['wasUpdated'] && ! $shouldRemove) {
-            LoggerService::warning('PC qualified tag already applied on lead.', extra: [
-                'applied_tag_version' => $leadResult['version'],
-            ]);
-        }
-
-        $customer = $customerResult['customer'];
-        if ($shouldRemove) {
-            if ($customer && $customerResult['wasUpdated']) {
-                LoggerService::info('PCP tag removed from customer record.', extra: [
-                    'customer_id' => $customer->id,
-                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                    'email' => $customer->email,
-                ]);
-            } elseif ($customer && ($customerResult['retainedExistingTag'] ?? false)) {
-                LoggerService::info('Skipped removing PCP tag because active qualified leads still exist for customer.', extra: [
-                    'customer_id' => $customer->id,
-                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                    'email' => $customer->email,
-                ]);
-            } elseif ($customer && ! $customerResult['wasUpdated']) {
-                LoggerService::warning('PCP tag already removed on customer.', extra: [
-                    'customer_id' => $customer->id,
-                    'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                    'email' => $customer->email,
-                ]);
-            }
-
-            return;
-        }
-
-        if ($customer && ! $customerResult['wasUpdated']) {
-            LoggerService::warning('PCP tag already applied on customer.', extra: [
-                'customer_id' => $customer->id,
-                'customer_name' => trim($customer->first_name.' '.$customer->last_name),
-                'email' => $customer->email,
-                'applied_tag_version' => $customerResult['version'],
-            ]);
+            return false;
         }
     }
 
