@@ -44,7 +44,15 @@ class RemovePcQualifiedJob implements ShouldQueue
             $quotes = $quoteQuery->select('uuid', 'quote_type_id')->get();
 
             foreach ($quotes as $quote) {
-                $this->removePcQualified($quote->uuid, $quote->quote_type_id);
+                try {
+                    $this->removePcQualified($quote->uuid, $quote->quote_type_id);
+                } catch (\Exception $e) {
+                    LoggerService::error('Error removing PC qualified tag. Continuing with next quote.', extra: [
+                        'quote_uuid' => $quote->uuid,
+                        'quote_type_id' => $quote->quote_type_id,
+                    ], exception: $e);
+                    // Do not throw — continue with next quote
+                }
             }
 
             LoggerService::info(self::class.': PC qualified removal exercise has been completed');
