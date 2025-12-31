@@ -99,6 +99,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
                     $leadInsurerTaxNumber = $leadDataStructure[$docType]['insurer_tax_number'] ?? null;
 
                     // Check if OCR's tax_invoice_number matches EITHER lead's tax_invoice_number OR insurer_tax_number
+                    // Note: null === null is considered a match (both missing is correct)
                     $taxInvoiceMatch = $this->valuesMatch($leadTaxInvoiceNumber, $ocrTaxInvoiceNumber)
                         || $this->valuesMatch($leadInsurerTaxNumber, $ocrTaxInvoiceNumber);
 
