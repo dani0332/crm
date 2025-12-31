@@ -850,7 +850,7 @@ class CentralController extends Controller
         LoggerService::startFeatureLogging(LoggerFeatureEnum::CAPTURE_PAYMENT_VALIDATION);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
         $quote = $this->getQuoteObjectBy($request->modelType, $request->uuid, 'uuid');
-        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode , $quote);
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode, $quote);
 
         $logContext = [
             'ref_id' => $request->quoteCode,
