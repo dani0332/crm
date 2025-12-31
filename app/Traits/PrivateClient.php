@@ -10,7 +10,6 @@ use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PrivateClientConfigService;
-use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -227,27 +226,68 @@ trait PrivateClient
             });
     }
 
-    private function applyPcpTagsToLeadAndCustomer($model, $pcpTagVersion): bool
+    public function removePcQualified(string $leadUuid, int $quoteTypeId)
     {
-        try {
-            return DB::transaction(function () use ($pcpTagVersion, $model) {
-                LoggerService::info('Applying PCP tag to lead and customer.', extra: [
-                    'leadUuid' => $model->uuid,
-                    'pcpTagVersion' => $pcpTagVersion,
-                ]);
-                $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
+        if (! $this->isLOBEligibleForPCP($quoteTypeId)) {
+            LoggerService::warning('LOB not eligible for PCP yet.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
 
-                $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
+            return;
+        }
 
-                $this->logUpdateResults($updateResults, $customerUpdateResult);
+        $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
+        if (! class_exists($modelClass)) {
+            LoggerService::warning('Model class not found.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
 
-                return true;
-            });
-        } catch (Exception $ex) {
-            LoggerService::error('Error applying PCP tag.', exception: $ex);
+            return;
+        }
 
+        // Find the lead model
+        $model = $this->findLeadModel($modelClass, $leadUuid, $quoteTypeId);
+        if (! $model) {
             return false;
         }
+        $configs = null;
+
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if ($quoteType && $quoteType instanceof QuoteTypes) {
+            $configs = app(PrivateClientConfigService::class)->evaluateConfig($quoteType, $model->nationality_id);
+        }
+
+        if (empty($configs)) {
+            LoggerService::warning('no configration found for this quoteType.', extra: [
+                'quoteType' => $quoteType,
+            ]);
+
+            return;
+        }
+
+        // Returnif lead matches PCP criteria
+        if ($this->doesLeadMatchPcpCriteria($model, $configs, $modelClass, $quoteTypeId)) {
+            LoggerService::warning('Lead matches PCP criteria so skipping it.', extra: [
+                'tag_version_criteria' => $configs->toArray(),
+                'leadUuid' => $leadUuid,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return;
+        }
+
+        LoggerService::warning('Removing PC qualified tag as lead does not match PCP criteria.', extra: [
+            'tag_version_criteria' => $configs->toArray(),
+            'leadUuid' => $leadUuid,
+            'quoteTypeId' => $quoteTypeId,
+        ]);
+
+        // Remove PC qualified tag from lead and personal quote
+        DB::transaction(function () use ($model) {
+            $updateData = ['pc_qualified' => false, 'pcp_tag_version' => null];
+            $model->update($updateData);
+            PersonalQuote::where('uuid', $model->uuid)->update($updateData);
+        });
     }
 
     private function updateLeadAndPersonalQuote($model, int $pcpTagVersion): array
