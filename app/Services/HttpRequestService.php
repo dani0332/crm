@@ -30,9 +30,17 @@ class HttpRequestService extends BaseService
 
             return $statusCode;
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            LoggerService::error('HttpRequestService - processRequest - error - ', [], $e);
+            $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
             $response = json_decode((string) $e->getResponse()->getBody());
-
+           
+            if (isset($statusCode) && $statusCode  === 404) {
+                LoggerService::warning('HttpRequestService - processRequest - 404 Not Found - ', [
+                    'status_code' => $statusCode,
+                    'response' => $response,
+                ], $e);
+            } else {
+                LoggerService::error('HttpRequestService - processRequest - error - ', [], $e);
+            }
             if (isset($response->error)) {
                 $response = $response->error;
             }
