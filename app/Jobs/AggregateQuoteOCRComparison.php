@@ -81,9 +81,14 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             $matchCount = 0;
             $totalFields = count($leadDataStructure[$docType]);
 
-            foreach ($leadDataStructure[$docType] as $key => $value) {
-                if (array_key_exists($key, $ocrDataStructure[$docType]) &&
-                    $leadDataStructure[$docType][$key] === $ocrDataStructure[$docType][$key]) {
+            foreach ($leadDataStructure[$docType] as $key => $leadValue) {
+                if (! array_key_exists($key, $ocrDataStructure[$docType])) {
+                    continue;
+                }
+
+                $ocrValue = $ocrDataStructure[$docType][$key];
+
+                if ($this->valuesMatch($leadValue, $ocrValue)) {
                     $matchCount++;
                 }
             }
@@ -195,5 +200,21 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             'exception_file' => $exception->getFile(),
             'exception_line' => $exception->getLine(),
         ]);
+    }
+
+    private function valuesMatch($leadValue, $ocrValue): bool
+    {
+        if ($leadValue === $ocrValue) {
+            return true;
+        }
+
+        if ($leadValue === null || $ocrValue === null) {
+            return $leadValue === $ocrValue;
+        }
+
+        $leadStr = (string) $leadValue;
+        $ocrStr = (string) $ocrValue;
+
+        return strtolower(trim($leadStr)) === strtolower(trim($ocrStr));
     }
 }
