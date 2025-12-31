@@ -99,7 +99,7 @@ trait PrivateClient
         return $this->applyPcpTagsToLeadAndCustomer($model, $version);
     }
 
-    public function reEvaluatePrivateClient(array $data): array
+    public function evaluatePrivateClient(array $data): array
     {
         $quoteTypeId = (int) $data['quote_type_id'];
 

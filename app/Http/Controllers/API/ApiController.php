@@ -26,7 +26,7 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\PaymentNotificationRequest;
-use App\Http\Requests\ReEvaluatePrivateClientRequest;
+use App\Http\Requests\evaluatePrivateClientRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
@@ -69,7 +69,7 @@ class ApiController extends Controller
 {
     // Use both traits; alias PrivateClient::reEvaluatePrivateClient to avoid future conflicts and enable explicit access.
     use GenericQueriesAllLobs, PrivateClient {
-        PrivateClient::reEvaluatePrivateClient as privateClientReEvaluate;
+        PrivateClient::evaluatePrivateClient as privateClientReEvaluate;
     }
 
     private const REQUIRED_STRING = 'required|string';
@@ -468,7 +468,7 @@ class ApiController extends Controller
         LoggerService::info(self::class.': Private client tag exercise has been completed');
     }
 
-    public function reEvaluatePrivateClient(ReEvaluatePrivateClientRequest $request)
+    public function evaluatePrivateClient(evaluatePrivateClientRequest $request)
     {
         $response = $this->privateClientReEvaluate($request->validated());
 
