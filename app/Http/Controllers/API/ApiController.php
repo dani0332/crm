@@ -473,7 +473,7 @@ class ApiController extends Controller
 
         dispatch(new TagPcpCustomerJob($request->input('uuids')));
 
-        return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging job has been dispatched!');
     }
 
     public function removePcQualified(Request $request)
@@ -487,7 +487,7 @@ class ApiController extends Controller
 
         dispatch(new RemovePcQualifiedJob($request->input('uuids')));
 
-        return apiResponse(null, Response::HTTP_OK, 'PC qualified removal has started!');
+        return apiResponse(null, Response::HTTP_OK, 'PC qualified removal job has been dispatched!');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
