@@ -248,7 +248,7 @@ trait PrivateClient
         // Find the lead model
         $model = $this->findLeadModel($modelClass, $leadUuid, $quoteTypeId);
         if (! $model) {
-            return false;
+            return;
         }
         $configs = null;
 
