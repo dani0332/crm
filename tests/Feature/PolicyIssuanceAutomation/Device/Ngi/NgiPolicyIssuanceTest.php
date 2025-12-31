@@ -15,7 +15,7 @@ use Tests\Helpers\NgiPolicyIssuanceTestDataBuilder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createDeviceSchema();
+    TestSchemaCreator::createMinimalSchema();
     enableNgiDeviceAutomation();
 });
 

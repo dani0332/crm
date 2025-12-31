@@ -352,15 +352,6 @@ class TestSchemaCreator
                 }
             });
         }
-    }
-
-    /**
-     * Create Device/NGI specific schema tables.
-     */
-    public static function createDeviceSchema(): void
-    {
-        // Ensure minimal schema exists first
-        self::createMinimalSchema();
 
         // Create device_quote table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('device_quote')) {
