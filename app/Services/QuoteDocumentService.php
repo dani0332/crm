@@ -654,6 +654,22 @@ class QuoteDocumentService extends BaseService
             if (file_exists($sourceFilePath)) {
                 unlink($sourceFilePath);
             }
+
+            $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt');
+            if (file_exists($qpdfLogPath)) {
+                unlink($qpdfLogPath);
+            }
+
+            $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+            if (file_exists($decryptedTempPath)) {
+                unlink($decryptedTempPath);
+            }
+
+            $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+            if (file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
+
         }
     }
 
@@ -704,7 +720,7 @@ class QuoteDocumentService extends BaseService
                 escapeshellarg($tempFilePath).' > '.
                 escapeshellarg($qpdfLogPath).' 2>&1';
 
-            shell_exec($qpdfCommand);
+            $output = shell_exec($qpdfCommand);
 
             if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
                 $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
@@ -712,7 +728,7 @@ class QuoteDocumentService extends BaseService
                 throw new \Exception('qpdf preprocessing failed');
             }
 
-            // region Build watermark overlay PDF (keeps form field appearances intact)
+            // region Apply watermark with FPDI
             $pdf = new Fpdi;
             $pageCount = $pdf->setSourceFile($tempFilePath);
 
@@ -763,19 +779,6 @@ class QuoteDocumentService extends BaseService
         } finally {
             if (file_exists($watermarkOverlayPath)) {
                 unlink($watermarkOverlayPath);
-            }
-
-            $qpdfLogPath ??= null;
-            if ($qpdfLogPath && file_exists($qpdfLogPath)) {
-                unlink($qpdfLogPath);
-            }
-
-            if (file_exists($decryptedTempPath)) {
-                unlink($decryptedTempPath);
-            }
-
-            if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
             }
         }
     }
