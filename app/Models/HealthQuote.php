@@ -583,7 +583,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function isSTPCase()
     {
-        return (bool) $this->healthUmafResponse?->stp_rating['is_stp'];
+        return (bool) $this->healthUmafResponse?->stp_rating['is_stp'] ?? false;
     }
 
     public function isBookingFailed()
