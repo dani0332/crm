@@ -482,4 +482,81 @@ class CyberQuoteService extends BaseQuoteService
 
         return $cyberManager?->email;
     }
+
+    /**
+     * Get customer cyber info for AML screening automation.
+     *
+     * @param  int  $quoteRequestId
+     * @param  string  $quoteType
+     * @return object|false
+     */
+    public function getCustomerCyberInfo(int $quoteRequestId, string $quoteType)
+    {
+        $model = $this->getModelObject($quoteType);
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        $customerCyberInfo = DB::table('personal_quotes as pq')
+            ->leftJoin('customer_insured as ci', function ($join) {
+                $join->on('ci.quote_request_id', '=', 'pq.id')
+                    ->where('ci.quote_type_id', '=', QuoteTypeId::Cyber);
+            })
+            ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
+            ->select(
+                'pq.id',
+                'pq.code',
+                'pq.customer_id',
+                'pq.gender',
+                'pq.first_name',
+                'pq.last_name',
+                'pq.dob',
+                'pq.nationality_id',
+                'i.id_type',
+                'i.id_number'
+            )
+            ->where('pq.id', $quoteRequestId)
+            ->where('pq.quote_type_id', QuoteTypeId::Cyber)
+            ->orderBy('ci.updated_at', 'desc')
+            ->first();
+
+        return $customerCyberInfo;
+    }
+
+    /**
+     * Check if customer cyber info is complete for AML screening.
+     *
+     * @param  array  $cyberQuoteRequest
+     * @return array
+     */
+    public function checkCustomerCyberInfoIsComplete(array $cyberQuoteRequest): array
+    {
+        $message = '';
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id']);
+
+        $missingDetails = [];
+        foreach ($requiredProperty as $value) {
+            if (empty($cyberQuoteRequest[$value])) {
+                $propertyName = match ($value) {
+                    'dob' => 'date of birth',
+                    'nationality_id' => 'nationality',
+                    default => str_replace(['-', '_'], ' ', $value)
+                };
+                array_push($missingDetails, ucwords($propertyName));
+            }
+        }
+
+        // Check for ID number (either passport or emirates ID)
+        if (empty($cyberQuoteRequest['id_number'])) {
+            array_push($missingDetails, 'ID Number (Passport or Emirates ID)');
+        }
+
+        $missingDetailCount = count($missingDetails);
+        if ($missingDetailCount) {
+            $message = 'Missing Info: '.implode(', ', $missingDetails);
+        }
+
+        return ['status' => $missingDetailCount ? false : true, 'message' => $message];
+    }
 }
