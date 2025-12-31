@@ -34,7 +34,7 @@ class HttpRequestService extends BaseService
             $statusCode = $responseObj ? $responseObj->getStatusCode() : null;
             $response = $responseObj ? json_decode((string) $responseObj->getBody()) : null;
 
-            if (isset($statusCode) && $statusCode  === 404) {
+            if (isset($statusCode) && $statusCode === 404) {
                 LoggerService::warning('HttpRequestService - processRequest - 404 Not Found - ', [
                     'status_code' => $statusCode,
                     'response' => $response,
