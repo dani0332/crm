@@ -87,7 +87,6 @@ trait PersonalQuoteObservable
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             $this->handlePolicyIssued($personalQuote);
-            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             if ($personalQuote->isHome()) {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$personalQuote->code.' Policy Issued ');
                 SendPolicyIssueWhatsappMessageJob::dispatch($personalQuote->uuid, $personalQuote->quote_type_id)->onQueue('insly');
