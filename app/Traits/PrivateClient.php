@@ -201,11 +201,10 @@ trait PrivateClient
                     ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                     ->whereNotNull('policy_expiry_date')
                     ->where('policy_expiry_date', '>', now());
+            })
+            ->when($customerId !== null, function ($query) use ($customerId) {
+                $query->where('id', $customerId);
             });
-
-        if ($customerId) {
-            $customers->where('id', $customerId);
-        }
 
         $customers->chunk(100, function ($customers) {
             foreach ($customers as $customer) {
@@ -291,12 +290,13 @@ trait PrivateClient
             $updateData = ['pc_qualified' => false, 'pcp_tag_version' => null];
             $model->update($updateData);
 
-            // Skip if its Home or Yatch since home and yatch already personal quote model
-            if ($model->quote_type_id === QuoteTypeId::Home || $model->quote_type_id === QuoteTypeId::Yacht) {
-                return;
+            // Update personal quote model if its not Home or Yacht since home and yacht already have personal quote model
+            if ($model->quote_type_id !== QuoteTypeId::Home && $model->quote_type_id !== QuoteTypeId::Yacht) {
+                PersonalQuote::where('uuid', $model->uuid)->update($updateData);
             }
 
-            PersonalQuote::where('uuid', $model->uuid)->update($updateData);
+            // Remobe PCP tag from customer if no active qualified leads were found
+            $this->removePcpTag($model->customer_id);
         });
     }
 
