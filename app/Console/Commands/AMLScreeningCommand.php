@@ -95,7 +95,6 @@ class AMLScreeningCommand extends Command
             ->whereDoesntHave('amlAutomation', function ($query) {
                 $query->where('status', AmlAutomationStatus::QUEUE_STATUS);
             });
-        
 
         // For PersonalQuote (Cyber), also filter by quote_type_id
         if ($quoteType === QuoteTypes::CYBER) {

@@ -486,8 +486,6 @@ class CyberQuoteService extends BaseQuoteService
     /**
      * Get customer cyber info for AML screening automation.
      *
-     * @param  int  $quoteRequestId
-     * @param  string  $quoteType
      * @return object|false
      */
     public function getCustomerCyberInfo(int $quoteRequestId, string $quoteType)
@@ -526,9 +524,6 @@ class CyberQuoteService extends BaseQuoteService
 
     /**
      * Check if customer cyber info is complete for AML screening.
-     *
-     * @param  array  $cyberQuoteRequest
-     * @return array
      */
     public function checkCustomerCyberInfoIsComplete(array $cyberQuoteRequest): array
     {

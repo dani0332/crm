@@ -73,7 +73,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
         $isAMLPending = empty($this->quoteRequest->aml_status) ?: $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
-        
+
         // Check amlAutomation status based on quote type
         $isAutomationInQueue = false;
         if ($this->quoteType === QuoteTypes::TRAVEL) {
@@ -161,7 +161,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         if ($this->quoteType === QuoteTypes::TRAVEL) {
             $travelQuoteService = app(TravelQuoteService::class);
             $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
-            
+
             if (empty($customerTravelInfo['id'])) {
                 return null;
             }
@@ -181,7 +181,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         } elseif ($this->quoteType === QuoteTypes::CYBER) {
             $cyberQuoteService = app(CyberQuoteService::class);
             $customerCyberInfo = (array) $cyberQuoteService->getCustomerCyberInfo($this->quoteRequest->id, $this->quoteType->value);
-            
+
             if (empty($customerCyberInfo['id'])) {
                 return null;
             }
@@ -199,9 +199,11 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     {
         if ($this->quoteType === QuoteTypes::TRAVEL) {
             $travelQuoteService = app(TravelQuoteService::class);
+
             return $travelQuoteService->checkCustomerTravelInfoIsComplete($customerInfo);
         } elseif ($this->quoteType === QuoteTypes::CYBER) {
             $cyberQuoteService = app(CyberQuoteService::class);
+
             return $cyberQuoteService->checkCustomerCyberInfoIsComplete($customerInfo);
         }
 
