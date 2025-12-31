@@ -30,7 +30,11 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'has_pec_tag'];
+    protected $appends = [
+        'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 
+        'pc_qualified_formatted', 'has_pec_tag', 'api_issuance_status', 'insurer_api_status'
+    ];
+
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -68,6 +72,16 @@ class HealthQuote extends Model implements AuditableContract
                 unset($model->policy_booking_date); // lock the policy booking date field
             }
         });
+    }
+
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
 
     public function getAuditables()

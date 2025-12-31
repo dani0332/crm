@@ -74,6 +74,8 @@ const props = defineProps({
   isAUHLead: Boolean,
   branchOptions: Object,
   hasPecTag: Boolean,
+  apiIssuanceStatus: String,
+  insurerApiStatus: String,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -2364,6 +2366,14 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.insurer_api_status ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS STP Case</dt>

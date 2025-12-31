@@ -224,6 +224,8 @@ class HealthQuoteService extends BaseService
             'b.id as lead_branch_id',
             'is_quote_locked',
             'is_branch_applicable',
+            'hqr.api_issuance_status_id',
+            'hqr.insurer_api_status_id',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
