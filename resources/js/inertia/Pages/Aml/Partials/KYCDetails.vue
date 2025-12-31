@@ -446,14 +446,14 @@ const submitInsuredKycForm = isValid => {
           notification.success({
             title: 'KYC Document uploaded successfully',
             position: 'top',
-          }); 
-          if(response.data.message){
+          });
+          if (response.data.message) {
             notification.success({
               title: response.data.message,
               position: 'top',
             });
           }
-          
+
           router.reload({
             replace: true,
             preserveScroll: true,
