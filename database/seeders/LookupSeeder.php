@@ -516,7 +516,7 @@ class LookupSeeder extends Seeder
             InsuranceProvidersEnum::AXA => ['INHOUSE'], // AXA/GIG GULF
             InsuranceProvidersEnum::BUP => ['SUKOON'],
             InsuranceProvidersEnum::CIG => ['NEURON'],
-            InsuranceProvidersEnum::DIC_AUH => ['MEDNET', 'DUBAICARE','AAFIYA', 'NEXTCARE'], // DUBAI INSURANCE (includes ISON, REMNTO)
+            InsuranceProvidersEnum::DIC_AUH => ['MEDNET', 'DUBAICARE', 'AAFIYA', 'NEXTCARE'], // DUBAI INSURANCE (includes ISON, REMNTO)
             InsuranceProvidersEnum::ISON_AUH => ['AAFIYA', 'NEXTCARE', 'MEDNET'],
             InsuranceProvidersEnum::FID => ['NEXTCARE', 'NAS'],
             'HANSEMERKUR' => ['NEURON', 'NEXTCARE'],
@@ -533,7 +533,7 @@ class LookupSeeder extends Seeder
             InsuranceProvidersEnum::SAICO => ['INHOUSE'],
             InsuranceProvidersEnum::SI => ['NAS', 'MEDNET', 'NEXTCARE', 'AAFIYA', 'AL MADALLAH'], // SALAMA
             InsuranceProvidersEnum::TE => ['NAS', 'AAFIYA', 'MEDNET', 'ECARE', 'NEXTCARE'], // TAKAFUL EMARAT
-            InsuranceProvidersEnum::HYH => ['NEXTCARE']
+            InsuranceProvidersEnum::HYH => ['NEXTCARE'],
         ];
 
         $sortOrder = 1;
@@ -543,7 +543,7 @@ class LookupSeeder extends Seeder
             $insuranceProvider = InsuranceProvider::where('code', $insurerCode)->first();
 
             // Skip if provider not found
-            if (!$insuranceProvider) {
+            if (! $insuranceProvider) {
                 continue;
             }
 

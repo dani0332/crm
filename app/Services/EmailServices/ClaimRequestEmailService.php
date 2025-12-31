@@ -35,16 +35,13 @@ class ClaimRequestEmailService extends BaseService
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'customer_email' => $claimRequest->email,
-                'isLifeLOB' => $isLifeLob
+                'isLifeLOB' => $isLifeLob,
             ]);
 
-
-            if(!$isLifeLob){
+            if (! $isLifeLob) {
                 // Dispatch the job to send Google review email
                 SendClaimGoogleReviewEmailJob::dispatch($claimRequest->uuid);
             }
-
-
 
         } catch (\Exception $e) {
             LoggerService::error(' Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
