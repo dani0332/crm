@@ -12,6 +12,7 @@ use App\Models\GenericDocument;
 use App\Models\GenericDocumentType;
 use App\Models\InsuranceProvider;
 use App\Services\QuoteDocumentService;
+use Illuminate\Database\Eloquent\Collection;
 use Tests\Helpers\TestSchemaCreator;
 use Tests\TestCase;
 
@@ -26,30 +27,139 @@ class QuoteDocumentServiceTest extends TestCase
         $this->service = new QuoteDocumentService();
     }
 
-    public function test_get_claim_documents_returns_empty_structure_when_no_document_type_exists(): void
+    public function test_get_empty_claim_documents_response_structure(): void
     {
-        // Don't create any GenericDocumentType
-        $result = $this->service->getClaimDocuments();
-
+        $result = $this->service->getEmptyClaimDocumentsResponseStructure();
+        
         $this->assertIsArray($result);
         $this->assertNotEmpty($result);
+
+        // Check that all expected quote types are present
+        $expectedQuoteTypes = QuoteTypeId::getClaimDocumentQuoteTypes();
+        foreach ($expectedQuoteTypes as $quoteTypeId) {
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+            if ($lob) {
+                $this->assertArrayHasKey($lob, $result);
+                $this->assertEquals($quoteTypeId, $result[$lob]['quoteTypeId']);
+                $this->assertIsArray($result[$lob]['docs']);
+                $this->assertEmpty($result[$lob]['docs']);
+            }
+        }
+
+        // Verify structure for specific LOBs
         $this->assertArrayHasKey('Home', $result);
-        $this->assertArrayHasKey('Travel', $result);
-        $this->assertArrayHasKey('Business', $result);
+        $this->assertEquals(QuoteTypeId::Home, $result['Home']['quoteTypeId']);
+        $this->assertIsArray($result['Home']['docs']);
         $this->assertEmpty($result['Home']['docs']);
-        $this->assertEmpty($result['Travel']['docs']);
+
+        $this->assertArrayHasKey('Business', $result);
+        $this->assertEquals(QuoteTypeId::Business, $result['Business']['quoteTypeId']);
+        $this->assertIsArray($result['Business']['docs']);
         $this->assertEmpty($result['Business']['docs']);
+
+        $this->assertArrayHasKey('Travel', $result);
+        $this->assertEquals(QuoteTypeId::Travel, $result['Travel']['quoteTypeId']);
+        $this->assertIsArray($result['Travel']['docs']);
+        $this->assertEmpty($result['Travel']['docs']);
     }
 
-    public function test_get_claim_documents_returns_empty_structure_when_no_documents_exist(): void
+    public function test_group_claim_documents_by_quote_type(): void
     {
-        // Create GenericDocumentType but no documents
-        GenericDocumentType::factory()->create([
-            'code' => GenericDocumentTypeCode::CLAIM_FORM->value,
+        $insuranceProvider = InsuranceProvider::factory()->create([
+            'code' => InsuranceProviderEnum::RSA->value,
+        ]);
+        $businessType = BusinessTypeOfInsurance::factory()->create(['text' => 'Property', 'code' => 'PROP']);
+
+        // Create documents for different scenarios
+        $homeDocument = GenericDocument::factory()->make([
+            'quote_type_id' => QuoteTypeId::Home,
+            'insurance_provider_id' => $insuranceProvider->id,
+            'name' => 'home-doc.pdf',
+            'path' => 'documents/claims/home-doc.pdf',
+        ]);
+        $homeDocument->insuranceProvider = $insuranceProvider;
+
+        $travelDocument = GenericDocument::factory()->make([
+            'quote_type_id' => QuoteTypeId::Travel,
+            'insurance_provider_id' => $insuranceProvider->id,
+            'name' => 'travel-doc.pdf',
+            'path' => 'documents/claims/travel-doc.pdf',
+        ]);
+        $travelDocument->insuranceProvider = $insuranceProvider;
+
+        $businessDocument = GenericDocument::factory()->make([
+            'quote_type_id' => QuoteTypeId::Business,
+            'insurance_provider_id' => $insuranceProvider->id,
+            'business_type_of_insurance_id' => $businessType->id,
+            'name' => 'business-doc.pdf',
+            'path' => 'documents/claims/business-doc.pdf',
+        ]);
+        $businessDocument->insuranceProvider = $insuranceProvider;
+        $businessDocument->businessTypeOfInsurance = $businessType;
+
+        // Document without insurance provider (should be skipped)
+        $documentWithoutProvider = GenericDocument::factory()->make([
+            'quote_type_id' => QuoteTypeId::Home,
+            'insurance_provider_id' => null,
+            'name' => 'no-provider.pdf',
+        ]);
+        $documentWithoutProvider->insuranceProvider = null;
+
+        // Document without quote_type_id (should be skipped)
+        $documentWithoutQuoteType = GenericDocument::factory()->make([
+            'quote_type_id' => null,
+            'insurance_provider_id' => $insuranceProvider->id,
+            'name' => 'no-quote-type.pdf',
+        ]);
+        $documentWithoutQuoteType->insuranceProvider = $insuranceProvider;
+
+        $documents = new Collection([
+            $homeDocument,
+            $travelDocument,
+            $businessDocument,
+            $documentWithoutProvider,
+            $documentWithoutQuoteType,
         ]);
 
-        $result = $this->service->getClaimDocuments();
+        $result = $this->service->groupClaimDocumentsByQuoteType($documents);
 
+        // Verify grouping works correctly
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result['Home']['docs']);
+        $this->assertCount(1, $result['Travel']['docs']);
+        $this->assertCount(1, $result['Business']['docs']);
+        
+        // Verify Home document structure
+        $homeDoc = $result['Home']['docs'][0];
+        $this->assertEquals($insuranceProvider->id, $homeDoc['insuranceProviderId']);
+        $this->assertEquals(InsuranceProviderEnum::RSA->value, $homeDoc['insuranceProviderCode']);
+        $this->assertEquals('home-doc.pdf', $homeDoc['docTitle']);
+        $this->assertStringContainsString('documents/claims/home-doc.pdf', $homeDoc['docUrl']);
+        $this->assertArrayNotHasKey('businessTypeOfInsuranceId', $homeDoc);
+        $this->assertArrayNotHasKey('businessTypeOfInsurance', $homeDoc);
+
+        // Verify Travel document structure
+        $travelDoc = $result['Travel']['docs'][0];
+        $this->assertEquals($insuranceProvider->id, $travelDoc['insuranceProviderId']);
+        $this->assertEquals('travel-doc.pdf', $travelDoc['docTitle']);
+        $this->assertStringContainsString('documents/claims/travel-doc.pdf', $travelDoc['docUrl']);
+
+        // Verify Business document includes business_type_of_insurance
+        $businessDoc = $result['Business']['docs'][0];
+        $this->assertArrayHasKey('businessTypeOfInsuranceId', $businessDoc);
+        $this->assertArrayHasKey('businessTypeOfInsurance', $businessDoc);
+        $this->assertEquals($businessType->id, $businessDoc['businessTypeOfInsuranceId']);
+        $this->assertEquals('Property', $businessDoc['businessTypeOfInsurance']['text']);
+        $this->assertEquals('PROP', $businessDoc['businessTypeOfInsurance']['code']);
+
+        // Verify documents without provider or quote_type_id are skipped
+        $this->assertCount(1, $result['Home']['docs'], 'Documents without provider or quote_type_id should be skipped');
+    }
+
+    public function test_get_claim_documents(): void
+    {
+        // Test with no document type
+        $result = $this->service->getClaimDocuments();
         $this->assertIsArray($result);
         $this->assertNotEmpty($result);
         $this->assertArrayHasKey('Home', $result);
@@ -58,14 +168,23 @@ class QuoteDocumentServiceTest extends TestCase
         $this->assertEmpty($result['Home']['docs']);
         $this->assertEmpty($result['Travel']['docs']);
         $this->assertEmpty($result['Business']['docs']);
-    }
 
-    public function test_get_claim_documents_groups_documents_by_quote_type(): void
-    {
+        // Test with document type but no documents
         $documentType = GenericDocumentType::factory()->create([
             'code' => GenericDocumentTypeCode::CLAIM_FORM->value,
         ]);
 
+        $result = $this->service->getClaimDocuments();
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+        $this->assertArrayHasKey('Home', $result);
+        $this->assertArrayHasKey('Travel', $result);
+        $this->assertArrayHasKey('Business', $result);
+        $this->assertEmpty($result['Home']['docs']);
+        $this->assertEmpty($result['Travel']['docs']);
+        $this->assertEmpty($result['Business']['docs']);
+
+        // Test with documents (reuse the same documentType created above)
         $insuranceProvider = InsuranceProvider::factory()->create([
             'code' => InsuranceProviderEnum::RSA->value,
         ]);
@@ -74,157 +193,25 @@ class QuoteDocumentServiceTest extends TestCase
             'documentable_type' => GenericDocumentType::class,
             'documentable_id' => $documentType->id,
             'insurance_provider_id' => $insuranceProvider->id,
-            'name' => 'test1.pdf',
-            'path' => 'documents/claims/test1.pdf',
+            'name' => 'home-doc.pdf',
         ]);
 
         GenericDocument::factory()->forTravel()->create([
             'documentable_type' => GenericDocumentType::class,
             'documentable_id' => $documentType->id,
             'insurance_provider_id' => $insuranceProvider->id,
-            'name' => 'test2.pdf',
-            'path' => 'documents/claims/test2.pdf',
+            'name' => 'travel-doc.pdf',
         ]);
 
         $result = $this->service->getClaimDocuments();
 
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('Home', $result);
-        $this->assertArrayHasKey('Travel', $result);
         $this->assertCount(1, $result['Home']['docs']);
         $this->assertCount(1, $result['Travel']['docs']);
         $this->assertEquals(QuoteTypeId::Home, $result['Home']['quoteTypeId']);
         $this->assertEquals(QuoteTypeId::Travel, $result['Travel']['quoteTypeId']);
-    }
-
-    public function test_get_claim_documents_includes_business_type_only_for_business_lob(): void
-    {
-        $documentType = GenericDocumentType::factory()->create([
-            'code' => GenericDocumentTypeCode::CLAIM_FORM->value,
-        ]);
-
-        $insuranceProvider = InsuranceProvider::factory()->create();
-        $businessType = BusinessTypeOfInsurance::factory()->create(['text' => 'Property']);
-
-        // Business document with business type
-        GenericDocument::factory()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
-            'quote_type_id' => QuoteTypeId::Business,
-            'insurance_provider_id' => $insuranceProvider->id,
-            'business_type_of_insurance_id' => $businessType->id,
-            'name' => 'business.pdf',
-        ]);
-
-        // Home document (should NOT have business type even if set)
-        GenericDocument::factory()->forHome()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
-            'insurance_provider_id' => $insuranceProvider->id,
-            'business_type_of_insurance_id' => $businessType->id,
-            'name' => 'home.pdf',
-        ]);
-
-        $result = $this->service->getClaimDocuments();
-
-        // Business document should have business_type_of_insurance
-        $businessDoc = $result['Business']['docs'][0];
-        $this->assertArrayHasKey('businessTypeOfInsuranceId', $businessDoc);
-        $this->assertArrayHasKey('businessTypeOfInsurance', $businessDoc);
-        $this->assertEquals($businessType->id, $businessDoc['businessTypeOfInsuranceId']);
-        $this->assertNotNull($businessDoc['businessTypeOfInsurance']);
-        $this->assertEquals('Property', $businessDoc['businessTypeOfInsurance']['text']);
-
-        // Home document should NOT have business_type_of_insurance
-        $homeDoc = $result['Home']['docs'][0];
-        $this->assertArrayNotHasKey('businessTypeOfInsuranceId', $homeDoc);
-        $this->assertArrayNotHasKey('businessTypeOfInsurance', $homeDoc);
-    }
-
-    public function test_get_claim_documents_skips_documents_without_insurance_provider(): void
-    {
-        $documentType = GenericDocumentType::factory()->create([
-            'code' => GenericDocumentTypeCode::CLAIM_FORM->value,
-        ]);
-
-        $insuranceProvider = InsuranceProvider::factory()->create();
-
-        // Document with insurance provider
-        GenericDocument::factory()->forHome()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
-            'insurance_provider_id' => $insuranceProvider->id,
-            'name' => 'with-provider.pdf',
-        ]);
-
-        // Document without insurance provider
-        GenericDocument::factory()->forHome()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
-            'insurance_provider_id' => null,
-            'name' => 'without-provider.pdf',
-        ]);
-
-        $result = $this->service->getClaimDocuments();
-
-        // Only document with insurance provider should be included
-        $this->assertCount(1, $result['Home']['docs']);
-        $this->assertEquals('with-provider.pdf', $result['Home']['docs'][0]['docTitle']);
-    }
-
-    public function test_get_claim_documents_skips_documents_with_null_quote_type_id(): void
-    {
-        $documentType = GenericDocumentType::factory()->create([
-            'code' => GenericDocumentTypeCode::CLAIM_FORM->value,
-        ]);
-
-        $insuranceProvider = InsuranceProvider::factory()->create();
-
-        // Document with quote_type_id
-        GenericDocument::factory()->forHome()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
-            'insurance_provider_id' => $insuranceProvider->id,
-            'name' => 'with-quote-type.pdf',
-        ]);
-
-        // Document without quote_type_id
-        GenericDocument::factory()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
-            'quote_type_id' => null,
-            'insurance_provider_id' => $insuranceProvider->id,
-            'name' => 'without-quote-type.pdf',
-        ]);
-
-        $result = $this->service->getClaimDocuments();
-
-        // Only document with quote_type_id should be included
-        $this->assertCount(1, $result['Home']['docs']);
-        $this->assertEquals('with-quote-type.pdf', $result['Home']['docs'][0]['docTitle']);
-    }
-
-    public function test_get_claim_documents_generates_full_document_url(): void
-    {
-        $documentType = GenericDocumentType::factory()->create([
-            'code' => GenericDocumentTypeCode::CLAIM_FORM->value,
-        ]);
-
-        $insuranceProvider = InsuranceProvider::factory()->create();
-
-        GenericDocument::factory()->forHome()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
-            'insurance_provider_id' => $insuranceProvider->id,
-            'name' => 'test.pdf',
-            'path' => 'documents/claims/test.pdf',
-        ]);
-
-        $result = $this->service->getClaimDocuments();
-
-        $docUrl = $result['Home']['docs'][0]['docUrl'];
-        $this->assertNotEmpty($docUrl);
-        $this->assertStringContainsString('documents/claims/test.pdf', $docUrl);
+        $this->assertEquals('home-doc.pdf', $result['Home']['docs'][0]['docTitle']);
+        $this->assertEquals('travel-doc.pdf', $result['Travel']['docs'][0]['docTitle']);
     }
 }
 

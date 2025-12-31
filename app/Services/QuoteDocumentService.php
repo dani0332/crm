@@ -1159,7 +1159,7 @@ class QuoteDocumentService extends BaseService
      *
      * @return array
      */
-    private function getEmptyClaimDocumentsResponseStructure(): array
+    public function getEmptyClaimDocumentsResponseStructure(): array
     {
         $structure = [];
 
@@ -1184,7 +1184,7 @@ class QuoteDocumentService extends BaseService
      * @param \Illuminate\Database\Eloquent\Collection $documents
      * @return array
      */
-    private function groupClaimDocumentsByQuoteType($documents): array
+    public function groupClaimDocumentsByQuoteType($documents): array
     {
         $grouped = $this->getEmptyClaimDocumentsResponseStructure();
 
