@@ -358,6 +358,9 @@ class RetryAllocationService
             ->when($quoteType === QuoteTypes::CORPLINE, function ($q) {
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
+            ->when($quoteType === QuoteTypes::CYBER, function ($q) {
+                $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested');
+            })
             ->take($chunkSize);
 
         $leads->logRawSql();
@@ -368,15 +371,22 @@ class RetryAllocationService
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
+            $isPaid = $lead->isPaymentAuthorizedOrDeclined();
+            $sicRequested = $quoteType === QuoteTypes::CYBER ? $lead->cyberQuote?->sic_advisor_requested ?? false : false;
+
             LoggerService::info(self::class.': Processing quote allocation', extra: [
                 'quote_type' => $quoteType->value,
                 'payment_status_id' => $lead->payment_status_id,
                 'quote_status_id' => $lead->quote_status_id,
                 'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
                 'source' => $lead->source,
+                'isPaid' => $isPaid,
+                'sicAdvisorRequested' => $sicRequested,
             ]);
+
             $quoteType->allocate(uuid: $lead->uuid);
             $processedRecords++;
+
             LoggerService::info(self::class.': Processed quote allocation', extra: [
                 'quote_type' => $quoteType->value,
             ]);
