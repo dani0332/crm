@@ -290,6 +290,29 @@ trait PrivateClient
         });
     }
 
+    private function applyPcpTagsToLeadAndCustomer($model, $pcpTagVersion): bool
+    {
+        try {
+            return DB::transaction(function () use ($pcpTagVersion, $model) {
+                LoggerService::info('Applying PCP tag to lead and customer.', extra: [
+                    'leadUuid' => $model->uuid,
+                    'pcpTagVersion' => $pcpTagVersion,
+                ]);
+                $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
+
+                $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
+
+                $this->logUpdateResults($updateResults, $customerUpdateResult);
+
+                return true;
+            });
+        } catch (Exception $ex) {
+            LoggerService::error('Error applying PCP tag.', exception: $ex);
+
+            return false;
+        }
+    }
+
     private function updateLeadAndPersonalQuote($model, int $pcpTagVersion): array
     {
         $wasLeadUpdated = false;
