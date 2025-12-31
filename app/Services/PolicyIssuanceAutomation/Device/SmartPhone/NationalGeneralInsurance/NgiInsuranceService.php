@@ -8,10 +8,8 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\NgiEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Interfaces\PolicyIssuanceInterface;
-use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -353,107 +351,4 @@ class NgiInsuranceService implements PolicyIssuanceInterface
         return $insurerApiStatus[$step] ?? null;
     }
 
-    /**
-     * Update quote API issuance status and allocate lead
-     * Called by SageApiService after book policy completes
-     *
-     * @param  mixed  $quote
-     * @param  int|null  $newInsurerApiStatus
-     * @param  int|null  $newApiIssuanceStatus
-     */
-    public function updateQuoteApiIssuanceStatusAndAllocate($quote, $newInsurerApiStatus = null, $newApiIssuanceStatus = null): void
-    {
-
-        LoggerService::info('Disabled updateQuoteApiIssuanceStatusAndAllocate for Device/Smartphone, please execute it from common function updateAPIIssuanceAndInsurerStatus defined in PolicyIssuanceService class for this LOB', extra: []);
-
-    //     // TODO:: NGI:: need to confirm this function with Bilal we might need some changes in this function or sub function calls made from here written in this file.
-    //     LoggerService::info('Starting updateQuoteApiIssuanceStatusAndAllocate for Device/Smartphone', extra: [
-    //         'quote_code' => $quote->code,
-    //     ]);
-
-    //     $policyIssuanceAutomation = $quote->policyIssuance;
-    //     $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
-    //     $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
-
-    //     $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
-    //     $insurerApiStatus = $quote?->insurer_api_status;
-    //     $apiIssuanceStatus = $quote?->api_issuance_status;
-
-    //     $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
-
-    //     LoggerService::info('Current status check', extra: [
-    //         'quote_code' => $quote->code,
-    //         'isInsurerApiStatusAlreadyFailed' => $isInsurerApiStatusAlreadyFailed,
-    //     ]);
-
-    //     // If Quote API issuance status is not already set, then set insurer api and api issuance status
-    //     if (! $apiIssuanceStatus) {
-    //         if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
-    //             $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-    //         } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
-    //             if (! $insurerApiStatus) {
-    //                 $newInsurerApiStatus = PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
-    //             }
-    //             $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
-    //         }
-    //     }
-
-    //     LoggerService::info('Status determination complete', extra: [
-    //         'quote_code' => $quote->code,
-    //         'insurerApiStatus' => $insurerApiStatus,
-    //         'apiIssuanceStatus' => $apiIssuanceStatus,
-    //         'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
-    //         'isPolicyBooked' => $isPolicyBooked,
-    //         'isPolicyBookingFailed' => $isPolicyBookingFailed,
-    //         'newInsurerApiStatus' => $newInsurerApiStatus,
-    //         'newApiIssuanceStatus' => $newApiIssuanceStatus,
-    //     ]);
-
-    //     // Update statuses
-    //     $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
-    //     $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
-
-    //     // Allocate lead and send notifications
-    //     $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
-
-    //     LoggerService::info('updateQuoteApiIssuanceStatusAndAllocate completed', extra: [
-    //         'quote_code' => $quote->code,
-    //     ]);
-    }
-
-    /**
-     * Update quote insurer API status
-     *
-     * @param  mixed  $quote
-     * @param  int|null  $newInsurerApiStatus
-     */
-    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus): void
-    {
-        LoggerService::info('Updating quote insurer API status', extra: [
-            'quote_code' => $quote->code,
-            'new_status' => $newInsurerApiStatus,
-        ]);
-
-        if ($newInsurerApiStatus) {
-            $quote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
-        }
-    }
-
-    /**
-     * Update quote API issuance status
-     *
-     * @param  mixed  $quote
-     * @param  int|null  $newApiIssuanceStatus
-     */
-    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus): void
-    {
-        LoggerService::info('Updating quote API issuance status', extra: [
-            'quote_code' => $quote->code,
-            'new_status' => $newApiIssuanceStatus,
-        ]);
-
-        if ($newApiIssuanceStatus) {
-            $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
-        }
-    }
 }
