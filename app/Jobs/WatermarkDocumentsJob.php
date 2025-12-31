@@ -57,14 +57,14 @@ class WatermarkDocumentsJob implements ShouldQueue
         $documentType = DocumentType::find($this->documentTypeId);
 
         // Ensure the quoteDocument and documentType exist
-        if (!$quoteDocument || !$documentType) {
-            LoggerService::warning('Document or DocumentType not found. Document Id:' . $this->quoteDocumentId . ' Document Type Id: ' . $this->documentTypeId . ' - Ref ID: ' . $this->uuid);
+        if (! $quoteDocument || ! $documentType) {
+            LoggerService::warning('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
 
             return;
         }
 
         // Check if the source file exists
-        if (!$this->fileExists($quoteDocument->doc_url)) {
+        if (! $this->fileExists($quoteDocument->doc_url)) {
             LoggerService::error("Source file does not exist: {$quoteDocument->doc_url}");
 
             return;
@@ -92,10 +92,10 @@ class WatermarkDocumentsJob implements ShouldQueue
                     'watermarked_doc_name' => $watermarkData['watermarked_doc_name'],
                     'watermarked_doc_url' => $watermarkData['watermarked_doc_url'],
                 ]);
-                LoggerService::info('watermark job completed for ' . $this->uuid);
+                LoggerService::info('watermark job completed for '.$this->uuid);
             }
         } catch (\Exception $e) {
-            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: " . $e->getMessage());
+            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage());
             throw $e; // Re-throw to trigger job retry
         }
     }
@@ -137,7 +137,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
             return false;
         } catch (\Exception $e) {
-            LoggerService::error("Error checking file existence: {$path}. Error: " . $e->getMessage());
+            LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
 
             return false;
         }
