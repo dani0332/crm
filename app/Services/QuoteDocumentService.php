@@ -683,7 +683,7 @@ class QuoteDocumentService extends BaseService
      */
     private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
     {
-        $watermarkOverlayPath = storage_path('temp/watermark_'.$uuid.'.pdf');
+        $watermarkOverlayPath = storage_path('temp/watermark_'.$docName);
 
         try {
             // Preprocess the PDF with qpdf for FPDI compatibility
