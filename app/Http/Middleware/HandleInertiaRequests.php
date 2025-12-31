@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -162,6 +163,7 @@ class HandleInertiaRequests extends Middleware
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
             'genericRequestEnum' => GenericRequestEnum::asArray(),
+            'collectionTypeEnum' => CollectionTypeEnum::asArray(),
         ];
     }
 
