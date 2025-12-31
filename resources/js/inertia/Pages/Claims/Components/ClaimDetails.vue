@@ -682,7 +682,9 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Claim TPA Option</dt>
-                <dd>{{ claim.claim_request_details?.tpa_option?.text || 'N/A' }}</dd>
+                <dd>
+                  {{ claim.claim_request_details?.tpa_option?.text || 'N/A' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Complaint Status</dt>
