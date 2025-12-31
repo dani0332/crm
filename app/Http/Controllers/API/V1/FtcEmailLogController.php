@@ -59,7 +59,7 @@ class FtcEmailLogController extends Controller
         } catch (\Exception $th) {
             LoggerService::error('Error creating FTC email log', [
                 'request' => $request->all(),
-            ], $th, ['ref_id' => $quoteUuid, 'feature' => 'ftc_email_log']);
+            ], $th, ['ref_id' => $quoteUuid, 'feature' => LoggerFeatureEnum::FTC_EMAIL_LOG]);
 
             return response()->json(['message' => 'Internal server error.'], 500);
         }
@@ -81,7 +81,7 @@ class FtcEmailLogController extends Controller
         } catch (\Exception $th) {
             LoggerService::error('Error updating FTC email log', [
                 'request' => $request->all(),
-            ], $th, ['feature' => 'ftc_email_log']);
+            ], $th, ['feature' => LoggerFeatureEnum::FTC_EMAIL_LOG]);
 
             return response()->json(['message' => 'Internal server error.'], 500);
         }
