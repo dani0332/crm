@@ -276,7 +276,7 @@ trait PrivateClient
 
                     $matchesCriteria = $this->doesLeadMatchPcpCriteria($lead, $configs, $modelClass, $quoteTypeId);
                     $version = $configs->first()?->version;
-                    $pcpUpdated = $this->updatePcpTagsForLeadAndCustomerAfterEvaluation($lead, $version, shouldRemoveTag:  ! $matchesCriteria);
+                    $pcpUpdated = $this->updatePcpTagsForLeadAndCustomerAfterEvaluation($lead, $version, shouldRemoveTag: ! $matchesCriteria);
 
                     if (! $pcpUpdated) {
                         $results['failures'][] = [
@@ -622,7 +622,7 @@ trait PrivateClient
                     'pcpTagVersion' => $pcpTagVersion,
                 ]);
 
-                //region Lead Update
+                // region Lead Update
                 $leadUpdated = false;
                 $desiredLeadState = $shouldRemoveTag
                     ? ['pc_qualified' => 0, 'pcp_tag_version' => null]
@@ -647,7 +647,7 @@ trait PrivateClient
                         'leadUuid' => $model->uuid,
                     ]);
                 }
-                //endregion
+                // endregion
 
                 // Customer update
                 $customer = Customer::where('id', $model->customer_id)
