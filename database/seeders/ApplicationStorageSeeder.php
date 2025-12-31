@@ -1135,16 +1135,6 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedDeviceSmartphonePolicyIssuanceSettings()
     {
-        // Smartphone - New Policy Template ID (Policy Documents Email)
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DEVICE_SEND_POLICY_TEMPLATE],
-            [
-                'value' => 'db6caa9d-d274-41b8-8950-a6fb4b56ae41', // Smartphone - New Policy template
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
 
         // Smartphone - Book Policy Template ID (same as New Policy for consistency)
         ApplicationStorage::firstOrCreate(
@@ -1232,15 +1222,6 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_REPLY_TO],
-            [
-                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_REPLY_TO,
-                'value' => 'production.approval.team@insurancemarket.ae', // TODO:: NGI:: need to take it from Rucha
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK],
             [
                 'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK,
@@ -1249,23 +1230,6 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL],
-            [
-                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_BIRD_URL,
-                'value' => '', // TODO:: NGI:: need to take it from Rucha
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TEMPLATE_ID],
-            [
-                'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TEMPLATE_ID,
-                'value' => '', // TODO:: NGI:: need to take it from Rucha
-                'is_active' => 1,
-            ],
-        );
     }
 
     private function seedLegacyPolicyKeys()
