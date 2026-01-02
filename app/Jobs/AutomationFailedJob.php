@@ -119,6 +119,7 @@ class AutomationFailedJob implements ShouldQueue
         $ccEmails = $notificationContext['cc'] ?? [];
         $this->recipientEmail = $notificationContext['recipientEmail'];
         $this->recipientName = $notificationContext['recipientName'];
+        $this->processInvolved = $notificationContext['processInvolved'];
 
         if (! $this->recipientEmail || ! $this->recipientName) {
             LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Insurer: '.$this->insurerName);

@@ -408,6 +408,7 @@ class CyberQuoteService extends BaseQuoteService
             return [
                 'recipientEmail' => $recipientEmail,
                 'recipientName' => $recipientName,
+                'processInvolved' => $processInvolved,
             ];
         }
 
@@ -440,6 +441,7 @@ class CyberQuoteService extends BaseQuoteService
             'cc' => $cc,
             'recipientEmail' => $recipientEmail,
             'recipientName' => $recipientName,
+            'processInvolved' => PolicyIssuanceEnum::mapProcessTextForAutomationFailureNotification($processInvolved),
         ];
     }
 
