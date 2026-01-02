@@ -3,14 +3,13 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\BuyLeadRequest;
 use App\Models\CarQuote;
-use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Models\User;
 use App\Models\UserTeams;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -19,9 +18,8 @@ use Closure;
 
 class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
 {
-    /**
-     * Handle the incoming request.
-     */
+    use Carable;
+
     public function handle(AllocationRequest $request, Closure $next)
     {
         $this->setRequest($request);
@@ -48,7 +46,6 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         LoggerService::info(self::class."::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} are: ".json_encode($tierUserIds));
 
         $advisors = [];
-
         if ($lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($tier->isValue() || $tier->isVolume())) {
             $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $teamId);
         }
@@ -100,33 +97,6 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         return UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->pluck('user_id')->toArray();
     }
 
-    private function getBaseQuery($status, $userIds)
-    {
-        $excludedUserIds = $this->allocationRequest->get('excludedUserIds');
-
-        return LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
-            $query->where('status', $status)->whereDoesntHave('roles', function ($query) {
-                $query->whereIn('name', [RolesEnum::CLIENTSUPPORT, RolesEnum::CLIENTSUPPORTLEAD]);
-            });
-        })
-            ->whereIn('user_id', $userIds)
-            ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
-                $query->whereNotIn('user_id', $excludedUserIds);
-            })
-            ->where('quote_type_id', QuoteTypes::CAR->id())
-            ->when(
-                $this->allocationRequest->hasNationalityConfig(),
-                fn ($q) => $q->whereIn('user_id', $this->allocationRequest->getAdvisorIDs()),
-                function ($q) {
-                    if ($this->allocationRequest->hasExcludedAdvisorIds()) {
-                        $q->whereNotIn('user_id', $this->allocationRequest->getExcludedAdvisorIds());
-                    }
-                },
-            )
-            ->activeUser()
-            ->when($this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('user_id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()));
-    }
-
     private function getBLAdvisorsByStatus($status, Tier $tier, $tierUserIds)
     {
         LoggerService::info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
@@ -170,5 +140,4 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
             ->logRawSql()
             ->get();
     }
-
 }

@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class EmailStatusEventJob implements ShouldQueue
 {
@@ -36,7 +37,9 @@ class EmailStatusEventJob implements ShouldQueue
     public function handle()
     {
         try {
-
+            if (DB::getDefaultConnection() !== 'mysql') {
+                DB::setDefaultConnection('mysql');
+            }
             if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
 
                 $isEmailMessage = EmailStatus::latest()->where('msg_id', $this->emailData->message_id)->first();

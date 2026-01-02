@@ -33,6 +33,7 @@ class UserService extends BaseService
         $user = new User;
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->employee_code = $request->employee_code ?? null;
         $user->mobile_no = $request->mobile_no;
         $user->landline_no = $request->landline_no;
         $user->calendar_link = $request->calendar_link;
@@ -397,5 +398,32 @@ class UserService extends BaseService
                 'not_found' => count($emails),
             ];
         }
+    }
+
+    public function getEmployeeCode($email)
+    {
+        $employeeData = $this->hrmRequestService->getEmployeeCodes([$email]);
+
+        if ($employeeData === false || empty($employeeData)) {
+            return null;
+        }
+
+        foreach ($employeeData as $employee) {
+            if (strtolower($employee['email'] ?? '') === strtolower($email) && ! empty($employee['code'])) {
+                return $employee['code'];
+            }
+        }
+
+        return null;
+    }
+
+    public function getAdvisors()
+    {
+        return User::select('id', 'name')
+            ->whereHas('usersroles', function ($query) {
+                $query->where('name', 'like', '%advisor%');
+            })
+            ->activeUser()
+            ->get();
     }
 }

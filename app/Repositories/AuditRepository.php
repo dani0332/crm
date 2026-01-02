@@ -2,7 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
+use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Models\Audit;
 
@@ -15,7 +17,6 @@ class AuditRepository extends BaseRepository
 
     public function fetchGetQuoteAudits()
     {
-
         $lobs = [
             quoteTypeCode::Health,
             quoteTypeCode::Car,
@@ -34,40 +35,72 @@ class AuditRepository extends BaseRepository
         $quoteObject = (in_array(ucfirst(strtolower(request()->quote_type)), $lobs)) ? app('\\App\\Models\\'.ucfirst(strtolower(request()->quote_type)).'Quote') : app('\\App\\Models\\'.request()->quote_type);
 
         $auditables = $quoteObject->getAuditables();
-        $code = isset(request()->code) ? request()->code : '';
-        $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
+        $auditableId = request()->has('auditable_id') && request()->auditable_id ? request()->input('auditable_id') : null;
+        $quoteType = request()->has('quote_type') && request()->quote_type ? request()->input('quote_type') : null;
+        $quoteTypeId = request()->has('quote_type_id') && request()->quote_type_id ? request()->input('quote_type_id') : null;
+        $isSendUpdate = $quoteType === GenericRequestEnum::SEND_UPDATE_LOG;
+        $payment = null;
+
+        if ($auditableId) {
+            if ($isSendUpdate) {
+                $payment = Payment::select('id')
+                    ->where('send_update_log_id', $auditableId)
+                    ->first();
+            } elseif (isset($auditables['auditable_type'])) {
+                $payment = Payment::select('id')
+                    ->where('paymentable_id', $auditableId)
+                    ->where('paymentable_type', $auditables['auditable_type'])
+                    ->first();
+            }
+        }
+
+        $showParentAuditLogs = $auditables['show_auditables'] ?? true;
 
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
             ->leftJoin('users', 'audits.user_id', 'users.id')
-            ->where(function ($q) use ($auditables) {
-                if (request()->has('auditable_id') && request()->auditable_id) {
-                    $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
+            ->when($showParentAuditLogs, function ($q) use ($auditables, $payment, $auditableId, $quoteTypeId) {
+                if ($auditableId && isset($auditables['auditable_type'])) {
+                    $q->where(function ($q) use ($auditables, $auditableId) {
+                        $q->where('auditable_id', $auditableId)
+                            ->where('auditable_type', $auditables['auditable_type']);
+                    });
                 }
-                if (request()->has('quote_type_id') && request()->quote_type_id) {
+
+                if ($payment) {
+                    $q->orWhere(function ($q) use ($payment) {
+                        $q->where('auditable_id', $payment->id)
+                            ->where('auditable_type', Payment::class);
+                    });
+                }
+                if ($quoteTypeId && isset($auditables['auditable_type'])) {
                     $q->where('auditable_type', $auditables['auditable_type'])
-                        ->where('new_values->quote_type_id', request()->quote_type_id);
+                        ->where('new_values->quote_type_id', $quoteTypeId);
                 }
             });
-        /*if ($code != '') {
-            $query->orWhere(function ($query) use ($code, $auditableTypes) {
-                $query->where('old_values', 'like', '%"code":"'.$code.'"%')
-                    ->whereIn('auditable_type', $auditableTypes);
-            });
-        }*/
         if (! empty($auditables['relations'])) {
             foreach ($auditables['relations'] as $relation) {
                 $model = $relation['auditable_type'];
-                if ($childRecord = $model::where($relation['key'], request()->auditable_id)->first()) {
-                    $query->orWhere(function ($q) use ($relation, $childRecord) {
-                        $q->where('auditable_type', $relation['auditable_type'])->where('auditable_id', $childRecord->id);
-                    });
+                $auditRelation = $relation['relation'] ?? 'one';
+                if ($auditRelation == 'many') {
+                    $childRecords = $model::where($relation['key'], $auditableId)->get();
+                } else {
+                    $record = $model::where($relation['key'], $auditableId)->first();
+                    $childRecords = $record ? [$record] : [];
+                }
+
+                if ($childRecords) {
+                    foreach ($childRecords as $record) {
+                        $query->orWhere(function ($q) use ($relation, $record) {
+                            $q->where('auditable_type', $relation['auditable_type'])->where('auditable_id', $record->id);
+                        });
+                    }
                 }
             }
         }
         $results = $query->orderBy('created_at', 'desc')->get();
 
-        $results->transform(function ($audit) {
+        $results->transform(function ($audit) use ($quoteObject, $quoteType) {
             $newValues = json_decode($audit->new_values, true) ?? [];
             $oldValues = json_decode($audit->old_values, true) ?? [];
 
@@ -138,6 +171,18 @@ class AuditRepository extends BaseRepository
                 }
             }
             $transformedOld = $extractProfiles($transformedOld);
+
+            if ($quoteType === 'UserBranch') {
+                $data = [
+                    'audit' => $audit,
+                    'transformedOld' => $transformedOld,
+                    'transformedNew' => $transformedNew,
+                ];
+                $data = $quoteObject->transformAuditables($data);
+                $audit = $data['audit'];
+                $transformedOld = $data['transformedOld'];
+                $transformedNew = $data['transformedNew'];
+            }
 
             $audit->new_values = json_encode($transformedNew);
             $audit->old_values = json_encode($transformedOld);

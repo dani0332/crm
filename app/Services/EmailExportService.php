@@ -143,13 +143,12 @@ class EmailExportService
     {
         $emailEnv = config('constants.APP_ENV');
 
+        $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+        $fromName = config('constants.MAIL_FROM_NAME');
+
         if ($emailEnv === EnvEnum::PRODUCTION) {
-            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML', config('constants.MAIL_FROM_ADDRESS'));
-            $fromName = config('constants.MAIL_FROM_NAME_AML', config('constants.MAIL_FROM_NAME'));
             $finalSubject = $subject;
         } else {
-            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
-            $fromName = config('constants.MAIL_FROM_NAME');
             $finalSubject = $emailEnv.' - '.$subject;
         }
 
