@@ -50,9 +50,13 @@ class EmiratesIdDataProcessor
                 throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');
             }
 
+            // Update insured table fields
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
+
+            // Update insured fields in customer table
+            $this->updateCustomerTableInsuredFields($insured);
 
             // Trigger OCR success validation
             $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
@@ -282,6 +286,28 @@ class EmiratesIdDataProcessor
             LoggerService::error('Failed to update InsuredKyc table', exception: $e);
 
             return false;
+        }
+    }
+
+    private function updateCustomerTableInsuredFields(Insured $insured): void
+    {
+        try {
+            $customer = $this->quote->customer;
+            if (! $customer) {
+                LoggerService::warning('Customer not found for quote UUID: '.$this->quote->uuid);
+                return;
+            }
+
+            $customer->update([
+                'insured_first_name' => $insured->first_name,
+                'insured_last_name' => $insured->last_name,
+                'emirates_id_number' => $insured->id_number,
+                'emirates_id_expiry_date' => $insured->insuredKyc?->id_expiry_date,
+            ]);
+
+            LoggerService::info('Customer table insured fields updated successfully');
+        } catch (Exception $e) {
+            LoggerService::error('Failed to update Customer table insured fields', exception: $e);
         }
     }
 
