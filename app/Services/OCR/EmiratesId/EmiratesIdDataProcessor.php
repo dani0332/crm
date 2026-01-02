@@ -293,6 +293,11 @@ class EmiratesIdDataProcessor
     {
         try {
             $customer = $this->quote->customer;
+            if (! $customer) {
+                LoggerService::warning('Customer not found for quote UUID: '.$this->quote->uuid);
+                return;
+            }
+
             $customer->update([
                 'insured_first_name' => $insured->first_name,
                 'insured_last_name' => $insured->last_name,
