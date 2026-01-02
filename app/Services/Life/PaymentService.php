@@ -32,7 +32,7 @@ class PaymentService extends BaseService
                         if ($splitPayment->sr_no === 1) {
                             $splitAmount = $splitPayment->payment_amount + $quotePayment->discount_value;
                         }
-                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $quoteType, $quote->id, count($paymentSplits));
+                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $quoteType, $quote->id, count($paymentSplits), $splitPayment->code);
                         $splitPayment->update([
                             'price_vat_applicable' => $priceWithoutVat,
                             'price_vat' => $vat,
