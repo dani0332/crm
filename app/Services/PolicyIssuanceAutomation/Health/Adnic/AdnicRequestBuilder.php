@@ -41,8 +41,8 @@ class AdnicRequestBuilder
         $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()?->answer_text;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()?->answer_text;
         $visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()?->answer_text;
-        $customerClassification = $healthUmafQuestionCollection->where('question_code', 'customerClassification')->first()?->answer_text;
-        $memberCategory = $healthUmafQuestionCollection->where('question_code', 'memberCategory')->first()?->answer_text;
+        $customerClassification = AdnicEnum::CUSTOMER_CLASSIFICATION_NATURAL_PERSONS; // FIX Value
+        $memberCategory = $sponsorCategory; // Member Category is same as Sponsor Category
 
         $healthInsurerRequest = json_decode($healthInsurerRequestResponse->request);
         $healthInsurerResponse = json_decode($healthInsurerRequestResponse->response);
@@ -79,21 +79,21 @@ class AdnicRequestBuilder
                 ],
                 'QuestionnarieInfo' => (array) $insuredMember->QuestionnarieInfo,
                 'PregnantStatus' => $currentlyPregnant ?? AdnicEnum::NO,
-                'PreviouslyCovered' => $previouslyCovered ?? AdnicEnum::NO, // TODO : Need to check this
+                'PreviouslyCovered' => $previouslyCovered ?? AdnicEnum::NO,  
                 'EmiratesId' => $emiratesId ?? '',
-                'EntryPermitNoOrFileNo' => $visaFileNumber ?? '', // TODO : Need to check this
+                'EntryPermitNoOrFileNo' => $visaFileNumber ?? '',  
                 'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
-                'MemberCategory' => $memberCategory ?? '', // TODO : Need to check this
+                'MemberCategory' => $memberCategory ?? '',  
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null),
                 'Commission' => AdnicEnum::NO, // Optional Field, set as default value
-                'VisaType' => $visaType ?? '', // TODO : Need to check this
+                'VisaType' => $visaType ?? '', 
                 'City' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
                 'Nationality' => $this->mappingNationality($quote->nationality?->name ?? null),
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
                 'WorkLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
                 'ResidenceLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
-                'Industry' => $industry ?? '', // TODO : Need to check this
+                'Industry' => $industry ?? '',  
                 'DocumentInfo' => $this->uploadedDocumentsInfo($uploadDocumentsResponse),
                 'PreviousVisaEmirate' => $insuredMember?->PreviousVisaEmirate,
             ];
@@ -115,14 +115,14 @@ class AdnicRequestBuilder
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null), // TODO:: Some attributes need to be created
                 'EmiratesId' => $emiratesId ?? '',
                 'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
-                'SponserCategory' => $sponsorCategory ?? '', // TODO : Need to check this
+                'SponserCategory' => $sponsorCategory ?? '',  
                 'MaritalStatus' => $this->mappingMaritalStatus($quote->marital_status_id ?? null),
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
-                'MemberCategory' => $memberCategory ?? '', // TODO : Need to check this
-                'VisaType' => $visaType ?? '', // TODO : Need to check this
+                'MemberCategory' => $memberCategory ?? '', 
+                'VisaType' => $visaType ?? '',  
                 'PreviousVisaEmirate' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
-                'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
+                'CustomerClassification' => $customerClassification ?? '1',  
             ],
             'QuoteInfo' => [
                 'PartnerReferenceNo' => $this->httpClient->getPartnerReferenceNo(),

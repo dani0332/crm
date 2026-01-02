@@ -23,6 +23,7 @@ class AdnicEnum
     public const LOADING_VALUE = 0;
     public const LOADING_AMOUNT = 0;
     public const PAYMENT_TYPE = 5;
+    public const CUSTOMER_CLASSIFICATION_NATURAL_PERSONS = 1;
     public const NO = 'NO';
 
     /* Insurer Document Keys */
