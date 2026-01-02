@@ -89,7 +89,7 @@ final class InsuranceProvidersEnum extends Enum
             self::RSA => 'Liva',
             self::AXA => 'GIG',
             self::OIC => 'Sukoon',
-            self::NGI => 'NGI',
+            self::NGI => 'NationalGeneralInsurance',
             default => 'GIG',
         };
     }
