@@ -85,6 +85,7 @@ return [
 
     'waits' => [
         'redis:default' => 60,
+        'redis:ocr_dedicated' => 180,
     ],
 
     /*
@@ -177,10 +178,19 @@ return [
             ],
             'supervisor-prod-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison'],
+                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+            ],
+            'supervisor-prod-ocr-dedicated' => [
+                'connection' => 'redis',
+                'queue' => ['ocr_dedicated'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 120,
+                'memory' => 512,
             ],
         ],
         'uat' => [
@@ -195,12 +205,21 @@ return [
             ],
             'supervisor-uat-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison'],
+                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
                 'tries' => 3,
                 'timeout' => 60,
+            ],
+            'supervisor-uat-ocr-dedicated' => [
+                'connection' => 'redis',
+                'queue' => ['ocr_dedicated'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 120,
+                'memory' => 512,
             ],
         ],
         // 'uat2' => [
@@ -233,10 +252,19 @@ return [
             ],
             'supervisor-stg-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison'],
+                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+            ],
+            'supervisor-stg-ocr-dedicated' => [
+                'connection' => 'redis',
+                'queue' => ['ocr_dedicated'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 120,
+                'memory' => 512,
             ],
         ],
         'dev01' => [
@@ -251,10 +279,19 @@ return [
             ],
             'supervisor-dev-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison'],
+                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+            ],
+            'supervisor-dev-ocr-dedicated' => [
+                'connection' => 'redis',
+                'queue' => ['ocr_dedicated'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 120,
+                'memory' => 512,
             ],
         ],
         'test' => [
@@ -269,10 +306,19 @@ return [
             ],
             'supervisor-test-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison'],
+                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+            ],
+            'supervisor-test-ocr-dedicated' => [
+                'connection' => 'redis',
+                'queue' => ['ocr_dedicated'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 120,
+                'memory' => 512,
             ],
         ],
         'local' => [
@@ -288,10 +334,19 @@ return [
             ],
             'supervisor-local-shared' => [
                 'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison'],
+                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
+                'memory' => 512,
+            ],
+            'supervisor-local-ocr-dedicated' => [
+                'connection' => 'redis',
+                'queue' => ['ocr_dedicated'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 120,
                 'memory' => 512,
             ],
         ],
