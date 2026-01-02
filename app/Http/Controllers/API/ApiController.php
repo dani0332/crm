@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -34,7 +34,10 @@ use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
+use App\Jobs\ProcessLeadOCRDataComparison;
+use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
+use App\Jobs\TagPcpCustomerJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -53,12 +56,14 @@ use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -72,13 +77,16 @@ class ApiController extends Controller
     public $inboundEmailsHookService;
     public $outboundEmailsHookService;
     protected $emailStatusService;
+    protected $quoteDocumentService;
+    protected $ocrReponseStructure;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService, QuoteDocumentService $quoteDocumentService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
         $this->outboundEmailsHookService = $outboundEmailsHookService;
+        $this->quoteDocumentService = $quoteDocumentService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -376,11 +384,6 @@ class ApiController extends Controller
         return $this->apiService->triggerAIGWorkflow($request);
     }
 
-    /**
-     * Process the one-time exercise to tag customers as Private Clients based on criteria
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function tagPrivateClients(Request $request)
     {
         LoggerService::info(self::class.': Private client tag exercise has been initiated');
@@ -457,6 +460,34 @@ class ApiController extends Controller
             );
         }
         LoggerService::info(self::class.': Private client tag exercise has been completed');
+    }
+
+    public function tagPcpCustomers(Request $request)
+    {
+        $request->validate([
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
+        ]);
+
+        LoggerService::info(self::class.': PC customer tag exercise has been initiated');
+
+        dispatch(new TagPcpCustomerJob($request->input('uuids')));
+
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging job has been dispatched!');
+    }
+
+    public function removePcQualified(Request $request)
+    {
+        $request->validate([
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
+        ]);
+
+        LoggerService::info(self::class.': PC qualified removal exercise has been initiated');
+
+        dispatch(new RemovePcQualifiedJob($request->input('uuids')));
+
+        return apiResponse(null, Response::HTTP_OK, 'PC qualified removal job has been dispatched!');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
@@ -683,5 +714,59 @@ class ApiController extends Controller
                 'quote_uuid' => $validatedData['quote_uuid'],
             ], 500);
         }
+    }
+
+    public function getLeadOCRComparison(Request $request)
+    {
+        $request->validate(
+            [
+                'uuid' => 'required_without_all:start_date,end_date|string',
+                'start_date' => 'required_without:uuid|date_format:Y-m-d',
+                'end_date' => 'required_without:uuid|date_format:Y-m-d',
+                'recalculate_comparison' => 'sometimes|boolean',
+            ],
+            [
+                'uuid.required_without_all' => 'UUID is required when start date and end date are not provided',
+                'start_date.required_without' => 'Start date is required when UUID is not provided',
+                'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
+                'end_date.required_without' => 'End date is required when UUID is not provided',
+                'end_date.date_format' => 'End date must be in YYYY-MM-DD format',
+                'recalculate_comparison.boolean' => 'Recalculate comparison must be true or false',
+            ]
+        );
+
+        $startDate = $request->filled('start_date')
+        ? Carbon::createFromFormat('Y-m-d', $request->start_date)
+        : null;
+
+        $endDate = $request->filled('end_date')
+            ? Carbon::createFromFormat('Y-m-d', $request->end_date)
+            : null;
+
+        $recalculateComparison = $request->boolean('recalculate_comparison', false);
+
+        LoggerService::info(self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'uuid' => $request->uuid,
+            'recalculate_comparison' => $recalculateComparison,
+            'user_agent' => $request->userAgent(),
+            'ip' => $request->ip(),
+        ]);
+
+        if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
+            return apiResponse(null, Response::HTTP_OK, 'OCR util processing is disabled');
+        }
+
+        // Atomically set cache lock - returns false if key already exists
+        if (! Cache::add('lead_ocr_data_comparison', true, now()->addMinutes(10))) {
+            return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job is already running');
+        }
+
+        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate, $recalculateComparison)
+            ->onConnection('redis')
+            ->onQueue('lead_ocr_data_comparison');
+
+        return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
     }
 }

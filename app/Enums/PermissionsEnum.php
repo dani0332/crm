@@ -454,6 +454,9 @@ final class PermissionsEnum extends Enum
     public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
     public const EDIT_LAST_YEAR_DETAILS = 'edit-last-year-details';
     public const SAGE_PROCESS_ISSUE_MANAGEMENT = 'sage-issue-management';
+    public const BUY_LEADS_REVIVAL = 'buy-leads-revival';
+    public const BRANCHES = 'branches';
+    public const BRANCH_ASSIGNMENTS = 'branch-assignments';
 
     public static function getAdvisorConversionReportPermissions()
     {

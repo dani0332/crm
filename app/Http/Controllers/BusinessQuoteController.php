@@ -38,6 +38,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -98,6 +99,7 @@ class BusinessQuoteController extends Controller
         $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+        $this->businessQuoteService->postProcessBusinessQuotes($quotes);
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
 
         // Support users and assignment permissions for LeadAssignment component
@@ -271,7 +273,7 @@ class BusinessQuoteController extends Controller
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
@@ -315,6 +317,7 @@ class BusinessQuoteController extends Controller
 
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business));
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),

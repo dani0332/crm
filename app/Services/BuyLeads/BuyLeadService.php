@@ -2,9 +2,11 @@
 
 namespace App\Services\BuyLeads;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
 use App\Models\BuyLeadConfiguration;
+use App\Models\BuyLeadConfigurationNationality;
 use App\Models\BuyLeadRequest;
 use App\Models\BuyLeadRequestLog;
 use App\Models\LeadAllocation;
@@ -15,44 +17,54 @@ use PDF;
 
 class BuyLeadService
 {
-    private function activeRequestsCount(QuoteTypes $quoteType): int
+    public function getBlLeadRemainingLimit(QuoteTypes $quoteType, bool $isCarRevival = false)
     {
-        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->active()->sum('requested_count');
-    }
-
-    public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
-    {
+        $isCarRevival = $isCarRevival || $quoteType->value == QuoteTypes::CAR_CAT_A->value;
+        // if the quote type is car revival, then set the quote type to car
+        if ($isCarRevival) {
+            $quoteType = QuoteTypes::CAR;
+            // check if the user has the car revival advisor role
+        }
         $leadAllocation = LeadAllocation::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->first();
-
         if (! $leadAllocation || ! $leadAllocation->buy_lead_status) {
             return 'DISABLED';
         }
 
         $buyLeadMaxCap = $leadAllocation?->buy_lead_max_capacity ?? 0;
 
-        return $buyLeadMaxCap - $this->activeRequestsCount($quoteType);
+        $assignedCount = $isCarRevival ? $leadAllocation->buy_lead_cat_a_allocation_count : $leadAllocation->buy_lead_allocation_count;
+
+        return $buyLeadMaxCap - $assignedCount;
     }
 
-    public function isRequestAlreadySubmitted(QuoteTypes $quoteType): bool
+    public function isRequestAlreadySubmitted(QuoteTypes $quoteType, bool $isCarRevival = false): bool
     {
-        return BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->unfulfilled()->exists();
+        return BuyLeadRequest::where('quote_type_id', $quoteType->id())
+            ->where('user_id', Auth::id())
+            ->notExpired()
+            ->unfulfilled()
+            ->when($isCarRevival, fn ($query) => $query->catA(), fn ($query) => $query->nonCatA())
+            ->exists();
     }
 
     private function verifyPreChecks(RequestBuyLeadsRequest $request): ?string
     {
+
         $quoteType = $request->getQuoteType();
-        $message = null;
+        $isCarRevival = $request->getQuoteType()->value == QuoteTypes::CAR_CAT_A->value;
+        if ($isCarRevival) {
+            $quoteType = QuoteTypes::CAR;
+        }
 
         if (! auth()->user()->hasAnyRole($quoteType->advisorRoles())) {
             return 'You are not allowed to request buy leads for this quote type';
         }
 
-        if ($this->isRequestAlreadySubmitted($quoteType)) {
+        if ($this->isRequestAlreadySubmitted($quoteType, $isCarRevival)) {
             return 'You can initiate a new Buy Lead request once the existing requested leads are assigned.';
         }
 
-        $remainingLimit = $this->getBlLeadRemainingLimit($quoteType);
-
+        $remainingLimit = $this->getBlLeadRemainingLimit($quoteType, $isCarRevival);
         if ($remainingLimit === 'DISABLED' || $remainingLimit <= 0) {
             $message = 'You have reached your maximum buy leads allocation for today';
         } elseif ($request->count > $remainingLimit) {
@@ -62,12 +74,26 @@ class BuyLeadService
             $message = "You have exceeded your remaining buy leads allocation. Your remaining Buy {$leadStr} {$isAre} {$remainingLimit}";
         }
 
-        return $message;
+        return $message ?? null;
     }
 
     public function findConfig(QuoteTypes $quoteType): ?BuyLeadConfiguration
     {
-        return BuyLeadConfiguration::where('quote_type_id', $quoteType->id())->where('department_id', Auth::user()->department_id ?? 0)->first();
+        // Optimized retrieval for BuyLeadConfiguration with Car Revival special handling.
+        $departmentId = Auth::user()->department_id ?? 0;
+        $isCarRevival = $quoteType->value === QuoteTypes::CAR_CAT_A->value;
+        $baseQuoteType = $isCarRevival ? QuoteTypes::CAR : $quoteType;
+
+        $query = BuyLeadConfiguration::where('quote_type_id', $baseQuoteType->id())
+            ->where('department_id', $departmentId);
+
+        // For Car Revival, ensure only configs with at least one nationality are considered.
+        if ($isCarRevival) {
+            $query->where('source', LeadSourceEnum::REVIVAL);
+        }
+
+        return $query->first();
+
     }
 
     public function findConfigCost(QuoteTypes $quoteType)
@@ -75,15 +101,18 @@ class BuyLeadService
         $config = $this->findConfig($quoteType);
         if (! $config) {
             return 'No configuration found for this quote type';
+
         }
 
         $cost = null;
         $requestType = null;
+        $isCarRevival = $quoteType->value === QuoteTypes::CAR_CAT_A->value;
+        $baseQuoteType = $isCarRevival ? QuoteTypes::CAR : $quoteType;
 
-        if (Auth::user()->isValueUser($quoteType)) {
+        if (Auth::user()->isValueUser($baseQuoteType)) {
             $cost = $config->value;
             $requestType = 'value';
-        } elseif (Auth::user()->isVolumeUser($quoteType)) {
+        } elseif (Auth::user()->isVolumeUser($baseQuoteType)) {
             $cost = $config->volume;
             $requestType = 'volume';
         }
@@ -111,9 +140,10 @@ class BuyLeadService
         }
 
         [$cost, $requestType, $segment] = $configCost;
-
+        $isCarRevival = $request->quote_type == QuoteTypes::CAR_CAT_A->value;
+        $baseQuoteTypeId = $isCarRevival ? QuoteTypes::CAR->id() : $request->getQuoteTypeId();
         BuyLeadRequest::create([
-            'quote_type_id' => $request->getQuoteTypeId(),
+            'quote_type_id' => $baseQuoteTypeId,
             'user_id' => Auth::id(),
             'requested_count' => $request->count,
             'cost_per_lead' => $cost,
@@ -121,6 +151,7 @@ class BuyLeadService
             'expires_at' => null,
             'department_id' => Auth::user()->department_id,
             'segment' => $segment,
+            'source' => $isCarRevival ? LeadSourceEnum::REVIVAL : null,
         ]);
 
         return null;
@@ -128,7 +159,7 @@ class BuyLeadService
 
     public function getActiveRequests()
     {
-        return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'allocated_count', 'cost_per_lead', 'created_at')
+        return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'allocated_count', 'cost_per_lead', 'source', 'created_at')
             ->selectRaw('CONCAT(ROUND(requested_count * cost_per_lead, 0), " AED") as total_cost')
             ->with('quoteType:id,code')
             ->where('user_id', Auth::id())
@@ -138,20 +169,32 @@ class BuyLeadService
             ->withQueryString();
     }
 
-    public function getTrackingData(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isExport = false)
+    public function getTrackingData(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isExport = false, bool $isCarRevival = false)
     {
         return BuyLeadRequestLog::select(
             'buy_lead_request_logs.id',
             'buy_lead_request_logs.quote_type_id',
             'buy_lead_request_logs.uuid as ref_id',
             'buy_lead_requests.created_at',
-            'departments.name as department')
+            'departments.name as department', 'buy_lead_requests.source')
             ->selectRaw('CONCAT(ROUND(buy_lead_requests.cost_per_lead, 0), " AED") as cost')
             ->with('quoteType:id,code')
             ->join('buy_lead_requests', 'buy_lead_requests.id', '=', 'buy_lead_request_logs.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'buy_lead_requests.user_id')
             ->leftJoin('departments', 'buy_lead_requests.department_id', '=', 'departments.id')
             ->where('buy_lead_requests.user_id', Auth::id())
+            ->when(
+                ! is_null($isCarRevival),
+                fn ($q) => $quoteType === QuoteTypes::CAR
+                    ? ($isCarRevival
+                        ? $q->where('buy_lead_requests.source', LeadSourceEnum::REVIVAL)
+                        : $q->where(function ($query) {
+                            $query->whereNull('buy_lead_requests.source')
+                                ->orWhere('buy_lead_requests.source', '');
+                        })
+                    )
+                    : $q
+            )
             ->where('buy_lead_request_logs.quote_type_id', $quoteType->id())
             ->whereBetween('buy_lead_request_logs.created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
             ->latest('buy_lead_request_logs.created_at')
@@ -162,9 +205,10 @@ class BuyLeadService
 
     }
 
-    public function exportTrackingReportPDF(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate)
+    public function exportTrackingReportPDF(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isCarRevival = false)
     {
-        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, true);
+        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, true, $isCarRevival);
+
         $data['quoteType'] = $quoteType;
         $pdf = PDF::loadView('pdf.buy-lead-requests', $data);
 
@@ -172,4 +216,10 @@ class BuyLeadService
 
         return $pdf->download($pdfName);
     }
+
+    public static function getNationalitiesIds(QuoteTypes $quoteType)
+    {
+        return BuyLeadConfigurationNationality::where('quote_type', $quoteType)->pluck('nationality_id')->toArray();
+    }
+
 }
