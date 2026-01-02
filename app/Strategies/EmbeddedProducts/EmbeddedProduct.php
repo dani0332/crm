@@ -79,13 +79,7 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
-
-            // TODO:: It should not be fetched through customer, it should be picked from the quote itself
-            $customerInsured = $customer?->customerInsured()
-                ->where('quote_request_id', $item->quote_request_id)
-                ->where('quote_type_id', $item->quote_type_id)
-                ->latest('updated_at')
-                ->first() ?? null;
+            $latestInsured = $quoteObject->latestInsured ?? null;
 
             $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
@@ -98,10 +92,9 @@ class EmbeddedProduct
                 $lastName = $quoteObject->last_name ?? '';
                 $emiratesIdNumber = '';
             } else {
-                // TODO:: Need to confirm with Jawad regading this fallback to customer insured
-                $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
-                $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
-                $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
+                $firstName = ($latestInsured?->first_name ?? $customer?->insured_first_name) ?? '';
+                $lastName = ($latestInsured?->last_name ?? $customer?->insured_last_name) ?? '';
+                $emiratesIdNumber = ($latestInsured?->id_number ?? $customer?->emirates_id_number) ?? '';
             }
 
             $item->id = $item->id;
