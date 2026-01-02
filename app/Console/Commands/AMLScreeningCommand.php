@@ -55,7 +55,8 @@ class AMLScreeningCommand extends Command
         $quoteTypesToProcess = [];
 
         if ($quoteTypeOption) {
-            $quoteType = QuoteTypes::tryFrom(ucfirst($quoteTypeOption));
+            $normalizedQuoteTypeOption = ucfirst(strtolower($quoteTypeOption));
+            $quoteType = QuoteTypes::tryFrom($normalizedQuoteTypeOption);
             if (! $quoteType || ! in_array($quoteType, [QuoteTypes::TRAVEL, QuoteTypes::CYBER])) {
                 $this->error("Invalid quote type. Must be 'Travel' or 'Cyber'.");
 
@@ -92,9 +93,7 @@ class AMLScreeningCommand extends Command
                 $query->whereNull('aml_status')
                     ->orWhere('aml_status', AMLStatusCode::AMLPending);
             })
-            ->whereDoesntHave('amlAutomation', function ($query) {
-                $query->where('status', AmlAutomationStatus::QUEUE_STATUS);
-            });
+            ->whereDoesntHave('amlAutomation');
 
         // For PersonalQuote (Cyber), also filter by quote_type_id
         if ($quoteType === QuoteTypes::CYBER) {
