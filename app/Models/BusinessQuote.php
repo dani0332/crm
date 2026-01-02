@@ -195,7 +195,7 @@ class BusinessQuote extends Model implements AuditableContract
             ->active();
     }
 
-    // Get the latest/most recent insured record for this quote
+    // Reminder::Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(

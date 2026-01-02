@@ -532,7 +532,7 @@ class CarQuote extends BaseModel
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
     }
 
-    // Reminder:: This relationship is used when we create child lead through CIR
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
@@ -540,7 +540,7 @@ class CarQuote extends BaseModel
             ->active();
     }
 
-    // Get the active insured record for this quote
+    // Reminder::Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(

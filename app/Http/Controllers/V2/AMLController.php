@@ -392,7 +392,6 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
-        // AML Mapping Reminder:: Tested
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
@@ -671,7 +670,6 @@ class AMLController extends Controller
 
     public function fetchEntity(Request $request)
     {
-        // AML Mapping Reminder:: Tested
         // TODO:: Logs needs to be updated
         $entity = Insured::where([
             'customer_type' => CustomerTypeEnum::Entity,
@@ -687,9 +685,7 @@ class AMLController extends Controller
 
     public function linkEntityDetails(Request $request)
     {
-        // AML Mapping Reminder:: Tested
         // TODO:: Logs needs to be updated
-
         // Reminder:: This patch add because data should be updated in new structure
         $quoteType = QuoteType::where('id', $request->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $request->quote_request_id);
@@ -745,7 +741,6 @@ class AMLController extends Controller
     public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
     {
         // TODO::Logs needs to be updated
-        // AML Mapping Reminder:: Tested
         LoggerService::startQuoteLogging($request->code, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
             'customer_type' => $request->customer_type,

@@ -215,7 +215,6 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
-        // AML Mapping Reminder:: Tested
         // TODO:: Logs needs to be updated
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [

@@ -129,10 +129,10 @@ class Customer extends Model implements AuditableContract
         return $this->hasManyThrough(
             Insured::class,
             CustomerInsured::class,
-            'customer_id', // Foreign key on CustomerInsured table
-            'id', // Foreign key on Insured table
-            'id', // Local key on Customer table
-            'insured_id' // Local key on CustomerInsured table
+            'customer_id', // customer_insured.customer_id
+            'id', // insured.id
+            'id', // customer.id (customer_insured.customer_id)
+            'insured_id' // customer_insured.insured_id
         )->where('customer_insured.is_active', true);
     }
 
@@ -141,6 +141,7 @@ class Customer extends Model implements AuditableContract
      *
      * @todo Review this relationship after customer insured process is updated
      */
+    // TODO:: Remove this relationship after customer insured process is updated
     public function customerInsured(): HasMany
     {
         return $this->hasMany(CustomerInsured::class, 'customer_id', 'id');

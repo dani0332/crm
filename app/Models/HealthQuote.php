@@ -308,7 +308,7 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
-    // TODO: Consider renaming this relation from 'insured' to 'currentlyInsured' for clarity, as the current name may incorrectly suggest association with AML Insured. Update usages throughout the codebase accordingly.
+    // Reminder:: this relation is being used for currently insured customer
     public function insured()
     {
         return $this->belongsTo(Customer::class, 'currently_insured_id');
@@ -359,6 +359,7 @@ class HealthQuote extends Model implements AuditableContract
         }
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
@@ -366,7 +367,7 @@ class HealthQuote extends Model implements AuditableContract
             ->active();
     }
 
-    // Get the active insured record for this quote
+    // Reminder::Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(

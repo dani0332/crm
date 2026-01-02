@@ -208,6 +208,7 @@ class LifeQuote extends Model implements AuditableContract
         return $this->allowedColumns;
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
@@ -215,7 +216,7 @@ class LifeQuote extends Model implements AuditableContract
             ->active();
     }
 
-    // Get the active insured record for this quote
+    // Reminder::Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -223,7 +224,7 @@ class LifeQuote extends Model implements AuditableContract
             CustomerInsured::class,
             'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // personal_quotes.id (life quotes use personal_quotes table)
+            'id', // life_quote_request.id
             'insured_id' // customer_insured.insured_id
         )
             ->where('customer_insured.quote_type_id', QuoteTypeId::Life)
