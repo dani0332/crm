@@ -29,15 +29,20 @@ class AdnicRequestBuilder
     {
         $chargeId = $splitPayment?->paymentCharges?->transaction_id ?? null;
 
-        //$UMAFDetails = HealthUMAFResponse::where('quote_uuid', $quote->uuid)->first();
         $healthUmafDetails = $quote->healthUmafResponse;
         $healthUmafQuestionCollection = collect($healthUmafDetails?->answers);
+        // Questions 
         $inceptionDate = $healthUmafQuestionCollection->where('question_code', 'inceptionDate')->first()?->answer_text;
         $currentlyPregnant = $healthUmafQuestionCollection->where('question_code', 'currentlyPregnant')->first()?->answer_text;
         $emiratesId = $healthUmafQuestionCollection->where('question_code', 'emiratesId')->first()?->answer_text;
-        $passportNumber = $healthUmafQuestionCollection->where('question_code', 'passportNumber')->first()?->answer_text;
-        $medicalEmiratesId = $healthUmafQuestionCollection->where('question_code', 'medicalEmiratesId')->first()?->answer_text;
-        $medicalPassportNumber = $healthUmafQuestionCollection->where('question_code', 'medicalPassportNumber')->first()?->answer_text;
+        $passportNumber = $healthUmafQuestionCollection->where('question_code', 'passportNumber')->first()?->answer_text; 
+        $previoslyCovered = $healthUmafQuestionCollection->where('question_code', 'adnicInsured')->first()?->answer_text;
+        $sponsorCategory = $healthUmafQuestionCollection->where('question_code', 'sponsorCategory')->first()?->answer_text;
+        $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()?->answer_text;
+        $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()?->answer_text;
+        $visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()?->answer_text;
+        $customerClassification = $healthUmafQuestionCollection->where('question_code', 'customerClassification')->first()?->answer_text;
+        $memberCategory = $healthUmafQuestionCollection->where('question_code', 'memberCategory')->first()?->answer_text;
 
         $healthInsurerRequest = json_decode($healthInsurerRequestResponse->request);
         $healthInsurerResponse = json_decode($healthInsurerRequestResponse->response);
@@ -74,21 +79,21 @@ class AdnicRequestBuilder
                 ],
                 'QuestionnarieInfo' => (array) $insuredMember->QuestionnarieInfo,
                 'PregnantStatus' => $currentlyPregnant ?? AdnicEnum::NO,
-                'PreviouslyCovered' => $UMAFDetails?->PreviouslyCovered ?? AdnicEnum::NO, // TODO : Need to check this
+                'PreviouslyCovered' => $previoslyCovered ?? AdnicEnum::NO, // TODO : Need to check this
                 'EmiratesId' => $emiratesId ?? '',
-                'EntryPermitNoOrFileNo' => $UMAFDetails?->EntryPermitNoOrFileNo ?? '', // TODO : Need to check this
-                'CustomerClassification' => $UMAFDetails?->CustomerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
-                'MemberCategory' => $UMAFDetails?->MemberCategory ?? '', // TODO : Need to check this
+                'EntryPermitNoOrFileNo' => $visaFileNumber ?? '', // TODO : Need to check this
+                'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
+                'MemberCategory' => $memberCategory ?? '', // TODO : Need to check this
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null),
                 'Commission' => AdnicEnum::NO, // Optional Field, set as default value
-                'VisaType' => $UMAFDetails?->VisaType ?? '', // TODO : Need to check this
+                'VisaType' => $visaType ?? '', // TODO : Need to check this
                 'City' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
                 'Nationality' => $this->mappingNationality($quote->nationality?->name ?? null),
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
                 'WorkLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
                 'ResidenceLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
-                'Industry' => $UMAFDetails?->Industry ?? '', // TODO : Need to check this
+                'Industry' => $industry ?? '', // TODO : Need to check this
                 'DocumentInfo' => $this->uploadedDocumentsInfo($uploadDocumentsResponse),
                 'PreviousVisaEmirate' => $insuredMember?->PreviousVisaEmirate,
             ];
@@ -110,14 +115,14 @@ class AdnicRequestBuilder
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null), // TODO:: Some attributes need to be created
                 'EmiratesId' => $emiratesId ?? '',
                 'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
-                'SponserCategory' => $UMAFDetails?->SponserCategory ?? '', // TODO : Need to check this
+                'SponserCategory' => $sponsorCategory ?? '', // TODO : Need to check this
                 'MaritalStatus' => $this->mappingMaritalStatus($quote->marital_status_id ?? null),
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
-                'MemberCategory' => $UMAFDetails?->MemberCategory ?? '', // TODO : Need to check this
-                'VisaType' => $UMAFDetails?->VisaType ?? '', // TODO : Need to check this
+                'MemberCategory' => $memberCategory ?? '', // TODO : Need to check this
+                'VisaType' => $visaType ?? '', // TODO : Need to check this
                 'PreviousVisaEmirate' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
-                'CustomerClassification' => $UMAFDetails?->CustomerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
+                'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
             ],
             'QuoteInfo' => [
                 'PartnerReferenceNo' => $this->httpClient->getPartnerReferenceNo(),
