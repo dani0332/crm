@@ -378,6 +378,19 @@ const submitInsuredKycForm = isValid => {
             });
           }
         }
+        /* Health Adnic AutoCapture Messages  */
+        if(!response.data.autoCaptureStatus){
+          notification.error({
+            title: response.data.autoCaptureMessage,
+            position: 'top',
+          });
+        }else if(response.data.autoCaptureStatus){
+          notification.success({
+            title: response.data.autoCaptureMessage,
+            position: 'top',
+          });
+        }
+
         if (response.data.success) {
           notification.success({
             title: 'KYC Document uploaded successfully',

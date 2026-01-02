@@ -11,6 +11,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -61,6 +62,7 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
+use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\QuoteDocumentService;
@@ -939,6 +941,15 @@ class AMLController extends Controller
         if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared || $insurerAMLScreeningResponse['is_previous_policy_expired']) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
+            $quote = $quote->refresh();
+            $isHealthAndSTPCase = $insuredKycRequest->quote_type_id == QuoteTypeId::Health && $quote->isSTPCase();
+            $isAmlAndKycCleared = $quote->aml_status == AMLStatusCode::AMLScreeningCleared && $quote->kyc_decision == Kyc::COMPLETE;
+            if($isHealthAndSTPCase && $isAmlAndKycCleared){
+                $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
+                $response['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
+                $response['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];
+            }
+
         }
 
         return response()->json($response);
