@@ -45,6 +45,7 @@ enum TeamsEnum: string
     case TRAVEL_RENEWALS = 'Travel - Renewals';
     case TRAVEL_TEAM = 'Travel - Team';
     case DEVICE_INSURANCE = 'Device Insurance';
+    case CYBER_INSURANCE = 'Cyber Insurance';
 
     /**
      * Get team ID by team enum.
@@ -70,6 +71,9 @@ enum TeamsEnum: string
             ],
             self::DEVICE_INSURANCE => [
                 QuoteTypes::DEVICE,
+            ],
+            self::CYBER_INSURANCE => [
+                QuoteTypes::CYBER,
             ],
             default => [$this],
         };
