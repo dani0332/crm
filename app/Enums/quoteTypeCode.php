@@ -81,4 +81,21 @@ class quoteTypeCode extends Enum
             DeviceQuote::class => self::Device,
         };
     }
+
+    public static function getProductNameFromQuoteTypeCode(string $quoteTypeCode): string
+    {
+        return match ($quoteTypeCode) {
+            self::CYBER => TeamNameEnum::CYBER,
+            default => $quoteTypeCode,
+        };
+    }
+
+    public static function getQuoteTypeCodeFromProductName(string $productName): string
+    {
+        return match ($productName) {
+            TeamNameEnum::CYBER => self::CYBER,
+            TeamNameEnum::DEVICE => self::Device,
+            default => $productName,
+        };
+    }
 }
