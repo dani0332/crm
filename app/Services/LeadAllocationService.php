@@ -1075,7 +1075,7 @@ class LeadAllocationService extends BaseService
                                 // OR PEC marked with Plan selected
                                     ->orWhere(function ($pecQuery) {
                                         $pecQuery->hasPecTag()
-                                        ->whereNotNull('plan_id');
+                                            ->whereNotNull('plan_id');
                                     })
                                 // OR Clicked proceed with application (payment link requested or authorized)
                                     ->orWhereIn('quote_status_id', [
