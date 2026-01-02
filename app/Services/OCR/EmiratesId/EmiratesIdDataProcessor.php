@@ -295,6 +295,7 @@ class EmiratesIdDataProcessor
             $customer = $this->quote->customer;
             if (! $customer) {
                 LoggerService::warning('Customer not found for quote UUID: '.$this->quote->uuid);
+
                 return;
             }
 
