@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\QuoteTypeId;
 use App\Http\Resources\ProformaPaymentRequestResource;
 use App\Interfaces\ExportDocumentInterface;
 use App\Models\Payment;
@@ -30,11 +31,15 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         and later on if we have to change it than have to make it at single place i.e logic for newUI() method in all LOB Models
         */
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
-
-        // TODO:: It should not be fetched through customer, it should be direct through quote
-        $quote->load(['customer.latestInsured' => function ($query) use ($quote) {
-            $query->where('quote_request_id', $quote->id);
-        }]);
+        $isPersonalQuote = checkPersonalQuotes(ucwords($quoteType));
+        if ($isPersonalQuote) {
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+            $quote->load(['latestInsured' => function ($query) use ($quoteTypeId) {
+                $query->where('customer_insured.quote_type_id', $quoteTypeId);
+            }]);
+        } else {
+            $quote->load('latestInsured');
+        }
 
         if (! $quote) {
             return ['error' => 'Quote  not found'];

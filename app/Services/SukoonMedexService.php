@@ -764,22 +764,31 @@ class SukoonMedexService
      * @param  mixed  $quote  The quote object.
      * @return array The prepared user details.
      */
+    // Reminder:: this function is used for Bike and Car quotes - already back tracked in the code
     private function prepareUserDetails($quote)
     {
-        $latestInsuredData = $quote->latestInsured;
+        $quoteType = $quote->quote_type_id ?? null;
+        $isBikeQuote = $quoteType == QuoteTypeId::Bike;
+
+        if ($isBikeQuote) {
+            $latestInsuredData = $quote->load(['latestInsured' => function ($query) {
+                $query->where('customer_insured.quote_type_id', QuoteTypeId::Bike);
+            }]);
+        } else {
+            $latestInsuredData = $quote->latestInsured;
+        }
+
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
         if (! empty($quote->quoteRequestEntityMapping)) {
             $firstName = $quote->first_name ?? '';
             $lastName = $quote->last_name ?? '';
         } else {
-            // TODO:: Need to confirm with Jawad regading this fallback to customer insured
-            $firstName = ($latestInsuredData?->first_name ?? $quote->customer?->insured_first_name) ?? '';
-            $lastName = ($latestInsuredData?->last_name ?? $quote->customer?->insured_last_name) ?? '';
+            $firstName = ($latestInsuredData?->first_name ?? $quote?->customer?->insured_first_name) ?? '';
+            $lastName = ($latestInsuredData?->last_name ?? $quote?->customer?->insured_last_name) ?? '';
         }
 
-        $quoteType = $quote->quote_type_id ?? null;
-        $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
+        $emirate = $isBikeQuote ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
         $emirateIdNumber = str_replace('-', '', $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '');
 
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {

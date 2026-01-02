@@ -158,7 +158,6 @@ class TravelRenewalService extends AllocationService
 
     public function createTravelRenewalPayload($quote, $batch, $policyDates, $destinationIds, $members, $customer)
     {
-        // TODO:: this relationship is not correct, it should not be fetched through customer, it should be picked from the quote itself
         return [
             'firstName' => trim($quote->first_name),
             'lastName' => trim($quote->last_name),
@@ -178,8 +177,8 @@ class TravelRenewalService extends AllocationService
             'destinationIds' => $destinationIds,
             'emiratesIdNumber' => $customer->emirates_id_number ?? null,
             'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,
-            'insuredFirstName' => isset($customer->latestInsured->first_name) ? $customer->latestInsured->first_name : (isset($customer->insured_first_name) ? $customer->insured_first_name : ''),
-            'insuredLastName' => isset($customer->latestInsured->last_name) ? $customer->latestInsured->last_name : (isset($customer->insured_last_name) ? $customer->insured_last_name : ''),
+            'insuredFirstName' => ($quote?->latestInsured?->first_name ?? $quote?->customer?->insured_first_name) ?? '',
+            'insuredLastName' => ($quote?->latestInsured?->last_name ?? $quote?->customer?->insured_last_name) ?? '',
             'isEcommerce' => $quote->is_ecommerce ?? null,
             'startDate' => Carbon::parse($policyDates['policyStartDate'])->format('Y-m-d'),
             'policyExpiryDate' => Carbon::parse($policyDates['newPolicyExpiryDate'])->format('Y-m-d'),

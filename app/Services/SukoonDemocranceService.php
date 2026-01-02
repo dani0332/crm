@@ -403,6 +403,7 @@ class SukoonDemocranceService
      * @param  mixed  $transaction  The transaction object.
      * @return array The prepared user details.
      */
+    // Reminder:: this not being in used on Production - discussed with Jawad (Only used for Car quotes - already back tracked in the code)
     private function prepareUserDetails($quote, $transaction)
     {
         $shortCode = $transaction->product->embeddedProduct->short_code;
@@ -411,9 +412,8 @@ class SukoonDemocranceService
             $firstName = $quote->first_name ?? '';
             $lastName = $quote->last_name ?? '';
         } else {
-            // TODO:: It should not be fetched through customer, it should be picked from the quote itself
-            $firstName = ($quote->customer?->latestInsured?->first_name ?? $quote->customer?->insured_first_name) ?? '';
-            $lastName = ($quote->customer?->latestInsured?->last_name ?? $quote->customer?->insured_last_name) ?? '';
+            $firstName = ($quote?->latestInsured?->first_name ?? $quote?->customer?->insured_first_name) ?? '';
+            $lastName = ($quote?->latestInsured?->last_name ?? $quote?->customer?->insured_last_name) ?? '';
         }
 
         return [
