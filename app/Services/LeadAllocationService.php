@@ -1054,6 +1054,7 @@ class LeadAllocationService extends BaseService
                     QuoteStatusEnum::Lost,
                 ])
                 ->whereNotIn('source', $excludedSources)
+                ->whereNotNull('price_starting_from')
                 ->where(function ($query) use ($ecomSources) {
                     // ECOM leads criteria
                     $query->where(function ($ecomQuery) use ($ecomSources) {
@@ -1073,8 +1074,8 @@ class LeadAllocationService extends BaseService
                                     })
                                 // OR PEC marked with Plan selected
                                     ->orWhere(function ($pecQuery) {
-                                        $pecQuery->whereNotNull('pec_marked_at')
-                                            ->whereNotNull('plan_id');
+                                        $pecQuery->hasPecTag()
+                                        ->whereNotNull('plan_id');
                                     })
                                 // OR Clicked proceed with application (payment link requested or authorized)
                                     ->orWhereIn('quote_status_id', [
