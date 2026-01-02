@@ -16,7 +16,7 @@ class PaymentService extends BaseService
         $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
         if ($quotePayment) {
             if (! $quotePayment->price_vat_applicable) {
-                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->frequency, $quotePayment->total_price, $quoteType, $quote->id);
+                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->total_price, $quoteType, $quote->id, $quotePayment->code);
                 $quotePayment->update([
                     'price_vat_applicable' => $priceWithoutVat,
                     'price_vat' => $vat,
