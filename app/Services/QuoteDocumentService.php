@@ -990,6 +990,16 @@ class QuoteDocumentService extends BaseService
      */
     public function updateQuoteAndPaymentStatusToPaymentPending($quote)
     {
+        // if Quote status is in already in the list of statuses to don't update payment status
+        $statuses = [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::TransactionApproved];
+        if (in_array($quote->quote_status_id, $statuses)) {
+            LoggerService::info("Quote status is already in the list of statuses to don't update payment status", extra: [
+                'quote_status_id' => $quote->quote_status_id,
+                'statuses' => $statuses,
+            ]);
+
+            return;
+        }
         $quote->quote_status_id = QuoteStatusEnum::PaymentPending;
         $quote->save();
         $payment = $quote->getLastPaymentWithInsurerPaymentLink();
