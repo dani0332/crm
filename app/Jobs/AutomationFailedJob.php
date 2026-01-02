@@ -20,10 +20,10 @@ class AutomationFailedJob implements ShouldQueue
     use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 100;
-
     public int $tries = 3;
-
     private string $insurerName = '';
+    private $recipientEmail;
+    private $recipientName;
 
     public function __construct(
         private $quoteId,
