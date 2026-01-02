@@ -23,35 +23,21 @@ class AutomationFailedJob implements ShouldQueue
 
     public int $tries = 3;
 
-    private $quoteId;
+    private string $insurerName = '';
 
-    private $quoteTypeId;
-
-    private $actionRequired;
-
-    private $statusAPIFailed;
-
-    private $processInvolved;
-
-    private $workflowType;
-
-    private $userToSendEmail;
-
-    private $insurerName = '';
-
-    public function __construct($quoteId, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
-    {
+    public function __construct(
+        private $quoteId,
+        private $quoteTypeId,
+        private $actionRequired,
+        private $statusAPIFailed,
+        private $processInvolved,
+        private $workflowType,
+        private $userToSendEmail = null
+    ) {
         LoggerService::info('job:AutomationFailedJob - Initializing job', extra: [
             'quoteId' => $quoteId,
             'quoteTypeId' => $quoteTypeId,
         ]);
-        $this->quoteId = $quoteId;
-        $this->quoteTypeId = $quoteTypeId;
-        $this->actionRequired = $actionRequired;
-        $this->processInvolved = $processInvolved;
-        $this->statusAPIFailed = $statusAPIFailed;
-        $this->workflowType = $workflowType;
-        $this->userToSendEmail = $sendTo;
     }
 
     /**
