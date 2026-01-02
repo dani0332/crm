@@ -497,7 +497,7 @@ class EmbeddedProductRepository extends BaseRepository
                 } else {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    
+
                     // Load latestInsured with quote_type_id constraint for personal quotes
                     $isPersonalQuote = checkPersonalQuotes(ucwords($modelType));
                     if ($isPersonalQuote) {
@@ -506,7 +506,7 @@ class EmbeddedProductRepository extends BaseRepository
                                 $query->where('customer_insured.quote_type_id', $quoteTypeId);
                             },
                             'embeddedTransactions.product.embeddedProduct',
-                            'customer'
+                            'customer',
                         ]);
                     } else {
                         $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
@@ -788,7 +788,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         // TODO:: Need to test this code
         $isPersonalQuote = checkPersonalQuotes(ucwords($modelType));
-        if ($isPersonalQuote && !$quoteObject->relationLoaded('latestInsured')) {
+        if ($isPersonalQuote && ! $quoteObject->relationLoaded('latestInsured')) {
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $quoteObject->load(['latestInsured' => function ($query) use ($quoteTypeId) {
                 $query->where('customer_insured.quote_type_id', $quoteTypeId);
