@@ -19,76 +19,29 @@ class AdnicValidationService
     ) {}
 
     /**
-     * Validate book policy prerequisites
-     *
-     * @param  mixed  $quote
-     */
-    public function validateBookPolicy($quote): array
-    {
-        LoggerService::info('Starting book policy validation');
-        $response = ['status' => true, 'error' => null, 'message' => null];
-
-        try {
-            $requestData = [
-                'quote_id' => $quote->id,
-                'model_type' => QuoteTypes::HEALTH->value,
-                'send_policy_type' => SendPolicyTypeEnum::SAGE,
-                'is_send_policy' => false,
-                'transaction_payment_status' => null,
-                'through_automation' => true,
-            ];
-            request()->merge($requestData);
-
-            $sendBookPolicyRequest = new SendBookPolicyRequest;
-            $validator = Validator::make($requestData, $sendBookPolicyRequest->rules());
-            $sendBookPolicyRequest->withValidator($validator);
-
-            if ($validator->fails()) {
-                $response['status'] = false;
-                $response['error'] = $validator->errors()->first() ?? 'SendBookPolicyRequest validation failed';
-                $response['message'] = $validator->errors()->first();
-
-                LoggerService::error('Validation failed', extra: [
-                    'validation_errors' => $validator->errors()->toArray(),
-                    'first_error' => $response['message'],
-                ]);
-
-                return $response;
-            }
-
-            LoggerService::info('All prerequisites validated successfully');
-            $response['message'] = 'All book policy prerequisites validated successfully';
-        } catch (Exception $e) {
-            $response['status'] = false;
-            $response['error'] = 'Validation error: '.$e->getMessage();
-            $response['message'] = 'An error occurred during validation: '.$e->getMessage();
-
-            LoggerService::error('Exception during validation', exception: $e);
-        }
-
-        return $response;
-    }
-
-    /**
      * Validate required data for policy issuance
      *
      * @param  mixed  $quote
      */
     public function validateRequiredData($quote): array
     {
-        $customer = $quote->customer; 
-        $insurerGenerateQuoteRequestResponse = $quote->insurerGenerateQuoteRequestResponse ?? HealthInsurerRequestResponse::where(['id' => '6881898ab82cdba2ae884b44'])->first();
+        $customer = $quote->customer;
+        $insurerGenerateQuoteRequestResponse = $quote->insurerGenerateQuoteRequestResponse;
         $insurerGenerateQuoteResponse = $insurerGenerateQuoteRequestResponse ? json_decode($insurerGenerateQuoteRequestResponse->response) : null;
         $insurerQuoteNumber = $insurerGenerateQuoteResponse?->QuoteInfo?->QuotationNo;
 
         $missing = [];
+
+        if (! $quote->healthUmafResponse) {
+            $missing[] = 'Health UMAF Response';
+        }
 
         if (! $quote->payments) {
             $missing[] = 'payments';
         }
 
         if (! $insurerQuoteNumber) {
-            $missing[] = 'insurer quote number';
+            $missing[] = 'Insurer Quote Number';
         }
         // Only check emirates id if customer exists (not null)
         if ($customer === null) {

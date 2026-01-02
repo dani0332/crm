@@ -120,38 +120,4 @@ class AdnicStepExecutor
 
         return $uploadPolicyDocumentsToIMCRMResponse;
     }
-
-    /**
-     * Execute book policy step
-     *
-     * @param  mixed  $quote
-     * @param  mixed  $process
-     */
-    public function executeBookPolicyStep($quote, $process): array
-    {
-        LoggerService::info('Starting book policy execution', extra: [
-            'step' => AdnicEnum::STEP_BOOK_POLICY,
-            'process_id' => $process->id,
-            'policy_number' => $quote->policy_number,
-        ]);
-
-        $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process);
-
-        if (! $triggerBookPolicyResponse['status']) {
-            LoggerService::error('Book policy failed', extra: [
-                'step' => AdnicEnum::STEP_BOOK_POLICY,
-                'error' => $triggerBookPolicyResponse['error'] ?? AdnicEnum::UNKNOWN_ERROR,
-                'message' => $triggerBookPolicyResponse['message'] ?? null,
-            ]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::HEALTH->value, PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Send And Book Policy');
-
-            return $triggerBookPolicyResponse;
-        }
-
-        LoggerService::info('Book policy execution successful', extra: [
-            'step' => AdnicEnum::STEP_BOOK_POLICY,
-        ]);
-
-        return $triggerBookPolicyResponse;
-    }
 }

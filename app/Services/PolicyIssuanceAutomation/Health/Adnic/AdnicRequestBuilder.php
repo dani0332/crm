@@ -31,12 +31,12 @@ class AdnicRequestBuilder
 
         $healthUmafDetails = $quote->healthUmafResponse;
         $healthUmafQuestionCollection = collect($healthUmafDetails?->answers);
-        // Questions 
+        // Questions
         $inceptionDate = $healthUmafQuestionCollection->where('question_code', 'inceptionDate')->first()?->answer_text;
         $currentlyPregnant = $healthUmafQuestionCollection->where('question_code', 'currentlyPregnant')->first()?->answer_text;
         $emiratesId = $healthUmafQuestionCollection->where('question_code', 'emiratesId')->first()?->answer_text;
-        $passportNumber = $healthUmafQuestionCollection->where('question_code', 'passportNumber')->first()?->answer_text; 
-        $previoslyCovered = $healthUmafQuestionCollection->where('question_code', 'adnicInsured')->first()?->answer_text;
+        $passportNumber = $healthUmafQuestionCollection->where('question_code', 'passportNumber')->first()?->answer_text;
+        $previouslyCovered = $healthUmafQuestionCollection->where('question_code', 'adnicInsured')->first()?->answer_text;
         $sponsorCategory = $healthUmafQuestionCollection->where('question_code', 'sponsorCategory')->first()?->answer_text;
         $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()?->answer_text;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()?->answer_text;
@@ -79,7 +79,7 @@ class AdnicRequestBuilder
                 ],
                 'QuestionnarieInfo' => (array) $insuredMember->QuestionnarieInfo,
                 'PregnantStatus' => $currentlyPregnant ?? AdnicEnum::NO,
-                'PreviouslyCovered' => $previoslyCovered ?? AdnicEnum::NO, // TODO : Need to check this
+                'PreviouslyCovered' => $previouslyCovered ?? AdnicEnum::NO, // TODO : Need to check this
                 'EmiratesId' => $emiratesId ?? '',
                 'EntryPermitNoOrFileNo' => $visaFileNumber ?? '', // TODO : Need to check this
                 'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
@@ -188,17 +188,6 @@ class AdnicRequestBuilder
                 'PolicyNo' => $generatePolicyResponse?->PolicyInfo?->PolicyNo,
                 'DocumentId' => $docId,
             ],
-        ];
-    }
-
-    /**
-     * Build headers required for policy issuance API
-     */
-    public function buildIssuePolicyHeaders(): array
-    {
-        return [
-            'TP-Payment-Key' => 'TP_PAYMENT',
-            'Accept' => 'application/json',
         ];
     }
 
