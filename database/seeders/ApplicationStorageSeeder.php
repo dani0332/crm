@@ -773,7 +773,7 @@ class ApplicationStorageSeeder extends Seeder
     private function claimGoogleReviewEmail()
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL],
+            ['key_name' => ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f440f3b1-7c43-445c-a229-2b694e71179c/invoke-sync',
                 'created_at' => now(),

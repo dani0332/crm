@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\CustomerPortalApiFacade;
 use App\Facades\InstantWriterAIFacade;
+use App\Jobs\SendClaimSubStatusUpdateNotificationEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\ClaimActivity;
@@ -893,6 +894,8 @@ class ClaimsService extends BaseService
             $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
             $request->customer_message, $request->ai_optimized_message
         );
+
+        SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->customer_message);
 
         return $claimActivity;
     }
