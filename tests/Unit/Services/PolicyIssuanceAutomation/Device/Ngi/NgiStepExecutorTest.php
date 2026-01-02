@@ -196,7 +196,7 @@ describe('executeBookPolicyStep', function () {
                 \App\Enums\QuoteTypes::DEVICE->value,
                 PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
-                NgiEnum::STEP_BOOK_POLICY
+                PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY
             );
         app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
 
