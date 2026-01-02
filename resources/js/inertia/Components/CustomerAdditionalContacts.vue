@@ -255,6 +255,15 @@ onMounted(() => {
               >
                 Make Primary
               </x-button>
+              <x-button
+                size="xs"
+                color="red"
+                outlined
+                @click.prevent="additionalContactDelete(item.id)"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Delete
+              </x-button>
             </div>
           </template>
         </DataTable>
