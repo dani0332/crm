@@ -191,6 +191,7 @@ class CustomerController extends Controller
             'quote_type' => 'required',
             'key' => 'required',
             'value' => 'required',
+            'keep_existing_primary_email' => 'required|boolean',
         ]);
         if ($validator->fails()) {
             return response()->json(['error' => [
@@ -199,7 +200,7 @@ class CustomerController extends Controller
         }
 
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-        $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
+        $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value, $request->keep_existing_primary_email);
 
         if ($quoteObject) {
             $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
