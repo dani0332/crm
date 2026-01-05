@@ -191,11 +191,14 @@ const additionalContactDeleteConfirmed = () => {
       onBefore: () => {
         contactLoader.value = true;
       },
-      onSuccess: () => {
-        notification.error({
-          title: 'Additional Contact Deleted',
-          position: 'top',
-        });
+      onSuccess: page => {
+        // Only show success notification if there's no flash error
+        if (!page.props?.flash?.error) {
+          notification.error({
+            title: 'Additional Contact Deleted',
+            position: 'top',
+          });
+        }
       },
       onFinish: () => {
         contactLoader.value = false;

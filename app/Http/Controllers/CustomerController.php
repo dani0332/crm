@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\SLAActionTypeEnum;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
@@ -168,6 +169,14 @@ class CustomerController extends Controller
 
     public function deleteAdditionalContact($id, Request $request)
     {
+        if (!auth()->user()->can(PermissionsEnum::DELETE_ADDITIONAL_CONTACT)) {
+            if (isset($request->isInertia) && $request->isInertia) {
+                return redirect()->back()->with('error', 'You are not authorized to delete additional contact.');
+            }
+
+            abort(403, 'You are not authorized to delete additional contact.');
+        }
+
         $deleteCustomerAdditionalContact = CustomerAdditionalContact::find($id);
 
         if ($deleteCustomerAdditionalContact) {
