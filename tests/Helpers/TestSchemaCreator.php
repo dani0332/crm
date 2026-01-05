@@ -268,5 +268,36 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        // Create car_quote_request table if it doesn't exist (minimal structure for CarQuote tests)
+        if (! Schema::connection('sqlite')->hasTable('car_quote_request')) {
+            Schema::connection('sqlite')->create('car_quote_request', function ($table) {
+                $table->id();
+                $table->string('uuid')->unique();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->timestamp('aig_flow_executed_at')->nullable();
+                $table->softDeletes();
+                $table->timestamps();
+            });
+        }
+
+        // Create quotes_flow_details table if it doesn't exist (minimal structure for QuoteFlowDetails)
+        if (! Schema::connection('sqlite')->hasTable('quotes_flow_details')) {
+            Schema::connection('sqlite')->create('quotes_flow_details', function ($table) {
+                $table->id();
+                $table->string('quote_uuid');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->integer('flow_type')->nullable();
+                $table->string('flow_id');
+                $table->timestamp('started_at')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 }
