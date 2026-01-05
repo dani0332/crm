@@ -116,6 +116,7 @@ const customerAlreadyPrimaryCheck = async () => {
     .then(res => {
       if (res.data.response === true) {
         modals.contactPrimaryConfirm = false;
+        EmailCheckLoader.value = false;
         modals.customerAlreadyPrimaryConfirm = true;
       } else {
         additionalContactPrimaryConfirmed();
