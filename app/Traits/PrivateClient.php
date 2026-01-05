@@ -10,7 +10,6 @@ use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PrivateClientConfigService;
-use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -194,37 +193,111 @@ trait PrivateClient
      * If count > 0 → keep the Private Client tag.
      * If count = 0 → remove the tag and write an audit-log entry on the Contact-Person profile.
      */
-    public function removePcpTag()
+    public function removePcpTag(?int $customerId = null)
     {
-        Customer::where('pcp_tag', true)
+        $customers = Customer::where('pcp_tag', true)
             ->whereDoesntHave('personalQuote', function ($query) {
                 $query->where('pc_qualified', true)
                     ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                     ->whereNotNull('policy_expiry_date')
                     ->where('policy_expiry_date', '>', now());
             })
-            ->chunk(100, function ($customers) {
-
-                foreach ($customers as $customer) {
-
-                    $customerLogObject = [
-                        'customer_id' => $customer->id,
-                        'customer_name' => $customer->first_name.' '.$customer->last_name,
-                        'email' => $customer->email,
-                    ];
-
-                    LoggerService::info('Removing PCP tag as no active qualified leads were found.', extra: $customerLogObject);
-
-                    try {
-                        $customer->update(['pcp_tag' => false]);
-
-                        LoggerService::info('PCP tag removed successfully.', extra: $customerLogObject);
-                    } catch (\Exception $ex) {
-                        LoggerService::error('Error removing PCP tag. Continuing with next customer.', extra: $customerLogObject, exception: $ex);
-                        // Do not throw — continue with next customer
-                    }
-                }
+            ->when($customerId !== null, function ($query) use ($customerId) {
+                $query->where('id', $customerId);
             });
+
+        $customers->chunk(100, function ($customers) {
+            foreach ($customers as $customer) {
+
+                $customerLogObject = [
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->first_name.' '.$customer->last_name,
+                    'email' => $customer->email,
+                ];
+
+                LoggerService::info('Removing PCP tag as no active qualified leads were found.', extra: $customerLogObject);
+
+                try {
+                    $customer->update(['pcp_tag' => false]);
+
+                    LoggerService::info('PCP tag removed successfully.', extra: $customerLogObject);
+                } catch (\Exception $ex) {
+                    LoggerService::error('Error removing PCP tag. Continuing with next customer.', extra: $customerLogObject, exception: $ex);
+                    // Do not throw — continue with next customer
+                }
+            }
+        });
+    }
+
+    public function removePcQualified(string $leadUuid, int $quoteTypeId)
+    {
+        if (! $this->isLOBEligibleForPCP($quoteTypeId)) {
+            LoggerService::warning('LOB not eligible for PCP yet.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return;
+        }
+
+        $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
+        if (! class_exists($modelClass)) {
+            LoggerService::warning('Model class not found.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return;
+        }
+
+        // Find the lead model
+        $model = $this->findLeadModel($modelClass, $leadUuid, $quoteTypeId);
+        if (! $model) {
+            return;
+        }
+        $configs = null;
+
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if ($quoteType && $quoteType instanceof QuoteTypes) {
+            $configs = app(PrivateClientConfigService::class)->evaluateConfig($quoteType, $model->nationality_id);
+        }
+
+        if (empty($configs)) {
+            LoggerService::warning('no configration found for this quoteType.', extra: [
+                'quoteType' => $quoteType,
+            ]);
+
+            return;
+        }
+
+        // Returnif lead matches PCP criteria
+        if ($this->doesLeadMatchPcpCriteria($model, $configs, $modelClass, $quoteTypeId)) {
+            LoggerService::warning('Lead matches PCP criteria so skipping it.', extra: [
+                'tag_version_criteria' => $configs->toArray(),
+                'leadUuid' => $leadUuid,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return;
+        }
+
+        LoggerService::warning('Removing PC qualified tag as lead does not match PCP criteria.', extra: [
+            'tag_version_criteria' => $configs->toArray(),
+            'leadUuid' => $leadUuid,
+            'quoteTypeId' => $quoteTypeId,
+        ]);
+
+        // Remove PC qualified tag from lead and personal quote
+        DB::transaction(function () use ($model) {
+            $updateData = ['pc_qualified' => false, 'pcp_tag_version' => null];
+            $model->update($updateData);
+
+            // Update personal quote model if its not Home or Yacht since home and yacht already have personal quote model
+            if ($model->quote_type_id !== QuoteTypeId::Home && $model->quote_type_id !== QuoteTypeId::Yacht) {
+                PersonalQuote::where('uuid', $model->uuid)->update($updateData);
+            }
+
+            // Remobe PCP tag from customer if no active qualified leads were found
+            $this->removePcpTag($model->customer_id);
+        });
     }
 
     private function applyPcpTagsToLeadAndCustomer($model, $pcpTagVersion): bool

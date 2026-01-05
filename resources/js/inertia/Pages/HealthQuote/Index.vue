@@ -293,12 +293,13 @@ const renewalBatchOptions = computed(() => {
 
 const modifiedAdvisorOptions = ref([]);
 
-modifiedAdvisorOptions.value = advisorOptions.value;
-
-modifiedAdvisorOptions.value.push({
-  value: 'unassigned',
-  label: 'Unassigned',
-});
+modifiedAdvisorOptions.value = [
+  {
+    value: 'unassigned',
+    label: 'Unassigned',
+  },
+  ...advisorOptions.value,
+];
 
 // const subTeamsOptions = computed(() => {
 

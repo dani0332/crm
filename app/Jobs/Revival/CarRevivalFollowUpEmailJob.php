@@ -33,15 +33,16 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
     public $timeout = 60;
     public $backoff = 300;
     private $dttRevival = null;
+    private $dttRevivalId = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dttRevival)
+    public function __construct($dttRevivalId)
     {
-        $this->dttRevival = $dttRevival;
+        $this->dttRevivalId = $dttRevivalId;
         $this->onQueue('renewals');
     }
 
@@ -52,9 +53,20 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
      */
     public function handle()
     {
+
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             LoggerService::info('Dtt is not enabled from cms');
+
+            return false;
+        }
+
+        // Fetch the DttRevival model to avoid serialization issues
+        $this->dttRevival = DttRevival::find($this->dttRevivalId);
+
+        // If the record was deleted between job creation and execution, exit gracefully
+        if ($this->dttRevival === null) {
+            LoggerService::info('DttRevival record not found (ID: '.$this->dttRevivalId.'). Record may have been deleted.');
 
             return false;
         }

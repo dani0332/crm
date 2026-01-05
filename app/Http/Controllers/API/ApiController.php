@@ -37,6 +37,7 @@ use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
 use App\Jobs\ProcessLeadOCRDataComparison;
+use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
 use App\Models\HealthQuote;
@@ -481,7 +482,21 @@ class ApiController extends Controller
 
         dispatch(new TagPcpCustomerJob($request->input('uuids')));
 
-        return apiResponse(null, Response::HTTP_OK, 'Private client tagging has started!');
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging job has been dispatched!');
+    }
+
+    public function removePcQualified(Request $request)
+    {
+        $request->validate([
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
+        ]);
+
+        LoggerService::info(self::class.': PC qualified removal exercise has been initiated');
+
+        dispatch(new RemovePcQualifiedJob($request->input('uuids')));
+
+        return apiResponse(null, Response::HTTP_OK, 'PC qualified removal job has been dispatched!');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
