@@ -264,7 +264,7 @@ onMounted(() => {
                 color="red"
                 outlined
                 @click.prevent="additionalContactDelete(item.id)"
-                v-if="readOnlyMode.isDisable === true"
+                v-if="readOnlyMode.isDisable === true && can(permissionsEnum.DELETE_ADDITIONAL_CONTACT)"
               >
                 Delete
               </x-button>
