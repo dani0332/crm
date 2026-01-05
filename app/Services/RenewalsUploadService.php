@@ -3482,6 +3482,7 @@ class RenewalsUploadService
      * @param array $processIds
      * @param int $maxRetries
      * @return void
+     * @throws \Illuminate\Database\QueryException
      * @throws FetchPlansUpdateException
      */
     private function updateProcessIdsWithRetry(array $processIds, int $maxRetries = 3)
@@ -3495,12 +3496,12 @@ class RenewalsUploadService
 
                 return;
             } catch (\Illuminate\Database\QueryException $e) {
-                if (strpos($e->getMessage(), 'Deadlock found') !== false) {
+                if (strpos($e->getMessage(), 'Deadlock found') !== false && $attempts < $maxRetries - 1) {
                     usleep(200000); // wait 200ms before retry
                     $attempts++;
-                } else {
-                    throw $e;
+                    continue;
                 }
+                throw $e;
             }
         }
 
