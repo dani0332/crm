@@ -16,8 +16,7 @@ class CarAigWorkflowMockHelper
         ?string $runId = 'test-run-id',
         int $statusCode = 200,
         ?callable $payloadAssert = null
-    ): \Mockery\MockInterface
-    {
+    ): \Mockery\MockInterface {
         $mock = Mockery::mock(BirdService::class);
 
         $mock->shouldReceive('triggerWebHookRequest')
@@ -57,5 +56,3 @@ class CarAigWorkflowMockHelper
         return $mock;
     }
 }
-
-

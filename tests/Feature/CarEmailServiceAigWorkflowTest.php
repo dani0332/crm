@@ -130,5 +130,3 @@ test('does not trigger workflow when workflow key missing', function () {
     $quoteAfter = CarQuote::on('sqlite')->where('uuid', $quote->uuid)->firstOrFail();
     expect($quoteAfter->aig_flow_executed_at)->toBeNull();
 });
-
-
