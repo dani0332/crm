@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 class SchemaUtils
 {
-    private const CONNECTION = 'sqlite_testing';
+    private const CONNECTION = 'sqlite';
 
     public static function builder(): Builder
     {

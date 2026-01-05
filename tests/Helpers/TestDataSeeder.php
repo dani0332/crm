@@ -21,7 +21,7 @@ class TestDataSeeder
         ];
 
         $user = User::factory()->create(array_merge($defaults, $attributes));
-        $user->setConnection('sqlite_testing');
+        $user->setConnection('sqlite');
 
         return $user;
     }
@@ -34,7 +34,7 @@ class TestDataSeeder
         $user = self::createUser($attributes);
 
         // Create role if it doesn't exist using DB facade
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite_testing');
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
         $roleId = $db->table('roles')->where('name', $roleName)->value('id');
         if (! $roleId) {
             $roleId = $db->table('roles')->insertGetId([
@@ -63,7 +63,7 @@ class TestDataSeeder
     public static function seedLifeQuoteLookups(): array
     {
         // Use DB facade to insert directly and avoid mass assignment issues
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite_testing');
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
 
         // Create Nationality
         $nationalityId = $db->table('nationality')->where('text', 'Test Nationality')->value('id');
@@ -136,7 +136,7 @@ class TestDataSeeder
     {
         $user = self::createUser($attributes);
 
-        $db = \Illuminate\Support\Facades\DB::connection('sqlite_testing');
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
         $roleId = $db->table('roles')->where('name', \App\Enums\RolesEnum::Admin)->value('id');
         if (! $roleId) {
             $roleId = $db->table('roles')->insertGetId([
