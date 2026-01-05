@@ -21,6 +21,12 @@ const notification = useNotifications('toast');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+// Helper function to convert text to title case (e.g., "METLIFE GULF" -> "Metlife Gulf")
+const toTitleCase = str => {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+};
+
 const modals = reactive({
   planDetails: false,
   createPlan: false,
@@ -380,7 +386,12 @@ onMounted(() => {
         <!-- Action buttons for Available Plans -->
         <div
           class="flex justify-between items-center flex-wrap gap-2 mb-4"
-          v-if="readOnlyMode.isDisable === true"
+          v-if="
+            readOnlyMode.isDisable === true &&
+            !availablePlansTable.isLoading &&
+            availablePlansTable.data &&
+            typeof availablePlansTable.data !== 'string'
+          "
         >
           <div class="flex gap-2">
             <!-- Savings Calculator Button -->
@@ -608,8 +619,8 @@ onMounted(() => {
 
             <!-- Item Templates -->
             <template #item-providerName="item">
-              <p class="">
-                {{ item.providerName }}
+              <p>
+                {{ toTitleCase(item.providerName) || 'N/A' }}
               </p>
               <div class="flex gap-1">
                 <x-tag
@@ -631,51 +642,51 @@ onMounted(() => {
               </div>
             </template>
             <template #item-name="item">
-              <span class="uppercase">{{ item.name }}</span>
+              <span>{{ toTitleCase(item.name) || 'N/A' }}</span>
             </template>
             <template #item-typeOfPlan="item">
-              <span class="">{{ item.typeOfPlan }}</span>
+              <span>{{ item.typeOfPlan || 'N/A' }}</span>
             </template>
             <template #item-insurerQuoteNo="item">
-              <span class="">{{ item.insurerQuoteNo }}</span>
+              <span>{{ item.insurerQuoteNo || 'N/A' }}</span>
             </template>
             <template #item-currency="item">
-              <span class="">{{ item.currency }}</span>
+              <span>{{ item.currency || 'N/A' }}</span>
             </template>
             <template #item-price="item">
-              <span class="">{{ item.price }}</span>
+              <span>{{ item.price || 'N/A' }}</span>
             </template>
             <template #item-exchangeRate="item">
-              <span class="">{{ item.exchangeRate }}</span>
+              <span>{{ item.exchangeRate || 'N/A' }}</span>
             </template>
             <template #item-priceAed="item">
-              <span class="">{{ item.priceAed }}</span>
+              <span>{{ item.priceAed || 'N/A' }}</span>
             </template>
             <template #item-investmentFrequency="item">
-              <span class="">{{ item.investmentFrequency }}</span>
+              <span>{{ item.investmentFrequency || 'N/A' }}</span>
             </template>
             <template #item-paymentTerm="item">
-              <span class="">{{ item.paymentTerm }}</span>
+              <span>{{ item.paymentTerm || 'N/A' }}</span>
             </template>
             <template #item-tenureOfSavings="item">
-              <span class="">{{ item.tenureOfSavings }}</span>
+              <span>{{ item.tenureOfSavings || 'N/A' }}</span>
             </template>
             <template #item-expectedRateOfReturn="item">
-              <span class="">{{ item.expectedRateOfReturn }}</span>
+              <span>{{ item.expectedRateOfReturn || 'N/A' }}</span>
             </template>
             <template #item-lumpsumAmount="item">
-              <span class="">{{ item.lumpsumAmount }}</span>
+              <span>{{ item.lumpsumAmount || 'N/A' }}</span>
             </template>
             <template #item-totalAnnualPrice="item">
-              <span class="">{{ item.totalAnnualPrice }}</span>
+              <span>{{ item.totalAnnualPrice || 'N/A' }}</span>
             </template>
             <template #item-totalAnnualPriceAed="item">
-              <span class="">{{ item.totalAnnualPriceAed }}</span>
+              <span>{{ item.totalAnnualPriceAed || 'N/A' }}</span>
             </template>
             <template #item-action="item">
-              <div class="flex gap-2">
+              <div class="flex gap-3">
                 <x-button
-                  size="xs"
+                  size="sm"
                   color="primary"
                   outlined
                   @click.prevent="
@@ -683,14 +694,16 @@ onMounted(() => {
                     getPlanDetails(item.id);
                   "
                   :loading="viewButtonLoading"
+                  class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
                 >
                   View
                 </x-button>
                 <x-button
-                  size="xs"
+                  size="sm"
                   color="error"
                   outlined
                   @click.prevent="copyPlanURL(item)"
+                  class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
                 >
                   Copy
                 </x-button>
@@ -708,14 +721,17 @@ onMounted(() => {
                     }"
                     :payments="payments"
                     :insuranceProviderId="item.insuranceProviderId"
+                    button-size="sm"
+                    button-class="!rounded-xl !px-5 !py-1 !font-normal"
                   />
 
                   <x-button
                     v-else
-                    size="xs"
+                    size="sm"
                     color="orange"
                     outlined
                     :disabled="true"
+                    class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
                   >
                     Selected
                   </x-button>
