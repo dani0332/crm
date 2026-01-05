@@ -14,6 +14,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\DatabaseConnectionEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -32,6 +33,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -1805,5 +1807,26 @@ if (! function_exists('formatEmiratesIdNumber')) {
             .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
 
         return $formattedIdNumber;
+    }
+}
+
+if (! function_exists('ensureWriteDefaultConnection')) {
+    /**
+     * Ensure the application's default DB connection is the write-enabled connection.
+     * This changes the global default connection for the current PHP process/request.
+     */
+    function ensureWriteDefaultConnection(array $context = []): void
+    {
+        if (DB::getDefaultConnection() !== DatabaseConnectionEnum::MYSQL_READ->value) {
+            return;
+        }
+
+        LoggerService::warning('ensureWriteDefaultConnection - Default DB connection is read replica; switching to write connection', context: [
+            ...$context,
+            'from' => DB::getDefaultConnection(),
+            'to' => DatabaseConnectionEnum::MYSQL->value,
+        ]);
+
+        DB::setDefaultConnection(DatabaseConnectionEnum::MYSQL->value);
     }
 }
