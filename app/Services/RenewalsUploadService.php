@@ -3477,6 +3477,7 @@ class RenewalsUploadService
 
     /**
      * Update process IDs with retry logic to handle deadlocks
+     * Only updates records that are still in PENDING status to prevent race conditions
      *
      * @param array $processIds
      * @param int $maxRetries
@@ -3488,7 +3489,9 @@ class RenewalsUploadService
         $attempts = 0;
         while ($attempts < $maxRetries) {
             try {
-                RenewalQuoteProcess::whereIn('id', $processIds)->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+                RenewalQuoteProcess::whereIn('id', $processIds)
+                    ->where('fetch_plans_status', FetchPlansStatuses::PENDING)
+                    ->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
                 return;
             } catch (\Illuminate\Database\QueryException $e) {
