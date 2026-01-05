@@ -56,9 +56,6 @@ trait IdNumberFormatting
     /**
      * Normalize Emirates ID in the given attributes array
      * Removes hyphens from id_number when id_type is emiratesId
-     *
-     * @param array $attributes
-     * @return array
      */
     protected static function normalizeEmiratesId(array $attributes): array
     {
