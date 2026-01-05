@@ -54,20 +54,20 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
     public function handle()
     {
 
-     
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             LoggerService::info('Dtt is not enabled from cms');
 
             return false;
         }
-        
+
         // Fetch the DttRevival model to avoid serialization issues
         $this->dttRevival = DttRevival::find($this->dttRevivalId);
 
         // If the record was deleted between job creation and execution, exit gracefully
         if ($this->dttRevival === null) {
             LoggerService::info('DttRevival record not found (ID: '.$this->dttRevivalId.'). Record may have been deleted.');
+
             return false;
         }
 
