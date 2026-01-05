@@ -3458,21 +3458,18 @@ class RenewalsUploadService
     {
         // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
         // To mitigate serialization deadlocks, update in smaller batches with retries
-        $query = RenewalQuoteProcess::where([
+        // Using chunkById for robust cursor-based batching that handles concurrent updates
+        RenewalQuoteProcess::where([
             'quote_id' => $quote->id,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
-        ])->where('id', '!=', $renewalQuoteProcess->id);
-
-        $batchSize = 50;
-        do {
-            $processIds = $query->limit($batchSize)->pluck('id');
-            if ($processIds->isEmpty()) {
-                break;
-            }
-            $this->updateProcessIdsWithRetry($processIds->toArray());
-        } while (true);
+        ])
+            ->where('id', '!=', $renewalQuoteProcess->id)
+            ->chunkById(10, function ($processes) {
+                $processIds = $processes->pluck('id')->toArray();
+                $this->updateProcessIdsWithRetry($processIds);
+            });
     }
 
     /**
@@ -3487,8 +3484,9 @@ class RenewalsUploadService
      */
     private function updateProcessIdsWithRetry(array $processIds, int $maxRetries = 3)
     {
-        $attempts = 0;
-        while ($attempts < $maxRetries) {
+        $lastException = null;
+        
+        for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
             try {
                 RenewalQuoteProcess::whereIn('id', $processIds)
                     ->where('fetch_plans_status', FetchPlansStatuses::PENDING)
@@ -3496,15 +3494,25 @@ class RenewalsUploadService
 
                 return;
             } catch (\Illuminate\Database\QueryException $e) {
-                if (strpos($e->getMessage(), 'Deadlock found') !== false && $attempts < $maxRetries - 1) {
-                    usleep(200000); // wait 200ms before retry
-                    $attempts++;
-                    continue;
+                $isDeadlock = strpos($e->getMessage(), 'Deadlock found') !== false;
+                
+                if (!$isDeadlock) {
+                    // Non-deadlock exception - throw immediately
+                    throw $e;
                 }
-                throw $e;
+                
+                $lastException = $e;
+                
+                // If this is the last attempt, throw custom exception
+                if ($attempt === $maxRetries - 1) {
+                    throw new FetchPlansUpdateException($processIds, $maxRetries, 0, $e);
+                }
+                
+                usleep(200000); // wait 200ms before retry
             }
         }
 
-        throw new FetchPlansUpdateException($processIds, $maxRetries);
+        // This should never be reached, but included for safety
+        throw new FetchPlansUpdateException($processIds, $maxRetries, 0, $lastException);
     }
 }
