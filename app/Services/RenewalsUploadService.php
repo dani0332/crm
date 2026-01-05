@@ -1240,12 +1240,7 @@ class RenewalsUploadService
             LoggerService::info($logPrefix.' quote updated UUID: '.$quote->uuid);
 
             // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
-            RenewalQuoteProcess::where([
-                'quote_id' => $quote->id,
-                'status' => RenewalProcessStatuses::PROCESSED,
-                'type' => RenewalsUploadType::UPDATE_LEADS,
-                'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->where('id', '!=', $renewalQuoteProcess->id)->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+            $this->markOtherFetchPlansOutdated($quote, $renewalQuoteProcess);
 
             // mark renewal quote process as processed and assign quote id
             $renewalQuoteProcess->update([
@@ -3451,4 +3446,46 @@ class RenewalsUploadService
         }
     }
 
+    /**
+     * This function is used to mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
+     *
+     * @param PersonalQuote|CarQuote|TravelQuote|HomeQuote $quote
+     * @param RenewalQuoteProcess $renewalQuoteProcess
+     * @return void
+     */
+    private function markOtherFetchPlansOutdated($quote, $renewalQuoteProcess)
+    {
+        // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
+        // To mitigate serialization deadlocks, update in smaller batches with retries
+        $query = RenewalQuoteProcess::where([
+            'quote_id' => $quote->id,
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
+        ])->where('id', '!=', $renewalQuoteProcess->id);
+
+        $batchSize = 50;
+        $maxRetries = 3;
+        do {
+            $processIds = $query->limit($batchSize)->pluck('id');
+            if ($processIds->isEmpty()) {
+                break;
+            }
+            $updated = false;
+            $attempts = 0;
+            while (!$updated && $attempts < $maxRetries) {
+                try {
+                    RenewalQuoteProcess::whereIn('id', $processIds)->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+                    $updated = true;
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if (strpos($e->getMessage(), 'Deadlock found') !== false) {
+                        usleep(200000); // wait 200ms before retry
+                        $attempts++;
+                    } else {
+                        throw $e;
+                    }
+                }
+            }
+        } while (true);
+    }
 }
