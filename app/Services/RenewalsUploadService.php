@@ -3486,6 +3486,10 @@ class RenewalsUploadService
                     }
                 }
             }
+            // If after all retries we're still not updated, abort further looping to avoid infinite loop
+            if (!$updated) {
+                throw new \RuntimeException("Failed to update fetch_plans_status to OUTDATED for process IDs: " . implode(', ', $processIds->toArray()) . " after {$maxRetries} deadlock retries.");
+            }
         } while (true);
     }
 }
