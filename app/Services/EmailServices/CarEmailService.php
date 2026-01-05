@@ -588,7 +588,6 @@ class CarEmailService extends BaseService
 
                     $lead->aig_flow_executed_at = now();
                     info("AIGWorkflow lead ref-id: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-                    ensureWriteDefaultConnection();
                     $lead->save();
 
                     if (! empty($response->headers['Run-Id'])) {
