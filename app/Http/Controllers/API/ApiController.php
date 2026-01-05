@@ -324,7 +324,7 @@ class ApiController extends Controller
 
             $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
             if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
-                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
                 $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);

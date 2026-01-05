@@ -497,6 +497,7 @@ class PolicyIssuanceService
     public function getInsurerAPIStatuses($status = null, $onlyKeys = false)
     {
         $statuses = [
+            PolicyIssuanceEnum::PIA_AUTO_CAPTURE_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_AUTO_CAPTURE_FAILED,
             PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED,
             PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED,
             PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
