@@ -87,7 +87,7 @@ class CyberEmailService extends BaseService
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CYBER_AUTOMATED_FOLLOWUPS)->first();
 
         LoggerService::info('| sendCyberAutomatedFollowups - Initiating process');
-
+        $advisor = null;
         if ($workflowUrl && ! empty($workflowUrl->value)) {
             // Fetch the advisor
             $advisor = User::find($lead->advisor_id);
@@ -95,6 +95,11 @@ class CyberEmailService extends BaseService
 
         if (! $advisor) {
             LoggerService::info('sendCyberAutomatedFollowups - Advisor not found');
+        }
+
+        if (! $workflowUrl || empty($workflowUrl->value)) {
+            LoggerService::info('sendCyberAutomatedFollowups - Workflow URL not found or empty');
+            return;
         }
 
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_AUTOMATED_FOLLOWUPS);
