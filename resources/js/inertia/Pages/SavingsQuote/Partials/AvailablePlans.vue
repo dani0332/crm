@@ -608,7 +608,7 @@ onMounted(() => {
 
             <!-- Item Templates -->
             <template #item-providerName="item">
-              <p class="text-primary-600 uppercase">
+              <p class="">
                 {{ item.providerName }}
               </p>
               <div class="flex gap-1">
@@ -631,52 +631,46 @@ onMounted(() => {
               </div>
             </template>
             <template #item-name="item">
-              <span class="text-primary-600 uppercase">{{ item.name }}</span>
+              <span class="uppercase">{{ item.name }}</span>
             </template>
             <template #item-typeOfPlan="item">
-              <span class="text-primary-600">{{ item.typeOfPlan }}</span>
+              <span class="">{{ item.typeOfPlan }}</span>
             </template>
             <template #item-insurerQuoteNo="item">
-              <span class="text-primary-600">{{ item.insurerQuoteNo }}</span>
+              <span class="">{{ item.insurerQuoteNo }}</span>
             </template>
             <template #item-currency="item">
-              <span class="text-primary-600">{{ item.currency }}</span>
+              <span class="">{{ item.currency }}</span>
             </template>
             <template #item-price="item">
-              <span class="text-primary-600">{{ item.price }}</span>
+              <span class="">{{ item.price }}</span>
             </template>
             <template #item-exchangeRate="item">
-              <span class="text-primary-600">{{ item.exchangeRate }}</span>
+              <span class="">{{ item.exchangeRate }}</span>
             </template>
             <template #item-priceAed="item">
-              <span class="text-primary-600">{{ item.priceAed }}</span>
+              <span class="">{{ item.priceAed }}</span>
             </template>
             <template #item-investmentFrequency="item">
-              <span class="text-primary-600">{{
-                item.investmentFrequency
-              }}</span>
+              <span class="">{{ item.investmentFrequency }}</span>
             </template>
             <template #item-paymentTerm="item">
-              <span class="text-primary-600">{{ item.paymentTerm }}</span>
+              <span class="">{{ item.paymentTerm }}</span>
             </template>
             <template #item-tenureOfSavings="item">
-              <span class="text-primary-600">{{ item.tenureOfSavings }}</span>
+              <span class="">{{ item.tenureOfSavings }}</span>
             </template>
             <template #item-expectedRateOfReturn="item">
-              <span class="text-primary-600">{{
-                item.expectedRateOfReturn
-              }}</span>
+              <span class="">{{ item.expectedRateOfReturn }}</span>
             </template>
             <template #item-lumpsumAmount="item">
-              <span class="text-primary-600">{{ item.lumpsumAmount }}</span>
+              <span class="">{{ item.lumpsumAmount }}</span>
             </template>
             <template #item-totalAnnualPrice="item">
-              <span class="text-primary-600">{{ item.totalAnnualPrice }}</span>
+              <span class="">{{ item.totalAnnualPrice }}</span>
             </template>
             <template #item-totalAnnualPriceAed="item">
-              <span class="text-primary-600">{{
-                item.totalAnnualPriceAed
-              }}</span>
+              <span class="">{{ item.totalAnnualPriceAed }}</span>
             </template>
             <template #item-action="item">
               <div class="flex gap-2">
