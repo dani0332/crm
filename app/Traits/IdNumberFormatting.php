@@ -62,7 +62,7 @@ trait IdNumberFormatting
      */
     protected static function normalizeEmiratesId(array $attributes): array
     {
-        if (isset($attributes['id_type'], $attributes['id_number']) 
+        if (isset($attributes['id_type'], $attributes['id_number'])
             && $attributes['id_type'] === 'emiratesId'
             && is_string($attributes['id_number'])) {
             $attributes['id_number'] = str_replace('-', '', $attributes['id_number']);
