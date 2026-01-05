@@ -32,18 +32,17 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 60;
     public $backoff = 300;
+    private $dttRevival = null;
     private $dttRevivalId = null;
 
     /**
      * Create a new job instance.
      *
-     * @param  int|DttRevival  $dttRevivalId  The DttRevival ID or model instance (for backward compatibility)
      * @return void
      */
     public function __construct($dttRevivalId)
     {
-        // Accept either ID (int) or model instance for backward compatibility
-        $this->dttRevivalId = is_object($dttRevivalId) ? $dttRevivalId->id : $dttRevivalId;
+        $this->dttRevivalId = $dttRevivalId;
         $this->onQueue('renewals');
     }
 
@@ -54,17 +53,12 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
      */
     public function handle()
     {
+
+        // Fetch the DttRevival model to avoid serialization issues
+        $this->dttRevival = DttRevival::find($this->dttRevivalId);
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             LoggerService::info('Dtt is not enabled from cms');
-
-            return false;
-        }
-
-        // Fetch the DttRevival model to avoid serialization issues
-        $dttRevival = DttRevival::find($this->dttRevivalId);
-        if (! $dttRevival) {
-            LoggerService::info('CarRevivalFollowUpEmailJob - DttRevival not found with ID: '.$this->dttRevivalId);
 
             return false;
         }
@@ -75,8 +69,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
         $leadStatusArray = [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake];
 
-        $created_at = $dttRevival->created_at;
-        $lead = CarQuote::where('uuid', $dttRevival->uuid)->first();
+        $created_at = $this->dttRevival->created_at;
+        $lead = CarQuote::where('uuid', $this->dttRevival->uuid)->first();
 
         // Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
         // or if the source is Revival Paid or if the lead is assigned to an advisor
@@ -88,7 +82,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             $afterTwentyeightDays = Carbon::parse($created_at)->addDays(28)->startOfDay();
 
             try {
-                $listQuotePlans = app(CarQuoteService::class)->getPlans($dttRevival->uuid, true, true);
+                $listQuotePlans = app(CarQuoteService::class)->getPlans($this->dttRevival->uuid, true, true);
             } catch (\Exception $exception) {
                 LoggerService::info('DTTFolloupListQuotePlansException: '.$exception->getMessage());
 
@@ -98,11 +92,6 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
             $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-            if (! $tierR) {
-                LoggerService::info('CarRevivalFollowUpEmailJob - Tier R not found');
-
-                return false;
-            }
 
             $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
@@ -115,18 +104,12 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             $emailData->customer = (object) ['firstName' => $lead->first_name, 'lastName' => $lead->last_name];
             $dttAdvisor = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ADVISOR)->value('value');
 
-            if (empty($dttAdvisor)) {
-                LoggerService::info('CarRevivalFollowUpEmailJob - DTT Advisor not configured');
-
-                return false;
-            }
-
             $advisor = explode(',', $dttAdvisor);
 
-            $emailData->uuid = $dttRevival->uuid;
+            $emailData->uuid = $this->dttRevival->uuid;
             $emailData->advisorName = $advisor[0];
             $emailData->advisorEmail = $advisor[1];
-            $emailData->id = $dttRevival->id;
+            $emailData->id = $this->dttRevival->id;
             $emailData->lob = QuoteTypes::CAR->id();
 
             // after two days
@@ -140,8 +123,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 $emailData->templateId = (int) $emailTemplateId;
                 $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                 $emailData->tag = 'reminder-purchase-your-motor-policy';
-                if ($dttRevival->follow_up_email_count == 0) {
-                    $this->sendFollowUpEmail($emailData, $dttRevival);
+                if ($this->dttRevival->follow_up_email_count == 0) {
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
             // after seven days
@@ -155,8 +138,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 $emailData->templateId = (int) $emailTemplateId;
                 $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                 $emailData->tag = 'reminder-purchase-your-motor-policy';
-                if ($dttRevival->follow_up_email_count == 1) {
-                    $this->sendFollowUpEmail($emailData, $dttRevival);
+                if ($this->dttRevival->follow_up_email_count == 1) {
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
             // after thirteen days
@@ -170,8 +153,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 $emailData->templateId = (int) $emailTemplateId;
                 $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
                 $emailData->tag = 'friendly-reminder-secure-your-motor-policy';
-                if ($dttRevival->follow_up_email_count == 2) {
-                    $this->sendFollowUpEmail($emailData, $dttRevival);
+                if ($this->dttRevival->follow_up_email_count == 2) {
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
             // after twenty days
@@ -185,8 +168,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 $emailData->templateId = (int) $emailTemplateId;
                 $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
                 $emailData->tag = 'gentle-reminder-secure-your-motor-policy';
-                if ($dttRevival->follow_up_email_count == 3) {
-                    $this->sendFollowUpEmail($emailData, $dttRevival);
+                if ($this->dttRevival->follow_up_email_count == 3) {
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
             // after twentyeight days
@@ -200,22 +183,22 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
                 $emailData->templateId = (int) $emailTemplateId;
                 $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
                 $emailData->tag = 'final-reminder-secure-your-motor-policy';
-                if ($dttRevival->follow_up_email_count == 4) {
-                    $this->sendFollowUpEmail($emailData, $dttRevival);
+                if ($this->dttRevival->follow_up_email_count == 4) {
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
         }
 
     }
 
-    private function sendFollowUpEmail($emailData, $dttRevival)
+    private function sendFollowUpEmail($emailData)
     {
         $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
         if ($response == 201) {
-            DttRevival::where('id', $dttRevival->id)->increment('follow_up_email_count');
-            LoggerService::info('CarRevivalFollowUpEmailJob email is sent '.$dttRevival->uuid.' - '.$emailData->customerEmail);
+            DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
+            LoggerService::info('CarRevivalFollowUpEmailJob email is sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         } else {
-            LoggerService::info('CarRevivalFollowUpEmailJob email not sent '.$dttRevival->uuid.' - '.$emailData->customerEmail);
+            LoggerService::info('CarRevivalFollowUpEmailJob email not sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         }
     }
 }
