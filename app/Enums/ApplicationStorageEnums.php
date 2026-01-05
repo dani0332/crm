@@ -326,6 +326,9 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
 
+    // OCR Util Feature Toggle
+    public const OCR_UTIL_ENABLED = 'OCR_UTIL_ENABLED';
+
     /* Adnic Health Policy Issuance Automation */
     public const ADNIC_HEALTH_AUTOMATION_API_TIMEOUT = 'ADNIC_HEALTH_AUTOMATION_API_TIMEOUT';
     public const ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE = 'ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE';
