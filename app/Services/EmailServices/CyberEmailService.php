@@ -99,6 +99,7 @@ class CyberEmailService extends BaseService
 
         if (! $workflowUrl || empty($workflowUrl->value)) {
             LoggerService::info('sendCyberAutomatedFollowups - Workflow URL not found or empty');
+
             return;
         }
 
