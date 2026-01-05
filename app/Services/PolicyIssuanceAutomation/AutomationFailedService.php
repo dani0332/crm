@@ -55,8 +55,7 @@ class AutomationFailedService
     public function generateImcrmLink($quote, string $quoteType): string
     {
         $baseUrl = config('app.url', env('APP_URL'));
-
-        return "{$baseUrl}/personal-quotes/{$quoteType}/{$quote->uuid}";
+        return "{$baseUrl}/personal-quotes/{ucfirst($quoteType)}/{$quote->uuid}";
     }
 
     /**

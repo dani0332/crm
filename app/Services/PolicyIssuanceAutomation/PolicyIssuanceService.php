@@ -342,7 +342,11 @@ class PolicyIssuanceService
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' PID : '.$policyIssuance?->id.' Policy Issuance Log ID : '.$log->id);
     }
 
-    public function shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider) {
+    public function shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider): bool {
+        if (!$insuranceProvider) {
+            return false;
+        }
+
         return $quoteType === QuoteTypes::DEVICE->value && $insuranceProvider->code === InsuranceProvidersEnum::NGI;
     }
 
