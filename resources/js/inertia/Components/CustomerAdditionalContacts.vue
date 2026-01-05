@@ -36,6 +36,7 @@ const can = permission => useCan(permission);
 
 const contactLoader = ref(false);
 const EmailCheckLoader = ref(false);
+const keepExistingPrimaryEmailLoader = ref(null);
 
 const additionalContactTable = [
   { text: 'Type', value: 'key' },
@@ -129,6 +130,8 @@ const customerAlreadyPrimaryCheck = async () => {
 
 function additionalContactPrimaryConfirmed(keepExistingPrimaryEmail = true) {
   const isEmail = confirmData.contactPrimary.key === 'email';
+  keepExistingPrimaryEmailLoader.value = keepExistingPrimaryEmail ? true : false;
+
   router.post(
     `/customer-additional-contact/${
       isEmail ? confirmData.contactPrimary.id : 0
@@ -158,6 +161,7 @@ function additionalContactPrimaryConfirmed(keepExistingPrimaryEmail = true) {
       onFinish: () => {
         contactLoader.value = false;
         EmailCheckLoader.value = false;
+        keepExistingPrimaryEmailLoader.value = null;
         modals.contactPrimaryConfirm = false;
         modals.customerAlreadyPrimaryConfirm = false;
       },
@@ -369,12 +373,13 @@ onMounted(() => {
           <br />
           <p>Are you sure you want to continue?</p>
           <template #actions>
-            <div class="">
+            <div class="text-right space-x-4">
               <x-button
                 size="sm"
                 color="primary"
                 @click.prevent="additionalContactPrimaryConfirmed(true)"
-                :loading="contactLoader"
+                :loading="keepExistingPrimaryEmailLoader === true && contactLoader"
+                :disabled="keepExistingPrimaryEmailLoader === false && contactLoader"
               >
                 Yes
               </x-button>
@@ -382,7 +387,10 @@ onMounted(() => {
                 size="sm"
                 ghost
                 color="red"
+                outlined
                 @click.prevent="additionalContactPrimaryConfirmed(false)"
+                :loading="keepExistingPrimaryEmailLoader === false && contactLoader"
+                :disabled="keepExistingPrimaryEmailLoader === true && contactLoader"
               >
                 No
               </x-button>
