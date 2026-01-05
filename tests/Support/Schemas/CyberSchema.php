@@ -112,6 +112,7 @@ class CyberSchema
             'documents' => fn (Blueprint $table) => $table->json('documents')->nullable(),
             'insurer_api_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('insurer_api_status_id')->nullable(),
             'api_issuance_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('api_issuance_status_id')->nullable(),
+            'send_update_log_id' => fn (Blueprint $table) => $table->unsignedBigInteger('send_update_log_id')->nullable(),
         ];
 
         foreach ($columns as $column => $callback) {
