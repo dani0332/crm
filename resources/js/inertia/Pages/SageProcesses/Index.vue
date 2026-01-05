@@ -402,7 +402,7 @@ async function exportExcel() {
 
       <!-- Lead Create Date Column -->
       <template #item-lead_create_date="item">
-        <span>{{ useDateTimeFormat(item.model?.created_at) || 'N/A' }}</span>
+        <span>{{ item.model?.created_at || 'N/A' }}</span>
       </template>
 
       <!-- Policy Number Column -->
@@ -472,9 +472,7 @@ async function exportExcel() {
 
       <!-- Payment Date -->
       <template #item-payment_date="item">
-        <span>{{
-          useDateTimeFormat(item.model?.payments?.[0]?.captured_at)
-        }}</span>
+        <span>{{ item.model?.payments?.[0]?.captured_at }}</span>
       </template>
 
       <!-- Payment Status -->
@@ -581,7 +579,7 @@ async function exportExcel() {
 
       <!-- Updated At Column -->
       <template #item-updated_at="{ updated_at }">
-        {{ useDateTimeFormat(updated_at) || 'N/A' }}
+        {{ updated_at || 'N/A' }}
       </template>
     </DataTable>
 
