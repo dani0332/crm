@@ -80,7 +80,7 @@ class DttFollowUp extends Command
                 }
             });
 
-        if (!empty($jobs) || count($jobs) > 0) {
+        if (! empty($jobs) || count($jobs) > 0) {
             Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
                     LoggerService::info($logPrefix.' all jobs completed successfully');

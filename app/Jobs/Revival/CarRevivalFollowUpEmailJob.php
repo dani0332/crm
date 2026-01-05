@@ -37,7 +37,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param int|DttRevival $dttRevivalId The DttRevival ID or model instance (for backward compatibility)
+     * @param  int|DttRevival  $dttRevivalId  The DttRevival ID or model instance (for backward compatibility)
      * @return void
      */
     public function __construct($dttRevivalId)
@@ -63,7 +63,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
 
         // Fetch the DttRevival model to avoid serialization issues
         $dttRevival = DttRevival::find($this->dttRevivalId);
-        if (!$dttRevival) {
+        if (! $dttRevival) {
             LoggerService::info('CarRevivalFollowUpEmailJob - DttRevival not found with ID: '.$this->dttRevivalId);
 
             return false;
@@ -98,7 +98,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
             $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-            if (!$tierR) {
+            if (! $tierR) {
                 LoggerService::info('CarRevivalFollowUpEmailJob - Tier R not found');
 
                 return false;
