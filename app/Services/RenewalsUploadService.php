@@ -35,6 +35,7 @@ use App\Enums\RenewalsUploadType;
 use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Exceptions\FetchPlansUpdateException;
 use App\Exceptions\RenewalProcessException;
 use App\Exports\RenewalQuotesExport;
 use App\Facades\Capi;
@@ -3465,31 +3466,41 @@ class RenewalsUploadService
         ])->where('id', '!=', $renewalQuoteProcess->id);
 
         $batchSize = 50;
-        $maxRetries = 3;
         do {
             $processIds = $query->limit($batchSize)->pluck('id');
             if ($processIds->isEmpty()) {
                 break;
             }
-            $updated = false;
-            $attempts = 0;
-            while (!$updated && $attempts < $maxRetries) {
-                try {
-                    RenewalQuoteProcess::whereIn('id', $processIds)->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
-                    $updated = true;
-                } catch (\Illuminate\Database\QueryException $e) {
-                    if (strpos($e->getMessage(), 'Deadlock found') !== false) {
-                        usleep(200000); // wait 200ms before retry
-                        $attempts++;
-                    } else {
-                        throw $e;
-                    }
+            $this->updateProcessIdsWithRetry($processIds->toArray());
+        } while (true);
+    }
+
+    /**
+     * Update process IDs with retry logic to handle deadlocks
+     *
+     * @param array $processIds
+     * @param int $maxRetries
+     * @return void
+     * @throws FetchPlansUpdateException
+     */
+    private function updateProcessIdsWithRetry(array $processIds, int $maxRetries = 3)
+    {
+        $attempts = 0;
+        while ($attempts < $maxRetries) {
+            try {
+                RenewalQuoteProcess::whereIn('id', $processIds)->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+
+                return;
+            } catch (\Illuminate\Database\QueryException $e) {
+                if (strpos($e->getMessage(), 'Deadlock found') !== false) {
+                    usleep(200000); // wait 200ms before retry
+                    $attempts++;
+                } else {
+                    throw $e;
                 }
             }
-            // If after all retries we're still not updated, abort further looping to avoid infinite loop
-            if (!$updated) {
-                throw new \RuntimeException("Failed to update fetch_plans_status to OUTDATED for process IDs: " . implode(', ', $processIds->toArray()) . " after {$maxRetries} deadlock retries.");
-            }
-        } while (true);
+        }
+
+        throw new FetchPlansUpdateException($processIds, $maxRetries);
     }
 }
