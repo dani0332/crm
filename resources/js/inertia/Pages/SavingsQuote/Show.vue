@@ -2129,6 +2129,13 @@ const getIncludedBenefitsTooltip = fieldText =>
       :expanded="sectionExpanded"
     />
 
+    <OcrLogs
+    v-if="can(permissionsEnum.API_LOG_VIEW)"
+    :type="modelClass"
+    :id="$page.props.quote.id"
+    :expanded="sectionExpanded"
+    />
+
     <lead-raw-data
       :modelType="'Savings'"
       :code="$page.props.quote.code"
