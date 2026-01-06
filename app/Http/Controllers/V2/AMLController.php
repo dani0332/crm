@@ -7,13 +7,9 @@ use App\Enums\AMLStatusCode;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
-use App\Enums\GenericModelTypeEnum;
-use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -34,27 +30,16 @@ use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
 use App\Models\BikeQuote;
-use App\Models\BusinessCoverType;
-use App\Models\BusinessQuoteType;
 use App\Models\CarQuoteRequestDetail;
-use App\Models\CommunicationMode;
 use App\Models\Customer;
-use App\Models\CustomerInsured;
-use App\Models\Emirate;
-use App\Models\Entity;
 use App\Models\Insured;
 use App\Models\KycLog;
-use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
-use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
-use App\Repositories\CarQuoteRepository;
-use App\Repositories\CustomerMembersRepository;
-use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AML\AMLDisplayService;
 use App\Services\AML\AMLEntityService;
@@ -64,7 +49,6 @@ use App\Services\AML\AMLQuoteDetailsService;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -126,13 +110,13 @@ class AMLController extends Controller
             return response()->json([
                 'status' => true,
                 'response' => $entity,
-                'message' => 'Entity found with the entered Trade License number'
+                'message' => 'Entity found with the entered Trade License number',
             ]);
         }
 
         return response()->json([
             'status' => false,
-            'message' => 'No Entity found with the entered Trade License number'
+            'message' => 'No Entity found with the entered Trade License number',
         ]);
     }
 
@@ -160,12 +144,6 @@ class AMLController extends Controller
 
         return response()->json($result->toArray());
     }
-
-
-
-
-
-
 
     public function export(Request $request)
     {
@@ -510,8 +488,6 @@ class AMLController extends Controller
 
         return true;
     }
-
-    
 
     public function sendBridgerResponse(Request $request)
     {

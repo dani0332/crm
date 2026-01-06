@@ -17,12 +17,7 @@ class AMLInsuredService
     /**
      * Get insured details by customer type and identification
      *
-     * @param string|null $customerType
-     * @param string|null $idType
-     * @param string|null $idNumber
-     * @param string|null $tradeLicense
-     * @param string|null $code For logging purposes
-     * @return InsuredSearchResult
+     * @param  string|null  $code  For logging purposes
      */
     public function getInsuredDetails(
         ?string $customerType,
@@ -68,10 +63,6 @@ class AMLInsuredService
 
     /**
      * Determine if the search is for an entity or individual
-     *
-     * @param string|null $customerType
-     * @param string|null $tradeLicense
-     * @return bool
      */
     private function determineIfEntity(?string $customerType, ?string $tradeLicense): bool
     {
@@ -82,7 +73,7 @@ class AMLInsuredService
 
         // If customer type is empty or null, check if trade license is provided
         if (empty($customerType) || is_null($customerType) || $customerType == 'null') {
-            return !empty($tradeLicense);
+            return ! empty($tradeLicense);
         }
 
         return false;
@@ -90,13 +81,6 @@ class AMLInsuredService
 
     /**
      * Search for insured based on customer type and identification
-     *
-     * @param string $customerType
-     * @param bool $isEntity
-     * @param string|null $idType
-     * @param string|null $idNumber
-     * @param string|null $tradeLicense
-     * @return Insured|null
      */
     private function searchInsured(
         string $customerType,
@@ -110,7 +94,7 @@ class AMLInsuredService
             ->when($isEntity, function ($query) use ($tradeLicense) {
                 $query->where('trade_license_no', $tradeLicense);
             })
-            ->when(!$isEntity, function ($query) use ($idType, $idNumber) {
+            ->when(! $isEntity, function ($query) use ($idType, $idNumber) {
                 $query->where('id_type', $idType)
                     ->when($idType == 'emiratesId', function ($query) use ($idNumber) {
                         $query->emiratesIdNumber($idNumber);
@@ -124,10 +108,6 @@ class AMLInsuredService
 
     /**
      * Get appropriate response message based on customer type and status
-     *
-     * @param string $customerType
-     * @param bool $found
-     * @return string
      */
     private function getResponseMessage(string $customerType, bool $found): string
     {
@@ -147,4 +127,3 @@ class AMLInsuredService
         return $messages[$customerType][$messageType];
     }
 }
-

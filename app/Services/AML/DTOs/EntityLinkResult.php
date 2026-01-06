@@ -18,8 +18,6 @@ class EntityLinkResult
 
     /**
      * Convert to JSON response array
-     *
-     * @return array
      */
     public function toArray(): array
     {
@@ -30,4 +28,3 @@ class EntityLinkResult
         ];
     }
 }
-

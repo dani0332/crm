@@ -22,32 +22,32 @@ class AMLQueryService
 {
     public function getAMLQuotes(object $request): \Illuminate\Contracts\Pagination\Paginator|array
     {
-        if (!$request->ajax()) {
+        if (! $request->ajax()) {
             return [];
         }
 
-        if (!isset($request->quoteType) || empty($request->quoteType)) {
+        if (! isset($request->quoteType) || empty($request->quoteType)) {
             return [];
         }
 
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
         $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
 
-        if (!$quoteTypeId) {
+        if (! $quoteTypeId) {
             return [];
         }
 
         $quoteRequestTable = $this->determineQuoteRequestTable($quoteTypeId, $request);
         $dataAml = $this->buildBaseQuery($quoteRequestTable, $request, $quoteTypeId);
         $dataAml = $this->applyFilters($dataAml, $quoteRequestTable, $request);
-        $dataAml = $dataAml->orderBy($quoteRequestTable . '.created_at', 'desc');
+        $dataAml = $dataAml->orderBy($quoteRequestTable.'.created_at', 'desc');
 
         return $dataAml->simplePaginate(10)->withQueryString();
     }
 
     private function determineQuoteRequestTable(int $quoteTypeId, object $request): string
     {
-        $quoteRequestTable = strtolower($request->quoteType) . '_quote_request';
+        $quoteRequestTable = strtolower($request->quoteType).'_quote_request';
 
         // Check if quote type uses personal_quotes table
         $personalQuoteTypes = [
@@ -61,12 +61,12 @@ class AMLQueryService
             QuoteTypes::HOME->id(),
         ];
 
-        if (!in_array($quoteTypeId, $personalQuoteTypes)) {
+        if (! in_array($quoteTypeId, $personalQuoteTypes)) {
             return $quoteRequestTable;
         }
 
         // Check if data has been migrated based on date
-        if (isset($request->amlCreatedStartDate) && !empty($request->amlCreatedStartDate)) {
+        if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
             return AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate)
                 ? 'personal_quotes'
                 : $quoteRequestTable;
@@ -93,7 +93,7 @@ class AMLQueryService
             default => null,
         };
 
-        if (!$searchType) {
+        if (! $searchType) {
             return null;
         }
 
@@ -113,21 +113,21 @@ class AMLQueryService
         $dataAml = DB::table($quoteRequestTable);
 
         // Special handling for Pet quote request
-        if ($quoteRequestTable === strtolower(quoteTypeCode::Pet) . '_quote_request') {
+        if ($quoteRequestTable === strtolower(quoteTypeCode::Pet).'_quote_request') {
             return $dataAml->select(
-                $quoteRequestTable . '.*',
-                $quoteRequestTable . '.personal_quote_id as id',
-                DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text'),
-                DB::raw('"' . $quoteTypeId . '" as quote_type_id'),
-                $quoteRequestTable . '.code as cdb_id'
+                $quoteRequestTable.'.*',
+                $quoteRequestTable.'.personal_quote_id as id',
+                DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text'),
+                DB::raw('"'.$quoteTypeId.'" as quote_type_id'),
+                $quoteRequestTable.'.code as cdb_id'
             );
         }
 
         return $dataAml->select(
-            $quoteRequestTable . '.*',
-            DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text'),
-            DB::raw('"' . $quoteTypeId . '" as quote_type_id'),
-            $quoteRequestTable . '.code as cdb_id'
+            $quoteRequestTable.'.*',
+            DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text'),
+            DB::raw('"'.$quoteTypeId.'" as quote_type_id'),
+            $quoteRequestTable.'.code as cdb_id'
         );
     }
 
@@ -137,19 +137,19 @@ class AMLQueryService
         if ($quoteRequestTable === 'personal_quotes') {
             $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
             $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
-            $dataAml->where($quoteRequestTable . '.quote_type_id', $quoteTypeId);
+            $dataAml->where($quoteRequestTable.'.quote_type_id', $quoteTypeId);
         }
 
         // Apply search filters
-        if (isset($request->searchType) && !empty($request->searchType) &&
-            isset($request->searchField) && !empty($request->searchField)
+        if (isset($request->searchType) && ! empty($request->searchType) &&
+            isset($request->searchField) && ! empty($request->searchField)
         ) {
             if ($request->searchType === 'cdbId') {
-                $dataAml->where($quoteRequestTable . '.code', $request->searchField);
+                $dataAml->where($quoteRequestTable.'.code', $request->searchField);
             }
 
             if ($request->searchType === 'customerEmail') {
-                $dataAml->where($quoteRequestTable . '.email', $request->searchField);
+                $dataAml->where($quoteRequestTable.'.email', $request->searchField);
             }
         }
 
@@ -164,11 +164,11 @@ class AMLQueryService
         }
 
         // Apply date range filter
-        if (isset($request->amlCreatedStartDate) && !empty($request->amlCreatedStartDate) &&
-            isset($request->amlCreatedEndDate) && !empty($request->amlCreatedEndDate)
+        if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
+            isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
         ) {
             $dataAml->whereBetween(
-                $quoteRequestTable . '.created_at',
+                $quoteRequestTable.'.created_at',
                 dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate)
             );
         }
@@ -176,4 +176,3 @@ class AMLQueryService
         return $dataAml;
     }
 }
-

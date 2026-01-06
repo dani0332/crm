@@ -14,21 +14,18 @@ class AMLResultsProcessor
 {
     /**
      * Process and filter AML results
-     *
-     * @param AML $aml
-     * @return array
      */
     public function process(AML $aml): array
     {
         $amlResults = $this->parseResults($aml->results);
-        
+
         if (empty($amlResults)) {
             return [];
         }
 
         $manualStatusUpdates = $this->extractManualStatusUpdates($amlResults);
-        
-        if (!isset($amlResults->Watchlist)) {
+
+        if (! isset($amlResults->Watchlist)) {
             return [];
         }
 
@@ -40,9 +37,6 @@ class AMLResultsProcessor
 
     /**
      * Parse JSON results safely
-     *
-     * @param string|null $results
-     * @return object|null
      */
     private function parseResults(?string $results): ?object
     {
@@ -51,15 +45,12 @@ class AMLResultsProcessor
         }
 
         $decoded = json_decode($results);
-        
+
         return collect($decoded)->first();
     }
 
     /**
      * Extract manual status updates from results
-     *
-     * @param object $amlResults
-     * @return Collection
      */
     private function extractManualStatusUpdates(object $amlResults): Collection
     {
@@ -68,23 +59,19 @@ class AMLResultsProcessor
 
     /**
      * Filter and enrich watchlist matches with decisions
-     *
-     * @param array $matches
-     * @param Collection $manualStatusUpdates
-     * @return array
      */
     private function filterAndEnrichMatches(
-        array $matches, 
+        array $matches,
         Collection $manualStatusUpdates
     ): array {
         return collect($matches)
-            ->filter(fn($match) => $match->FalsePositive === false)
+            ->filter(fn ($match) => $match->FalsePositive === false)
             ->map(function ($match) use ($manualStatusUpdates) {
                 $match->decision = $this->determineDecision(
                     $match,
                     $manualStatusUpdates
                 );
-                
+
                 return $match;
             })
             ->values()
@@ -93,13 +80,9 @@ class AMLResultsProcessor
 
     /**
      * Determine the decision status for a match
-     *
-     * @param object $match
-     * @param Collection $manualStatusUpdates
-     * @return string
      */
     private function determineDecision(
-        object $match, 
+        object $match,
         Collection $manualStatusUpdates
     ): string {
         // If already marked as true match or false positive
@@ -116,4 +99,3 @@ class AMLResultsProcessor
         return AMLDecisionStatusEnum::UNKNOWN;
     }
 }
-

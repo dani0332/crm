@@ -24,38 +24,33 @@ class AMLDisplayService
 
     /**
      * Prepare AML data for display
-     *
-     * @param AML $aml
-     * @param int|null $insuredId
-     * @param int|null $customerId
-     * @return AMLShowData
      */
     public function prepareShowData(
-        AML $aml, 
-        ?int $insuredId = null, 
+        AML $aml,
+        ?int $insuredId = null,
         ?int $customerId = null
     ): AMLShowData {
         // Eager load relationships to avoid N+1
         $aml->load('quotetype');
-        
+
         // Add quote type text to AML model
         $aml->quote_type_text = $aml->quotetype->text;
-        
+
         // Process AML results through dedicated processor
         $processedResults = $this->resultsProcessor->process($aml);
-        
+
         // Get quote object using trait method
         $quoteObject = $this->getQuoteObject(
             $aml->quotetype->code,
             $aml->quote_request_id
         );
-        
+
         // Get insured with KYC if ID provided
         $insured = $this->getInsuredWithKyc($insuredId);
-        
+
         // Prepare enum arrays
         $enums = $this->prepareEnums();
-        
+
         return new AMLShowData(
             aml: $aml,
             amlResults: $processedResults,
@@ -68,13 +63,10 @@ class AMLDisplayService
 
     /**
      * Get insured with KYC relationship
-     *
-     * @param int|null $insuredId
-     * @return Insured|null
      */
     private function getInsuredWithKyc(?int $insuredId): ?Insured
     {
-        if (!$insuredId) {
+        if (! $insuredId) {
             return null;
         }
 
@@ -83,8 +75,6 @@ class AMLDisplayService
 
     /**
      * Prepare enum arrays for view
-     *
-     * @return array
      */
     private function prepareEnums(): array
     {
@@ -95,4 +85,3 @@ class AMLDisplayService
         ];
     }
 }
-

@@ -40,8 +40,6 @@ class AMLQuoteDetailsData
 
     /**
      * Convert to array for Inertia response
-     *
-     * @return array
      */
     public function toArray(): array
     {
@@ -71,4 +69,3 @@ class AMLQuoteDetailsData
         ], $this->businessPayload, $this->rtaConfigurationData);
     }
 }
-

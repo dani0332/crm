@@ -22,8 +22,6 @@ class AMLShowData
 
     /**
      * Convert to array for Inertia response
-     *
-     * @return array
      */
     public function toArray(): array
     {
@@ -37,4 +35,3 @@ class AMLShowData
         ];
     }
 }
-
