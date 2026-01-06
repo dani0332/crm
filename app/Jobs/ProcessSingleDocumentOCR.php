@@ -556,7 +556,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             'id_expiry_date' => $this->formatDate($ocrData->expiryDate ?? null),
             'place_of_birth' => $this->getNationalityId($ocrData->nationality ?? null),
             'country_of_residence' => $this->getNationalityId($ocrData->country ?? null),
-            'residential_address' => ($ocrData->issuingPlace ?? '').', UAE',
+            'residential_address' => ! empty($ocrData->issuingPlace) ? $ocrData->issuingPlace.', UAE' : null,
             'employer_company_name' => $ocrData->sponsor ?? null,
             'job_title' => $ocrData->occupation ?? null,
             'issuing_place' => $ocrData->issuingPlace ?? null,
