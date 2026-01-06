@@ -3480,6 +3480,9 @@ class RenewalsUploadService
      * Update a single process ID with retry logic to handle deadlocks
      * Only updates records that are still in PENDING status to prevent race conditions
      * Uses explicit WHERE id = ? with ORDER BY to ensure consistent lock ordering
+     * 
+     * Note: When called within a transaction, deadlocks are not retried here to preserve
+     * transaction atomicity. The deadlock exception will propagate for higher-level retry.
      *
      * @param int $processId
      * @param int $maxRetries
@@ -3489,6 +3492,8 @@ class RenewalsUploadService
      */
     private function updateProcessIdWithRetry(int $processId, int $maxRetries = 3)
     {
+        $isInTransaction = DB::transactionLevel() > 0;
+        
         for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
             try {
                 // Update single record with explicit WHERE clause to ensure consistent lock ordering
@@ -3505,6 +3510,12 @@ class RenewalsUploadService
                 
                 if (!$isDeadlock) {
                     // Non-deadlock exception - throw immediately
+                    throw $e;
+                }
+                
+                // If we're in a transaction, don't retry - let the deadlock propagate
+                // so the entire transaction can be retried at a higher level
+                if ($isInTransaction) {
                     throw $e;
                 }
                 
