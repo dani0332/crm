@@ -2027,6 +2027,11 @@ class SendEmailCustomerService extends BaseService
             return;
         }
 
+        if (empty($itSupportEmail)) {
+            LoggerService::error('Manager Deactivation Attempt: IT_SUPPORT_EMAIL not found in ApplicationStorage.');
+            return;
+        }
+
         $emailData = (object)[
             'recipientEmail' => $itSupportEmail,
             'recipientName' => "IT Support AFIA",
