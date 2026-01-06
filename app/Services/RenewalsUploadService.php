@@ -3484,8 +3484,6 @@ class RenewalsUploadService
      */
     private function updateProcessIdsWithRetry(array $processIds, int $maxRetries = 3)
     {
-        $lastException = null;
-        
         for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
             try {
                 RenewalQuoteProcess::whereIn('id', $processIds)
@@ -3501,8 +3499,6 @@ class RenewalsUploadService
                     throw $e;
                 }
                 
-                $lastException = $e;
-                
                 // If this is the last attempt, throw custom exception
                 if ($attempt === $maxRetries - 1) {
                     throw new FetchPlansUpdateException($processIds, $maxRetries, 0, $e);
@@ -3511,8 +3507,5 @@ class RenewalsUploadService
                 usleep(200000); // wait 200ms before retry
             }
         }
-
-        // This should never be reached, but included for safety
-        throw new FetchPlansUpdateException($processIds, $maxRetries, 0, $lastException);
     }
 }
