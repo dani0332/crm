@@ -24,11 +24,6 @@ class AMLDisplayService
 
     /**
      * Prepare AML data for display
-     *
-     * @param AML $aml
-     * @param int|null $insuredId
-     * @param int|null $customerId
-     * @return AMLPageData
      */
     public function prepareShowData(
         AML $aml,
@@ -55,7 +50,7 @@ class AMLDisplayService
 
         // Prepare enum arrays
         $enums = $this->prepareEnums();
-        
+
         return new AMLPageData([
             'aml' => $aml,
             'amlResults' => $processedResults,

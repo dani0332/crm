@@ -15,8 +15,6 @@ class AMLPageData
 
     /**
      * Convert to array for Inertia response
-     *
-     * @return array
      */
     public function toArray(): array
     {
@@ -25,10 +23,6 @@ class AMLPageData
 
     /**
      * Get a specific value from the data
-     *
-     * @param string $key
-     * @param mixed $default
-     * @return mixed
      */
     public function get(string $key, mixed $default = null): mixed
     {
@@ -37,9 +31,6 @@ class AMLPageData
 
     /**
      * Check if a key exists in the data
-     *
-     * @param string $key
-     * @return bool
      */
     public function has(string $key): bool
     {
@@ -48,13 +39,9 @@ class AMLPageData
 
     /**
      * Merge additional data into the page data
-     *
-     * @param array $additionalData
-     * @return self
      */
     public function merge(array $additionalData): self
     {
         return new self(array_merge($this->data, $additionalData));
     }
 }
-

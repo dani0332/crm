@@ -37,10 +37,6 @@ class AMLQuoteDetailsService
 
     /**
      * Prepare AML quote details data for display
-     *
-     * @param int $quoteTypeId
-     * @param int $quoteRequestId
-     * @return AMLPageData
      */
     public function prepareQuoteDetailsData(int $quoteTypeId, int $quoteRequestId): AMLPageData
     {

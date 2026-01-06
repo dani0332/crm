@@ -17,8 +17,6 @@ class AMLOperationResult
 
     /**
      * Convert to JSON response array
-     *
-     * @return array
      */
     public function toArray(): array
     {
@@ -31,10 +29,6 @@ class AMLOperationResult
 
     /**
      * Create a successful result
-     *
-     * @param mixed $response
-     * @param string $message
-     * @return self
      */
     public static function success(mixed $response, string $message): self
     {
@@ -47,9 +41,6 @@ class AMLOperationResult
 
     /**
      * Create a failed result
-     *
-     * @param string $message
-     * @return self
      */
     public static function failure(string $message): self
     {
@@ -60,4 +51,3 @@ class AMLOperationResult
         );
     }
 }
-

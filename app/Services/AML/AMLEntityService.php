@@ -43,12 +43,6 @@ class AMLEntityService
     /**
      * Link entity details to a quote
      * Handles both new structure and legacy structure migration
-     *
-     * @param int $quoteTypeId
-     * @param int $quoteRequestId
-     * @param int $entityId
-     * @param string|null $triggeredFrom
-     * @return AMLOperationResult
      */
     public function linkEntityToQuote(
         int $quoteTypeId,
@@ -65,7 +59,7 @@ class AMLEntityService
         // Get insured entity
         $insured = Insured::where('id', $entityId)->first();
 
-        if (!$insured) {
+        if (! $insured) {
             return AMLOperationResult::failure('Entity not found');
         }
 

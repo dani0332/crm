@@ -17,12 +17,7 @@ class AMLInsuredService
     /**
      * Get insured details by customer type and identification
      *
-     * @param string|null $customerType
-     * @param string|null $idType
-     * @param string|null $idNumber
-     * @param string|null $tradeLicense
-     * @param string|null $code For logging purposes
-     * @return AMLOperationResult
+     * @param  string|null  $code  For logging purposes
      */
     public function getInsuredDetails(
         ?string $customerType,
