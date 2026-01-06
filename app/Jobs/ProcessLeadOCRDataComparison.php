@@ -29,6 +29,8 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 {
     use Queueable;
 
+    private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
+
     public $tries = 1;
     public $timeout = 900;
     protected $ocrReponseStructure;
@@ -61,7 +63,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     {
         try {
             if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
-                LoggerService::warning(self::class.' - OCR util processing is disabled, skipping job execution', extra: [
+                LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - OCR util processing is disabled, skipping job execution', extra: [
                     'uuid' => $this->uuid,
                     'start_date' => $this->startDate?->toDateString(),
                     'end_date' => $this->endDate?->toDateString(),
@@ -73,7 +75,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
             $this->getCarDocuments();
         } finally {
-            LoggerService::info(self::class.' - Job completed', extra: [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Job completed', extra: [
                 'uuid' => $this->uuid,
                 'start_date' => $this->startDate?->toDateString(),
                 'end_date' => $this->endDate?->toDateString(),
@@ -147,7 +149,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
         $carQuoteIds = $carQuotes->filter(fn ($quote) => $quote->documents->isNotEmpty())->pluck('uuid');
 
-        LoggerService::info('getCarDocuments - Car quotes with OCR documents fetched', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - getCarDocuments - Car quotes with OCR documents fetched', extra: [
             'uuid_filter' => $this->uuid,
             'document_type_codes' => $documentTypeCodes,
             'start_date' => $this->startDate ? $this->startDate->toDateString() : null,
@@ -162,7 +164,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     private function processOcrDocumentsForLeads($carQuotes, array $documentTypeCodes): void
     {
-        LoggerService::info(self::class.'::processOcrDocumentsForLeads - Starting to dispatch document jobs', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Starting to dispatch document jobs', extra: [
             'total_quotes' => $carQuotes->count(),
             'document_type_codes' => $documentTypeCodes,
         ]);
@@ -172,7 +174,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         foreach ($carQuotes as $quote) {
             LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::LEAD_OCR_DATA_COMPARISON);
 
-            LoggerService::info(self::class.'::processOcrDocumentsForLeads - Processing quote', extra: [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Processing quote', extra: [
                 'quote_id' => $quote->id,
                 'quote_uuid' => $quote->uuid,
                 'quote_code' => $quote->code,
@@ -181,7 +183,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             ]);
 
             if (! $quote->personalQuote) {
-                LoggerService::warning(self::class.'::processOcrDocumentsForLeads - PersonalQuote not found, skipping', extra: [
+                LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - PersonalQuote not found, skipping', extra: [
                     'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
                 ]);
@@ -190,7 +192,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             }
 
             if ($quote->personalQuote->lead_ocr_comparison_processed && ! $this->recalculateComparison) {
-                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote already processed, skipping (use recalculate_comparison=true to recalculate)', extra: [
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Quote already processed, skipping (use recalculate_comparison=true to recalculate)', extra: [
                     'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
                 ]);
@@ -199,7 +201,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             }
 
             if ($quote->personalQuote->lead_ocr_comparison_processed && $this->recalculateComparison) {
-                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote already processed, recalculating comparison with cached OCR data', extra: [
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Quote already processed, recalculating comparison with cached OCR data', extra: [
                     'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
                 ]);
@@ -208,7 +210,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             $documentsDispatched = 0;
 
             foreach ($quote->documents as $document) {
-                LoggerService::info(self::class.'::processOcrDocumentsForLeads - Dispatching document job', extra: [
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Dispatching document job', extra: [
                     'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
                     'document_id' => $document->id,
@@ -226,14 +228,14 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 $totalDocumentsDispatched++;
             }
 
-            LoggerService::info(self::class.'::processOcrDocumentsForLeads - Quote document jobs dispatched', extra: [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Quote document jobs dispatched', extra: [
                 'quote_id' => $quote->id,
                 'quote_uuid' => $quote->uuid,
                 'documents_dispatched' => $documentsDispatched,
             ]);
         }
 
-        LoggerService::info(self::class.'::processOcrDocumentsForLeads - All document jobs dispatched', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - All document jobs dispatched', extra: [
             'total_quotes' => $carQuotes->count(),
             'total_documents_dispatched' => $totalDocumentsDispatched,
         ]);
@@ -277,7 +279,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             'ocr_data' => json_encode($ocrDataStructure),
         ]);
 
-        LoggerService::info(self::class.'::saveOCRData - OCR Response data saved successfully', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::saveOCRData - OCR Response data saved successfully', extra: [
             'quote_id' => $quoteId,
             'ocr_response' => json_encode($this->ocrReponseStructure),
             'ocr_data' => json_encode($ocrDataStructure),
@@ -296,7 +298,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $personalQuote = $quote->personalQuote;
 
         if (! $personalQuote) {
-            LoggerService::error(self::class.'::updateLeadOCRComparisonProcessedFlag - PersonalQuote not found via relationship', extra: [
+            LoggerService::error(self::OCR_UTIL_FEAT.' - '.self::class.'::updateLeadOCRComparisonProcessedFlag - PersonalQuote not found via relationship', extra: [
                 'car_quote_id' => $quote->id,
                 'car_quote_uuid' => $quote->uuid,
             ]);
@@ -308,7 +310,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $updated = $personalQuote->update(['lead_ocr_comparison_processed' => true]);
 
         if (! $updated) {
-            LoggerService::error(self::class.'::updateLeadOCRComparisonProcessedFlag - Failed to update flag', extra: [
+            LoggerService::error(self::OCR_UTIL_FEAT.' - '.self::class.'::updateLeadOCRComparisonProcessedFlag - Failed to update flag', extra: [
                 'personal_quote_id' => $personalQuote->id,
                 'car_quote_id' => $quote->id,
                 'car_quote_uuid' => $quote->uuid,
@@ -317,7 +319,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             return false;
         }
 
-        LoggerService::info(self::class.'::updateLeadOCRComparisonProcessedFlag - Flag updated successfully', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::updateLeadOCRComparisonProcessedFlag - Flag updated successfully', extra: [
             'personal_quote_id' => $personalQuote->id,
             'car_quote_id' => $quote->id,
             'car_quote_uuid' => $quote->uuid,
@@ -340,14 +342,14 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             if ($personalQuote) {
                 $personalQuote->update(['lead_ocr_comparison_processed' => true]);
 
-                LoggerService::warning(self::class.'::markAsProcessedOnError - Marked as processed after error to prevent infinite loop', extra: [
+                LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.'::markAsProcessedOnError - Marked as processed after error to prevent infinite loop', extra: [
                     'personal_quote_id' => $personalQuote->id,
                     'car_quote_id' => $quote->id,
                     'car_quote_uuid' => $quote->uuid,
                 ]);
             }
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::markAsProcessedOnError - Failed to mark as processed', exception: $e, extra: [
+            LoggerService::error(self::OCR_UTIL_FEAT.' - '.self::class.'::markAsProcessedOnError - Failed to mark as processed', exception: $e, extra: [
                 'car_quote_id' => $quote->id,
                 'car_quote_uuid' => $quote->uuid,
             ]);
@@ -360,7 +362,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         // Get lead data structure for the document type
         $leadDataStructure[$ocrDocType] = $this->getLeadDataStructure($ocrDocType, $quote);
 
-        LoggerService::info(self::class.'::processOcrDocument - Processing OCR document', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - Processing OCR document', extra: [
             'quote_id' => $quote->id,
             'quote_uuid' => $quote->uuid,
             'quote_code' => $quote->code,
@@ -372,7 +374,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         ]);
 
         if (! $document->doc_url || ! $document->doc_mime_type) {
-            LoggerService::warning(self::class.'::processOcrDocument - Missing document payload', extra: [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - Missing document payload', extra: [
                 'quote_id' => $quote->id,
                 'document_id' => $document->id,
                 'has_doc_url' => (bool) $document->doc_url,
@@ -395,7 +397,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 $ocrData = $ocrResponseJson[$ocrDocType];
                 $ocrDataStructure[$ocrDocType] = $ocrDataJson[$ocrDocType];
 
-                LoggerService::info(self::class.'::processOcrDocument - OCR data already exists in database', extra: [
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - OCR data already exists in database', extra: [
                     'quote_id' => $quote->id,
                     'ocr_response' => $ocrData,
                     'ocr_data' => $ocrDataStructure[$ocrDocType],
@@ -404,7 +406,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 return true;
             }
 
-            LoggerService::warning(self::class.'::processOcrDocument - Cached OCR data exists but document type not found', extra: [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - Cached OCR data exists but document type not found', extra: [
                 'quote_id' => $quote->id,
                 'document_type' => $ocrDocType,
                 'has_ocr_response' => ! is_null($ocrResponseJson),
@@ -416,7 +418,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $ocrData = $this->callOcrApi($quote, $document, $ocrDocType);
 
         if ($ocrData) {
-            LoggerService::info(self::class.'::processOcrDocument - OCR API call successful', extra: [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - OCR API call successful', extra: [
                 'quote_id' => $quote->id,
                 'document_id' => $document->id,
                 'has_data' => ! empty($ocrData),
@@ -428,7 +430,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             return true;
         }
 
-        LoggerService::warning(self::class.'::processOcrDocument - OCR API call failed', extra: [
+        LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - OCR API call failed', extra: [
             'quote_id' => $quote->id,
             'document_id' => $document->id,
         ]);
@@ -778,7 +780,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         // $docUrl = "https://azstorinsurancemarketstg.blob.core.windows.net/imcrmdev/{$document->doc_url}";
 
         if (! $docUrl) {
-            LoggerService::warning(self::class.'::callOcrApi - Failed to get document URL', extra: [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.'::callOcrApi - Failed to get document URL', extra: [
                 'quote_uuid' => $quote->uuid,
                 'document_id' => $document->id,
                 'doc_url' => $document->doc_url,
@@ -805,7 +807,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             'image' => false,
         ];
 
-        LoggerService::info(self::class.'::callOcrApi - OCR API Request Details', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::callOcrApi - OCR API Request Details', extra: [
             'request_data' => $requestData,
         ]);
 
@@ -821,7 +823,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             $responseBody = $response->body();
 
             if ($response->successful()) {
-                LoggerService::info(self::class.'::callOcrApi - OCR API Response Success', extra: [
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::callOcrApi - OCR API Response Success', extra: [
                     'quote_uuid' => $quote->uuid,
                     'document_id' => $document->id,
                     'has_data' => ! empty($responseData),
@@ -839,7 +841,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 return (object) $responseData;
             }
 
-            LoggerService::warning(self::class.'::callOcrApi - OCR API Response Failed', extra: [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.'::callOcrApi - OCR API Response Failed', extra: [
                 'quote_uuid' => $quote->uuid,
                 'document_id' => $document->id,
                 'response_status' => $response->status(),
@@ -858,7 +860,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
             return null;
         } catch (\Exception $e) {
-            LoggerService::error(self::class.'::callOcrApi - Exception occurred during API call', exception: $e);
+            LoggerService::error(self::OCR_UTIL_FEAT.' - '.self::class.'::callOcrApi - Exception occurred during API call', exception: $e);
 
             return null;
         }
@@ -940,7 +942,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         try {
             return Carbon::parse($date)->format('Y-m-d');
         } catch (\Exception $e) {
-            LoggerService::error('Failed to format date', exception: $e);
+            LoggerService::error(self::OCR_UTIL_FEAT.' - Failed to format date', exception: $e);
 
             return null;
         }
@@ -961,20 +963,20 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
     public function getVehicleColorCode(?string $vehicleColor, int $quoteTypeId, ?int $providerId): ?string
     {
-        LoggerService::info('OCR Utils - getVehicleColorCode called', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - OCR Utils - getVehicleColorCode called', extra: [
             'vehicleColor' => $vehicleColor,
             'quoteTypeId' => $quoteTypeId,
             'providerId' => $providerId,
         ]);
 
         if (empty($vehicleColor)) {
-            LoggerService::info('OCR Utils - Vehicle color is empty, returning null');
+            LoggerService::info(self::OCR_UTIL_FEAT.' - OCR Utils - Vehicle color is empty, returning null');
 
             return null;
         }
 
         if (! $providerId) {
-            LoggerService::warning('OCR Utils - No valid provider id for vehicle color code', extra: [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - OCR Utils - No valid provider id for vehicle color code', extra: [
                 'vehicleColor' => $vehicleColor,
                 'quoteTypeId' => $quoteTypeId,
                 'providerId' => $providerId,
@@ -989,7 +991,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             return strtolower($color->text) === strtolower($vehicleColor);
         });
 
-        LoggerService::info('OCR Utils - Vehicle color lookup result', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - OCR Utils - Vehicle color lookup result', extra: [
             'vehicleColor' => $vehicleColor,
             'providerId' => $providerId,
             'availableColors' => $vehicleColors->pluck('text')->toArray(),
@@ -1007,7 +1009,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         }
 
         if (! $providerId) {
-            LoggerService::warning('OCR Utils - No valid provider id for bank code');
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - OCR Utils - No valid provider id for bank code');
 
             return null;
         }
@@ -1029,7 +1031,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
         // $parts = explode('/', $cleaned, 2);
         if (preg_match('/^([A-Z0-9]+)[\/:\-\s\']*(\d+)$/i', $cleaned, $matches)) {
-            LoggerService::info('OCR Utils - extractPlateCodeNumber - Plate code and number extracted', extra: [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - OCR Utils - extractPlateCodeNumber - Plate code and number extracted', extra: [
                 'plate_number' => $plateNumber,
                 'matches' => $matches,
             ]);
@@ -1077,7 +1079,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        LoggerService::error(self::class.' - Job failed', extra: [
+        LoggerService::error(self::OCR_UTIL_FEAT.' - '.self::class.' - Job failed', extra: [
             'uuid' => $this->uuid,
             'start_date' => $this->startDate?->toDateString(),
             'end_date' => $this->endDate?->toDateString(),

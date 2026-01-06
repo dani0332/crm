@@ -69,6 +69,8 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
+    private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
+
     use GenericQueriesAllLobs, PrivateClient;
 
     private const REQUIRED_STRING = 'required|string';
@@ -759,7 +761,7 @@ class ApiController extends Controller
             return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job is already running');
         }
 
-        LoggerService::info(self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
             'start_date' => $startDate,
             'end_date' => $endDate,
             'uuid' => $request->uuid,
