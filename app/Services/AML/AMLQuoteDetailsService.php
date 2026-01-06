@@ -11,7 +11,6 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\Emirate;
@@ -145,10 +144,6 @@ class AMLQuoteDetailsService
 
     /**
      * Add quote link to quote request object
-     *
-     * @param object $quoteRequest
-     * @param QuoteType $quoteType
-     * @return void
      */
     private function addQuoteLinkToRequest(object $quoteRequest, QuoteType $quoteType): void
     {
@@ -160,8 +155,7 @@ class AMLQuoteDetailsService
     /**
      * Count escalated logs
      *
-     * @param \Illuminate\Support\Collection $kycLogs
-     * @return int
+     * @param  \Illuminate\Support\Collection  $kycLogs
      */
     private function countEscalatedLogs($kycLogs): int
     {
@@ -176,9 +170,6 @@ class AMLQuoteDetailsService
 
     /**
      * Get card holder name from payment
-     *
-     * @param string $code
-     * @return string
      */
     private function getCardHolderName(string $code): string
     {
@@ -191,15 +182,12 @@ class AMLQuoteDetailsService
 
     /**
      * Get quote AML status
-     *
-     * @param int|null $amlStatus
-     * @return int|null
      */
     private function getQuoteAmlStatus(?int $amlStatus): ?int
     {
         $checkScreeningStatus = [
             AMLStatusCode::AMLScreeningCleared => 2,
-            AMLStatusCode::AMLScreeningFailed => 1
+            AMLStatusCode::AMLScreeningFailed => 1,
         ];
 
         return $checkScreeningStatus[$amlStatus] ?? null;
@@ -207,9 +195,6 @@ class AMLQuoteDetailsService
 
     /**
      * Get insurer default email based on provider code
-     *
-     * @param string $providerCode
-     * @return string
      */
     private function getInsurerDefaultEmail(string $providerCode): string
     {
@@ -222,8 +207,6 @@ class AMLQuoteDetailsService
 
     /**
      * Prepare enum arrays for view
-     *
-     * @return array
      */
     private function prepareEnums(): array
     {
@@ -239,4 +222,3 @@ class AMLQuoteDetailsService
         ];
     }
 }
-

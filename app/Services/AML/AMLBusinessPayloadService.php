@@ -17,10 +17,6 @@ class AMLBusinessPayloadService
 {
     /**
      * Get business-specific payload data
-     *
-     * @param QuoteType $quoteType
-     * @param object $quoteRequest
-     * @return array
      */
     public function getBusinessPayload(QuoteType $quoteType, object $quoteRequest): array
     {
@@ -39,13 +35,10 @@ class AMLBusinessPayloadService
 
     /**
      * Get business type code
-     *
-     * @param object $quoteRequest
-     * @return string|null
      */
     private function getBusinessTypeCode(object $quoteRequest): ?string
     {
-        if (!isset($quoteRequest->business_type_of_insurance_id)) {
+        if (! isset($quoteRequest->business_type_of_insurance_id)) {
             return null;
         }
 
@@ -55,13 +48,10 @@ class AMLBusinessPayloadService
 
     /**
      * Get business cover type text
-     *
-     * @param object $quoteRequest
-     * @return string|null
      */
     private function getBusinessCoverTypeText(object $quoteRequest): ?string
     {
-        if (!isset($quoteRequest->business_cover_type_id)) {
+        if (! isset($quoteRequest->business_cover_type_id)) {
             return null;
         }
 
@@ -71,13 +61,10 @@ class AMLBusinessPayloadService
 
     /**
      * Get business communication mode text
-     *
-     * @param object $quoteRequest
-     * @return string|null
      */
     private function getBusinessCommunicationModeText(object $quoteRequest): ?string
     {
-        if (!isset($quoteRequest->business_communication_mode_id)) {
+        if (! isset($quoteRequest->business_communication_mode_id)) {
             return null;
         }
 
@@ -85,4 +72,3 @@ class AMLBusinessPayloadService
             ->value('text');
     }
 }
-

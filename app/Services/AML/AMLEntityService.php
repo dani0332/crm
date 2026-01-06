@@ -31,9 +31,6 @@ class AMLEntityService
 
     /**
      * Fetch entity by trade license number
-     *
-     * @param string $tradeLicense
-     * @return Insured|null
      */
     public function fetchEntityByTradeLicense(string $tradeLicense): ?Insured
     {
@@ -96,12 +93,6 @@ class AMLEntityService
 
     /**
      * Link customer to insured
-     *
-     * @param int $quoteTypeId
-     * @param int $quoteRequestId
-     * @param int $customerId
-     * @param int $insuredId
-     * @return void
      */
     private function linkCustomerInsured(
         int $quoteTypeId,
@@ -136,12 +127,6 @@ class AMLEntityService
     /**
      * Handle legacy entity structure migration
      * TODO: Remove when new structure is completely mapped
-     *
-     * @param int $quoteTypeId
-     * @param int $quoteRequestId
-     * @param Insured $insured
-     * @param string|null $triggeredFrom
-     * @return Entity
      */
     private function handleLegacyEntityStructure(
         int $quoteTypeId,
@@ -153,13 +138,13 @@ class AMLEntityService
         $oldStructureEntity = Entity::where('trade_license_no', $insured->trade_license_no)->first();
         $existingEntityMapping = QuoteRequestEntityMapping::where([
             'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId
+            'quote_request_id' => $quoteRequestId,
         ])->first();
 
         // Prepare update fields
         $updateFields = [
             'entity_id' => $oldStructureEntity->id,
-            'entity_type_code' => $triggeredFrom ? LookupsEnum::SUB_ENTITY : LookupsEnum::PARENT_ENTITY
+            'entity_type_code' => $triggeredFrom ? LookupsEnum::SUB_ENTITY : LookupsEnum::PARENT_ENTITY,
         ];
 
         // Update or create entity mapping
@@ -173,7 +158,7 @@ class AMLEntityService
             'quoteRequestEntityMapping' => function ($mappedEntity) use ($quoteTypeId, $quoteRequestId) {
                 $mappedEntity->where([
                     'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $quoteRequestId
+                    'quote_request_id' => $quoteRequestId,
                 ]);
             },
             'quoteMember',
@@ -187,19 +172,16 @@ class AMLEntityService
 
     /**
      * Clean up previous entity if no longer referenced
-     *
-     * @param QuoteRequestEntityMapping|null $existingEntityMapping
-     * @return void
      */
     private function cleanupPreviousEntity(?QuoteRequestEntityMapping $existingEntityMapping): void
     {
-        if (!$existingEntityMapping) {
+        if (! $existingEntityMapping) {
             return;
         }
 
         $previousEntity = $existingEntityMapping->entity;
         $entityMappingCount = QuoteRequestEntityMapping::where([
-            'entity_id' => $previousEntity->id ?? null
+            'entity_id' => $previousEntity->id ?? null,
         ])->count();
 
         // Delete if no mappings exist and no trade license (Jawad's change for car commercial quote)
@@ -210,10 +192,6 @@ class AMLEntityService
 
     /**
      * Update car quote company details
-     *
-     * @param int $quoteRequestId
-     * @param Entity $entity
-     * @return void
      */
     private function updateCarQuoteCompanyDetails(int $quoteRequestId, Entity $entity): void
     {
@@ -223,4 +201,3 @@ class AMLEntityService
         ]);
     }
 }
-

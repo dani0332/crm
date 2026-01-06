@@ -17,11 +17,6 @@ class AMLLookupsService
 
     /**
      * Get lookups for quote with additional fields if enabled
-     *
-     * @param QuoteType $quoteType
-     * @param object|null $insuranceProvider
-     * @param object $quoteRequest
-     * @return array
      */
     public function getLookupsForQuote(
         QuoteType $quoteType,
@@ -52,4 +47,3 @@ class AMLLookupsService
         return $lookups->toArray();
     }
 }
-

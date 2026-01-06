@@ -108,13 +108,13 @@ class AMLController extends Controller
             return response()->json([
                 'status' => true,
                 'response' => $entity,
-                'message' => 'Entity found with the entered Trade License number'
+                'message' => 'Entity found with the entered Trade License number',
             ]);
         }
 
         return response()->json([
             'status' => false,
-            'message' => 'No Entity found with the entered Trade License number'
+            'message' => 'No Entity found with the entered Trade License number',
         ]);
     }
 
