@@ -358,14 +358,26 @@ class UserController extends Controller
 
         if ($previouslyActive && ! $isActive) {
             $subordinates = $this->userService->getSubordinates($user->id);
-            /** @var User $currentUser */
-            $currentUser = auth()->user();
-            LoggerService::info("Dispatching SendManagerDeactivationAttemptEmailJob");
-            SendManagerDeactivationAttemptEmailJob::dispatch(
-                $user->id,
-                $subordinates->pluck('id')->all(),
-                $currentUser->id
-            );
+
+            if ($subordinates->isNotEmpty()) {
+                /** @var User $currentUser */
+                $currentUser = auth()->user();
+                LoggerService::info('Dispatching SendManagerDeactivationAttemptEmailJob', [
+                    'manager_user_id' => $user->id,
+                    'subordinates_count' => $subordinates->count(),
+                    'attempted_by_user_id' => $currentUser?->id,
+                ]);
+
+                SendManagerDeactivationAttemptEmailJob::dispatch(
+                    $user->id,
+                    $subordinates->pluck('id')->all(),
+                    $currentUser->id
+                );
+            } else {
+                LoggerService::info('Skipping SendManagerDeactivationAttemptEmailJob dispatch: manager has no subordinates', [
+                    'manager_user_id' => $user->id,
+                ]);
+            }
         }
 
         if ($request->department_ids != null) {
