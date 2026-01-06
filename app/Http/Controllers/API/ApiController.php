@@ -22,7 +22,7 @@ use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
-use App\Http\Requests\evaluatePrivateClientRequest;
+use App\Http\Requests\EvaluatePrivateClientRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
@@ -494,7 +494,7 @@ class ApiController extends Controller
         return apiResponse(null, Response::HTTP_OK, 'PC qualified removal job has been dispatched!');
     }
 
-    public function evaluatePrivateClient(evaluatePrivateClientRequest $request)
+    public function evaluatePrivateClient(EvaluatePrivateClientRequest $request)
     {
         $response = $this->privateClientReEvaluate($request->validated());
 

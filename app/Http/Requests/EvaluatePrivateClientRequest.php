@@ -10,7 +10,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
-class evaluatePrivateClientRequest extends FormRequest
+class EvaluatePrivateClientRequest extends FormRequest
 {
     private const MAX_CREATED_AT_RANGE_DAYS = 7;
 
