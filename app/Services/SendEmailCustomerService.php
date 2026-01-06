@@ -2017,7 +2017,7 @@ class SendEmailCustomerService extends BaseService
         return true;
     }
 
-    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $subordinates, $attemptedBy)
+    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $attemptedBy)
     {
         $workflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW);
         $itSupportEmail = getAppStorageValueByKey(ApplicationStorageEnums::IT_SUPPORT_EMAIL);

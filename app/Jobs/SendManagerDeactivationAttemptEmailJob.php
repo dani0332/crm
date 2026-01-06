@@ -69,40 +69,16 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
                 return;
             }
 
-            $subordinates = User::query()
-                ->select(['id', 'name', 'email'])
-                ->activeUser()
-                ->whereIn('id', $this->subordinateIds)
-                ->get()
-                ->map(fn (User $user) => (object) [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                ])
-                ->all();
-
-            if (empty($subordinates)) {
-                LoggerService::info('Manager deactivation attempt email skipped: no active subordinates found', [
-                    'manager_id' => $this->managerUserId,
-                    'attempted_by' => $this->attemptedByUserId,
-                    'subordinate_ids_count' => count($this->subordinateIds),
-                ]);
-
-                return;
-            }
-
             $managerPayload =  collect([$managerUser->only(['id', 'name', 'email','managers'])]);
             $attemptedByPayload = (object) $attemptedBy->only(['id', 'name', 'email']);
 
             LoggerService::info('Sending manager deactivation attempt email', [
                 'manager_id' => $managerPayload,
-                'subordinates_count' => count($subordinates),
                 'attempted_by' => $attemptedByPayload->id,
             ]);
 
             app(SendEmailCustomerService::class)->sendManagerDeactivationAttemptEmail(
                 $managerPayload,
-                $subordinates,
                 $attemptedByPayload
             );
 
