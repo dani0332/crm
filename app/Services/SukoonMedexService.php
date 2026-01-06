@@ -771,9 +771,10 @@ class SukoonMedexService
         $isBikeQuote = $quoteType == QuoteTypeId::Bike;
 
         if ($isBikeQuote) {
-            $latestInsuredData = $quote->load(['latestInsured' => function ($query) {
+            $quote->load(['latestInsured' => function ($query) {
                 $query->where('customer_insured.quote_type_id', QuoteTypeId::Bike);
             }]);
+            $latestInsuredData = $quote->latestInsured;
         } else {
             $latestInsuredData = $quote->latestInsured;
         }
