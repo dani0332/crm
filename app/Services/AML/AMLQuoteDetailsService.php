@@ -19,7 +19,7 @@ use App\Models\Payment;
 use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\NationalityRepository;
-use App\Services\AML\DTOs\AMLQuoteDetailsData;
+use App\Services\AML\DTOs\AMLPageData;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
@@ -41,9 +41,9 @@ class AMLQuoteDetailsService
      *
      * @param int $quoteTypeId
      * @param int $quoteRequestId
-     * @return AMLQuoteDetailsData
+     * @return AMLPageData
      */
-    public function prepareQuoteDetailsData(int $quoteTypeId, int $quoteRequestId): AMLQuoteDetailsData
+    public function prepareQuoteDetailsData(int $quoteTypeId, int $quoteRequestId): AMLPageData
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
@@ -117,32 +117,30 @@ class AMLQuoteDetailsService
         // Prepare enums
         $enums = $this->prepareEnums();
 
-        return new AMLQuoteDetailsData(
-            quoteType: $quoteType,
-            quoteRequest: $quoteRequest,
-            amlStatusName: $amlStatusName,
-            kycLogs: $kycLogs,
-            lookups: $lookups,
-            nationalities: $nationalities,
-            emirates: $emirates,
-            insuredDetails: $insuredDetails,
-            entityDetails: $entityDetails,
-            membersDetails: $membersDetails,
-            uboDetails: $uboDetails,
-            cardHolderName: $cardHolderName,
-            quoteAmlStatus: $quoteAmlStatus,
-            screeningType: $screeningType,
-            gigInsurerDefaultEmail: $gigInsurerDefaultEmail,
-            isAnyEscalated: $isAnyEscalated,
-            isInsurerSyncEnabled: $isInsurerSyncEnabled,
-            isAddionalFieldsEnabled: $isAddionalFieldsEnabled,
-            isPrivateCar: $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
-            LIVAEnums: app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
-            insurerName: InsuranceProvidersEnum::getTextByCode($providerCode),
-            enums: $enums,
-            businessPayload: $businessPayload,
-            rtaConfigurationData: $rtaConfigurationData
-        );
+        return new AMLPageData(array_merge([
+            'quoteType' => $quoteType,
+            'quoteRequest' => $quoteRequest,
+            'amlStatusName' => $amlStatusName,
+            'kycLogs' => $kycLogs,
+            'lookups' => $lookups,
+            'nationalities' => $nationalities,
+            'emirates' => $emirates,
+            'insuredDetails' => $insuredDetails,
+            'entityDetails' => $entityDetails,
+            'membersDetails' => $membersDetails,
+            'uboDetails' => $uboDetails,
+            'cardHolderName' => $cardHolderName,
+            'quoteAmlStatus' => $quoteAmlStatus,
+            'screeningType' => $screeningType,
+            'gigInsurerDefaultEmail' => $gigInsurerDefaultEmail,
+            'isAnyEscalated' => $isAnyEscalated,
+            'isInsurerSyncEnabled' => $isInsurerSyncEnabled,
+            'isAddionalFieldsEnabled' => $isAddionalFieldsEnabled,
+            'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
+            'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
+            'insurerName' => InsuranceProvidersEnum::getTextByCode($providerCode),
+            ...$enums,
+        ], $businessPayload, $rtaConfigurationData));
     }
 
     /**

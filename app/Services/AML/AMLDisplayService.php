@@ -7,7 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Models\AML;
 use App\Models\Insured;
-use App\Services\AML\DTOs\AMLShowData;
+use App\Services\AML\DTOs\AMLPageData;
 use App\Traits\GenericQueriesAllLobs;
 
 /**
@@ -28,13 +28,13 @@ class AMLDisplayService
      * @param AML $aml
      * @param int|null $insuredId
      * @param int|null $customerId
-     * @return AMLShowData
+     * @return AMLPageData
      */
     public function prepareShowData(
         AML $aml, 
         ?int $insuredId = null, 
         ?int $customerId = null
-    ): AMLShowData {
+    ): AMLPageData {
         // Eager load relationships to avoid N+1
         $aml->load('quotetype');
         
@@ -56,14 +56,14 @@ class AMLDisplayService
         // Prepare enum arrays
         $enums = $this->prepareEnums();
         
-        return new AMLShowData(
-            aml: $aml,
-            amlResults: $processedResults,
-            quoteObject: $quoteObject,
-            insured: $insured,
-            customerId: $customerId,
-            enums: $enums
-        );
+        return new AMLPageData([
+            'aml' => $aml,
+            'amlResults' => $processedResults,
+            'quoteObject' => $quoteObject,
+            'insured' => $insured,
+            'customerId' => $customerId,
+            ...$enums,
+        ]);
     }
 
     /**

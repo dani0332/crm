@@ -12,7 +12,7 @@ use App\Models\Insured;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteType;
 use App\Repositories\CarQuoteRepository;
-use App\Services\AML\DTOs\EntityLinkResult;
+use App\Services\AML\DTOs\AMLOperationResult;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -51,14 +51,14 @@ class AMLEntityService
      * @param int $quoteRequestId
      * @param int $entityId
      * @param string|null $triggeredFrom
-     * @return EntityLinkResult
+     * @return AMLOperationResult
      */
     public function linkEntityToQuote(
         int $quoteTypeId,
         int $quoteRequestId,
         int $entityId,
         ?string $triggeredFrom = null
-    ): EntityLinkResult {
+    ): AMLOperationResult {
         $quoteType = QuoteType::where('id', $quoteTypeId)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $quoteRequestId);
 
@@ -69,11 +69,7 @@ class AMLEntityService
         $insured = Insured::where('id', $entityId)->first();
 
         if (!$insured) {
-            return new EntityLinkResult(
-                status: false,
-                entity: null,
-                message: 'Entity not found'
-            );
+            return AMLOperationResult::failure('Entity not found');
         }
 
         // Update insured in personal quote (new structure)
@@ -95,11 +91,7 @@ class AMLEntityService
             $this->updateCarQuoteCompanyDetails($quoteRequestId, $entity);
         }
 
-        return new EntityLinkResult(
-            status: true,
-            entity: $entity,
-            message: 'Entity Linked Successfully'
-        );
+        return AMLOperationResult::success($entity, 'Entity Linked Successfully');
     }
 
     /**

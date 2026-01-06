@@ -5,7 +5,7 @@ namespace App\Services\AML;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\Insured;
-use App\Services\AML\DTOs\InsuredSearchResult;
+use App\Services\AML\DTOs\AMLOperationResult;
 use App\Services\Logger\LoggerService;
 
 /**
@@ -22,7 +22,7 @@ class AMLInsuredService
      * @param string|null $idNumber
      * @param string|null $tradeLicense
      * @param string|null $code For logging purposes
-     * @return InsuredSearchResult
+     * @return AMLOperationResult
      */
     public function getInsuredDetails(
         ?string $customerType,
@@ -30,7 +30,7 @@ class AMLInsuredService
         ?string $idNumber,
         ?string $tradeLicense,
         ?string $code = null
-    ): InsuredSearchResult {
+    ): AMLOperationResult {
         if ($code) {
             LoggerService::startQuoteLogging($code, LoggerFeatureEnum::AML_SCREENING);
         }
@@ -59,11 +59,9 @@ class AMLInsuredService
         $status = (bool) $insuredDetails;
         $message = $this->getResponseMessage($resolvedCustomerType, $status);
 
-        return new InsuredSearchResult(
-            status: $status,
-            insured: $insuredDetails,
-            message: $message
-        );
+        return $status
+            ? AMLOperationResult::success($insuredDetails, $message)
+            : AMLOperationResult::failure($message);
     }
 
     /**
