@@ -100,7 +100,7 @@ class DttFollowUp extends Command
             }
 
             return Command::SUCCESS;
-            
+
         } catch (\Throwable $e) {
             LoggerService::warning('Dtt:followup command failed', extra: [
                 'error' => $e->getMessage(),
