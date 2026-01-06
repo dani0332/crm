@@ -30,20 +30,16 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
     use Queueable;
 
     public $tries = 1;
-    public $timeout = 600;
-    protected $startDate;
-    protected $endDate;
-    protected $uuid;
-    protected $recalculateComparison;
+    public $timeout = 900;
     protected $ocrReponseStructure;
 
-    public function __construct($uuid, $startDate, $endDate, $recalculateComparison = false)
-    {
-        $this->startDate = $startDate;
-        $this->endDate = $endDate;
-        $this->uuid = $uuid;
-        $this->recalculateComparison = $recalculateComparison;
-    }
+    public function __construct(
+        protected ?string $uuid,
+        protected ?Carbon $startDate,
+        protected ?Carbon $endDate,
+        protected bool $recalculateComparison = false,
+        protected int $limit = 15
+    ) {}
 
     public function middleware(): array
     {
@@ -145,7 +141,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             ])
             ->orderBy('transaction_approved_at', 'asc') // Consistent ordering: oldest first
             ->orderBy('id', 'asc') // Secondary sort for same-timestamp records
-            ->limit(5); // Safety limit: maximum 5 leads total
+            ->limit($this->limit);
 
         $carQuotes = $carQuotes->get();
 
