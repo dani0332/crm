@@ -160,7 +160,7 @@ class FailedILAEmailService
             ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_REPLIED,LeadSourceEnum::REVIVAL_PAID])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])
             ->with('quoteStatus')
             ->get();
         return $leads;
@@ -178,7 +178,7 @@ class FailedILAEmailService
 
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_REPLIED,LeadSourceEnum::REVIVAL_PAID])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
             ->with('quoteStatus')
             ->get();
         return $leads;
@@ -189,7 +189,7 @@ class FailedILAEmailService
             ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_REPLIED,LeadSourceEnum::REVIVAL_PAID])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
             ->where('lead_allocation_failed_at', '!=', null)
             ->with('quoteStatus')
             ->get();
@@ -201,7 +201,7 @@ class FailedILAEmailService
             ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_REPLIED,LeadSourceEnum::REVIVAL_PAID])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
             ->where('lead_allocation_failed_at', '!=', null)
             ->with('quoteStatus')
             ->get();
@@ -213,7 +213,7 @@ class FailedILAEmailService
             ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_REPLIED,LeadSourceEnum::REVIVAL_PAID])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
             ->where('lead_allocation_failed_at', '!=', null)
             ->with('quoteStatus')
             ->get();
@@ -227,7 +227,7 @@ class FailedILAEmailService
             ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_REPLIED,LeadSourceEnum::REVIVAL_PAID])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
             ->where('lead_allocation_failed_at', '!=', null)
             ->with('quoteStatus')
             ->get();
