@@ -44,60 +44,69 @@ class DttFollowUp extends Command
      */
     public function handle()
     {
-        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
-        if ($isDttEnabled == false || $isDttEnabled == 0) {
-            LoggerService::info('Dtt is not enabled from cms');
+        try {
+            $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+            if ($isDttEnabled == false || $isDttEnabled == 0) {
+                LoggerService::info('Dtt is not enabled from cms');
+
+                return Command::SUCCESS;
+            }
+
+            $twoDaysBefore = Carbon::now()->subDays(2)->toDateString();
+            $sevenDaysBefore = Carbon::now()->subDays(7)->toDateString();
+            $thirteenDaysBefore = Carbon::now()->subDays(13)->toDateString();
+            $twentyDaysBefore = Carbon::now()->subDays(20)->toDateString();
+            $twentyEightDaysBefore = Carbon::now()->subDays(28)->toDateString();
+
+            $logPrefix = 'carRevivalFollowUpEmailJob -';
+
+            $jobs = [];
+            $delayCounter = 0;
+
+            // Use chunking to avoid memory issues with large datasets
+            DttRevival::where(function ($q) use ($twoDaysBefore, $sevenDaysBefore, $thirteenDaysBefore, $twentyDaysBefore, $twentyEightDaysBefore) {
+                $q->whereDate('created_at', '=', $twoDaysBefore);
+                $q->orWhereDate('created_at', '=', $sevenDaysBefore);
+                $q->orWhereDate('created_at', '=', $thirteenDaysBefore);
+                $q->orWhereDate('created_at', '=', $twentyDaysBefore);
+                $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
+            })
+                ->where('reply_received', 0)
+                ->select('id', 'uuid') // Only select needed fields to reduce memory usage
+                ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter) {
+                    foreach ($unreplied as $item) {
+                        // Pass only the ID to avoid serialization issues with full model
+                        $jobs[] = (new CarRevivalFollowUpEmailJob($item->id))->delay(now()->addSeconds(10 + $delayCounter));
+                        $delayCounter += 10;
+                    }
+                });
+
+            if (! empty($jobs) || count($jobs) > 0) {
+                Bus::batch($jobs)
+                    ->then(function () use ($logPrefix) {
+                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                    })
+                    ->catch(function () use ($logPrefix) {
+                        LoggerService::info($logPrefix.' one of batch is failed.');
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        LoggerService::info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->name('Car Revival Follow Up Email Jobs')
+                    ->dispatch();
+            } else {
+                LoggerService::info($logPrefix.'No lead Found');
+            }
+
+            return Command::SUCCESS;
+
+        } catch (\Throwable $e) {
+            LoggerService::warning('Dtt:followup command failed', extra: [
+                'error' => $e->getMessage(),
+            ]);
 
             return Command::SUCCESS;
         }
-
-        $twoDaysBefore = Carbon::now()->subDays(2)->toDateString();
-        $sevenDaysBefore = Carbon::now()->subDays(7)->toDateString();
-        $thirteenDaysBefore = Carbon::now()->subDays(13)->toDateString();
-        $twentyDaysBefore = Carbon::now()->subDays(20)->toDateString();
-        $twentyEightDaysBefore = Carbon::now()->subDays(28)->toDateString();
-
-        $logPrefix = 'carRevivalFollowUpEmailJob -';
-
-        $jobs = [];
-        $delayCounter = 0;
-
-        // Use chunking to avoid memory issues with large datasets
-        DttRevival::where(function ($q) use ($twoDaysBefore, $sevenDaysBefore, $thirteenDaysBefore, $twentyDaysBefore, $twentyEightDaysBefore) {
-            $q->whereDate('created_at', '=', $twoDaysBefore);
-            $q->orWhereDate('created_at', '=', $sevenDaysBefore);
-            $q->orWhereDate('created_at', '=', $thirteenDaysBefore);
-            $q->orWhereDate('created_at', '=', $twentyDaysBefore);
-            $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
-        })
-            ->where('reply_received', 0)
-            ->select('id', 'uuid') // Only select needed fields to reduce memory usage
-            ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter) {
-                foreach ($unreplied as $item) {
-                    // Pass only the ID to avoid serialization issues with full model
-                    $jobs[] = (new CarRevivalFollowUpEmailJob($item->id))->delay(now()->addSeconds(10 + $delayCounter));
-                    $delayCounter += 10;
-                }
-            });
-
-        if (! empty($jobs) || count($jobs) > 0) {
-            Bus::batch($jobs)
-                ->then(function () use ($logPrefix) {
-                    LoggerService::info($logPrefix.' all jobs completed successfully');
-                })
-                ->catch(function () use ($logPrefix) {
-                    LoggerService::info($logPrefix.' one of batch is failed.');
-                })
-                ->finally(function () use ($logPrefix) {
-                    LoggerService::info($logPrefix.' everything done');
-                })
-                ->allowFailures()
-                ->name('Car Revival Follow Up Email Jobs')
-                ->dispatch();
-        } else {
-            LoggerService::info($logPrefix.'No lead Found');
-        }
-
-        return Command::SUCCESS;
     }
 }
