@@ -70,11 +70,3 @@ class PaymentFactory extends Factory
         return Payment::create($paymentAttributes);
     }
 }
-
-// Simple usage - just pass the CarQuote
-// $payment = Payment::factory()->createForSqlite($this->carQuote);
-
-// Or override specific attributes if needed
-// $payment = Payment::factory()->createForSqlite($this->carQuote, [
-//     'payment_methods_code' => PaymentMethodsEnum::CreditCard,
-// ]);
