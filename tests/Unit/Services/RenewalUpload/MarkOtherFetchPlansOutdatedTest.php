@@ -3,13 +3,17 @@
 declare(strict_types=1);
 
 use App\Enums\FetchPlansStatuses;
+use App\Enums\LeadSourceEnum;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Models\CarQuote;
+use App\Models\RenewalsUploadLeads;
 use App\Models\RenewalQuoteProcess;
 use App\Services\RenewalsUploadService;
-use ReflectionClass;
 use Tests\Helpers\TestSchemaCreator;
+use Tests\TestCase;
+
+uses(TestCase::class);
 
 beforeEach(
     function () {
@@ -18,23 +22,25 @@ beforeEach(
     }
 );
 
-/**
- * Helper function to invoke the private markOtherFetchPlansOutdated method
- */
-function invokeMarkOtherFetchPlansOutdated(RenewalsUploadService $service, $quote, $renewalQuoteProcess): void
-{
-    $reflection = new ReflectionClass($service);
-    $method = $reflection->getMethod('markOtherFetchPlansOutdated');
-    $method->setAccessible(true);
-    $method->invoke($service, $quote, $renewalQuoteProcess);
-}
-
 test('marks other pending fetch plans as outdated successfully', function () {
-    // Arrange: Create a quote
-    $quote = CarQuote::factory()->create();
+    // Arrange: Create a simple quote
+    $quote = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    // Create renewal upload lead
+    $renewalUploadLead = RenewalsUploadLeads::create([
+        'file_name' => 'test.xlsx',
+        'file_path' => 'test/path.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
     
     // Create the current renewal quote process (should not be marked as outdated)
     $currentProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -47,6 +53,7 @@ test('marks other pending fetch plans as outdated successfully', function () {
     $processesToMark = [];
     for ($i = 0; $i < 5; $i++) {
         $processesToMark[] = RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalUploadLead->id,
             'quote_id' => $quote->id,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -56,9 +63,9 @@ test('marks other pending fetch plans as outdated successfully', function () {
         ]);
     }
     
-    // Act: Call the private method
+    // Act: Call markOtherFetchPlansOutdated directly
     $service = app(RenewalsUploadService::class);
-    invokeMarkOtherFetchPlansOutdated($service, $quote, $currentProcess);
+    $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: All other processes should be marked as outdated
     foreach ($processesToMark as $process) {
@@ -66,17 +73,30 @@ test('marks other pending fetch plans as outdated successfully', function () {
         expect($process->fetch_plans_status)->toBe(FetchPlansStatuses::OUTDATED);
     }
     
-    // Assert: Current process should remain pending
+    // Assert: Current process should NOT be marked as outdated
     $currentProcess->refresh();
     expect($currentProcess->fetch_plans_status)->toBe(FetchPlansStatuses::PENDING);
 });
 
 test('does not mark processes with different status as outdated', function () {
-    // Arrange: Create a quote
-    $quote = CarQuote::factory()->create();
+    // Arrange: Create a simple quote
+    $quote = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    // Create renewal upload lead
+    $renewalUploadLead = RenewalsUploadLeads::create([
+        'file_name' => 'test.xlsx',
+        'file_path' => 'test/path.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
     
     // Create the current renewal quote process
     $currentProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -87,6 +107,7 @@ test('does not mark processes with different status as outdated', function () {
     
     // Create processes with different statuses (should not be affected)
     $processedProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::VALIDATED, // Different status
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -96,6 +117,7 @@ test('does not mark processes with different status as outdated', function () {
     ]);
     
     $fetchedProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -104,9 +126,9 @@ test('does not mark processes with different status as outdated', function () {
         'data' => [],
     ]);
     
-    // Act: Call the private method
+    // Act: Call markOtherFetchPlansOutdated directly
     $service = app(RenewalsUploadService::class);
-    invokeMarkOtherFetchPlansOutdated($service, $quote, $currentProcess);
+    $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: Processes with different statuses should not be changed
     $processedProcess->refresh();
@@ -117,11 +139,24 @@ test('does not mark processes with different status as outdated', function () {
 });
 
 test('handles empty result set when no pending processes exist', function () {
-    // Arrange: Create a quote
-    $quote = CarQuote::factory()->create();
+    // Arrange: Create a simple quote
+    $quote = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    // Create renewal upload lead
+    $renewalUploadLead = RenewalsUploadLeads::create([
+        'file_name' => 'test.xlsx',
+        'file_path' => 'test/path.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
     
     // Create only the current renewal quote process
     $currentProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -130,9 +165,9 @@ test('handles empty result set when no pending processes exist', function () {
         'data' => [],
     ]);
     
-    // Act: Call the private method (should not throw exception)
+    // Act: Call markOtherFetchPlansOutdated (should not throw exception when no other processes exist)
     $service = app(RenewalsUploadService::class);
-    invokeMarkOtherFetchPlansOutdated($service, $quote, $currentProcess);
+    $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: Current process should remain unchanged
     $currentProcess->refresh();
@@ -140,11 +175,24 @@ test('handles empty result set when no pending processes exist', function () {
 });
 
 test('handles large batch of processes (more than 50 records)', function () {
-    // Arrange: Create a quote
-    $quote = CarQuote::factory()->create();
+    // Arrange: Create a simple quote
+    $quote = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    // Create renewal upload lead
+    $renewalUploadLead = RenewalsUploadLeads::create([
+        'file_name' => 'test.xlsx',
+        'file_path' => 'test/path.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
     
     // Create the current renewal quote process
     $currentProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -157,6 +205,7 @@ test('handles large batch of processes (more than 50 records)', function () {
     $processesToMark = [];
     for ($i = 0; $i < 75; $i++) {
         $processesToMark[] = RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalUploadLead->id,
             'quote_id' => $quote->id,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -166,9 +215,9 @@ test('handles large batch of processes (more than 50 records)', function () {
         ]);
     }
     
-    // Act: Call the private method
+    // Act: Call markOtherFetchPlansOutdated directly
     $service = app(RenewalsUploadService::class);
-    invokeMarkOtherFetchPlansOutdated($service, $quote, $currentProcess);
+    $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: All processes should be marked as outdated
     $updatedCount = RenewalQuoteProcess::where('quote_id', $quote->id)
@@ -181,11 +230,27 @@ test('handles large batch of processes (more than 50 records)', function () {
 
 test('does not affect processes for different quotes', function () {
     // Arrange: Create two different quotes
-    $quote1 = CarQuote::factory()->create();
-    $quote2 = CarQuote::factory()->create();
+    $quote1 = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    $quote2 = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    // Create renewal upload lead for quote1
+    $renewalUploadLead1 = RenewalsUploadLeads::create([
+        'file_name' => 'test1.xlsx',
+        'file_path' => 'test/path1.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
     
     // Create the current renewal quote process for quote1
     $currentProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead1->id,
         'quote_id' => $quote1->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -198,6 +263,7 @@ test('does not affect processes for different quotes', function () {
     $quote1Processes = [];
     for ($i = 0; $i < 3; $i++) {
         $quote1Processes[] = RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalUploadLead1->id,
             'quote_id' => $quote1->id,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -207,10 +273,21 @@ test('does not affect processes for different quotes', function () {
         ]);
     }
     
+    // Create renewal upload lead for quote2
+    $renewalUploadLead2 = RenewalsUploadLeads::create([
+        'file_name' => 'test2.xlsx',
+        'file_path' => 'test/path2.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
+    
     // Create pending processes for quote2 (should NOT be affected)
     $quote2Processes = [];
     for ($i = 0; $i < 3; $i++) {
         $quote2Processes[] = RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalUploadLead2->id,
             'quote_id' => $quote2->id,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -220,9 +297,9 @@ test('does not affect processes for different quotes', function () {
         ]);
     }
     
-    // Act: Call the private method for quote1
+    // Act: Call markOtherFetchPlansOutdated for quote1
     $service = app(RenewalsUploadService::class);
-    invokeMarkOtherFetchPlansOutdated($service, $quote1, $currentProcess);
+    $service->markOtherFetchPlansOutdated($quote1, $currentProcess);
     
     // Assert: Quote1 processes should be marked as outdated
     foreach ($quote1Processes as $process) {
@@ -238,11 +315,24 @@ test('does not affect processes for different quotes', function () {
 });
 
 test('does not affect processes with different type', function () {
-    // Arrange: Create a quote
-    $quote = CarQuote::factory()->create();
+    // Arrange: Create a simple quote
+    $quote = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    // Create renewal upload lead
+    $renewalUploadLead = RenewalsUploadLeads::create([
+        'file_name' => 'test.xlsx',
+        'file_path' => 'test/path.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
     
     // Create the current renewal quote process
     $currentProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -255,6 +345,7 @@ test('does not affect processes with different type', function () {
     $createProcesses = [];
     for ($i = 0; $i < 3; $i++) {
         $createProcesses[] = RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalUploadLead->id,
             'quote_id' => $quote->id,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::CREATE_LEADS, // Different type
@@ -264,9 +355,9 @@ test('does not affect processes with different type', function () {
         ]);
     }
     
-    // Act: Call the private method
+    // Act: Call markOtherFetchPlansOutdated directly
     $service = app(RenewalsUploadService::class);
-    invokeMarkOtherFetchPlansOutdated($service, $quote, $currentProcess);
+    $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: CREATE_LEADS processes should remain pending
     foreach ($createProcesses as $process) {
@@ -275,12 +366,25 @@ test('does not affect processes with different type', function () {
     }
 });
 
-test('handles database deadlock with retry mechanism', function () {
-    // Arrange: Create a quote
-    $quote = CarQuote::factory()->create();
+test('handles processing multiple records successfully', function () {
+    // Arrange: Create a simple quote
+    $quote = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    // Create renewal upload lead
+    $renewalUploadLead = RenewalsUploadLeads::create([
+        'file_name' => 'test.xlsx',
+        'file_path' => 'test/path.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
     
     // Create the current renewal quote process
     $currentProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -293,6 +397,7 @@ test('handles database deadlock with retry mechanism', function () {
     $processesToMark = [];
     for ($i = 0; $i < 3; $i++) {
         $processesToMark[] = RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalUploadLead->id,
             'quote_id' => $quote->id,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -302,28 +407,40 @@ test('handles database deadlock with retry mechanism', function () {
         ]);
     }
     
-    // Note: Testing deadlock retry mechanism is complex with Eloquent.
-    // The actual implementation has retry logic for deadlocks (max 3 retries with 200ms delay).
-    // In a real scenario, deadlocks would occur under high concurrency.
-    // This test verifies the method completes successfully under normal conditions.
-    
-    // Act: Call the method
+    // Act: Call markOtherFetchPlansOutdated directly
     $service = app(RenewalsUploadService::class);
-    invokeMarkOtherFetchPlansOutdated($service, $quote, $currentProcess);
+    $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
-    // Assert: All processes should be marked as outdated (method completes successfully)
+    // Assert: All processes should be marked as outdated
     foreach ($processesToMark as $process) {
         $process->refresh();
         expect($process->fetch_plans_status)->toBe(FetchPlansStatuses::OUTDATED);
     }
+    
+    // Current process should remain unchanged
+    $currentProcess->refresh();
+    expect($currentProcess->fetch_plans_status)->toBe(FetchPlansStatuses::PENDING);
 });
 
 test('completes successfully under normal database conditions', function () {
-    // Arrange: Create a quote
-    $quote = CarQuote::factory()->create();
+    // Arrange: Create a simple quote
+    $quote = CarQuote::factory()->create([
+        'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+    ]);
+    
+    // Create renewal upload lead
+    $renewalUploadLead = RenewalsUploadLeads::create([
+        'file_name' => 'test.xlsx',
+        'file_path' => 'test/path.xlsx',
+        'quote_type' => 'CAR',
+        'status' => 'IN_PROGRESS',
+        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
+        'is_sic' => 0,
+    ]);
     
     // Create the current renewal quote process
     $currentProcess = RenewalQuoteProcess::create([
+        'renewals_upload_lead_id' => $renewalUploadLead->id,
         'quote_id' => $quote->id,
         'status' => RenewalProcessStatuses::PROCESSED,
         'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -336,6 +453,7 @@ test('completes successfully under normal database conditions', function () {
     $processesToMark = [];
     for ($i = 0; $i < 3; $i++) {
         $processesToMark[] = RenewalQuoteProcess::create([
+            'renewals_upload_lead_id' => $renewalUploadLead->id,
             'quote_id' => $quote->id,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -345,9 +463,9 @@ test('completes successfully under normal database conditions', function () {
         ]);
     }
     
-    // Act: Call the method
+    // Act: Call markOtherFetchPlansOutdated directly
     $service = app(RenewalsUploadService::class);
-    invokeMarkOtherFetchPlansOutdated($service, $quote, $currentProcess);
+    $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: Method completes without throwing and updates processes correctly
     foreach ($processesToMark as $process) {

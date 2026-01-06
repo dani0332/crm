@@ -3454,7 +3454,7 @@ class RenewalsUploadService
      * @param RenewalQuoteProcess $renewalQuoteProcess
      * @return void
      */
-    private function markOtherFetchPlansOutdated($quote, $renewalQuoteProcess)
+    public function markOtherFetchPlansOutdated($quote, $renewalQuoteProcess)
     {
         // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
         // To mitigate serialization deadlocks, update in smaller batches with retries
@@ -3489,7 +3489,7 @@ class RenewalsUploadService
      * @throws \Illuminate\Database\QueryException
      * @throws FetchPlansUpdateException
      */
-    private function updateProcessIdWithRetry(int $processId, int $maxRetries = 3)
+    public function updateProcessIdWithRetry(int $processId, int $maxRetries = 3)
     {
         $isInTransaction = DB::transactionLevel() > 0;
         
