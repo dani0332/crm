@@ -1727,11 +1727,11 @@ class SendUpdateLogService
             if ($payment) {
                 $payment->load($planRelationName);
             }
-            $insuranceProvider = $payment->{$planRelationName}?->insuranceProvider;
-            $insuranceProviderId = $insuranceProvider->id ?? null;
-            $plan_id = $quoteModel->plan?->id ?? null;
+            $insuranceProvider = $payment?->{$planRelationName}?->insuranceProvider;
+            $insuranceProviderId = $insuranceProvider?->id ?? null;
+            $plan_id = $quoteModel?->plan?->id ?? null;
         } else {
-            $insuranceProviderId = $quote->insurance_provider_id ?? null;
+            $insuranceProviderId = $quote?->insurance_provider_id ?? null;
         }
         info('fn: getProviderDetails end for Send Update - code: '.$quote->code);
 
