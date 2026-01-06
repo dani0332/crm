@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\DTO\AutomationFailedEmailDataRequest;
 use App\Enums\QuoteTypes;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -85,19 +86,20 @@ class AutomationFailedJob implements ShouldQueue
         // Build CC emails with LOB/Provider-specific logic
         $cc = $service->buildCcEmails($quote, $isDeviceNgi, $this->processInvolved);
 
-        // Build email data with LOB-specific fields
-        $emailData = $service->buildEmailData(
-            $quote,
-            $quoteType,
-            $cc,
-            $isDeviceNgi,
-            $this->actionRequired,
-            $recipientEmail,
-            $recipientName,
-            $this->statusAPIFailed,
-            $this->processInvolved,
-            $this->workflowType
+        // Build email data request DTO
+        $emailDataRequest = new AutomationFailedEmailDataRequest(
+            cc: $cc,
+            isDeviceNgi: $isDeviceNgi,
+            actionRequired: $this->actionRequired,
+            recipientEmail: $recipientEmail,
+            recipientName: $recipientName,
+            statusAPIFailed: $this->statusAPIFailed,
+            processInvolved: $this->processInvolved,
+            workflowType: $this->workflowType
         );
+
+        // Build email data with LOB-specific fields
+        $emailData = $service->buildEmailData($quote, $quoteType, $emailDataRequest);
 
         $response = app(CentralService::class)->sendAutomationEmail($quote, $emailData, $this->quoteTypeId, $this->workflowType);
         LoggerService::info('job:AutomationFailedJob - Job Response ', extra: ['emailData' => json_encode($response)]);

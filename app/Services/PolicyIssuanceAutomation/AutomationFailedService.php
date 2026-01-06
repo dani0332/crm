@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation;
 
+use App\DTO\AutomationFailedEmailDataRequest;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -79,45 +80,46 @@ class AutomationFailedService
      */
     public function determineRecipient($quote, bool $isDeviceNgi, string $processInvolved, ?string $userToSendEmail): ?array
     {
-        // Device/NGI-specific recipient logic per FRD
         if ($isDeviceNgi) {
-            $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
-
-            // Booking Details API failure goes to Production Approval Team
-            if ($isBookingFailure) {
-                $toEmail = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO)
-                    ?: 'production.approval.team@insurancemarket.ae';
-
-                LoggerService::info('AutomationFailedService - Device/NGI Booking failure, sending to Production Approval Team', extra: [
-                    'toEmail' => $toEmail,
-                ]);
-
-                return ['email' => $toEmail, 'name' => 'Production Approval Team'];
-            }
-
-            // Other failures go to assigned SIC advisor
-            if ($quote?->advisor) {
-                return ['email' => $quote->advisor->email, 'name' => $quote->advisor->name];
-            }
-
-            // Fallback for Device/NGI when no advisor - don't stop, send to PA Team
-            $fallbackEmail = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO)
-                ?: 'production.approval.team@insurancemarket.ae';
-
-            LoggerService::info('AutomationFailedService - Device/NGI no advisor assigned, sending to fallback', extra: [
-                'fallbackEmail' => $fallbackEmail,
-            ]);
-
-            return ['email' => $fallbackEmail, 'name' => 'Device Support Team'];
+            return $this->determineDeviceNgiRecipient($quote, $processInvolved);
         }
 
-        // Original logic for other LOBs (Car, etc.)
-        if ($userToSendEmail == UserNameEnum::PA_USER) {
-            $email = $quote?->kycDocumentUser?->createdBy?->email;
-            $name = $quote?->kycDocumentUser?->createdBy?->name;
+        return $this->determineOtherLobRecipient($quote, $userToSendEmail);
+    }
 
-            if ($email && $name) {
-                return ['email' => $email, 'name' => $name];
+    /**
+     * Determine recipient for Device/NGI quotes.
+     * FRD: Booking Details API failure → Production Approval Team
+     * Other failures → Assigned SIC Advisor (or fallback to PA Team)
+     *
+     * @return array{email: string, name: string}|null
+     */
+    private function determineDeviceNgiRecipient($quote, string $processInvolved): ?array
+    {
+        $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
+
+        if ($isBookingFailure) {
+            return $this->getProductionApprovalTeamRecipient();
+        }
+
+        if ($quote?->advisor) {
+            return ['email' => $quote->advisor->email, 'name' => $quote->advisor->name];
+        }
+
+        return $this->getDeviceNgiFallbackRecipient();
+    }
+
+    /**
+     * Determine recipient for other LOBs (Car, etc.).
+     *
+     * @return array{email: string, name: string}|null
+     */
+    private function determineOtherLobRecipient($quote, ?string $userToSendEmail): ?array
+    {
+        if ($userToSendEmail == UserNameEnum::PA_USER) {
+            $recipient = $this->getPaUserRecipient($quote);
+            if ($recipient) {
+                return $recipient;
             }
         }
 
@@ -128,6 +130,66 @@ class AutomationFailedService
         LoggerService::info('AutomationFailedService - No advisor assigned, stopping job - Insurer: '.$this->insurerName);
 
         return null;
+    }
+
+    /**
+     * Get Production Approval Team recipient for Device/NGI booking failures.
+     *
+     * @return array{email: string, name: string}
+     */
+    private function getProductionApprovalTeamRecipient(): array
+    {
+        $toEmail = $this->getDeviceFailureEmailTo();
+
+        LoggerService::info('AutomationFailedService - Device/NGI Booking failure, sending to Production Approval Team', extra: [
+            'toEmail' => $toEmail,
+        ]);
+
+        return ['email' => $toEmail, 'name' => 'Production Approval Team'];
+    }
+
+    /**
+     * Get fallback recipient for Device/NGI when no advisor is assigned.
+     *
+     * @return array{email: string, name: string}
+     */
+    private function getDeviceNgiFallbackRecipient(): array
+    {
+        $fallbackEmail = $this->getDeviceFailureEmailTo();
+
+        LoggerService::info('AutomationFailedService - Device/NGI no advisor assigned, sending to fallback', extra: [
+            'fallbackEmail' => $fallbackEmail,
+        ]);
+
+        return ['email' => $fallbackEmail, 'name' => 'Device Support Team'];
+    }
+
+    /**
+     * Get PA user recipient from quote's KYC document user.
+     *
+     * @return array{email: string, name: string}|null
+     */
+    private function getPaUserRecipient($quote): ?array
+    {
+        $email = $quote?->kycDocumentUser?->createdBy?->email;
+        $name = $quote?->kycDocumentUser?->createdBy?->name;
+
+        if ($email && $name) {
+            return ['email' => $email, 'name' => $name];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get Device failure email from ApplicationStorage with fallback.
+     *
+     * @return string
+     */
+    private function getDeviceFailureEmailTo(): string
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO)
+            ?: 'production.approval.team@insurancemarket.ae';
     }
 
     /**
@@ -172,36 +234,31 @@ class AutomationFailedService
 
     /**
      * Build email data with LOB/Provider-specific fields.
-     * Device/NGI: includes imcrmLink and escalationLink
-     * Other LOBs: excludes imcrmLink and escalationLink
+     * Device/NGI: includes imcrmLink and escalationLink (Device-specific)
+     * Other LOBs: includes imcrmLink, escalationLink, refId, and ccEmails (Cyber-specific)
+     *
+     * @param AutomationFailedEmailDataRequest $request Contains email recipient, CC, process, and workflow data
      */
     public function buildEmailData(
         $quote,
         string $quoteType,
-        array $cc,
-        bool $isDeviceNgi,
-        string $actionRequired,
-        string $recipientEmail,
-        string $recipientName,
-        string $statusAPIFailed,
-        string $processInvolved,
-        string $workflowType
+        AutomationFailedEmailDataRequest $request
     ): object {
         // Base email data common to all LOBs
         $emailData = [
-            'actionRequired' => $actionRequired,
-            'recipientEmail' => $recipientEmail,
-            'recipientName' => $recipientName,
+            'actionRequired' => $request->actionRequired,
+            'recipientEmail' => $request->recipientEmail,
+            'recipientName' => $request->recipientName,
             'imcrmReferenceNumber' => $quote->code,
-            'insurerApiStatus' => $statusAPIFailed,
+            'insurerApiStatus' => $request->statusAPIFailed,
             'insurerName' => $this->insuranceProvider?->text ?? '',
-            'processInvolved' => $processInvolved,
-            'cc' => $cc,
-            'workflowType' => $workflowType,
+            'processInvolved' => $request->processInvolved,
+            'cc' => $request->cc,
+            'workflowType' => $request->workflowType,
         ];
 
         // Device/NGI-specific fields per FRD
-        if ($isDeviceNgi) {
+        if ($request->isDeviceNgi) {
             $emailData['imcrmLink'] = $this->generateImcrmLink($quote, $quoteType);
             $emailData['escalationLink'] = $this->getEscalationLink();
         }
