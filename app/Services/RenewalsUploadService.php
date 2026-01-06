@@ -3458,7 +3458,8 @@ class RenewalsUploadService
     {
         // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
         // To mitigate serialization deadlocks, update in smaller batches with retries
-        // Using chunkById for robust cursor-based batching that handles concurrent updates
+        // Using chunkById with size 1 and ORDER BY id to ensure consistent lock ordering
+        // This prevents deadlocks by ensuring all concurrent processes acquire locks in the same order
         RenewalQuoteProcess::where([
             'quote_id' => $quote->id,
             'status' => RenewalProcessStatuses::PROCESSED,
@@ -3466,33 +3467,41 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])
             ->where('id', '!=', $renewalQuoteProcess->id)
-            ->chunkById(10, function ($processes) {
-                $processIds = $processes->pluck('id')->toArray();
-                $this->updateProcessIdsWithRetry($processIds);
+            ->orderBy('id') // Critical: ensures consistent lock ordering to prevent deadlocks
+            ->chunkById(1, function ($processes) {
+                // Process one record at a time to minimize lock contention
+                foreach ($processes as $process) {
+                    $this->updateProcessIdWithRetry($process->id);
+                }
             });
     }
 
     /**
-     * Update process IDs with retry logic to handle deadlocks
+     * Update a single process ID with retry logic to handle deadlocks
      * Only updates records that are still in PENDING status to prevent race conditions
+     * Uses explicit WHERE id = ? with ORDER BY to ensure consistent lock ordering
      *
-     * @param array $processIds
+     * @param int $processId
      * @param int $maxRetries
      * @return void
      * @throws \Illuminate\Database\QueryException
      * @throws FetchPlansUpdateException
      */
-    private function updateProcessIdsWithRetry(array $processIds, int $maxRetries = 3)
+    private function updateProcessIdWithRetry(int $processId, int $maxRetries = 3)
     {
         for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
             try {
-                RenewalQuoteProcess::whereIn('id', $processIds)
+                // Update single record with explicit WHERE clause to ensure consistent lock ordering
+                // The WHERE clause with fetch_plans_status check prevents race conditions
+                RenewalQuoteProcess::where('id', $processId)
                     ->where('fetch_plans_status', FetchPlansStatuses::PENDING)
                     ->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
                 return;
             } catch (\Illuminate\Database\QueryException $e) {
-                $isDeadlock = strpos($e->getMessage(), 'Deadlock found') !== false;
+                $isDeadlock = strpos($e->getMessage(), 'Deadlock found') !== false
+                    || strpos($e->getMessage(), 'Lock wait timeout') !== false
+                    || $e->getCode() === '40001'; // SQLSTATE 40001 is serialization failure
                 
                 if (!$isDeadlock) {
                     // Non-deadlock exception - throw immediately
@@ -3501,7 +3510,7 @@ class RenewalsUploadService
                 
                 // If this is the last attempt, throw custom exception
                 if ($attempt === $maxRetries - 1) {
-                    throw new FetchPlansUpdateException($processIds, $maxRetries, 0, $e);
+                    throw new FetchPlansUpdateException([$processId], $maxRetries, 0, $e);
                 }
                 
                 usleep(200000); // wait 200ms before retry
