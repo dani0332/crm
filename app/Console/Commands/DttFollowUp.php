@@ -48,7 +48,7 @@ class DttFollowUp extends Command
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             LoggerService::info('Dtt is not enabled from cms');
 
-            return false;
+            return Command::SUCCESS;
         }
 
         $twoDaysBefore = Carbon::now()->subDays(2)->toDateString();
@@ -57,25 +57,30 @@ class DttFollowUp extends Command
         $twentyDaysBefore = Carbon::now()->subDays(20)->toDateString();
         $twentyEightDaysBefore = Carbon::now()->subDays(28)->toDateString();
 
-        $unreplied = DttRevival::where(function ($q) use ($twoDaysBefore, $sevenDaysBefore, $thirteenDaysBefore, $twentyDaysBefore, $twentyEightDaysBefore) {
+        $logPrefix = 'carRevivalFollowUpEmailJob -';
+
+        $jobs = [];
+        $delayCounter = 0;
+
+        // Use chunking to avoid memory issues with large datasets
+        DttRevival::where(function ($q) use ($twoDaysBefore, $sevenDaysBefore, $thirteenDaysBefore, $twentyDaysBefore, $twentyEightDaysBefore) {
             $q->whereDate('created_at', '=', $twoDaysBefore);
             $q->orWhereDate('created_at', '=', $sevenDaysBefore);
             $q->orWhereDate('created_at', '=', $thirteenDaysBefore);
             $q->orWhereDate('created_at', '=', $twentyDaysBefore);
             $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
-        })->where('reply_received', 0)
-            ->get();
+        })
+            ->where('reply_received', 0)
+            ->select('id', 'uuid') // Only select needed fields to reduce memory usage
+            ->chunk(100, function ($unreplied) use (&$jobs, &$delayCounter) {
+                foreach ($unreplied as $item) {
+                    // Pass only the ID to avoid serialization issues with full model
+                    $jobs[] = (new CarRevivalFollowUpEmailJob($item->id))->delay(now()->addSeconds(10 + $delayCounter));
+                    $delayCounter += 10;
+                }
+            });
 
-        $logPrefix = 'carRevivalFollowUpEmailJob -';
-
-        $jobs = [];
-        $delayCounter = 0;
-        foreach ($unreplied as $item) {
-            $jobs[] = (new CarRevivalFollowUpEmailJob($item))->delay(now()->addSeconds(10 + $delayCounter));
-            $delayCounter += 10;
-        }
-
-        if ($jobs != null && count($jobs)) {
+        if (! empty($jobs) || count($jobs) > 0) {
             Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
                     LoggerService::info($logPrefix.' all jobs completed successfully');
@@ -92,5 +97,7 @@ class DttFollowUp extends Command
         } else {
             LoggerService::info($logPrefix.'No lead Found');
         }
+
+        return Command::SUCCESS;
     }
 }
