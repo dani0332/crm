@@ -3480,7 +3480,6 @@ class RenewalsUploadService
      * Update a single process ID with retry logic to handle deadlocks
      * Only updates records that are still in PENDING status to prevent race conditions
      * Uses explicit WHERE id = ? with ORDER BY to ensure consistent lock ordering
-     * 
      * Note: When called within a transaction, deadlocks are not retried here to preserve
      * transaction atomicity. The deadlock exception will propagate for higher-level retry.
      *
