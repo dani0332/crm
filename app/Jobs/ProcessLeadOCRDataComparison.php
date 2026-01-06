@@ -73,7 +73,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 return;
             }
 
-        $this->getCarDocuments();
+            $this->getCarDocuments();
         } finally {
             LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Job completed', extra: [
                 'uuid' => $this->uuid,
@@ -193,17 +193,17 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
             if ($quote->personalQuote->lead_ocr_comparison_processed && ! $this->recalculateComparison) {
                 LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Quote already processed, skipping (use recalculate_comparison=true to recalculate)', extra: [
-                                'quote_id' => $quote->id,
-                                'quote_uuid' => $quote->uuid,
-                            ]);
+                    'quote_id' => $quote->id,
+                    'quote_uuid' => $quote->uuid,
+                ]);
 
-                            continue;
-                        }
+                continue;
+            }
 
             if ($quote->personalQuote->lead_ocr_comparison_processed && $this->recalculateComparison) {
                 LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Quote already processed, recalculating comparison with cached OCR data', extra: [
-                            'quote_id' => $quote->id,
-                            'quote_uuid' => $quote->uuid,
+                    'quote_id' => $quote->id,
+                    'quote_uuid' => $quote->uuid,
                 ]);
             }
 
@@ -211,11 +211,11 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
 
             foreach ($quote->documents as $document) {
                 LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Dispatching document job', extra: [
-                            'quote_id' => $quote->id,
+                    'quote_id' => $quote->id,
                     'quote_uuid' => $quote->uuid,
-                            'document_id' => $document->id,
-                            'document_type_code' => $document->document_type_code,
-                        ]);
+                    'document_id' => $document->id,
+                    'document_type_code' => $document->document_type_code,
+                ]);
 
                 ProcessSingleDocumentOCR::dispatch(
                     $quote->id,
@@ -229,10 +229,10 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             }
 
             LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - Quote document jobs dispatched', extra: [
-                    'quote_id' => $quote->id,
-                    'quote_uuid' => $quote->uuid,
+                'quote_id' => $quote->id,
+                'quote_uuid' => $quote->uuid,
                 'documents_dispatched' => $documentsDispatched,
-                ]);
+            ]);
         }
 
         LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocumentsForLeads - All document jobs dispatched', extra: [
@@ -397,13 +397,13 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
                 $ocrData = $ocrResponseJson[$ocrDocType];
                 $ocrDataStructure[$ocrDocType] = $ocrDataJson[$ocrDocType];
 
-            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - OCR data already exists in database', extra: [
-                'quote_id' => $quote->id,
-                'ocr_response' => $ocrData,
-                'ocr_data' => $ocrDataStructure[$ocrDocType],
-            ]);
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - OCR data already exists in database', extra: [
+                    'quote_id' => $quote->id,
+                    'ocr_response' => $ocrData,
+                    'ocr_data' => $ocrDataStructure[$ocrDocType],
+                ]);
 
-            return true;
+                return true;
             }
 
             LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.'::processOcrDocument - Cached OCR data exists but document type not found', extra: [
