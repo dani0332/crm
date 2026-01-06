@@ -36,7 +36,7 @@ class MDX extends EmbeddedProduct
         }
 
         $latestInsured = $quoteObject->latestInsured ?? null;
-       
+
         if (! empty($quoteObject->quoteRequestEntityMapping)) {
             $firstName = $quoteObject->first_name ?? '';
             $lastName = $quoteObject->last_name ?? '';
