@@ -145,7 +145,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
             ])
             ->orderBy('transaction_approved_at', 'asc') // Consistent ordering: oldest first
             ->orderBy('id', 'asc') // Secondary sort for same-timestamp records
-            ->limit(50); // Safety limit: maximum 50 leads total
+            ->limit(5); // Safety limit: maximum 5 leads total
 
         $carQuotes = $carQuotes->get();
 
