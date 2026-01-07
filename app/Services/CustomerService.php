@@ -186,7 +186,7 @@ class CustomerService extends BaseService
                 $email = trim($lead->email);
 
                 if (str_ends_with($email, '@insurancemarket.ae') || str_ends_with($email, '@afia.ae')) {
-                    $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id);
+                    $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)->first()->delete();
 
                 } else {
 
@@ -217,7 +217,7 @@ class CustomerService extends BaseService
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $this->removeAdditionalEmailContactIfExitst($lead->email, $lead->customer_id);
+                $this->removeAdditionalEmailContactIfExitst($lead->email, $lead->customer_id)->first()->delete();
 
                 // ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
                 $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
@@ -232,7 +232,7 @@ class CustomerService extends BaseService
                 }
             } else {
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id);
+                $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)->first()->delete();
 
                 $customer = $this->getCustomerByEmail($value);
                 $email = trim($lead->email);
@@ -272,7 +272,7 @@ class CustomerService extends BaseService
             }
 
             if ($keepExistingPrimaryEmail == false) {
-                $this->removeAdditionalEmailContactIfExitst($previousEmail, 0);
+                $this->removeAdditionalEmailContactIfExitst($previousEmail)->delete();
             }
 
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
@@ -304,7 +304,7 @@ class CustomerService extends BaseService
         }
     }
 
-    private function removeAdditionalEmailContactIfExitst(string $email, int $customerId)
+    private function removeAdditionalEmailContactIfExitst(string $email, ?int $customerId = null)
     {
         $additionalContacts = CustomerAdditionalContact::when($customerId, 
                 fn ($q) => $q->where('customer_id', $customerId)
@@ -319,7 +319,7 @@ class CustomerService extends BaseService
             return false;
         }
 
-        $customerId ? $additionalContacts->first()->delete() : $additionalContacts->delete();
+        return $additionalContacts;
     }
 
     public function getCustomerCampaignFollowups($id)
