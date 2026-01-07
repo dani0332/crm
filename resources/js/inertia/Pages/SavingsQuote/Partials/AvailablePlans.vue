@@ -111,12 +111,75 @@ const toggleLoader = ref(false);
 const viewButtonLoading = ref(false);
 const planDetails = ref(null);
 
+// Exchange Rate Logic (Frontend-only, all rates from API)
+const exchangeRates = ref({}); // { currency: rate } from API (USD base)
+const planRates = ref({}); // { planId: rate } - user edited rates
+const ratesLoading = ref(false);
+
 const selectedProviderPlan = ref({
   id: props.quote?.plan_id,
   planName: props.quote?.plans?.name,
   providerName: props.quote?.plans?.providerName,
   premium: props.quote?.plans?.premium,
 });
+
+// Fetch rates from free public API (no key required)
+const fetchExchangeRates = async () => {
+  if (Object.keys(exchangeRates.value).length > 0) return;
+  ratesLoading.value = true;
+  try {
+    const { data } = await axios.get('https://open.er-api.com/v6/latest/USD');
+    if (data?.rates) exchangeRates.value = data.rates;
+  } catch (e) {
+    console.error('Exchange rate fetch failed:', e);
+  } finally {
+    ratesLoading.value = false;
+  }
+};
+
+// Get exchange rate: 1 [Currency] = X AED (all from API)
+const getRate = item => {
+  const id = item.id;
+  const cur = (item.currency || 'USD').toUpperCase();
+  const usdToAed = exchangeRates.value['AED'] || null;
+
+  // Use user-edited rate if exists
+  if (planRates.value[id] !== undefined) return planRates.value[id];
+
+  if (!usdToAed) return null; // API not loaded yet
+
+  if (cur === 'AED') return 1;
+  if (cur === 'USD') return Math.round(usdToAed * 10000) / 10000;
+
+  // Other currencies: rate = usdToAed / (USD to Currency)
+  const usdToCur = exchangeRates.value[cur];
+  return usdToCur ? Math.round((usdToAed / usdToCur) * 10000) / 10000 : null;
+};
+
+// Editable only for selected plan (non-AED)
+const isEditable = item =>
+  item.currency?.toUpperCase() !== 'AED' &&
+  String(selectedProviderPlan.value.id) === String(item.id);
+
+// Update rate for a plan
+const setRate = (id, val) => {
+  const num = parseFloat(val);
+  if (!isNaN(num) && num > 0) planRates.value[id] = num;
+};
+
+// Calculate AED prices
+const toAED = (amount, item) => {
+  const rate = getRate(item);
+  return rate ? Math.round(amount * rate * 100) / 100 : null;
+};
+
+const fmt = v =>
+  v != null
+    ? new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(v)
+    : 'N/A';
 
 const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id;
@@ -365,6 +428,7 @@ const readOnlyMode = reactive({
 
 onMounted(() => {
   onLoadAvailablePlansData();
+  fetchExchangeRates(); // Fetch rates on mount
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
@@ -657,10 +721,25 @@ onMounted(() => {
               <span>{{ item.price || 'N/A' }}</span>
             </template>
             <template #item-exchangeRate="item">
-              <span>{{ item.exchangeRate || 'N/A' }}</span>
+              <x-input
+                v-if="isEditable(item)"
+                :model-value="getRate(item)"
+                @update:model-value="val => setRate(item.id, val)"
+                type="number"
+                step="0.0001"
+                min="0"
+                class="w-24"
+                size="sm"
+              />
+              <span v-else-if="ratesLoading && !getRate(item)">
+                <x-spinner size="xs" />
+              </span>
+              <span v-else>{{ getRate(item) ?? 'N/A' }}</span>
             </template>
             <template #item-priceAed="item">
-              <span>{{ item.priceAed || 'N/A' }}</span>
+              <span>{{
+                fmt(toAED(item.actualPremium || item.price || 0, item))
+              }}</span>
             </template>
             <template #item-investmentFrequency="item">
               <span>{{ item.investmentFrequency || 'N/A' }}</span>
@@ -681,7 +760,7 @@ onMounted(() => {
               <span>{{ item.totalAnnualPrice || 'N/A' }}</span>
             </template>
             <template #item-totalAnnualPriceAed="item">
-              <span>{{ item.totalAnnualPriceAed || 'N/A' }}</span>
+              <span>{{ fmt(toAED(item.totalAnnualPrice || 0, item)) }}</span>
             </template>
             <template #item-action="item">
               <div class="flex gap-3">
