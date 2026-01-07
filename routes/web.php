@@ -1032,10 +1032,3 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         echo 'Done';
     });
 });
-
-Route::get('test', function () {
-    $ccPayment = CcPaymentProcess::find(5088);
-    $ccPayment->update(['status' => PaymentProcessJobEnum::PENDING]);
-
-    echo 'Done';
-});
