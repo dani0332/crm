@@ -2,8 +2,6 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use Carbon\Carbon;
 
