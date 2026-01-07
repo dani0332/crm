@@ -709,7 +709,10 @@ onMounted(() => {
                 </x-button>
                 <span>
                   <SelectPlan
-                    v-if="selectedProviderPlan.id != item.id"
+                    v-if="
+                      !selectedProviderPlan?.id ||
+                      String(selectedProviderPlan.id) !== String(item.id)
+                    "
                     @update:selectedPlanChanged="handlePlanSelected"
                     :plan="item"
                     :quoteType="'Savings'"
@@ -722,7 +725,7 @@ onMounted(() => {
                     :payments="payments"
                     :insuranceProviderId="item.insuranceProviderId"
                     button-size="sm"
-                    button-class="!rounded-xl !px-5 !py-1 !font-normal"
+                    button-class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
                   />
 
                   <x-button
