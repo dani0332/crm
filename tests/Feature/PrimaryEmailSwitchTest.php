@@ -151,7 +151,7 @@ function makePrimaryEmailRequest($quoteA, $switchWithAdditionalContacts, $keepEx
         'quote_customer_id' => $quoteA->customer_id,
         'quote_primary_email_address' => $quoteA->email,
         'quote_primary_mobile_no' => $quoteA->mobile_no,
-        'keep_existing_primary_email' => $keepExistingPrimaryEmail,
+        'keep_existing_primary_email' => $keepExistingPrimaryEmail ? 1 : 0,
     ];
     $request = new Request($payload);
     return app(CustomerController::class)->makeAdditionalContactPrimary($request);

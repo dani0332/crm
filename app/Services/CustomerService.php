@@ -167,7 +167,7 @@ class CustomerService extends BaseService
         return Customer::where('uuid', $uuid)->first();
     }
 
-    public function makeAdditionalContactPrimary($lead, $key, $value, $keepExistingPrimaryEmail = true)
+    public function makeAdditionalContactPrimary($lead, $key, $value, bool $keepExistingPrimaryEmail = true)
     {
         if ($key == GenericRequestEnum::EMAIL) {
             $customer = null;

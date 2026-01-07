@@ -130,7 +130,7 @@ const customerAlreadyPrimaryCheck = async () => {
 
 function additionalContactPrimaryConfirmed(keepExistingPrimaryEmail = true) {
   const isEmail = confirmData.contactPrimary.key === 'email';
-  keepExistingPrimaryEmailLoader.value = keepExistingPrimaryEmail ? true : false;
+  keepExistingPrimaryEmailLoader.value = keepExistingPrimaryEmail;
 
   router.post(
     `/customer-additional-contact/${
@@ -145,7 +145,7 @@ function additionalContactPrimaryConfirmed(keepExistingPrimaryEmail = true) {
       quote_customer_id: props.customerId,
       quote_primary_email_address: props.quoteEmail,
       quote_primary_mobile_no: props.quoteMobile,
-      keep_existing_primary_email: keepExistingPrimaryEmail,
+      keep_existing_primary_email: keepExistingPrimaryEmail ? 1 : 0,
     },
     {
       preserveScroll: true,
