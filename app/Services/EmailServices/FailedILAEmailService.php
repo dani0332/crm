@@ -107,7 +107,7 @@ class FailedILAEmailService
     public function getFailedILALeads($quoteType)
     {
         switch ($quoteType) {
-            case QuoteTypes::CAR:
+            case QuoteTypes::CAR->value:
                 $leads = $this->getCarFailedILALeads();
                 break;
             case QuoteTypes::BIKE->value:
