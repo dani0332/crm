@@ -15,6 +15,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PaymentStatus;
 use App\Models\RenewalBatch;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -29,6 +30,7 @@ use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -39,8 +41,6 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
-use App\Services\AMLService;
-use App\Models\PaymentStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -84,7 +84,7 @@ abstract class BaseQuoteService extends BaseService
     public function getQuoteStatuses($ignoreList = [])
     {
         $cacheKey = $this->getQuoteStatusesCacheKey($ignoreList);
-        
+
         return Cache::remember($cacheKey, now()->addHours(6), function () use ($ignoreList) {
             $quoteStatuses = QuoteStatusRepository::byQuoteTypeId($this->quoteType->id())->get();
 
@@ -255,11 +255,11 @@ abstract class BaseQuoteService extends BaseService
     {
         $sortedIgnoreList = $ignoreList;
         sort($sortedIgnoreList);
-        
-        $ignoreListKey = empty($sortedIgnoreList) 
-            ? 'none' 
+
+        $ignoreListKey = empty($sortedIgnoreList)
+            ? 'none'
             : implode('_', array_map('strval', $sortedIgnoreList));
-        
+
         return "quote_statuses_{$this->quoteType->value}_{$ignoreListKey}";
     }
 
