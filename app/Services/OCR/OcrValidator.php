@@ -50,6 +50,8 @@ trait OcrValidator
         InsuranceProviderEnum::DIC->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::CIG->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::SI->value => [QuoteTypes::GROUP_MEDICAL],
+        // Savings
+        InsuranceProviderEnum::OIC->value => [QuoteTypes::SAVINGS],
     ];
 
     public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
