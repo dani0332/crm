@@ -186,7 +186,8 @@ class CustomerService extends BaseService
                 $email = trim($lead->email);
 
                 if (str_ends_with($email, '@insurancemarket.ae') || str_ends_with($email, '@afia.ae')) {
-                    $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)->first()->delete();
+                    $removeableContact = $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)->first();
+                    if ($removeableContact) $removeableContact->delete();
 
                 } else {
 
@@ -217,7 +218,8 @@ class CustomerService extends BaseService
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $this->removeAdditionalEmailContactIfExitst($lead->email, $lead->customer_id)->first()->delete();
+                $removeableContact = $this->removeAdditionalEmailContactIfExitst($lead->email, $lead->customer_id)->first();
+                if ($removeableContact) $removeableContact->delete();
 
                 // ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
                 $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
@@ -232,7 +234,8 @@ class CustomerService extends BaseService
                 }
             } else {
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)->first()->delete();
+                $removeableContact = $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)->first();
+                if ($removeableContact) $removeableContact->delete();
 
                 $customer = $this->getCustomerByEmail($value);
                 $email = trim($lead->email);
@@ -316,7 +319,6 @@ class CustomerService extends BaseService
                 'email' => $email,
                 'customerId' => $customerId,
             ]);
-            return false;
         }
 
         return $additionalContacts;
