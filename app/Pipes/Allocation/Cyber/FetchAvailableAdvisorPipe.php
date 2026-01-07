@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
+use App\Strategies\Allocations\CyberAllocation;
 use Closure;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
@@ -93,7 +94,17 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         if ($this->allocationRequest->get('isCHSAdvisor')) {
             LoggerService::info(self::class.' - getAdvisorsByStatus: CHS Advisors is required');
 
-            return User::select('users.id as user_id')->chs()->get();
+            if ($this->isTestMode()) {
+                LoggerService::info(self::class.' - TEST MODE: Using test Happiness User email for CHS advisor');
+
+                return User::select('users.id as user_id')
+                    ->where('users.email', CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL)
+                    ->first();
+            }
+
+            LoggerService::info(self::class.' - PRODUCTION MODE: Using Production CHS advisor');
+
+            return User::select('users.id as user_id')->chs()->first();
         }
 
         return $this->getAdvisorByHardcodedEmails($onlineStatus);
