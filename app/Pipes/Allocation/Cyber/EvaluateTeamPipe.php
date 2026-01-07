@@ -6,7 +6,6 @@ use App\Models\PersonalQuote;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\CyberAllocation;
 use Closure;
 
 class EvaluateTeamPipe extends BaseAllocationPipe
