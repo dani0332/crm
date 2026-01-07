@@ -670,7 +670,6 @@ class AMLController extends Controller
 
     public function fetchEntity(Request $request)
     {
-        // TODO:: Logs needs to be updated
         $entity = Insured::where([
             'customer_type' => CustomerTypeEnum::Entity,
             'trade_license_no' => $request->trade_license,
@@ -685,7 +684,6 @@ class AMLController extends Controller
 
     public function linkEntityDetails(Request $request)
     {
-        // TODO:: Logs needs to be updated
         // Reminder:: This patch add because data should be updated in new structure
         $quoteType = QuoteType::where('id', $request->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $request->quote_request_id);
@@ -740,7 +738,6 @@ class AMLController extends Controller
 
     public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
     {
-        // TODO::Logs needs to be updated
         LoggerService::startQuoteLogging($request->code, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
             'customer_type' => $request->customer_type,
@@ -1080,8 +1077,6 @@ class AMLController extends Controller
 
     public function updateAddtionalVehicleDriverDetails(UpdateAdditionalVehicleDriverDetailsRequest $updateAdditionalVehicleDriverDetailsRequest)
     {
-        // AML Mapping Reminder:: Not Tested
-        // TODO:: Logs needs to be updated
         $quoteType = QuoteTypes::getName($updateAdditionalVehicleDriverDetailsRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $updateAdditionalVehicleDriverDetailsRequest->quote_uuid, 'uuid');
 

@@ -1725,7 +1725,6 @@ class AMLService
 
     private function createOrUpdateInsured($request, bool $isEntity): Insured
     {
-        // TODO:: Logs needs to be updated
         if ($isEntity) {
             LoggerService::info('Entity Details', extra: [
                 'trade_license_no' => $request->trade_license_no,
@@ -1745,7 +1744,7 @@ class AMLService
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
             ]);
         } else {
-            // TODO:: remove get insured details after id_number format is consistent
+            // Reminder:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', $request->screening_id_type)
                 ->when($request->screening_id_type == 'emiratesId', function ($query) use ($request) {
@@ -1800,8 +1799,6 @@ class AMLService
 
     public function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
     {
-        // AML Mapping Reminder:: Tested
-        // TODO:: Logs needs to be updated
         LoggerService::info('Updating Insured in Personal Quote', extra: [
             'insured_id' => $insured->id,
         ]);
@@ -1817,7 +1814,6 @@ class AMLService
 
     public function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
     {
-        // TODO:: Logs needs to be updated
         $isCustomerInsuredAssociationUpdated = false;
 
         // Check for orphaned record (without quote mapping) first
@@ -1906,7 +1902,6 @@ class AMLService
 
     private function shouldApplyScreening($insured, bool $isCustomerInsuredAssociationUpdated, $getLastScreening, bool $isEntity): bool
     {
-        // TODO:: Logs needs to be updated
         if ($insured->wasRecentlyCreated) {
             LoggerService::info('Insured '.($isEntity ? 'Entity' : 'Person').' profile created');
 
@@ -1930,10 +1925,9 @@ class AMLService
         return false;
     }
 
-    // TODO:: this function is added because universal search and customer members have dependency on customer and entity details.
+    // Reminder:: this function is added because universal search and customer members have dependency on customer and entity details.
     private function handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, bool $isEntity): ?int
     {
-        // TODO:: Logs needs to be updated
         if ($isEntity) {
             return $this->handleEntityData($request, $quoteTypeId, $quote);
         }

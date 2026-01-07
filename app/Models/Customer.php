@@ -141,7 +141,6 @@ class Customer extends Model implements AuditableContract
      *
      * @todo Review this relationship after customer insured process is updated
      */
-    // TODO:: Remove this relationship after customer insured process is updated
     public function customerInsured(): HasMany
     {
         return $this->hasMany(CustomerInsured::class, 'customer_id', 'id');

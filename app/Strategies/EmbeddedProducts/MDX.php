@@ -20,14 +20,6 @@ class MDX extends EmbeddedProduct
     public function getPDFData($quoteObject, $certificateNumber, $premium)
     {
         $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-
-        if ($quoteObject::class == PersonalQuote::class) {
-            $quoteTypeId = $quoteObject->quote_type_id;
-        } else {
-            $quoteType = quoteTypeCode::getName($quoteObject::class);
-            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        }
-
         $isPersonalQuote = $quoteObject::class == PersonalQuote::class;
         if ($isPersonalQuote) {
             $quoteObject->load(['latestInsured' => function ($query) use ($quoteObject) {

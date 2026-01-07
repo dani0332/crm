@@ -215,7 +215,6 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
-        // TODO:: Logs needs to be updated
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [
                 'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),

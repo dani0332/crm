@@ -786,7 +786,6 @@ class EmbeddedProductRepository extends BaseRepository
         $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
         $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
 
-        // TODO:: Need to test this code
         $isPersonalQuote = checkPersonalQuotes(ucwords($modelType));
         if ($isPersonalQuote && ! $quoteObject->relationLoaded('latestInsured')) {
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));

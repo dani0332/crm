@@ -86,7 +86,7 @@ class OCRDocumentValidator
             ->select('driver_gender')
             ->first();
 
-        // TODO:: Quote type id missing here - used forQuote
+        // Reminder:: Quote type id missing here - used forQuote
         $customerInsured = CustomerInsured::active()
             ->where('quote_request_id', $quoteId)
             ->first();
