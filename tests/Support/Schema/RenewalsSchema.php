@@ -14,24 +14,21 @@ class RenewalsSchema
     private function ensureTables(): void
     {
         SchemaUtils::ensureTables([
-            'quote_type' =>
-            function (Blueprint $table) {
+            'quote_type' => function (Blueprint $table) {
                 $table->id();
                 $table->string('short_code')->unique();
                 $table->string('code');
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
-            'car_make' =>
-            function (Blueprint $table) {
+            'car_make' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
                 $table->string('code')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             },
-            'car_model' =>
-            function (Blueprint $table) {
+            'car_model' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
                 $table->string('car_make_code')->nullable();
@@ -39,38 +36,33 @@ class RenewalsSchema
                 $table->timestamps();
                 $table->softDeletes();
             },
-            'nationality' =>
-            function (Blueprint $table) {
+            'nationality' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
                 $table->softDeletes();
             },
-            'emirates' =>
-            function (Blueprint $table) {
+            'emirates' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
                 $table->softDeletes();
             },
-            'claim_history' =>
-            function (Blueprint $table) {
+            'claim_history' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
                 $table->timestamps();
                 $table->softDeletes();
             },
-            'uae_license_held_for' =>
-            function (Blueprint $table) {
+            'uae_license_held_for' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
                 $table->timestamps();
                 $table->softDeletes();
             },
-            'car_quote_request' =>
-            function (Blueprint $table) {
+            'car_quote_request' => function (Blueprint $table) {
                 $table->id();
                 $table->string('uuid')->unique();
                 $table->string('code')->nullable();
@@ -96,8 +88,7 @@ class RenewalsSchema
                 $table->timestamps();
                 $table->softDeletes();
             },
-            'renewals_upload_leads'=>
-            function (Blueprint $table) {
+            'renewals_upload_leads' => function (Blueprint $table) {
                 $table->id();
                 $table->string('file_name');
                 $table->string('file_path');
@@ -107,8 +98,7 @@ class RenewalsSchema
                 $table->boolean('is_sic')->default(0);
                 $table->timestamps();
             },
-            'renewal_quote_processes' =>
-            function (Blueprint $table) {
+            'renewal_quote_processes' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('renewals_upload_lead_id');
                 $table->unsignedBigInteger('quote_id');

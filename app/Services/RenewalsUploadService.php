@@ -3450,8 +3450,8 @@ class RenewalsUploadService
     /**
      * This function is used to mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
      *
-     * @param PersonalQuote|CarQuote|TravelQuote|HomeQuote $quote
-     * @param RenewalQuoteProcess $renewalQuoteProcess
+     * @param  PersonalQuote|CarQuote|TravelQuote|HomeQuote  $quote
+     * @param  RenewalQuoteProcess  $renewalQuoteProcess
      * @return void
      */
     public function markOtherFetchPlansOutdated($quote, $renewalQuoteProcess)
@@ -3483,16 +3483,15 @@ class RenewalsUploadService
      * Note: When called within a transaction, deadlocks are not retried here to preserve
      * transaction atomicity. The deadlock exception will propagate for higher-level retry.
      *
-     * @param int $processId
-     * @param int $maxRetries
      * @return void
+     *
      * @throws \Illuminate\Database\QueryException
      * @throws FetchPlansUpdateException
      */
     public function updateProcessIdWithRetry(int $processId, int $maxRetries = 3)
     {
         $isInTransaction = DB::transactionLevel() > 0;
-        
+
         for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
             try {
                 // Update single record with explicit WHERE clause to ensure consistent lock ordering
@@ -3506,23 +3505,23 @@ class RenewalsUploadService
                 $isDeadlock = strpos($e->getMessage(), 'Deadlock found') !== false
                     || strpos($e->getMessage(), 'Lock wait timeout') !== false
                     || $e->getCode() === '40001'; // SQLSTATE 40001 is serialization failure
-                
-                if (!$isDeadlock) {
+
+                if (! $isDeadlock) {
                     // Non-deadlock exception - throw immediately
                     throw $e;
                 }
-                
+
                 // If we're in a transaction, don't retry - let the deadlock propagate
                 // so the entire transaction can be retried at a higher level
                 if ($isInTransaction) {
                     throw $e;
                 }
-                
+
                 // If this is the last attempt, throw custom exception
                 if ($attempt === $maxRetries - 1) {
                     throw new FetchPlansUpdateException([$processId], $maxRetries, 0, $e);
                 }
-                
+
                 usleep(200000); // wait 200ms before retry
             }
         }

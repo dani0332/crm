@@ -271,11 +271,10 @@ class TestSchemaCreator
         }
     }
 
-
     public static function createRenewalsSchema(): void
     {
         self::createMinimalSchema();
 
-        (new RenewalsSchema())->register();
+        (new RenewalsSchema)->register();
     }
 }
