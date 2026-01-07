@@ -542,7 +542,7 @@ class CustomerVerificationService
     private function updateCustomerVerificationStatus(Model $quote): void
     {
         $requestData = ['quoteUuid' => $quote->uuid,
-            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::from($this->getQuoteType($quote))),
+            'quoteTypeId' => $this->getQuoteTypeId($quote),
             'callSource' => LeadSourceEnum::IMCRM,
         ];
 
