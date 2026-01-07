@@ -22,6 +22,31 @@ beforeEach(
     }
 );
 
+afterEach(function () {
+    Mockery::close();
+});
+
+/**
+ * Create RenewalsUploadService instance using reflection to bypass constructor.
+ * This prevents CapiRequestService and other dependencies from being autoloaded.
+ * 
+ * Performance note: ReflectionClass has minimal overhead (~0.01-0.05ms per call).
+ * We cache the ReflectionClass instance to avoid recreating it for each test.
+ */
+function createRenewalsUploadServiceWithMocks(): RenewalsUploadService
+{
+    static $reflection = null;
+
+    // Cache ReflectionClass instance to avoid recreating it for each test call
+    if ($reflection === null) {
+        $reflection = new \ReflectionClass(RenewalsUploadService::class);
+    }
+
+    // Create instance without calling constructor (fast operation)
+    $service = $reflection->newInstanceWithoutConstructor();
+    return $service;
+}
+
 test('marks other pending fetch plans as outdated successfully', function () {
     // Arrange: Create a simple quote
     $quote = CarQuote::factory()->create([
@@ -64,7 +89,7 @@ test('marks other pending fetch plans as outdated successfully', function () {
     }
     
     // Act: Call markOtherFetchPlansOutdated directly
-    $service = app(RenewalsUploadService::class);
+    $service = createRenewalsUploadServiceWithMocks();
     $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: All other processes should be marked as outdated
@@ -127,7 +152,7 @@ test('does not mark processes with different status as outdated', function () {
     ]);
     
     // Act: Call markOtherFetchPlansOutdated directly
-    $service = app(RenewalsUploadService::class);
+    $service = createRenewalsUploadServiceWithMocks();
     $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: Processes with different statuses should not be changed
@@ -166,7 +191,7 @@ test('handles empty result set when no pending processes exist', function () {
     ]);
     
     // Act: Call markOtherFetchPlansOutdated (should not throw exception when no other processes exist)
-    $service = app(RenewalsUploadService::class);
+    $service = createRenewalsUploadServiceWithMocks();
     $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: Current process should remain unchanged
@@ -216,7 +241,7 @@ test('handles large batch of processes (more than 50 records)', function () {
     }
     
     // Act: Call markOtherFetchPlansOutdated directly
-    $service = app(RenewalsUploadService::class);
+    $service = createRenewalsUploadServiceWithMocks();
     $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: All processes should be marked as outdated
@@ -298,7 +323,7 @@ test('does not affect processes for different quotes', function () {
     }
     
     // Act: Call markOtherFetchPlansOutdated for quote1
-    $service = app(RenewalsUploadService::class);
+    $service = createRenewalsUploadServiceWithMocks();
     $service->markOtherFetchPlansOutdated($quote1, $currentProcess);
     
     // Assert: Quote1 processes should be marked as outdated
@@ -356,7 +381,7 @@ test('does not affect processes with different type', function () {
     }
     
     // Act: Call markOtherFetchPlansOutdated directly
-    $service = app(RenewalsUploadService::class);
+    $service = createRenewalsUploadServiceWithMocks();
     $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: CREATE_LEADS processes should remain pending
@@ -408,7 +433,7 @@ test('handles processing multiple records successfully', function () {
     }
     
     // Act: Call markOtherFetchPlansOutdated directly
-    $service = app(RenewalsUploadService::class);
+    $service = createRenewalsUploadServiceWithMocks();
     $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: All processes should be marked as outdated
@@ -464,7 +489,7 @@ test('completes successfully under normal database conditions', function () {
     }
     
     // Act: Call markOtherFetchPlansOutdated directly
-    $service = app(RenewalsUploadService::class);
+    $service = createRenewalsUploadServiceWithMocks();
     $service->markOtherFetchPlansOutdated($quote, $currentProcess);
     
     // Assert: Method completes without throwing and updates processes correctly
