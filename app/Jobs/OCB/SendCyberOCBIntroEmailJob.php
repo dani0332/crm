@@ -45,7 +45,6 @@ class SendCyberOCBIntroEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        // LoggerService::startQuoteLogging(QuoteTypes::getName($this->quoteType)->refId($this->quoteUuid));
         $lead = PersonalQuote::where('uuid', $this->quoteUuid)->first();
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_OCB_INTRO_EMAIL);
         if (! $lead) {
