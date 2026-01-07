@@ -30,7 +30,7 @@ class SendFailedIlaEmailsCommand extends Command
     public function handle()
     {
         LoggerService::info(self::class.' - sendFailedIlaEmails - Starting to send failed ILA emails to managers');
-      $allowedLobs =[QuoteTypes::CAR, QuoteTypes::BIKE, QuoteTypes::HEALTH, QuoteTypes::LIFE, QuoteTypes::TRAVEL, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::CYCLE, QuoteTypes::SAVINGS, QuoteTypes::GROUP_MEDICAL, QuoteTypes::CORPLINE];
+      $allowedLobs =[QuoteTypes::CAR, QuoteTypes::BIKE, QuoteTypes::HEALTH, QuoteTypes::LIFE, QuoteTypes::TRAVEL, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::CYCLE, QuoteTypes::SAVINGS, QuoteTypes::GROUP_MEDICAL, QuoteTypes::CORPLINE, QuoteTypes::YACHT, QuoteTypes::JETSKI];
 
       foreach ($allowedLobs as $quoteType) {
         switch ($quoteType) {
@@ -82,6 +82,14 @@ class SendFailedIlaEmailsCommand extends Command
           case QuoteTypes::BUSINESS :
             app(FailedILAEmailService::class)->sendFailedIlaEmails(QuoteTypes::BUSINESS);   
             LoggerService::info(self::class.' - sendFailedIlaEmails - Sent failed ILA emails to managers for quote type: '.QuoteTypes::BUSINESS->value);
+            break;
+          case QuoteTypes::YACHT:
+            app(FailedILAEmailService::class)->sendFailedIlaEmails(QuoteTypes::YACHT);
+            LoggerService::info(self::class.' - sendFailedIlaEmails - Sent failed ILA emails to managers for quote type: '.QuoteTypes::YACHT->value);
+            break;
+          case QuoteTypes::JETSKI:
+            app(FailedILAEmailService::class)->sendFailedIlaEmails(QuoteTypes::JETSKI);
+            LoggerService::info(self::class.' - sendFailedIlaEmails - Sent failed ILA emails to managers for quote type: '.QuoteTypes::JETSKI->value);
             break;
           default:
             LoggerService::warning(self::class.' - sendFailedIlaEmails - Invalid quote type: '.$quoteType->value);
