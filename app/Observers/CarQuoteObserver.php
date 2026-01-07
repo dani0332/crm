@@ -62,7 +62,7 @@ class CarQuoteObserver
      */
     public function updated(CarQuote $lead)
     {
-        $dirty = $lead->getDirty();
+        $dirty = $lead->getChanges();
         $changes = [];
 
         if (Route::currentRouteName() == 'car.update' && $this->checkIfAnythingDirty($dirty, ['first_name', 'last_name', 'email', 'mobile_no', 'updated_at', 'is_quote_locked', 'quote_updated_at', 'advisor_id'])) {
@@ -163,6 +163,7 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
+            QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
             LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
             ExtendCustomerSubscriptionViaSQS::dispatch(
@@ -184,19 +185,6 @@ class CarQuoteObserver
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
 
-        if (
-            isset($dirty['quote_status_id']) &&
-            $lead->quote_status_id === QuoteStatusEnum::PolicyBooked
-        ) {
-            try {
-                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
-            } catch (Exception $e) {
-                Log::error('CarQuoteObserver - dispatch QuotePolicyBooked event failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $lead->uuid,
-                ]);
-            }
-        }
         if (
             isset($dirty['quote_status_id']) &&
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued

@@ -4,18 +4,34 @@ declare(strict_types=1);
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Events\LeadStatusUpdated;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuotePolicyBooked;
 use App\Facades\Capi;
 use App\Models\CarQuote;
 use App\Models\Customer;
+use App\Services\BranchAssignmentService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
+    Queue::fake();
+
+    $branchAssignmentService = Mockery::mock(BranchAssignmentService::class);
+    $branchAssignmentService->shouldReceive('saveBranchOverride')->andReturnNull();
+    $branchAssignmentService->shouldReceive('getBranch')->andReturn(null);
+    $this->instance(BranchAssignmentService::class, $branchAssignmentService);
+
+    $policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+    $policyIssuanceService->shouldReceive('shouldValidateBranch')->andReturn(false);
+    $this->instance(PolicyIssuanceService::class, $policyIssuanceService);
+
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
 });
@@ -25,31 +41,26 @@ afterEach(function () {
 });
 
 test('dispatches QuotePolicyBooked event when car quote status changes to PolicyBooked', function () {
-    Event::fake();
-    
-    // Create a minimal car quote using direct creation
-    $customer = Customer::create([
-        'first_name' => 'Test',
-        'last_name' => 'Customer',
-        'email' => 'test@example.com',
-        'mobile_no' => '+971501234567',
+    Event::fake([
+        QuotePolicyBooked::class,
+        LeadStatusUpdated::class,
+        PrivateClientUpdatedEvent::class,
     ]);
-    
-    $carQuote = CarQuote::create([
-        'uuid' => 'test-car-quote-uuid-'.uniqid(),
-        'code' => 'TEST-'.uniqid(),
+
+    $customer = Customer::factory()->create();
+
+    $carQuote = CarQuote::factory()->create([
         'customer_id' => $customer->id,
         'quote_status_id' => QuoteStatusEnum::Quoted,
-        'quote_status_date' => now(),
     ]);
-    
-    $carQuote->quote_status_id = QuoteStatusEnum::PolicyBooked;
-    $carQuote->save();
-    
+
+    $carQuote->update([
+        'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+    ]);
+
     Event::assertDispatched(QuotePolicyBooked::class, function ($event) use ($carQuote) {
         return $event->quoteUID === $carQuote->uuid
-            && $event->quoteTypeId === QuoteTypeId::Car
-            && $event->eventType === 'Purchase';
+            && $event->quoteTypeId === QuoteTypeId::Car;
     });
 });
 

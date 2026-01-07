@@ -62,7 +62,7 @@ class ConversionApiService
         LoggerService::startFeatureLogging(LoggerFeatureEnum::CONVERSION_API);
         LoggerService::startQuoteLogging($quoteUID, LoggerFeatureEnum::CONVERSION_API);
 
-        LoggerService::info("ConversionApiService - Calling {$platform} conversion API", [
+        LoggerService::info("ConversionApiService - Calling {$platform} conversion API", [], [
             'uuid' => $quoteUID,
             'eventType' => $eventType,
             'platform' => $platform,
@@ -74,7 +74,7 @@ class ConversionApiService
         try {
             $response = Capi::request($endpoint, 'post', $payload);
 
-            LoggerService::info("ConversionApiService - {$platform} conversion API call successful", [
+            LoggerService::info("ConversionApiService - {$platform} conversion API call successful", [], [
                 'uuid' => $quoteUID,
                 'eventType' => $eventType,
                 'platform' => $platform,
@@ -85,14 +85,14 @@ class ConversionApiService
 
             return true;
         } catch (Exception $e) {
-            LoggerService::error("ConversionApiService - {$platform} conversion API call exception", [
+            LoggerService::error("ConversionApiService - {$platform} conversion API call exception", [], $e, [
                 'uuid' => $quoteUID,
                 'eventType' => $eventType,
                 'platform' => $platform,
                 'quoteTypeId' => $quoteTypeId,
                 'endpoint' => $endpoint,
                 'error' => $e->getMessage(),
-            ], exception: $e);
+            ]);
 
             return false;
         } finally {

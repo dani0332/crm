@@ -52,6 +52,8 @@ class TriggerConversionApisTest extends TestCase
             ->andReturn(true);
 
         $this->listener->handle($event);
+
+        $this->addToAssertionCount(2);
     }
 
     public function test_handle_logs_processing_start(): void
@@ -80,6 +82,8 @@ class TriggerConversionApisTest extends TestCase
                     && isset($context['eventType']) && $context['eventType'] === 'Purchase';
             }))
             ->once();
+
+        $this->addToAssertionCount(1);
     }
 
     public function test_handle_logs_processing_completion_with_success_status(): void
@@ -109,6 +113,8 @@ class TriggerConversionApisTest extends TestCase
                     && isset($context['googleSuccess']) && $context['googleSuccess'] === true;
             }))
             ->once();
+
+        $this->addToAssertionCount(1);
     }
 
     public function test_handle_logs_processing_completion_with_failure_status(): void
@@ -136,6 +142,8 @@ class TriggerConversionApisTest extends TestCase
                     && isset($context['googleSuccess']) && $context['googleSuccess'] === false;
             }))
             ->once();
+
+        $this->addToAssertionCount(1);
     }
 
     public function test_handle_handles_exceptions_gracefully(): void
@@ -151,18 +159,18 @@ class TriggerConversionApisTest extends TestCase
             ->shouldReceive('triggerFacebookConversion')
             ->andThrow(new \Exception('API Error'));
 
-        // Should not throw exception
-        $this->expectNotToPerformAssertions();
-        
-        try {
-            $this->listener->handle($event);
-        } catch (\Exception $e) {
-            $this->fail('Listener should handle exceptions gracefully');
-        }
+        $this->listener->handle($event);
 
         Log::shouldHaveReceived('error')
-            ->with(\Mockery::pattern('/TriggerConversionApis - Exception occurred while processing conversion APIs/'), \Mockery::type('array'), \Mockery::type(\Exception::class))
+            ->with(\Mockery::pattern('/TriggerConversionApis - Exception occurred while processing conversion APIs/'), \Mockery::on(function ($context) {
+                return isset($context['exception']) && is_array($context['exception'])
+                    && isset($context['exception']['message'])
+                    && isset($context['exception']['trace'])
+                    && isset($context['exception']['code']);
+            }))
             ->once();
+
+        $this->addToAssertionCount(1);
     }
 
     public function test_handle_works_with_custom_event_type(): void
@@ -186,6 +194,8 @@ class TriggerConversionApisTest extends TestCase
             ->andReturn(true);
 
         $this->listener->handle($event);
+
+        $this->addToAssertionCount(2);
     }
 
     public function test_handle_continues_even_if_one_api_fails(): void
@@ -197,19 +207,16 @@ class TriggerConversionApisTest extends TestCase
 
         $this->mockConversionApiService
             ->shouldReceive('triggerFacebookConversion')
+            ->once()
             ->andReturn(false);
 
         $this->mockConversionApiService
             ->shouldReceive('triggerGoogleConversion')
+            ->once()
             ->andReturn(true);
 
-        // Should not throw exception
-        $this->expectNotToPerformAssertions();
-        
-        try {
-            $this->listener->handle($event);
-        } catch (\Exception $e) {
-            $this->fail('Listener should continue even if one API fails');
-        }
+        $this->listener->handle($event);
+
+        $this->addToAssertionCount(1);
     }
 }

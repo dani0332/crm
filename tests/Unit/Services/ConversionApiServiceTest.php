@@ -112,7 +112,7 @@ class ConversionApiServiceTest extends TestCase
         $mockCapi->shouldReceive('request')
             ->andReturn((object) ['success' => true]);
         
-        $this->service->triggerFacebookConversion($quoteUID, $quoteTypeId);
+        $result = $this->service->triggerFacebookConversion($quoteUID, $quoteTypeId);
 
         Log::shouldHaveReceived('info')
             ->with(\Mockery::pattern('/ConversionApiService - Calling facebook conversion API/'), \Mockery::on(function ($context) use ($quoteUID, $quoteTypeId) {
@@ -122,6 +122,8 @@ class ConversionApiServiceTest extends TestCase
                     && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId;
             }))
             ->once();
+        
+        $this->assertTrue($result);
     }
 
     public function test_trigger_google_conversion_logs_request(): void
@@ -135,7 +137,7 @@ class ConversionApiServiceTest extends TestCase
         $mockCapi->shouldReceive('request')
             ->andReturn((object) ['success' => true]);
         
-        $this->service->triggerGoogleConversion($quoteUID, $quoteTypeId);
+        $result = $this->service->triggerGoogleConversion($quoteUID, $quoteTypeId);
 
         Log::shouldHaveReceived('info')
             ->with(\Mockery::pattern('/ConversionApiService - Calling google conversion API/'), \Mockery::on(function ($context) use ($quoteUID, $quoteTypeId) {
@@ -145,6 +147,8 @@ class ConversionApiServiceTest extends TestCase
                     && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId;
             }))
             ->once();
+        
+        $this->assertTrue($result);
     }
 
     public function test_trigger_facebook_conversion_logs_success(): void
@@ -155,11 +159,13 @@ class ConversionApiServiceTest extends TestCase
         $mockCapi->shouldReceive('request')
             ->andReturn((object) ['success' => true]);
 
-        $this->service->triggerFacebookConversion('test-uuid-success', QuoteTypeId::Car);
+        $result = $this->service->triggerFacebookConversion('test-uuid-success', QuoteTypeId::Car);
 
         Log::shouldHaveReceived('info')
             ->with(\Mockery::pattern('/ConversionApiService - facebook conversion API call successful/'), \Mockery::type('array'))
             ->once();
+        
+        $this->assertTrue($result);
     }
 
     public function test_trigger_facebook_conversion_logs_error_on_failure(): void
@@ -170,11 +176,18 @@ class ConversionApiServiceTest extends TestCase
         $mockCapi->shouldReceive('request')
             ->andThrow(new \Exception('API Error'));
 
-        $this->service->triggerFacebookConversion('test-uuid-error', QuoteTypeId::Car);
+        $result = $this->service->triggerFacebookConversion('test-uuid-error', QuoteTypeId::Car);
 
         Log::shouldHaveReceived('error')
-            ->with(\Mockery::pattern('/ConversionApiService - facebook conversion API call exception/'), \Mockery::type('array'), \Mockery::type(\Exception::class))
+            ->with(\Mockery::pattern('/ConversionApiService - facebook conversion API call exception/'), \Mockery::on(function ($context) {
+                return isset($context['exception']) && is_array($context['exception'])
+                    && isset($context['exception']['message'])
+                    && isset($context['exception']['trace'])
+                    && isset($context['exception']['code']);
+            }))
             ->once();
+        
+        $this->assertFalse($result);
     }
 
     public function test_works_with_different_quote_type_ids(): void

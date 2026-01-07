@@ -24,7 +24,7 @@ class TriggerConversionApis
     public function handle(QuotePolicyBooked $event): void
     {
         try {
-            LoggerService::info('TriggerConversionApis - Processing conversion APIs for PolicyBooked quote', [
+            LoggerService::info('TriggerConversionApis - Processing conversion APIs for PolicyBooked quote', [], [
                 'quoteUID' => $event->quoteUID,
                 'quoteTypeId' => $event->quoteTypeId,
                 'eventType' => $event->eventType,
@@ -44,7 +44,7 @@ class TriggerConversionApis
                 $event->eventType
             );
 
-            LoggerService::info('TriggerConversionApis - Conversion APIs processing completed', [
+            LoggerService::info('TriggerConversionApis - Conversion APIs processing completed', [], [
                 'quoteUID' => $event->quoteUID,
                 'quoteTypeId' => $event->quoteTypeId,
                 'eventType' => $event->eventType,
@@ -52,12 +52,12 @@ class TriggerConversionApis
                 'googleSuccess' => $googleSuccess,
             ]);
         } catch (Exception $e) {
-            LoggerService::error('TriggerConversionApis - Exception occurred while processing conversion APIs', [
+            LoggerService::error('TriggerConversionApis - Exception occurred while processing conversion APIs', [], $e, [
                 'quoteUID' => $event->quoteUID,
                 'quoteTypeId' => $event->quoteTypeId,
                 'eventType' => $event->eventType,
                 'error' => $e->getMessage(),
-            ], exception: $e);
+            ]);
         }
     }
 }

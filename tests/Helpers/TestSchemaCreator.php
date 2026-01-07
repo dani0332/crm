@@ -268,5 +268,73 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        // Create customer table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('customer')) {
+            Schema::connection('sqlite')->create('customer', function ($table) {
+                $table->id();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create quote_status table if it doesn't exist (needed for car_quote_request)
+        if (! Schema::connection('sqlite')->hasTable('quote_status')) {
+            Schema::connection('sqlite')->create('quote_status', function ($table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->string('code')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        // Create car_quote_request table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('car_quote_request')) {
+            Schema::connection('sqlite')->create('car_quote_request', function ($table) {
+                $table->id();
+                $table->string('uuid')->nullable();
+                $table->string('code')->nullable();
+                $table->boolean('is_ecommerce')->default(false);
+                $table->decimal('car_value', 15, 2)->nullable();
+                $table->unsignedBigInteger('car_make_id')->nullable();
+                $table->unsignedBigInteger('car_model_id')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->timestamp('quote_status_date')->nullable();
+                $table->string('registration_type')->nullable();
+                $table->string('source')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->unsignedBigInteger('tier_id')->nullable();
+                $table->unsignedBigInteger('quote_batch_id')->nullable();
+                $table->unsignedBigInteger('branch_id')->nullable();
+                $table->unsignedBigInteger('created_by')->nullable();
+                $table->dateTime('policy_expiry_date')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
+        // Create quote_sync table if it doesn't exist (needed for syncQuote)
+        if (! Schema::connection('sqlite')->hasTable('quote_sync')) {
+            Schema::connection('sqlite')->create('quote_sync', function ($table) {
+                $table->id();
+                $table->string('quote_uuid')->nullable();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->text('updated_fields')->nullable();
+                $table->boolean('is_synced')->default(false);
+                $table->string('status')->nullable();
+                $table->text('error')->nullable();
+                $table->timestamp('synced_at')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 }
