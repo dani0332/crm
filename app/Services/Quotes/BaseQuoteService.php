@@ -83,7 +83,7 @@ abstract class BaseQuoteService extends BaseService
 
     public function getQuoteStatuses($ignoreList = [])
     {
-        $cacheKey = "quote_statuses_{$this->quoteType->value}_".md5(json_encode($ignoreList));
+        $cacheKey = $this->getQuoteStatusesCacheKey($ignoreList);
         
         return Cache::remember($cacheKey, now()->addHours(6), function () use ($ignoreList) {
             $quoteStatuses = QuoteStatusRepository::byQuoteTypeId($this->quoteType->id())->get();
@@ -249,6 +249,18 @@ abstract class BaseQuoteService extends BaseService
                 ->orderBy('text')
                 ->get(['id', 'text']);
         });
+    }
+
+    private function getQuoteStatusesCacheKey(array $ignoreList): string
+    {
+        $sortedIgnoreList = $ignoreList;
+        sort($sortedIgnoreList);
+        
+        $ignoreListKey = empty($sortedIgnoreList) 
+            ? 'none' 
+            : implode('_', array_map('strval', $sortedIgnoreList));
+        
+        return "quote_statuses_{$this->quoteType->value}_{$ignoreListKey}";
     }
 
 }
