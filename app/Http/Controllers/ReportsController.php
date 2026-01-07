@@ -615,7 +615,7 @@ class ReportsController extends Controller
         $productNames = $products->pluck('name')->toArray();
         $mappedProducts = array_map(function ($name) {
             if ($name === TeamNameEnum::CYBER) {
-                return 'Cyber';
+                return QuoteTypes::CYBER->value;
             }
 
             return $name;
