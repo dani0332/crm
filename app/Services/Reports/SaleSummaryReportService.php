@@ -471,7 +471,7 @@ class SaleSummaryReportService extends ManagementReport
             'support_user' => ['support_user.name', 'branch_name'],
             'line_of_business' => ['quote_type.code', 'branch_name'],
             'department' => ['u.department_id', 'branch_name'],
-            'branch' => ['branch_name'],
+            'branch_name' => ['branch_name'],
         ];
 
         if ($isEndorsementQuery) {

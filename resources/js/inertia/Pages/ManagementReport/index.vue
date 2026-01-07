@@ -239,7 +239,7 @@ const groupBy = reactive([
   { label: 'Insurer', value: 'insurer' },
   { label: 'Line of Business', value: 'line_of_business' },
   { label: 'Department', value: 'department' },
-  { label: 'Branch', value: 'branch' },
+  { label: 'Branch', value: 'branch_name' },
 ]);
 
 const umtGroup = reactive([

@@ -143,7 +143,7 @@ watchEffect(() => {
     insurer: ['insurer'],
     line_of_business: ['line_of_business'],
     department: ['department'],
-    branch: ['branch_name']
+    branch_name: ['branch_name']
   };
 
   // Remove all columns in tableHeader that match any key in the columns object
@@ -163,7 +163,7 @@ watchEffect(() => {
   }
   tableHeader.unshift(...columnsToAdd);
 
-  if (props.groupBy != 'branch') { 
+  if (props.groupBy != 'branch_name') { 
     tableHeader.push(columns['branch_name']);
   }
 });
