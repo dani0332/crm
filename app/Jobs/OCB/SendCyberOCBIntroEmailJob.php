@@ -3,7 +3,6 @@
 namespace App\Jobs\OCB;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\CyberEmailService;
 use App\Services\Logger\LoggerService;
