@@ -13,6 +13,7 @@ use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\CourtesyEmailJob;
@@ -181,6 +182,20 @@ class CarQuoteObserver
                 }
             }
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $lead->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
+            } catch (Exception $e) {
+                Log::error('CarQuoteObserver - dispatch QuotePolicyBooked event failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $lead->uuid,
+                ]);
+            }
         }
         if (
             isset($dirty['quote_status_id']) &&

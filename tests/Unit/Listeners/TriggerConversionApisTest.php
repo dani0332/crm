@@ -1,0 +1,215 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Listeners;
+
+use App\Enums\QuoteTypeId;
+use App\Events\QuotePolicyBooked;
+use App\Listeners\TriggerConversionApis;
+use App\Services\ConversionApiService;
+use Illuminate\Support\Facades\Log;
+use Mockery;
+use Tests\TestCase;
+
+class TriggerConversionApisTest extends TestCase
+{
+    private ConversionApiService $mockConversionApiService;
+    private TriggerConversionApis $listener;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        $this->mockConversionApiService = Mockery::mock(ConversionApiService::class);
+        $this->listener = new TriggerConversionApis($this->mockConversionApiService);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+
+    public function test_handle_calls_both_facebook_and_google_conversion_apis(): void
+    {
+        $quoteUID = 'test-quote-uuid-123';
+        $quoteTypeId = QuoteTypeId::Car;
+        $eventType = 'Purchase';
+        
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId, $eventType);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->once()
+            ->with($quoteUID, $quoteTypeId, $eventType)
+            ->andReturn(true);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerGoogleConversion')
+            ->once()
+            ->with($quoteUID, $quoteTypeId, $eventType)
+            ->andReturn(true);
+
+        $this->listener->handle($event);
+    }
+
+    public function test_handle_logs_processing_start(): void
+    {
+        Log::spy();
+        
+        $quoteUID = 'test-quote-uuid-456';
+        $quoteTypeId = QuoteTypeId::Travel;
+        
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->andReturn(true);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerGoogleConversion')
+            ->andReturn(true);
+
+        $this->listener->handle($event);
+
+        Log::shouldHaveReceived('info')
+            ->with(\Mockery::pattern('/TriggerConversionApis - Processing conversion APIs for PolicyBooked quote/'), \Mockery::on(function ($context) use ($quoteUID, $quoteTypeId) {
+                return isset($context['quoteUID']) && $context['quoteUID'] === $quoteUID
+                    && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId
+                    && isset($context['eventType']) && $context['eventType'] === 'Purchase';
+            }))
+            ->once();
+    }
+
+    public function test_handle_logs_processing_completion_with_success_status(): void
+    {
+        Log::spy();
+        
+        $quoteUID = 'test-quote-uuid-789';
+        $quoteTypeId = QuoteTypeId::Health;
+        
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->andReturn(true);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerGoogleConversion')
+            ->andReturn(true);
+
+        $this->listener->handle($event);
+
+        Log::shouldHaveReceived('info')
+            ->with(\Mockery::pattern('/TriggerConversionApis - Conversion APIs processing completed/'), \Mockery::on(function ($context) use ($quoteUID, $quoteTypeId) {
+                return isset($context['quoteUID']) && $context['quoteUID'] === $quoteUID
+                    && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId
+                    && isset($context['facebookSuccess']) && $context['facebookSuccess'] === true
+                    && isset($context['googleSuccess']) && $context['googleSuccess'] === true;
+            }))
+            ->once();
+    }
+
+    public function test_handle_logs_processing_completion_with_failure_status(): void
+    {
+        Log::spy();
+        
+        $quoteUID = 'test-quote-uuid-fail';
+        $quoteTypeId = QuoteTypeId::Car;
+        
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->andReturn(false);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerGoogleConversion')
+            ->andReturn(false);
+
+        $this->listener->handle($event);
+
+        Log::shouldHaveReceived('info')
+            ->with(\Mockery::pattern('/TriggerConversionApis - Conversion APIs processing completed/'), \Mockery::on(function ($context) {
+                return isset($context['facebookSuccess']) && $context['facebookSuccess'] === false
+                    && isset($context['googleSuccess']) && $context['googleSuccess'] === false;
+            }))
+            ->once();
+    }
+
+    public function test_handle_handles_exceptions_gracefully(): void
+    {
+        Log::spy();
+        
+        $quoteUID = 'test-quote-uuid-exception';
+        $quoteTypeId = QuoteTypeId::Travel;
+        
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->andThrow(new \Exception('API Error'));
+
+        // Should not throw exception
+        $this->expectNotToPerformAssertions();
+        
+        try {
+            $this->listener->handle($event);
+        } catch (\Exception $e) {
+            $this->fail('Listener should handle exceptions gracefully');
+        }
+
+        Log::shouldHaveReceived('error')
+            ->with(\Mockery::pattern('/TriggerConversionApis - Exception occurred while processing conversion APIs/'), \Mockery::type('array'), \Mockery::type(\Exception::class))
+            ->once();
+    }
+
+    public function test_handle_works_with_custom_event_type(): void
+    {
+        $quoteUID = 'test-quote-uuid-custom';
+        $quoteTypeId = QuoteTypeId::Business;
+        $eventType = 'CustomEvent';
+        
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId, $eventType);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->once()
+            ->with($quoteUID, $quoteTypeId, $eventType)
+            ->andReturn(true);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerGoogleConversion')
+            ->once()
+            ->with($quoteUID, $quoteTypeId, $eventType)
+            ->andReturn(true);
+
+        $this->listener->handle($event);
+    }
+
+    public function test_handle_continues_even_if_one_api_fails(): void
+    {
+        $quoteUID = 'test-quote-uuid-partial';
+        $quoteTypeId = QuoteTypeId::Car;
+        
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->andReturn(false);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerGoogleConversion')
+            ->andReturn(true);
+
+        // Should not throw exception
+        $this->expectNotToPerformAssertions();
+        
+        try {
+            $this->listener->handle($event);
+        } catch (\Exception $e) {
+            $this->fail('Listener should continue even if one API fails');
+        }
+    }
+}

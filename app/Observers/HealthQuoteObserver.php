@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
@@ -152,6 +153,17 @@ class HealthQuoteObserver
                 'lead-status-update-myalfred-we'
             );
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($healthQuote->uuid, QuoteTypeId::Health);
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $healthQuote->uuid]);
+            }
         }
 
         if (
