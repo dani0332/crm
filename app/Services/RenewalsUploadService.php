@@ -1226,6 +1226,9 @@ class RenewalsUploadService
                 unset($quoteData['additional_notes']);
             }
 
+            // update advisor assigned datetime before update the quote
+            $this->updateAdvisorAssignmentOrMarkedAsSIC($quote, $advisorId, $renewalUploadLead, $quoteType, $previousAdvisor, $logPrefix);
+
             $quote->update($quoteData);
 
             if (! $isPersonalQuote) {
@@ -1235,27 +1238,6 @@ class RenewalsUploadService
                 $this->getCustomerEntity($quote, $data);
             }
             LoggerService::info($logPrefix.' quote updated UUID: '.$quote->uuid);
-
-            if (! empty($advisorId) && $quote->advisor_id != $advisorId) {
-                $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
-                LoggerService::info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
-            } else {
-                if ($renewalUploadLead->is_sic == 1) {
-                    // add entry to quote tag as SIC
-                    $quoteTagPayload = [
-                        'name' => QuoteSegmentEnum::SIC->tag(),
-                        'quote_type_id' => QuoteTypeId::Car,
-                        'value' => 1,
-                        'quote_uuid' => $quote->uuid,
-                    ];
-
-                    $checkExisted = QuoteTag::where('quote_uuid', $quote->uuid)->where('name', QuoteSegmentEnum::SIC->tag())->first();
-                    ! $checkExisted && QuoteTag::create($quoteTagPayload);
-                    // processing the SIC workflow trigger only and don't send OCB email
-                    SendCarOCBIntroEmailJob::dispatch($quote->uuid, $previousAdvisor, true, true);
-                    LoggerService::info($logPrefix.' Quote Tag created. : '.QuoteSegmentEnum::SIC->tag().' for UUID: '.$quote->uuid);
-                }
-            }
 
             // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
             RenewalQuoteProcess::where([
@@ -3443,6 +3425,30 @@ class RenewalsUploadService
         RenewalQuoteProcess::where('id', $renewalQuoteProcessId)->update(['email_sent' => 1]);
 
         return true;
+    }
+
+    private function updateAdvisorAssignmentOrMarkedAsSIC($quote, $advisorId, $renewalUploadLead, $quoteType, $previousAdvisor, $logPrefix)
+    {
+        if (! empty($advisorId) && $quote->advisor_id != $advisorId) {
+            $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
+            LoggerService::info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
+        } else {
+            if ($renewalUploadLead->is_sic == 1) {
+                // add entry to quote tag as SIC
+                $quoteTagPayload = [
+                    'name' => QuoteSegmentEnum::SIC->tag(),
+                    'quote_type_id' => QuoteTypeId::Car,
+                    'value' => 1,
+                    'quote_uuid' => $quote->uuid,
+                ];
+
+                $checkExisted = QuoteTag::where('quote_uuid', $quote->uuid)->where('name', QuoteSegmentEnum::SIC->tag())->first();
+                ! $checkExisted && QuoteTag::create($quoteTagPayload);
+                // processing the SIC workflow trigger only and don't send OCB email
+                SendCarOCBIntroEmailJob::dispatch($quote->uuid, $previousAdvisor, true, true);
+                LoggerService::info($logPrefix.' Quote Tag created. : '.QuoteSegmentEnum::SIC->tag().' for UUID: '.$quote->uuid);
+            }
+        }
     }
 
 }

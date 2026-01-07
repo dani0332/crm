@@ -83,7 +83,7 @@ class ResetLeadAllocationCounts extends Command
     private function resetNormalLeadAllocationCapacity()
     {
         LeadAllocation::query()->where('reset_cap', 1)->update([
-            'max_capacity' => 20,
+            'max_capacity' => DB::raw('CASE WHEN quote_type_id IN (1, 3) THEN 40 ELSE 20 END'),
         ]);
     }
 
