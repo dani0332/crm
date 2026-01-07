@@ -1692,7 +1692,7 @@ class SendUpdateLogService
 
             if (in_array($exception->getCode(), $dbErrorCodes)) {
                 if ($attempts < $maxAttempts) {
-                    $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProviderId);
+                    return $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProviderId);
                 } else {
                     info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Generation Failed - Max Attempts Reached - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
@@ -1704,6 +1704,8 @@ class SendUpdateLogService
                 return ['status' => false, 'message' => $reversalLog.'Broker Invoice Number Generation Failed'];
             }
         }
+
+        return $response;
     }
 
     public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
@@ -1725,11 +1727,11 @@ class SendUpdateLogService
             if ($payment) {
                 $payment->load($planRelationName);
             }
-            $insuranceProvider = $payment->{$planRelationName}?->insuranceProvider;
-            $insuranceProviderId = $insuranceProvider->id ?? null;
-            $plan_id = $quoteModel->plan?->id ?? null;
+            $insuranceProvider = $payment?->{$planRelationName}?->insuranceProvider;
+            $insuranceProviderId = $insuranceProvider?->id ?? null;
+            $plan_id = $quoteModel?->plan?->id ?? null;
         } else {
-            $insuranceProviderId = $quote->insurance_provider_id ?? null;
+            $insuranceProviderId = $quote?->insurance_provider_id ?? null;
         }
         info('fn: getProviderDetails end for Send Update - code: '.$quote->code);
 

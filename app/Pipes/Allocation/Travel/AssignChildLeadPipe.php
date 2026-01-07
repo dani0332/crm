@@ -68,11 +68,7 @@ class AssignChildLeadPipe extends BaseAllocationPipe
 
     private function findtAdvisorByStatus($onlineStatus, $teamId, $lead)
     {
-        return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])
-            ->when($lead->isSIC($this->allocationRequest->getQuoteType()), function ($q) {
-                $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
-            })
-            ->first();
+        return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])->first();
     }
 
     private function assignLead($lead, $advisor, $assignmentType)

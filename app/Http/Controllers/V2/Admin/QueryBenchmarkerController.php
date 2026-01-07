@@ -25,7 +25,7 @@ class QueryBenchmarkerController extends Controller
     public function show()
     {
         // CRITICAL SECURITY: Restrict access to only authorized email
-        $authorizedEmail = 'ahsan.ashfaq@myalfred.ae';
+        $authorizedEmail = 'ahsan.ashfaq@myalfred.com';
         if (! Auth::check() || Auth::user()->email !== $authorizedEmail) {
             abort(403, 'Access denied. This feature is restricted to authorized personnel only.');
         }
@@ -36,7 +36,7 @@ class QueryBenchmarkerController extends Controller
     public function process(QueryBenchmarkRequest $request): JsonResponse
     {
         // CRITICAL SECURITY: Restrict access to only authorized email
-        $authorizedEmail = 'ahsan.ashfaq@myalfred.ae';
+        $authorizedEmail = 'ahsan.ashfaq@myalfred.com';
         if (! Auth::check() || Auth::user()->email !== $authorizedEmail) {
             return response()->json([
                 'error' => true,
