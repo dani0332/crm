@@ -111,7 +111,7 @@ class FailedILAEmailService
                 $leads = $this->getCarFailedILALeads();
                 break;
             case QuoteTypes::BIKE->value:
-                $leads = $this->getBikeFailedILALeads($quoteType);
+                $leads = $this->getBikeFailedILALeads();
                 break;
             case QuoteTypes::HEALTH->value:
                 $leads = $this->getHealthFailedILALeads();
