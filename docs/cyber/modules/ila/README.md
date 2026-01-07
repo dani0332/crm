@@ -11,7 +11,7 @@ The ILA system for Cyber handles:
 - **Automatic Advisor Assignment**: Assigns leads to advisors without manual intervention
 - **Leave Management**: Automatically routes leads to backup advisors when primary advisor is on leave
 - **Test Mode Support**: Allows testing with specific advisors before production deployment
-- **Paid Lead Handling**: Routes paid leads to Happiness Support team
+- **CHS Advisor Assignment**: Routes automation-completed/failed leads to CHS advisors
 - **SIC Lead Handling**: Routes SIC (Self-Initiated Customer) leads to appropriate advisors
 
 ## Key Features
@@ -19,7 +19,7 @@ The ILA system for Cyber handles:
 - **Primary/Backup Advisor Logic**: Primary advisor (Smitha) gets all leads unless on leave
 - **Leave Status Detection**: Automatically detects SICK (4) or LEAVE (5) status
 - **Daily Capacity Cap**: 200 leads per day per advisor (manually updateable by admin)
-- **Payment-Based Assignment**: Paid leads always assigned to HAPEX team
+- **CHS Advisor Assignment**: Automation-completed/failed leads assigned to CHS advisors
 - **SIC Lead Handling**: All leads are SIC; allocation triggered when advisor requested
 - **Test Mode**: Separate advisor list for testing purposes
 - **Production Mode**: Smart routing with leave checking

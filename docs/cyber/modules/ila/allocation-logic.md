@@ -10,7 +10,7 @@ This document explains the detailed logic behind how Cyber Insurance leads are a
 - **Primary Advisor**: Smitha Chandran (`smitha.chandran@insurancemarket.ae`) gets all leads
 - **Backup Advisor**: Neil Rama (`neil.rama@insurancemarket.ae`) when primary is on leave
 - **Daily Capacity**: 200 leads per day per advisor
-- **Payment Handling**: Paid leads always go to HAPEX team which is the HAPPINESS_SUPPORT_USER_EMAIL
+- **CHS Advisor Assignment**: Automation-completed/failed leads assigned to CHS advisors
 - **No Auto-Reassignment**: Manual reassignment only
 
 ## Allocation Decision Tree
@@ -18,15 +18,23 @@ This document explains the detailed logic behind how Cyber Insurance leads are a
 ```
 Lead Created/Updated
     ↓
-Is lead paid? (Payment Authorized/Declined)
-    ↓ YES → Assign to Happiness Support User
-    ↓ NO
+VerifyLeadPreChecksPipe: Check AWNI Automation
+    ↓
+    ├─ Automation completed/failed → Set isCHSAdvisor flag
+    │                                  ↓
+    │                                  Proceed to advisor allocation
+    │
+    └─ No automation → Continue
     ↓
 Is SIC advisor requested OR has retry flag?
     ↓ YES → Proceed with advisor allocation
     ↓ NO → Stop allocation (lead not eligible)
     ↓
-Check Test Mode Flag
+FetchAvailableAdvisorPipe: Check allocation type
+    ↓
+    ├─ isCHSAdvisor flag set → Assign CHS Advisor
+    │
+    └─ Normal allocation → Check Test Mode Flag
     ↓
     ├─ Test Mode (1) → Use CYBER_ADVISORS_TEST
     │                    ↓
@@ -60,46 +68,71 @@ Check Test Mode Flag
 
 ## Detailed Logic
 
-### 1. Paid Lead Detection
+### 1. Automation Pre-Checks (CHS Advisor Assignment)
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:22`
+**Location**: `app/Pipes/Allocation/Cyber/VerifyLeadPreChecksPipe.php:68-107`
 
-**Condition**: `$this->allocationRequest->shouldAssignToHappinessUser()`
+**Condition**: AWNI Cyber Policy Issuance Automation enabled and lead is paid
 
 **Logic**:
 
-- Checks if lead payment is authorized or declined
-- If true, assigns to Happiness Support User
-- Email: `happiness@support.insurancemarket.ae`
+- Checks if AWNI Cyber automation is enabled
+- Verifies if lead is paid and insurer is AWNI
+- If automation completed or failed → Sets `isCHSAdvisor` flag
+- If policy issuance failed → Proceeds with allocation
+- Otherwise → Skips allocation (automation in progress)
 
 **Code Reference**:
 
 ```php
-if ($this->allocationRequest->shouldAssignToHappinessUser()) {
-    $advisor = $this->getHappinessUser();
+if ($isAWNI && $isAutomationEnabled && $lead->isPaid()) {
+    if ($lead->isAutomationCompleted() || $lead->isBookingFailed()) {
+        $this->allocationRequest->set('isCHSAdvisor', true);
+        // Proceed with CHS advisor allocation
+    } else if ($lead->isPolicyIssuanceFailed()) {
+        return true; // Proceed with allocation
+    } else {
+        return false; // Skip allocation (automation in progress)
+    }
+}
+```
+
+### 2. CHS Advisor Assignment
+
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:25-45`
+
+**Condition**: `$this->allocationRequest->get('isCHSAdvisor') === true`
+
+**Logic**:
+
+- If `isCHSAdvisor` flag is set, assigns CHS advisor
+- Queries all CHS advisors
+- Assigns first available CHS advisor
+- Used for automation-completed or failed leads
+
+**Code Reference**:
+
+```php
+if ($this->allocationRequest->get('isCHSAdvisor')) {
+    $advisor = $this->findAvailableAdvisor(teamId: null);
+    // findAvailableAdvisor calls getAdvisorByStatus which returns CHS advisors
     $this->allocationRequest->setAdvisor($advisor);
     return $next($request);
 }
 ```
 
-### 2. Team Evaluation
+### 3. Team Evaluation
 
 **Location**: `app/Pipes/Allocation/Cyber/EvaluateTeamPipe.php`
 
 **Conditions Checked**:
 
-1. **Payment Status**: Is payment authorized or declined?
-2. **SIC Advisor Requested**: Does `cyber_quote.sic_advisor_requested` = true?
-3. **Retry Flag**: Does lead have `lead_allocation_failed_at` set?
+1. **SIC Advisor Requested**: Does `cyber_quote.sic_advisor_requested` = true?
+2. **Retry Flag**: Does lead have `lead_allocation_failed_at` set?
 
 **Decision Logic**:
 
 ```php
-// Paid lead → Happiness User
-if ($isPaymentAuthorizedOrDeclined) {
-    return false; // No team, assign to happiness user
-}
-
 // SIC requested OR retry flag → Hardcoded advisors
 if ($sicAdvisorRequested || $hasRetryFlag) {
     return false; // No team, use hardcoded advisors
@@ -109,11 +142,13 @@ if ($sicAdvisorRequested || $hasRetryFlag) {
 $this->stop('sic advisor requested is false for cyber lead');
 ```
 
-**Code Reference**: `app/Pipes/Allocation/Cyber/EvaluateTeamPipe.php:34-89`
+**Note**: Payment status is logged for debugging but no longer affects allocation logic. Paid leads are handled through automation flow (CHS advisor assignment) or normal SIC allocation.
 
-### 3. Test Mode vs Production Mode
+**Code Reference**: `app/Pipes/Allocation/Cyber/EvaluateTeamPipe.php:33-76`
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:107-116`
+### 4. Test Mode vs Production Mode
+
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:144-151`
 
 **Test Mode Check**:
 
@@ -129,7 +164,7 @@ return $this->getProductionModeAdvisorEmails();
 
 #### Test Mode Flow
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:118-139`
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:153-166`
 
 **Process**:
 
@@ -145,7 +180,7 @@ return $this->getProductionModeAdvisorEmails();
 
 #### Production Mode Flow
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:141-182`
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:168-201`
 
 **Process**:
 
@@ -162,9 +197,9 @@ return $this->getProductionModeAdvisorEmails();
 - Primary: `smitha.chandran@insurancemarket.ae`
 - Backups: `['neil.rama@insurancemarket.ae']`
 
-### 4. Leave Status Checking
+### 5. Leave Status Checking
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:165`
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:184`
 
 **Method**: `$this->isUserOnLeave($primaryEmail, addUnavailable: true)`
 
@@ -205,9 +240,9 @@ public function isUserOnLeave(string $email, bool $addUnavailable = false): bool
 
 **Code Reference**: `app/Services/AllocationService.php:440-458`
 
-### 5. Advisor Query Execution
+### 6. Advisor Query Execution
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:72-105`
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:102-135`
 
 **Query Logic**:
 
@@ -249,7 +284,7 @@ $advisorRecord = $this->getAdvisorBaseQuery(
 
 **Code Reference**: `app/Pipes/Allocation/Common/BaseAllocationPipe.php:149-191`
 
-### 6. Lead Assignment
+### 7. Lead Assignment
 
 **Location**: `app/Pipes/Allocation/Cyber/AssignLeadPipe.php`
 
@@ -265,16 +300,16 @@ $advisorRecord = $this->getAdvisorBaseQuery(
 
 ## Scenarios
 
-### Scenario 1: Paid Lead
+### Scenario 1: Automation-Completed Lead (CHS Advisor)
 
 ```
-Lead Payment Status: Authorized
+AWNI Cyber Automation Enabled
     ↓
-EvaluateTeamPipe detects paid status
+Lead is paid and automation completed/failed
     ↓
-Sets assignToHappinessUser = true
+VerifyLeadPreChecksPipe sets isCHSAdvisor = true
     ↓
-FetchAvailableAdvisorPipe assigns to Happiness User
+FetchAvailableAdvisorPipe assigns CHS advisor
     ↓
 Assignment Complete
 ```
@@ -291,7 +326,19 @@ Query advisors with test emails
 Assign first available advisor
 ```
 
-### Scenario 3: Production - Primary Available
+### Scenario 3: Normal SIC Lead Allocation
+
+```
+SIC advisor requested = true
+    ↓
+EvaluateTeamPipe allows allocation
+    ↓
+FetchAvailableAdvisorPipe finds advisor
+    ↓
+Assignment Complete
+```
+
+### Scenario 4: Production - Primary Available
 
 ```
 CYBER_ALLOCATION_TEST_MODE = 0
@@ -309,7 +356,7 @@ Query advisor with smitha email
 Assign to Smitha
 ```
 
-### Scenario 4: Production - Primary on Leave
+### Scenario 5: Production - Primary on Leave
 
 ```
 CYBER_ALLOCATION_TEST_MODE = 0
@@ -327,7 +374,7 @@ Query advisors with neil email
 Assign to Neil
 ```
 
-### Scenario 5: Multiple Backups
+### Scenario 6: Multiple Backups
 
 ```
 Production emails: [smitha, neil, alex, tina]
