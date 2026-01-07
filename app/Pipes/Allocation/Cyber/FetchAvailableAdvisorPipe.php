@@ -156,7 +156,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     private function isTestMode(): bool
     {
-        $testMode = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE);
+        $testMode = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE, useCache: true);
 
         return $testMode == 1;
     }

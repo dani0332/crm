@@ -31,6 +31,7 @@ class CyberQuoteService extends BaseQuoteService
     private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
     private const CYBER_BOOKING_TEAM_EMAIL_TEST = 'productionapproval@yopmail.com';
     private const CYBER_BOOKING_TEAM_NAME_TEST = 'Production Approval Team Test';
+    private const HAPPINESS_SUPPORT_USER_EMAIL = 'hapexuser@gmail.com'; // Test/UAT email
 
     public function __construct(
         private CustomerInsuredService $customerInsuredService
@@ -197,6 +198,16 @@ class CyberQuoteService extends BaseQuoteService
             $quote->payment_status_id,
             $quote->payment_status_id_text ?? $quote->paymentStatus?->text ?? null
         );
+
+        // Replace advisor name with "Auto Issued" if advisor is automation user
+        // Check test mode for UAT/Staging vs Production email
+        $automationUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE, useCache: true) == '1'
+            ? self::HAPPINESS_SUPPORT_USER_EMAIL // Test/UAT email
+            : PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL; // Production email
+
+        if ($quote->advisor && $quote->advisor->email === $automationUserEmail) {
+            $quote->advisor->name = PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL;
+        }
 
         $data = $this->getShowCommonData($quote);
 
