@@ -111,7 +111,7 @@ class FailedILAEmailService
                 $leads = $this->getCarFailedILALeads();
                 break;
             case QuoteTypes::BIKE->value:
-                $leads = $this->getBikeFailedILALeads();
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::BIKE->id());
                 break;
             case QuoteTypes::HEALTH->value:
                 $leads = $this->getHealthFailedILALeads();
@@ -154,17 +154,7 @@ class FailedILAEmailService
         }
         return $leads;
     }
-    public function getBikeFailedILALeads()
-    {
-        $leads = BikeQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id')
-            ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
-            ->whereNull('advisor_id')
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])
-            ->with('quoteStatus')
-            ->get();
-        return $leads;
-    }
+   
     public function getBusinessFailedILALeads($businessTypeOfInsuranceId = null)
     {
         $leads = BusinessQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id')
