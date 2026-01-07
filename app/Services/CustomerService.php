@@ -235,7 +235,7 @@ class CustomerService extends BaseService
             } else {
                 $customer = $this->getCustomerByEmail($value);
                 if (! $customer) {
-                    abort(404, "Customer not found against this email: {$value}");
+                    abort(422, "Customer not found against this email: {$value}");
                 }
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
