@@ -296,6 +296,15 @@ class LookupService extends BaseService
 
     public function getCyberCoverages()
     {
-        return Lookup::where('key', LookupsEnum::CYBER_COVERAGE)->select('id', 'code', 'text')->orderBy('sort_order')->get();
+        return Cache::remember(
+            'cyber_coverages',
+            now()->addHour(),
+            function () {
+                return Lookup::where('key', LookupsEnum::CYBER_COVERAGE)
+                    ->select('id', 'code', 'text')
+                    ->orderBy('sort_order')
+                    ->get();
+            }
+        );
     }
 }
