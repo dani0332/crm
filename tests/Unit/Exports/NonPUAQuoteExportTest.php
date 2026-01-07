@@ -58,5 +58,3 @@ test('NonPUAQuoteExport map outputs empty string when department is missing', fu
     expect($mapped)->toBeArray()
         ->and($mapped[9])->toBe('');
 });
-
-
