@@ -233,11 +233,15 @@ class CustomerService extends BaseService
                     $removeAdvisorEmail->delete();
                 }
             } else {
+                $customer = $this->getCustomerByEmail($value);
+                if (! $customer) {
+                    abort(404, "Customer not found against this email: {$value}");
+                }
+
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
                 $removeableContact = $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)->first();
                 if ($removeableContact) $removeableContact->delete();
 
-                $customer = $this->getCustomerByEmail($value);
                 $email = trim($lead->email);
                 if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
 
