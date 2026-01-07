@@ -52,17 +52,18 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'hasRetryFlag' => $hasRetryFlag,
         ]);
 
-        // If cyberr lead is paid, assign to Happiness Support User
-        if ($isPaymentAuthorizedOrDeclined) {
-            $this->allocationRequest->setAssignToHappinessUser(true);
-
-            LoggerService::info(self::class.' - Cyber lead is paid - Will assign to Happiness Support User', extra: [
-                'targetUserEmail' => CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL,
-                'reason' => 'Payment authorized or declined',
-            ]);
-
-            return false;
-        }
+        // Commented out: Happiness User assignment for paid leads - will only assign in automation scenarios
+        // // If cyberr lead is paid, assign to Happiness Support User
+        // if ($isPaymentAuthorizedOrDeclined) {
+        //     $this->allocationRequest->setAssignToHappinessUser(true);
+        //
+        //     LoggerService::info(self::class.' - Cyber lead is paid - Will assign to Happiness Support User', extra: [
+        //         'targetUserEmail' => CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL,
+        //         'reason' => 'Payment authorized or declined',
+        //     ]);
+        //
+        //     return false;
+        // }
 
         // SIC advisor requested or has retry flag, assign to hardcoded advisors
         if ($sicAdvisorRequested || $hasRetryFlag) {

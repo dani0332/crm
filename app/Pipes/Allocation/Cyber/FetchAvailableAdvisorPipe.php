@@ -19,18 +19,18 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         $this->setRequest($request);
 
-        if ($this->allocationRequest->shouldAssignToHappinessUser()) {
-            LoggerService::info(self::class.' - Paid Cyber lead - Fetching Happiness Support User');
+        if ($this->allocationRequest->get('isCHSAdvisor')) {
+            LoggerService::info(self::class.' - CHS Advisor is required for Cyber lead');
 
-            $advisor = $this->getHappinessUser();
+            $advisor = $this->findAvailableAdvisor(teamId: null);
 
             if (! $advisor) {
-                LoggerService::warning(self::class.' - Happiness Support User not found');
+                LoggerService::warning(self::class.' - CHS Advisor not found');
                 $this->allocationRequest->markAsFailed();
-                $this->throw('Happiness Support User not found', self::NOT_FOUND);
+                $this->throw('CHS Advisor not found', self::NOT_FOUND);
             }
 
-            LoggerService::info(self::class.' - Happiness Support User found successfully', extra: [
+            LoggerService::info(self::class.' - CHS Advisor found successfully', extra: [
                 'advisorId' => $advisor->id,
                 'advisorName' => $advisor->name,
                 'advisorEmail' => $advisor->email,
@@ -41,7 +41,30 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             return $next($request);
         }
 
-        LoggerService::info(self::class.' - Unpaid Cyber lead with SIC request - Fetching advisor using hardcoded email list');
+        // Commented out: Happiness User assignment for paid leads - will only assign in automation scenarios
+        // if ($this->allocationRequest->shouldAssignToHappinessUser()) {
+        //     LoggerService::info(self::class.' - Paid Cyber lead - Fetching Happiness Support User');
+        //
+        //     $advisor = $this->getHappinessUser();
+        //
+        //     if (! $advisor) {
+        //         LoggerService::warning(self::class.' - Happiness Support User not found');
+        //         $this->allocationRequest->markAsFailed();
+        //         $this->throw('Happiness Support User not found', self::NOT_FOUND);
+        //     }
+        //
+        //     LoggerService::info(self::class.' - Happiness Support User found successfully', extra: [
+        //         'advisorId' => $advisor->id,
+        //         'advisorName' => $advisor->name,
+        //         'advisorEmail' => $advisor->email,
+        //     ]);
+        //
+        //     $this->allocationRequest->setAdvisor($advisor);
+        //
+        //     return $next($request);
+        // }
+
+        LoggerService::info(self::class.' - Cyber lead with SIC request - Fetching advisor using hardcoded email list');
 
         $advisor = $this->findAvailableAdvisor(teamId: null);
 
@@ -86,6 +109,12 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     protected function getAdvisorByStatus($onlineStatus, $teamId)
     {
         LoggerService::info(self::class." - Searching for Cyber advisor with status: {$onlineStatus}");
+
+        if ($this->allocationRequest->get('isCHSAdvisor')) {
+            LoggerService::info(self::class.' - getAdvisorsByStatus: CHS Advisors is required');
+
+            return User::select('users.id as user_id')->chs()->get();
+        }
 
         return $this->getAdvisorByHardcodedEmails($onlineStatus);
     }

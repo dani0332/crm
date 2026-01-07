@@ -692,4 +692,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(AmlAutomation::class, 'code', 'code');
     }
+
+    public function isAutomationCompleted()
+    {
+        return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
+    }
 }
