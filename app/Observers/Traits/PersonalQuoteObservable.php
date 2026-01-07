@@ -122,7 +122,6 @@ trait PersonalQuoteObservable
             LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
         }
 
-
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
     }
 
