@@ -41,29 +41,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             return $next($request);
         }
 
-        // Commented out: Happiness User assignment for paid leads - will only assign in automation scenarios
-        // if ($this->allocationRequest->shouldAssignToHappinessUser()) {
-        //     LoggerService::info(self::class.' - Paid Cyber lead - Fetching Happiness Support User');
-        //
-        //     $advisor = $this->getHappinessUser();
-        //
-        //     if (! $advisor) {
-        //         LoggerService::warning(self::class.' - Happiness Support User not found');
-        //         $this->allocationRequest->markAsFailed();
-        //         $this->throw('Happiness Support User not found', self::NOT_FOUND);
-        //     }
-        //
-        //     LoggerService::info(self::class.' - Happiness Support User found successfully', extra: [
-        //         'advisorId' => $advisor->id,
-        //         'advisorName' => $advisor->name,
-        //         'advisorEmail' => $advisor->email,
-        //     ]);
-        //
-        //     $this->allocationRequest->setAdvisor($advisor);
-        //
-        //     return $next($request);
-        // }
-
         LoggerService::info(self::class.' - Cyber lead with SIC request - Fetching advisor using hardcoded email list');
 
         $advisor = $this->findAvailableAdvisor(teamId: null);
