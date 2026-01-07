@@ -20,8 +20,6 @@ class CacheConfigTest extends TestCase
      * This ensures that different environments (production, staging, uat, test)
      * have separate cache namespaces, preventing cross-environment conflicts
      * when using shared cache drivers like Redis or DynamoDB.
-     *
-     * @return void
      */
     public function test_cache_prefix_includes_environment(): void
     {
@@ -45,8 +43,6 @@ class CacheConfigTest extends TestCase
      *
      * This test simulates different environment configurations to verify
      * that each environment would have a unique cache prefix.
-     *
-     * @return void
      */
     public function test_different_environments_have_unique_cache_prefixes(): void
     {
@@ -84,8 +80,6 @@ class CacheConfigTest extends TestCase
      * Test that cache prefix format is correct for current environment.
      *
      * This verifies the exact format: {app_name}_cache_{environment}
-     *
-     * @return void
      */
     public function test_cache_prefix_format_is_correct(): void
     {
@@ -100,7 +94,7 @@ class CacheConfigTest extends TestCase
         $this->assertEquals(
             $expectedPrefix,
             $prefix,
-            "Cache prefix should match format: {app_name}_cache_{environment}"
+            'Cache prefix should match format: {app_name}_cache_{environment}'
         );
     }
 
@@ -109,8 +103,6 @@ class CacheConfigTest extends TestCase
      *
      * This ensures that CACHE_PREFIX environment variable takes precedence
      * over the default computed prefix.
-     *
-     * @return void
      */
     public function test_cache_prefix_can_be_overridden_via_env(): void
     {
@@ -137,8 +129,6 @@ class CacheConfigTest extends TestCase
      *
      * This ensures that the cache prefix doesn't break normal cache operations
      * and that cached items are properly namespaced.
-     *
-     * @return void
      */
     public function test_cache_operations_work_with_environment_prefix(): void
     {
@@ -166,8 +156,6 @@ class CacheConfigTest extends TestCase
      *
      * This test demonstrates that the same cache key with different prefixes
      * would not collide, simulating environment isolation.
-     *
-     * @return void
      */
     public function test_cache_prefix_prevents_key_collisions(): void
     {
@@ -194,8 +182,6 @@ class CacheConfigTest extends TestCase
      *
      * This verifies that the cache configuration supports the onOneServer()
      * functionality used in scheduled tasks by checking for proper store configuration.
-     *
-     * @return void
      */
     public function test_cache_configuration_supports_task_locking(): void
     {
@@ -224,8 +210,6 @@ class CacheConfigTest extends TestCase
      *
      * This ensures the application name is part of the prefix for
      * additional namespace isolation when multiple apps share cache infrastructure.
-     *
-     * @return void
      */
     public function test_cache_prefix_includes_application_name(): void
     {
@@ -244,8 +228,6 @@ class CacheConfigTest extends TestCase
      * Test cache prefix structure for testing environment.
      *
      * Special test to verify the testing environment has proper prefix.
-     *
-     * @return void
      */
     public function test_testing_environment_has_proper_cache_prefix(): void
     {

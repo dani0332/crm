@@ -22,8 +22,6 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
      * Test that ResetLeadAllocationCounts command respects environment filtering.
      *
      * This ensures the scheduled task only runs in allowed environments.
-     *
-     * @return void
      */
     public function test_reset_lead_allocation_counts_respects_environment(): void
     {
@@ -46,8 +44,6 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
      *
      * This verifies that tasks scheduled for specific timezones maintain
      * their configuration correctly.
-     *
-     * @return void
      */
     public function test_scheduled_tasks_have_proper_timezone(): void
     {
@@ -69,8 +65,6 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
      *
      * This test verifies that different environments would use different
      * cache keys for task locking.
-     *
-     * @return void
      */
     public function test_cache_prefix_ensures_lock_isolation(): void
     {
@@ -100,8 +94,6 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
      *
      * This ensures that scheduled tasks have proper mutex configuration
      * to prevent duplicate execution across multiple servers.
-     *
-     * @return void
      */
     public function test_critical_scheduled_tasks_have_one_server_mutex(): void
     {
@@ -136,8 +128,6 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
      * Test that scheduled task expressions are valid.
      *
      * This verifies that cron expressions for scheduled tasks are properly formatted.
-     *
-     * @return void
      */
     public function test_scheduled_task_expressions_are_valid(): void
     {
@@ -167,8 +157,6 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
      *
      * This test verifies that the when() callback for environment filtering
      * evaluates correctly in the test environment.
-     *
-     * @return void
      */
     public function test_environment_aware_scheduling_evaluation(): void
     {
@@ -203,8 +191,6 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
      *
      * This ensures the cache configuration is suitable for running
      * scheduled tasks across multiple servers with proper locking.
-     *
-     * @return void
      */
     public function test_cache_store_suitable_for_multi_server_locking(): void
     {
@@ -233,8 +219,6 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
      *
      * This verifies that scheduled tasks have proper timeout settings
      * to prevent long-running tasks from blocking.
-     *
-     * @return void
      */
     public function test_overlap_prevention_timeout_is_configured(): void
     {
