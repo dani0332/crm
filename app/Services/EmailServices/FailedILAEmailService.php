@@ -158,7 +158,7 @@ class FailedILAEmailService
     public function getBusinessFailedILALeads($businessTypeOfInsuranceId = null)
     {
         $leads = BusinessQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id')
-            ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
+            ->whereBetween('created_at', [now()->subDays(60)->startOfDay(), now()->endOfDay()])
             ->when($businessTypeOfInsuranceId, function ($query) use ($businessTypeOfInsuranceId) {
                 $query->where('business_type_of_insurance_id', $businessTypeOfInsuranceId);
             })
@@ -176,7 +176,7 @@ class FailedILAEmailService
     public function getHealthFailedILALeads()
     {
         $leads = HealthQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
-            ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
+            ->whereBetween('created_at', [now()->subDays(60)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
@@ -188,7 +188,7 @@ class FailedILAEmailService
     public function getTravelFailedILALeads()
     {
         $leads = TravelQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
-            ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
+            ->whereBetween('created_at', [now()->subDays(60)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
@@ -200,7 +200,7 @@ class FailedILAEmailService
     public function getPersonalFailedILALeads($quoteTypeId = null)
     {
         $leads = PersonalQuote::where('quote_type_id', $quoteTypeId)->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
-            ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
+            ->whereBetween('created_at', [now()->subDays(60)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
@@ -214,7 +214,7 @@ class FailedILAEmailService
     {
 
         $leads = CarQuote::select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
-            ->whereBetween('created_at', [now()->subDays(65)->startOfDay(), now()->endOfDay()])
+            ->whereBetween('created_at', [now()->subDays(60)->startOfDay(), now()->endOfDay()])
             ->whereNull('advisor_id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
