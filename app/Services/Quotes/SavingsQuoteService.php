@@ -255,6 +255,9 @@ class SavingsQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
+            'savingsCalculatorUrl' => config('constants.ECOM_SAVINGS_CALCULATOR_URL', config('constants.WEBSITE_URL').'/savings-insurance/calculator/'),
+            'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL', config('constants.WEBSITE_URL').'/savings-insurance/quote/'),
+            'websiteURL' => config('constants.WEBSITE_URL'),
             ...$data,
         ];
     }
@@ -561,5 +564,94 @@ class SavingsQuoteService extends BaseQuoteService
         $found = collect($eligibility)->firstWhere('code', $code);
 
         return $found ? $found->value : 'N/A';
+    }
+
+    /**
+     * Create a new savings plan manually
+     */
+    public function createSavingsPlan($request, $quoteUuId)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-savings-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+
+        $savingsPlanData = [
+            'quoteUID' => $quoteUuId,
+            'update' => false,
+            'url' => strval($request->current_url ?? ''),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(Auth::id()),
+            'plans' => [
+                [
+                    'planId' => (int) $request->savings_plan_id,
+                    'actualPremium' => (float) ($request->actual_premium ?? 0),
+                    'isDisabled' => false,
+                    'insurerQuoteNo' => strval($request->insurer_quote_no ?? ''),
+                    'isManualUpdate' => true,
+                ],
+            ],
+        ];
+
+        $apiCreds = [
+            'apiEndPoint' => $apiEndPoint,
+            'apiToken' => $apiToken,
+            'apiTimeout' => $apiTimeout,
+            'apiUserName' => $apiUserName,
+            'apiPassword' => $apiPassword,
+        ];
+
+        return $this->httpService->processRequest($savingsPlanData, $apiCreds);
+    }
+
+    /**
+     * Get savings plans by insurance provider
+     */
+    public function getSavingsPlansByProvider($insuranceProviderId, $quoteUuId = null)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-savings-plans-by-provider';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($apiUserName.':'.$apiPassword);
+
+        $requestData = [
+            'insuranceProviderId' => (int) $insuranceProviderId,
+            'quoteUID' => $quoteUuId,
+            'lang' => 'en',
+        ];
+
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $response = $client->post(
+                $apiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'x-api-token' => $apiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($requestData),
+                    'timeout' => $apiTimeout,
+                ]
+            );
+
+            if ($response->getStatusCode() == 200) {
+                $contents = json_decode($response->getBody(), true);
+
+                return $contents['plans'] ?? [];
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            LoggerService::error('SavingsQuoteService - getSavingsPlansByProvider failed', exception: $e);
+
+            return [];
+        }
+
+        return [];
     }
 }

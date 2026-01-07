@@ -22,6 +22,10 @@ class PermissionSeeder extends Seeder
                 'name' => PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
                 'guard_name' => 'web',
             ],
+            [
+                'name' => PermissionsEnum::NONRULE_LEADALLOCATION,
+                'guard_name' => 'web',
+            ],
         ];
 
         foreach ($permissions as $permission) {

@@ -1,22 +1,22 @@
 <script setup>
-import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
-import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
+import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
+import OcrNotification from '@/inertia/Components/OcrNotification.vue';
+import { usePayment } from '@/inertia/Composables/usePayment';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
-import { usePage, router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
+import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import CustomerVerificationDetails from './Partials/CustomerVerificationDetails.vue';
-import AdditionalVehicleTransactionDetails from '../../Aml/Partials/AdditionalVehicleTransactionDetails.vue';
-import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import { usePayment } from '@/inertia/Composables/usePayment';
 
 defineProps({
   quote: Object,
@@ -1447,7 +1447,8 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.record.id,
   insured_first_name: page.props.record.insured_first_name || '',
   insured_last_name: page.props.record.insured_last_name || '',
-  emirates_id_number: page.props.record.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.record.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
 
   entity_id: page.props.record.entity_id ?? null,
@@ -3898,7 +3899,10 @@ const handleCancelConfirmationModal = () => {
                   </div>
                   <span>
                     <SelectPlan
-                      v-if="selectedProviderPlan.id != item.id"
+                      v-if="
+                        !selectedProviderPlan?.id ||
+                        String(selectedProviderPlan.id) !== String(item.id)
+                      "
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="quoteType"

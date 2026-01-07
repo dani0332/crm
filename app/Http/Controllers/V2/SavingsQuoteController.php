@@ -9,9 +9,14 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsPlanUpdateRequest;
 use App\Http\Requests\SavingsQuoteRequest;
+use App\Jobs\SendSavingsOCAEmailJob;
+use App\Models\InsuranceProvider;
+use App\Models\PersonalQuote;
 use App\Repositories\LostReasonRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\Quotes\SavingsQuoteService;
+use App\Services\Savings\SavingsEmailService;
 use Illuminate\Http\Request;
 
 class SavingsQuoteController extends Controller
@@ -183,5 +188,103 @@ class SavingsQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : $this->savingsQuoteService->getData(forExport: true, getTotalCount: true),
             'investmentFrequencies' => $this->savingsQuoteService->getInvestmentFrequencies(),
         ]);
+    }
+
+    /**
+     * Send OCA (One Click Apply) email to customer
+     */
+    public function sendOCAEmail(Request $request, string $quoteUuId)
+    {
+        try {
+            $quote = PersonalQuote::where('uuid', $quoteUuId)->firstOrFail();
+
+            LoggerService::startQuoteLogging($quoteUuId);
+            LoggerService::info('SavingsQuoteController - sendOCAEmail', [
+                'quote_uuid' => $quoteUuId,
+                'customer_email' => $quote->email,
+                'plan_ids' => $request->plan_ids ?? [],
+            ]);
+
+            // Prepare data for the email
+            $emailData = [
+                'plan_ids' => $request->plan_ids ?? [],
+            ];
+
+            // Dispatch the job to send OCA email
+            SendSavingsOCAEmailJob::dispatch($quoteUuId, $emailData);
+
+            LoggerService::info('SavingsQuoteController - sendOCAEmail job dispatched');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'OCA email has been queued for sending to '.$quote->email,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('SavingsQuoteController - sendOCAEmail failed', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to send OCA email: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create a new savings plan manually
+     */
+    public function savingsPlanManualProcess(Request $request, string $quoteUuId)
+    {
+        $request->validate([
+            'insurance_provider_id' => 'required|integer',
+            'savings_plan_id' => 'required|integer',
+            'actual_premium' => 'required|numeric|min:0',
+            'insurer_quote_no' => 'required|string|max:50',
+        ]);
+
+        try {
+            $quote = PersonalQuote::where('uuid', $quoteUuId)->firstOrFail();
+
+            LoggerService::info('SavingsQuoteController - savingsPlanManualProcess', [
+                'quote_uuid' => $quoteUuId,
+                'insurance_provider_id' => $request->insurance_provider_id,
+                'savings_plan_id' => $request->savings_plan_id,
+            ]);
+
+            // Call the service to create the plan
+            $response = $this->savingsQuoteService->createSavingsPlan($request, $quoteUuId);
+
+            if ($response === 200 || $response === 201) {
+                return redirect()->back()->with('message', 'Savings plan created successfully');
+            }
+
+            return redirect()->back()->withErrors(['error' => 'Failed to create savings plan']);
+        } catch (\Exception $e) {
+            LoggerService::error('SavingsQuoteController - savingsPlanManualProcess failed', exception: $e);
+
+            return redirect()->back()->withErrors(['error' => 'Failed to create savings plan: '.$e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get savings plans by insurance provider
+     */
+    public function savingsPlansByInsuranceProvider(Request $request)
+    {
+        $insuranceProviderId = $request->get('insuranceProviderId');
+        $quoteUuId = $request->get('quoteUuId');
+
+        if (! $insuranceProviderId) {
+            return response()->json([]);
+        }
+
+        try {
+            $plans = $this->savingsQuoteService->getSavingsPlansByProvider($insuranceProviderId, $quoteUuId);
+
+            return response()->json($plans);
+        } catch (\Exception $e) {
+            LoggerService::error('SavingsQuoteController - savingsPlansByInsuranceProvider failed', exception: $e);
+
+            return response()->json([]);
+        }
     }
 }

@@ -65,9 +65,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         $finalEligibleAdvisorIds = $this->determineFinalAdvisorIdsBasedOnRules($availableAdvisorIds, $rules, $teamId);
         $advisorId = $this->getFinalAdvisorId($finalEligibleAdvisorIds);
 
-        $advisor = User::find($advisorId);
-
-        return $advisor;
+        return User::find($advisorId);
     }
 
     protected function getAdvisorsByStatus($onlineStatus, $teamId)
@@ -91,9 +89,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 if ($sicUnassistedTeamId) {
                     $q->whereNotIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $sicUnassistedTeamId));
                 }
-            })
-            ->when($this->allocationRequest->isSIC(), function ($q) {
-                $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
             ->logRawSql()
             ->get();
@@ -139,6 +134,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         } else {
             // If no rules are found, get user IDs from rule lead sources.
             $ruleUserIds = $this->allocationRequest->get('ruleUserIds');
+            $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
 
             LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUserIds).' and teamId is : '.$teamId);
 
