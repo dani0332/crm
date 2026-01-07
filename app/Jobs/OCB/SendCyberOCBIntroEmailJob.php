@@ -20,29 +20,21 @@ class SendCyberOCBIntroEmailJob implements ShouldQueue
 
     /**
      * The number of times the job may be attempted.
-     *
-     * @var int
      */
     public int $tries = 3;
 
     /**
      * The number of seconds the job can run before timing out.
-     *
-     * @var int
      */
     public int $timeout = 30;
 
     /**
      * The number of seconds to wait before retrying the job.
-     *
-     * @var int
      */
     public int $backoff = 10;
 
     /**
      * The UUID of the PersonalQuote.
-     *
-     * @var string
      */
     private string $quoteUuid;
 
@@ -55,22 +47,16 @@ class SendCyberOCBIntroEmailJob implements ShouldQueue
 
     /**
      * Whether to trigger the SIC workflow.
-     *
-     * @var bool
      */
     private bool $triggerSICWorkflow;
 
     /**
      * Whether to handle zero plans specifically.
-     *
-     * @var bool
      */
     private bool $handleZeroPlans;
 
     /**
      * Whether to force the SIC workflow regardless of other checks.
-     *
-     * @var bool
      */
     private bool $forceSicWorkflow;
 
@@ -102,8 +88,9 @@ class SendCyberOCBIntroEmailJob implements ShouldQueue
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_OCB_INTRO_EMAIL);
 
         if (! $lead) {
-            LoggerService::info(static::class . " - Lead not found for uuid: {$this->quoteUuid}");
+            LoggerService::info(static::class." - Lead not found for uuid: {$this->quoteUuid}");
             LoggerService::endLogging();
+
             return;
         }
 
@@ -115,9 +102,9 @@ class SendCyberOCBIntroEmailJob implements ShouldQueue
                 $this->handleZeroPlans,
                 $this->forceSicWorkflow
             );
-            LoggerService::info(static::class . " - OCB Intro Email sent for uuid: {$this->quoteUuid}");
+            LoggerService::info(static::class." - OCB Intro Email sent for uuid: {$this->quoteUuid}");
         } catch (Exception $e) {
-            LoggerService::error(static::class . " - Error sending Cyber OCB Intro Email: {$e->getMessage()} for uuid: {$this->quoteUuid}", [
+            LoggerService::error(static::class." - Error sending Cyber OCB Intro Email: {$e->getMessage()} for uuid: {$this->quoteUuid}", [
                 'exception' => $e,
                 'uuid' => $this->quoteUuid,
             ]);
