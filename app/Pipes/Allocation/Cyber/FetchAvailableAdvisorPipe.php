@@ -96,12 +96,14 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
             if ($this->isTestMode()) {
                 LoggerService::info(self::class.' - TEST MODE: Using test Happiness User email for CHS advisor');
+
                 return User::select('users.id as user_id')
                     ->where('users.email', CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL)
                     ->first();
             }
 
             LoggerService::info(self::class.' - PRODUCTION MODE: Using Production CHS advisor');
+
             return User::select('users.id as user_id')->chs()->first();
         }
 
