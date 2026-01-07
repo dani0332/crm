@@ -23,7 +23,6 @@ class SendCyberAutomatedFollowupJob implements ShouldQueue
 
     public function __construct($quoteUuid)
     {
-
         $this->quoteUuid = $quoteUuid;
         $this->afterCommit();
     }
