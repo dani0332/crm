@@ -160,6 +160,7 @@ class TestSchemaCreator
                 $table->date('dob')->nullable();
                 $table->string('source')->nullable();
                 $table->string('device')->nullable();
+                $table->unsignedBigInteger('customer_id')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
@@ -268,5 +269,70 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        // Create customer_additional_contact table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('customer_additional_contact')) {
+            Schema::connection('sqlite')->create('customer_additional_contact', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->string('key')->nullable();
+                $table->string('value')->nullable();
+                $table->boolean('wa_opt_in')->default(0);
+                $table->timestamps();
+            });
+        }
+
+        if (! Schema::connection('sqlite')->hasTable('quote_sync')) {
+            Schema::connection('sqlite')->create('quote_sync', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->string('quote_uuid')->nullable();
+                $table->boolean('is_synced')->default(0);
+                $table->timestamp('synced_at')->nullable();
+                $table->text('updated_fields')->nullable();
+                $table->unsignedInteger('status')->nullable();
+                $table->text('error')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create customer table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('customer')) {
+            Schema::connection('sqlite')->create('customer', function ($table) {
+                $table->id();
+                $table->string('emirates_id_number')->nullable();
+                $table->date('dob')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create car_quote_request table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('car_quote_request')) {
+            Schema::connection('sqlite')->create('car_quote_request', function ($table) {
+                $table->id();
+                $table->string('uuid')->unique();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->date('dob')->nullable();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->softDeletes();
+                $table->timestamps();
+            });
+        }
+
+        // if (! Schema::connection('sqlite')->hasTable('car_quote_request_detail')) {
+        //     Schema::connection('sqlite')->create('car_quote_request_detail', function ($table) {
+        //         $table->id();
+        //         $table->unsignedBigInteger('car_quote_request_id')->nullable();
+        //         $table->timestamps();
+        //     });
+        // }
     }
 }
