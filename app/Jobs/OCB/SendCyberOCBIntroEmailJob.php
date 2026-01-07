@@ -6,54 +6,131 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\CyberEmailService;
 use App\Services\Logger\LoggerService;
+use Exception;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
 
 class SendCyberOCBIntroEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 40;
-    public $backoff = 300;
-    private $quoteUuid;
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public int $tries = 3;
+
+    /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public int $timeout = 30;
+
+    /**
+     * The number of seconds to wait before retrying the job.
+     *
+     * @var int
+     */
+    public int $backoff = 10;
+
+    /**
+     * The UUID of the PersonalQuote.
+     *
+     * @var string
+     */
+    private string $quoteUuid;
+
+    /**
+     * (Optional) Previous advisor for the quote, if any.
+     *
+     * @var mixed
+     */
     private $previousAdvisor;
-    private $handleZeroPlans;
-    private $triggerSICWorkflow;
-    private $triggerOnlyWorkflow;
-    private $forceSicWorkflow;
-    private $quoteType;
+
+    /**
+     * Whether to trigger the SIC workflow.
+     *
+     * @var bool
+     */
+    private bool $triggerSICWorkflow;
+
+    /**
+     * Whether to handle zero plans specifically.
+     *
+     * @var bool
+     */
+    private bool $handleZeroPlans;
+
+    /**
+     * Whether to force the SIC workflow regardless of other checks.
+     *
+     * @var bool
+     */
+    private bool $forceSicWorkflow;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteUuid, $previousAdvisor = null, bool $triggerSICWorkflow = false, bool $handleZeroPlans = false, bool $forceSicWorkflow = false)
-    {
+    public function __construct(
+        string $quoteUuid,
+        $previousAdvisor = null,
+        bool $triggerSICWorkflow = false,
+        bool $handleZeroPlans = false,
+        bool $forceSicWorkflow = false
+    ) {
         $this->quoteUuid = $quoteUuid;
-        $this->forceSicWorkflow = $forceSicWorkflow;
-        $this->triggerSICWorkflow = $triggerSICWorkflow;
         $this->previousAdvisor = $previousAdvisor;
+        $this->triggerSICWorkflow = $triggerSICWorkflow;
         $this->handleZeroPlans = $handleZeroPlans;
+        $this->forceSicWorkflow = $forceSicWorkflow;
         $this->afterCommit();
     }
 
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(CyberEmailService $cyberEmailService): void
     {
         $lead = PersonalQuote::where('uuid', $this->quoteUuid)->first();
-        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_OCB_INTRO_EMAIL);
-        if (! $lead) {
-            LoggerService::info(self::class." - Lead not found for uuid: {$this->quoteUuid}");
 
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_OCB_INTRO_EMAIL);
+
+        if (! $lead) {
+            LoggerService::info(static::class . " - Lead not found for uuid: {$this->quoteUuid}");
+            LoggerService::endLogging();
             return;
         }
-        app(CyberEmailService::class)->sendCyberOCBIntroEmail($lead);
-        LoggerService::info(self::class." - OCB Intro Email sent for uuid: {$this->quoteUuid}");
-        LoggerService::endLogging();
 
+        try {
+            $cyberEmailService->sendCyberOCBIntroEmail(
+                $lead,
+                $this->previousAdvisor,
+                $this->triggerSICWorkflow,
+                $this->handleZeroPlans,
+                $this->forceSicWorkflow
+            );
+            LoggerService::info(static::class . " - OCB Intro Email sent for uuid: {$this->quoteUuid}");
+        } catch (Exception $e) {
+            LoggerService::error(static::class . " - Error sending Cyber OCB Intro Email: {$e->getMessage()} for uuid: {$this->quoteUuid}", [
+                'exception' => $e,
+                'uuid' => $this->quoteUuid,
+            ]);
+        } finally {
+            LoggerService::endLogging();
+        }
+    }
+
+    /**
+     * Prevent jobs with the same quoteUuid from overlapping.
+     */
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping($this->quoteUuid))->dontRelease()];
     }
 }
