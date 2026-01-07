@@ -39,8 +39,11 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
+use App\Services\AMLService;
+use App\Models\PaymentStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 abstract class BaseQuoteService extends BaseService
 {
@@ -80,9 +83,13 @@ abstract class BaseQuoteService extends BaseService
 
     public function getQuoteStatuses($ignoreList = [])
     {
-        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId($this->quoteType->id())->get();
+        $cacheKey = "quote_statuses_{$this->quoteType->value}_".md5(json_encode($ignoreList));
+        
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($ignoreList) {
+            $quoteStatuses = QuoteStatusRepository::byQuoteTypeId($this->quoteType->id())->get();
 
-        return collect($quoteStatuses)->filter(fn ($value) => ! in_array($value['id'], $ignoreList))->values();
+            return collect($quoteStatuses)->filter(fn ($value) => ! in_array($value['id'], $ignoreList))->values();
+        });
     }
 
     public function getRenewalBatches()
@@ -92,7 +99,9 @@ abstract class BaseQuoteService extends BaseService
 
     public function getPaymentAuthorizedDays()
     {
-        return ApplicationStorage::where('key_name', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        return Cache::remember('payment_authorized_days', now()->addHours(6), function () {
+            return ApplicationStorage::where('key_name', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        });
     }
 
     public function hasOtherFilters()
@@ -225,4 +234,21 @@ abstract class BaseQuoteService extends BaseService
     {
         return $user && method_exists($user, 'can') && $user->can($permission);
     }
+
+    public function getInsurerAMLStatuses(): array
+    {
+        return Cache::remember('insurer_aml_statuses', now()->addHours(6), function () {
+            return AMLService::getInsurerAMLStatuses();
+        });
+    }
+
+    public function getPaymentStatuses()
+    {
+        return Cache::remember('payment_statuses_active', now()->addHours(6), function () {
+            return PaymentStatus::where('is_active', 1)
+                ->orderBy('text')
+                ->get(['id', 'text']);
+        });
+    }
+
 }
