@@ -79,8 +79,8 @@ test('switch primary email id WITHOUT keeping existing primary email id', functi
     $customerBAdditionalContacts = getCustomerEmailAdditionalContacts($quoteBFirstData['value'], $quoteBFirstData['customer_id'])->first();
     $response = makePrimaryEmailRequest($quoteA, $customerBAdditionalContacts, false);
 
-    $existingPrimaryEmailAdditionalContacts = getCustomerEmailAdditionalContacts($quoteA->email);
     $switchedQuote = CarQuote::find($quoteA->id);
+    $existingPrimaryEmailAdditionalContacts = getCustomerEmailAdditionalContacts($customerBAdditionalContacts->email, $switchedQuote->customer_id);
 
     expect($response->isRedirect())->toBeTrue()
         ->and($response->getSession()->get('error'))->toBeNull()
