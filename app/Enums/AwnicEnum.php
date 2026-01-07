@@ -15,4 +15,6 @@ class AwnicEnum
     public const RESPONSE_DOWNLOAD_DOCUMENT = 'DownloadDocumentResponse';
     public const UNKNOWN_ERROR = 'Unknown error';
     public const ALL_STEPS_ARE_EDITABLE = 'All Steps are editable';
+
+    public const AWNIC_MOBILE_NO = '971502732524';
 }
