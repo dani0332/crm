@@ -31,7 +31,7 @@ class CarPlanFactory extends Factory
     public function definition()
     {
         return [
-            'insurance_provider_id' => InsuranceProvider::factory(),
+            'provider_id' => InsuranceProvider::factory(),
             'plan_name' => $this->faker->words(3, true),
             'is_active' => 1,
             'created_at' => now(),
@@ -45,7 +45,7 @@ class CarPlanFactory extends Factory
     public function forInsuranceProvider($insuranceProviderId)
     {
         return $this->state(fn (array $attributes) => [
-            'insurance_provider_id' => $insuranceProviderId,
+            'provider_id' => $insuranceProviderId,
         ]);
     }
 }
