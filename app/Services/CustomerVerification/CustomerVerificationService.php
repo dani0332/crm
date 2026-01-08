@@ -586,7 +586,7 @@ class CustomerVerificationService
 
     private function getQuoteTypeId($quote)
     {
-        return ($quote instanceof CarQuote) ? (int)QuoteTypes::CAR->id() : $quote->quote_type_id;
+        return ($quote instanceof CarQuote) ? (int) QuoteTypes::CAR->id() : $quote->quote_type_id;
     }
 
     public function isCustomerVerificationEnabled(): bool
