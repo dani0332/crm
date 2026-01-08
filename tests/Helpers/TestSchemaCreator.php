@@ -3,6 +3,7 @@
 namespace Tests\Helpers;
 
 use Illuminate\Support\Facades\Schema;
+use Tests\Support\Schema\RenewalsSchema;
 
 class TestSchemaCreator
 {
@@ -459,5 +460,12 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+    }
+
+    public static function createRenewalsSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new RenewalsSchema)->register();
     }
 }
