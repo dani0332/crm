@@ -58,6 +58,7 @@ class CyberEmailService extends BaseService
 
         return [
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'source' => $lead->source,
             'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'advisorMobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
