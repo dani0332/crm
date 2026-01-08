@@ -115,6 +115,9 @@ class UserService extends BaseService
         /**
          * Subordinates are users whose `user_manager.manager_id` points to the manager user.
          *
+         * Only active users should be considered subordinates for operational flows (e.g. deactivation
+         * notifications). Inactive users should not trigger those alerts.
+         *
          * This is a self-referencing many-to-many (users <-> users via user_manager). Using
          * relationship-based whereHas() queries can become fragile because Laravel aliases the
          * related `users` table in self-joins; that can lead to empty results (seen on sqlite test cases).
@@ -125,6 +128,7 @@ class UserService extends BaseService
         return User::query()
             ->join('user_manager', 'user_manager.user_id', '=', 'users.id')
             ->where('user_manager.manager_id', $userId)
+            ->ActiveUser()
             ->select(['users.id', 'users.name', 'users.email'])
             ->get();
     }
