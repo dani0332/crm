@@ -1235,7 +1235,6 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_SEND_POLICY_TEMPLATE],
             [
