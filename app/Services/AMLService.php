@@ -1706,7 +1706,7 @@ class AMLService
         return $data;
     }
 
-    public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening)
+    public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening, $checkApplicableForScreening = true)
     {
         LoggerService::info('Processing Insured Data for Screening');
 
@@ -1716,7 +1716,11 @@ class AMLService
         $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
 
         $isCustomerInsuredAssociationUpdated = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
-        $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
+
+        $shouldApplicableForScreening = false;
+        if ($checkApplicableForScreening) {
+            $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
+        }
 
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
 
@@ -1754,6 +1758,7 @@ class AMLService
                     $query->where('id_number', $request->screening_id_number);
                 })
                 ->first();
+
             $idNumber = $insured?->id_number ?? $request->screening_id_number;
 
             LoggerService::info('Individual Details', extra: [
@@ -1762,9 +1767,9 @@ class AMLService
                 'formatted_id_number' => $idNumber,
                 'insured_first_name' => $request->insured_first_name,
                 'insured_last_name' => $request->insured_last_name,
-                'dob' => $request->dob,
-                'nationality_id' => $request->nationality_id,
-                'gender' => $request->screening_gender,
+                'dob' => $request->dob ?? null,
+                'nationality_id' => $request->nationality_id ?? null,
+                'gender' => $request->screening_gender ?? null,
             ]);
 
             $insured = Insured::updateOrCreate([
@@ -1774,9 +1779,9 @@ class AMLService
             ], [
                 'first_name' => $request->insured_first_name,
                 'last_name' => $request->insured_last_name,
-                'dob' => $request->dob,
-                'nationality_id' => $request->nationality_id,
-                'gender' => $request->screening_gender,
+                'dob' => $request->dob ?? null,
+                'nationality_id' => $request->nationality_id ?? null,
+                'gender' => $request->screening_gender ?? null,
             ]);
         }
 
@@ -1925,7 +1930,7 @@ class AMLService
         return false;
     }
 
-    // Reminder:: this function is added because universal search and customer members have dependency on customer and entity details.
+    // Reminder:: this function is added because universal search, customer members and Sage have dependency on customer and entity details.
     private function handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, bool $isEntity): ?int
     {
         if ($isEntity) {
