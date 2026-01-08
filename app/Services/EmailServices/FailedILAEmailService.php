@@ -147,7 +147,7 @@ class FailedILAEmailService
             case QuoteTypes::JETSKI->value:
                 $leads = $this->getPersonalFailedILALeads(QuoteTypes::JETSKI->id());
                 break;
-                break;
+                
             default:
                 $leads = [];
                 break;
