@@ -1270,46 +1270,6 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CYBER_BOOKING_TEAM_EMAIL],
-            [
-                'value' => 'production.approval.team@insurancemarket.ae',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CYBER_BOOKING_TEAM_NAME],
-            [
-                'value' => 'Production Approval Team',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CYBER_BOOKING_TEAM_EMAIL_TEST],
-            [
-                'value' => 'productionapproval@yopmail.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CYBER_BOOKING_TEAM_NAME_TEST],
-            [
-                'value' => 'Production Approval Team Test',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL],
             [
                 'value' => 'hapexuser@gmail.com',
