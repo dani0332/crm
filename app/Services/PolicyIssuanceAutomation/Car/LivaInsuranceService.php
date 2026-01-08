@@ -105,7 +105,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         if ($this->isPolicyIssuanceAutomationEnabled() && $isQuotePolicyIssuanceAutomationEnabled) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Automation is disabled' : 'LIVA Car Quote Policy Issuance Automation is disabled';
+            $errorMessage = !$isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Quote Policy Issuance Automation is disabled' : 'LIVA Car Automation is disabled';
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
         }
 

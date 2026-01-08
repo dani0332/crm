@@ -144,7 +144,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         if ($this->isPolicyIssuanceAutomationEnabled() && $isQuotePolicyIssuanceAutomationEnabled) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Automation is disabled' : 'GIG Car Quote Policy Issuance Automation is disabled';
+            $errorMessage = !$isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Quote Policy Issuance Automation is disabled' : 'GIG Car Automation is disabled';
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
         }
 
