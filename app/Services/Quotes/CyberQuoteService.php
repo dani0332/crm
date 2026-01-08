@@ -15,12 +15,14 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Facades\Ken;
 use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BranchAssignmentService;
 use App\Services\CustomerInsuredService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -224,31 +226,19 @@ class CyberQuoteService extends BaseQuoteService
 
     public function listQuotePlans($id)
     {
-        $listQuotePlans = '';
         $quotePlans = $this->getQuotePlans($id);
 
-        if (isset($quotePlans->message) && $quotePlans->message != '') {
-            $listQuotePlans = $quotePlans->message;
-        } else {
-            if (gettype($quotePlans) != 'string') {
-                $listQuotePlans = $quotePlans->quotes->plans ?? [];
-            } else {
-                $listQuotePlans = $quotePlans;
-            }
+        // getQuotePlans() returns string for errors, array for success
+        if (is_string($quotePlans)) {
+            return $quotePlans;
         }
 
-        return $listQuotePlans;
+        // Success response: array with 'quotes' key containing 'plans'
+        return $quotePlans['quotes']['plans'] ?? [];
     }
 
     public function getQuotePlans($id, bool $getLatestRating = false)
     {
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/cyber/get-quote-plans';
-        $plansApiToken = config('constants.KEN_API_TOKEN');
-        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
-        $plansApiUserName = config('constants.KEN_API_USER');
-        $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
-
         $plansDataArr = [
             'quoteUID' => $id,
             'lang' => 'en',
@@ -256,60 +246,27 @@ class CyberQuoteService extends BaseQuoteService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        $client = new \GuzzleHttp\Client;
-
         try {
-            $kenRequest = $client->post(
-                $plansApiEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
-                    ],
-                    'body' => json_encode($plansDataArr),
-                    'timeout' => $plansApiTimeout,
-                ]
-            );
+            $response = Ken::request('/cyber/get-quote-plans', 'post', $plansDataArr);
 
-            $getStatusCode = $kenRequest->getStatusCode();
-
-            if ($getStatusCode == 200) {
-                $getContents = (string) $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
-
-                return $getdecodeContents;
-            }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-            $contents = (string) $response->getBody();
-            $response = json_decode($contents);
-
-            if (isset($response->message)) {
-                $responseBodyAsString = $response->message;
-            } elseif (isset($response->error)) {
-                $responseBodyAsString = $response->error;
-            } else {
-                $responseBodyAsString = $contents;
+            if (isset($response['message'])) {
+                return $response['message'];
             }
 
-            return $responseBodyAsString;
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
-            $responseBodyAsString = 'Connection error occurred.';
+            if (isset($response['msg'])) {
+                return $response['msg'];
+            }
 
-            return $responseBodyAsString;
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            $responseBodyAsString = 'Request error occurred.';
+            if (isset($response['error'])) {
+                return $response['error'];
+            }
 
-            return $responseBodyAsString;
+            return $response;
+        } catch (ConnectionException $e) {
+            return 'Connection error occurred.';
         } catch (\Exception $e) {
-            $responseBodyAsString = 'An unexpected error occurred.';
-
-            return $responseBodyAsString;
+            return 'An unexpected error occurred.';
         }
-
-        return 'Failed to fetch quote plans.';
     }
 
     public function getFormOptions()
