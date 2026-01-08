@@ -41,7 +41,7 @@ class FailedIlaLeadsExport implements FromCollection, WithStrictNullComparison
             $leadData->last_name = $lead->last_name ?? '';
             $leadData->created_at = $lead->created_at ?? '';
             $leadData->paid_at = $lead->paid_at ?? '';
-            $leadData->quote_status = $lead->quoteStatus->text ?? '';
+            $leadData->quote_status = isset($lead->quoteStatus) && $lead->quoteStatus ? $lead->quoteStatus->text : '';
             $exportLeads->push($leadData);
         }
 

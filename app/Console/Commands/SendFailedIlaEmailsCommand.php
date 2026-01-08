@@ -83,10 +83,6 @@ class SendFailedIlaEmailsCommand extends Command
             app(FailedILAEmailService::class)->sendFailedIlaEmails(QuoteTypes::CORPLINE);
             LoggerService::info(self::class.' - sendFailedIlaEmails - Sent failed ILA emails to managers for quote type: '.QuoteTypes::CORPLINE->value);
             break;
-          case QuoteTypes::BUSINESS :
-            app(FailedILAEmailService::class)->sendFailedIlaEmails(QuoteTypes::BUSINESS);   
-            LoggerService::info(self::class.' - sendFailedIlaEmails - Sent failed ILA emails to managers for quote type: '.QuoteTypes::BUSINESS->value);
-            break;
           case QuoteTypes::YACHT:
             app(FailedILAEmailService::class)->sendFailedIlaEmails(QuoteTypes::YACHT);
             LoggerService::info(self::class.' - sendFailedIlaEmails - Sent failed ILA emails to managers for quote type: '.QuoteTypes::YACHT->value);
