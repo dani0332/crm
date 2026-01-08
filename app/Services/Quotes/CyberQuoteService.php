@@ -104,11 +104,9 @@ class CyberQuoteService extends BaseQuoteService
     public function getOne(string $uuid, $allDetails = false)
     {
         $quote = $this->baseQuery()
+            ->select(['personal_quotes.*'])
             ->with('cyberQuote')
             ->when($allDetails, function ($q) {
-                $entityCustomerType = CustomerTypeEnum::Entity;
-                $individualCustomerType = CustomerTypeEnum::Individual;
-
                 $q->with([
                     'quoteStatus',
                     'currentlyInsuredWith',
@@ -153,20 +151,12 @@ class CyberQuoteService extends BaseQuoteService
                     'documents' => function ($q) {
                         $q->with('createdBy')->orderBy('created_at', 'desc');
                     },
-                ])->select([
-                    'personal_quotes.*',
-                ])->selectRaw("
-                IF(
-                    EXISTS (
-                        SELECT *
-                        FROM quote_request_entity_mapping
-                        WHERE quote_type_id = {$this->quoteType->id()}
-                        AND quote_request_id = personal_quotes.id
-                    ), '{$entityCustomerType}', '{$individualCustomerType}'
-                ) AS customer_type
-            ");
+                ]);
             })
             ->where('uuid', $uuid)->firstOrFail();
+
+        // Set customer_type - Cyber quotes always have Individual customer type
+        $quote->customer_type = CustomerTypeEnum::Individual;
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
