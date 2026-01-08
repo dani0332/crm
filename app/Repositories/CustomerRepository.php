@@ -60,22 +60,22 @@ class CustomerRepository extends BaseRepository
                 $businessQuoteIds = [];
                 $travelQuoteIds = [];
                 $personalQuoteIds = [];
-                
+
                 if ($filterType == 'insured_first_name') {
                     $insuredIds = Insured::where('first_name', $filterValue)->pluck('id');
-                    
+
                     if ($insuredIds->isEmpty()) {
                         return $allQuotes;
                     }
-                    
+
                     $customerInsuredRecords = CustomerInsured::whereIn('insured_id', $insuredIds)
                         ->where('is_active', true)
                         ->get(['customer_id', 'quote_type_id', 'quote_request_id']);
-                    
+
                     if ($customerInsuredRecords->isEmpty()) {
                         return $allQuotes;
                     }
-                    
+
                     foreach ($customerInsuredRecords as $record) {
                         switch ($record->quote_type_id) {
                             case QuoteTypeId::Car:
@@ -90,7 +90,7 @@ class CustomerRepository extends BaseRepository
                             case QuoteTypeId::Travel:
                                 $travelQuoteIds[] = $record->quote_request_id;
                                 break;
-                                
+
                             case QuoteTypeId::Home:
                             case QuoteTypeId::Life:
                             case QuoteTypeId::Bike:
@@ -102,12 +102,12 @@ class CustomerRepository extends BaseRepository
                                 break;
                         }
                     }
-                    
+
                     $customerIds = $customerInsuredRecords->pluck('customer_id')->unique()->values();
                 } else {
                     $customerIds = Customer::where($filterType, $filterValue)->pluck('id');
                 }
-                
+
                 if (empty($customerIds) || $customerIds->isEmpty()) {
                     return $allQuotes;
                 }
@@ -226,7 +226,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $personalQuotes = PersonalQuote::with(['advisor', 'customer', 'latestInsured' => function($latestInsured) {
+            $personalQuotes = PersonalQuote::with(['advisor', 'customer', 'latestInsured' => function ($latestInsured) {
                 $latestInsured->whereIn('quote_type_id', getPersonalQuoteTypeIds());
             }])
                 ->when($filterType == 'insured_first_name' && ! empty($personalQuoteIds), function ($query) use ($personalQuoteIds) {

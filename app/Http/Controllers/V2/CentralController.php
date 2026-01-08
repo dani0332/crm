@@ -59,16 +59,12 @@ use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
-use App\Models\CustomerInsured;
-use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\QuoteNote;
-use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -242,10 +238,10 @@ class CentralController extends Controller
         }
 
         app(AMLService::class)->processInsuredDataForScreening(
-            $customerProfileRequest, 
-            $customerProfileRequest->quote_type_id, 
-            $quote, 
-            [], 
+            $customerProfileRequest,
+            $customerProfileRequest->quote_type_id,
+            $quote,
+            [],
             false);
 
         if ($quote) {
