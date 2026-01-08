@@ -89,6 +89,7 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             'Make',
             'Model',
             'Assigned Advisor Email',
+            'Department Name',
         ];
     }
 
@@ -105,6 +106,7 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
                 $quote->make,
                 $quote->model,
                 $quote->assignedadvisoremail,
+                $quote->departmentname ?? '',
             ];
         } elseif (isset($quote->Team)) {
             return [
@@ -123,6 +125,6 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             ];
         }
 
-        return array_fill(0, 11, '');
+        return array_fill(0, count($this->headings()), '');
     }
 }
