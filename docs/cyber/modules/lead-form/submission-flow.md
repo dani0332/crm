@@ -266,7 +266,7 @@ ILA is triggered separately (not automatically during quote creation). When ILA 
 
 1. **Automation Flow**: If AWNI automation completed/failed → Assigns CHS advisor
 2. **Normal Flow**: Fetches available advisor based on:
-   - Test mode flag
+   - Advisor emails from CYBER_ADVISORS app storage
    - Advisor leave status
    - Advisor availability (ONLINE → OFFLINE → UNAVAILABLE)
    - SIC advisor requested flag

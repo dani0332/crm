@@ -32,8 +32,7 @@ Cyber Insurance protects businesses and individuals from internet-based risks an
 - [Lead Details](./modules/lead-details/README.md) - Lead details page and management
 - [ILA (Instant Lead Allocation)](./modules/ila/README.md) - Advisor allocation system
   - [Allocation Logic](./modules/ila/allocation-logic.md) - How advisors are selected
-  - [Test Mode](./modules/ila/test-mode.md) - Test mode configuration
-  - [Production Mode](./modules/ila/production-mode.md) - Production allocation rules
+  - [Production Mode](./modules/ila/production-mode.md) - Allocation rules and behavior
   - [Daily Capacity](./modules/ila/daily-capacity.md) - Daily capacity management
   - [Business Requirements](./modules/ila/business-requirements.md) - FR documentation
   - [App Storage Keys](./modules/ila/app-storage-keys.md) - Storage key documentation
