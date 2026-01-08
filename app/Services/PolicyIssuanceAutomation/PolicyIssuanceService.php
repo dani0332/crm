@@ -531,7 +531,7 @@ class PolicyIssuanceService
             'policy_issuance_automation_enabled' => $enabled,
         ];
 
-        if ($enabled && $isExistingApiStatusLegacyNon) {
+        if (empty($quote->insurer_api_status_id) || $isExistingApiStatusLegacyNon) {
             $quoteData['insurer_api_status_id'] = $insurerApiStatus;
         }
 
