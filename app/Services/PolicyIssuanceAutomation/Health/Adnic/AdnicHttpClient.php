@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -83,6 +84,22 @@ class AdnicHttpClient
     private function buildClient(array $headers = []): PendingRequest
     {
         return Http::timeout($this->apiTimeout)
+            ->retry(
+                times: 5,
+                sleepMilliseconds: 10000,
+                when: function ($exception, $request) {
+                    // Retry on server errors (5xx) or connection/timeout exceptions
+                    if ($exception instanceof ConnectionException) {
+                        LoggerService::warning('ADNIC API retry attempt due to connection/timeout exception', extra: [
+                            'exception_message' => $exception->getMessage(),
+                        ]);
+                        return true;
+                    }
+
+                    return false;
+                },
+                throw: true
+            )
             ->withHeaders(array_merge($this->baseHeaders, $headers))
             ->asJson();
     }
