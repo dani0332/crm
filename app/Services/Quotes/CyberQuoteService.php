@@ -33,7 +33,7 @@ class CyberQuoteService extends BaseQuoteService
         parent::__construct(QuoteTypes::CYBER);
     }
 
-    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
+    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false, bool $getQuery = false)
     {
         $query = $this->baseQuery()->with([
             'quoteStatus',
@@ -82,6 +82,10 @@ class CyberQuoteService extends BaseQuoteService
         if (request()->has('debug') && request()->debug == 'true') {
             echo $query->toRawSql();
             exit;
+        }
+
+        if ($getQuery) {
+            return $query;
         }
 
         return $query->resolveData($paginted, $forExport, $getTotalCount);

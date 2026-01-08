@@ -123,7 +123,7 @@ class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadin
             QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams),
             QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuoteQuery(isExportRequest: true),
             QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(getQuery: true),
-            QuoteTypes::CYBER->value => app(CyberQuoteService::class)->getData(false, false, false),
+            QuoteTypes::CYBER->value => app(CyberQuoteService::class)->getData(getQuery: true),
             default => abort(404),
         };
 

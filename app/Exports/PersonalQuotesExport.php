@@ -124,7 +124,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams),
             QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuotes(isExportRequest: true),
             QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(forExport: true),
-            QuoteTypes::CYBER->value => app(CyberQuoteService::class)->getData(),
+            QuoteTypes::CYBER->value => app(CyberQuoteService::class)->getData(getQuery: true),
             default => abort(404),
         };
     }
