@@ -21,63 +21,65 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 
         $this->setRequest($request);
 
-        $lead = $this->findLead();
+        if ($this->verifyFetchLeadPreChecks() === false) {
+            $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
+        }
 
-        if (! $lead) {
-            LoggerService::info(self::class.' - Cyber lead does not meet pre-check criteria or not found');
+        $isVerified = $this->verifyPreChecks();
+
+        if (! $isVerified) {
+            LoggerService::info(self::class.' - Cyber lead does not meet pre-check criteria');
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
         }
 
         LoggerService::info(self::class.' - Cyber lead pre-checks passed', extra: [
-            'leadUuid' => $lead->uuid,
-            'leadId' => $lead->id,
+            'leadUuid' => $this->lead->uuid,
+            'leadId' => $this->lead->id,
         ]);
-
-        $this->allocationRequest->setLead($lead);
 
         return $next($request);
     }
 
-    private function findLead()
+    private function verifyPreChecks(): bool
     {
-        if ($this->verifyFetchLeadPreChecks() === false) {
-            return null;
-        }
-
-        LoggerService::info(self::class.' - Fetching Cyber lead');
-
-        $lead = $this->getLeadBaseQuery()
-            ->with('cyberQuote')
-            ->where(function ($query) {
-                $this->verifyPreChecks($query);
-            })
-            ->first();
+        $lead = $this->lead;
 
         if (! $lead) {
-            LoggerService::info(self::class.' - Cyber lead not found');
-
-            return null;
+            LoggerService::info(self::class.' - Lead not found, skipping assignment');
+            return false;
         }
 
-        LoggerService::info(self::class.' - Cyber lead found successfully', extra: [
-            'leadUuid' => $lead->uuid,
-            'leadId' => $lead->id,
-            'hasAdvisor' => $lead->advisor_id ? true : false,
-            'hasCyberQuote' => $lead->cyberQuote ? true : false,
-        ]);
+        // Load cyberQuote relation if not already loaded
+        if (! $lead->relationLoaded('cyberQuote')) {
+            $lead->load('cyberQuote');
+        }
 
-        return $lead;
-    }
+        // Check if lead is SIC and advisor is requested
+        $isSIC = $lead->isSIC(QuoteTypes::CYBER);
+        $isAdvisorRequested = $lead->cyberQuote && isset($lead->cyberQuote->sic_advisor_requested) && (bool) $lead->cyberQuote->sic_advisor_requested;
+        $isCHSAdvisor = $this->allocationRequest->get('isCHSAdvisor', false);
 
-    private function verifyPreChecks($query)
-    {
-        $query->where(function ($q) {
-            // Check if lead is SIC and advisor is requested
-            $q->isSIC(QuoteTypes::CYBER)
-                ->whereHas('cyberQuote', function ($cyberQuery) {
-                    $cyberQuery->where('sic_advisor_requested', 1);
-                });
-        });
+        // Check base conditions first
+        if (! $this->allocationRequest->isOverrideAdvisorRequest() && ! empty($lead->advisor_id) && ! $isCHSAdvisor) {
+            LoggerService::info(self::class.' - Lead is already assigned to advisor with ID: '.$lead->advisor_id.', skipping assignment');
+            return false;
+        } elseif ($lead->isFakeOrDuplicate()) {
+            LoggerService::info(self::class.' - Lead is fake or duplicate having quote_status_id '.$lead->quote_status_id.', skipping assignment');
+            return false;
+        } elseif ($isCHSAdvisor) {
+            LoggerService::info(self::class.' - CHS advisor assignment requested (AWNI automation), continuing assignment');
+            return true;
+        } elseif ($isSIC && $isAdvisorRequested) {
+            LoggerService::info(self::class.' - Lead is SIC and advisor is requested, continuing assignment');
+            return true;
+        } else {
+            LoggerService::info(self::class.' - Lead does not meet allocation criteria (SIC and advisor requested), skipping assignment', extra: [
+                'isSIC' => $isSIC,
+                'isAdvisorRequested' => $isAdvisorRequested,
+                'isCHSAdvisor' => $isCHSAdvisor,
+            ]);
+            return false;
+        }
     }
 
     private function verifyFetchLeadPreChecks()
