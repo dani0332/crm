@@ -29,6 +29,11 @@ use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
+    private const CYBER_BOOKING_TEAM_EMAIL = 'production.approval.team@insurancemarket.ae';
+    private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
+    private const CYBER_BOOKING_TEAM_EMAIL_TEST = 'productionapproval@yopmail.com';
+    private const CYBER_BOOKING_TEAM_NAME_TEST = 'Production Approval Team Test';
+
     public function __construct(
         private CustomerInsuredService $customerInsuredService
     ) {
@@ -418,16 +423,10 @@ class CyberQuoteService extends BaseQuoteService
     private function getPaContactDetails(): array
     {
         if (! app()->environment('production')) {
-            $email = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_BOOKING_TEAM_EMAIL_TEST, useCache: true);
-            $name = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_BOOKING_TEAM_NAME_TEST, useCache: true);
-
-            return [$email, $name];
+            return [self::CYBER_BOOKING_TEAM_EMAIL_TEST, self::CYBER_BOOKING_TEAM_NAME_TEST];
         }
 
-        $email = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_BOOKING_TEAM_EMAIL, useCache: true);
-        $name = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_BOOKING_TEAM_NAME, useCache: true);
-
-        return [$email, $name];
+        return [self::CYBER_BOOKING_TEAM_EMAIL, self::CYBER_BOOKING_TEAM_NAME];
     }
 
     private function getAdvisorManagerEmail(PersonalQuote $quote): ?string
