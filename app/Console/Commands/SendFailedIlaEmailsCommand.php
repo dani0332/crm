@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\Logger\LoggerService;
+use App\Enums\ApplicationStorageEnums;
 
 class SendFailedIlaEmailsCommand extends Command
 {
@@ -29,6 +30,13 @@ class SendFailedIlaEmailsCommand extends Command
 
     public function handle()
     {
+      try {
+
+        $sendFailedIlaEmailsSwitch = getAppStorageValueByKey(ApplicationStorageEnums::SEND_FAILED_ILA_EMAILS_SWITCH, useCache: true);
+        if (!$sendFailedIlaEmailsSwitch) {
+            LoggerService::warning(self::class.' - sendFailedIlaEmails - Send failed ILA emails switch is not enabled');
+            return Command::FAILURE;
+        }
         $quoteType = $this->option('quoteType');
         $quoteType = QuoteTypes::tryFrom($quoteType);
         
@@ -96,7 +104,10 @@ class SendFailedIlaEmailsCommand extends Command
             break;
        
         }
-        
+      } catch (\Exception $e) {
+        LoggerService::error(self::class.' - sendFailedIlaEmails - Error: '.$e->getMessage());
+        return Command::FAILURE;
+      }
       
       LoggerService::info(self::class.' - sendFailedIlaEmails - Completed sending failed ILA emails to managers');
       return Command::SUCCESS;
