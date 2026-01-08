@@ -1719,6 +1719,9 @@ class CRUDController extends Controller
         if (strpos($url, 'savings')) {
             $this->genericModel->modelType = 'Savings';
         }
+        if (strpos($url, 'device')) {
+            $this->genericModel->modelType = 'Device';
+        }
     }
 
     private function fillModelByModelType($type, Request $request)
