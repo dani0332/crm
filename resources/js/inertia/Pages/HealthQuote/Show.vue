@@ -4451,6 +4451,13 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
       :logs="clientInquiryLogs"
     />
 
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
     <lead-raw-data
       :modelType="'Health'"
       :uuid="$page.props.quote.uuid"
