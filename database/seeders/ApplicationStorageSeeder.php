@@ -73,7 +73,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
         $this->seedLegacyPolicyKeys();
-        $this->seedCyberAdvisors();
+        $this->seedCyberConfigurations();
         $this->seedBranchData();
         $this->seedOcrUtilEnabled();
     }
@@ -1221,7 +1221,7 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedCyberAdvisors()
+    private function seedCyberConfigurations()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS],
@@ -1281,6 +1281,56 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::CYBER_ESCALATION_LINK],
             [
                 'value' => $escalationLink,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_BOOKING_TEAM_EMAIL],
+            [
+                'value' => 'production.approval.team@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_BOOKING_TEAM_NAME],
+            [
+                'value' => 'Production Approval Team',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_BOOKING_TEAM_EMAIL_TEST],
+            [
+                'value' => 'productionapproval@yopmail.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_BOOKING_TEAM_NAME_TEST],
+            [
+                'value' => 'Production Approval Team Test',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL],
+            [
+                'value' => 'hapexuser@gmail.com',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

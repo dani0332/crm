@@ -27,19 +27,13 @@ use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
-    private const CYBER_BOOKING_TEAM_EMAIL = 'production.approval.team@insurancemarket.ae';
-    private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
-    private const CYBER_BOOKING_TEAM_EMAIL_TEST = 'productionapproval@yopmail.com';
-    private const CYBER_BOOKING_TEAM_NAME_TEST = 'Production Approval Team Test';
-    private const HAPPINESS_SUPPORT_USER_EMAIL = 'hapexuser@gmail.com'; // Test/UAT email
-
     public function __construct(
         private CustomerInsuredService $customerInsuredService
     ) {
         parent::__construct(QuoteTypes::CYBER);
     }
 
-    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
+    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false, bool $getQuery = false)
     {
         $query = $this->baseQuery()->with([
             'quoteStatus',
@@ -90,6 +84,10 @@ class CyberQuoteService extends BaseQuoteService
             exit;
         }
 
+        if ($getQuery) {
+            return $query;
+        }
+
         return $query->resolveData($paginted, $forExport, $getTotalCount);
     }
 
@@ -110,11 +108,9 @@ class CyberQuoteService extends BaseQuoteService
     public function getOne(string $uuid, $allDetails = false)
     {
         $quote = $this->baseQuery()
+            ->select(['personal_quotes.*'])
             ->with('cyberQuote')
             ->when($allDetails, function ($q) {
-                $entityCustomerType = CustomerTypeEnum::Entity;
-                $individualCustomerType = CustomerTypeEnum::Individual;
-
                 $q->with([
                     'quoteStatus',
                     'currentlyInsuredWith',
@@ -159,20 +155,12 @@ class CyberQuoteService extends BaseQuoteService
                     'documents' => function ($q) {
                         $q->with('createdBy')->orderBy('created_at', 'desc');
                     },
-                ])->select([
-                    'personal_quotes.*',
-                ])->selectRaw("
-                IF(
-                    EXISTS (
-                        SELECT *
-                        FROM quote_request_entity_mapping
-                        WHERE quote_type_id = {$this->quoteType->id()}
-                        AND quote_request_id = personal_quotes.id
-                    ), '{$entityCustomerType}', '{$individualCustomerType}'
-                ) AS customer_type
-            ");
+                ]);
             })
             ->where('uuid', $uuid)->firstOrFail();
+
+        // Set customer_type - Cyber quotes always have Individual customer type
+        $quote->customer_type = CustomerTypeEnum::Individual;
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
@@ -202,7 +190,7 @@ class CyberQuoteService extends BaseQuoteService
         // Replace advisor name with "Auto Issued" if advisor is automation user
         // Check test mode for UAT/Staging vs Production email
         $automationUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE, useCache: true) == '1'
-            ? self::HAPPINESS_SUPPORT_USER_EMAIL // Test/UAT email
+            ? getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true) // Test/UAT email
             : PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL; // Production email
 
         if ($quote->advisor && $quote->advisor->email === $automationUserEmail) {
@@ -472,12 +460,17 @@ class CyberQuoteService extends BaseQuoteService
 
     private function getPaContactDetails(): array
     {
-
         if (! app()->environment('production')) {
-            return [self::CYBER_BOOKING_TEAM_EMAIL_TEST, self::CYBER_BOOKING_TEAM_NAME_TEST];
+            $email = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_BOOKING_TEAM_EMAIL_TEST, useCache: true);
+            $name = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_BOOKING_TEAM_NAME_TEST, useCache: true);
+
+            return [$email, $name];
         }
 
-        return [self::CYBER_BOOKING_TEAM_EMAIL, self::CYBER_BOOKING_TEAM_NAME];
+        $email = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_BOOKING_TEAM_EMAIL, useCache: true);
+        $name = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_BOOKING_TEAM_NAME, useCache: true);
+
+        return [$email, $name];
     }
 
     private function getAdvisorManagerEmail(PersonalQuote $quote): ?string
