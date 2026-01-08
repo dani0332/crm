@@ -2017,19 +2017,19 @@ class SendEmailCustomerService extends BaseService
         return true;
     }
 
-    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $attemptedBy)
+    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $attemptedBy): ?object
     {
         $workflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW);
         $itSupportEmail = getAppStorageValueByKey(ApplicationStorageEnums::IT_SUPPORT_EMAIL);
 
         if (empty($workflowUrl)) {
             LoggerService::error('Manager Deactivation Attempt: BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW not found in ApplicationStorage.');
-            return;
+            return null;
         }
 
         if (empty($itSupportEmail)) {
             LoggerService::error('Manager Deactivation Attempt: IT_SUPPORT_EMAIL not found in ApplicationStorage.');
-            return;
+            return null;
         }
 
         $emailData = (object)[
@@ -2058,7 +2058,7 @@ class SendEmailCustomerService extends BaseService
             'emailData' => $emailData
         ]);
 
-        app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+        return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
     }
 
 }

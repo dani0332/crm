@@ -2,6 +2,8 @@
 
 namespace Tests\Helpers;
 
+use App\Enums\AuthGuardEnum;
+use App\Enums\PermissionsEnum;
 use App\Models\Nationality;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +20,8 @@ class TestDataSeeder
             'email' => 'test@example.com',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
+            // Required for routes behind CheckLastLoginMiddleware (last_login_check)
+            'last_login' => now(),
         ];
 
         $user = User::factory()->create(array_merge($defaults, $attributes));
@@ -35,11 +39,14 @@ class TestDataSeeder
 
         // Create role if it doesn't exist using DB facade
         $db = \Illuminate\Support\Facades\DB::connection('sqlite');
-        $roleId = $db->table('roles')->where('name', $roleName)->value('id');
+        $roleId = $db->table('roles')
+            ->where('name', $roleName)
+            ->where('guard_name', AuthGuardEnum::Web->value)
+            ->value('id');
         if (! $roleId) {
             $roleId = $db->table('roles')->insertGetId([
                 'name' => $roleName,
-                'guard_name' => 'web',
+                'guard_name' => AuthGuardEnum::Web->value,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -53,6 +60,65 @@ class TestDataSeeder
         ]);
 
         return $user;
+    }
+
+    /**
+     * Seed permissions for a single role (Spatie permissions tables) on sqlite.
+     *
+     * @param  array<int, string>  $permissionNames
+     */
+    public static function seedRolePermissions(string $roleName, array $permissionNames): void
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        $guardName = AuthGuardEnum::Web->value;
+
+        $roleId = $db->table('roles')
+            ->where('name', $roleName)
+            ->where('guard_name', $guardName)
+            ->value('id');
+
+        if (! $roleId) {
+            $roleId = $db->table('roles')->insertGetId([
+                'name' => $roleName,
+                'guard_name' => $guardName,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $permissionIds = collect($permissionNames)
+            ->filter(fn ($permissionName) => is_string($permissionName) && $permissionName !== '')
+            ->unique()
+            ->map(function (string $permissionName) use ($db, $guardName): int {
+                $permissionId = $db->table('permissions')
+                    ->where('name', $permissionName)
+                    ->where('guard_name', $guardName)
+                    ->value('id');
+
+                if (! $permissionId) {
+                    $permissionId = $db->table('permissions')->insertGetId([
+                        'name' => $permissionName,
+                        'guard_name' => $guardName,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                return (int) $permissionId;
+            })
+            ->values()
+            ->all();
+
+        foreach ($permissionIds as $permissionId) {
+            $db->table('role_has_permissions')->insertOrIgnore([
+                'permission_id' => $permissionId,
+                'role_id' => $roleId,
+            ]);
+        }
+
+        // Ensure Spatie doesn't serve stale permission mappings in the same process. Ensures cache is cleared so new/updated roles and permissions are recognized immediately
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     /**
@@ -132,16 +198,19 @@ class TestDataSeeder
     /**
      * Create a user with Admin role for testing.
      */
-    public static function createAdminUser(array $attributes = []): User
+    public static function createAdminUser(array $attributes = [], array $permissionNames = []): User
     {
         $user = self::createUser($attributes);
 
         $db = \Illuminate\Support\Facades\DB::connection('sqlite');
-        $roleId = $db->table('roles')->where('name', \App\Enums\RolesEnum::Admin)->value('id');
+        $roleId = $db->table('roles')
+            ->where('name', \App\Enums\RolesEnum::Admin)
+            ->where('guard_name', AuthGuardEnum::Web->value)
+            ->value('id');
         if (! $roleId) {
             $roleId = $db->table('roles')->insertGetId([
                 'name' => \App\Enums\RolesEnum::Admin,
-                'guard_name' => 'web',
+                'guard_name' => AuthGuardEnum::Web->value,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -153,6 +222,66 @@ class TestDataSeeder
             'model_id' => $user->id,
         ]);
 
+        // In app, Admin users are expected to pass permission middleware checks.
+        // For SQLite tests, attach all known PermissionsEnum permissions unless explicitly overridden.
+        $permissionsToSeed = $permissionNames !== []
+            ? $permissionNames
+            : array_values(PermissionsEnum::asArray());
+
+        self::seedRolePermissions(\App\Enums\RolesEnum::Admin, $permissionsToSeed);
+
         return $user;
+    }
+
+    /**
+     * Seed application_storage key/value pairs on sqlite.
+     *
+     * @param  array<string, mixed>  $keyValueMap
+     */
+    public static function seedApplicationStorage(array $keyValueMap): void
+    {
+        $rows = collect($keyValueMap)
+            ->map(fn ($value, $key) => [
+                'key_name' => $key,
+                'value' => $value,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ])
+            ->values()
+            ->all();
+
+        \Illuminate\Support\Facades\DB::connection('sqlite')
+            ->table('application_storage')
+            ->insertOrIgnore($rows);
+    }
+
+    /**
+     * Seed a basic product -> team hierarchy on sqlite.
+     *
+     * @return array{productTeamId:int, teamId:int}
+     */
+    public static function seedTeamHierarchy(): array
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        $productTeamId = (int) $db->table('teams')->insertGetId([
+            'name' => 'TEST_PRODUCT',
+            'type' => \App\Enums\TeamTypeEnum::PRODUCT,
+            'is_active' => 1,
+            'parent_team_id' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $teamId = (int) $db->table('teams')->insertGetId([
+            'name' => 'TEST_TEAM',
+            'type' => \App\Enums\TeamTypeEnum::TEAM,
+            'is_active' => 1,
+            'parent_team_id' => $productTeamId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return compact('productTeamId', 'teamId');
     }
 }
