@@ -18,7 +18,7 @@ class SendFailedIlaEmailsCommand extends Command
      * @var string
      */
     protected QuoteTypes $quoteType;
-    protected $signature = 'app:send-failed-ila-emails-command';
+    protected $signature = 'send-failed-ila-leads {--quoteType=}';
 
     /**
      * The console command description.
@@ -29,10 +29,12 @@ class SendFailedIlaEmailsCommand extends Command
 
     public function handle()
     {
-        LoggerService::info(self::class.' - sendFailedIlaEmails - Starting to send failed ILA emails to managers');
-      $allowedLobs =[QuoteTypes::CAR, QuoteTypes::BIKE, QuoteTypes::HEALTH, QuoteTypes::LIFE, QuoteTypes::TRAVEL, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::CYCLE, QuoteTypes::SAVINGS, QuoteTypes::GROUP_MEDICAL, QuoteTypes::CORPLINE, QuoteTypes::YACHT, QuoteTypes::JETSKI];
-
-      foreach ($allowedLobs as $quoteType) {
+        $quoteType = $this->option('quoteType');
+        LoggerService::info(self::class.' - sendFailedIlaEmails - Starting to send failed ILA emails to managers for quote type: '.$quoteType);
+        if (!$quoteType) {
+            LoggerService::warning(self::class.' - sendFailedIlaEmails - Quote type is required');
+            return Command::FAILURE;
+        }
         switch ($quoteType) {
          
           case QuoteTypes::CAR:
@@ -97,7 +99,7 @@ class SendFailedIlaEmailsCommand extends Command
        
         }
         
-      }
+      
       LoggerService::info(self::class.' - sendFailedIlaEmails - Completed sending failed ILA emails to managers');
       return Command::SUCCESS;
     }
