@@ -328,4 +328,7 @@ final class ApplicationStorageEnums extends Enum
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
+
+    // OCR Util Feature Toggle
+    public const OCR_UTIL_ENABLED = 'OCR_UTIL_ENABLED';
 }

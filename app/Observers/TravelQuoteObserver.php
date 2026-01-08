@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BranchEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -20,6 +21,7 @@ use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
+use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SIBService;
@@ -97,6 +99,10 @@ class TravelQuoteObserver
                 $travelQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $travelQuote->transaction_approved_at];
+        }
+        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::Quoted && $travelQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+            LoggerService::info(self::class." - Sending automated travel followup for quote uuid: {$travelQuote->uuid}");
+            app(TravelEmailService::class)->handleAutomatedFollowup($travelQuote);
         }
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
