@@ -23,7 +23,10 @@ class DeviceQuoteMockHelper
                 return self::simulateCapiResponse($testUuid, $data);
             });
 
-        // Bind the mock to the service container
+        // Bind the mock to the service container using fully-qualified class name
+        // This works for both constructor injection and facade access
+        app()->instance(CapiService::class, $mock);
+        // Also bind the facade accessor string for facade resolution
         app()->instance('CapiService', $mock);
 
         return $mock;
@@ -68,4 +71,3 @@ class DeviceQuoteMockHelper
         ];
     }
 }
-
