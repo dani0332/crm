@@ -7,7 +7,6 @@ use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Cyber\AssignLeadPipe;
-use App\Pipes\Allocation\Cyber\EvaluateTeamPipe;
 use App\Pipes\Allocation\Cyber\FetchAvailableAdvisorPipe;
 use App\Pipes\Allocation\Cyber\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -46,7 +45,6 @@ class CyberAllocation implements Allocation
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
                 VerifyAlreadyInProgressAllocationPipe::class,
-                EvaluateTeamPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,
