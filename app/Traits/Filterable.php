@@ -41,7 +41,7 @@ trait Filterable
         $ids = $this->resolveIds($id);
 
         $query->when(! empty($ids), function ($query) use ($ids, $alias) {
-            if (in_array('-1', $ids) || in_array(-1, $ids)) {
+            if (in_array('-1', $ids) || in_array(-1, $ids) || in_array('unassigned', $ids)) {
                 $query->whereNull('advisor_id');
             } else {
                 $this->applyFilter($query, 'advisor_id', $ids, $alias);

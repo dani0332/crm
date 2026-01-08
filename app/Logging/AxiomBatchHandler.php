@@ -123,7 +123,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
     public function sendBatch()
     {
-        if (empty($this->batch) || $this->batchSent || app()->environment('local')) {
+        if (empty($this->batch) || $this->batchSent || app()->environment('local') || app()->environment('testing')) {
             return;
         }
 

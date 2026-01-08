@@ -312,6 +312,7 @@ final class ApplicationStorageEnums extends Enum
     public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';
 
     // EP Failure Notification Email
+    public const EP_FAILURE_EMAIL_FROM = 'EP_FAILURE_EMAIL_FROM';
     public const EP_FAILURE_EMAIL_TO = 'EP_FAILURE_EMAIL_TO';
     public const EP_FAILURE_EMAIL_REPLY_TO = 'EP_FAILURE_EMAIL_REPLY_TO';
     public const EP_FAILURE_EMAIL_CC = 'EP_FAILURE_EMAIL_CC';
@@ -328,4 +329,6 @@ final class ApplicationStorageEnums extends Enum
     // Failed ILA Email Switch
     public const SEND_FAILED_ILA_EMAILS_SWITCH = 'SEND_FAILED_ILA_EMAILS_SWITCH';
     public const BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW = 'BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW';
+    // OCR Util Feature Toggle
+    public const OCR_UTIL_ENABLED = 'OCR_UTIL_ENABLED';
 }

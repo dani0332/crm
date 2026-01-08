@@ -60,4 +60,5 @@ final class GenericRequestEnum extends Enum
     const API_ISSUANCE_STATUS_ID_BLANK = 'blank';
     const PREVIOUS_POLICY_EXPIRED = 'Previous policy has expired';
     const PREVIOUS_POLICY_EXPIRED_STATUS_ID = 99;
+    const SEND_UPDATE_LOG = 'SendUpdateLog';
 }

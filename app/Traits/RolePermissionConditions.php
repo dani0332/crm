@@ -28,21 +28,26 @@ trait RolePermissionConditions
         $isSupportUser = $user->isSupportUser();
         $isAdmin = $user->isAdmin();
 
-        if ($isRenewalAdvisor) {
+        $isHealthUnassignedFilter = $restrictedQuoteType == quoteTypeCode::Health
+            && request()->has('advisors')
+            && is_array(request('advisors'))
+            && in_array('unassigned', request('advisors'));
+
+        if ($isRenewalAdvisor && ! $isHealthUnassignedFilter) {
 
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->where($prefix.'.'.'advisor_id', $user->id);
         }
-        if ($isRenewalManager) {
+        if ($isRenewalManager && ! $isHealthUnassignedFilter) {
             $ids = $this->walkTree($user->id, user: $user);
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
-        if ($isNewAdvisor) {
+        if ($isNewAdvisor && ! $isHealthUnassignedFilter) {
             $query->where($prefix.'.'.'advisor_id', $user->id);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
-        if ($isAdvisor) {
+        if ($isAdvisor && ! $isHealthUnassignedFilter) {
             $query->where($prefix.'.'.'advisor_id', $user->id);
         }
         if ($isSupportUser && in_array($restrictedQuoteType, [quoteTypeCode::Business, quoteTypeCode::Health])) {
@@ -75,17 +80,17 @@ trait RolePermissionConditions
                 });
             }
             // This condition allows cross-LOB access if a user possesses two roles, such as health manager and car manager.
-            if ($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health && ! $isAdmin) {
+            if ($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health && ! $isAdmin && ! $isHealthUnassignedFilter) {
                 $ids = $this->associateAdvisorsWithManager($user->id);
                 $ids[] = $user->id;
                 $query->whereIn($prefix.'.'.'advisor_id', $ids);
             }
         }
-        if ($isCarManager && $restrictedQuoteType == quoteTypeCode::Health && $user->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+        if ($isCarManager && $restrictedQuoteType == quoteTypeCode::Health && $user->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS) && ! $isHealthUnassignedFilter) {
             $ids = $this->walkTree($user->id, quoteTypeCode::Car);
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
-        if ($isCarAdvisor && $restrictedQuoteType == quoteTypeCode::Health && $user->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+        if ($isCarAdvisor && $restrictedQuoteType == quoteTypeCode::Health && $user->can(PermissionsEnum::HEALTH_QUOTES_ACCESS) && ! $isHealthUnassignedFilter) {
             $query->where($prefix.'.'.'advisor_id', $user->id);
         }
     }
