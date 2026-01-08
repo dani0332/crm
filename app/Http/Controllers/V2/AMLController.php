@@ -89,6 +89,7 @@ class AMLController extends Controller
         $this->middleware('permission:'.PermissionsEnum::AMLList.'|'.PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
             ['only' => ['index']]);
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
+        $this->middleware('permission:'.PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API, ['only' => ['togglePolicyIssuanceAutomation']]);
     }
 
     /**
