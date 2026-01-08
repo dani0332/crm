@@ -205,7 +205,7 @@ class CustomerService extends BaseService
                         ->where('value', $email)
                         ->exists();
 
-                    if ($keepExistingPrimaryEmail == true && !$isExist) {
+                    if ($keepExistingPrimaryEmail && !$isExist) {
                         CustomerAdditionalContact::create([
                             'customer_id' => $customer->id,
                             'key' => GenericRequestEnum::EMAIL,
@@ -244,7 +244,7 @@ class CustomerService extends BaseService
                 if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
 
                     // Convert lead email from primary to secondary, if user wants to keep
-                    if ($keepExistingPrimaryEmail == true) {
+                    if ($keepExistingPrimaryEmail) {
                         CustomerAdditionalContact::firstOrCreate([
                             'customer_id' => $customer->id,
                             'key' => GenericRequestEnum::EMAIL,
@@ -276,7 +276,7 @@ class CustomerService extends BaseService
                 }
             }
 
-            if ($keepExistingPrimaryEmail == false) {
+            if (!$keepExistingPrimaryEmail) {
                 $this->removeAdditionalEmailContactIfExitst($previousEmail, $lead->customer_id)?->delete();
             }
 
