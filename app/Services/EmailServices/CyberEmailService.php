@@ -30,6 +30,12 @@ class CyberEmailService extends BaseService
             LoggerService::info('sendCyberOCBIntroEmail - Advisor not found');
         }
 
+        if (! $workflowUrl || empty($workflowUrl->value)) {
+            LoggerService::info('sendCyberOCBIntroEmail - Workflow URL not found or empty');
+
+            return;
+        }
+
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
 
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
