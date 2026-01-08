@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Http\Requests;
+
+use App\Enums\QuoteStatusEnum;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Foundation\Http\FormRequest;
+
+class CustomerPrimaryEmailRequest extends FormRequest
+{
+    use GenericQueriesAllLobs;
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'quote_id' => 'required',
+            'quote_type' => 'required',
+            'key' => 'required',
+            'value' => 'required',
+        ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $quote = $this->getQuoteObject($this->quote_type, $this->quote_id);
+            if (
+                in_array($quote->quote_status_id, [
+                    QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+                    QuoteStatusEnum::POLICY_BOOKING_FAILED,
+                ])
+            ) {
+                $validator->errors()->add('error', 'Primary email ID cannot be changed while the policy booking is in progress.');
+            }
+        });
+    }
+}
