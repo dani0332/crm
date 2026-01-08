@@ -379,12 +379,12 @@ const submitInsuredKycForm = isValid => {
           }
         }
         /* Health Adnic AutoCapture Messages  */
-        if(response.data.autoCaptureStatus == 'failed'){
+        if (response.data.autoCaptureStatus == 'failed') {
           notification.error({
             title: response.data.autoCaptureMessage,
             position: 'top',
           });
-        }else if(response.data.autoCaptureStatus == 'success'){
+        } else if (response.data.autoCaptureStatus == 'success') {
           notification.success({
             title: response.data.autoCaptureMessage,
             position: 'top',
