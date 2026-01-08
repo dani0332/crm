@@ -311,11 +311,10 @@ class CustomerService extends BaseService
         }
     }
 
-    private function removeAdditionalEmailContactIfExitst(string $email, ?int $customerId = null)
+    private function removeAdditionalEmailContactIfExitst($email, $customerId)
     {
-        $additionalContacts = CustomerAdditionalContact::when($customerId, 
-                fn ($q) => $q->where('customer_id', $customerId)
-            )->where('value', $email)
+        $additionalContacts = CustomerAdditionalContact::where('customer_id', $customerId)
+            ->where('value', $email)
             ->where('key', GenericRequestEnum::EMAIL);
 
         if ($additionalContacts->count() == 0) {
