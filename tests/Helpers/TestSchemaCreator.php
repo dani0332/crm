@@ -311,9 +311,51 @@ class TestSchemaCreator
                 $table->unsignedBigInteger('plan_id')->nullable();
                 $table->unsignedBigInteger('insurance_provider_id')->nullable();
                 $table->boolean('policy_issuance_automation_enabled')->default(false);
+                $table->unsignedBigInteger('customer_id')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
+                $table->softDeletes();
+                $table->timestamps();
+            });
+        }
+
+        // Create customer_additional_contact table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('customer_additional_contact')) {
+            Schema::connection('sqlite')->create('customer_additional_contact', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->string('key')->nullable();
+                $table->string('value')->nullable();
+                $table->boolean('wa_opt_in')->default(0);
+                $table->timestamps();
+            });
+        }
+
+        // Create customer table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('customer')) {
+            Schema::connection('sqlite')->create('customer', function ($table) {
+                $table->id();
+                $table->string('emirates_id_number')->nullable();
+                $table->date('dob')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (! Schema::connection('sqlite')->hasTable('quote_sync')) {
+            Schema::connection('sqlite')->create('quote_sync', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->string('quote_uuid')->nullable();
+                $table->boolean('is_synced')->default(0);
+                $table->timestamp('synced_at')->nullable();
+                $table->text('updated_fields')->nullable();
+                $table->unsignedInteger('status')->nullable();
+                $table->text('error')->nullable();
                 $table->timestamps();
             });
         }
