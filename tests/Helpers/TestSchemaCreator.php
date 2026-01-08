@@ -3,6 +3,7 @@
 namespace Tests\Helpers;
 
 use Illuminate\Support\Facades\Schema;
+use Tests\Support\Schema\RenewalsSchema;
 
 class TestSchemaCreator
 {
@@ -38,6 +39,8 @@ class TestSchemaCreator
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->string('remember_token')->nullable();
+                $table->integer('status')->nullable();
+                $table->timestamp('logout_at')->nullable();
                 $table->timestamps();
             });
         }
@@ -268,5 +271,57 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+
+        // Create insurance_provider table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('insurance_provider')) {
+            Schema::connection('sqlite')->create('insurance_provider', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->unsignedBigInteger('payment_gateway_id')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create car_plan table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('car_plan')) {
+            Schema::connection('sqlite')->create('car_plan', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('insurance_provider_id');
+                $table->string('plan_name');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        // Create car_quote_request table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('car_quote_request')) {
+            Schema::connection('sqlite')->create('car_quote_request', function ($table) {
+                $table->id();
+                $table->string('uuid')->unique();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->date('dob')->nullable();
+                $table->string('registration_type')->nullable();
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->boolean('policy_issuance_automation_enabled')->default(false);
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->unsignedBigInteger('created_by_id')->nullable();
+                $table->unsignedBigInteger('updated_by_id')->nullable();
+                $table->timestamps();
+            });
+        }
+    }
+
+    public static function createRenewalsSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new RenewalsSchema)->register();
     }
 }

@@ -101,6 +101,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             'Make',
             'Model',
             'Assigned Advisor Email',
+            'Department Name',
         ];
     }
 
@@ -117,6 +118,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
                 $quote->make,
                 $quote->model,
                 $quote->assignedadvisoremail,
+                $quote->departmentname ?? '',
             ];
         } elseif (isset($quote->NonPUA)) {
             return [
@@ -135,6 +137,6 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
             ];
         }
 
-        return array_fill(0, 11, '');
+        return array_fill(0, count($this->headings()), '');
     }
 }
