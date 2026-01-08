@@ -11,9 +11,7 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Tests\Helpers\TestSchemaCreator;
-use Tests\TestCase;
 
-uses(TestCase::class);
 
 beforeEach(
     function () {
