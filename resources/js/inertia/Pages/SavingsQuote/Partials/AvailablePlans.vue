@@ -14,6 +14,7 @@ const props = defineProps({
   ecomSavingsInsuranceQuoteUrl: String,
   websiteURL: String,
   lockLeadSectionsDetails: Object,
+  lookUpData: Object,
 });
 
 const page = usePage();
@@ -829,6 +830,7 @@ onMounted(() => {
           :planDetails="planDetails"
           :quote="quote"
           :lockLeadSectionsDetails="lockLeadSectionsDetails"
+          :lookUpData="lookUpData"
           @update="onPlanDetailsUpdate"
         />
 
@@ -878,6 +880,7 @@ onMounted(() => {
             :quote="quote"
             :insuranceProviders="insuranceProviders"
             :available-plans="availablePlansTable.data"
+            :lookUpData="lookUpData"
             @success="onCreatePlan"
             @error="onPlanError"
           />

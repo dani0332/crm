@@ -8,6 +8,7 @@ const props = defineProps({
   planDetails: Object,
   quote: Object,
   lockLeadSectionsDetails: Object,
+  lookUpData: Object,
 });
 
 const page = usePage();
@@ -23,19 +24,33 @@ const planDetailsTabs = ref([
   { index: 5, label: 'Plan Documents' },
 ]);
 
-// Currency Options
-const currencyOptions = ref([
-  { value: 'AED', label: 'AED' },
-  { value: 'USD', label: 'USD' },
-  { value: 'EUR', label: 'EUR' },
-  { value: 'GBP', label: 'GBP' },
-]);
+// Currency Options - from lookUpData
+const currencyOptions = computed(() => {
+  return (
+    props.lookUpData?.currencyType?.map(item => ({
+      value: item.code || item.text,
+      label: item.text,
+    })) || [
+      { value: 'AED', label: 'AED' },
+      { value: 'USD', label: 'USD' },
+      { value: 'EUR', label: 'EUR' },
+      { value: 'GBP', label: 'GBP' },
+    ]
+  );
+});
 
-// Investment Frequency Options
-const investmentFrequencyOptions = ref([
-  { value: 'Regular', label: 'Regular' },
-  { value: 'Lumpsum', label: 'Lumpsum' },
-]);
+// Investment Frequency Options - from lookUpData
+const investmentFrequencyOptions = computed(() => {
+  return (
+    props.lookUpData?.savingsInvestmentType?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || [
+      { value: 'Regular', label: 'Regular' },
+      { value: 'Lumpsum', label: 'Lumpsum' },
+    ]
+  );
+});
 
 // Payment Term Options
 const paymentTermOptions = ref([

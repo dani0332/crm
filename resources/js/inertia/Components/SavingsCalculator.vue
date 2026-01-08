@@ -1,4 +1,5 @@
 <script setup>
+import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
 import { Chart } from 'highcharts-vue';
 import { toPng } from 'html-to-image';
 
@@ -10,6 +11,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue', 'calculate']);
+
+// Use the composable
+const { calculate, getYearlyProgression, formatNumber, formatNumberShort } =
+  useSavingsCalculator();
 
 // Calculator mode: 'invest' or 'goal'
 const calculatorMode = ref('goal');
@@ -38,7 +43,7 @@ const frequencyOptions = [
   { value: 'Yearly', label: 'Yearly' },
 ];
 
-// Format number with commas
+// Format number with commas for input
 const formatWithCommas = value => {
   if (!value) return '';
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -56,111 +61,29 @@ const currencySymbol = computed(() => {
   return currency ? currency.label : 'Ð';
 });
 
-// Get periods per year based on frequency
-const getPeriodsPerYear = frequency => {
-  switch (frequency) {
-    case 'Single Payment':
-      return 1;
-    case 'Monthly':
-      return 12;
-    case 'Quarterly':
-      return 4;
-    case 'Half Yearly':
-      return 2;
-    case 'Yearly':
-      return 1;
-    default:
-      return 12;
-  }
-};
-
-// Calculate results based on mode
+// Calculate results using composable
 const calculationResults = computed(() => {
-  const rate = form.expectedRateOfReturn / 100;
-  const periodicAmount = form.investmentAmount;
-  const periodsPerYear = getPeriodsPerYear(form.investmentFrequency);
+  const result = calculate({
+    mode: calculatorMode.value,
+    amount: form.investmentAmount,
+    rate: form.expectedRateOfReturn,
+    years: form.investmentDuration,
+    frequency: form.investmentFrequency,
+  });
 
+  // Add header text based on mode
+  let headerText;
   if (calculatorMode.value === 'invest') {
-    // Calculate future value from investment amount
-    if (form.investmentFrequency === 'Single Payment') {
-      // Lump sum investment: FV = P * (1 + r)^n
-      const futureValue =
-        periodicAmount * Math.pow(1 + rate, form.investmentDuration);
-      const totalInvestment = periodicAmount;
-      const wealthGained = futureValue - totalInvestment;
-
-      return {
-        headerText: `Estimated returns of ${currencySymbol.value} ${formatNumber(Math.round(futureValue))}`,
-        totalInvestment: Math.round(totalInvestment),
-        wealthGained: Math.round(wealthGained),
-        futureValue: Math.round(futureValue),
-      };
-    } else {
-      // Regular periodic investment (SIP - Systematic Investment Plan)
-      const totalPeriods = form.investmentDuration * periodsPerYear;
-      const periodicRate = rate / periodsPerYear;
-
-      // Future Value of Annuity Due formula (payment at beginning of period):
-      // FV = P × [((1 + r)^n - 1) / r] × (1 + r)
-      const futureValue =
-        periodicAmount *
-        ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate) *
-        (1 + periodicRate);
-      const totalInvestment = periodicAmount * totalPeriods;
-      const wealthGained = futureValue - totalInvestment;
-
-      return {
-        headerText: `Estimated returns of ${currencySymbol.value} ${formatNumber(Math.round(futureValue))}`,
-        totalInvestment: Math.round(totalInvestment),
-        wealthGained: Math.round(wealthGained),
-        futureValue: Math.round(futureValue),
-      };
-    }
+    headerText = `Estimated returns of ${currencySymbol.value} ${formatNumber(result.futureValue)}`;
   } else {
-    // Goal mode: Calculate required investment to reach the goal (investment amount is the goal)
-    const goalAmount = form.investmentAmount;
-
-    if (form.investmentFrequency === 'Single Payment') {
-      // Required lump sum: P = FV / (1 + r)^n
-      const requiredPayment =
-        goalAmount / Math.pow(1 + rate, form.investmentDuration);
-      const wealthGained = goalAmount - requiredPayment;
-
-      return {
-        headerText: `Single investment required of ${currencySymbol.value} ${formatNumber(Math.round(requiredPayment))}`,
-        totalInvestment: Math.round(requiredPayment),
-        wealthGained: Math.round(wealthGained),
-        futureValue: goalAmount,
-      };
-    } else {
-      const totalPeriods = form.investmentDuration * periodsPerYear;
-      const periodicRate = rate / periodsPerYear;
-
-      // PMT formula for Annuity Due (SIP - payment at beginning of period):
-      // PMT = FV × [r / ((1 + r)^n - 1)] / (1 + r)
-      const requiredPayment =
-        (goalAmount *
-          (periodicRate / (Math.pow(1 + periodicRate, totalPeriods) - 1))) /
-        (1 + periodicRate);
-      const totalInvestment = requiredPayment * totalPeriods;
-      const wealthGained = goalAmount - totalInvestment;
-
-      const frequencyLabel = form.investmentFrequency;
-
-      return {
-        headerText: `${frequencyLabel} investment required of ${currencySymbol.value} ${formatNumber(Math.round(requiredPayment))}`,
-        totalInvestment: Math.round(totalInvestment),
-        wealthGained: Math.round(wealthGained),
-        futureValue: goalAmount,
-      };
-    }
+    const freq = form.investmentFrequency;
+    const label =
+      freq === 'Single Payment' ? 'Single investment' : freq + ' investment';
+    headerText = `${label} required of ${currencySymbol.value} ${formatNumber(result.requiredPayment || result.totalInvestment)}`;
   }
-});
 
-// Format number with commas
-const formatNumber = num => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-};
+  return { ...result, headerText };
+});
 
 // Chart options for donut chart (Goal mode)
 const donutChartOptions = computed(() => ({
@@ -169,32 +92,17 @@ const donutChartOptions = computed(() => ({
     backgroundColor: 'transparent',
     height: 280,
   },
-  title: {
-    text: '',
-  },
-  xAxis: {
-    visible: false,
-    categories: [],
-  },
-  yAxis: {
-    visible: false,
-  },
-  tooltip: {
-    pointFormat: '<b>{point.percentage:.1f}%</b>',
-  },
-  accessibility: {
-    point: {
-      valueSuffix: '%',
-    },
-  },
+  title: { text: '' },
+  xAxis: { visible: false, categories: [] },
+  yAxis: { visible: false },
+  tooltip: { pointFormat: '<b>{point.percentage:.1f}%</b>' },
+  accessibility: { point: { valueSuffix: '%' } },
   plotOptions: {
     pie: {
       innerSize: '60%',
       allowPointSelect: true,
       cursor: 'pointer',
-      dataLabels: {
-        enabled: false,
-      },
+      dataLabels: { enabled: false },
       showInLegend: false,
     },
   },
@@ -216,60 +124,23 @@ const donutChartOptions = computed(() => ({
       ],
     },
   ],
-  credits: {
-    enabled: false,
-  },
+  credits: { enabled: false },
 }));
 
-// Format number with K/M suffix
-const formatNumberShort = num => {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(num % 1000000 === 0 ? 0 : 2) + 'M';
-  }
-  if (num >= 1000) {
-    return Math.round(num / 1000) + 'k';
-  }
-  return num.toString();
-};
-
-// Calculate yearly investment values for bar chart
+// Yearly investment data for bar chart (using composable)
 const yearlyInvestmentData = computed(() => {
-  const rate = form.expectedRateOfReturn / 100;
-  const years = form.investmentDuration;
-  const periodsPerYear = getPeriodsPerYear(form.investmentFrequency);
-  const periodicAmount = form.investmentAmount;
-  const data = [];
+  const progression = getYearlyProgression({
+    amount: form.investmentAmount,
+    rate: form.expectedRateOfReturn,
+    years: form.investmentDuration,
+    frequency: form.investmentFrequency,
+  });
 
-  if (form.investmentFrequency === 'Single Payment') {
-    // Lump sum: compound growth each year
-    for (let year = 1; year <= years; year++) {
-      const futureValue = periodicAmount * Math.pow(1 + rate, year);
-      data.push({
-        name: `Year ${year}`,
-        y: Math.round(futureValue),
-        color: '#F5A623',
-      });
-    }
-  } else {
-    // Regular periodic investment (SIP formula)
-    const periodicRate = rate / periodsPerYear;
-
-    for (let year = 1; year <= years; year++) {
-      const totalPeriods = year * periodsPerYear;
-      // Future Value of Annuity Due formula (payment at beginning of period)
-      const futureValue =
-        periodicAmount *
-        ((Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate) *
-        (1 + periodicRate);
-      data.push({
-        name: `Year ${year}`,
-        y: Math.round(futureValue),
-        color: '#F5A623',
-      });
-    }
-  }
-
-  return data;
+  return progression.map(d => ({
+    name: `Year ${d.year}`,
+    y: d.value,
+    color: '#F5A623',
+  }));
 });
 
 // Chart options for bar chart (Invest mode)

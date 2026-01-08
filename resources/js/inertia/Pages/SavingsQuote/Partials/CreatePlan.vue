@@ -1,4 +1,9 @@
 <script setup>
+import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
+import {
+  cleanFormattedValueToFloat,
+  useFormatPrice,
+} from '@/inertia/Composables/utilities';
 import { defineEmits } from 'vue';
 
 const emit = defineEmits(['success', 'error']);
@@ -8,9 +13,47 @@ const props = defineProps({
   quote: Object,
   insuranceProviders: Array,
   availablePlans: Array,
+  lookUpData: Object,
 });
 
 const page = usePage();
+
+// Use savings calculator composable for lumpsum payout calculation
+const { calculatePayout } = useSavingsCalculator();
+
+// Display values for formatted inputs (format on blur only)
+const investmentAmountDisplay = ref('');
+const lumpsumPayoutDisplay = ref('');
+
+// Format price with commas and 2 decimals
+const formatPrice = value => {
+  if (!value && value !== 0) return '';
+  return useFormatPrice(value, true);
+};
+
+// Sync form value while typing (without formatting)
+watch(investmentAmountDisplay, val => {
+  addPlanForm.investment_amount = cleanFormattedValueToFloat(val) || null;
+});
+
+watch(lumpsumPayoutDisplay, val => {
+  addPlanForm.lumpsum_payout = cleanFormattedValueToFloat(val) || null;
+});
+
+// Handle blur - format the display value
+const onInvestmentAmountBlur = () => {
+  const value = addPlanForm.investment_amount;
+  if (value) {
+    investmentAmountDisplay.value = formatPrice(value);
+  }
+};
+
+const onLumpsumPayoutBlur = () => {
+  const value = addPlanForm.lumpsum_payout;
+  if (value) {
+    lumpsumPayoutDisplay.value = formatPrice(value);
+  }
+};
 
 const isEmptyField = ref(false);
 
@@ -56,27 +99,41 @@ const addPlanForm = useForm({
   waiver_of_premium_value_2: 0,
 });
 
-// Plan Type Options
+// Plan Type Options (hardcoded - specific to plan types)
 const planTypeOptions = ref([
   { value: 'savings', label: 'Savings' },
   { value: 'whole_of_life', label: 'Whole of Life' },
 ]);
 
-// Currency Options
-const currencyOptions = ref([
-  { value: 'AED', label: 'AED' },
-  { value: 'USD', label: 'USD' },
-  { value: 'EUR', label: 'EUR' },
-  { value: 'GBP', label: 'GBP' },
-]);
+// Currency Options - from lookUpData
+const currencyOptions = computed(() => {
+  return (
+    props.lookUpData?.currencyType?.map(item => ({
+      value: item.code || item.text,
+      label: item.text,
+    })) || [
+      { value: 'AED', label: 'AED' },
+      { value: 'USD', label: 'USD' },
+      { value: 'EUR', label: 'EUR' },
+      { value: 'GBP', label: 'GBP' },
+    ]
+  );
+});
 
-// Investment Frequency Options
-const investmentFrequencyOptions = ref([
-  { value: 'regular', label: 'Regular' },
-  { value: 'lumpsum', label: 'Lumpsum' },
-]);
+// Investment Frequency Options - from lookUpData
+const investmentFrequencyOptions = computed(() => {
+  return (
+    props.lookUpData?.savingsInvestmentType?.map(item => ({
+      value: item.code?.toLowerCase() || item.id,
+      label: item.text,
+    })) || [
+      { value: 'regular', label: 'Regular' },
+      { value: 'lumpsum', label: 'Lumpsum' },
+    ]
+  );
+});
 
-// Payment Term Options
+// Payment Term Options (payment frequencies)
 const paymentTermOptions = ref([
   { value: 'monthly', label: 'Monthly' },
   { value: 'quarterly', label: 'Quarterly' },
@@ -84,11 +141,18 @@ const paymentTermOptions = ref([
   { value: 'annual', label: 'Annual' },
 ]);
 
-// Tenure of Savings Options (1-30 years)
+// Tenure of Savings Options - from lookUpData or generate 1-30 years
 const tenureOfSavingsOptions = computed(() => {
+  if (props.lookUpData?.savingsTenure?.length) {
+    return props.lookUpData.savingsTenure.map(item => ({
+      value: parseInt(item.code) || item.id,
+      label: item.text,
+    }));
+  }
+  // Fallback: generate 1-30 years
   const options = [];
   for (let i = 1; i <= 30; i++) {
-    options.push({ value: i, label: `${i}` });
+    options.push({ value: i, label: `${i} Year${i > 1 ? 's' : ''}` });
   }
   return options;
 });
@@ -97,6 +161,17 @@ const tenureOfSavingsOptions = computed(() => {
 const showRiders = computed(() => {
   return addPlanForm.plan_type === 'whole_of_life';
 });
+
+// Map payment term to frequency for calculator
+const getFrequencyFromPaymentTerm = term => {
+  const map = {
+    monthly: 'Monthly',
+    quarterly: 'Quarterly',
+    semi_annual: 'Half Yearly',
+    annual: 'Yearly',
+  };
+  return map[term] || 'Monthly';
+};
 
 const insuranceProviderOptions = computed(() => {
   return (
@@ -185,9 +260,32 @@ const createQuotePlan = isValid => {
 };
 
 const calculatePlan = () => {
-  // Placeholder for calculate functionality
-  notification.info({
-    title: 'Calculate functionality will be implemented',
+  const amount = parseFloat(addPlanForm.investment_amount) || 0;
+  const rate = parseFloat(addPlanForm.expected_rate_of_return) || 0;
+  const years = parseInt(addPlanForm.tenure_of_savings) || 0;
+
+  // Validate required fields
+  if (!amount || !rate || !years) {
+    notification.warning({
+      title: 'Please fill Investment Amount, Rate of Return, and Tenure',
+      position: 'top',
+    });
+    return;
+  }
+
+  // Determine frequency based on investment type
+  const frequency =
+    addPlanForm.investment_frequency === 'lumpsum'
+      ? 'Single Payment'
+      : getFrequencyFromPaymentTerm(addPlanForm.payment_term);
+
+  // Calculate and set lumpsum payout
+  const payout = calculatePayout({ amount, rate, years, frequency });
+  addPlanForm.lumpsum_payout = payout;
+  lumpsumPayoutDisplay.value = formatPrice(payout); // Update display
+
+  notification.success({
+    title: `Lumpsum Payout: ${formatPrice(payout)}`,
     position: 'top',
   });
 };
@@ -265,13 +363,12 @@ const validateDecimal = event => {
             :rules="[isRequired]"
           />
           <x-input
-            v-model="addPlanForm.investment_amount"
-            :rules="[isRequired, maxPrice(999999999), minPrice(0)]"
+            v-model="investmentAmountDisplay"
+            @blur="onInvestmentAmountBlur"
+            :rules="[isRequired]"
             class="flex-1"
-            placeholder="Enter Investment Amount"
-            type="number"
-            step="any"
-            @keydown="validateDecimal"
+            placeholder="0.00"
+            type="text"
           />
         </div>
       </div>
@@ -341,13 +438,12 @@ const validateDecimal = event => {
         <x-input
           label="Lumpsum Payout"
           required
-          v-model="addPlanForm.lumpsum_payout"
-          :rules="[isRequired, maxPrice(999999999), minPrice(0)]"
+          v-model="lumpsumPayoutDisplay"
+          @blur="onLumpsumPayoutBlur"
+          :rules="[isRequired]"
           class="w-full"
-          placeholder="Enter Lumpsum Amount"
-          type="number"
-          step="any"
-          @keydown="validateDecimal"
+          placeholder="0.00"
+          type="text"
         />
       </div>
       <div class="w-full md:w-1/2">
