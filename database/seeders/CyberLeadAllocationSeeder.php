@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\LeadAllocation;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\CyberAllocation;
 use Illuminate\Database\Seeder;
 
 class CyberLeadAllocationSeeder extends Seeder
@@ -86,7 +86,8 @@ class CyberLeadAllocationSeeder extends Seeder
 
     private function setupSystemUserAllocation(): void
     {
-        $systemUser = User::where('email', CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL)->first();
+        $happinessUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true);
+        $systemUser = User::where('email', $happinessUserEmail)->first();
 
         if (! $systemUser) {
             LoggerService::warning('CyberLeadAllocationSeeder: Customer Happiness Centre system user not found');

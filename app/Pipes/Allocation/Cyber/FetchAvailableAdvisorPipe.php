@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\CyberAllocation;
 use Closure;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
@@ -96,9 +95,10 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
             if ($this->isTestMode()) {
                 LoggerService::info(self::class.' - TEST MODE: Using test Happiness User email for CHS advisor');
+                $happinessUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true);
 
                 return User::select('users.id as user_id')
-                    ->where('users.email', CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL)
+                    ->where('users.email', $happinessUserEmail)
                     ->first();
             }
 

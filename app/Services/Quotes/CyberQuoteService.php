@@ -27,8 +27,6 @@ use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
-    private const HAPPINESS_SUPPORT_USER_EMAIL = 'hapexuser@gmail.com';
-
     public function __construct(
         private CustomerInsuredService $customerInsuredService
     ) {
@@ -198,7 +196,7 @@ class CyberQuoteService extends BaseQuoteService
         // Replace advisor name with "Auto Issued" if advisor is automation user
         // Check test mode for UAT/Staging vs Production email
         $automationUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE, useCache: true) == '1'
-            ? self::HAPPINESS_SUPPORT_USER_EMAIL // Test/UAT email
+            ? getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true) // Test/UAT email
             : PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL; // Production email
 
         if ($quote->advisor && $quote->advisor->email === $automationUserEmail) {
