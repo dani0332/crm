@@ -362,20 +362,6 @@ class AMLController extends Controller
         return response()->json($response);
     }
 
-    // public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
-    // {
-    //     $customer = CustomerRepository::updateCustomerDetails($request->customer_id, $request->safe());
-
-    //     return response()->json(['success' => true]);
-    // }
-
-    // public function updateEntityDetails(UpdateAMLEntityDetailRequest $request)
-    // {
-    //     $entity = EntityRepository::updateEntityDetail($request->safe());
-
-    //     return response()->json(['success' => true]);
-    // }
-
     public function checkMissingTravelAmlRequirement(Request $request)
     {
         LoggerService::info(self::class.' fn: '.__FUNCTION__);

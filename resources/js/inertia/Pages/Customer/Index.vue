@@ -165,11 +165,9 @@ function onReset() {
         {{ customer?.first_name }}
       </template>
 
-      <template #item-insured_first_name="{ customer }">
+      <template #item-insured_first_name="{ latest_insured, customer }">
         {{
-          customer?.latest_insured?.first_name ??
-          customer?.insured_first_name ??
-          ''
+          (latest_insured?.first_name ?? customer?.first_name) ?? ''
         }}
       </template>
 

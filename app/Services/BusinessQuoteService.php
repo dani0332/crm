@@ -169,7 +169,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('customer_insured as ci', function ($query) {
                 $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $query->on('ci.quote_request_id', '=', 'bqr.id');
-                $query->whereRaw('ci.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Business]);
+                $query->where('ci.is_active', '=', true);
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
