@@ -563,7 +563,7 @@ class CustomerVerificationService
             'has_response' => $response !== null,
         ]);
 
-        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, QuoteTypes::CAR->value));
+        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, $this->getQuoteType($quote)));
     }
 
     private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
