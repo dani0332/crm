@@ -69,6 +69,10 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
     {
         $lead = $this->lead;
 
+        if (! $lead) {
+            return false;
+        }
+
         $isAwniCyberPolicyIssuanceEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_AWNI_CYBER_POLICY_ISSUANCE, useCache: true) == '1';
 
         if ($isAwniCyberPolicyIssuanceEnabled) {
