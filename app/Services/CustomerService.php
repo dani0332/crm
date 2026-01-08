@@ -279,7 +279,8 @@ class CustomerService extends BaseService
             }
 
             if ($keepExistingPrimaryEmail == false) {
-                $this->removeAdditionalEmailContactIfExitst($previousEmail, $lead->customer_id)->delete();
+                $removeableContact = $this->removeAdditionalEmailContactIfExitst($previousEmail, $lead->customer_id)->first();
+                if ($removeableContact) $removeableContact->delete();
             }
 
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
