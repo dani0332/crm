@@ -4,6 +4,7 @@ namespace App\Pipes\Allocation\Cyber;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\quoteTypeCode;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -47,6 +48,9 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 
         $lead = $this->getLeadBaseQuery()
             ->with('cyberQuote')
+            ->where(function ($query) {
+                $this->verifyPreChecks($query);
+            })
             ->first();
 
         if (! $lead) {
@@ -63,6 +67,17 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         ]);
 
         return $lead;
+    }
+
+    private function verifyPreChecks($query)
+    {
+        $query->where(function ($q) {
+            // Check if lead is SIC and advisor is requested
+            $q->isSIC(QuoteTypes::CYBER)
+                ->whereHas('cyberQuote', function ($cyberQuery) {
+                    $cyberQuery->where('sic_advisor_requested', 1);
+                });
+        });
     }
 
     private function verifyFetchLeadPreChecks()
