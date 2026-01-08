@@ -40,6 +40,7 @@ trait OcrValidator
         InsuranceProviderEnum::QIC->value => [QuoteTypes::CAR],
         InsuranceProviderEnum::RSA->value => [QuoteTypes::CAR],
         InsuranceProviderEnum::TM->value => [QuoteTypes::CAR],
+        InsuranceProviderEnum::AFNIC->value => [QuoteTypes::CAR],
         // Group Medical-only
         InsuranceProviderEnum::TE->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::OI2->value => [QuoteTypes::GROUP_MEDICAL],

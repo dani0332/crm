@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BranchEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
@@ -271,6 +273,14 @@ class SageApiService
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
         $isEndorsementActionDisabled = app(SendUpdateLogService::class)->isEndorsementBookingActionDisabled($sendUpdateLog);
+
+        // Check if sage booking is temporarily disabled
+        if ($this->isSageBookingTempDisabled()) {
+            LoggerService::info('Sage booking is temporarily disabled', extra: ['SendUpdateQuote' => $sendUpdateLog->code]);
+
+            return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
         if (! $isEndorsementActionDisabled) {
 
             // create AR Prepayment Premium Receipt
@@ -654,6 +664,26 @@ class SageApiService
 
         $quoteTypeId = QuoteTypes::getIdFromValue($request->model_type) ?? $quote->quote_type_id;
 
+        $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($quote, $quoteType);
+        if ($shouldValidateBranch == true) {
+
+            $hasBranchAssignment = app(BranchAssignmentService::class)->hasBranchAssignment($quote, $quoteTypeId);
+            if ($hasBranchAssignment == false) {
+                $branchAssignmentMessage = 'Branch assignment missing. Please ensure ';
+                if ($quoteTypeId === QuoteTypeId::Health) {
+                    $branchAssignmentMessage .= 'advisor branch or emirate of visa';
+                } elseif ($quoteTypeId === QuoteTypeId::GroupMedical) {
+                    $branchAssignmentMessage .= 'advisor branch or emirate of registration';
+                } else {
+                    $branchAssignmentMessage .= 'advisor branch';
+                }
+                $branchAssignmentMessage .= ' is configured or contact admin.';
+                LoggerService::warning($branchAssignmentMessage);
+
+                return ['status' => false, 'message' => $branchAssignmentMessage];
+            }
+        }
+
         if (in_array($quoteTypeId, EmbeddedProductRepository::ALLOWED_LOBS)) {
 
             $captureableEmbeddedTransactions = EmbeddedProductRepository::authorisedTransactions($quoteTypeId, $quote->id);
@@ -735,11 +765,21 @@ class SageApiService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Payment Code: '.$payment->code.' - Capture payment process skip & proceeding with Policy Book process - Unpaid payment count: '.$unpaidPaymentCount.' - Is Insurer Payment: '.$isInsurerPayment);
         }
 
-        $isHealthAUHLead = $this->isHealthAUHLead($quoteType, $quote);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Quote code: '.$quote->code.' - Is Health AUH Lead Check ', extra : [
-            'isHealthAUHLead' => $isHealthAUHLead,
-        ]);
-        if ($isHealthAUHLead) {
+        $emirate = null;
+        $quoteTypeIdForBranch = $quoteTypeId;
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emirate = $quote?->emirate_of_your_visa_id ?? null;
+        } elseif (
+            in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
+            && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+        ) {
+            $emirate = $quote?->latestInsured?->emirate_of_registration_id ?? null;
+            $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
+        }
+        $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
+
+        if ($branch?->id == BranchEnum::ABU_DHABI->value) {
+            LoggerService::info('Sage posting is not allowed for Abu Dhabi branch', extra: ['ref_id' => $quote->code, 'branch_id' => $branch?->id]);
 
             if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
@@ -760,7 +800,6 @@ class SageApiService
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ########## End of Policy Booked for : '.$quote->code.' ##########');
 
             return ['status' => true, 'message' => 'Policy is Booked'];
-
         }
 
         // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
@@ -871,6 +910,31 @@ class SageApiService
 
         LoggerService::info('--------------------------------Sage Policy Booking process started-------------------------------');
 
+        // Dispatch the policy document job first, before any policy booking operations
+        $skipBookPolicyDocumentJob = false;
+        if ($quoteTypeId === QuoteTypeId::Travel) {
+            $quote->load('policyIssuance');
+            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
+                $skipBookPolicyDocumentJob = true;
+            }
+        }
+
+        LoggerService::info('Skipping book policy document job', extra: [
+            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No',
+        ]);
+        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+            LoggerService::info('Dispatching job to send customer documents after policy booking');
+            // dispath job to send email
+            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
+        }
+
+        // Check if sage booking is temporarily disabled
+        if ($this->isSageBookingTempDisabled()) {
+            LoggerService::info('Sage booking is temporarily disabled', extra: ['QuoteCode' => $quote->code]);
+
+            return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
         if (! $isPolicyBookedOnSage) {
 
             LoggerService::info('Payment frequency: '.$payment->frequency);
@@ -954,23 +1018,6 @@ class SageApiService
                     return $embeddedProductSageBookingResponse;
                 }
             }
-        }
-
-        $skipBookPolicyDocumentJob = false;
-        if ($quoteTypeId === QuoteTypeId::Travel) {
-            $quote->load('policyIssuance');
-            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
-                $skipBookPolicyDocumentJob = true;
-            }
-        }
-
-        LoggerService::info('Skipping book policy document job', extra: [
-            'skipBookPolicyDocumentJob' => $skipBookPolicyDocumentJob ? 'Yes' : 'No',
-        ]);
-        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
-            LoggerService::info('Dispatching job to send customer documents after policy booking');
-            // dispath job to send email
-            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
         }
 
         LoggerService::info('Marking quote status as Policy Booked');
@@ -2713,8 +2760,9 @@ class SageApiService
                     }
                 }
 
+                $arDiscountInvoiceBatchNumber = $postedResponse['BatchNumber'];
                 $isLiveApiCallStep12 = true;
-                $aRPostInvoices = SagePayloadFactory::aRPostInvoices(batchNumber: $postedResponse['BatchNumber'], type: $sageEntryType, extras: $extraDetails);
+                $aRPostInvoices = SagePayloadFactory::aRPostInvoices(batchNumber: $arDiscountInvoiceBatchNumber, type: $sageEntryType, extras: $extraDetails);
                 if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                     LoggerService::info('AR Invoice Discount AR Post already posted');
                     $isLiveApiCallStep12 = false;
@@ -2723,18 +2771,18 @@ class SageApiService
                     if (($isAlreadyPosted && isset($aRPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL)) {
                         if ($isAlreadyPosted) {
                             LoggerService::info('AR Invoice Discount batch already posted', extra : [
-                                'BatchNumber' => $postedResponse['BatchNumber'],
+                                'BatchNumber' => $arDiscountInvoiceBatchNumber,
                             ]);
                             $postedResponse = $aRPostInvoices['payload'];
                         } else {
                             LoggerService::info('Checking status of AR Invoice Discount batch', extra : [
-                                'BatchNumber' => $postedResponse['BatchNumber'],
+                                'BatchNumber' => $arDiscountInvoiceBatchNumber,
                             ]);
-                            $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
+                            $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$arDiscountInvoiceBatchNumber.')', [], 'GET');
                             $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
                             LoggerService::info('Status of AR Invoice Discount batch', extra: [
-                                'BatchNumber' => $postedResponse['BatchNumber'],
+                                'BatchNumber' => $arDiscountInvoiceBatchNumber,
                                 'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
                             ]);
 
@@ -2748,7 +2796,7 @@ class SageApiService
 
                             if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                                 LoggerService::info('AR Invoice Discount AR Post already posted', extra : [
-                                    'BatchNumber' => $postedResponse['BatchNumber'],
+                                    'BatchNumber' => $arDiscountInvoiceBatchNumber,
                                 ]);
                                 $postedResponse = $aRPostInvoices['payload'];
                                 $isAlreadyPosted = true;
@@ -2770,7 +2818,7 @@ class SageApiService
                     return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     LoggerService::info('AR Invoice Discount AR Post completed successfully', extra : [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
+                        'BatchNumber' => $arDiscountInvoiceBatchNumber,
                     ]);
                     if ($isLiveApiCallStep12) {
                         $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
@@ -3579,46 +3627,127 @@ class SageApiService
         }
         $sageProcessCommandLock = Cache::lock($processLockKey, 20);
         if ($sageProcessCommandLock->get()) {
-            $sageProcesses = SageProcess::whereIn('status', $status)
-                ->whereNotIn('insurance_provider_id', function ($query) {
-                    $query->select('insurance_provider_id')
-                        ->from('sage_processes')
-                        ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
-                })->when($insurerId, function ($query) use ($insurerId) {
-                    $query->where('insurance_provider_id', $insurerId);
-                })->orderBy('created_at')
-                ->groupBy('insurance_provider_id')
-                ->get();
+            try {
+                $sageProcesses = SageProcess::whereIn('status', $status)
+                    ->whereNotIn('insurance_provider_id', function ($query) {
+                        $query->select('insurance_provider_id')
+                            ->from('sage_processes')
+                            ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+                    })->when($insurerId, function ($query) use ($insurerId) {
+                        $query->where('insurance_provider_id', $insurerId);
+                    })->orderBy('created_at')
+                    ->groupBy('insurance_provider_id')
+                    ->get();
 
-            if (count($sageProcesses) > 0) {
-                foreach ($sageProcesses as $sageProcess) {
+                if (count($sageProcesses) > 0) {
+                    foreach ($sageProcesses as $sageProcess) {
+                        try {
+                            LoggerService::info('Processing sage process for Insurance Provider', extra: [
+                                'SageProcessID' => $sageProcess?->id,
+                                'InsuranceProviderID' => $sageProcess?->insurance_provider_id,
+                            ]);
 
-                    LoggerService::info('Processing sage process for Insurance Provider', extra: [
-                        'SageProcessID' => $sageProcess?->id,
-                        'InsuranceProviderID' => $sageProcess?->insurance_provider_id,
-                    ]);
+                            // Validate request data before decoding
+                            if (empty($sageProcess->request)) {
+                                LoggerService::warning('Sage process has empty request data', extra: [
+                                    'SageProcessID' => $sageProcess?->id,
+                                ]);
 
-                    $sageProcessRequest = json_decode($sageProcess->request);
-                    $sageRequest = $sageProcessRequest->sagePayload;
-                    $request = $sageProcessRequest->requestPayload;
+                                continue;
+                            }
 
-                    if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
-                        $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
-                        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
-                    } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
-                        $model = $sageProcess->model;
-                        SendUpdateSageJob::dispatch($request, $model, $sageRequest, $sageProcess)->onQueue('insly');
-                    } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_POST_PREPAYMENT_REQUEST) {
-                        PostPrepaymentToSageJob::dispatch($request, $sageRequest, $sageProcess)->onQueue('insly');
-                    } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST) {
-                        $ePTransaction = $sageProcess->model;
-                        BookEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');
+                            // Safely decode JSON with error handling
+                            $sageProcessRequest = json_decode($sageProcess->request);
+
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                LoggerService::warning('Failed to decode sage process request JSON', extra: [
+                                    'SageProcessID' => $sageProcess?->id,
+                                    'json_error' => json_last_error_msg(),
+                                    'request_preview' => substr($sageProcess->request, 0, 200),
+                                ]);
+
+                                continue;
+                            }
+
+                            // Validate decoded data structure
+                            if (! isset($sageProcessRequest->sagePayload) || ! isset($sageProcessRequest->requestPayload)) {
+                                LoggerService::warning('Sage process request missing required fields', extra: [
+                                    'SageProcessID' => $sageProcess?->id,
+                                    'has_sagePayload' => isset($sageProcessRequest->sagePayload),
+                                    'has_requestPayload' => isset($sageProcessRequest->requestPayload),
+                                ]);
+
+                                continue;
+                            }
+
+                            $sageRequest = $sageProcessRequest->sagePayload;
+                            $request = $sageProcessRequest->requestPayload;
+
+                            // Validate sageRequest has required properties
+                            if (! isset($sageRequest->sageProcessRequestType)) {
+                                LoggerService::warning('Sage request missing sageProcessRequestType', extra: [
+                                    'SageProcessID' => $sageProcess?->id,
+                                ]);
+
+                                continue;
+                            }
+
+                            if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
+                                if (! isset($request->model_type) || ! $sageProcess->model_id) {
+                                    LoggerService::warning('Missing model_type or model_id for BOOK_POLICY_REQUEST', extra: [
+                                        'SageProcessID' => $sageProcess?->id,
+                                    ]);
+
+                                    continue;
+                                }
+                                $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
+                                BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
+                            } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
+                                $model = $sageProcess->model;
+                                if (! $model) {
+                                    LoggerService::warning('Model not found for SEND_UPDATE_REQUEST', extra: [
+                                        'SageProcessID' => $sageProcess?->id,
+                                    ]);
+
+                                    continue;
+                                }
+                                SendUpdateSageJob::dispatch($request, $model, $sageRequest, $sageProcess)->onQueue('insly');
+                            } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_POST_PREPAYMENT_REQUEST) {
+                                PostPrepaymentToSageJob::dispatch($request, $sageRequest, $sageProcess)->onQueue('insly');
+                            } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST) {
+                                $ePTransaction = $sageProcess->model;
+                                if (! $ePTransaction) {
+                                    LoggerService::warning('ePTransaction not found for BOOK_EMBEDDED_PRODUCT_REQUEST', extra: [
+                                        'SageProcessID' => $sageProcess?->id,
+                                    ]);
+
+                                    continue;
+                                }
+                                BookEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');
+                            }
+                        } catch (\Throwable $e) {
+                            LoggerService::warning('Error processing individual sage process', extra: [
+                                'SageProcessID' => $sageProcess?->id,
+                                'error' => $e->getMessage(),
+                                'file' => $e->getFile(),
+                                'line' => $e->getLine(),
+                            ]);
+                            // Continue processing other items
+                        }
                     }
+                } else {
+                    LoggerService::info('No eligible Sage processes found for scheduling or all processes are currently being processed for each insurance provider');
                 }
-            } else {
-                LoggerService::info('No eligible Sage processes found for scheduling or all processes are currently being processed for each insurance provider');
+            } catch (\Throwable $e) {
+                LoggerService::warning('Error in sage process scheduling', extra: [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            } finally {
+                $sageProcessCommandLock->release();
             }
-            $sageProcessCommandLock->release();
         } else {
             LoggerService::info('Sage policy or endorsement booking job is already running. Skipping execution.');
         }
@@ -3688,6 +3817,11 @@ class SageApiService
     public function isSageRetryTimeoutEnabled()
     {
         return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
+    }
+
+    private function isSageBookingTempDisabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::TEMP_DISABLE_SAGE_BOOKING);
     }
 
     public function isPaymentPaidOrCreditApproved($payment, $paymentSplits, $sageRequest)

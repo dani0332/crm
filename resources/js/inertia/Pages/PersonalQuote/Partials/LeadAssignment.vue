@@ -30,6 +30,7 @@ const page = usePage();
 const emit = defineEmits(['success', 'error']);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 if (!String.prototype.hasOwnProperty('capitalizeFirstChar')) {
   Object.defineProperty(String.prototype, 'capitalizeFirstChar', {
@@ -63,9 +64,11 @@ function onAssignLead(isValid) {
   //     ? `/quotes/car/manualLeadAssign`
   //     : `/quotes/${props.quoteType}/leadAssign`;
 
-  const postUrl = Array('car', 'business').includes(
-    props.quoteType.toLowerCase(),
-  )
+  const postUrl = Array(
+    quoteTypeCodeEnum.Car.toLowerCase(),
+    quoteTypeCodeEnum.Business.toLowerCase(),
+    quoteTypeCodeEnum.Health.toLowerCase(),
+  ).includes(props.quoteType.toLowerCase())
     ? `/quotes/${props.quoteType}/manualLeadAssign`
     : props.quoteType === 'tmlead'
       ? '/telemarketing/tmLeadsAssign'

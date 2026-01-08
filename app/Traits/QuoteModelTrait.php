@@ -18,6 +18,7 @@ use App\Models\CarQuotePlanDetail;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
+use App\Services\BuyLeads\BuyLeadService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -225,6 +226,11 @@ trait QuoteModelTrait
             $this->assignment_type,
             [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]
         );
+    }
+
+    public function isCatABuyLeadApplicable(QuoteTypes $quoteType): bool
+    {
+        return ! $this->isStale() && $this->source == LeadSourceEnum::REVIVAL && in_array($this->nationality_id, BuyLeadService::getNationalitiesIds($quoteType));
     }
 
     public function getForeignKey()

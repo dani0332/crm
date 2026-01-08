@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
@@ -41,6 +40,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use PDF;
 
@@ -147,27 +147,29 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
-        if (strtolower($modelType) == 'business') {
-            $modelType = 'Corpline';
-        }
-        $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
-            return $item;
-        });
-        foreach ($allowedLeadTypes as $leadType) {
-            $leadType = strtolower($leadType);
-            if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
-                $leadType = 'Business';
+        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($modelType, $leadCode) {
+            $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
+            if (strtolower($modelType) == 'business') {
+                $modelType = 'Corpline';
             }
-            $duplicateRecord = $this->{strtolower($leadType).'QuoteService'}->getDuplicateEntityByCode($leadCode);
-            if ($duplicateRecord) {
-                $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
-                    return $item;
-                });
+            $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
+                return $item;
+            });
+            foreach ($allowedLeadTypes as $leadType) {
+                $leadType = strtolower($leadType);
+                if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
+                    $leadType = 'Business';
+                }
+                $duplicateRecord = $this->{strtolower($leadType).'QuoteService'}->getDuplicateEntityByCode($leadCode);
+                if ($duplicateRecord) {
+                    $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
+                        return $item;
+                    });
+                }
             }
-        }
 
-        return $allowedLeadTypes;
+            return $allowedLeadTypes;
+        });
     }
 
     public function createDuplicate(Request $request)
@@ -1192,7 +1194,7 @@ class CRUDService extends BaseService
             $data['quote_uuid'] = $quote->uuid;
             $kycLogs = AML::where([
                 'quote_request_id' => $quoteModel->id,
-            ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->orderBy('created_at', 'desc')->get();
+            ])->excludeRyuDecisionStrict()->orderBy('created_at', 'desc')->get();
             $pdf = PDF::loadView('pdf.risk_score_document', compact('quoteModel', 'detail', 'kycLogs', 'quoteType', 'data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();

@@ -67,6 +67,7 @@ final class ApplicationStorageEnums extends Enum
     public const DUBAI_NOW_CC_GROUP = 'DUBAI_NOW_CC_GROUP';
     public const SAGE_ENABLED = 'SAGE_ENABLED';
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
+    public const TEMP_DISABLE_SAGE_BOOKING = 'TEMP_DISABLE_SAGE_BOOKING';
     public const DTT_ENABLED = 'DTT_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
@@ -193,6 +194,8 @@ final class ApplicationStorageEnums extends Enum
     public const HOME_OCB_AUTOMATED_FOLLOWUPS = 'HOME_OCB_AUTOMATED_FOLLOWUPS';
     public const HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 'HOME_RENEWAL_AUTOMATED_FOLLOWUPS';
     public const AUTOMATED_HOME_RENEWAL_FOLLOWUP_SWITCH = 'AUTOMATED_HOME_RENEWAL_FOLLOWUP_SWITCH';
+    public const TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS = 'TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS';
+    public const AUTOMATED_TRAVEL_RENEWAL_FOLLOWUP_SWITCH = 'AUTOMATED_TRAVEL_RENEWAL_FOLLOWUP_SWITCH';
     public const HOME_RENEWAL_OCB = 'HOME_RENEWAL_OCB';
     public const HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH = 'HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH';
     public const BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW = 'BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW';
@@ -230,6 +233,8 @@ final class ApplicationStorageEnums extends Enum
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
     public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
     public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
+    public const INSLY_TEMP_CUSTOMER_EMAIL = 'INSLY_TEMP_CUSTOMER_EMAIL';
+    public const INSLY_TEMP_CUSTOMER_POLICY_OID = 'INSLY_TEMP_CUSTOMER_POLICY_OID';
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
 
     /* AIG Workflow Integration */
@@ -307,12 +312,22 @@ final class ApplicationStorageEnums extends Enum
     public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';
 
     // EP Failure Notification Email
+    public const EP_FAILURE_EMAIL_FROM = 'EP_FAILURE_EMAIL_FROM';
     public const EP_FAILURE_EMAIL_TO = 'EP_FAILURE_EMAIL_TO';
     public const EP_FAILURE_EMAIL_REPLY_TO = 'EP_FAILURE_EMAIL_REPLY_TO';
     public const EP_FAILURE_EMAIL_CC = 'EP_FAILURE_EMAIL_CC';
 
     // MetLife Integration
     public const ENABLE_METLIFE = 'ENABLE_METLIFE';
+    public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
+    public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
+
+    // Branch Enum
+    public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
+    public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
+
+    // OCR Util Feature Toggle
+    public const OCR_UTIL_ENABLED = 'OCR_UTIL_ENABLED';
     public const BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW = 'BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW';
     public const IT_SUPPORT_EMAIL = 'IT_SUPPORT_EMAIL';
 }
