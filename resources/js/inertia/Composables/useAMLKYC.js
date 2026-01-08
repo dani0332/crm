@@ -79,8 +79,6 @@ export const useAMLKYC = () => {
   const isInsurerAmlVerified = (quoteRequest, quoteType, payments) => {
     const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
     let isTravelQuote = quoteType === quoteTypeCodeEnum.Travel;
-    /*     let isCarQuote = quoteType === quoteTypeCodeEnum.Car;
-    let isQuotePolicyIssuanceAutomationEnabled = quoteRequest.policy_issuance_automation_enabled; */
 
     let isGIGInsuranceProvider =
       page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||

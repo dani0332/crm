@@ -169,7 +169,6 @@ const shouldProcessUpdate = () => {
   }
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
-  //const insurerAMLStatus = page.props.amlStatusEnum.InsurerAMLScreeningCleared;
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
