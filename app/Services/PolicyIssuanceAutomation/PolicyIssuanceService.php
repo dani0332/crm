@@ -522,15 +522,21 @@ class PolicyIssuanceService
         }
 
         $insurerApiStatus = PolicyIssuanceEnum::PIA_LEGACY_NON_API_STATUS_ID;
-        if ($enabled && $quote->insurer_api_status_id == PolicyIssuanceEnum::PIA_LEGACY_NON_API_STATUS_ID) {
+        $isExistingApiStatusLegacyNon = $quote->insurer_api_status_id == PolicyIssuanceEnum::PIA_LEGACY_NON_API_STATUS_ID;
+        if ($enabled && $isExistingApiStatusLegacyNon) {
             $insurerApiStatus = null;
         }
 
-        // Update the policy_issuance_automation_enabled field
-        $quote->update([
+        $quoteData = [
             'policy_issuance_automation_enabled' => $enabled,
-            'insurer_api_status_id' => $insurerApiStatus,
-        ]);
+        ];
+
+        if ($enabled && $isExistingApiStatusLegacyNon) {
+            $quoteData['insurer_api_status_id'] = $insurerApiStatus;
+        }
+
+        // Update the policy_issuance_automation_enabled field
+        $quote->update($quoteData);
 
         LoggerService::info('Policy issuance automation toggled successfully for quote', extra: [
             'quote_uuid' => $quote->uuid,

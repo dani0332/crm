@@ -1980,7 +1980,7 @@ class CentralService extends BaseService
             $isCarQuote = $quoteTypeId == QuoteTypeId::Car;
 
             if ($isCarQuote) {
-                $isQuotePolicyAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+                $isQuotePolicyAutomationEnabled = $quote?->isQuotePolicyIssuanceAutomationEnabled();
             }
             if (! $isQuotePolicyAutomationEnabled) {
                 return ['status' => PaymentCaptureValidationEnum::SUCCESS, 'message' => 'Quote Policy Issuance Automation disabled for this Lead.'];

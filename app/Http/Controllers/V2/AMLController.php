@@ -301,7 +301,7 @@ class AMLController extends Controller
         $isPolicyAutomationEnabled = false;
         if ($quoteType->code === quoteTypeCode::Car && $insuranceProvider) {
             $policyIssuanceService = app(PolicyIssuanceService::class)->init($quoteType->code, $insuranceProvider->code);
-            $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled();
+            $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
         }
 
         return inertia('Aml/DetailPage', array_merge([
