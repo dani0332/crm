@@ -142,11 +142,11 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  insured_first_name: page.props.quote?.customer?.insured?.first_name,
+  insured_last_name: page.props.quote?.customer?.insured?.last_name,
+  emirates_id_number: page.props.quote?.customer?.insured?.id_number,
   emirates_id_expiry_date:
-    page.props.quote?.customer.emirates_id_expiry_date || null,
+    page.props.quote?.customer?.insured?.insured_kyc?.id_expiry_date,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
