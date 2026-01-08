@@ -30,7 +30,8 @@ class SendFailedIlaEmailsCommand extends Command
     public function handle()
     {
         $quoteType = $this->option('quoteType');
-        LoggerService::info(self::class.' - sendFailedIlaEmails - Starting to send failed ILA emails to managers for quote type: '.$quoteType);
+        $quoteType = QuoteTypes::tryFrom($quoteType);
+        LoggerService::info(self::class.' - sendFailedIlaEmails - Starting to send failed ILA emails to managers for quote type: '.$quoteType->value);
         if (!$quoteType) {
             LoggerService::warning(self::class.' - sendFailedIlaEmails - Quote type is required');
             return Command::FAILURE;
