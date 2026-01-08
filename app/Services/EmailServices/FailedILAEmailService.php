@@ -167,6 +167,7 @@ class FailedILAEmailService
             })
 
             ->whereNull('advisor_id')
+            ->where('lead_allocation_failed_at', '!=', null)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY,LeadSourceEnum::REVIVAL])           
             ->with('quoteStatus')
