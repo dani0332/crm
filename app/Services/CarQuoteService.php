@@ -2062,7 +2062,8 @@ class CarQuoteService extends BaseService
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
-                'u.email as assignedadvisoremail'
+                'u.email as assignedadvisoremail',
+                'd.name as departmentname'
             )
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'q.id')
@@ -2071,6 +2072,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as d', 'u.department_id', '=', 'd.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
@@ -2203,7 +2205,8 @@ class CarQuoteService extends BaseService
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
-                'u.email as assignedadvisoremail'
+                'u.email as assignedadvisoremail',
+                'd.name as departmentname'
             )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('payments as p', function ($join) {
@@ -2215,6 +2218,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as d', 'u.department_id', '=', 'd.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
