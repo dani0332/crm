@@ -187,6 +187,12 @@ const shouldProcessUpdate = () => {
   ];
 
   const captureOption = getCaptureOption.value;
+  let isQuotePolicyIssuanceAutomationEnabled = true;
+  let isCarQuote = props.quoteType === quoteTypeCodeEnum.Car;
+  if (isCarQuote) {
+    isQuotePolicyIssuanceAutomationEnabled =
+      props.quoteRequest.policy_issuance_automation_enabled;
+  }
 
   if (
     isInsurer &&
@@ -196,7 +202,9 @@ const shouldProcessUpdate = () => {
     !shouldSendUpdate
   ) {
     if (
-      insuredApiStatus === genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID
+      insuredApiStatus ===
+        genericRequestEnum.PREVIOUS_POLICY_EXPIRED_STATUS_ID ||
+      !isQuotePolicyIssuanceAutomationEnabled
     ) {
       isInsurerAmlCleared = true;
     } else {

@@ -53,6 +53,8 @@ enum LoggerFeatureEnum: string
     case LEAD_OCR_DATA_COMPARISON = 'lead-ocr-data-comparison';
     case WATERMARK_DOCUMENT = 'watermark-document';
 
+    case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
+
     case CYBER_OCB_INTRO_EMAIL = 'cyber-ocb-intro-email';
     case CYBER_AUTOMATED_FOLLOWUPS = 'cyber-automated-followups';
     case CHECK_DOCUMENT_UPLOAD_AFTER_PAYMENT = 'check-document-upload-after-payment';

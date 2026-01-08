@@ -457,6 +457,7 @@ final class PermissionsEnum extends Enum
     public const BUY_LEADS_REVIVAL = 'buy-leads-revival';
     public const BRANCHES = 'branches';
     public const BRANCH_ASSIGNMENTS = 'branch-assignments';
+    public const CAR_LEGACY_KYC_SKIP_INSURER_API = 'car-legacy-kyc-skip-insurer-api';
 
     // Cyber Permissions
     public const CYBER_QUOTES_LIST = 'cyber-quotes-list';
