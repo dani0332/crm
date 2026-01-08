@@ -198,23 +198,6 @@ class TestSchemaCreator
             });
         }
 
-        // Create device_quote_request table if it doesn't exist
-        if (! Schema::connection('sqlite')->hasTable('device_quote_request')) {
-            Schema::connection('sqlite')->create('device_quote_request', function ($table) {
-                $table->id();
-                $table->unsignedBigInteger('personal_quote_id');
-                $table->string('first_name')->nullable();
-                $table->string('last_name')->nullable();
-                $table->string('email')->nullable();
-                $table->string('mobile_no')->nullable();
-                $table->string('month_of_purchase')->nullable();
-                $table->string('year_of_purchase')->nullable();
-                $table->unsignedBigInteger('make_id')->nullable();
-                $table->unsignedBigInteger('model_id')->nullable();
-                $table->string('imei')->nullable();
-                $table->timestamps();
-            });
-        }
 
         // Create application_storage table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('application_storage')) {
@@ -393,12 +376,15 @@ class TestSchemaCreator
             Schema::connection('sqlite')->create('device_quote_request', function ($table) {
                 $table->id();
                 $table->unsignedBigInteger('personal_quote_id');
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->string('month_of_purchase')->nullable();
+                $table->string('year_of_purchase')->nullable();
+                $table->unsignedBigInteger('make_id')->nullable();
+                $table->unsignedBigInteger('model_id')->nullable();
                 $table->string('imei')->nullable();
-                $table->string('device_make')->nullable();
-                $table->string('device_model')->nullable();
-                $table->string('device_type')->nullable();
-                $table->decimal('device_value', 15, 2)->nullable();
-                $table->string('device_condition')->nullable();
                 $table->string('purchase_date')->nullable();
                 $table->timestamps();
             });

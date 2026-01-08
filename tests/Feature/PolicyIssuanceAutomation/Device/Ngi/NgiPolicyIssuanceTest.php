@@ -303,10 +303,6 @@ function createDeviceQuoteWithDependencies()
     $db->table('device_quote_request')->insertGetId([
         'personal_quote_id' => $quoteId,
         'imei' => $deviceSubQuoteData['imei'],
-        'device_make' => $deviceSubQuoteData['device_make'],
-        'device_model' => $deviceSubQuoteData['device_model'],
-        'device_type' => $deviceSubQuoteData['device_type'],
-        'device_value' => $deviceSubQuoteData['device_value'],
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -445,10 +441,6 @@ function createDeviceQuoteWithoutImei()
     $db->table('device_quote_request')->insertGetId([
         'personal_quote_id' => $quoteId,
         'imei' => null, // Missing IMEI
-        'device_make' => $deviceSubQuoteData['device_make'],
-        'device_model' => $deviceSubQuoteData['device_model'],
-        'device_type' => $deviceSubQuoteData['device_type'],
-        'device_value' => $deviceSubQuoteData['device_value'],
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -523,8 +515,6 @@ function createDeviceQuoteWithoutInsurerQuoteNumber()
     $db->table('device_quote_request')->insertGetId([
         'personal_quote_id' => $quoteId,
         'imei' => $deviceSubQuoteData['imei'],
-        'device_make' => $deviceSubQuoteData['device_make'],
-        'device_model' => $deviceSubQuoteData['device_model'],
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -584,8 +574,6 @@ function createDeviceQuoteWithCustomerMissingEmiratesId()
     $db->table('device_quote_request')->insertGetId([
         'personal_quote_id' => $quoteId,
         'imei' => $deviceSubQuoteData['imei'],
-        'device_make' => $deviceSubQuoteData['device_make'],
-        'device_model' => $deviceSubQuoteData['device_model'],
         'created_at' => now(),
         'updated_at' => now(),
     ]);
