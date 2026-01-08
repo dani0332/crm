@@ -56,8 +56,13 @@ class EmiratesIdDataProcessor
             $kycUpdated = $this->updateInsuredKycTable($insured);
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
-            // Trigger OCR success validation
-            $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);
+           // Trigger OCR success validation
+           $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+            'quoteId' => $this->quote->id,
+            'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $ocrDocumentValidator->validateEIDFields($this->documentTypeCode);
             LoggerService::info('EmiratesId data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
 
             DB::commit();
