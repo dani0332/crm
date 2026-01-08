@@ -112,11 +112,21 @@ class UserService extends BaseService
 
     public function getSubordinates(int $userId): Collection
     {
-        return User::whereHas('managers', function ($query) use ($userId) {
-            $query->where('users.id', $userId);
-        })
-        ->select('id','name', 'email')
-        ->get();
+        /**
+         * Subordinates are users whose `user_manager.manager_id` points to the manager user.
+         *
+         * This is a self-referencing many-to-many (users <-> users via user_manager). Using
+         * relationship-based whereHas() queries can become fragile because Laravel aliases the
+         * related `users` table in self-joins; that can lead to empty results (seen on sqlite test cases).
+         *
+         * A direct join against the pivot avoids self-join aliasing entirely and is stable across
+         * DB engines.
+         */
+        return User::query()
+            ->join('user_manager', 'user_manager.user_id', '=', 'users.id')
+            ->where('user_manager.manager_id', $userId)
+            ->select(['users.id', 'users.name', 'users.email'])
+            ->get();
     }
 
     public function isAllowedToShowLeadListReport()
