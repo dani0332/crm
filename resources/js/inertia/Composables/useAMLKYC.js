@@ -106,7 +106,7 @@ export const useAMLKYC = () => {
     let isInsurerAmlCleared =
       insurerAmlClearedStatuses.includes(insurerAMLStatus);
 
-    if (isInsurerAmlBypassEligibleQuote) {
+    if (isTravelQuote) {
       if (isGIGInsuranceProvider && isPaymentMethodCC) {
         // Insurer AML is required if its travel and insurer is GIG and payment is CC
         return isInsurerAmlCleared;
