@@ -31,11 +31,12 @@ class SendFailedIlaEmailsCommand extends Command
     {
         $quoteType = $this->option('quoteType');
         $quoteType = QuoteTypes::tryFrom($quoteType);
-        LoggerService::info(self::class.' - sendFailedIlaEmails - Starting to send failed ILA emails to managers for quote type: '.$quoteType->value);
+        
         if (!$quoteType) {
             LoggerService::warning(self::class.' - sendFailedIlaEmails - Quote type is required');
             return Command::FAILURE;
         }
+        LoggerService::info(self::class.' - sendFailedIlaEmails - Starting to send failed ILA emails to managers for quote type: '.$quoteType->value);
         switch ($quoteType) {
          
           case QuoteTypes::CAR:

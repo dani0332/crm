@@ -123,9 +123,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('send-failed-ila-leads --quoteType=Pet')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Cycle')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Savings')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
-        $schedule->command('send-failed-ila-leads --quoteType=GroupMedical')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType="Group Medical"')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Corpline')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
-        $schedule->command('send-failed-ila-leads --quoteType=Business')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Yacht')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Jetski')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
 
