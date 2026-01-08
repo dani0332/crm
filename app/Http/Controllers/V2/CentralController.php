@@ -215,6 +215,9 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
+        $quoteType = QuoteTypes::getName($customerProfileRequest->quote_type_id);
+        $quote = $this->getQuoteObject($quoteType->value, $customerProfileRequest->quote_request_id);
+
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [
                 'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),
@@ -223,42 +226,13 @@ class CentralController extends Controller
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);
 
-            $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
-                ->where('id_type', 'emiratesId')
-                ->emiratesIdNumber($customerProfileRequest->emirates_id_number)
-                ->first();
-            $idNumber = $insured?->id_number ?? $customerProfileRequest->emirates_id_number;
-
-            $insuredPersonDetails = Insured::updateOrCreate([
-                'id_type' => 'emiratesId',
-                'id_number' => $idNumber,
-                'customer_type' => $customerProfileRequest->customer_type,
-            ], [
-                'first_name' => $customerProfileRequest->insured_first_name,
-                'last_name' => $customerProfileRequest->insured_last_name,
-                'dob' => $customer->dob,
-                'nationality_id' => $customer->nationality_id,
-                'gender' => $customer->screening_gender,
-            ]);
-
-            CustomerInsured::createOrUpdateActive([
-                'customer_id' => $customerProfileRequest->customer_id,
-                'insured_id' => $insuredPersonDetails->id,
-                'quote_type_id' => $customerProfileRequest->quote_type_id,
-                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            $customerProfileRequest->merge([
+                'screening_id_type' => 'emiratesId',
+                'screening_id_number' => $customerProfileRequest->emirates_id_number,
             ]);
         }
 
-        // Reminder:: I believe this code patch is not in used, if it's in used, then it should be update the customerInsured for Entity cases
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
-            $entity = Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
-            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
-
-            QuoteRequestEntityMapping::updateOrCreate([
-                'quote_type_id' => $customerProfileRequest->quote_type_id,
-                'quote_request_id' => $customerProfileRequest->quote_request_id,
-            ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
-
             if ($customerProfileRequest->quote_type_id === QuoteTypeId::Car) {
                 CarQuoteRepository::where('id', $customerProfileRequest->quote_request_id)->update([
                     'company_name' => $customerProfileRequest->company_name,
@@ -267,8 +241,13 @@ class CentralController extends Controller
             }
         }
 
-        $quoteType = QuoteTypes::getName($customerProfileRequest->quote_type_id);
-        $quote = $this->getQuoteObject($quoteType->value, $customerProfileRequest->quote_request_id);
+        app(AMLService::class)->processInsuredDataForScreening(
+            $customerProfileRequest, 
+            $customerProfileRequest->quote_type_id, 
+            $quote, 
+            [], 
+            false);
+
         if ($quote) {
             app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT);
         }
