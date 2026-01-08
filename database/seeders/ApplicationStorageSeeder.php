@@ -1226,9 +1226,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS],
             [
-                // 'value' => 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae', Production advisors
-                // remove this when going to production and use the production advisors
-                'value' => 'fahadhussain2020@gmail.com,diya.lekhwani@myalfred.com', // Test advisors
+                'value' => 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
