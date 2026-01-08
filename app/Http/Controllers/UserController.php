@@ -21,6 +21,7 @@ use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
@@ -355,31 +356,7 @@ class UserController extends Controller
         }
         $user->is_active = $isActive ? 1 : 0;
 
-
-        if ($previouslyActive && ! $isActive) {
-            $subordinates = $this->userService->getSubordinates($user->id);
-
-            if ($subordinates->isNotEmpty()) {
-                /** @var User $currentUser */
-                $currentUser = auth()->user();
-                LoggerService::info('Dispatching SendManagerDeactivationAttemptEmailJob', [
-                    'manager_user_id' => $user->id,
-                    'subordinates_count' => $subordinates->count(),
-                    'attempted_by_user_id' => $currentUser?->id,
-                ]);
-
-                SendManagerDeactivationAttemptEmailJob::dispatch(
-                    $user->id,
-                    $subordinates->pluck('id')->all(),
-                    $currentUser->id
-                );
-            } else {
-                LoggerService::info('Skipping SendManagerDeactivationAttemptEmailJob dispatch: manager has no subordinates', [
-                    'manager_user_id' => $user->id,
-                ]);
-            }
-        }
-
+        DB::transaction(function () use ($request, $user, $previouslyActive, $isActive) {
         if ($request->department_ids != null) {
             app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
         } else {
@@ -457,6 +434,41 @@ class UserController extends Controller
 
         // if Corpline Advisor exists, then set Business Types otherwise set it as empty
         $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
+
+            if ($previouslyActive && ! $isActive) {
+                $subordinates = $this->userService->getSubordinates($user->id);
+
+                $attemptedByUserId = Auth::id() ?: null;
+
+                $deactivationAttemptEmailPayload = [
+                    'manager_user_id' => $user->id,
+                    'subordinate_ids' => $subordinates->pluck('id')->all(),
+                    'attempted_by_user_id' => (int) $attemptedByUserId,
+                    'subordinates_count' => $subordinates->count(),
+                ];
+
+                $logDetails = [
+                    'manager_user_id' => $deactivationAttemptEmailPayload['manager_user_id'],
+                    'subordinates_count' => $deactivationAttemptEmailPayload['subordinates_count'],
+                    'attempted_by_user_id' => $deactivationAttemptEmailPayload['attempted_by_user_id'],
+                ];
+
+                if ($subordinates->isNotEmpty()) {
+                    DB::afterCommit(function () use ($deactivationAttemptEmailPayload, $logDetails) {
+                        LoggerService::info('Dispatching SendManagerDeactivationAttemptEmailJob', $logDetails);
+
+                        SendManagerDeactivationAttemptEmailJob::dispatch(
+                            $deactivationAttemptEmailPayload['manager_user_id'],
+                            $deactivationAttemptEmailPayload['attempted_by_user_id']
+                        );
+                    });
+                } else {
+                    LoggerService::info('Skipping SendManagerDeactivationAttemptEmailJob dispatch: manager has no subordinates', [
+                        'manager_user_id' => $user->id,
+                    ]);
+                }
+            }
+        });
 
         return redirect(route('users.show', $user->id))->with('success', 'User has been updated');
     }
@@ -541,7 +553,7 @@ class UserController extends Controller
         $currentDateTime = Carbon::now();
         $startDateTime = Carbon::parse('18:30:00'); // 6:30 PM
         $endDateTime = Carbon::parse('08:59:00')->addDay(); // 8:59 AM of the next day
-        $user = User::find(auth()->user()->id);
+        $user = User::find((int) Auth::id());
         $user->status = $request->user_status == true ? UserStatusEnum::ONLINE : UserStatusEnum::MANUAL_OFFLINE;
         $user->update();
         if (

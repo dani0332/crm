@@ -25,23 +25,20 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 60;
 
-    private int $managerUserId;
-    private array $subordinateIds;
+    private int $deactivatingUserId;
     private int $attemptedByUserId;
 
     /**
      * Create a new job instance.
      *
-     * @param  int  $managerUserId
-     * @param  array  $subordinateIds
+     * @param  int  $deactivatingUserId
      * @param  int  $attemptedByUserId
      */
-    public function __construct(int $managerUserId, array $subordinateIds, int $attemptedByUserId)
+    public function __construct(int $deactivatingUserId, int $attemptedByUserId)
     {
-        $this->managerUserId = $managerUserId;
-        $this->subordinateIds = array_values(array_unique(array_map('intval', $subordinateIds)));
+        $this->deactivatingUserId = $deactivatingUserId;
         $this->attemptedByUserId = $attemptedByUserId;
-        $this->onQueue('shared');
+        $this->onQueue('default');
     }
 
     /**
@@ -52,9 +49,9 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
         LoggerService::info("SendManagerDeactivationAttemptEmailJob Started");
         try {
             $managerUser = User::query()
-                ->with(['managers' => fn ($query) => $query->select('user_manager.id', 'email')])
+                ->with('managers:email')
                 ->select(['id', 'name', 'email'])
-                ->find($this->managerUserId);
+                ->find($this->deactivatingUserId);
 
             $attemptedBy = User::query()
                 ->select(['id', 'name', 'email'])
@@ -62,7 +59,7 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
 
             if (! $managerUser || ! $attemptedBy) {
                 LoggerService::error('Manager deactivation attempt email skipped: user not found', [
-                    'manager_id' => $this->managerUserId,
+                    'manager_id' => $this->deactivatingUserId,
                     'attempted_by' => $this->attemptedByUserId,
                 ]);
 
@@ -86,7 +83,7 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
 
         } catch (Exception $e) {
             LoggerService::error('Error sending manager deactivation attempt email', [
-                'manager_id' => $this->managerUserId,
+                'manager_id' => $this->deactivatingUserId,
                 'error' => $e->getMessage(),
             ], $e);
 
