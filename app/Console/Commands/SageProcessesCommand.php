@@ -32,15 +32,28 @@ class SageProcessesCommand extends Command
      */
     public function handle()
     {
-        LoggerService::info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Started');
+        try {
+            LoggerService::info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Started');
 
-        if ((new SageApiService)->isSageEnabled()) {
-            (new SageApiService)->scheduleSageProcesses();
-        } else {
-            LoggerService::info('cmd:SageProcessesCommand - Sage is not enabled');
+            if ((new SageApiService)->isSageEnabled()) {
+                (new SageApiService)->scheduleSageProcesses();
+            } else {
+                LoggerService::info('cmd:SageProcessesCommand - Sage is not enabled');
+            }
+
+            LoggerService::info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Ended');
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            LoggerService::error('cmd:SageProcessesCommand - Command failed', extra: [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return Command::FAILURE;
         }
-
-        LoggerService::info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Ended');
     }
 
 }
