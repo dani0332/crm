@@ -76,9 +76,9 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             // remove this when going to production and use the production CHS advisor
             $happinessUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true);
 
-                return User::select('users.id as user_id')
-                    ->where('users.email', $happinessUserEmail)
-                    ->first();
+            return User::select('users.id as user_id')
+                ->where('users.email', $happinessUserEmail)
+                ->first();
         }
 
         return $this->getAdvisorByHardcodedEmails($onlineStatus);
