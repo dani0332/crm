@@ -235,7 +235,8 @@ class CustomerService extends BaseService
             } else {
                 $customer = $this->getCustomerByEmail($value);
                 if (! $customer) {
-                    abort(422, "Customer not found against this email: {$value}");
+                    LoggerService::warning("Customer not found against this email: {$value}");
+                    vAbort("Customer not found against this email: {$value}");
                 }
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
