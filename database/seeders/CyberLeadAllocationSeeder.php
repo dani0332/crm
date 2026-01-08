@@ -52,7 +52,7 @@ class CyberLeadAllocationSeeder extends Seeder
         $cyberQuoteTypeId = QuoteTypes::getId(QuoteTypes::CYBER);
 
         foreach ($cyberAdvisors as $advisor) {
-            $leadAllocation = LeadAllocation::updateOrCreate(
+            $leadAllocation = LeadAllocation::firstOrCreate(
                 [
                     'user_id' => $advisor->id,
                     'quote_type_id' => $cyberQuoteTypeId,
@@ -72,7 +72,7 @@ class CyberLeadAllocationSeeder extends Seeder
                 ]
             );
 
-            LoggerService::info('CyberLeadAllocationSeeder: Lead allocation record created/updated', extra: [
+            LoggerService::info('CyberLeadAllocationSeeder: Lead allocation record checked/created', extra: [
                 'advisorId' => $advisor->id,
                 'advisorEmail' => $advisor->email,
                 'advisorName' => $advisor->name,
@@ -97,7 +97,7 @@ class CyberLeadAllocationSeeder extends Seeder
 
         $cyberQuoteTypeId = QuoteTypes::getId(QuoteTypes::CYBER);
 
-        $leadAllocation = LeadAllocation::updateOrCreate(
+        $leadAllocation = LeadAllocation::firstOrCreate(
             [
                 'user_id' => $systemUser->id,
                 'quote_type_id' => $cyberQuoteTypeId,
@@ -117,7 +117,7 @@ class CyberLeadAllocationSeeder extends Seeder
             ]
         );
 
-        LoggerService::info('CyberLeadAllocationSeeder: System user (Customer Happiness Centre) allocation record created/updated', extra: [
+        LoggerService::info('CyberLeadAllocationSeeder: System user (Customer Happiness Centre) allocation record checked/created', extra: [
             'userId' => $systemUser->id,
             'userEmail' => $systemUser->email,
             'userName' => $systemUser->name,
