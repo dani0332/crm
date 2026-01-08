@@ -45,14 +45,11 @@ class TogglePolicyIssuanceAutomationRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             // Validate quote type is Car
-            if ($this->quote_type_id) {
-
-                if (! $this->quote_type_id || $this->quote_type_id != QuoteTypeId::Car) {
-                    $validator->errors()->add(
-                        'quote_type_id',
-                        'Policy issuance automation is only available for Car quotes'
-                    );
-                }
+            if (! $this->quote_type_id || $this->quote_type_id != QuoteTypeId::Car) {
+                $validator->errors()->add(
+                    'quote_type_id',
+                    'Policy issuance automation is only available for Car quotes'
+                );
             }
         });
     }
