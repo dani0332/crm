@@ -11,9 +11,11 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\Insured;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
@@ -51,23 +53,71 @@ class CustomerRepository extends BaseRepository
                     return $allQuotes;
                 }
             } else {
+                $carQuoteIds = [];
+                $homeQuoteIds = [];
+                $healthQuoteIds = [];
+                $lifeQuoteIds = [];
+                $businessQuoteIds = [];
+                $travelQuoteIds = [];
+                $personalQuoteIds = [];
+                
                 if ($filterType == 'insured_first_name') {
-                    $customerIds = Customer::where(function ($query) use ($filterValue) {
-                        $query->whereHas('insureds', function ($query) use ($filterValue) {
-                            $query->where('first_name', $filterValue);
-                        });
-                        $query->orWhere('insured_first_name', $filterValue);
-                    })->pluck('id');
+                    $insuredIds = Insured::where('first_name', $filterValue)->pluck('id');
+                    
+                    if ($insuredIds->isEmpty()) {
+                        return $allQuotes;
+                    }
+                    
+                    $customerInsuredRecords = CustomerInsured::whereIn('insured_id', $insuredIds)
+                        ->where('is_active', true)
+                        ->get(['customer_id', 'quote_type_id', 'quote_request_id']);
+                    
+                    if ($customerInsuredRecords->isEmpty()) {
+                        return $allQuotes;
+                    }
+                    
+                    foreach ($customerInsuredRecords as $record) {
+                        switch ($record->quote_type_id) {
+                            case QuoteTypeId::Car:
+                                $carQuoteIds[] = $record->quote_request_id;
+                                break;
+                            case QuoteTypeId::Health:
+                                $healthQuoteIds[] = $record->quote_request_id;
+                                break;
+                            case QuoteTypeId::Business:
+                                $businessQuoteIds[] = $record->quote_request_id;
+                                break;
+                            case QuoteTypeId::Travel:
+                                $travelQuoteIds[] = $record->quote_request_id;
+                                break;
+                                
+                            case QuoteTypeId::Home:
+                            case QuoteTypeId::Life:
+                            case QuoteTypeId::Bike:
+                            case QuoteTypeId::Yacht:
+                            case QuoteTypeId::Pet:
+                            case QuoteTypeId::Cycle:
+                            case QuoteTypeId::Jetski:
+                                $personalQuoteIds[] = $record->quote_request_id;
+                                break;
+                        }
+                    }
+                    
+                    $customerIds = $customerInsuredRecords->pluck('customer_id')->unique()->values();
                 } else {
                     $customerIds = Customer::where($filterType, $filterValue)->pluck('id');
                 }
-                if ($customerIds->isEmpty()) {
+                
+                if (empty($customerIds) || $customerIds->isEmpty()) {
                     return $allQuotes;
                 }
             }
 
-            $carQuotes = CarQuote::with(['advisor', 'customer', 'customer.insureds'])
-                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+            $carQuotes = CarQuote::with(['advisor', 'customer', 'latestInsured'])
+                ->when($filterType == 'insured_first_name' && ! empty($carQuoteIds), function ($query) use ($carQuoteIds) {
+                    $query->whereIn('id', $carQuoteIds);
+                })
+                ->when($filterType != 'insured_first_name' && ! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
                 ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
@@ -76,14 +126,17 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
+                ->select(['id', 'uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Car.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $homeQuotes = HomeQuote::with(['advisor', 'customer', 'customer.insureds'])
-                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+            $homeQuotes = HomeQuote::with(['advisor', 'customer', 'latestInsured'])
+                ->when($filterType == 'insured_first_name' && ! empty($homeQuoteIds), function ($query) use ($homeQuoteIds) {
+                    $query->whereIn('id', $homeQuoteIds);
+                })
+                ->when($filterType != 'insured_first_name' && ! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
                 ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
@@ -92,14 +145,17 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
+                ->select(['id', 'uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Home.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $healthQuotes = HealthQuote::with(['advisor', 'customer', 'customer.insureds'])
-                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+            $healthQuotes = HealthQuote::with(['advisor', 'customer', 'latestInsured'])
+                ->when($filterType == 'insured_first_name' && ! empty($healthQuoteIds), function ($query) use ($healthQuoteIds) {
+                    $query->whereIn('id', $healthQuoteIds);
+                })
+                ->when($filterType != 'insured_first_name' && ! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
                 ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
@@ -108,14 +164,17 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
+                ->select(['id', 'uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Health.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $lifeQuotes = LifeQuote::with(['advisor', 'customer', 'customer.insureds'])
-                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+            $lifeQuotes = LifeQuote::with(['advisor', 'customer', 'latestInsured'])
+                ->when($filterType == 'insured_first_name' && ! empty($lifeQuoteIds), function ($query) use ($lifeQuoteIds) {
+                    $query->whereIn('id', $lifeQuoteIds);
+                })
+                ->when($filterType != 'insured_first_name' && ! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
                 ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
@@ -124,14 +183,17 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
+                ->select(['id', 'uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Life.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $businessQuotes = BusinessQuote::with(['advisor', 'customer', 'customer.insureds'])
-                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+            $businessQuotes = BusinessQuote::with(['advisor', 'customer', 'latestInsured'])
+                ->when($filterType == 'insured_first_name' && ! empty($businessQuoteIds), function ($query) use ($businessQuoteIds) {
+                    $query->whereIn('id', $businessQuoteIds);
+                })
+                ->when($filterType != 'insured_first_name' && ! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
                 ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
@@ -140,13 +202,16 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
+                ->select(['id', 'uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Business.'" as quote_type_id'),
                     'business_type_of_insurance_id'])
                 ->orderBy('created_at', 'desc');
 
-            $travelQuotes = TravelQuote::with(['advisor', 'customer', 'customer.insureds'])
-                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+            $travelQuotes = TravelQuote::with(['advisor', 'customer', 'latestInsured'])
+                ->when($filterType == 'insured_first_name' && ! empty($travelQuoteIds), function ($query) use ($travelQuoteIds) {
+                    $query->whereIn('id', $travelQuoteIds);
+                })
+                ->when($filterType != 'insured_first_name' && ! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
                 ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
@@ -155,14 +220,19 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
+                ->select(['id', 'uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Travel.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $personalQuotes = PersonalQuote::with(['advisor', 'customer', 'customer.insureds'])
-                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+            $personalQuotes = PersonalQuote::with(['advisor', 'customer', 'latestInsured' => function($latestInsured) {
+                $latestInsured->whereIn('quote_type_id', getPersonalQuoteTypeIds());
+            }])
+                ->when($filterType == 'insured_first_name' && ! empty($personalQuoteIds), function ($query) use ($personalQuoteIds) {
+                    $query->whereIn('id', $personalQuoteIds);
+                })
+                ->when($filterType != 'insured_first_name' && ! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
                 ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
@@ -171,7 +241,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyDocumentsPending, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED, QuoteStatusEnum::POLICY_BOOKING_QUEUED])
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date', 'quote_type_id',
+                ->select(['id', 'uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date', 'quote_type_id',
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
