@@ -188,10 +188,10 @@ class CyberQuoteService extends BaseQuoteService
         );
 
         // Replace advisor name with "Auto Issued" if advisor is automation user
-        // Check test mode for UAT/Staging vs Production email
-        $automationUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE, useCache: true) == '1'
-            ? getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true) // Test/UAT email
-            : PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL; // Production email
+        // $automationUserEmail = PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL // Production CHS advisor
+        
+        // remove this when going to production and use the production CHS advisor
+        $automationUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true); // Test/UAT email
 
         if ($quote->advisor && $quote->advisor->email === $automationUserEmail) {
             $quote->advisor->name = PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL;

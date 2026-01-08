@@ -34,14 +34,14 @@ FetchAvailableAdvisorPipe: Check allocation type
     ↓
     ├─ isCHSAdvisor flag set → Assign CHS Advisor
     │
-    └─ Normal allocation → Check Test Mode Flag
+    └─ Normal allocation → Get advisor emails from CYBER_ADVISORS
     ↓
-    ├─ Test Mode (1) → Use CYBER_ADVISORS_TEST
-    │                    ↓
-    │                    Get test advisor emails
-    │                    ↓
-    │                    Query advisors by status
-    │                    ↓
+    Get advisor emails
+    ↓
+    Check primary advisor leave status
+    ↓
+    Query advisors by status
+    ↓
     │                    Return first available
     │
     └─ Production Mode (0) → Use CYBER_ADVISORS
@@ -146,41 +146,9 @@ $this->stop('sic advisor requested is false for cyber lead');
 
 **Code Reference**: `app/Pipes/Allocation/Cyber/EvaluateTeamPipe.php:33-76`
 
-### 4. Test Mode vs Production Mode
+### 4. Advisor Email Selection
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:144-151`
-
-**Test Mode Check**:
-
-```php
-$testMode = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE);
-
-if ($testMode == 1) {
-    return $this->getTestModeAdvisorEmails();
-}
-
-return $this->getProductionModeAdvisorEmails();
-```
-
-#### Test Mode Flow
-
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:153-166`
-
-**Process**:
-
-1. Fetch emails from `CYBER_ADVISORS_TEST` app storage
-2. Parse comma-separated string
-3. Validate email format
-4. Return array of test advisor emails
-
-**Example**:
-
-- Storage Value: `fahadhussain2020@gmail.com,test.advisor@example.com`
-- Returns: `['fahadhussain2020@gmail.com', 'test.advisor@example.com']`
-
-#### Production Mode Flow
-
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:168-201`
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:115`
 
 **Process**:
 
@@ -197,9 +165,11 @@ return $this->getProductionModeAdvisorEmails();
 - Primary: `smitha.chandran@insurancemarket.ae`
 - Backups: `['neil.rama@insurancemarket.ae']`
 
+**Code Reference**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:115-148`
+
 ### 5. Leave Status Checking
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:184`
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:131`
 
 **Method**: `$this->isUserOnLeave($primaryEmail, addUnavailable: true)`
 
@@ -314,19 +284,7 @@ FetchAvailableAdvisorPipe assigns CHS advisor
 Assignment Complete
 ```
 
-### Scenario 2: Test Mode Lead
-
-```
-CYBER_ALLOCATION_TEST_MODE = 1
-    ↓
-Fetch test advisor emails from CYBER_ADVISORS_TEST
-    ↓
-Query advisors with test emails
-    ↓
-Assign first available advisor
-```
-
-### Scenario 3: Normal SIC Lead Allocation
+### Scenario 2: Normal SIC Lead Allocation
 
 ```
 SIC advisor requested = true
@@ -338,12 +296,10 @@ FetchAvailableAdvisorPipe finds advisor
 Assignment Complete
 ```
 
-### Scenario 4: Production - Primary Available
+### Scenario 4: Primary Advisor Available
 
 ```
-CYBER_ALLOCATION_TEST_MODE = 0
-    ↓
-Get production emails: [smitha, neil]
+Get advisor emails from CYBER_ADVISORS: [smitha, neil]
     ↓
 Primary = smitha
     ↓
@@ -356,12 +312,10 @@ Query advisor with smitha email
 Assign to Smitha
 ```
 
-### Scenario 5: Production - Primary on Leave
+### Scenario 5: Primary Advisor on Leave
 
 ```
-CYBER_ALLOCATION_TEST_MODE = 0
-    ↓
-Get production emails: [smitha, neil]
+Get advisor emails from CYBER_ADVISORS: [smitha, neil]
     ↓
 Primary = smitha
     ↓

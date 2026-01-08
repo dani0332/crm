@@ -102,13 +102,9 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
    ↓
 4. Check if paid lead → Assign to Happiness User
    ↓
-5. Else → Check test mode
+5. Else → Get advisors from CYBER_ADVISORS
    ↓
-6. If test mode → Get test advisors from app storage
-   ↓
-7. If production → Get production advisors
-   ↓
-8. Check primary advisor leave status
+6. Check primary advisor leave status
    ↓
 9. Return appropriate advisor emails
    ↓
@@ -172,9 +168,7 @@ The Cyber LOB follows a layered architecture pattern with clear separation of co
 
 ### Application Storage Keys
 
-- `CYBER_ADVISORS`: Production advisor emails (comma-separated)
-- `CYBER_ADVISORS_TEST`: Test advisor emails
-- `CYBER_ALLOCATION_TEST_MODE`: Test mode flag (0 = production, 1 = test)
+- `CYBER_ADVISORS`: Advisor emails (comma-separated, first email is primary, rest are backups)
 
 ### Environment Variables
 
