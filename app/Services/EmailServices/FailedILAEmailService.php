@@ -17,24 +17,26 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class FailedILAEmailService
 {
-    protected function getManagerEmailsByQuoteType($quoteType)
+    protected function getManagerEmailsByQuoteType( $quoteType)
     {
-        $roleMap = [
-            QuoteTypes::CAR => RolesEnum::CarManager,
-            QuoteTypes::BIKE => RolesEnum::BikeManager,
-            QuoteTypes::HEALTH => RolesEnum::HealthManager,
-            QuoteTypes::LIFE => RolesEnum::LifeManager,
-            QuoteTypes::TRAVEL => RolesEnum::TravelManager,
-            QuoteTypes::HOME => RolesEnum::HomeManager,
-            QuoteTypes::PET => RolesEnum::PetManager,
-            QuoteTypes::CYCLE => RolesEnum::CycleManager,
-            QuoteTypes::SAVINGS => RolesEnum::SavingsManager,
-            QuoteTypes::GROUP_MEDICAL => RolesEnum::GMManager,
-            QuoteTypes::CORPLINE => RolesEnum::CorplineManager,
-            QuoteTypes::YACHT => RolesEnum::YachtManager,
-            QuoteTypes::JETSKI => RolesEnum::JetskiManager,
-        ];
-        $roleName = $roleMap[$quoteType] ?? null;
+        
+        // Use match expression to map quote type to role name for type-safe matching
+        $roleName = match ($quoteType->value) {
+            QuoteTypes::CAR->value => RolesEnum::CarManager,
+            QuoteTypes::BIKE->value => RolesEnum::BikeManager,
+            QuoteTypes::HEALTH->value => RolesEnum::HealthManager,
+            QuoteTypes::LIFE->value => RolesEnum::LifeManager,
+            QuoteTypes::TRAVEL->value => RolesEnum::TravelManager,
+            QuoteTypes::HOME->value => RolesEnum::HomeManager,
+            QuoteTypes::PET->value => RolesEnum::PetManager,
+            QuoteTypes::CYCLE->value => RolesEnum::CycleManager,
+            QuoteTypes::SAVINGS->value => RolesEnum::SavingsManager,
+            QuoteTypes::GROUP_MEDICAL->value => RolesEnum::GMManager,
+            QuoteTypes::CORPLINE->value => RolesEnum::CorplineManager,
+            QuoteTypes::YACHT->value => RolesEnum::YachtManager,
+            QuoteTypes::JETSKI->value => RolesEnum::JetskiManager,
+            default => null,
+        };
 
         return $this->getManagerEmails($roleName);
     }
@@ -43,7 +45,6 @@ class FailedILAEmailService
     {
         // Fetch leads created today (from midnight to now)
         $managerEmails = $this->getManagerEmailsByQuoteType($quoteType) ?? [];
-
         if (empty($managerEmails)) {
             LoggerService::warning(self::class." - sendFailedIlaEmails - No managers found for quote type: {$quoteType->value}");
 
