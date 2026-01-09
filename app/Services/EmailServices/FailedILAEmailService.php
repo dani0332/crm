@@ -92,7 +92,6 @@ class FailedILAEmailService
             case QuoteTypes::HEALTH->value:
                 $leads = $this->getHealthFailedILALeads();
                 break;
-
             case QuoteTypes::LIFE->value:
                 $leads = $this->getPersonalFailedILALeads(QuoteTypes::LIFE->id());
                 break;
