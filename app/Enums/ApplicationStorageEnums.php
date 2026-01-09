@@ -329,6 +329,7 @@ final class ApplicationStorageEnums extends Enum
     // Failed ILA Email Switch
     public const SEND_FAILED_ILA_EMAILS_SWITCH = 'SEND_FAILED_ILA_EMAILS_SWITCH';
     public const BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW = 'BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW';
+
     // OCR Util Feature Toggle
     public const OCR_UTIL_ENABLED = 'OCR_UTIL_ENABLED';
 }

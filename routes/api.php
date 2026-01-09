@@ -76,7 +76,6 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
 
-
     Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
         ->name('pc-customer-assignment');
     Route::post('/remove-pc-qualified', [ApiController::class, 'removePcQualified'])->name('remove-pc-qualified');

@@ -9,7 +9,6 @@ use App\Enums\WorkflowTypeEnum;
 use App\Services\EmailServices\FailedILAEmailService;
 use Mockery;
 use Tests\TestCase;
-use App\Enums\RolesEnum;
 
 class FailedILAEmailServiceTest extends TestCase
 {
@@ -18,7 +17,7 @@ class FailedILAEmailServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new FailedILAEmailService();
+        $this->service = new FailedILAEmailService;
     }
 
     protected function tearDown(): void
@@ -139,8 +138,8 @@ class FailedILAEmailServiceTest extends TestCase
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-   
-    }   
+
+    }
     public function test_build_failed_ila_email_corpline_data()
     {
         $quoteType = QuoteTypes::GROUP_MEDICAL;
@@ -198,5 +197,5 @@ class FailedILAEmailServiceTest extends TestCase
         $this->assertIsString($result->fileDownloadUrl);
         $this->assertNotEmpty($result->fileDownloadUrl);
     }
-    
+
 }
