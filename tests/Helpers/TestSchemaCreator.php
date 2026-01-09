@@ -2,7 +2,6 @@
 
 namespace Tests\Helpers;
 
-use Illuminate\Support\Facades\Schema;
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\RenewalsSchema;
 

@@ -640,7 +640,7 @@ class CoreSchema
                 $table->string('status')->nullable();
                 $table->string('completed_step')->nullable();
                 $table->text('message')->nullable();
-                $table->timestamps();;
+                $table->timestamps();
             },
             'policy_issuance_log' => function (Blueprint $table) {
                 $table->id();
