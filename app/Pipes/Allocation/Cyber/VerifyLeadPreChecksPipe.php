@@ -4,8 +4,8 @@ namespace App\Pipes\Allocation\Cyber;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProviderEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Repositories\PaymentRepository;
@@ -46,6 +46,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 
         if (! $lead) {
             LoggerService::info(self::class.' - Lead not found, skipping assignment');
+
             return false;
         }
 
@@ -62,15 +63,19 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         // Check base conditions first
         if (! $this->allocationRequest->isOverrideAdvisorRequest() && ! empty($lead->advisor_id) && ! $isCHSAdvisor) {
             LoggerService::info(self::class.' - Lead is already assigned to advisor with ID: '.$lead->advisor_id.', skipping assignment');
+
             return false;
         } elseif ($lead->isFakeOrDuplicate()) {
             LoggerService::info(self::class.' - Lead is fake or duplicate having quote_status_id '.$lead->quote_status_id.', skipping assignment');
+
             return false;
         } elseif ($isCHSAdvisor) {
             LoggerService::info(self::class.' - CHS advisor assignment requested (AWNI automation), continuing assignment');
+
             return true;
         } elseif ($isSIC && $isAdvisorRequested) {
             LoggerService::info(self::class.' - Lead is SIC and advisor is requested, continuing assignment');
+
             return true;
         } else {
             LoggerService::info(self::class.' - Lead does not meet allocation criteria (SIC and advisor requested), skipping assignment', extra: [
@@ -78,6 +83,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
                 'isAdvisorRequested' => $isAdvisorRequested,
                 'isCHSAdvisor' => $isCHSAdvisor,
             ]);
+
             return false;
         }
     }
