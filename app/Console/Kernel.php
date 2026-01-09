@@ -124,7 +124,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('send-failed-ila-leads --quoteType=Cycle')->name('send-failed-ila-leads:cron:cycle')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Savings')->name('send-failed-ila-leads:cron:savings')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType="Group Medical"')->name('send-failed-ila-leads:cron:group_medical')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
-        $schedule->command('send-failed-ila-leads --quoteType=Corpline')->name('send-failed-ila-leads:cron:corpline')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=CorpLine')->name('send-failed-ila-leads:cron:corpline')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Yacht')->name('send-failed-ila-leads:cron:yacht')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Jetski')->name('send-failed-ila-leads:cron:jetski')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
 
