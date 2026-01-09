@@ -60,32 +60,28 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         $isAdvisorRequested = $lead->cyberQuote && isset($lead->cyberQuote->sic_advisor_requested) && (bool) $lead->cyberQuote->sic_advisor_requested;
         $isCHSAdvisor = $this->allocationRequest->get('isCHSAdvisor', false);
 
+        $continueAssignment = false;
+
         // Check base conditions first
         if (! $this->allocationRequest->isOverrideAdvisorRequest() && ! empty($lead->advisor_id) && ! $isCHSAdvisor) {
             LoggerService::info(self::class.' - Lead is already assigned to advisor with ID: '.$lead->advisor_id.', skipping assignment');
-
-            return false;
         } elseif ($lead->isFakeOrDuplicate()) {
             LoggerService::info(self::class.' - Lead is fake or duplicate having quote_status_id '.$lead->quote_status_id.', skipping assignment');
-
-            return false;
         } elseif ($isCHSAdvisor) {
             LoggerService::info(self::class.' - CHS advisor assignment requested (AWNI automation), continuing assignment');
-
-            return true;
+            $continueAssignment = true;
         } elseif ($isSIC && $isAdvisorRequested) {
             LoggerService::info(self::class.' - Lead is SIC and advisor is requested, continuing assignment');
-
-            return true;
+            $continueAssignment = true;
         } else {
             LoggerService::info(self::class.' - Lead does not meet allocation criteria (SIC and advisor requested), skipping assignment', extra: [
                 'isSIC' => $isSIC,
                 'isAdvisorRequested' => $isAdvisorRequested,
                 'isCHSAdvisor' => $isCHSAdvisor,
             ]);
-
-            return false;
         }
+
+        return $continueAssignment;
     }
 
     private function verifyFetchLeadPreChecks()
