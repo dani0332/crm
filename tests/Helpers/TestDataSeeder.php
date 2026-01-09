@@ -179,7 +179,7 @@ class TestDataSeeder
 
         // Create Car Plan
         $carPlanId = $db->table('car_plan')->insertGetId([
-            'insurance_provider_id' => $insuranceProviderId,
+            'provider_id' => $insuranceProviderId,
             'plan_name' => 'Test Car Plan',
             'is_active' => 1,
             'created_at' => now(),

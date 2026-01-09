@@ -288,7 +288,7 @@ class TestSchemaCreator
         if (! Schema::connection('sqlite')->hasTable('car_plan')) {
             Schema::connection('sqlite')->create('car_plan', function ($table) {
                 $table->id();
-                $table->unsignedBigInteger('insurance_provider_id');
+                $table->unsignedBigInteger('provider_id');
                 $table->string('plan_name');
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();

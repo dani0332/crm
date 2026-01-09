@@ -11,6 +11,22 @@ use Tests\Helpers\TestSchemaCreator;
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     $this->user = TestDataSeeder::createAdminUser();
+    
+    // Assign required permission for toggle policy issuance automation
+    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $permissionId = $db->table('permissions')->insertGetId([
+        'name' => \App\Enums\PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API,
+        'guard_name' => 'web',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    
+    $db->table('model_has_permissions')->insert([
+        'permission_id' => $permissionId,
+        'model_type' => \App\Models\User::class,
+        'model_id' => $this->user->id,
+    ]);
+    
     $this->actingAs($this->user);
 
     // Use Laravel factories to create test data
