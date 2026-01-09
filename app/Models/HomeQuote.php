@@ -237,6 +237,21 @@ class HomeQuote extends Model implements AuditableContract
             ->active();
     }
 
+    // Reminder::Get the active insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // home_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        )
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Home)
+            ->where('customer_insured.is_active', true);
+    }
+
     public function amlLogs()
     {
         return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
