@@ -25,6 +25,20 @@ abstract class TestCase extends BaseTestCase
             
             // Clear any existing connections to force reconnection with new config
             app('db')->purge('mysql');
+            app('db')->purge('sqlite');
+            
+            // Reconnect to ensure clean state
+            app('db')->reconnect('sqlite');
         }
+    }
+    
+    protected function tearDown(): void
+    {
+        // Clear permission cache after each test to prevent state pollution
+        if (class_exists(\Spatie\Permission\PermissionRegistrar::class)) {
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        }
+        
+        parent::tearDown();
     }
 }

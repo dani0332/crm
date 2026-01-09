@@ -410,6 +410,7 @@ class TestSchemaCreator
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
+                $table->integer('sort_order')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('payment_gateway_id')->nullable();
                 $table->timestamps();
