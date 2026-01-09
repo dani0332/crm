@@ -133,7 +133,7 @@ class SageProcessesExport implements CsvExportableInterface
             $payment?->commission ?? $this->notAvailable,
             $paymentDate,
             $payment?->paymentStatus?->text ?? $payment?->payment_status ?? $this->notAvailable,
-            $row->insurance_provider?->text ?? $this->notAvailable,
+            $row->insuranceProvider?->text ?? $this->notAvailable,
             $payment?->invoice_description ?? $this->notAvailable,
             $payment?->insurer_tax_number ?? $this->notAvailable,
             $payment?->insurer_commmission_invoice_number ?? $this->notAvailable,
