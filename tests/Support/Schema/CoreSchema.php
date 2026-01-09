@@ -613,7 +613,7 @@ class CoreSchema
             'insurance_provider' => function (Blueprint $table) {
                 $table->id();
                 $table->string('code')->nullable();
-                $table->string('text');
+                $table->string('text')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('payment_gateway_id')->nullable();
                 $table->timestamps();
