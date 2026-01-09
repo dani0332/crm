@@ -38,6 +38,7 @@ class FailedILAEmailService
 
         return $this->getManagerEmails($roleName);
     }
+
     public function sendFailedIlaEmails($quoteType)
     {
         // Fetch leads created today (from midnight to now)
@@ -48,6 +49,7 @@ class FailedILAEmailService
 
             return;
         }
+
         LoggerService::info(self::class.' - sendFailedIlaEmails - Sending failed ILA emails to managers: '.implode(', ', $managerEmails));
         $birdSendFailedIlaEmailsWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW, useCache: true);
         if ($birdSendFailedIlaEmailsWorkflow) {
@@ -151,12 +153,14 @@ class FailedILAEmailService
             })
             ->get();
     }
+
     public function getHealthFailedILALeads()
     {
         return $this->getBaseQuery(QuoteTypes::HEALTH)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
             ->get();
     }
+
     public function getTravelFailedILALeads()
     {
         $leads = $this->getBaseQuery(QuoteTypes::TRAVEL)
@@ -180,6 +184,7 @@ class FailedILAEmailService
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
             ->get();
     }
+
     public function exportFailedIlaLeads($quoteType)
     {
 
