@@ -166,15 +166,7 @@ class SageProcessesExport implements CsvExportableInterface
         }
 
         try {
-            // Check if date is in custom format like "02-Jul-2025 01:09pm"
-            if (is_string($createdAt) && preg_match('/^\d{2}-[A-Za-z]{3}-\d{4}\s+\d{1,2}:\d{2}(am|pm)$/i', $createdAt)) {
-                // Parse custom format: "02-Jul-2025 01:09pm"
-                $createdAt = Carbon::createFromFormat('d-M-Y h:ia', $createdAt);
-            } elseif (! $createdAt instanceof Carbon) {
-                // Parse other formats
-                $createdAt = Carbon::parse($createdAt);
-            }
-
+            $createdAt = Carbon::parse($createdAt);
             return $createdAt->format(config('constants.DATETIME_DISPLAY_FORMAT'));
         } catch (\Exception $e) {
             return $this->notAvailable;
