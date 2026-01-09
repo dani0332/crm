@@ -717,7 +717,7 @@ class ApiController extends Controller
         }
     }
 
-    public function ExportFailedIlaLeads($quoteType)
+    public function exportFailedIlaLeads($quoteType)
     {
         try {
         $response = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);

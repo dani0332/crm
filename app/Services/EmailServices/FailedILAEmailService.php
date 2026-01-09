@@ -23,55 +23,32 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 class FailedILAEmailService
 {
+
+
+    protected function getManagerEmailsByQuoteType($quoteType){
+        $roleMap = [
+            QuoteTypes::CAR          => RolesEnum::CarManager,
+            QuoteTypes::BIKE         => RolesEnum::BikeManager,
+            QuoteTypes::HEALTH       => RolesEnum::HealthManager,
+            QuoteTypes::LIFE         => RolesEnum::LifeManager,
+            QuoteTypes::TRAVEL       => RolesEnum::TravelManager,
+            QuoteTypes::HOME         => RolesEnum::HomeManager,
+            QuoteTypes::PET          => RolesEnum::PetManager,
+            QuoteTypes::CYCLE        => RolesEnum::CycleManager,
+            QuoteTypes::SAVINGS      => RolesEnum::SavingsManager,
+            QuoteTypes::GROUP_MEDICAL=> RolesEnum::GMManager,
+            QuoteTypes::CORPLINE     => RolesEnum::CorplineManager,
+            QuoteTypes::YACHT        => RolesEnum::YachtManager,
+            QuoteTypes::JETSKI       => RolesEnum::JetskiManager,
+        ];
+        $roleName = $roleMap[$quoteType] ?? null;
+        return $this->getManagerEmails($roleName);
+    }
     public function sendFailedIlaEmails($quoteType)
     {
         // Fetch leads created today (from midnight to now)
-        $managerEmails = [];
-        switch ($quoteType) {
-            case QuoteTypes::CAR:
-                $managerEmails = $this->getManagerEmails(RolesEnum::CarManager);
-                break;
-            case QuoteTypes::BIKE:
-                $managerEmails = $this->getManagerEmails(RolesEnum::BikeManager);
-                break;
-            case QuoteTypes::HEALTH:
-                $managerEmails = $this->getManagerEmails(RolesEnum::HealthManager);
-                break;
-            case QuoteTypes::LIFE:
-                $managerEmails = $this->getManagerEmails(RolesEnum::LifeManager);
-                break;
-            case QuoteTypes::TRAVEL:
-                $managerEmails = $this->getManagerEmails(RolesEnum::TravelManager);
-                break;
-            case QuoteTypes::HOME:
-                $managerEmails = $this->getManagerEmails(RolesEnum::HomeManager);
-                break;
-            case QuoteTypes::PET:
-                $managerEmails = $this->getManagerEmails(RolesEnum::PetManager);
-                break;
-            case QuoteTypes::CYCLE:
-                $managerEmails = $this->getManagerEmails(RolesEnum::CycleManager);
-                break;
-            case QuoteTypes::SAVINGS:
-                $managerEmails = $this->getManagerEmails(RolesEnum::SavingsManager);
-                break;
-            case QuoteTypes::GROUP_MEDICAL:
-                $managerEmails = $this->getManagerEmails(RolesEnum::GMManager);
-                break;
-            case QuoteTypes::CORPLINE:
-                $managerEmails = $this->getManagerEmails(RolesEnum::CorplineManager);
-                break;
-            case QuoteTypes::YACHT:
-                $managerEmails = $this->getManagerEmails(RolesEnum::YachtManager);
-                break;
-            case QuoteTypes::JETSKI:
-                $managerEmails = $this->getManagerEmails(RolesEnum::JetskiManager);
-                break;
-
-            default:
-                $managerEmails = [];
-                break;
-        }
+        $managerEmails = $this->getManagerEmailsByQuoteType($quoteType) ?? [];
+        
         if (empty($managerEmails)) {
             LoggerService::warning(self::class . ' - sendFailedIlaEmails - No managers found for quote type: ' . $quoteType);
             return;
