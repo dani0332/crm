@@ -3,6 +3,7 @@
 namespace Tests\Helpers;
 
 use Illuminate\Support\Facades\Schema;
+use Tests\Support\Schema\RenewalsSchema;
 
 class TestSchemaCreator
 {
@@ -38,6 +39,8 @@ class TestSchemaCreator
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->string('remember_token')->nullable();
+                $table->integer('status')->nullable();
+                $table->timestamp('logout_at')->nullable();
                 $table->timestamps();
             });
         }
@@ -408,6 +411,7 @@ class TestSchemaCreator
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
                 $table->boolean('is_active')->default(1);
+                $table->unsignedBigInteger('payment_gateway_id')->nullable();
                 $table->timestamps();
                 $table->softDeletes(); // BaseModel uses SoftDeletes trait
             });
@@ -419,6 +423,7 @@ class TestSchemaCreator
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
+                $table->string('plan_name')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('provider_id')->nullable();
                 $table->timestamps();
@@ -426,7 +431,7 @@ class TestSchemaCreator
             });
         }
 
-        // Create personal_quotes table if it doesn't exist
+        // Create car_quote_request table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('car_quote_request')) {
             Schema::connection('sqlite')->create('car_quote_request', function ($table) {
                 $table->id();
@@ -446,6 +451,8 @@ class TestSchemaCreator
                 $table->timestamp('quote_status_date')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->timestamp('payment_paid_at')->nullable(); // Required for payment approval updates
+                $table->string('registration_type')->nullable();
+                $table->boolean('policy_issuance_automation_enabled')->default(false);
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
@@ -524,4 +531,12 @@ class TestSchemaCreator
             });
         }
     }
+
+    public static function createRenewalsSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new RenewalsSchema)->register();
+    }
 }
+

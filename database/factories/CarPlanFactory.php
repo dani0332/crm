@@ -8,26 +8,46 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CarPlanFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
     protected $model = CarPlan::class;
+
+    /**
+     * Configure the model factory.
+     */
+    public function configure()
+    {
+        return $this->afterMaking(function (CarPlan $carPlan) {
+            // Use SQLite connection for tests
+            if (app()->environment('testing')) {
+                $carPlan->setConnection('sqlite');
+            }
+        });
+    }
 
     /**
      * Define the model's default state.
      *
-     * @return array<string, mixed>
+     * @return array
      */
-    public function definition(): array
+    public function definition()
     {
-        // When creating a CarPlan via the factory, Laravel automatically creates an InsuranceProvider record and uses its id for provider_id.
         return [
+            'provider_id' => InsuranceProvider::factory(),
+            'plan_name' => $this->faker->words(3, true),
+            'is_active' => 1,
             'code' => $this->faker->unique()->regexify('[A-Z0-9]{5,10}'),
             'text' => $this->faker->words(2, true),
-            'is_active' => 1,
-            'provider_id' => InsuranceProvider::factory(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
+    }
+
+    /**
+     * Indicate that the car plan belongs to a specific insurance provider.
+     */
+    public function forInsuranceProvider($insuranceProviderId)
+    {
+        return $this->state(fn (array $attributes) => [
+            'provider_id' => $insuranceProviderId,
+        ]);
     }
 }
