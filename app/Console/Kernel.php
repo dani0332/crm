@@ -119,7 +119,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('send-failed-ila-leads --quoteType=Health')->name('send-failed-ila-leads:cron:health')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Life')->name('send-failed-ila-leads:cron:life')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Travel')->name('send-failed-ila-leads:cron:travel')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
-        $schedule->command('send-failed-ila-leads --quoteType=Home')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Home')->timezone('Asia/Dubai')->name('send-failed-ila-leads:cron:home')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Pet')->name('send-failed-ila-leads:cron:pet')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Cycle')->name('send-failed-ila-leads:cron:cycle')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Savings')->name('send-failed-ila-leads:cron:savings')->timezone('Asia/Dubai')->everyTenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
