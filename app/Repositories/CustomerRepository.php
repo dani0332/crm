@@ -278,7 +278,7 @@ class CustomerRepository extends BaseRepository
         $entitiesIds = $filterData['entitiesIds'];
 
         return PersonalQuote::with(['advisor', 'customer', 'latestInsured' => function ($latestInsured) {
-            $latestInsured->whereIn('quote_type_id', getPersonalQuoteTypeIds());
+            $latestInsured->whereIn('customer_insured.quote_type_id', getPersonalQuoteTypeIds());
         }])
             ->when($filterType === 'insured_first_name' && ! empty($quoteIds), function ($query) use ($quoteIds) {
                 $query->whereIn('id', $quoteIds);
