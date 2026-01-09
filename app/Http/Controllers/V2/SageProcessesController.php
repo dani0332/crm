@@ -70,7 +70,7 @@ class SageProcessesController extends Controller
             $failedProcesses = $this->sageProcessesService->getFailedSageProcesses($request->safe(), true);
 
             // Check if there's any data to export
-            if (empty($failedProcesses)) {
+            if ($failedProcesses->isEmpty()) {
                 return response()->json([
                     'message' => 'No data available to export.',
                 ], 404);
