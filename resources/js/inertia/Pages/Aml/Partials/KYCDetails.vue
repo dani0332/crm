@@ -22,6 +22,13 @@ const isSyncEnabled = ref(page.props.isInsurerSyncEnabled ?? false);
 const syncProcessLoading = ref(false);
 const quoteRequest = page.props.quoteRequest;
 const isPrivateCar = page.props.isPrivateCar;
+const isPolicyAutomationEnabled = ref(
+  page.props.isPolicyAutomationEnabled ?? false,
+);
+const policyAutomationToggleLoading = ref(false);
+const policyIssuanceAutomationEnabled = isPrivateCar
+  ? ref(quoteRequest.policy_issuance_automation_enabled)
+  : ref(false);
 
 const emit = defineEmits(['update:insurerPortalSyncData']);
 
@@ -106,11 +113,20 @@ const transactionPatternOptions = [
   ['no_changes', 'No Changes'],
   ['not_applicable', 'Not Applicable'],
 ].map(([value, label]) => ({ value, label }));
+
 const complianceRules = computed(() => {
   const hasPermission =
     can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch);
   return hasPermission ? [isRequired] : [];
+});
+
+const showPolicyIssuanceAutomationToggle = computed(() => {
+  return (
+    isPrivateCar &&
+    isPolicyAutomationEnabled.value &&
+    can(permissionsEnum.CAR_LEGACY_KYC_SKIP_INSURER_API)
+  );
 });
 
 function activePatternField() {
@@ -320,6 +336,54 @@ const syncInsurerPortalUpdates = () => {
     });
 };
 
+const togglePolicyIssuanceAutomation = () => {
+  // Set loading state
+  policyAutomationToggleLoading.value = true;
+
+  // The v-model will have already updated when @change fires, so we use the current value
+  const newValue = policyIssuanceAutomationEnabled.value;
+
+  // Store the previous value to revert on error
+  const previousValue = !newValue;
+
+  axios
+    .post('/toggle-policy-issuance-automation', {
+      quote_uuid: quoteRequest.uuid,
+      quote_type_id: page.props.quoteType.id,
+      enabled: newValue,
+    })
+    .then(response => {
+      if (response.data.success) {
+        policyIssuanceAutomationEnabled.value =
+          response.data.data.policy_issuance_automation_enabled;
+        notification.success({
+          title: response.data.message,
+          position: 'top',
+        });
+      } else {
+        // Revert on failure
+        policyIssuanceAutomationEnabled.value = previousValue;
+        notification.error({
+          title: response.data.message || 'Failed to toggle policy automation',
+          position: 'top',
+        });
+      }
+    })
+    .catch(error => {
+      // Revert on error
+      policyIssuanceAutomationEnabled.value = previousValue;
+      notification.error({
+        title:
+          error.response?.data?.message || 'Error toggling policy automation',
+        position: 'top',
+      });
+      console.error('Toggle error:', error);
+    })
+    .finally(() => {
+      policyAutomationToggleLoading.value = false;
+    });
+};
+
 const submitInsuredKycForm = isValid => {
   if (!isValid) return;
 
@@ -383,6 +447,13 @@ const submitInsuredKycForm = isValid => {
             title: 'KYC Document uploaded successfully',
             position: 'top',
           });
+          if (response.data.message) {
+            notification.success({
+              title: response.data.message,
+              position: 'top',
+            });
+          }
+
           router.reload({
             replace: true,
             preserveScroll: true,
@@ -1180,51 +1251,66 @@ const [SubmitInsuredKycFormBtnTemplate, SubmitInsuredKycFormBtnReuseTemplate] =
         />
       </x-field>
     </dl>
-    <div class="flex justify-end my-5 gap-x-2">
-      <!-- :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)" -->
-      <x-button
-        size="sm"
-        color="primary"
-        type="button"
-        class="px-6"
-        @click="syncInsurerPortalUpdates"
-        :disabled="!isSyncEnabled"
-        :loading="syncProcessLoading"
-        v-if="isPrivateCar"
-      >
-        Sync
-      </x-button>
-      <SubmitInsuredKycFormBtnTemplate>
+    <div class="flex justify-between my-5 gap-x-2">
+      <!-- Policy Issuance Automation Toggle -->
+      <div class="flex items-center gap-x-3">
+        <template v-if="showPolicyIssuanceAutomationToggle">
+          <x-label class="mb-0">Policy Issuance Automation API: </x-label>
+          <x-toggle
+            v-model="policyIssuanceAutomationEnabled"
+            @change="togglePolicyIssuanceAutomation"
+            :disabled="policyAutomationToggleLoading"
+            :loading="policyAutomationToggleLoading"
+            :label="policyIssuanceAutomationEnabled ? 'Enabled' : 'Disabled'"
+          />
+        </template>
+      </div>
+      <div class="flex gap-x-2">
+        <!-- :disabled="!isSyncEnabled || !can(permissionsEnum.AMLList)" -->
         <x-button
           size="sm"
-          color="orange"
-          type="submit"
+          color="primary"
+          type="button"
           class="px-6"
-          :loading="kycFormDetails.processing"
-          :disabled="
-            !can(permissionsEnum.AMLList) || !kycFormDetails.insured_id
-          "
+          @click="syncInsurerPortalUpdates"
+          :disabled="!isSyncEnabled"
+          :loading="syncProcessLoading"
+          v-if="isPrivateCar"
         >
-          Save
+          Sync
         </x-button>
-      </SubmitInsuredKycFormBtnTemplate>
+        <SubmitInsuredKycFormBtnTemplate>
+          <x-button
+            size="sm"
+            color="orange"
+            type="submit"
+            class="px-6"
+            :loading="kycFormDetails.processing"
+            :disabled="
+              !can(permissionsEnum.AMLList) || !kycFormDetails.insured_id
+            "
+          >
+            Save
+          </x-button>
+        </SubmitInsuredKycFormBtnTemplate>
 
-      <x-tooltip
-        v-if="!can(permissionsEnum.AMLList) || !kycFormDetails.insured_id"
-        placement="left"
-      >
-        <SubmitInsuredKycFormBtnReuseTemplate />
-        <template #tooltip>
-          {{
-            kycFormDetails.insured_id
-              ? "You don't have permission to edit this section"
-              : "Search the Insured's ID number"
-          }}
+        <x-tooltip
+          v-if="!can(permissionsEnum.AMLList) || !kycFormDetails.insured_id"
+          placement="left"
+        >
+          <SubmitInsuredKycFormBtnReuseTemplate />
+          <template #tooltip>
+            {{
+              kycFormDetails.insured_id
+                ? "You don't have permission to edit this section"
+                : "Search the Insured's ID number"
+            }}
+          </template>
+        </x-tooltip>
+        <template v-else>
+          <SubmitInsuredKycFormBtnReuseTemplate />
         </template>
-      </x-tooltip>
-      <template v-else>
-        <SubmitInsuredKycFormBtnReuseTemplate />
-      </template>
+      </div>
     </div>
   </x-form>
 </template>

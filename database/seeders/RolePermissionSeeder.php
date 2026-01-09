@@ -44,6 +44,7 @@ class RolePermissionSeeder extends Seeder
         $this->addEditLastYearDetailsPermission();
         $this->sageProcessTrackerPermissions();
         $this->addBranchesPermission();
+        $this->addCarLegacyKycSkipInsurerApiPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -530,6 +531,27 @@ class RolePermissionSeeder extends Seeder
             foreach ($permissions as $permission) {
                 if (! $engineeringRole->hasPermissionTo($permission)) {
                     $engineeringRole->givePermissionTo($permission);
+                }
+            }
+        }
+    }
+
+    private function addCarLegacyKycSkipInsurerApiPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
                 }
             }
         }

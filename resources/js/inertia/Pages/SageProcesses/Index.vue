@@ -227,8 +227,8 @@ function clearFilters() {
 }
 
 function getDetailPageRoute(item) {
-  const sageRequest = JSON.parse(item.request);
-  let quoteTypeId = sageRequest.sagePayload.quoteTypeId;
+  const sageRequest = JSON.parse(item?.request);
+  let quoteTypeId = sageRequest?.sagePayload?.quoteTypeId;
   if (item.model?.status) {
     return route('send-update.show', item.model?.uuid);
   } else {
