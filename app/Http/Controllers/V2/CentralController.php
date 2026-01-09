@@ -240,11 +240,17 @@ class CentralController extends Controller
             ]);
         }
 
-        if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity && $customerProfileRequest->quote_type_id === QuoteTypeId::Car) {
-            CarQuoteRepository::where('id', $customerProfileRequest->quote_request_id)->update([
-                'company_name' => $customerProfileRequest->company_name,
-                'company_address' => $customerProfileRequest->company_address,
+        if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
+            $customerProfileRequest->merge([
+                'customer_id' => $quote->customer_id,
             ]);
+
+            if ($customerProfileRequest->quote_type_id === QuoteTypeId::Car) {
+                CarQuoteRepository::where('id', $customerProfileRequest->quote_request_id)->update([
+                    'company_name' => $customerProfileRequest->company_name,
+                    'company_address' => $customerProfileRequest->company_address,
+                ]);
+            }
         }
 
         app(AMLService::class)->processInsuredDataForScreening(
