@@ -2254,6 +2254,7 @@ class AMLService
             ->select(['ci.quote_request_id', 'ci.insured_id', 'ci.customer_id', 'ci.quote_type_id'])
             ->whereIn('ci.quote_request_id', $quoteIds)
             ->where('ci.quote_type_id', $quoteTypeId)
+            ->where('ci.is_active', true)
             ->get()
             ->keyBy('quote_request_id');
 
