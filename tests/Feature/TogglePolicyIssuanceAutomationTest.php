@@ -1,32 +1,30 @@
 <?php
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use Spatie\Permission\Models\Permission;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     $this->user = TestDataSeeder::createAdminUser();
-    
-    // Assign required permission for toggle policy issuance automation
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
-    $permissionId = $db->table('permissions')->insertGetId([
-        'name' => \App\Enums\PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API,
-        'guard_name' => 'web',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-    
-    $db->table('model_has_permissions')->insert([
-        'permission_id' => $permissionId,
-        'model_type' => \App\Models\User::class,
-        'model_id' => $this->user->id,
-    ]);
-    
+
+    // Grant the required permission to the user
+    $permission = Permission::firstOrCreate(
+        ['name' => PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API, 'guard_name' => 'web'],
+        ['created_at' => now(), 'updated_at' => now()]
+    );
+    $this->user->givePermissionTo($permission);
+
+    // Clear permission cache to ensure permissions are available immediately
+    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    $this->user->refresh();
+
     $this->actingAs($this->user);
 
     // Use Laravel factories to create test data
