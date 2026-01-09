@@ -50,6 +50,7 @@ use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CQF\CarCQFFileExportService;
+use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -760,6 +761,26 @@ class ApiController extends Controller
         }
     }
 
+    public function exportFailedIlaLeads($quoteType)
+    {
+        try {
+            $response = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
+
+            $fileResponse = $response['file'];
+            // Add custom header for total leads count
+            $fileResponse->headers->set('X-Total-Leads', $response['total_leads'] ?? 0);
+
+            return $fileResponse;
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.': Failed to export failed ILA leads', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export failed ILA leads',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
     public function getLeadOCRComparison(Request $request)
     {
         $request->validate(

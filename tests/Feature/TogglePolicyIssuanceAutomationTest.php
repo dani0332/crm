@@ -1,16 +1,30 @@
 <?php
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use Spatie\Permission\Models\Permission;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     $this->user = TestDataSeeder::createAdminUser();
+
+    // Grant the required permission to the user
+    $permission = Permission::firstOrCreate(
+        ['name' => PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API, 'guard_name' => 'web'],
+        ['created_at' => now(), 'updated_at' => now()]
+    );
+    $this->user->givePermissionTo($permission);
+
+    // Clear permission cache to ensure permissions are available immediately
+    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    $this->user->refresh();
+
     $this->actingAs($this->user);
 
     // Use Laravel factories to create test data
