@@ -70,6 +70,9 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         } elseif ($isCHSAdvisor) {
             LoggerService::info(self::class.' - CHS advisor assignment requested (AWNI automation), continuing assignment');
             $continueAssignment = true;
+        } elseif ($lead->isPaid()) {
+            // for cyber we do not assign if the lead is paid, as it was requested by business
+            LoggerService::info(self::class.' - Lead is paid, skipping assignment');
         } elseif ($isSIC && $isAdvisorRequested) {
             LoggerService::info(self::class.' - Lead is SIC and advisor is requested, continuing assignment');
             $continueAssignment = true;
