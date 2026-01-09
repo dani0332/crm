@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -41,5 +42,21 @@ class ChangePrimaryContactRequest extends FormRequest
 
         return $rules;
     }
-
+    
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->key === GenericRequestEnum::EMAIL) {
+                $quote = $this->getQuoteObject($this->quote_type, $this->quote_id);
+                if (
+                    in_array($quote->quote_status_id, [
+                        QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+                        QuoteStatusEnum::POLICY_BOOKING_FAILED,
+                    ])
+                ) {
+                    $validator->errors()->add('error', 'Primary email ID cannot be changed while the policy booking is in progress.');
+                }
+            }
+        });
+    }
 }
