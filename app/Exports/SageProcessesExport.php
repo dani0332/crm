@@ -167,6 +167,7 @@ class SageProcessesExport implements CsvExportableInterface
 
         try {
             $createdAt = Carbon::parse($createdAt);
+
             return $createdAt->format(config('constants.DATETIME_DISPLAY_FORMAT'));
         } catch (\Exception $e) {
             return $this->notAvailable;
