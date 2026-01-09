@@ -214,6 +214,15 @@ class CentralController extends Controller
         $quoteType = QuoteTypes::getName($customerProfileRequest->quote_type_id);
         $quote = $this->getQuoteObject($quoteType->value, $customerProfileRequest->quote_request_id);
 
+        if (! $quote) {
+            LoggerService::info('Quote not found', extra: [
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            ]);
+
+            return redirect()->back()->with('error', 'Quote not found');
+        }
+
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [
                 'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),
@@ -225,6 +234,9 @@ class CentralController extends Controller
             $customerProfileRequest->merge([
                 'screening_id_type' => 'emiratesId',
                 'screening_id_number' => $customerProfileRequest->emirates_id_number,
+                'dob' => $customer->dob,
+                'nationality_id' => $customer->nationality_id,
+                'screening_gender' => $customer->screening_gender,
             ]);
         }
 
@@ -244,9 +256,7 @@ class CentralController extends Controller
             [],
             false);
 
-        if ($quote) {
-            app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT);
-        }
+        app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::CUSTOMER_PROFILE_EDIT);
 
         return redirect()->back();
     }
