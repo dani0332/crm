@@ -92,4 +92,8 @@ class SendUpdateLog extends Model implements AuditableContract
     {
         return $this->option->code == SendUpdateLogStatusEnum::PPE;
     }
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'personal_quote_id', 'id');
+    }
 }
