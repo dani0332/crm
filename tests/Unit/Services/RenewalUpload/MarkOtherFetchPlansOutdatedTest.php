@@ -12,7 +12,6 @@ use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Tests\Helpers\TestSchemaCreator;
 
-
 beforeEach(
     function () {
         // Create minimal schema for tests that may hit database
