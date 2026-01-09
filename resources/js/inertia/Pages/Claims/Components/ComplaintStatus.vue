@@ -108,7 +108,12 @@ watch(
 
 // Computed property to disable submit button
 const isSubmitDisabled = computed(() => {
-  return complaintStatusForm.processing || !isFormValid.value || ! complaintStatusForm.complaint_status_id || !complaintStatusForm.complaint_datetime;
+  return (
+    complaintStatusForm.processing ||
+    !isFormValid.value ||
+    !complaintStatusForm.complaint_status_id ||
+    !complaintStatusForm.complaint_datetime
+  );
 });
 
 const updateComplaintStatus = isValid => {
