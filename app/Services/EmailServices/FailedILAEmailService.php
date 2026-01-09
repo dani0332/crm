@@ -39,7 +39,7 @@ class FailedILAEmailService
         return $this->getManagerEmails($roleName);
     }
 
-    public function sendFailedIlaEmails(QuoteTypes$quoteType)
+    public function sendFailedIlaEmails(QuoteTypes $quoteType)
     {
         // Fetch leads created today (from midnight to now)
         $managerEmails = $this->getManagerEmailsByQuoteType($quoteType) ?? [];
