@@ -8,7 +8,7 @@ use Tests\Support\Schema\RenewalsSchema;
 class TestSchemaCreator
 {
     /**
-     * Create minimal required tables for LifeQuote tests.
+     * Create minimal required tables tests.
      */
     public static function createMinimalSchema(): void
     {
