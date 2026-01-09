@@ -767,29 +767,19 @@ class SukoonMedexService
     // Reminder:: this function is used for Bike and Car quotes - already back tracked in the code
     private function prepareUserDetails($quote)
     {
-        $quoteType = $quote->quote_type_id ?? null;
-        $isBikeQuote = $quoteType == QuoteTypeId::Bike;
-
-        if ($isBikeQuote) {
-            $quote->load(['latestInsured' => function ($query) {
-                $query->where('customer_insured.quote_type_id', QuoteTypeId::Bike);
-            }]);
-            $latestInsuredData = $quote->latestInsured;
-        } else {
-            $latestInsuredData = $quote->latestInsured;
-        }
-
+        $latestInsuredData = $quote->latestInsured;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
         if (! empty($quote->quoteRequestEntityMapping)) {
             $firstName = $quote->first_name ?? '';
             $lastName = $quote->last_name ?? '';
         } else {
-            $firstName = ($latestInsuredData?->first_name ?? $quote?->customer?->insured_first_name) ?? '';
-            $lastName = ($latestInsuredData?->last_name ?? $quote?->customer?->insured_last_name) ?? '';
+            $firstName = ($latestInsuredData?->first_name ?? $quote->customer?->insured_first_name) ?? '';
+            $lastName = ($latestInsuredData?->last_name ?? $quote->customer?->insured_last_name) ?? '';
         }
 
-        $emirate = $isBikeQuote ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
+        $quoteType = $quote->quote_type_id ?? null;
+        $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote?->emirates ?? null) : ($quote->emirate ?? null);
         $emirateIdNumber = str_replace('-', '', $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '');
 
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
@@ -799,13 +789,13 @@ class SukoonMedexService
 
         return [
             'form_name' => 'personal_details',
-            'title' => $latestInsuredData->gender == 'Male' ? 'Mr' : 'Ms',
+            'title' => $latestInsuredData?->gender == 'Male' ? 'Mr' : 'Ms',
             'first_name' => $firstName,
             'last_name' => $lastName,
             'mobile' => '+9710502732524',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
-            'emirate' => $emirate->text ?? '',
+            'emirate' => $emirate?->text ?? '',
             'emirates_id_number' => $emirateIdNumber,
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',

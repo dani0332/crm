@@ -136,16 +136,6 @@ class Customer extends Model implements AuditableContract
         )->where('customer_insured.is_active', true);
     }
 
-    /**
-     * Get all customer insured records associated with this customer.
-     *
-     * @todo Review this relationship after customer insured process is updated
-     */
-    public function customerInsured(): HasMany
-    {
-        return $this->hasMany(CustomerInsured::class, 'customer_id', 'id');
-    }
-
     public function pcpTagFormatted(): Attribute
     {
         return Attribute::make(
