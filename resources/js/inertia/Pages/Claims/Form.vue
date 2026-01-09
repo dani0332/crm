@@ -7,7 +7,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 const claimForm = useForm({
   // IMCRM Required Fields
@@ -273,6 +273,18 @@ async function searchPolicies(pageNumber = 1) {
       position: 'top',
     });
     return;
+  }
+
+  // Validate email format if email is provided
+  if (claimForm.email) {
+    const emailValidation = isEmail(claimForm.email);
+    if (emailValidation !== true) {
+      notification.error({
+        title: emailValidation,
+        position: 'top',
+      });
+      return;
+    }
   }
 
   // Ensure page number is always an integer
@@ -617,7 +629,7 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
           />
           <x-input
             v-model="claimForm.mobile_no"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             type="tel"
             label="Phone Number"
@@ -663,6 +675,7 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
             placeholder="Select Claim Type"
             :options="claimTypeOptions"
             :rules="[isRequired]"
+            required
             filterable
             filterPlaceholder="Filter Claim Type...."
             :error="claimForm.errors.claim_type_id"

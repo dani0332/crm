@@ -516,7 +516,7 @@ watch(
       <h2 class="text-xl font-semibold">Claims List</h2>
       <div class="flex gap-2">
         <Link v-if="can(permissionsEnum.CLAIM_CREATE)" href="/claim/create">
-          <x-button size="sm" color="primary">Add New Claim</x-button>
+          <x-button size="sm" color="primary">Create Claim</x-button>
         </Link>
       </div>
     </div>
