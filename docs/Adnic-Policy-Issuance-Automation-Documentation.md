@@ -87,6 +87,7 @@ The ADNIC Policy Issuance Automation follows a modular architecture pattern with
 **Implements**: `PolicyIssuanceInterface`
 
 **Responsibilities**:
+
 - Entry point for policy issuance automation
 - Manages step execution sequence
 - Handles automation enable/disable checks
@@ -116,6 +117,7 @@ public function getStepsLockingStatus($quote, $throughAutomation = false): array
 **Important**: The `createPolicyIssuanceSchedule()` method checks `$quote->isSTPCase()` before creating the schedule. Only STP (Straight Through Processing) cases are eligible for automation.
 
 **Step Handlers Mapping**:
+
 ```php
 private array $stepHandlers = [
     AdnicEnum::STEP_ISSUE_POLICY => 'executeIssuePolicyStep',
@@ -125,6 +127,7 @@ private array $stepHandlers = [
 ```
 
 **Step Execution Order**:
+
 1. `STEP_UPLOAD_DOCUMENTS` - Upload customer documents to ADNIC
 2. `STEP_ISSUE_POLICY` - Create policy with ADNIC
 3. `STEP_UPLOAD_POLICY_DOCS` - Download policy documents from ADNIC and upload to IMCRM
@@ -136,6 +139,7 @@ private array $stepHandlers = [
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicStepExecutor.php`
 
 **Responsibilities**:
+
 - Executes individual automation steps
 - Updates quote status on success/failure
 - Delegates API calls to AdnicApiService
@@ -155,6 +159,7 @@ public function executeUploadPolicyDocumentsStep($quote, $process): array
 ```
 
 **Error Handling**:
+
 - Each step returns a standardized response array
 - Updates `policy_issuance` table with API status codes
 - Logs failures with detailed context for debugging
@@ -166,6 +171,7 @@ public function executeUploadPolicyDocumentsStep($quote, $process): array
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicApiService.php`
 
 **Responsibilities**:
+
 - Direct interaction with ADNIC Insurance API
 - Orchestrates API calls with proper payloads
 - Stores API logs for audit trails
@@ -185,6 +191,7 @@ public function uploadPolicyDocumentsToIMCRM($quote, $process): array
 ```
 
 **API Endpoints Used**:
+
 - `/GeneratePolicy` - Create policy
 - `/UploadDocument` - Upload customer documents
 - `/GeneratePolicyDocument` - Download policy documents
@@ -196,12 +203,14 @@ public function uploadPolicyDocumentsToIMCRM($quote, $process): array
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicHttpClient.php`
 
 **Responsibilities**:
+
 - Manages HTTP communication with ADNIC API
 - Configures authentication, headers, and timeouts
 - Provides consistent error handling for HTTP errors
 - Centralizes API configuration
 
 **Configuration**:
+
 ```php
 // From constants config
 'ADNIC_API_BASE_URL' => env('ADNIC_API_BASE_URL')
@@ -215,6 +224,7 @@ ADNIC_HEALTH_AUTOMATION_API_TIMEOUT
 ```
 
 **Headers**:
+
 ```php
 [
     'Content-Type' => 'application/json',
@@ -231,6 +241,7 @@ ADNIC_HEALTH_AUTOMATION_API_TIMEOUT
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicRequestBuilder.php`
 
 **Responsibilities**:
+
 - Constructs API request payloads from domain models
 - Formats dates, addresses, and other data as per API requirements
 - Builds headers for specific API calls
@@ -250,6 +261,7 @@ public function buildDownloadDocumentPayload($generatePolicyResponse, $docId): a
 ```
 
 **Data Mappings**:
+
 - Salary Band: `1 => 1 (4000 and less)`, `2 => 2 (More than 4000)`
 - Gender: IMCRM format → `M` or `F`
 - Marital Status: `1 => Single`, `2 => Married`, `3 => Widowed`, `4 => Divorced`
@@ -263,6 +275,7 @@ public function buildDownloadDocumentPayload($generatePolicyResponse, $docId): a
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicResponseHandler.php`
 
 **Responsibilities**:
+
 - Normalizes HTTP responses into consistent structure
 - Extracts error messages from various response formats
 - Handles success/failure states
@@ -279,6 +292,7 @@ public function buildStepResponse(string $step, bool $status = false, ?string $m
 ```
 
 **Response Structure**:
+
 ```php
 [
     'status' => true|false,
@@ -290,6 +304,7 @@ public function buildStepResponse(string $step, bool $status = false, ?string $m
 ```
 
 **Error Detection**:
+
 - Checks for `ErrorInfo` array in response
 - Checks for `DocumentInfo->ErrorInfo` array
 - Handles null responses
@@ -303,12 +318,14 @@ public function buildStepResponse(string $step, bool $status = false, ?string $m
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicDocumentHandler.php`
 
 **Responsibilities**:
+
 - Fetches document content from Azure storage
 - Maps document types between IMCRM and ADNIC
 - Validates document MIME types
 - Uploads downloaded policy documents to IMCRM
 
 **Allowed MIME Types**:
+
 ```php
 ['application/pdf', 'image/jpeg', 'image/png']
 ```
@@ -316,11 +333,13 @@ public function buildStepResponse(string $step, bool $status = false, ?string $m
 **Document Type Mappings**:
 
 **IMCRM → ADNIC (Upload)**:
+
 - `HEA_EID` (Emirates ID) → `3`
 - `HEA_VISA` (Visa) → `6`
 - `HEA_PAS` (Passport) → `1`
 
 **ADNIC → IMCRM (Download)**:
+
 - `PolicyDocumentId` → `POLC` (Policy Schedule)
 - `CommisionNoteDocumentId` → `TIRBB` (Commission Note)
 - `TaxInvoiceDocumentId` → `TI` (Tax Invoice)
@@ -341,7 +360,8 @@ public function uploadAndAttachToQuoteDocuments($quote, $documentContent, $docum
 public function getInsurerDocCodeForHealth(string $documentType): ?string
 ```
 
-**Important Note**: 
+**Important Note**:
+
 - `fetchDocumentContent()` returns RAW content (not base64)
 - Base64 encoding is done in `AdnicApiService::uploadDocuments()`
 - `uploadAndAttachToQuoteDocuments()` expects base64 encoded content
@@ -354,6 +374,7 @@ public function getInsurerDocCodeForHealth(string $documentType): ?string
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicValidationService.php`
 
 **Responsibilities**:
+
 - Validates required data before automation starts
 - Validates documents before upload
 - Validates document availability before download
@@ -373,6 +394,7 @@ public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array
 ```
 
 **Required Data**:
+
 - Health UMAF Response
 - Payments
 - Insurer Quote Number
@@ -385,6 +407,7 @@ public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicQuoteUpdaterService.php`
 
 **Responsibilities**:
+
 - Updates quote with policy issuance response data
 - Updates quote status to PolicyIssued
 - Filters out null values to avoid overwriting existing data
@@ -400,6 +423,7 @@ public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePo
 ```
 
 **Updated Fields**:
+
 - `policy_number`
 - `policy_start_date`
 - `policy_expiry_date`
@@ -414,6 +438,7 @@ public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePo
 **Location**: `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicBookPolicyService.php`
 
 **Responsibilities**:
+
 - Determines which steps are editable in the UI
 - Provides locking status based on automation progress
 - Allows manual intervention when automation fails
@@ -427,13 +452,13 @@ public function getStepsLockingStatus($quote, $throughAutomation = false): array
 
 **Locking Logic**:
 
-| Completed Step | Policy Details Editable | Booking Details Editable |
-|---------------|------------------------|--------------------------|
-| None | Yes | Yes |
-| UPLOAD_DOCUMENTS | Yes | Yes |
-| ISSUE_POLICY | Yes | Yes |
-| UPLOAD_POLICY_DOCS | Yes | Yes |
-| Through Automation | Yes | Yes |
+| Completed Step     | Policy Details Editable | Booking Details Editable |
+| ------------------ | ----------------------- | ------------------------ |
+| None               | Yes                     | Yes                      |
+| UPLOAD_DOCUMENTS   | Yes                     | Yes                      |
+| ISSUE_POLICY       | Yes                     | Yes                      |
+| UPLOAD_POLICY_DOCS | Yes                     | Yes                      |
+| Through Automation | Yes                     | Yes                      |
 
 ---
 
@@ -442,11 +467,13 @@ public function getStepsLockingStatus($quote, $throughAutomation = false): array
 **Location**: `app/Facades/AdnicHttpFacade.php`
 
 **Responsibilities**:
+
 - Provides static access to AdnicHttpClient
 - Simplifies dependency injection
 - Enables easy mocking in tests
 
 **Usage**:
+
 ```php
 use App\Facades\AdnicHttpFacade;
 
@@ -461,6 +488,7 @@ $baseUrl = AdnicHttpFacade::getBaseUrl();
 **Location**: `app/Providers/AdnicServiceProvider.php`
 
 **Responsibilities**:
+
 - Registers AdnicHttpClient as singleton
 - Binds AdnicInsuranceService with dependencies
 - Ensures proper dependency injection
@@ -488,18 +516,18 @@ sequenceDiagram
     Payment->>SplitPaymentService: Capture Payment
     SplitPaymentService->>AdnicInsuranceService: createPolicyIssuanceSchedule()
     AdnicInsuranceService->>PolicyIssuance: Create Entry (status: PENDING)
-    
+
     Note over CronJob: Cron runs every X minutes
     CronJob->>PolicyIssuanceService: Process Pending
     PolicyIssuanceService->>AdnicInsuranceService: executeSteps()
-    
+
     AdnicInsuranceService->>AdnicStepExecutor: executeUploadDocumentsStep()
     AdnicStepExecutor->>AdnicApiService: uploadDocuments()
     AdnicApiService->>AdnicAPI: POST /UploadDocument (per member, per document)
     AdnicAPI-->>AdnicApiService: Document Upload Response
     AdnicApiService-->>AdnicStepExecutor: Success/Failure
     AdnicStepExecutor-->>AdnicInsuranceService: completed_step: UPLOAD_DOCUMENTS
-    
+
     AdnicInsuranceService->>AdnicStepExecutor: executeIssuePolicyStep()
     AdnicStepExecutor->>AdnicApiService: issuePolicy()
     AdnicApiService->>AdnicAPI: POST /GeneratePolicy
@@ -507,7 +535,7 @@ sequenceDiagram
     AdnicApiService->>AdnicQuoteUpdaterService: updateQuoteFromIssuePolicyResponse()
     AdnicApiService-->>AdnicStepExecutor: Success + Policy Data
     AdnicStepExecutor-->>AdnicInsuranceService: completed_step: ISSUE_POLICY
-    
+
     AdnicInsuranceService->>AdnicStepExecutor: executeUploadPolicyDocumentsStep()
     AdnicStepExecutor->>AdnicApiService: uploadPolicyDocumentsToIMCRM()
     AdnicApiService->>AdnicAPI: POST /GeneratePolicyDocument (3 times)
@@ -516,7 +544,7 @@ sequenceDiagram
     AdnicDocumentHandler->>QuoteDocumentService: Upload to IMCRM
     AdnicApiService-->>AdnicStepExecutor: Success/Failure
     AdnicStepExecutor-->>AdnicInsuranceService: completed_step: UPLOAD_POLICY_DOCS
-    
+
     AdnicInsuranceService->>PolicyIssuance: Update status: SUCCESS
 ```
 
@@ -525,6 +553,7 @@ sequenceDiagram
 **Purpose**: Upload required customer documents to ADNIC for each insured member
 
 **Process**:
+
 1. Retrieve insured members from `healthInsurerRequestResponse`
 2. Get required document types: Emirates ID, Visa, Passport
 3. For each member:
@@ -538,18 +567,21 @@ sequenceDiagram
 4. Update `completed_step` to `STEP_UPLOAD_DOCUMENTS`
 
 **Validation**:
+
 - Documents must exist in quote
 - Insured info details must be available
 - Document content must be fetchable
 - MIME type must be allowed
 
 **Failure Scenarios**:
+
 - Document not found in Azure
 - Invalid MIME type
 - API call failure
 - Missing insured info
 
 **API Payload Example**:
+
 ```json
 {
   "PartnerInfo": {
@@ -574,6 +606,7 @@ sequenceDiagram
 **Purpose**: Create the policy with ADNIC using quote and payment information
 
 **Process**:
+
 1. Retrieve payment and split payment (credit card)
 2. Retrieve health UMAF response answers
 3. Build insured info array from `healthInsurerRequestResponse`
@@ -586,18 +619,21 @@ sequenceDiagram
 10. Update `completed_step` to `STEP_ISSUE_POLICY`
 
 **Validation**:
+
 - Health UMAF Response exists
 - Payments exist
 - Insurer Quote Number exists
 - Customer exists
 
 **Failure Scenarios**:
+
 - Payment information missing
 - API validation errors
 - Policy creation failure
 - Missing required fields
 
 **API Payload Structure**:
+
 ```json
 {
   "PartnerInfo": {
@@ -646,6 +682,7 @@ sequenceDiagram
 ```
 
 **Response Data Extracted**:
+
 - `PolicyInfo.PolicyNo` → `policy_number`
 - `PolicyInfo.PolicyStartDate` → `policy_start_date`
 - `PolicyInfo.PolicyEndDate` → `policy_expiry_date`
@@ -660,6 +697,7 @@ sequenceDiagram
 **Purpose**: Download policy documents from ADNIC and upload them to IMCRM
 
 **Process**:
+
 1. Retrieve policy issuance response from logs
 2. Extract document IDs (Policy, Commission Note, Tax Invoice)
 3. Validate document type codes for IMCRM exist
@@ -674,17 +712,20 @@ sequenceDiagram
 6. Update `completed_step` to `STEP_UPLOAD_POLICY_DOCS`
 
 **Required Documents**:
+
 - Policy Document (`PolicyDocumentId` → `POLC`)
 - Commission Note (`CommisionNoteDocumentId` → `TIRBB`)
 - Tax Invoice (`TaxInvoiceDocumentId` → `TI`)
 
 **Failure Scenarios**:
+
 - Document download failure
 - Missing document IDs
 - Upload to IMCRM failure
 - Incomplete document set (< 3 documents)
 
 **API Payload Example**:
+
 ```json
 {
   "PartnerInfo": {
@@ -700,6 +741,7 @@ sequenceDiagram
 ```
 
 **Response Data**:
+
 ```json
 {
   "DocumentInfo": {
@@ -716,6 +758,7 @@ sequenceDiagram
 **Feature**: Automation can resume from the last completed step after a failure or timeout
 
 **Process**:
+
 1. Cron job picks up failed/timeout policy issuances
 2. `AdnicInsuranceService` checks `completed_step`
 3. Calls `getNextStep()` to determine where to resume
@@ -723,6 +766,7 @@ sequenceDiagram
 5. Skips already completed steps
 
 **Example**:
+
 ```php
 // Last completed step was UPLOAD_DOCUMENTS
 $lastCompletedStep = 'UploadDocuments';
@@ -744,6 +788,7 @@ $nextStep = $service->getNextStep($lastCompletedStep);
 **Method**: Header-based authentication
 
 **Headers**:
+
 ```php
 'Authorization' => 'Bearer {TOKEN}' or 'Token {TOKEN}'
 'Ocp-Apim-Subscription-Key' => '{SUBSCRIPTION_KEY}'
@@ -752,6 +797,7 @@ $nextStep = $service->getNextStep($lastCompletedStep);
 ```
 
 **Configuration**:
+
 ```env
 ADNIC_API_BASE_URL=https://api.adnic.ae/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical
 ADNIC_AUTHORIZATION_TOKEN=your_token_here
@@ -765,11 +811,13 @@ ADNIC_PARTNER_REFERENCE_NO=your_reference_no
 ### API Endpoints
 
 #### 1. Upload Document
+
 **Endpoint**: `/UploadDocument`  
 **Method**: `POST`  
 **Purpose**: Upload customer documents for policy members
 
 **Success Response**:
+
 ```json
 {
   "DocumentInfo": {
@@ -782,6 +830,7 @@ ADNIC_PARTNER_REFERENCE_NO=your_reference_no
 ```
 
 **Error Response**:
+
 ```json
 {
   "ErrorInfo": [
@@ -796,11 +845,13 @@ ADNIC_PARTNER_REFERENCE_NO=your_reference_no
 ---
 
 #### 2. Generate Policy
+
 **Endpoint**: `/GeneratePolicy`  
 **Method**: `POST`  
 **Purpose**: Create health insurance policy
 
 **Success Response**:
+
 ```json
 {
   "data": {
@@ -826,11 +877,13 @@ ADNIC_PARTNER_REFERENCE_NO=your_reference_no
 ---
 
 #### 3. Generate Policy Document
+
 **Endpoint**: `/GeneratePolicyDocument`  
 **Method**: `POST`  
 **Purpose**: Download policy documents (PDF)
 
 **Success Response**:
+
 ```json
 {
   "DocumentInfo": {
@@ -846,12 +899,14 @@ ADNIC_PARTNER_REFERENCE_NO=your_reference_no
 ### Error Handling
 
 **HTTP Status Codes**:
+
 - `200 OK` - Success, but check response body for API errors
 - `404 Not Found` - Endpoint not found
 - `500 Internal Server Error` - Server error
 - `Timeout` - Request timeout (configurable)
 
 **API-Level Errors**:
+
 ```php
 // Error detection logic in AdnicResponseHandler
 if ($responseObject == null) {
@@ -935,6 +990,7 @@ if (isset($responseObject->DocumentInfo->ErrorInfo) && count($responseObject->Do
 ### MIME Type Validation
 
 **Allowed Types**:
+
 ```php
 const ALLOWED_DOCUMENT_MIME_TYPES = [
     'application/pdf',
@@ -944,6 +1000,7 @@ const ALLOWED_DOCUMENT_MIME_TYPES = [
 ```
 
 **Detection Method**:
+
 ```php
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mimeType = finfo_buffer($finfo, $fileContent);
@@ -958,13 +1015,14 @@ finfo_close($finfo);
 
 These settings are managed via `ApplicationStorage` table and can be toggled without code deployment:
 
-| Key | Purpose | Type |
-|-----|---------|------|
-| `ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE` | Master switch for automation | boolean |
+| Key                                                 | Purpose                        | Type    |
+| --------------------------------------------------- | ------------------------------ | ------- |
+| `ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE`               | Master switch for automation   | boolean |
 | `ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE` | Enable retry for timeout cases | boolean |
-| `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT` | API timeout in seconds | integer |
+| `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT`               | API timeout in seconds         | integer |
 
 **Access Method**:
+
 ```php
 use App\Services\ApplicationStorageService;
 
@@ -977,6 +1035,7 @@ $enabled = app(ApplicationStorageService::class)
 ### Environment Variables
 
 **Required in `.env`**:
+
 ```env
 # ADNIC API Configuration
 ADNIC_API_BASE_URL=https://api.adnic.ae/dev/MedicalProductAPI/MedicalAPI.svc/API/Medical
@@ -1005,37 +1064,44 @@ AZURE_IM_STORAGE_CONTAINER=your_container_name
 All test factories are located in `database/factories/` directory:
 
 **Health Quote Factories**:
+
 - `HealthQuoteFactory.php` - Creates health quotes with STP/non-STP states
 - `HealthInsurerRequestResponseFactory.php` - Creates insurer API responses
 - `QuoteDocumentFactory.php` - Creates documents (EID, Visa, Passport)
 
 **Customer & Related Factories**:
+
 - `CustomerFactory.php` - Creates customers with Emirates ID
 - `NationalityFactory.php` - Creates nationalities
 
 **Provider & Payment Factories**:
+
 - `InsuranceProviderFactory.php` - Creates insurance providers (ADNIC state)
 - `PaymentFactory.php` - Creates payments with lead payment state
 - `PaymentSplitFactory.php` - Creates payment splits (authorised/captured)
 - `PaymentChargeFactory.php` - Creates payment charges
 
 **Policy Issuance Factories**:
+
 - `PolicyIssuanceFactory.php` - Creates policy issuance records (pending/processing/timeout)
 
 ### Factory States
 
 **HealthQuoteFactory States**:
+
 ```php
 HealthQuote::factory()->withSTPCase()->create();      // STP eligible
 HealthQuote::factory()->withNonSTPCase()->create();   // Non-STP
 ```
 
 **InsuranceProviderFactory States**:
+
 ```php
 InsuranceProvider::factory()->adnic()->create();  // ADNIC provider
 ```
 
 **QuoteDocumentFactory States**:
+
 ```php
 QuoteDocument::factory()->emiratesId()->create(['quote_documentable_id' => $quote->id]);
 QuoteDocument::factory()->visa()->create(['quote_documentable_id' => $quote->id]);
@@ -1043,12 +1109,14 @@ QuoteDocument::factory()->passport()->create(['quote_documentable_id' => $quote-
 ```
 
 **PaymentSplitFactory States**:
+
 ```php
 PaymentSplit::factory()->authorised()->create();  // Authorised status
 PaymentSplit::factory()->captured()->create();    // Captured status
 ```
 
 **PolicyIssuanceFactory States**:
+
 ```php
 PolicyIssuance::factory()->pending()->create();     // Pending status
 PolicyIssuance::factory()->processing()->create();  // Processing status
@@ -1058,6 +1126,7 @@ PolicyIssuance::factory()->timeout()->create();     // Timeout status
 ### Factory Relationships
 
 **Creating Complete Health Quote Flow**:
+
 ```php
 // Create quote with all relationships
 $quote = HealthQuote::factory()
@@ -1103,7 +1172,7 @@ return [
     'ADNIC_PARTNER_REFERENCE_NO' => env('ADNIC_PARTNER_REFERENCE_NO', ''),
     'ADNIC_AUTHORIZATION_TOKEN' => env('ADNIC_AUTHORIZATION_TOKEN', ''),
     'ADNIC_SUBSCRIPTION_KEY' => env('ADNIC_SUBSCRIPTION_KEY', ''),
-    
+
     // Azure Storage
     'AZURE_IM_STORAGE_URL' => env('AZURE_IM_STORAGE_URL', ''),
     'AZURE_IM_STORAGE_CONTAINER' => env('AZURE_IM_STORAGE_CONTAINER', ''),
@@ -1122,22 +1191,22 @@ class AdnicEnum
     // Default Contact Information
     public const RESPONSIBLE_PERSON_DEFAULT_EMAIL = 'hitesh.motwani@insurancemarket.ae';
     public const RESPONSIBLE_PERSON_DEFAULT_MOBILE = '+971505636254';
-    
+
     // Step Names
     public const STEP_ISSUE_POLICY = 'IssuePolicy';
     public const STEP_UPLOAD_DOCUMENTS = 'UploadDocuments';
     public const STEP_UPLOAD_POLICY_DOCS = 'UploadPolicyDocumentsToIMCRM';
-    
+
     // Response Keys
     public const RESPONSE_POLICY = 'PolicyResponse';
     public const RESPONSE_UPLOAD_DOCUMENTS = 'UploadDocumentsResponse';
     public const RESPONSE_DOWNLOAD_DOCUMENT = 'DownloadDocumentResponse';
-    
+
     // Insurer Document Keys
     public const INSURER_DOCUMENT_KEY_POLICY_DOCUMENT = 'PolicyDocumentId';
     public const INSURER_DOCUMENT_KEY_COMMISION_NOTE = 'CommisionNoteDocumentId';
     public const INSURER_DOCUMENT_KEY_TAX_INVOICE = 'TaxInvoiceDocumentId';
-    
+
     // Policy Payload Defaults
     public const LOADING_TYPE = 'PER';
     public const LOADING_VALUE = 0;
@@ -1178,17 +1247,20 @@ LoggerService::error('API call failed', extra: [
 ### Log Categories
 
 **Information Logs**:
+
 - Automation initiation
 - Step execution start/completion
 - API call initiation/completion
 - Validation success
 
 **Warning Logs**:
+
 - Automation disabled
 - Invalid step encountered
 - Resume from last completed step
 
 **Error Logs**:
+
 - Validation failures
 - API call failures
 - Document fetch failures
@@ -1213,6 +1285,7 @@ app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
 ```
 
 **Table Structure**:
+
 - `policy_issuance_id` - Links to policy_issuance table
 - `model_type` - HealthQuote class
 - `model_id` - Quote ID
@@ -1224,6 +1297,7 @@ app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
 - `created_at` - Timestamp
 
 **Usage**:
+
 - Debugging API failures
 - Audit trail
 - Resume from last successful step
@@ -1234,6 +1308,7 @@ app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
 ### Error Response Format
 
 **Standardized Error Response**:
+
 ```php
 [
     'status' => false,
@@ -1247,6 +1322,7 @@ app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
 **Common Error Scenarios**:
 
 1. **Validation Errors**:
+
 ```php
 [
     'status' => false,
@@ -1256,6 +1332,7 @@ app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
 ```
 
 2. **API Errors**:
+
 ```php
 [
     'status' => false,
@@ -1265,6 +1342,7 @@ app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
 ```
 
 3. **Document Errors**:
+
 ```php
 [
     'status' => false,
@@ -1278,6 +1356,7 @@ app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
 ### Exception Handling
 
 **Try-Catch Pattern**:
+
 ```php
 try {
     // Validation
@@ -1285,17 +1364,17 @@ try {
     if (!$validationResult['status']) {
         return $validationResult;
     }
-    
+
     // Step execution
     $result = $this->executeStepSequence($quote, $process, $nextStep);
-    
+
     return $result;
 } catch (Exception $e) {
     LoggerService::error('Exception occurred', extra: [
         'process_id' => $process->id,
         'quote_id' => $quote->id,
     ], exception: $e);
-    
+
     return [
         'status' => false,
         'error' => $e->getMessage(),
@@ -1313,6 +1392,7 @@ try {
 The testing suite is organized into two main categories and uses **Pest PHP testing framework**:
 
 **Unit Tests** (`tests/Unit/Services/Adnic/`):
+
 - `AdnicDocumentHandlerTest.php` - Document handling and type mappings
 - `AdnicInsuranceServiceTest.php` - Main orchestration service
 - `AdnicResponseHandlerTest.php` - API response parsing
@@ -1320,6 +1400,7 @@ The testing suite is organized into two main categories and uses **Pest PHP test
 - `AdnicValidationServiceTest.php` - Data validation
 
 **Feature Tests** (`tests/Feature/`):
+
 - `AdnicPolicyIssuanceIntegrationTest.php` - Full integration flow testing
 
 **Note**: All tests have been converted to Pest syntax for better readability and modern PHP testing practices.
@@ -1331,6 +1412,7 @@ The testing suite is organized into two main categories and uses **Pest PHP test
 #### 1. AdnicValidationServiceTest (Pest)
 
 **Test Coverage**:
+
 - ✓ Validates required data passes with all data present
 - ✓ Fails when payments missing
 - ✓ Fails when customer missing
@@ -1344,19 +1426,21 @@ The testing suite is organized into two main categories and uses **Pest PHP test
 - ✓ Validation returns consistent error/success structure
 
 **Run Command**:
+
 ```bash
 doppler run -- php artisan test tests/Unit/Services/Adnic/AdnicValidationServiceTest.php
 ```
 
 **Sample Pest Test**:
+
 ```php
 test('validate required data passes with all data present', function () {
     $customer = Mockery::mock(Customer::class);
     $payment = Mockery::mock(Payment::class);
     // ... setup mocks
-    
+
     $result = $this->service->validateRequiredData($quote);
-    
+
     expect($result['status'])->toBeTrue();
 });
 ```
@@ -1366,6 +1450,7 @@ test('validate required data passes with all data present', function () {
 #### 2. AdnicResponseHandlerTest (Pest)
 
 **Test Coverage**:
+
 - ✓ Builds step response with correct structure
 - ✓ Builds step response with default values
 - ✓ Parses successful HTTP response
@@ -1378,20 +1463,22 @@ test('validate required data passes with all data present', function () {
 - ✓ Returns consistent structure for all responses
 
 **Run Command**:
+
 ```bash
 doppler run -- php artisan test tests/Unit/Services/Adnic/AdnicResponseHandlerTest.php
 ```
 
 **Sample Pest Test**:
+
 ```php
 test('parse http response handles successful response', function () {
     $responseData = (object) ['policyInfo' => (object) ['policyNo' => 'POL123']];
     $responseMock = Mockery::mock(Response::class);
     $responseMock->shouldReceive('successful')->once()->andReturn(true);
     $responseMock->shouldReceive('object')->once()->andReturn($responseData);
-    
+
     $result = $this->handler->parseHttpResponse($responseMock, 'TestAPI');
-    
+
     expect($result['status'])->toBeTrue()
         ->and($result['error'])->toBeNull()
         ->and($result['data'])->toBe($responseData);
@@ -1403,6 +1490,7 @@ test('parse http response handles successful response', function () {
 #### 3. AdnicStepExecutorTest (Pest)
 
 **Test Coverage**:
+
 - ✓ Executes upload documents step successfully
 - ✓ Handles upload documents step failure
 - ✓ Executes issue policy step successfully
@@ -1412,16 +1500,18 @@ test('parse http response handles successful response', function () {
 - ✓ All step methods return standardized response structure
 
 **Run Command**:
+
 ```bash
 doppler run -- php artisan test tests/Unit/Services/Adnic/AdnicStepExecutorTest.php
 ```
 
 **Sample Pest Test**:
+
 ```php
 test('execute upload documents step succeeds', function () {
     $quote = Mockery::mock(HealthQuote::class);
     $process = Mockery::mock(PolicyIssuance::class);
-    
+
     $this->apiServiceMock->shouldReceive('uploadDocuments')
         ->once()
         ->andReturn([
@@ -1429,9 +1519,9 @@ test('execute upload documents step succeeds', function () {
             'completed_step' => AdnicEnum::STEP_UPLOAD_DOCUMENTS,
             'message' => 'Documents uploaded successfully',
         ]);
-    
+
     $result = $this->executor->executeUploadDocumentsStep($quote, $process);
-    
+
     expect($result['status'])->toBeTrue()
         ->and($result['completed_step'])->toBe(AdnicEnum::STEP_UPLOAD_DOCUMENTS);
 });
@@ -1442,6 +1532,7 @@ test('execute upload documents step succeeds', function () {
 #### 4. AdnicInsuranceServiceTest (Pest)
 
 **Test Coverage**:
+
 - ✓ Checks if automation is enabled
 - ✓ Checks if retry for timeout is enabled
 - ✓ Returns first step when no completed step
@@ -1460,27 +1551,29 @@ test('execute upload documents step succeeds', function () {
 - ✓ Resumes from last completed step
 
 **Run Command**:
+
 ```bash
 doppler run -- php artisan test tests/Unit/Services/Adnic/AdnicInsuranceServiceTest.php
 ```
 
 **Sample Pest Test**:
+
 ```php
 test('execute steps successfully completes all steps', function () {
     $quote = Mockery::mock(HealthQuote::class);
     $process = Mockery::mock(PolicyIssuance::class);
-    
+
     $this->validationServiceMock->shouldReceive('validateRequiredData')
         ->once()
         ->andReturn(['status' => true]);
-    
+
     // Mock all three steps to succeed
     $this->stepExecutorMock->shouldReceive('executeUploadDocumentsStep')->once()->andReturn([...]);
     $this->stepExecutorMock->shouldReceive('executeIssuePolicyStep')->once()->andReturn([...]);
     $this->stepExecutorMock->shouldReceive('executeUploadPolicyDocumentsStep')->once()->andReturn([...]);
-    
+
     $result = $this->service->executeSteps($process);
-    
+
     expect($result['status'])->toBeTrue()
         ->and($result['message'])->toContain('completed successfully');
 });
@@ -1491,6 +1584,7 @@ test('execute steps successfully completes all steps', function () {
 #### 5. AdnicDocumentHandlerTest (Pest)
 
 **Test Coverage**:
+
 - ✓ Returns correct insurer doc codes for health documents
 - ✓ Returns null for invalid document types
 - ✓ Returns correct IMCRM document type mappings
@@ -1509,11 +1603,13 @@ test('execute steps successfully completes all steps', function () {
 - ✓ All health document types are supported
 
 **Run Command**:
+
 ```bash
 doppler run -- php artisan test tests/Unit/Services/Adnic/AdnicDocumentHandlerTest.php
 ```
 
 **Sample Pest Test**:
+
 ```php
 test('get insurer doc code for health returns correct codes', function () {
     expect($this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_EID))->toBe('3')
@@ -1529,6 +1625,7 @@ test('get insurer doc code for health returns correct codes', function () {
 #### AdnicPolicyIssuanceIntegrationTest (Pest)
 
 **Tests Full Integration Flow**:
+
 - ✓ Creates policy issuance schedule on payment capture for STP case
 - ✓ Does not create schedule for non-STP case
 - ✓ Does not create duplicate schedules
@@ -1548,19 +1645,21 @@ test('get insurer doc code for health returns correct codes', function () {
 - ✓ Policy issuance service correctly identifies health quote type
 
 **Run Command**:
+
 ```bash
 doppler run -- php artisan test tests/Feature/AdnicPolicyIssuanceIntegrationTest.php
 ```
 
 **Sample Pest Test**:
+
 ```php
 test('policy issuance schedule is created on payment capture for STP case', function () {
     $quote = Mockery::mock($this->quote)->makePartial();
     $quote->shouldReceive('isSTPCase')->andReturn(true);
-    
+
     $service = app(AdnicInsuranceService::class);
     $service->createPolicyIssuanceSchedule($quote, $this->insurer);
-    
+
     expect(PolicyIssuance::where([
         'model_type' => HealthQuote::class,
         'model_id' => $this->quote->id,
@@ -1574,31 +1673,37 @@ test('policy issuance schedule is created on payment capture for STP case', func
 ### Running All Tests
 
 **Run all Adnic tests (Pest + SQLite)**:
+
 ```bash
 doppler run -- php artisan test --filter=Adnic
 ```
 
 **Run with coverage**:
+
 ```bash
 doppler run -- php artisan test --filter=Adnic --coverage
 ```
 
 **Run specific test file**:
+
 ```bash
 doppler run -- php artisan test tests/Unit/Services/Adnic/AdnicInsuranceServiceTest.php
 ```
 
 **Run tests with parallel execution** (Pest feature):
+
 ```bash
 doppler run -- php artisan test --parallel --filter=Adnic
 ```
 
 **Run specific test**:
+
 ```bash
 doppler run -- php artisan test --filter="creates health quote with all relationships"
 ```
 
 **Test Performance** (with SQLite):
+
 - Unit tests: ~0.5-1 second per test file
 - Feature tests: ~1-2 seconds per test file
 - Total suite: ~5-10 seconds (92 tests)
@@ -1609,6 +1714,7 @@ doppler run -- php artisan test --filter="creates health quote with all relation
 ### Test Data Setup
 
 **Database Configuration**:
+
 - Tests use **SQLite** in-memory database (`:memory:`) for fast, isolated testing
 - Configured in `phpunit.xml`: `DB_CONNECTION=sqlite` and `DB_DATABASE=:memory:`
 - Each test gets a fresh database via `RefreshDatabase` trait
@@ -1617,20 +1723,21 @@ doppler run -- php artisan test --filter="creates health quote with all relation
 **Factory Usage**:
 All ADNIC tests use Laravel factories to create realistic test data:
 
-| Factory | Purpose | Key States |
-|---------|---------|------------|
-| `HealthQuote::factory()` | Health insurance quotes | `withSTPCase()`, `withNonSTPCase()` |
-| `Customer::factory()` | Customer with emirates ID | - |
-| `InsuranceProvider::factory()` | Insurance providers | `adnic()` |
-| `Nationality::factory()` | Nationalities | - |
-| `Payment::factory()` | Payment records | `leadPayment()` |
-| `PaymentSplit::factory()` | Payment splits | `authorised()`, `captured()` |
-| `PaymentCharge::factory()` | Payment charges | - |
-| `QuoteDocument::factory()` | Health documents | `emiratesId()`, `visa()`, `passport()` |
-| `PolicyIssuance::factory()` | Policy issuance records | `pending()`, `processing()`, `timeout()` |
-| `HealthInsurerRequestResponse::factory()` | Insurer API responses | - |
+| Factory                                   | Purpose                   | Key States                               |
+| ----------------------------------------- | ------------------------- | ---------------------------------------- |
+| `HealthQuote::factory()`                  | Health insurance quotes   | `withSTPCase()`, `withNonSTPCase()`      |
+| `Customer::factory()`                     | Customer with emirates ID | -                                        |
+| `InsuranceProvider::factory()`            | Insurance providers       | `adnic()`                                |
+| `Nationality::factory()`                  | Nationalities             | -                                        |
+| `Payment::factory()`                      | Payment records           | `leadPayment()`                          |
+| `PaymentSplit::factory()`                 | Payment splits            | `authorised()`, `captured()`             |
+| `PaymentCharge::factory()`                | Payment charges           | -                                        |
+| `QuoteDocument::factory()`                | Health documents          | `emiratesId()`, `visa()`, `passport()`   |
+| `PolicyIssuance::factory()`               | Policy issuance records   | `pending()`, `processing()`, `timeout()` |
+| `HealthInsurerRequestResponse::factory()` | Insurer API responses     | -                                        |
 
 **Factory Example Usage**:
+
 ```php
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -1642,24 +1749,25 @@ test('creates health quote with all relationships', function () {
         ->for(Customer::factory())
         ->for(Nationality::factory())
         ->create();
-    
+
     // Create documents
     QuoteDocument::factory()->emiratesId()->create(['quote_documentable_id' => $quote->id]);
     QuoteDocument::factory()->visa()->create(['quote_documentable_id' => $quote->id]);
     QuoteDocument::factory()->passport()->create(['quote_documentable_id' => $quote->id]);
-    
+
     // Create payment
     $payment = Payment::factory()->leadPayment()->create([
         'code' => $quote->code,
         'quote_id' => $quote->id,
     ]);
-    
+
     expect($quote->customer)->not->toBeNull()
         ->and($quote->documents)->toHaveCount(3);
 });
 ```
 
 **Mock ApplicationStorage (Pest)**:
+
 ```php
 function mockApplicationStorage(bool $enabled): void
 {
@@ -1669,12 +1777,13 @@ function mockApplicationStorage(bool $enabled): void
             [ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE, $enabled],
             [ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE, $enabled],
         ]);
-    
+
     app()->instance(ApplicationStorageService::class, $mockService);
 }
 ```
 
 **Helper Functions (Pest)**:
+
 ```php
 uses(RefreshDatabase::class); // SQLite database reset per test
 
@@ -1687,20 +1796,20 @@ function createTestData(): void
 {
     // Create insurer using factory
     $insurer = InsuranceProvider::factory()->adnic()->create();
-    
+
     // Create complete quote with relationships
     $quote = HealthQuote::factory()
         ->withSTPCase()
         ->for(Customer::factory())
         ->for(Nationality::factory())
         ->create();
-    
+
     // Create payment chain
     $payment = Payment::factory()->create([
         'code' => $quote->code,
         'quote_id' => $quote->id,
     ]);
-    
+
     // Create documents
     QuoteDocument::factory()->emiratesId()->create(['quote_documentable_id' => $quote->id]);
     QuoteDocument::factory()->visa()->create(['quote_documentable_id' => $quote->id]);
@@ -1709,6 +1818,7 @@ function createTestData(): void
 ```
 
 **Benefits of Factory + SQLite Approach**:
+
 - ✅ **Fast** - SQLite in-memory is 10-100x faster than MySQL
 - ✅ **Isolated** - Each test gets fresh database, no test pollution
 - ✅ **Realistic** - Factories create valid model relationships
@@ -1723,12 +1833,14 @@ function createTestData(): void
 ### Code Style & Standards
 
 **Follow Laravel 12 Standards**:
+
 - Use `declare(strict_types=1);` in all files
 - Apply strict typing to all method parameters and return types
 - Use PHP 8.2+ features (readonly properties, match expressions)
 - Follow PSR-12 coding standards
 
 **Example**:
+
 ```php
 <?php
 
@@ -1742,7 +1854,7 @@ class AdnicApiService
         private AdnicRequestBuilder $requestBuilder,
         private AdnicResponseHandler $responseHandler,
     ) {}
-    
+
     public function issuePolicy($quote, $process, $healthInsurerRequestResponse): array
     {
         // Implementation
@@ -1757,11 +1869,13 @@ class AdnicApiService
 To add a new automation step:
 
 **1. Define Step Constant** in `AdnicEnum`:
+
 ```php
 public const STEP_MY_NEW_STEP = 'MyNewStep';
 ```
 
 **2. Add Step Handler** in `AdnicInsuranceService`:
+
 ```php
 private array $stepHandlers = [
     AdnicEnum::STEP_UPLOAD_DOCUMENTS => 'executeUploadDocumentsStep',
@@ -1772,6 +1886,7 @@ private array $stepHandlers = [
 ```
 
 **3. Add Step to Sequence** in `getAPISteps()`:
+
 ```php
 private function getAPISteps(): array
 {
@@ -1785,6 +1900,7 @@ private function getAPISteps(): array
 ```
 
 **4. Implement Step in `AdnicStepExecutor`**:
+
 ```php
 public function executeMyNewStep($quote, $process): array
 {
@@ -1792,15 +1908,15 @@ public function executeMyNewStep($quote, $process): array
         'step' => AdnicEnum::STEP_MY_NEW_STEP,
         'process_id' => $process->id,
     ]);
-    
+
     $response = $this->apiService->callMyNewAPI($quote, $process);
-    
+
     if (!$response['status']) {
         LoggerService::error('My new step failed', extra: [
             'step' => AdnicEnum::STEP_MY_NEW_STEP,
             'error' => $response['error'] ?? AdnicEnum::UNKNOWN_ERROR,
         ]);
-        
+
         app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
             $quote,
             QuoteTypes::HEALTH->value,
@@ -1808,19 +1924,20 @@ public function executeMyNewStep($quote, $process): array
             PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
             'My New Step'
         );
-        
+
         return $response;
     }
-    
+
     LoggerService::info('My new step completed successfully', extra: [
         'step' => AdnicEnum::STEP_MY_NEW_STEP,
     ]);
-    
+
     return $response;
 }
 ```
 
 **5. Write Tests**:
+
 - Unit test in `AdnicStepExecutorTest`
 - Integration test in `AdnicPolicyIssuanceIntegrationTest`
 
@@ -1829,33 +1946,38 @@ public function executeMyNewStep($quote, $process): array
 ### Debugging Tips
 
 **1. Check Application Storage**:
+
 ```sql
-SELECT * FROM application_storage 
+SELECT * FROM application_storage
 WHERE `key` LIKE '%ADNIC%';
 ```
 
 **2. Check Policy Issuance Status**:
+
 ```sql
-SELECT * FROM policy_issuance 
-WHERE model_type = 'App\Models\HealthQuote' 
+SELECT * FROM policy_issuance
+WHERE model_type = 'App\Models\HealthQuote'
 AND model_id = {quote_id}
 ORDER BY created_at DESC;
 ```
 
 **3. Check API Logs**:
+
 ```sql
-SELECT * FROM policy_issuance_logs 
+SELECT * FROM policy_issuance_logs
 WHERE policy_issuance_id = {process_id}
 ORDER BY created_at DESC;
 ```
 
 **4. Enable Detailed Logging**:
+
 ```php
 // In .env
 LOG_LEVEL=debug
 ```
 
 **5. Test Specific Step**:
+
 ```php
 // In tinker
 $quote = HealthQuote::find(123);
@@ -1873,26 +1995,31 @@ dd($result);
 ### Common Issues & Solutions
 
 **Issue 1: Documents not uploading**
+
 - **Cause**: Document MIME type not allowed
 - **Solution**: Check `ALLOWED_DOCUMENT_MIME_TYPES` constant
 - **Verify**: Use `fetchDocumentContent()` to check MIME type
 
 **Issue 2: Policy issuance fails with missing data**
+
 - **Cause**: Quote missing required relationships
 - **Solution**: Ensure quote has: customer, payments, healthUmafResponse, insurerGenerateQuoteRequestResponse
 - **Verify**: Call `validateRequiredData()` method
 
 **Issue 3: Automation not triggering**
+
 - **Cause**: ApplicationStorage flag disabled
 - **Solution**: Enable `ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE` in application_storage table
 - **Verify**: Check `isPolicyIssuanceAutomationEnabled()` returns true
 
 **Issue 4: Documents downloaded but not uploaded to IMCRM**
+
 - **Cause**: `is_base_64` flag not set correctly
 - **Solution**: `AdnicDocumentHandler::uploadAndAttachToQuoteDocuments()` always sets this flag
 - **Verify**: Check quote_documents table for uploaded documents
 
 **Issue 5: API timeout**
+
 - **Cause**: Default timeout too short
 - **Solution**: Increase `ADNIC_HEALTH_AUTOMATION_API_TIMEOUT` in application_storage
 - **Verify**: Check AdnicHttpClient configuration
@@ -1902,21 +2029,25 @@ dd($result);
 ### Performance Optimization
 
 **1. Document Upload Optimization**:
+
 - Documents are uploaded per member, per document type
 - For 3 members with 3 documents each = 9 API calls
 - Consider implementing batch upload if API supports it
 
 **2. API Timeout Configuration**:
+
 - Current: Configurable via ApplicationStorage
 - Recommended: 60-120 seconds for policy issuance
 - Adjust based on API performance
 
 **3. Cron Job Frequency**:
+
 - Processes pending policy issuances
 - Recommended: Every 5-10 minutes
 - Avoid too frequent to prevent API rate limiting
 
 **4. Logging Level**:
+
 - Production: `info` level
 - Development: `debug` level
 - Disable verbose logging in production for performance
@@ -1926,26 +2057,31 @@ dd($result);
 ### Security Considerations
 
 **1. API Credentials**:
+
 - Store in environment variables, never commit
 - Rotate regularly
 - Use different credentials for staging/production
 
 **2. Document Access**:
+
 - Documents fetched from Azure with proper authentication
 - Validate MIME types to prevent malicious uploads
 - Sanitize document names
 
 **3. Data Validation**:
+
 - Validate all input before API calls
 - Sanitize user data in payloads
 - Use strict typing throughout
 
 **4. Logging**:
+
 - Never log sensitive data (credit card info, passwords)
 - Mask personal information in logs
 - Store API logs securely
 
 **5. Error Messages**:
+
 - Don't expose internal system details in error messages
 - Provide user-friendly messages
 - Log detailed errors separately
@@ -2032,6 +2168,7 @@ dd($result);
 ### B. Database Schema
 
 **policy_issuance Table**:
+
 ```sql
 CREATE TABLE policy_issuance (
     id BIGINT PRIMARY KEY,
@@ -2047,6 +2184,7 @@ CREATE TABLE policy_issuance (
 ```
 
 **policy_issuance_logs Table**:
+
 ```sql
 CREATE TABLE policy_issuance_logs (
     id BIGINT PRIMARY KEY,
@@ -2068,6 +2206,7 @@ CREATE TABLE policy_issuance_logs (
 ### C. Key File Locations
 
 **Services**:
+
 - `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicInsuranceService.php`
 - `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicApiService.php`
 - `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicStepExecutor.php`
@@ -2080,12 +2219,14 @@ CREATE TABLE policy_issuance_logs (
 - `app/Services/PolicyIssuanceAutomation/Health/Adnic/AdnicBookPolicyService.php`
 
 **Configuration**:
+
 - `app/Enums/AdnicEnum.php`
 - `app/Facades/AdnicHttpFacade.php`
 - `app/Providers/AdnicServiceProvider.php`
 - `config/app.php` (register provider)
 
 **Tests**:
+
 - `tests/Unit/Services/Adnic/`
 - `tests/Feature/AdnicPolicyIssuanceIntegrationTest.php`
 
@@ -2101,7 +2242,7 @@ CREATE TABLE policy_issuance_logs (
 **Base64**: Binary-to-text encoding scheme for documents  
 **Azure Storage**: Cloud storage for documents  
 **Cron Job**: Scheduled task that runs automation  
-**Policy Issuance**: Process of creating an insurance policy  
+**Policy Issuance**: Process of creating an insurance policy
 
 ---
 
@@ -2111,7 +2252,8 @@ For questions or issues related to ADNIC Policy Issuance Automation:
 
 **Development Team**: Backend Team  
 **Documentation**: This file  
-**Related Documentation**: 
+**Related Documentation**:
+
 - Sage Integration Documentation (`docs/Sage-Integration-Documentation.md`)
 - Policy Issuance Automation Architecture (`.cursor/rules/Policy Issuance Automation Architecture.mdc`)
 
@@ -2120,6 +2262,7 @@ For questions or issues related to ADNIC Policy Issuance Automation:
 ## Changelog
 
 ### Version 1.2.0 - January 2026
+
 - ✅ **SQLite Testing**: Migrated all tests to use SQLite in-memory database
 - ✅ **Factory Pattern**: Implemented comprehensive Laravel factories for all models
 - ✅ **Test Performance**: 10-100x faster test execution with SQLite
@@ -2131,6 +2274,7 @@ For questions or issues related to ADNIC Policy Issuance Automation:
 - ✅ **Enhanced Integration Tests**: 3 new tests validating factory-based data creation
 
 ### Version 1.1.0 - January 2026
+
 - ✅ **Completed Integration**: Full ADNIC Health policy automation integration
 - ✅ **Test Migration**: All tests converted to Pest PHP testing framework
 - ✅ **STP Requirement**: Added STP case validation before automation trigger
@@ -2139,6 +2283,7 @@ For questions or issues related to ADNIC Policy Issuance Automation:
 - ✅ **Enhanced Testing**: Added 20+ new test cases for comprehensive coverage
 
 ### Version 1.0.0 - December 2025
+
 - Initial release with basic automation framework
 
 ---
@@ -2150,4 +2295,3 @@ For questions or issues related to ADNIC Policy Issuance Automation:
 **Database**: SQLite in-memory (`:memory:`)  
 **Test Data**: Laravel Factories (10 factories)  
 **Integration Status**: ✅ Complete
-
