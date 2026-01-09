@@ -539,4 +539,3 @@ class TestSchemaCreator
         (new RenewalsSchema)->register();
     }
 }
-
