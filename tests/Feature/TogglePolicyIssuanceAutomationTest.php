@@ -13,6 +13,21 @@ beforeEach(function () {
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
 
+    // Assign required permission for toggle policy issuance automation
+    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $permissionId = $db->table('permissions')->insertGetId([
+        'name' => \App\Enums\PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API,
+        'guard_name' => 'web',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $db->table('model_has_permissions')->insert([
+        'permission_id' => $permissionId,
+        'model_type' => \App\Models\User::class,
+        'model_id' => $this->user->id,
+    ]);
+
     // Use Laravel factories to create test data
     $this->insuranceProvider = InsuranceProvider::factory()->rsa()->createOneQuietly();
     $this->carPlan = CarPlan::factory()->forInsuranceProvider($this->insuranceProvider->id)->createOneQuietly();

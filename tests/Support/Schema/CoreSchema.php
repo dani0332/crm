@@ -189,6 +189,12 @@ class CoreSchema
                 $table->timestamps();
                 $table->softDeletes();
             },
+            'uae_license_held_for' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->timestamps();
+                $table->softDeletes();
+            },
         ]);
     }
 
