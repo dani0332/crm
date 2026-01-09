@@ -39,13 +39,21 @@ class FailedILAEmailService
         return $this->getManagerEmails($roleName);
     }
 
-    public function sendFailedIlaEmails($quoteType)
+    public function sendFailedIlaEmails(QuoteTypes$quoteType)
     {
         // Fetch leads created today (from midnight to now)
         $managerEmails = $this->getManagerEmailsByQuoteType($quoteType) ?? [];
 
         if (empty($managerEmails)) {
-            LoggerService::warning(self::class.' - sendFailedIlaEmails - No managers found for quote type: '.$quoteType);
+            LoggerService::warning(self::class." - sendFailedIlaEmails - No managers found for quote type: {$quoteType->value}");
+
+            return;
+        }
+
+        $leadsCount = $this->getFailedILALeads($quoteType, justCount: true);
+
+        if ($leadsCount === 0) {
+            LoggerService::info(self::class." - sendFailedIlaEmails - No failed ILA leads found for quote type: {$quoteType->value}");
 
             return;
         }
@@ -79,47 +87,47 @@ class FailedILAEmailService
         ];
     }
 
-    public function getFailedILALeads($quoteType)
+    public function getFailedILALeads($quoteType, bool $justCount = false)
     {
         switch ($quoteType) {
             case QuoteTypes::CAR->value:
-                $leads = $this->getCarFailedILALeads();
+                $leads = $this->getCarFailedILALeads($justCount);
                 break;
             case QuoteTypes::BIKE->value:
-                $leads = $this->getPersonalFailedILALeads(QuoteTypes::BIKE);
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::BIKE, $justCount);
                 break;
             case QuoteTypes::HEALTH->value:
-                $leads = $this->getHealthFailedILALeads();
+                $leads = $this->getHealthFailedILALeads($justCount);
                 break;
             case QuoteTypes::LIFE->value:
-                $leads = $this->getPersonalFailedILALeads(QuoteTypes::LIFE);
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::LIFE, $justCount);
                 break;
             case QuoteTypes::TRAVEL->value:
-                $leads = $this->getTravelFailedILALeads();
+                $leads = $this->getTravelFailedILALeads($justCount);
                 break;
             case QuoteTypes::HOME->value:
-                $leads = $this->getPersonalFailedILALeads(QuoteTypes::HOME);
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::HOME, $justCount);
                 break;
             case QuoteTypes::PET->value:
-                $leads = $this->getPersonalFailedILALeads(QuoteTypes::PET);
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::PET, $justCount);
                 break;
             case QuoteTypes::CYCLE->value:
-                $leads = $this->getPersonalFailedILALeads(QuoteTypes::CYCLE);
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::CYCLE, $justCount);
                 break;
             case QuoteTypes::SAVINGS->value:
-                $leads = $this->getPersonalFailedILALeads(QuoteTypes::SAVINGS);
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::SAVINGS, $justCount);
                 break;
             case QuoteTypes::GROUP_MEDICAL->value:
-                $leads = $this->getBusinessFailedILALeads(BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                $leads = $this->getBusinessFailedILALeads(BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL, $justCount);
                 break;
             case QuoteTypes::CORPLINE->value:
-                $leads = $this->getBusinessFailedILALeads();
+                $leads = $this->getBusinessFailedILALeads(justCount: $justCount);
                 break;
             case QuoteTypes::YACHT->value:
-                $leads = $this->getPersonalFailedILALeads(QuoteTypes::YACHT);
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::YACHT, $justCount);
                 break;
             case QuoteTypes::JETSKI->value:
-                $leads = $this->getPersonalFailedILALeads(QuoteTypes::JETSKI);
+                $leads = $this->getPersonalFailedILALeads(QuoteTypes::JETSKI, $justCount);
                 break;
 
             default:
@@ -141,7 +149,7 @@ class FailedILAEmailService
             ->with('quoteStatus');
     }
 
-    public function getBusinessFailedILALeads($businessTypeOfInsuranceId = null)
+    public function getBusinessFailedILALeads($businessTypeOfInsuranceId = null, bool $justCount = false)
     {
         return $this->getBaseQuery(QuoteTypes::BUSINESS)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id')
@@ -151,43 +159,60 @@ class FailedILAEmailService
             ->when(! $businessTypeOfInsuranceId, function ($query) {
                 $query->whereNotIn('business_type_of_insurance_id', [BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL]);
             })
-            ->get();
+            ->when(
+                $justCount,
+                fn ($query) => $query->count(),
+                fn ($query) => $query->get(),
+            );
     }
 
-    public function getHealthFailedILALeads()
+    public function getHealthFailedILALeads(bool $justCount = false)
     {
         return $this->getBaseQuery(QuoteTypes::HEALTH)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
-            ->get();
+            ->when(
+                $justCount,
+                fn ($query) => $query->count(),
+                fn ($query) => $query->get(),
+            );
     }
 
-    public function getTravelFailedILALeads()
+    public function getTravelFailedILALeads(bool $justCount = false)
     {
-        $leads = $this->getBaseQuery(QuoteTypes::TRAVEL)
+        return $this->getBaseQuery(QuoteTypes::TRAVEL)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
-            ->get();
-
-        return $leads;
+            ->when(
+                $justCount,
+                fn ($query) => $query->count(),
+                fn ($query) => $query->get(),
+            );
     }
 
-    public function getPersonalFailedILALeads(QuoteTypes $quoteType)
+    public function getPersonalFailedILALeads(QuoteTypes $quoteType, bool $justCount = false)
     {
         return $this->getBaseQuery($quoteType)
             ->where('quote_type_id', $quoteType->id())
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
-            ->get();
+            ->when(
+                $justCount,
+                fn ($query) => $query->count(),
+                fn ($query) => $query->get(),
+            );
     }
 
-    public function getCarFailedILALeads()
+    public function getCarFailedILALeads(bool $justCount = false)
     {
         return $this->getBaseQuery(QuoteTypes::CAR)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
-            ->get();
+            ->when(
+                $justCount,
+                fn ($query) => $query->count(),
+                fn ($query) => $query->get(),
+            );
     }
 
     public function exportFailedIlaLeads($quoteType)
     {
-
         $leads = $this->getFailedILALeads($quoteType);
         $totalLeads = count($leads);
         LoggerService::info(self::class.' - exportFailedIlaLeads - Total leads: '.$totalLeads);
