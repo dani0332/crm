@@ -9,6 +9,7 @@ const props = defineProps({
   quote: Object,
   lockLeadSectionsDetails: Object,
   lookUpData: Object,
+  localLookups: Object,
 });
 
 const page = usePage();
@@ -24,11 +25,11 @@ const planDetailsTabs = ref([
   { index: 5, label: 'Plan Documents' },
 ]);
 
-// Currency Options - from lookUpData
+// Currency Options - from localLookups
 const currencyOptions = computed(() => {
   return (
-    props.lookUpData?.currencyType?.map(item => ({
-      value: item.code || item.text,
+    props.localLookups?.currencies?.map(item => ({
+      value: item.code || item.id,
       label: item.text,
     })) || [
       { value: 'AED', label: 'AED' },
@@ -39,10 +40,10 @@ const currencyOptions = computed(() => {
   );
 });
 
-// Investment Frequency Options - from lookUpData
+// Investment Frequency Options - from localLookups
 const investmentFrequencyOptions = computed(() => {
   return (
-    props.lookUpData?.savingsInvestmentType?.map(item => ({
+    props.localLookups?.investmentFrequencies?.map(item => ({
       value: item.text,
       label: item.text,
     })) || [
@@ -52,13 +53,21 @@ const investmentFrequencyOptions = computed(() => {
   );
 });
 
-// Payment Term Options
-const paymentTermOptions = ref([
-  { value: 'Monthly', label: 'Monthly' },
-  { value: 'Quarterly', label: 'Quarterly' },
-  { value: 'Semi-Annual', label: 'Semi-Annual' },
-  { value: 'Annual', label: 'Annual' },
-]);
+// Payment Term Options - from localLookups
+const paymentTermOptions = computed(() => {
+  return (
+    props.localLookups?.paymentTerms?.map(item => ({
+      value: item.text,
+      label: item.text,
+    })) || [
+      { value: 'Monthly', label: 'Monthly' },
+      { value: 'Quarterly', label: 'Quarterly' },
+      { value: 'Semi-Annually', label: 'Semi-Annually' },
+      { value: 'Annually', label: 'Annually' },
+      { value: 'Single Payment', label: 'Single Payment' },
+    ]
+  );
+});
 
 // Form for individual plan updates
 const planForm = useForm({
@@ -332,7 +341,7 @@ const modalVisible = computed({
                   >
                   <div class="flex-1 relative">
                     <x-input
-                      v-model="planDetails.expectedRateOfReturn"
+                      v-model="planDetails.expectedRor"
                       placeholder="Enter rate"
                       size="sm"
                       type="number"
@@ -371,7 +380,7 @@ const modalVisible = computed({
                 <div class="flex items-center">
                   <span class="text-sm text-gray-600 w-36">Lumpsum Amount</span>
                   <x-input
-                    v-model="planDetails.lumpsumAmount"
+                    v-model="planDetails.lumpSumPayout"
                     placeholder="Enter amount"
                     size="sm"
                     type="number"

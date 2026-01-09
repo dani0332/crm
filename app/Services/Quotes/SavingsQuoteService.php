@@ -4,6 +4,7 @@ namespace App\Services\Quotes;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
@@ -11,6 +12,9 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Models\CurrencyType;
+use App\Models\InsuranceProviderPlan;
+use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
@@ -255,6 +259,7 @@ class SavingsQuoteService extends BaseQuoteService
 
         // Get lookups for CreatePlan and PlanDetails dropdowns
         $lookUpData = $this->getSavingsQuoteLookUpData();
+        $localLookups = $this->getLocalLookups();
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
@@ -262,6 +267,7 @@ class SavingsQuoteService extends BaseQuoteService
             'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL', config('constants.WEBSITE_URL').'/savings-insurance/quote/'),
             'websiteURL' => config('constants.WEBSITE_URL'),
             'lookUpData' => $lookUpData,
+            'localLookups' => $localLookups,
             ...$data,
         ];
     }
@@ -269,6 +275,53 @@ class SavingsQuoteService extends BaseQuoteService
     public function getSavingsQuoteLookUpData()
     {
         return app(LookupService::class)->getSavingsQuoteLookUpData();
+    }
+
+    /**
+     * Get local savings lookups from database for CreatePlan and PlanDetails dropdowns
+     */
+    public function getLocalLookups(): array
+    {
+        // Plan types from lookups table
+        $planTypes = Lookup::where('key', 'plan_type')
+            ->where('quote_type_id', QuoteTypeId::Savings)
+            ->where('is_active', 1)
+            ->select('id', 'code', 'text')
+            ->get();
+
+        // Insurance provider plans from insurance_provider_plans table
+        $providerPlans = InsuranceProviderPlan::where('quote_type_id', QuoteTypeId::Savings)
+            ->active()
+            ->select('id', 'provider_id', 'code', 'text')
+            ->get();
+
+        // Investment frequencies from lookups table
+        $investmentFrequencies = Lookup::where('key', LookupsEnum::INVESTMENT_TYPE)
+            ->where('is_active', 1)
+            ->select('id', 'code', 'text')
+            ->get();
+
+        // Currencies from currency_type table
+        $currencies = CurrencyType::withActive()
+            ->select('id', 'code', 'text')
+            ->get();
+
+        // Payment terms (static values based on investment frequency)
+        $paymentTerms = collect([
+            ['id' => 'monthly', 'code' => 'monthly', 'text' => 'Monthly', 'value' => 12],
+            ['id' => 'quarterly', 'code' => 'quarterly', 'text' => 'Quarterly', 'value' => 4],
+            ['id' => 'semi_annually', 'code' => 'semi_annually', 'text' => 'Semi-Annually', 'value' => 2],
+            ['id' => 'annually', 'code' => 'annually', 'text' => 'Annually', 'value' => 1],
+            ['id' => 'single_payment', 'code' => 'single_payment', 'text' => 'Single Payment', 'value' => 0],
+        ]);
+
+        return [
+            'planTypes' => $planTypes,
+            'providerPlans' => $providerPlans,
+            'investmentFrequencies' => $investmentFrequencies,
+            'currencies' => $currencies,
+            'paymentTerms' => $paymentTerms,
+        ];
     }
 
     public function getInvestmentFrequencies()

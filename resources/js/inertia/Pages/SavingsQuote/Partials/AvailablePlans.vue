@@ -15,6 +15,7 @@ const props = defineProps({
   websiteURL: String,
   lockLeadSectionsDetails: Object,
   lookUpData: Object,
+  localLookups: Object,
 });
 
 const page = usePage();
@@ -85,11 +86,11 @@ const availablePlansTable = reactive({
     },
     {
       text: 'Expected Rate of Return',
-      value: 'expectedRateOfReturn',
+      value: 'expectedRor',
     },
     {
       text: 'Lumpsum Amount',
-      value: 'lumpsumAmount',
+      value: 'lumpSumPayout',
     },
     {
       text: 'Total Annual Price',
@@ -205,52 +206,20 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-      // Process the response data to flatten regular and lumpsum plans
-      const processedPlans = [];
+      console.log(res.data);
 
-      // Process regular plans
-      if (res.data.regular && Array.isArray(res.data.regular)) {
-        res.data.regular.forEach(plan => {
-          const processedPlan = {
-            ...plan,
-            investmentFrequency: 'Regular',
-            currency: plan.currencyName || 'USD',
-            minimumInvestment: getEligibilityValue(
-              plan,
-              'minimumInvestmentAmount',
-            ),
-            policyTerm: getEligibilityValue(plan, 'policyTerm'),
-            isManualUpdate: plan.isManualUpdate || false,
-            isDisabled: plan.isDisabled || false,
-            actualPremium: plan.actualPremium,
-            insuranceProviderId: plan.providerId || plan.insuranceProviderId,
-            providerCode: plan.providerCode,
-          };
-          processedPlans.push(processedPlan);
-        });
-      }
-
-      // Process lumpsum plans
-      if (res.data.lumpsum && Array.isArray(res.data.lumpsum)) {
-        res.data.lumpsum.forEach(plan => {
-          const processedPlan = {
-            ...plan,
-            investmentFrequency: 'Lumpsum',
-            currency: plan.currencyName || 'USD',
-            minimumInvestment: getEligibilityValue(
-              plan,
-              'minimumInvestmentAmount',
-            ),
-            policyTerm: getEligibilityValue(plan, 'policyTerm'),
-            isManualUpdate: plan.isManualUpdate || false,
-            isDisabled: plan.isDisabled || false,
-            actualPremium: plan.actualPremium,
-            insuranceProviderId: plan.providerId || plan.insuranceProviderId,
-            providerCode: plan.providerCode,
-          };
-          processedPlans.push(processedPlan);
-        });
-      }
+      // Process flat array - each item already has investmentFrequency
+      const processedPlans = res.data.map(plan => ({
+        ...plan,
+        currency: plan.currencyName || plan.currency || 'USD',
+        minimumInvestment: getEligibilityValue(plan, 'minimumInvestmentAmount'),
+        policyTerm: getEligibilityValue(plan, 'policyTerm'),
+        isManualUpdate: plan.isManualUpdate || false,
+        isDisabled: plan.isDisabled || false,
+        actualPremium: plan.actualPremium || 0,
+        insuranceProviderId: plan.providerId || plan.insuranceProviderId,
+        providerCode: plan.providerCode,
+      }));
 
       availablePlansTable.data = processedPlans;
     })
@@ -831,6 +800,7 @@ onMounted(() => {
           :quote="quote"
           :lockLeadSectionsDetails="lockLeadSectionsDetails"
           :lookUpData="lookUpData"
+          :localLookups="localLookups"
           @update="onPlanDetailsUpdate"
         />
 
@@ -881,6 +851,7 @@ onMounted(() => {
             :insuranceProviders="insuranceProviders"
             :available-plans="availablePlansTable.data"
             :lookUpData="lookUpData"
+            :localLookups="localLookups"
             @success="onCreatePlan"
             @error="onPlanError"
           />

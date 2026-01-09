@@ -14,6 +14,7 @@ const props = defineProps({
   insuranceProviders: Array,
   availablePlans: Array,
   lookUpData: Object,
+  localLookups: Object,
 });
 
 const page = usePage();
@@ -99,17 +100,24 @@ const addPlanForm = useForm({
   waiver_of_premium_value_2: 0,
 });
 
-// Plan Type Options (hardcoded - specific to plan types)
-const planTypeOptions = ref([
-  { value: 'savings', label: 'Savings' },
-  { value: 'whole_of_life', label: 'Whole of Life' },
-]);
+// Plan Type Options - from localLookups
+const planTypeOptions = computed(() => {
+  return (
+    props.localLookups?.planTypes?.map(item => ({
+      value: item.code || item.id,
+      label: item.text,
+    })) || [
+      { value: 'savings', label: 'Savings' },
+      { value: 'whole_of_life', label: 'Whole of Life' },
+    ]
+  );
+});
 
-// Currency Options - from lookUpData
+// Currency Options - from localLookups
 const currencyOptions = computed(() => {
   return (
-    props.lookUpData?.currencyType?.map(item => ({
-      value: item.code || item.text,
+    props.localLookups?.currencies?.map(item => ({
+      value: item.code || item.id,
       label: item.text,
     })) || [
       { value: 'AED', label: 'AED' },
@@ -120,10 +128,10 @@ const currencyOptions = computed(() => {
   );
 });
 
-// Investment Frequency Options - from lookUpData
+// Investment Frequency Options - from localLookups
 const investmentFrequencyOptions = computed(() => {
   return (
-    props.lookUpData?.savingsInvestmentType?.map(item => ({
+    props.localLookups?.investmentFrequencies?.map(item => ({
       value: item.code?.toLowerCase() || item.id,
       label: item.text,
     })) || [
@@ -133,13 +141,21 @@ const investmentFrequencyOptions = computed(() => {
   );
 });
 
-// Payment Term Options (payment frequencies)
-const paymentTermOptions = ref([
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly' },
-  { value: 'semi_annual', label: 'Semi-Annual' },
-  { value: 'annual', label: 'Annual' },
-]);
+// Payment Term Options - from localLookups
+const paymentTermOptions = computed(() => {
+  return (
+    props.localLookups?.paymentTerms?.map(item => ({
+      value: item.code || item.id,
+      label: item.text,
+    })) || [
+      { value: 'monthly', label: 'Monthly' },
+      { value: 'quarterly', label: 'Quarterly' },
+      { value: 'semi_annually', label: 'Semi-Annually' },
+      { value: 'annually', label: 'Annually' },
+      { value: 'single_payment', label: 'Single Payment' },
+    ]
+  );
+});
 
 // Tenure of Savings Options - from lookUpData or generate 1-30 years
 const tenureOfSavingsOptions = computed(() => {

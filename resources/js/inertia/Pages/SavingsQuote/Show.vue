@@ -56,6 +56,7 @@ const props = defineProps({
   ecomSavingsInsuranceQuoteUrl: String,
   websiteURL: String,
   lookUpData: Object,
+  localLookups: Object,
 });
 
 const page = usePage();
@@ -1000,6 +1001,7 @@ const onCopyText = text => {
       :websiteURL="websiteURL"
       :lockLeadSectionsDetails="lockLeadSectionsDetails"
       :lookUpData="lookUpData"
+      :localLookups="localLookups"
       @plan-selected="handlePlanSelected"
     />
 
