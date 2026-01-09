@@ -17,9 +17,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class FailedILAEmailService
 {
-    protected function getManagerEmailsByQuoteType( $quoteType)
+    protected function getManagerEmailsByQuoteType($quoteType)
     {
-        
+
         // Use match expression to map quote type to role name for type-safe matching
         $roleName = match ($quoteType->value) {
             QuoteTypes::CAR->value => RolesEnum::CarManager,
