@@ -24,7 +24,6 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 class FailedILAEmailService
 {
 
-
     protected function getManagerEmailsByQuoteType($quoteType){
         $roleMap = [
             QuoteTypes::CAR          => RolesEnum::CarManager,
