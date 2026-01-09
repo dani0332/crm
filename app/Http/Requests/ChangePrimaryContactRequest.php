@@ -43,7 +43,7 @@ class ChangePrimaryContactRequest extends FormRequest
 
         return $rules;
     }
-    
+
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
