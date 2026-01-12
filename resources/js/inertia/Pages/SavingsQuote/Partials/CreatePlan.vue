@@ -113,8 +113,19 @@ const planTypeOptions = computed(() => {
   );
 });
 
-// Currency Options - from localLookups
+// Currency Options - from selected plan's currency_coverages or fallback to localLookups
 const currencyOptions = computed(() => {
+  // If a plan is selected, use its currency coverages
+  if (selectedPlanData.value?.currency_coverages?.length) {
+    return selectedPlanData.value.currency_coverages
+      .filter(cc => cc.currency) // Ensure currency relation is loaded
+      .map(cc => ({
+        value: cc.currency.code,
+        label: cc.currency.text || cc.currency.code,
+      }));
+  }
+
+  // Fallback to localLookups currencies
   return (
     props.localLookups?.currencies?.map(item => ({
       value: item.code || item.id,
@@ -132,7 +143,7 @@ const currencyOptions = computed(() => {
 const investmentFrequencyOptions = computed(() => {
   return (
     props.localLookups?.investmentFrequencies?.map(item => ({
-      value: item.code?.toLowerCase() || item.id,
+      value: item.id,
       label: item.text,
     })) || [
       { value: 'regular', label: 'Regular' },
@@ -189,6 +200,7 @@ const getFrequencyFromPaymentTerm = term => {
   return map[term] || 'Monthly';
 };
 
+// Level 1: Insurance Provider Options (all providers for now)
 const insuranceProviderOptions = computed(() => {
   return (
     props.insuranceProviders?.map(provider => ({
@@ -198,43 +210,127 @@ const insuranceProviderOptions = computed(() => {
   );
 });
 
-const insuranceProviderPlanOptions = ref([]);
+// Level 2: Plans filtered by Provider + Plan Type
+const insuranceProviderPlanOptions = computed(() => {
+  if (!addPlanForm.insurance_provider_id) return [];
+
+  let plans = props.localLookups?.providerPlans || [];
+
+  // Filter by insurance provider
+  plans = plans.filter(
+    plan => plan.provider_id === addPlanForm.insurance_provider_id,
+  );
+
+  // Filter by plan type if selected (based on plan's code or text containing the type)
+  // This filtering logic can be adjusted based on actual data structure
+  if (addPlanForm.plan_type) {
+    // For now, we'll show all plans from the provider
+    // Adjust this if providerPlans has a plan_type_id field
+  }
+
+  return plans.map(plan => ({
+    value: plan.id,
+    label: plan.text || plan.code,
+    ...plan, // Keep full plan data for auto-population
+  }));
+});
+
 const isLoadingPlans = ref(false);
 
-const setSavingsPlans = () => {
-  if (!addPlanForm.insurance_provider_id) return;
+// Level 3: Auto-populate fields when plan is selected
+const selectedPlanData = computed(() => {
+  if (!addPlanForm.savings_plan_id) return null;
+  return insuranceProviderPlanOptions.value.find(
+    plan => plan.value === addPlanForm.savings_plan_id,
+  );
+});
 
-  isLoadingPlans.value = true;
-  const id = addPlanForm.insurance_provider_id;
-  axios
-    .get(
-      `/savings-insurance-provider-plans?insuranceProviderId=${id}&quoteUuId=${page.props.quote.uuid}`,
-    )
-    .then(({ data }) => {
-      insuranceProviderPlanOptions.value = data.map(plan => ({
-        value: plan.id,
-        label: plan.text || plan.name,
+// Watch for plan selection to auto-populate dependent fields
+watch(
+  () => addPlanForm.savings_plan_id,
+  newPlanId => {
+    if (newPlanId && selectedPlanData.value) {
+      const plan = selectedPlanData.value;
+      // Auto-populate fields from plan data if available
+      // These can be adjusted based on actual plan data structure
+      addPlanForm.currency = plan.currency || 'AED';
+      addPlanForm.investment_frequency = plan.investment_frequency || null;
+      addPlanForm.expected_rate_of_return = plan.expected_return || null;
+      // addPlanForm.tenure_of_savings = plan.policyTerm || null;
+    }
+  },
+);
+
+// Level 4: Payment Terms from selected plan's eligibilities (type = PAYMENT_TERM)
+const filteredPaymentTermOptions = computed(() => {
+  // If a plan is selected, use its eligibilities for payment terms
+  if (selectedPlanData.value?.eligibilities?.length) {
+    const planEligibilities = selectedPlanData.value.eligibilities
+      .filter(e => e.type === 'PAYMENT_TERM')
+      .map(e => ({
+        value: e.code?.toLowerCase(),
+        label: e.text || e.code,
       }));
-    })
-    .catch(error => {
-      console.error('Error fetching insurance provider plans:', error);
-      notification.error({
-        title: 'Failed to fetch plans',
-        position: 'top',
-      });
-    })
-    .finally(() => {
-      isLoadingPlans.value = false;
-    });
-};
 
-// Reset plan when plan type or provider changes
+    if (planEligibilities.length) {
+      // Further filter based on investment frequency
+      if (addPlanForm.investment_frequency === 'lumpsum') {
+        return planEligibilities.filter(
+          term => term.value === 'single_payment',
+        );
+      } else if (addPlanForm.investment_frequency === 'regular') {
+        return planEligibilities.filter(
+          term => term.value !== 'single_payment',
+        );
+      }
+      return planEligibilities;
+    }
+  }
+
+  // Fallback to localLookups payment terms
+  const allTerms = paymentTermOptions.value;
+
+  if (addPlanForm.investment_frequency === 'lumpsum') {
+    // Lumpsum → Single Payment only
+    return allTerms.filter(term => term.value === 'single_payment');
+  } else if (addPlanForm.investment_frequency === 'regular') {
+    // Regular → Monthly, Quarterly, Semi-Annually, Annually (exclude Single Payment)
+    return allTerms.filter(term => term.value !== 'single_payment');
+  }
+
+  // If no investment frequency selected, show all
+  return allTerms;
+});
+
+// Reset plan when plan type changes
 watch(
   () => addPlanForm.plan_type,
   () => {
     addPlanForm.savings_plan_id = null;
-    if (addPlanForm.insurance_provider_id) {
-      setSavingsPlans();
+    addPlanForm.insurance_provider_id = '';
+  },
+);
+
+// Reset plan when provider changes
+watch(
+  () => addPlanForm.insurance_provider_id,
+  () => {
+    addPlanForm.savings_plan_id = null;
+  },
+);
+
+// Reset payment term when investment frequency changes
+watch(
+  () => addPlanForm.investment_frequency,
+  newFreq => {
+    // Auto-select payment term based on frequency
+    if (newFreq === 'lumpsum') {
+      addPlanForm.payment_term = 'single_payment';
+    } else if (
+      newFreq === 'regular' &&
+      addPlanForm.payment_term === 'single_payment'
+    ) {
+      addPlanForm.payment_term = null; // Reset if was single payment
     }
   },
 );
@@ -342,7 +438,6 @@ const validateDecimal = event => {
           :rules="[isRequired]"
           :options="insuranceProviderOptions"
           placeholder="Select Insurance Provider"
-          @update:modelValue="setSavingsPlans"
           filterable
           required
           label="Insurance Provider"
@@ -406,7 +501,7 @@ const validateDecimal = event => {
         <x-select
           v-model="addPlanForm.payment_term"
           :rules="[isRequired]"
-          :options="paymentTermOptions"
+          :options="filteredPaymentTermOptions"
           placeholder="Select Payment Terms"
           required
           label="Payment Term"
@@ -633,28 +728,4 @@ const validateDecimal = event => {
       </x-button>
     </div>
   </x-form>
-
-  <!-- Existing Plans Section - Commented out for now
-  <div
-    v-if="props.availablePlans && props.availablePlans.length > 0"
-    class="mt-6"
-  >
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">Existing Plans</h3>
-    </div>
-    <DataTable
-      table-class-name="tablefixed compact"
-      :headers="quotePlansTable.columns"
-      :items="props.availablePlans || []"
-      show-index
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-actualPremium="{ actualPremium }">
-        {{ actualPremium ? parseFloat(actualPremium).toFixed(2) : '0.00' }}
-      </template>
-    </DataTable>
-  </div>
-  -->
 </template>

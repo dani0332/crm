@@ -33,4 +33,14 @@ class InsuranceProviderPlan extends Model
     {
         return $this->hasOne(PolicyWording::class, 'plan_id');
     }
+
+    public function eligibilities()
+    {
+        return $this->hasMany(InsurancePlansEligibility::class, 'plan_id');
+    }
+
+    public function currencyCoverages()
+    {
+        return $this->hasMany(CurrencyCoverage::class, 'plan_id');
+    }
 }

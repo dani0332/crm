@@ -292,7 +292,7 @@ class SavingsQuoteService extends BaseQuoteService
         // Insurance provider plans from insurance_provider_plans table
         $providerPlans = InsuranceProviderPlan::where('quote_type_id', QuoteTypeId::Savings)
             ->active()
-            ->select('id', 'provider_id', 'code', 'text')
+            ->with(['eligibilities', 'currencyCoverages.currency'])
             ->get();
 
         // Investment frequencies from lookups table
@@ -366,6 +366,7 @@ class SavingsQuoteService extends BaseQuoteService
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
+            'callSource' => 'imcrm',
             ...$extraData,
         ];
 
