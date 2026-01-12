@@ -305,7 +305,7 @@ class LookupService extends BaseService
     }
 
     /**
-     * Get claim service types
+     * Get claim Category Type
      */
     public function getClaimServiceTypes(): array
     {

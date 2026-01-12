@@ -20,6 +20,7 @@ use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\YearOfManufacture;
+use App\Models\BusinessTypeOfInsurance;
 use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
@@ -229,6 +230,10 @@ class ClaimsService extends BaseService
             $query->where('quote_type_id', $filters['quote_type_id']);
         }
 
+        if (! empty($filters['business_type_of_insurance_id'])) {
+            $query->where('business_type_of_insurance_id', $filters['business_type_of_insurance_id']);
+        }
+
         if (! empty($filters['policy_number'])) {
             $query->where('policy_number', $filters['policy_number']);
         }
@@ -296,6 +301,7 @@ class ClaimsService extends BaseService
             'manager_id',
             'manager_assigned_date',
             'quote_type_id',
+            'business_type_of_insurance_id',
             'policy_number',
             'complaint_status_id',
             'next_followup_datetime',
@@ -782,6 +788,7 @@ class ClaimsService extends BaseService
             'carMake' => $this->getCarMake(),
             'carModel' => $carMake ? $this->getCarModelByMake($carMake) : [],
             'carModelYear' => $this->getCarModelYear(),
+            'businessTypeOfInsurance' => $this->getBusinessTypeOfInsurance(),
         ];
     }
 
@@ -823,6 +830,16 @@ class ClaimsService extends BaseService
                 ->toArray();
         });
 
+    }
+
+    public function getBusinessTypeOfInsurance(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::BUSINESS_TYPE_OF_INSURANCE_KEY, function () {
+            return BusinessTypeOfInsurance::select('id', 'text')
+                ->active()
+                ->get()
+                ->toArray();
+        });
     }
 
     /**

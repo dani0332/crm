@@ -99,6 +99,15 @@ const claimSubStatusOptions = computed(() => {
   );
 });
 
+const businessTypeOfInsuranceOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.businessTypeOfInsurance?.map(bt => ({
+      value: bt.id,
+      label: bt.text,
+    })) || []
+  );
+});
+
 const managersOptions = computed(() => {
   return (
     props.claimDropdownOptions?.claimsManagers?.map(manager => ({
@@ -592,7 +601,14 @@ watch(
           filterPlaceholder="Filter Line of Business...."
           clearable
         />
-
+        <x-select
+          v-model="filters.business_type_of_insurance_id"
+          label="Search by Business Type of Insurance"
+          placeholder="Select  "
+          :options="businessTypeOfInsuranceOptions"
+          filterable
+          filterPlaceholder="Filter Business Type of Insurance...."
+        />
         <x-select
           v-model="filters.claim_status_id"
           label="Claim Status"
@@ -714,11 +730,11 @@ watch(
           <x-select
             v-if="isPendingClaimRequestType"
             v-model="filters.service_type_id"
-            label="Service Type"
-            placeholder="Select Service Type"
+            label="Category Type"
+            placeholder="Select Category Type"
             :options="claimServiceTypeOptions"
             filterable
-            filterPlaceholder="Filter Service Type...."
+            filterPlaceholder="Filter Category Type...."
             clearable
           />
         </template>

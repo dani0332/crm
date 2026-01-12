@@ -36,9 +36,10 @@ enum ClaimsEnum: string
     case CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE = 'pending-approvals';
     case CLAIM_REQUEST_TYPE_ASK_A_QUESTION_CODE = 'ask-a-question';
 
-    // Claim Service Type Codes
+    // Claim Category Type Codes
     case CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE = 'in-patient-request';
     case CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE = 'out-patient-request';
+    case CLAIM_SERVICE_TYPE_OTHERS_REQUEST_CODE = 'others';
 
     // Claim Request Access Type Codes
     case CLAIM_REQUEST_ACCESS_TYPE_SYSTEM_GENERATED_CODE = 'system-generated';
@@ -141,13 +142,14 @@ enum ClaimsEnum: string
     }
 
     /**
-     * Get all claim service type codes
+     * Get all claim Category Type codes
      */
     public static function getClaimServiceTypeCodes(): array
     {
         return [
             self::CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE->value,
             self::CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE->value,
+            self::CLAIM_SERVICE_TYPE_OTHERS_REQUEST_CODE->value,
         ];
     }
 
