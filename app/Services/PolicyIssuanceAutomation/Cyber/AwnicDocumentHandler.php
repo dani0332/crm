@@ -18,7 +18,7 @@ class AwnicDocumentHandler
     public function fetchDocumentContent(string $relativePath): array
     {
         $filePath = $this->buildAzureDocumentPath($relativePath);
-        
+
         if (! $filePath) {
             $message = 'Failed to generate temporary URL for document';
             LoggerService::error('Document URL generation failed', extra: [
@@ -28,7 +28,7 @@ class AwnicDocumentHandler
 
             return ['status' => false, 'message' => $message];
         }
-        
+
         $fileContent = @file_get_contents($filePath);
 
         if ($fileContent === false || $fileContent === '') {
@@ -64,19 +64,19 @@ class AwnicDocumentHandler
     private function buildAzureDocumentPath(string $relativePath): ?string
     {
         $quoteDocumentService = app(QuoteDocumentService::class);
-        
+
         // Use getDocumentUrl to get the actual URL string, not the JSON response
         $url = $quoteDocumentService->getDocumentUrl($relativePath);
-        
+
         if (! $url) {
             LoggerService::error('Failed to generate temporary URL for document', extra: [
                 'relative_path' => $relativePath,
                 'url' => $url,
             ]);
-            
+
             return null;
         }
-        
+
         return $url;
     }
 
