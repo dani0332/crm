@@ -22,7 +22,6 @@ use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
-use App\Http\Requests\EvaluatePrivateClientRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
@@ -59,8 +58,6 @@ use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -70,11 +67,6 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
-    // Use both traits; alias PrivateClient::reEvaluatePrivateClient to avoid future conflicts and enable explicit access.
-    use GenericQueriesAllLobs, PrivateClient {
-        PrivateClient::evaluatePrivateClient as privateClientReEvaluate;
-    }
-
     private const REQUIRED_STRING = 'required|string';
 
     public $apiService;
@@ -492,13 +484,6 @@ class ApiController extends Controller
         dispatch(new RemovePcQualifiedJob($request->input('uuids')));
 
         return apiResponse(null, Response::HTTP_OK, 'PC qualified removal job has been dispatched!');
-    }
-
-    public function evaluatePrivateClient(EvaluatePrivateClientRequest $request)
-    {
-        $response = $this->privateClientReEvaluate($request->validated());
-
-        return apiResponse($response, Response::HTTP_OK, 'PCP re-evaluation completed.');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
