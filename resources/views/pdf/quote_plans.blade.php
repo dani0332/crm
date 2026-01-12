@@ -25,14 +25,10 @@
         }
 
         header {
-            position: fixed;
-            top: 0;
-            left: 0;
             height: 85px;
             width: 100%;
             display: block;
             background: white;
-            z-index: 1;
         }
 
         div,
@@ -800,27 +796,18 @@
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
     @endcomponent
 
-{{-- End of PDF Page Footer Section --}}
-
-
 {{-- Second Last Page --}}
-<div style="page-break-after: always;"></div>.
-<div style="margin: 0; padding: 0; position: relative; z-index: 100;">  
-<img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+<div style="page-break-before: always; margin: 0; padding: 0;">
+    <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
 </div>
-     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
-      
-     
+@component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
 @endcomponent
 
-
 {{-- Last Page --}}
-<div style="page-break-after: always;"></div>
-<div style="margin: 0; padding: 0; position: relative; z-index: 100;"> 
-<img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}"
-style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+<div style="page-break-before: always; margin: 0; padding: 0;">
+    <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
 </div>
-     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
+@component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
 @endcomponent
 </body>
 </html>
