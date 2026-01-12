@@ -209,6 +209,13 @@ const additionalContactDeleteConfirmed = () => {
         contactLoader.value = false;
         modals.contactDeleteConfirm = false;
       },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      },
     },
   );
 };

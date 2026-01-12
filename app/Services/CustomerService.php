@@ -309,6 +309,39 @@ class CustomerService extends BaseService
         }
     }
 
+    /**
+     * Delete customer additional contact(s) by ID.
+     * Deletes all contacts matching the same key, value, and customer_id.
+     *
+     * @param int $additionalContactId
+     * @return array{success: bool, message: string}
+     */
+    public function deleteCustomerAdditionalContacts(int $additionalContactId): array
+    {
+        $additionalContact = CustomerAdditionalContact::find($additionalContactId);
+        if (!$additionalContact) {
+            LoggerService::warning(__CLASS__.' fn:deleteCustomerAdditionalContacts - Additional contact not found.', [
+                'additionalContactId' => $additionalContactId
+            ]);
+            return ['success' => false, 'message' => 'Additional contact not found.'];
+        }
+
+        $filters = $additionalContact->only(['key', 'value', 'customer_id']);
+        $deleteCount = CustomerAdditionalContact::where($filters)->delete();
+
+        $message = $deleteCount > 1 
+            ? "{$deleteCount} additional contacts deleted successfully."
+            : 'Additional contact deleted successfully.';
+
+        LoggerService::info(__CLASS__.' fn:deleteCustomerAdditionalContacts', [
+            'filters' => $filters,
+            'message' => $message,
+            'deleted_count' => $deleteCount,
+        ]);
+
+        return ['success' => true, 'message' => $message];
+    }
+
     private function removeAdditionalEmailContactIfExitst($email, $customerId)
     {
         $additionalContacts = CustomerAdditionalContact::where('customer_id', $customerId)

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\PermissionsEnum;
 use App\Enums\SLAActionTypeEnum;
+use App\Http\Requests\DeleteAdditionalContactRequest;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
@@ -167,30 +167,19 @@ class CustomerController extends Controller
         return view('customers.upload');
     }
 
-    public function deleteAdditionalContact($id, Request $request)
+    public function deleteAdditionalContact($id, DeleteAdditionalContactRequest $request)
     {
-        if (!auth()->user()->can(PermissionsEnum::DELETE_ADDITIONAL_CONTACT)) {
-            if (isset($request->isInertia) && $request->isInertia) {
-                return redirect()->back()->with('error', 'You are not authorized to delete additional contact.');
-            }
-
-            abort(403, 'You are not authorized to delete additional contact.');
-        }
-
-        $deleteCustomerAdditionalContact = CustomerAdditionalContact::find($id);
-
-        if ($deleteCustomerAdditionalContact) {
-            Log::info('Customer additional contact deleted. ID: '.$id);
-            $deleteCustomerAdditionalContact->delete();
-        }
+        $result = $this->customerService->deleteCustomerAdditionalContacts($id);
 
         if (isset($request->isInertia) && $request->isInertia) {
-            return redirect()->back();
+            return redirect()->back()->with($result['success'] ? 'success' : 'error', $result['message']);
         }
 
-        return response()->json(['data' => [
-            'message' => 'Additional Contact Deleted.',
-        ]]);
+        if ($result['success']) {
+            return response()->json(['data' => ['message' => $result['message']]], 200);
+        }
+
+        return response()->json(['error' => ['message' => $result['message']]], 404);
     }
 
     public function makeAdditionalContactPrimary(Request $request)
