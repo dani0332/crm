@@ -61,7 +61,6 @@ const leadData = ref([
     reset: false,
     BlMaxcap: 0,
     BlCapEdit: false,
-    BlAllocationStatus: false,
   },
 ]);
 
@@ -360,9 +359,10 @@ onMounted(() => {
       id: item.id,
       userId: item.userId,
       cap: item.max_capacity,
-
       capEdit: false,
       status: item.is_available,
+      BlMaxcap: item.BLMaxCapacity,
+      BlCapEdit: false,
     };
   });
 });
@@ -457,6 +457,27 @@ watch(
   {
     immediate: true,
   },
+);
+
+// Watch for changes in props.data to update leadData
+watch(
+  () => props.data,
+  newData => {
+    if (newData && newData.length > 0) {
+      leadData.value = newData.map(item => {
+        return {
+          id: item.id,
+          userId: item.userId,
+          cap: item.max_capacity,
+          capEdit: false,
+          status: item.is_available,
+          BlMaxcap: item.BLMaxCapacity,
+          BlCapEdit: false,
+        };
+      });
+    }
+  },
+  { deep: true },
 );
 </script>
 <template>
