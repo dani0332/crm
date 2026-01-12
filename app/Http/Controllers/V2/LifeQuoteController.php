@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
@@ -239,6 +240,7 @@ class LifeQuoteController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ]);
     }
 

@@ -906,6 +906,7 @@ class CRUDController extends Controller
                 $isEpEcbPaymentPaid = app(EmbeddedProductRepository::class)->checkIsEpSelected($record->id, QuoteTypeId::Car, EmbeddedProductEnum::ECB, true);
                 $carTypeofInsurance = CarTypeInsurance::select('id', 'text')->find($record->car_type_insurance_id) ?? null;
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Car));
+                $genericRequestEnum = GenericRequestEnum::asArray();
 
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
@@ -1010,6 +1011,7 @@ class CRUDController extends Controller
                     'rtaConfigurationData',
                     'LIVAEnums',
                     'carTypeofInsurance',
+                    'genericRequestEnum',
                 ]));
             }
 
@@ -1339,6 +1341,7 @@ class CRUDController extends Controller
                     'paymentGatewayEnum' => $paymentGatewayEnum,
                     'isFuncsEnabled' => $isFuncsEnabled,
                     'branchOptions' => EmirateEnum::getBranchMapping(),
+                    'genericRequestEnum' => GenericRequestEnum::asArray(),
                 ]);
             } else {
                 return view('shared.show', compact([

@@ -369,6 +369,7 @@ class TravelController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'isAllianceProvider' => $insuranceProvider?->code === InsuranceProviderEnum::ALNC->value,
             'customerAddressData' => $customerAddressData,
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ]);
     }
 

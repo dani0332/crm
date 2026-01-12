@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
@@ -153,7 +154,6 @@ class YachtQuoteController extends Controller
      */
     public function show($uuid)
     {
-
         /* Start - Temporarily adding for correcting historic data */
         $quote = YachtQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
@@ -261,6 +261,7 @@ class YachtQuoteController extends Controller
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
