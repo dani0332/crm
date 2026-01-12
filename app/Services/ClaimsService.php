@@ -922,7 +922,7 @@ class ClaimsService extends BaseService
             $request->customer_message, $request->ai_optimized_message
         );
 
-        SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->customer_message);
+        SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->ai_optimized_message);
 
         return $claimActivity;
     }
