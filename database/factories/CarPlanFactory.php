@@ -34,6 +34,8 @@ class CarPlanFactory extends Factory
             'provider_id' => InsuranceProvider::factory(),
             'plan_name' => $this->faker->words(3, true),
             'is_active' => 1,
+            'code' => $this->faker->unique()->regexify('[A-Z0-9]{5,10}'),
+            'text' => $this->faker->words(2, true),
             'created_at' => now(),
             'updated_at' => now(),
         ];
