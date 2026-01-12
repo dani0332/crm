@@ -1124,8 +1124,6 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
             $documents = $emailData->documents;
             $attachments = [];
             if (! empty($documents)) {
@@ -1136,11 +1134,15 @@ class SendEmailCustomerService extends BaseService
 
                         continue;
                     }
-                    $documentURL = $path !== '' ? $websiteURL.$path : '';
-                    $attachments[] = [
-                        'url' => $documentURL,
-                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->code.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
-                    ];
+                    $documentExtension = app(QuoteDocumentService::class)->getDocumentExtension($path);
+                    $documentName = 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->code.'.'.$documentExtension;
+                    $documentURL = app(QuoteDocumentService::class)->getDocumentUrl($path);
+                    if ($documentURL) {
+                        $attachments[] = [
+                            'url' => $documentURL,
+                            'name' => $documentName,
+                        ];
+                    }
                 }
             }
 
