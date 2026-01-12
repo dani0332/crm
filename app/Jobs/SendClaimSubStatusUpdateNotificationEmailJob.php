@@ -43,6 +43,7 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
      * The claim request UUID to send claim sub status update notification email for
      */
     private string $claimRequestUuid;
+
     private string $customerMessage;
 
     /**
