@@ -138,9 +138,10 @@ class NgiQuoteUpdaterService
         // Invoice numbers with fallback for testing
         // TODO:: NGI:: premium_inv_no & commision_inv_no are required for book policy while missed from provider in case of missing payment_refrence in issue policy API call
         $premiumInvNo = $policyDocumentsResult->premium_inv_no;
-        $updateData['insurer_tax_number'] = ($premiumInvNo && $premiumInvNo !== 'NA')
-            ? $premiumInvNo
-            : 'P/INV/NN100TS10344'.rand(9999, 99999999).rand(9999, 99999999);
+        // $updateData['insurer_tax_number'] = ($premiumInvNo && $premiumInvNo !== 'NA')
+        //     ? $premiumInvNo
+        //     : 'P/INV/NN100TS10344'.rand(9999, 99999999).rand(9999, 99999999);
+        $updateData['insurer_tax_number'] = 'P/INV/NN100TS10344'.rand(9999, 99999999).rand(9999, 99999999);
 
         $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no
             ?? 'INV/NN100TS10344'.rand(9999, 99999999).rand(9999, 99999999);
