@@ -94,6 +94,7 @@ use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SageProcessesController;
 use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
@@ -893,6 +894,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['middleware' => ['readonly_db']], function () {
         Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
         Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+
+        // Sage Failed Processes Routes
+        Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.index');
+        Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.export');
     });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
