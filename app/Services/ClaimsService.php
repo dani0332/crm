@@ -452,7 +452,7 @@ class ClaimsService extends BaseService
 
             if ($responseData['success'] && $isClaimManager) {
                 $claim = $this->getClaimById($responseData['claimUID']);
-                $claim->update('manager_id');
+                $claim->update(['manager_id' => $user->id]);
             }
 
             return $responseData;
