@@ -1274,7 +1274,10 @@ const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const isMetLife = item => {
   if (!item) return false;
 
-  return item.providerCode === insuranceProviderCodeEnum?.MTL;
+  return (
+    item.providerCode === insuranceProviderCodeEnum?.MTL &&
+    item.instantPolicy === true
+  ); // only for metlife instant policy
 };
 
 const canSelectMetLifePlan = computed(() => {
@@ -1379,7 +1382,7 @@ const getDisplayPriceInAED = item => {
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Life Detail</h2>
         <x-button
-          v-if="quote.customer?.pcp_tag == true"
+          v-if="quote?.customer?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"

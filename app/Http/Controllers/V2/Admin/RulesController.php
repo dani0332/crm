@@ -8,7 +8,6 @@ use App\Models\Rule;
 use App\Models\RuleType;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class RulesController extends Controller
 {
@@ -109,7 +108,7 @@ class RulesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(RuleRequest $request, $id)
     {
         $rule = Rule::findOrFail($id);
         $rule->update($request->except('rule_users'));

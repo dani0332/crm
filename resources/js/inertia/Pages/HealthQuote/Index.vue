@@ -97,6 +97,7 @@ const tableHeader = ref([
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
+  { text: 'BRANCH', value: 'branch_name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   {
     text: 'ADVISOR REQUESTED',
@@ -292,12 +293,13 @@ const renewalBatchOptions = computed(() => {
 
 const modifiedAdvisorOptions = ref([]);
 
-modifiedAdvisorOptions.value = advisorOptions.value;
-
-modifiedAdvisorOptions.value.push({
-  value: 'unassigned',
-  label: 'Unassigned',
-});
+modifiedAdvisorOptions.value = [
+  {
+    value: 'unassigned',
+    label: 'Unassigned',
+  },
+  ...advisorOptions.value,
+];
 
 // const subTeamsOptions = computed(() => {
 

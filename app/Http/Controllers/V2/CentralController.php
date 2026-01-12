@@ -223,16 +223,23 @@ class CentralController extends Controller
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);
 
+            // todo: remove get insured details after id_number format is consistent
+            $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
+                ->where('id_type', 'emiratesId')
+                ->emiratesIdNumber($customerProfileRequest->emirates_id_number)
+                ->first();
+            $idNumber = $insured?->id_number ?? $customerProfileRequest->emirates_id_number;
+
             $insuredPersonDetails = Insured::updateOrCreate([
                 'id_type' => 'emiratesId',
-                'id_number' => $customerProfileRequest->emirates_id_number,
+                'id_number' => $idNumber,
+                'customer_type' => $customerProfileRequest->customer_type,
             ], [
                 'first_name' => $customerProfileRequest->insured_first_name,
                 'last_name' => $customerProfileRequest->insured_last_name,
                 'dob' => $customer->dob,
                 'nationality_id' => $customer->nationality_id,
                 'gender' => $customer->screening_gender,
-                'customer_type' => $customerProfileRequest->customer_type,
             ]);
 
             CustomerInsured::updateOrCreate([
@@ -338,6 +345,16 @@ class CentralController extends Controller
             }
 
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
+
+            if (! $response['status']) {
+                return response()->json([
+                    'errors' => [
+                        'message' => [
+                            $response['message'],
+                        ],
+                    ],
+                ], 422);
+            }
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -832,7 +849,8 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::CAPTURE_PAYMENT_VALIDATION);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
-        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode);
+        $quote = $this->getQuoteObjectBy($request->modelType, $request->uuid, 'uuid');
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode, $quote);
 
         $logContext = [
             'ref_id' => $request->quoteCode,

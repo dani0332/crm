@@ -72,9 +72,12 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'days_cover_for',
             'lead_assignment_trigger',
             'parent_id',
+            'branch_id',
+            'is_branch_applicable',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
+            'advisor.primaryBranch',
             'travelQuoteRequestDetail',
             'travelQuoteRequestDetail.lostReason',
             'customer:id,emirates_id_expiry_date,receive_marketing_updates,pcp_tag',
@@ -92,6 +95,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quoteTags:quote_uuid,name',
             'parent:id,code',
             'child:id,code,parent_id',
+            'branch:id,name',
         ]);
     }
 

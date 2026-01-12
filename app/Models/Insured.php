@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\IdNumberFormatting;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -9,6 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 class Insured extends Model implements AuditableContract
 {
     use Auditable;
+    use IdNumberFormatting;
 
     protected $table = 'insured';
     protected $guarded = [];
@@ -21,5 +23,18 @@ class Insured extends Model implements AuditableContract
     public function insuredKyc()
     {
         return $this->hasOne(InsuredKyc::class, 'insured_id', 'id');
+    }
+
+    public function scopeEmiratesIdNumber($query, $idNumber)
+    {
+        return $query->where(function ($q) use ($idNumber) {
+            $q->where('id_number', formatEmiratesIdNumber($idNumber))
+                ->orWhere('id_number', str_replace('-', '', $idNumber));
+        });
+    }
+
+    public function entity()
+    {
+        return $this->hasOne(Entity::class, 'id', 'entity_id');
     }
 }

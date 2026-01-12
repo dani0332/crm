@@ -101,10 +101,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::startQuoteLogging($quote);
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
-        if ($this->isPolicyIssuanceAutomationEnabled()) {
+        $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+        if ($this->isPolicyIssuanceAutomationEnabled() && $isQuotePolicyIssuanceAutomationEnabled) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - LIVA Car Automation is disabled');
+            $errorMessage = ! $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Quote Policy Issuance Automation is disabled' : 'LIVA Car Automation is disabled';
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
@@ -125,10 +127,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id.' started');
 
         try {
-            if (! $this->isPolicyIssuanceAutomationEnabled()) {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - LIVA Car Automation is disabled');
-                $response['error'] = 'LIVA Car Automation is disabled';
-                $response['message'] = 'LIVA Car Automation is disabled';
+            $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+            if (! $this->isPolicyIssuanceAutomationEnabled() || ! $isQuotePolicyIssuanceAutomationEnabled) {
+                $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Automation is disabled' : 'LIVA Car Quote Policy Issuance Automation is disabled';
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
+                $response['error'] = $errorMessage;
+                $response['message'] = $errorMessage;
 
                 return $response;
             }
@@ -598,13 +602,13 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             $quote->update(['rta_upload_status' => PolicyIssuanceEnum::PIA_RTA_UPLOAD_STATUS_DONE]);
         }
 
-        /* if ($newDocument->exists) {
+        if ($newDocument?->exists) {
             WatermarkDocumentsJob::dispatch(
                 $newDocument->id,
                 $quote->uuid,
                 $documentType->id
             );
-        } */
+        }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
 

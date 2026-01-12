@@ -67,6 +67,7 @@ class ResetLeadAllocationCounts extends Command
             'auto_assignment_count' => 0,
             'manual_assignment_count' => 0,
             'buy_lead_allocation_count' => 0,
+            'buy_lead_cat_a_allocation_count' => 0,
         ]);
     }
 
@@ -82,7 +83,7 @@ class ResetLeadAllocationCounts extends Command
     private function resetNormalLeadAllocationCapacity()
     {
         LeadAllocation::query()->where('reset_cap', 1)->update([
-            'max_capacity' => 20,
+            'max_capacity' => DB::raw('CASE WHEN quote_type_id IN (1, 3) THEN 40 ELSE 20 END'),
         ]);
     }
 

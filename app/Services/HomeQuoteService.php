@@ -142,6 +142,8 @@ class HomeQuoteService extends BaseService
             'hqr.insly_migrated',
             'hqr.aml_status',
             'c.gender',
+            'c.pcp_tag',
+            'hqr.pc_qualified',
             DB::raw('
                 CASE
                     WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"

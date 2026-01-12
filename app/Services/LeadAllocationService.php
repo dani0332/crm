@@ -72,6 +72,7 @@ class LeadAllocationService extends BaseService
                 'u.name as userName',
                 'lead_allocation.buy_lead_max_capacity as BLMaxCapacity',
                 'lead_allocation.buy_lead_allocation_count as BLAllocationCount',
+                'lead_allocation.buy_lead_cat_a_allocation_count as BLCATAAllocationCount',
                 'lead_allocation.buy_lead_status as BLStatus',
                 'lead_allocation.normal_allocation_enabled as normalAllocationEnabled',
                 'lead_allocation.buy_lead_reset_capacity as blResetCap'])
@@ -1011,5 +1012,96 @@ class LeadAllocationService extends BaseService
         }
 
         return $isCommercial;
+    }
+
+    /**
+     * Get the count of unassigned Health leads based on FR criteria.
+     *
+     * FR Criteria:
+     * - Date range: Last 3 months
+     * - ECOM leads: insurancemarket.ae, CALL_DESK, INSURANCE_WALLET sources
+     *   - SIC leads where sic_advisor_requested = 1
+     *   - Non-SIC leads from Ecom inquiry
+     *   - PEC marked (pec_marked_at NOT NULL) with Plan selected (plan_id NOT NULL)
+     * - REVIVAL leads: source = REVIVAL_REPLIED
+     * - Exclusions: IMCRM, INSLY, Renewal_upload sources
+     */
+    public function getHealthUnassignedLeadsCount(): int
+    {
+        try {
+            $fromDate = now()->subMonths(3)->startOfDay();
+            $toDate = now()->endOfDay();
+
+            // Allowed ECOM sources (insurancemarket.ae variants, CALL_DESK, INSURANCE_WALLET)
+            $ecomSources = [
+                LeadSourceEnum::INSURANCE_MARKET,
+                LeadSourceEnum::CALL_DESK,
+                LeadSourceEnum::INSURANCE_WALLET,
+            ];
+
+            // Excluded sources
+            $excludedSources = [
+                LeadSourceEnum::IMCRM,
+                LeadSourceEnum::INSLY,
+                LeadSourceEnum::RENEWAL_UPLOAD,
+            ];
+
+            $count = HealthQuote::whereNull('advisor_id')
+                ->whereBetween('created_at', [$fromDate, $toDate])
+                ->whereNotIn('quote_status_id', [
+                    QuoteStatusEnum::Fake,
+                    QuoteStatusEnum::Duplicate,
+                    QuoteStatusEnum::Lost,
+                ])
+                ->whereNotIn('source', $excludedSources)
+                ->whereNotNull('price_starting_from')
+                ->where(function ($query) use ($ecomSources) {
+                    // ECOM leads criteria
+                    $query->where(function ($ecomQuery) use ($ecomSources) {
+                        $ecomQuery->where(function ($sourceQuery) use ($ecomSources) {
+                            // Match exact sources or environment-based source (insurancemarket.ae for prod, alfred.ae for others)
+                            $sourceQuery->whereIn('source', $ecomSources)
+                                ->orWhere('source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
+                        })
+                            ->where(function ($ecomCriteria) {
+                                // SIC leads with advisor_requested = Yes
+                                $ecomCriteria->where(function ($sicQuery) {
+                                    $sicQuery->where('sic_advisor_requested', 1);
+                                })
+                                // OR Non-SIC Ecom inquiry leads (no SIC tag in quote_tags)
+                                    ->orWhere(function ($nonSicQuery) {
+                                        $nonSicQuery->isNonSICLead(QuoteTypes::HEALTH);
+                                    })
+                                // OR PEC marked with Plan selected
+                                    ->orWhere(function ($pecQuery) {
+                                        $pecQuery->hasPecTag()
+                                            ->whereNotNull('plan_id');
+                                    })
+                                // OR Clicked proceed with application (payment link requested or authorized)
+                                    ->orWhereIn('quote_status_id', [
+                                        QuoteStatusEnum::ApplicationPending,
+                                        QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+                                    ]);
+                            });
+                    })
+                    // OR REVIVAL leads (replied to OCB email or source = REVIVAL_REPLIED)
+                        ->orWhere('source', LeadSourceEnum::REVIVAL_REPLIED);
+                })
+                ->count();
+
+            LoggerService::info('getHealthUnassignedLeadsCount', extra: [
+                'count' => $count,
+                'from_date' => $fromDate->toDateTimeString(),
+                'to_date' => $toDate->toDateTimeString(),
+            ]);
+
+            return $count;
+        } catch (\Exception $e) {
+            LoggerService::error('Error getting health unassigned leads count: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return 0;
+        }
     }
 }
