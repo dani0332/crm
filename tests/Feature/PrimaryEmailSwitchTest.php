@@ -3,17 +3,125 @@
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Models\CustomerAdditionalContact;
 use App\Models\CarQuote;
+use App\Models\Customer;
+use App\Models\CustomerAdditionalContact;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Tests\Helpers\PrimaryEmailSwitchTestDataSeeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
+const QUOTE_TYPE = QuoteTypes::CAR;
+
+const EMAIL_TEST = 'test@testing.com';
+const EMAIL_EXAMPLE = 'test@example.com';
+const EMAIL_YOPMAIL = 'test@yopmail.com';
+
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    PrimaryEmailSwitchTestDataSeeder::seedLookups();
+    
+    // Fake the queue to prevent jobs from being dispatched during tests
+    Queue::fake();
+    
+    // Create permission
+    DB::connection('sqlite')->table('permissions')->insert([
+        'name' => PermissionsEnum::DELETE_ADDITIONAL_CONTACT,
+        'guard_name' => 'web'
+    ]);
+
+    // Create customers with specific emails using factories
+    $customerA = Customer::factory()
+        ->withEmail(EMAIL_TEST)
+        ->create();
+    
+    $customerB = Customer::factory()
+        ->withEmail(EMAIL_EXAMPLE)
+        ->create();
+    
+    $customerC = Customer::factory()
+        ->withEmail(EMAIL_YOPMAIL)
+        ->create();
+
+    // Create quotes for customers using factories
+    $quoteA1 = CarQuote::factory()
+        ->forCustomer($customerA->id)
+        ->withEmail(EMAIL_TEST)
+        ->create();
+    
+    $quoteA2 = CarQuote::factory()
+        ->forCustomer($customerA->id)
+        ->withEmail(EMAIL_TEST)
+        ->create();
+    
+    $quoteB1 = CarQuote::factory()
+        ->forCustomer($customerB->id)
+        ->withEmail(EMAIL_EXAMPLE)
+        ->create();
+    
+    $quoteB2 = CarQuote::factory()
+        ->forCustomer($customerB->id)
+        ->withEmail(EMAIL_EXAMPLE)
+        ->create();
+    
+    $quoteC1 = CarQuote::factory()
+        ->forCustomer($customerC->id)
+        ->withEmail(EMAIL_YOPMAIL)
+        ->create();
+
+    // Create personal_quotes entries for each CarQuote
+    foreach ([$quoteA1, $quoteA2, $quoteB1, $quoteB2, $quoteC1] as $quote) {
+        DB::connection('sqlite')->table('personal_quotes')->insert([
+            'code' => $quote->code,
+            'uuid' => $quote->uuid,
+            'first_name' => $quote->first_name,
+            'last_name' => $quote->last_name,
+            'email' => $quote->email,
+            'mobile_no' => $quote->mobile_no,
+            'customer_id' => $quote->customer_id,
+            'quote_type_id' => QUOTE_TYPE->id(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    // Create additional contacts linking different customers' emails
+    CustomerAdditionalContact::factory()
+        ->forCustomer($customerA->id)
+        ->email()
+        ->withValue(EMAIL_EXAMPLE)
+        ->create();
+    
+    CustomerAdditionalContact::factory()
+        ->forCustomer($customerA->id)
+        ->email()
+        ->withValue(EMAIL_YOPMAIL)
+        ->create();
+    
+    CustomerAdditionalContact::factory()
+        ->forCustomer($customerB->id)
+        ->email()
+        ->withValue(EMAIL_TEST)
+        ->create();
+    
+    CustomerAdditionalContact::factory()
+        ->forCustomer($customerB->id)
+        ->email()
+        ->withValue(EMAIL_YOPMAIL)
+        ->create();
+    
+    CustomerAdditionalContact::factory()
+        ->forCustomer($customerC->id)
+        ->email()
+        ->withValue(EMAIL_TEST)
+        ->create();
+    
+    CustomerAdditionalContact::factory()
+        ->forCustomer($customerC->id)
+        ->email()
+        ->withValue(EMAIL_EXAMPLE)
+        ->create();
 
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
@@ -23,24 +131,6 @@ afterEach(function () {
     Mockery::close();
     Cache::flush();
 });
-
-const QUOTE_TYPE = QuoteTypes::CAR;
-
-enum Email {
-    case TEST;
-    case EXAMPLE;
-    case YOPMAIL;
-}
-
-function getEmail(Email $email)
-{
-    return match ($email) {
-        Email::TEST => 'test@testing.com',
-        Email::EXAMPLE => 'test@example.com',
-        Email::YOPMAIL => 'test@yopmail.com',
-        default => throw new Exception('Email not found'. $email),
-    };
-}
 
 test('switch primary email id WITH keeping existing primary email id', function () {
     $customerAdditionalContacts = getCustomerAdditionalContactData();
@@ -160,9 +250,9 @@ function getQuoteData(): array
     $grouped = CarQuote::all()->groupBy('email');
 
     return [
-        $grouped->get(getEmail(Email::TEST))?->toArray() ?? [],
-        $grouped->get(getEmail(Email::EXAMPLE))?->toArray() ?? [],
-        $grouped->get(getEmail(Email::YOPMAIL))?->toArray() ?? [],
+        $grouped->get(EMAIL_TEST)?->toArray() ?? [],
+        $grouped->get(EMAIL_EXAMPLE)?->toArray() ?? [],
+        $grouped->get(EMAIL_YOPMAIL)?->toArray() ?? [],
     ];
 }
 function getCustomerAdditionalContactData(): Collection
