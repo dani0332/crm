@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\GenericRequestEnum;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
@@ -466,6 +467,7 @@ class HomeQuoteRepository extends BaseRepository
             'isFuncsEnabled' => $isFuncsEnabled,
             'homePossessionTypeEnum' => HomePossessionType::asArray(),
             'homeCutOffDate' => $homeCutOffDate,
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ];
     }
 

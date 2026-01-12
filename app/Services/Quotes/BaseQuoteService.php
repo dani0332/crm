@@ -5,6 +5,7 @@ namespace App\Services\Quotes;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -194,6 +195,7 @@ abstract class BaseQuoteService extends BaseService
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'emailStatuses' => $emailStatuses,
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ];
     }
 
