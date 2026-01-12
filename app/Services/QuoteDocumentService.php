@@ -895,9 +895,7 @@ class QuoteDocumentService extends BaseService
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
         if (Storage::disk($storageDisk)->exists($filePath)) {
-            $encodedFileName = urlencode($filePath);
-
-            return Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
+            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
         } else {
             return null;
         }
