@@ -15,16 +15,14 @@ class ClaimRequestObserver
     public function updated(ClaimRequest $claimRequest): void
     {
         $dirty = $claimRequest->getDirty();
-        if (isset($dirty['advisor_id'])) {
+        if (isset($dirty['manager_id'])) {
             try {
-                $claimRequest->markLeadAllocationPassed();
-
                 app(ClaimEmailService::class)->sendIntroEmail($claimRequest);
-
             } catch (Exception $e) {
-                LoggerService::error('ClaimRequestObserver - handle claim  update advisor failed', [
+                LoggerService::error('ClaimRequestObserver - handle claim  update manager failed', [
                     'error' => $e->getMessage(),
                     'uuid' => $claimRequest->uuid,
+                    'manager_id' => $claimRequest->manager_id,
                 ]);
             }
         }
