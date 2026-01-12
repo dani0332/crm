@@ -22,6 +22,7 @@ class CoreSchema
         $this->ensureDocumentTables();
         $this->ensurePolicyIssuanceTables();
         $this->ensureSageTables();
+        $this->ensureCustomerAdditionalContactTables();
     }
 
     private function ensureAuditTables(): void
@@ -684,6 +685,20 @@ class CoreSchema
                 $table->string('status')->nullable();
                 $table->string('sage_request_type')->nullable();
                 $table->integer('step')->nullable();
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureCustomerAdditionalContactTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'customer_additional_contact' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->string('key')->nullable();
+                $table->string('value')->nullable();
+                $table->boolean('wa_opt_in')->default(0);
                 $table->timestamps();
             },
         ]);
