@@ -110,10 +110,6 @@ class AllocationRequest
         }
     }
 
-    public function setAssignToHappinessUser(bool $value = true)
-    {
-        $this->assignToHappinessUser = $value;
-    }
 
     public function shouldAssignToHappinessUser()
     {
