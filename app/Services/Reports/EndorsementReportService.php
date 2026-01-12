@@ -150,7 +150,10 @@ class EndorsementReportService extends ManagementReport
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
                 'ls.text as sub_source',
-                'sso.text as sub_source_option'
+                'sso.text as sub_source_option',
+                'pq.frequency as payment_frequency',
+                'personal_quotes.created_at as quote_created_at',
+                'ipp.text as plan_name',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -164,6 +167,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('insurance_provider as ip3', 'ip3.id', '=', 'personal_quotes.insurance_provider_id')
+            ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'pq.plan_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
@@ -270,7 +274,10 @@ class EndorsementReportService extends ManagementReport
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
                 'ls.text as sub_source',
-                'sso.text as sub_source_option'
+                'sso.text as sub_source_option',
+                'pq.frequency as payment_frequency',
+                'personal_quotes.created_at as quote_created_at',
+                'ipp.text as plan_name',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -284,6 +291,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('insurance_provider as ip3', 'ip3.id', '=', 'personal_quotes.insurance_provider_id')
+            ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'pq.plan_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
@@ -409,6 +417,16 @@ class EndorsementReportService extends ManagementReport
             } else {
                 $item->travel_coverage = 'N/A';
                 $item->traveling_where = 'N/A';
+            }
+
+            if ($item->quote_type_id != QuoteTypeId::Life) {
+                $item->insurance_provider_name = 'N/A';
+                $item->payment_frequency = 'N/A';
+                $item->plan_name = 'N/A';
+                $item->quote_created_at = 'N/A';
+            } else {
+                $item->insurance_provider_name = $item->insurer;
+                $item->quote_created_at = !empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
             }
         });
     }
