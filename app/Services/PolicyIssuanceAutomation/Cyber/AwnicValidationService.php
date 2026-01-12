@@ -75,9 +75,9 @@ class AwnicValidationService
     {
         $customer = $quote->customer ?? null;
         $emiratesIdNumber = null;
-        LoggerService::info('quote', ['customer' => $quote->customer]);
+        LoggerService::info('validateRequiredData for policy issuance - customer details', ['customer' => $quote->customer]);
         if (isset($quote->latestInsured)) {
-            LoggerService::info('latestInsured', ['latestInsured' => $quote->latestInsured]);
+            LoggerService::info('validateRequiredData for policy issuance - latestInsured details', ['latestInsured' => $quote->latestInsured]);
             $emiratesIdNumber = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
         }
         $nationality = $quote->nationality ?? null;
