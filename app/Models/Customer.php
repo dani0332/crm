@@ -18,8 +18,7 @@ class Customer extends Model implements AuditableContract
     protected $appends = ['pcp_tag_formatted'];
     public $ref_id;
     protected $casts = [
-        // Keep null vs 0 vs 1 distinct so API callers can tell "No PC" (null) from "Ex-PC" (0) and "PC" (1).
-        'pcp_tag' => 'integer',
+        'pcp_tag' => 'boolean',
     ];
     /**
      * customer detail relation

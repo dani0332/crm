@@ -45,7 +45,6 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('duplicate-entires', [ApiController::class, 'duplicateEntries']);
     Route::post('/cache/forget', [ApiController::class, 'forgetCache']);
     Route::post('/imcrm/trigger-aig-workflow', [ApiController::class, 'triggerAIGWorkflow'])->name('triggerAIGWorkflow');
-    Route::post('/imcrm/pcp/re-evaluate', [ApiController::class, 'evaluatePrivateClient'])->name('reEvaluatePrivateClient');
     // life
     Route::post('life/send-oca-email', [LifeController::class, 'sendOCAEmail'])->name('lifeSendOCAEmail');
     Route::post('/imcrm/trigger-travel-aig-workflow', [ApiController::class, 'triggerTravelAIGWorkflow'])->name('triggerTravelAIGWorkflow');

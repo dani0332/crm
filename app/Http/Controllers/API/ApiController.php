@@ -58,6 +58,8 @@ use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
+use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -67,6 +69,8 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
+    use GenericQueriesAllLobs, PrivateClient;
+
     private const REQUIRED_STRING = 'required|string';
 
     public $apiService;
