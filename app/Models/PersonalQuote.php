@@ -413,7 +413,7 @@ class PersonalQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-            )
+        )
             ->whereIn('customer_insured.quote_type_id', getPersonalQuoteTypeIds())
             ->where('customer_insured.is_active', true);
     }

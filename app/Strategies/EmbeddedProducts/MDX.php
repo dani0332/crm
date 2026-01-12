@@ -2,7 +2,6 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use App\Models\PersonalQuote;
 use Carbon\Carbon;
 
 class MDX extends EmbeddedProduct
