@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
-use App\Enums\RolesEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Facades\CustomerPortalApiFacade;
 use App\Facades\InstantWriterAIFacade;
 use App\Jobs\SendClaimSubStatusUpdateNotificationEmailJob;
@@ -447,7 +447,7 @@ class ClaimsService extends BaseService
             $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
 
             $responseData = $response->data;
-            $user =  auth()->user();
+            $user = auth()->user();
             $isClaimManager = $user->hasRole(RolesEnum::CLAIM_MANAGER);
 
             if ($responseData['success'] && $isClaimManager) {
