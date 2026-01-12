@@ -730,11 +730,11 @@ watch(
           <x-select
             v-if="isPendingClaimRequestType"
             v-model="filters.service_type_id"
-            label="Category Type"
-            placeholder="Select Category Type"
+            label="Service Type"
+            placeholder="Select Service Type"
             :options="claimServiceTypeOptions"
             filterable
-            filterPlaceholder="Filter Category Type...."
+            filterPlaceholder="Filter Service Type...."
             clearable
           />
         </template>

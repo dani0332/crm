@@ -606,7 +606,7 @@ watch(
                     class="grid sm:grid-cols-2"
                   >
                     <dt class="font-medium">
-                      HEALTH Category Type
+                      HEALTH Service Type
                       <span class="text-red-500">*</span>
                     </dt>
                     <dd>
