@@ -19,7 +19,7 @@ class ClaimRequestObserver
             try {
                 app(ClaimEmailService::class)->sendIntroEmail($claimRequest);
             } catch (Exception $e) {
-                LoggerService::error('ClaimRequestObserver - handle claim  update manager failed', [
+                LoggerService::warning('ClaimRequestObserver - handle claim  update manager failed', [
                     'error' => $e->getMessage(),
                     'uuid' => $claimRequest->uuid,
                     'manager_id' => $claimRequest->manager_id,
