@@ -29,7 +29,11 @@ class AMLCheckRequest extends FormRequest
     public function rules(): array
     {
         LoggerService::info('AML Check Request - Validation Rules');
-        $rules = [];
+        $rules = [
+            'screening_id_type' => 'required|string',
+            'screening_id_number' => 'required|string',
+        ];
+
         if ($this->customer_type == CustomerTypeEnum::Individual) {
             $rules = [
                 'nationality_id' => 'required',
