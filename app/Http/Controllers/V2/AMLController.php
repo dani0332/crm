@@ -335,7 +335,7 @@ class AMLController extends Controller
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
             'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
             'isPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
-            'genericRequestEnums' => GenericRequestEnum::asArray(),
+            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
@@ -701,6 +701,20 @@ class AMLController extends Controller
         // Get trade license from id_number where id_type is tradeLicense
         $tradeLicenseNo = ($insured->id_type === GenericRequestEnum::TRADE_LICENSE) ? $insured->id_number : null;
         $oldStructureEntity = $tradeLicenseNo ? Entity::where('trade_license_no', $tradeLicenseNo)->first() : null;
+
+        if (!$oldStructureEntity) {
+            LoggerService::warning('Entity not found', extra: [
+                'trade_license_no' => $tradeLicenseNo,
+                'insured_id' => $insured->id,
+                'id_type' => $insured->id_type,
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Entity not found in the old structure. Please ensure the trade license is valid.',
+            ], 404);
+        }
+
         $existingEntityMapping = QuoteRequestEntityMapping::where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id])->first();
 
         $updateFields = ['entity_id' => $oldStructureEntity->id, 'entity_type_code' => LookupsEnum::PARENT_ENTITY];
