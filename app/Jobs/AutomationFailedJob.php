@@ -86,6 +86,12 @@ class AutomationFailedJob implements ShouldQueue
         // Build CC emails with LOB/Provider-specific logic
         $cc = $service->buildCcEmails($quote, $isDeviceNgi, $this->processInvolved);
 
+        if (! $recipientEmail || ! $recipientName) {
+            LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Insurer: '.$this->insurerName);
+
+            return;
+        }
+
         // Build email data request DTO
         $emailDataRequest = new AutomationFailedEmailDataRequest(
             cc: $cc,
