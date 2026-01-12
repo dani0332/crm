@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteTypeId;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -26,18 +27,17 @@ class ChangePrimaryContactRequest extends FormRequest
      */
     public function rules()
     {
+        $quoteTypes = array_values(QuoteTypeId::getOptions());
         $rules = [
             'key' => 'required|in:'.GenericRequestEnum::EMAIL.','.GenericRequestEnum::MOBILE_NO,
             'value' => 'required',
             'quote_id' => 'required',
+            'quote_type' => 'required|in:'.implode(',', $quoteTypes),
             'quote_customer_id' => 'nullable',
             'quote_primary_email_address' => 'nullable',
             'quote_primary_mobile_no' => 'nullable',
+            'keep_existing_primary_email' => 'nullable|numeric|in:0,1',
         ];
-
-        if (request()->segment(1) == 'customer-additional-contact') {
-            $rules['quote_type'] = 'required';
-        }
 
         return $rules;
     }

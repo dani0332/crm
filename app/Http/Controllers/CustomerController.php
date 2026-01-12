@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\SLAActionTypeEnum;
+use App\Http\Requests\ChangePrimaryContactRequest;
 use App\Http\Requests\DeleteAdditionalContactRequest;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
@@ -182,29 +183,17 @@ class CustomerController extends Controller
         return response()->json(['error' => ['message' => $result['message']]], 404);
     }
 
-    public function makeAdditionalContactPrimary(Request $request)
+    public function makeAdditionalContactPrimary(ChangePrimaryContactRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'quote_id' => 'required',
-            'quote_type' => 'required',
-            'key' => 'required',
-            'value' => 'required',
-            'keep_existing_primary_email' => 'nullable|numeric|in:0,1',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['error' => [
-                'message' => $validator->errors(),
-            ]]);
+        $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
+        if (!$quoteObject) {
+            return redirect()->back()->with(['error' => ['message' => 'Quote not found.']]);
         }
 
-        $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         $keepExistingPrimaryEmail = isset($request->keep_existing_primary_email) ? $request->keep_existing_primary_email : 1;
 
         $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value, (bool) $keepExistingPrimaryEmail);
-
-        if ($quoteObject) {
-            $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
-        }
+        $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
 
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
