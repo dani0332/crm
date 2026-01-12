@@ -3,10 +3,8 @@
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Http\Controllers\CustomerController;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CarQuote;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Tests\Helpers\PrimaryEmailSwitchTestDataSeeder;
@@ -137,24 +135,24 @@ test('delete additional contact with permission', function () {
 });
 
 function deleteAdditionalContactRequest($customerAdditionalContactId) {
-    return app(CustomerController::class)->deleteAdditionalContact($customerAdditionalContactId, new Request(['isInertia' => true]));
+    return test()->post("/customer-additional-contact/{$customerAdditionalContactId}/delete", [
+        'isInertia' => true,
+    ]);
 }
 
-function makePrimaryEmailRequest($quoteA, $switchWithAdditionalContacts, $keepExistingPrimaryEmail) {
-    
-    $payload = [
+function makePrimaryEmailRequest($quoteA, $switchWithAdditionalContacts, $keepExistingPrimaryEmail) 
+{
+    return test()->post("/customer-additional-contact/{$switchWithAdditionalContacts->id}/make-primary", [
         'isInertia' => true,
         'quote_id' => $quoteA->id,
-        'quote_type' => QUOTE_TYPE->name,
+        'quote_type' => QUOTE_TYPE->value,
         'key' => 'email',
         'value' => $switchWithAdditionalContacts->value,
         'quote_customer_id' => $quoteA->customer_id,
         'quote_primary_email_address' => $quoteA->email,
         'quote_primary_mobile_no' => $quoteA->mobile_no,
         'keep_existing_primary_email' => $keepExistingPrimaryEmail ? 1 : 0,
-    ];
-    $request = new Request($payload);
-    return app(CustomerController::class)->makeAdditionalContactPrimary($request);
+    ]);
 }
 
 function getQuoteData(): array

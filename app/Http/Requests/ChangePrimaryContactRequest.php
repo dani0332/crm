@@ -28,7 +28,8 @@ class ChangePrimaryContactRequest extends FormRequest
     public function rules()
     {
         $quoteTypes = array_values(QuoteTypeId::getOptions());
-        $rules = [
+
+        return [
             'key' => 'required|in:'.GenericRequestEnum::EMAIL.','.GenericRequestEnum::MOBILE_NO,
             'value' => 'required',
             'quote_id' => 'required',
@@ -38,8 +39,6 @@ class ChangePrimaryContactRequest extends FormRequest
             'quote_primary_mobile_no' => 'nullable',
             'keep_existing_primary_email' => 'nullable|numeric|in:0,1',
         ];
-
-        return $rules;
     }
 
 }
