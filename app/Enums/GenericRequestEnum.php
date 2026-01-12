@@ -61,4 +61,9 @@ final class GenericRequestEnum extends Enum
     const PREVIOUS_POLICY_EXPIRED = 'Previous policy has expired';
     const PREVIOUS_POLICY_EXPIRED_STATUS_ID = 99;
     const SEND_UPDATE_LOG = 'SendUpdateLog';
+    public const TRADE_LICENSE = 'tradeLicense';
+    public const EMIRATES_ID = 'emiratesId';
+    public const PASSPORT = 'passport';
+    public const TRDATE_LICENSE_SHORT_CODE = 'TL';
+    public const EMIRATES_ID_SHORT_CODE = 'EID';
 }
