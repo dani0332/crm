@@ -335,6 +335,7 @@ class AMLController extends Controller
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
             'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
             'isPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
+            'genericRequestEnums' => GenericRequestEnum::asArray(),
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
@@ -669,7 +670,8 @@ class AMLController extends Controller
     {
         $entity = Insured::where([
             'customer_type' => CustomerTypeEnum::Entity,
-            'trade_license_no' => $request->trade_license,
+            'id_type' => GenericRequestEnum::TRADE_LICENSE,
+            'id_number' => $request->trade_license,
         ])->first();
 
         if ($entity) {
@@ -688,7 +690,7 @@ class AMLController extends Controller
         LoggerService::startQuoteLogging($quoteObject, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
-        // Reminder:: Entity id is Insured ID which we get from fetchEntity() this function
+        // Reminder:: Entity id is Insured ID which we get from 'fetchEntity()' function
         $insured = Insured::where('id', $request->entity_id)->first();
         app(AMLService::class)->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
 
@@ -696,7 +698,9 @@ class AMLController extends Controller
         app(AMLService::class)->handleCustomerInsuredMappings($request, $request->quote_type_id, $quoteObject, $insured);
 
         // Reminder:: This code should be remove when new structure will be completly mapped
-        $oldStructureEntity = Entity::where('trade_license_no', $insured->trade_license_no)->first();
+        // Get trade license from id_number where id_type is tradeLicense
+        $tradeLicenseNo = ($insured->id_type === GenericRequestEnum::TRADE_LICENSE) ? $insured->id_number : null;
+        $oldStructureEntity = $tradeLicenseNo ? Entity::where('trade_license_no', $tradeLicenseNo)->first() : null;
         $existingEntityMapping = QuoteRequestEntityMapping::where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id])->first();
 
         $updateFields = ['entity_id' => $oldStructureEntity->id, 'entity_type_code' => LookupsEnum::PARENT_ENTITY];
@@ -740,28 +744,23 @@ class AMLController extends Controller
             'customer_type' => $request->customer_type,
             'id_type' => $request->id_type,
             'id_number' => $request->id_number,
-            'trade_license' => $request->trade_license,
         ]);
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
         if (empty($request->customer_type) || is_null($request->customer_type) || $request->customer_type == 'null') {
-            $isEntity = ! empty($request->trade_license);
+            $isEntity = $request->id_type == GenericRequestEnum::TRADE_LICENSE && ! empty($request->id_number);
         }
 
         $customerType = $isEntity ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+        $idType = $isEntity ? GenericRequestEnum::TRADE_LICENSE : $request->id_type;
         $insuredDetails = Insured::with('insuredKyc')
             ->where('customer_type', $customerType)
-            ->when($isEntity, function ($query) use ($request) {
-                $query->where('trade_license_no', $request->trade_license);
+            ->where('id_type', $idType)
+            ->when($idType == 'emiratesId', function ($query) use ($request) {
+                $query->emiratesIdNumber($request->id_number);
             })
-            ->when(! $isEntity, function ($query) use ($request) {
-                $query->where('id_type', $request->id_type)
-                    ->when($request->id_type == 'emiratesId', function ($query) use ($request) {
-                        $query->emiratesIdNumber($request->id_number);
-                    })
-                    ->when($request->id_type != 'emiratesId', function ($query) use ($request) {
-                        $query->where('id_number', $request->id_number);
-                    });
+            ->when($idType != 'emiratesId', function ($query) use ($request) {
+                $query->where('id_number', $request->id_number);
             })
             ->first();
 
