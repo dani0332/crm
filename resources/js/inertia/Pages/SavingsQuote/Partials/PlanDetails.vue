@@ -25,8 +25,26 @@ const planDetailsTabs = ref([
   { index: 5, label: 'Plan Documents' },
 ]);
 
-// Currency Options - from localLookups
+// Get the plan data from localLookups.providerPlans for eligibilities and currency coverages
+const providerPlanData = computed(() => {
+  if (!props.planDetails?.planId && !props.planDetails?.id) return null;
+  const planId = props.planDetails.planId || props.planDetails.id;
+  return props.localLookups?.providerPlans?.find(p => p.id === planId) || null;
+});
+
+// Currency Options - from plan's currency_coverages or fallback to localLookups
 const currencyOptions = computed(() => {
+  // If plan has currency coverages, use them
+  if (providerPlanData.value?.currency_coverages?.length) {
+    return providerPlanData.value.currency_coverages
+      .filter(cc => cc.currency)
+      .map(cc => ({
+        value: cc.currency.code,
+        label: cc.currency.text || cc.currency.code,
+      }));
+  }
+
+  // Fallback to localLookups currencies
   return (
     props.localLookups?.currencies?.map(item => ({
       value: item.code || item.id,
@@ -40,31 +58,55 @@ const currencyOptions = computed(() => {
   );
 });
 
-// Investment Frequency Options - from localLookups
+// Investment Frequency Options - filtered by plan's investment_frequency
 const investmentFrequencyOptions = computed(() => {
-  return (
-    props.localLookups?.investmentFrequencies?.map(item => ({
-      value: item.text,
+  const allFrequencies = props.localLookups?.investmentFrequencies?.map(
+    item => ({
+      value: item.id,
       label: item.text,
-    })) || [
-      { value: 'Regular', label: 'Regular' },
-      { value: 'Lumpsum', label: 'Lumpsum' },
-    ]
-  );
+    }),
+  ) || [
+    { value: 'regular', label: 'Regular' },
+    { value: 'lumpsum', label: 'Lumpsum' },
+  ];
+
+  // If plan has investment_frequency, show only that option
+  if (providerPlanData.value?.investment_frequency) {
+    const planFrequencyId = providerPlanData.value.investment_frequency;
+    const filtered = allFrequencies.filter(f => f.value === planFrequencyId);
+    return filtered.length ? filtered : allFrequencies;
+  }
+
+  return allFrequencies;
 });
 
-// Payment Term Options - from localLookups
+// Payment Term Options - from plan's eligibilities (type = PAYMENT_TERM)
 const paymentTermOptions = computed(() => {
+  // If plan has eligibilities with PAYMENT_TERM type, use them
+  if (providerPlanData.value?.eligibilities?.length) {
+    const planPaymentTerms = providerPlanData.value.eligibilities
+      .filter(e => e.type === 'PAYMENT_TERM')
+      .map(e => ({
+        value: e.code?.toLowerCase(),
+        label: e.text || e.code,
+      }));
+
+    if (planPaymentTerms.length) {
+      return planPaymentTerms;
+    }
+  }
+
+  // Fallback to localLookups payment terms
   return (
     props.localLookups?.paymentTerms?.map(item => ({
-      value: item.text,
+      value: item.code,
       label: item.text,
     })) || [
-      { value: 'Monthly', label: 'Monthly' },
-      { value: 'Quarterly', label: 'Quarterly' },
-      { value: 'Semi-Annually', label: 'Semi-Annually' },
-      { value: 'Annually', label: 'Annually' },
-      { value: 'Single Payment', label: 'Single Payment' },
+      { value: 'monthly', label: 'Monthly' },
+      { value: 'quarterly', label: 'Quarterly' },
+      { value: 'semi_annually', label: 'Semi-Annually' },
+      { value: 'annually', label: 'Annually' },
+      { value: 'single_payment', label: 'Single Payment' },
     ]
   );
 });
