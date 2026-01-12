@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
+use App\Enums\RolesEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -445,7 +446,16 @@ class ClaimsService extends BaseService
             // Make API call to create claim
             $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
 
-            return $response->data;
+            $responseData = $response->data;
+            $user =  auth()->user();
+            $isClaimManager = $user->hasRole(RolesEnum::CLAIM_MANAGER);
+
+            if ($responseData['success'] && $isClaimManager) {
+                $claim = $this->getClaimById($responseData['claimUID']);
+                $claim->update('manager_id');
+            }
+
+            return $responseData;
 
         } catch (\Exception $e) {
             LoggerService::error(' Error creating claim request', extra: [
