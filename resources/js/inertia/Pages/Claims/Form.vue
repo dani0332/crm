@@ -701,12 +701,12 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
             />
             <x-select
               v-model="claimForm.service_type_id"
-              label="Claim Category Type"
-              placeholder="Select Claim Category Type"
+              label="Claim Service Type"
+              placeholder="Select Claim Service Type"
               :options="claimServiceTypeOptions"
               :rules="[isRequired]"
               filterable
-              filterPlaceholder="Filter Claim Category Type...."
+              filterPlaceholder="Filter Claim Service Type...."
               :error="claimForm.errors.service_type_id"
             />
           </template>

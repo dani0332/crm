@@ -36,7 +36,7 @@ enum ClaimsEnum: string
     case CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE = 'pending-approvals';
     case CLAIM_REQUEST_TYPE_ASK_A_QUESTION_CODE = 'ask-a-question';
 
-    // Claim Category Type Codes
+    // Claim Service Type Codes
     case CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE = 'in-patient-request';
     case CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE = 'out-patient-request';
     case CLAIM_SERVICE_TYPE_OTHERS_REQUEST_CODE = 'others';
@@ -142,7 +142,7 @@ enum ClaimsEnum: string
     }
 
     /**
-     * Get all claim Category Type codes
+     * Get all claim Service Type codes
      */
     public static function getClaimServiceTypeCodes(): array
     {
