@@ -139,17 +139,26 @@ const currencyOptions = computed(() => {
   );
 });
 
-// Investment Frequency Options - from localLookups
+// Investment Frequency Options - filtered by selected plan's investment_frequency
 const investmentFrequencyOptions = computed(() => {
-  return (
-    props.localLookups?.investmentFrequencies?.map(item => ({
+  const allFrequencies = props.localLookups?.investmentFrequencies?.map(
+    item => ({
       value: item.id,
       label: item.text,
-    })) || [
-      { value: 'regular', label: 'Regular' },
-      { value: 'lumpsum', label: 'Lumpsum' },
-    ]
-  );
+    }),
+  ) || [
+    { value: 'regular', label: 'Regular' },
+    { value: 'lumpsum', label: 'Lumpsum' },
+  ];
+
+  // If a plan is selected, show only its investment frequency
+  if (selectedPlanData.value?.investment_frequency) {
+    const planFrequencyId = selectedPlanData.value.investment_frequency;
+    const filtered = allFrequencies.filter(f => f.value === planFrequencyId);
+    return filtered.length ? filtered : allFrequencies;
+  }
+
+  return allFrequencies;
 });
 
 // Payment Term Options - from localLookups
@@ -523,6 +532,7 @@ const validateDecimal = event => {
             placeholder="Enter Expected Rate of Return"
             type="number"
             step="any"
+            disabled
             @keydown="validateDecimal"
           />
           <span
@@ -560,7 +570,6 @@ const validateDecimal = event => {
       <div class="w-full md:w-1/2">
         <x-input
           label="Insurer Quote Number"
-          required
           v-model="addPlanForm.insurer_quote_no"
           :rules="[isRequired]"
           class="w-full"
