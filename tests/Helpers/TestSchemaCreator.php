@@ -7,11 +7,45 @@ use Illuminate\Support\Facades\DB;
 class TestSchemaCreator
 {
     /**
+     * Configure database connections to use SQLite for testing.
+     * This ensures both 'sqlite' and 'mysql' connections point to the same in-memory database,
+     * which is necessary for models that explicitly use the 'mysql' connection.
+     */
+    private static function configureTestDatabaseConnections(): void
+    {
+        DB::setDefaultConnection('sqlite');
+        
+        $sqliteConfig = config('database.connections.sqlite', ['database' => ':memory:', 'prefix' => '']);
+        config([
+            'database.default' => 'sqlite',
+            'database.connections.mysql' => array_merge($sqliteConfig, ['driver' => 'sqlite']),
+        ]);
+        
+        DB::purge('mysql');
+        DB::reconnect('mysql');
+    }
+
+    /**
      * Create minimal required tables for LifeQuote tests.
      */
     public static function createMinimalSchema(): void
     {
-        $schema = DB::connection('sqlite')->getSchemaBuilder();
+        self::configureTestDatabaseConnections();
+        
+        $sqliteSchema = DB::connection('sqlite')->getSchemaBuilder();
+        $mysqlSchema = DB::connection('mysql')->getSchemaBuilder();
+        
+        // Helper to create table on both connections since some models use 'mysql' explicitly
+        $createOnBoth = function ($tableName, $callback) use ($sqliteSchema, $mysqlSchema) {
+            if (! $sqliteSchema->hasTable($tableName)) {
+                $sqliteSchema->create($tableName, $callback);
+            }
+            if (! $mysqlSchema->hasTable($tableName)) {
+                $mysqlSchema->create($tableName, $callback);
+            }
+        };
+        
+        $schema = $sqliteSchema; // Keep for backward compatibility
 
         // Create audits table if it doesn't exist (for Laravel Auditing)
         if (! $schema->hasTable('audits')) {
@@ -40,7 +74,13 @@ class TestSchemaCreator
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->string('remember_token')->nullable();
+                $table->tinyInteger('is_active')->default(1);
                 $table->timestamps();
+            });
+        } elseif (! $schema->hasColumn('users', 'is_active')) {
+            // Add is_active column if table exists but column doesn't
+            $schema->table('users', function ($table) {
+                $table->tinyInteger('is_active')->default(1)->after('remember_token');
             });
         }
 
@@ -165,8 +205,22 @@ class TestSchemaCreator
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->string('insurer_aml_status')->nullable();
                 $table->timestamps();
             });
+        } elseif ($schema->hasTable('personal_quotes')) {
+            // Add missing columns if table exists but columns don't
+            if (! $schema->hasColumn('personal_quotes', 'quote_status_id')) {
+                $schema->table('personal_quotes', function ($table) {
+                    $table->unsignedBigInteger('quote_status_id')->nullable()->after('updated_by_id');
+                });
+            }
+            if (! $schema->hasColumn('personal_quotes', 'insurer_aml_status')) {
+                $schema->table('personal_quotes', function ($table) {
+                    $table->string('insurer_aml_status')->nullable()->after('quote_status_id');
+                });
+            }
         }
 
         // Create life_quote_request table if it doesn't exist
@@ -197,6 +251,97 @@ class TestSchemaCreator
             });
         }
 
+        // Create quote_type table if it doesn't exist
+        if (! $schema->hasTable('quote_type')) {
+            $schema->create('quote_type', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('short_code')->nullable();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create quote_status table if it doesn't exist
+        if (! $schema->hasTable('quote_status')) {
+            $schema->create('quote_status', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->boolean('is_deleted')->default(0);
+                $table->string('uuid')->nullable();
+                $table->string('created_by')->nullable();
+                $table->string('updated_by')->nullable();
+                $table->softDeletes();
+                $table->timestamps();
+            });
+        }
+
+        // Create quote_status_map table if it doesn't exist
+        if (! $schema->hasTable('quote_status_map')) {
+            $schema->create('quote_status_map', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_status_id');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create car_plan table if it doesn't exist
+        if (! $schema->hasTable('car_plan')) {
+            $schema->create('car_plan', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create car_plan_coverage table if it doesn't exist
+        if (! $schema->hasTable('car_plan_coverage')) {
+            $schema->create('car_plan_coverage', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->string('value')->nullable();
+                $table->string('value_ar')->nullable();
+                $table->string('type')->nullable();
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create quote_batches table if it doesn't exist
+        if (! $schema->hasTable('quote_batches')) {
+            $schema->create('quote_batches', function ($table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->date('start_date')->nullable();
+                $table->date('end_date')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create renewal_batches table if it doesn't exist
+        if (! $schema->hasTable('renewal_batches')) {
+            $schema->create('renewal_batches', function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->date('start_date')->nullable();
+                $table->date('end_date')->nullable();
+                $table->integer('month')->nullable();
+                $table->integer('year')->nullable();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->timestamps();
+            });
+        }
+
         // Create application_storage table if it doesn't exist
         if (! $schema->hasTable('application_storage')) {
             $schema->create('application_storage', function ($table) {
@@ -223,6 +368,52 @@ class TestSchemaCreator
                 $table->id();
                 $table->unsignedBigInteger('user_id');
                 $table->unsignedBigInteger('team_id');
+                $table->unsignedBigInteger('manager_id')->nullable();
+                $table->timestamps();
+            });
+        } elseif ($schema->hasTable('user_team')) {
+            // Add missing columns if table exists but columns don't
+            if (! $schema->hasColumn('user_team', 'manager_id')) {
+                $schema->table('user_team', function ($table) {
+                    $table->unsignedBigInteger('manager_id')->nullable()->after('team_id');
+                });
+            }
+        }
+
+        // Create user_products table if it doesn't exist (pivot table)
+        if (! $schema->hasTable('user_products')) {
+            $schema->create('user_products', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('product_id');
+                $table->timestamps();
+            });
+        }
+
+        // Create tiers table if it doesn't exist
+        if (! $schema->hasTable('tiers')) {
+            $schema->create('tiers', function ($table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->decimal('min_price', 15, 2)->nullable();
+                $table->decimal('max_price', 15, 2)->nullable();
+                $table->decimal('cost_per_lead', 15, 2)->nullable();
+                $table->boolean('can_handle_null_value')->default(0);
+                $table->boolean('can_handle_ecommerce')->default(0);
+                $table->boolean('is_active')->default(1);
+                $table->boolean('can_handle_tpl')->default(0);
+                $table->boolean('is_tpl_renewals')->default(0);
+                $table->timestamps();
+            });
+        }
+
+        // Create payment_status table if it doesn't exist
+        if (! $schema->hasTable('payment_status')) {
+            $schema->create('payment_status', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->boolean('is_active')->default(1);
                 $table->timestamps();
             });
         }
@@ -234,6 +425,20 @@ class TestSchemaCreator
                 $table->string('code')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->morphs('paymentable');
+                $table->timestamps();
+            });
+        }
+
+        // Create life_insurance_tenure table if it doesn't exist
+        if (! $schema->hasTable('life_insurance_tenure')) {
+            $schema->create('life_insurance_tenure', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->boolean('is_deleted')->default(0);
+                $table->integer('sort_order')->nullable();
                 $table->timestamps();
             });
         }
@@ -352,6 +557,248 @@ class TestSchemaCreator
                 $table->date('manager_dob')->nullable();
                 $table->string('manager_position')->nullable();
                 $table->boolean('is_owner_high_risk')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create health_cover_for table if it doesn't exist
+        if (! $schema->hasTable('health_cover_for')) {
+            $schema->create('health_cover_for', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        // Create health_lead_type table if it doesn't exist
+        if (! $schema->hasTable('health_lead_type')) {
+            $schema->create('health_lead_type', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        // Create emirates table if it doesn't exist
+        if (! $schema->hasTable('emirates')) {
+            $schema->create('emirates', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->softDeletes();
+                $table->timestamps();
+            });
+        }
+
+        // Create salary_band table if it doesn't exist
+        if (! $schema->hasTable('salary_band')) {
+            $schema->create('salary_band', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create member_category table if it doesn't exist
+        if (! $schema->hasTable('member_category')) {
+            $schema->create('member_category', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create insurance_provider table if it doesn't exist (on both connections since model uses 'mysql')
+        $createOnBoth('insurance_provider', function ($table) {
+            $table->id();
+            $table->string('text')->nullable();
+            $table->string('text_lms')->nullable();
+            $table->string('code')->nullable();
+            $table->boolean('is_active')->default(1);
+            $table->boolean('is_deleted')->default(0);
+            $table->softDeletes();
+            $table->timestamps();
+        });
+
+        // Create travel_quote_request table if it doesn't exist
+        if (! $schema->hasTable('travel_quote_request')) {
+            $schema->create('travel_quote_request', function ($table) {
+                $table->id();
+                $table->string('uuid')->nullable();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('direction_code')->nullable();
+                $table->string('coverage_code')->nullable();
+                $table->string('policy_number')->nullable();
+                $table->string('source')->nullable();
+                $table->unsignedBigInteger('sub_source_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->unsignedBigInteger('previous_advisor_id')->nullable();
+                $table->unsignedBigInteger('previous_quote_id')->nullable();
+                $table->date('policy_expiry_date')->nullable();
+                $table->string('renewal_batch')->nullable();
+                $table->string('renewal_import_code')->nullable();
+                $table->string('previous_quote_policy_number')->nullable();
+                $table->decimal('previous_quote_policy_premium', 10, 2)->nullable();
+                $table->string('device')->nullable();
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->date('policy_start_date')->nullable();
+                $table->date('policy_issuance_date')->nullable();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->unsignedBigInteger('parent_duplicate_quote_id')->nullable();
+                $table->boolean('is_ecommerce')->default(0);
+                $table->date('policy_booking_date')->nullable();
+                $table->string('insurer_quote_number')->nullable();
+                $table->unsignedBigInteger('policy_issuance_status_id')->nullable();
+                $table->string('policy_issuance_status_other')->nullable();
+                $table->string('sic_advisor_requested')->nullable();
+                $table->string('aml_status')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->string('insurer_aml_status')->nullable();
+                $table->unsignedBigInteger('renewal_batch_id')->nullable();
+                $table->date('previous_policy_expiry_date')->nullable();
+                $table->date('dob')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->timestamp('transaction_approved_at')->nullable();
+                $table->string('assignment_type')->nullable();
+                $table->string('gender')->nullable();
+                $table->decimal('premium', 10, 2)->nullable();
+                $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->unsignedBigInteger('currently_located_in_id')->nullable();
+                $table->unsignedBigInteger('api_issuance_status_id')->nullable();
+                $table->unsignedBigInteger('insurer_api_status_id')->nullable();
+                $table->date('start_date')->nullable();
+                $table->date('end_date')->nullable();
+                $table->integer('days_cover_for')->nullable();
+                $table->string('lead_assignment_trigger')->nullable();
+                $table->unsignedBigInteger('parent_id')->nullable();
+                $table->unsignedBigInteger('branch_id')->nullable();
+                $table->boolean('is_branch_applicable')->default(0);
+                $table->timestamps();
+            });
+        }
+
+        // Create insurance_provider_quote_type pivot table if it doesn't exist
+        if (! $schema->hasTable('insurance_provider_quote_type')) {
+            $schema->create('insurance_provider_quote_type', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('insurance_provider_id');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->timestamps();
+            });
+        }
+
+        // Create travel_plan table if it doesn't exist
+        if (! $schema->hasTable('travel_plan')) {
+            $schema->create('travel_plan', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->string('code')->nullable();
+                $table->unsignedBigInteger('provider_id')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        // Create health_plan_type table if it doesn't exist
+        if (! $schema->hasTable('health_plan_type')) {
+            $schema->create('health_plan_type', function ($table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            });
+        }
+
+        // Create health_quote_request table if it doesn't exist
+        if (! $schema->hasTable('health_quote_request')) {
+            $schema->create('health_quote_request', function ($table) {
+                $table->id();
+                $table->string('uuid')->nullable();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('source')->nullable();
+                $table->unsignedBigInteger('sub_source_id')->nullable();
+                $table->string('health_team_type')->nullable();
+                $table->decimal('premium', 10, 2)->nullable();
+                $table->string('policy_number')->nullable();
+                $table->unsignedBigInteger('support_user_id')->nullable();
+                $table->unsignedBigInteger('marital_status_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->unsignedBigInteger('previous_advisor_id')->nullable();
+                $table->unsignedBigInteger('lead_type_id')->nullable();
+                $table->unsignedBigInteger('previous_quote_id')->nullable();
+                $table->unsignedBigInteger('salary_band_id')->nullable();
+                $table->unsignedBigInteger('member_category_id')->nullable();
+                $table->date('policy_expiry_date')->nullable();
+                $table->string('renewal_batch')->nullable();
+                $table->string('renewal_import_code')->nullable();
+                $table->string('previous_quote_policy_number')->nullable();
+                $table->decimal('previous_quote_policy_premium', 10, 2)->nullable();
+                $table->string('device')->nullable();
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->date('policy_start_date')->nullable();
+                $table->date('policy_issuance_date')->nullable();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->unsignedBigInteger('currently_insured_with_id')->nullable();
+                $table->unsignedBigInteger('parent_duplicate_quote_id')->nullable();
+                $table->boolean('is_ecommerce')->default(0);
+                $table->decimal('price_starting_from', 10, 2)->nullable();
+                $table->date('policy_booking_date')->nullable();
+                $table->string('insurer_quote_number')->nullable();
+                $table->unsignedBigInteger('policy_issuance_status_id')->nullable();
+                $table->string('policy_issuance_status_other')->nullable();
+                $table->timestamp('stale_at')->nullable();
+                $table->string('sic_advisor_requested')->nullable();
+                $table->string('aml_status')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->string('insurer_aml_status')->nullable();
+                $table->unsignedBigInteger('renewal_batch_id')->nullable();
+                $table->date('previous_policy_expiry_date')->nullable();
+                $table->date('dob')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->timestamp('transaction_approved_at')->nullable();
+                $table->string('assignment_type')->nullable();
+                $table->string('gender')->nullable();
+                $table->unsignedBigInteger('emirate_of_your_visa_id')->nullable();
+                $table->timestamp('pec_marked_at')->nullable();
+                $table->unsignedBigInteger('branch_id')->nullable();
+                $table->boolean('is_branch_applicable')->default(0);
+                $table->timestamps();
+            });
+        }
+
+        // Create lead_allocation table if it doesn't exist
+        if (! $schema->hasTable('lead_allocation')) {
+            $schema->create('lead_allocation', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->integer('auto_assignment_count')->default(0);
+                $table->integer('manual_assignment_count')->default(0);
+                $table->integer('max_capacity')->default(0);
+                $table->timestamps();
+            });
+        }
+
+        // Create health_quote_request_detail table if it doesn't exist
+        if (! $schema->hasTable('health_quote_request_detail')) {
+            $schema->create('health_quote_request_detail', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('health_quote_request_id');
+                $table->timestamp('advisor_assigned_date')->nullable();
+                $table->unsignedBigInteger('lost_reason_id')->nullable();
+                $table->text('notes')->nullable();
                 $table->timestamps();
             });
         }
