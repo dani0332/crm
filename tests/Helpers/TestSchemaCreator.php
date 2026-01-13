@@ -3,6 +3,8 @@
 namespace Tests\Helpers;
 
 use Illuminate\Support\Facades\DB;
+use Tests\Support\Schema\CoreSchema;
+use Tests\Support\Schema\RenewalsSchema;
 
 class TestSchemaCreator
 {
@@ -26,45 +28,19 @@ class TestSchemaCreator
     }
 
     /**
-     * Create minimal required tables for LifeQuote tests.
+     * Create minimal required tables for tests.
      */
     public static function createMinimalSchema(): void
     {
         self::configureTestDatabaseConnections();
-        
-        $sqliteSchema = DB::connection('sqlite')->getSchemaBuilder();
-        $mysqlSchema = DB::connection('mysql')->getSchemaBuilder();
-        
-        // Helper to create table on both connections since some models use 'mysql' explicitly
-        $createOnBoth = function ($tableName, $callback) use ($sqliteSchema, $mysqlSchema) {
-            if (! $sqliteSchema->hasTable($tableName)) {
-                $sqliteSchema->create($tableName, $callback);
-            }
-            if (! $mysqlSchema->hasTable($tableName)) {
-                $mysqlSchema->create($tableName, $callback);
-            }
-        };
-        
-        $schema = $sqliteSchema; // Keep for backward compatibility
+        (new CoreSchema)->register();
+    }
 
-        // Create audits table if it doesn't exist (for Laravel Auditing)
-        if (! $schema->hasTable('audits')) {
-            $schema->create('audits', function ($table) {
-                $table->id();
-                $table->string('user_type')->nullable();
-                $table->unsignedBigInteger('user_id')->nullable();
-                $table->string('event');
-                $table->morphs('auditable');
-                $table->text('old_values')->nullable();
-                $table->text('new_values')->nullable();
-                $table->text('url')->nullable();
-                $table->ipAddress('ip_address')->nullable();
-                $table->string('user_agent')->nullable();
-                $table->string('tags')->nullable();
-                $table->timestamps();
-            });
-        }
-
+    public static function createRenewalsSchema(): void
+    {
+        self::createMinimalSchema();
+        (new RenewalsSchema)->register();
+    
         // Create users table if it doesn't exist
         if (! $schema->hasTable('users')) {
             $schema->create('users', function ($table) {
@@ -802,5 +778,8 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+=======
+        (new RenewalsSchema)->register();
+>>>>>>> 47c163ddac60a435a3bfa70baf8832106b3f9a1c
     }
 }

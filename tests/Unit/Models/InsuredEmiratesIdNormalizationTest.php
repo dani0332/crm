@@ -6,9 +6,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use Tests\Helpers\TestSchemaCreator;
-use Tests\TestCase;
-
-uses(TestCase::class);
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
