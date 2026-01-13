@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\InsuranceProviderEnum;
-use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Http\Controllers\Controller;
 use App\Jobs\PolicyIssuanceJob;
