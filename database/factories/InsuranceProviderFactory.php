@@ -47,7 +47,7 @@ class InsuranceProviderFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'code' => 'TE',
+                'code' => 'ADNIC',
                 'text' => 'ADNIC Insurance',
             ];
         });
