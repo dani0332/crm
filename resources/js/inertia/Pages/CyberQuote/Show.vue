@@ -1271,19 +1271,19 @@ const confirmSendEmail = () => {
                 <span>PLANS</span>
               </template>
               <template #header-coverageUpTo>
-                <span>Coverage Up to</span>
+                <span>Coverage Up to (USD)</span>
               </template>
               <template #header-quoteNumber>
                 <span>Quote Number</span>
               </template>
               <template #header-priceWithoutVat>
-                <span>Price without VAT</span>
+                <span>Price without VAT (AED)</span>
               </template>
               <template #header-vat>
-                <span>VAT</span>
+                <span>VAT (AED)</span>
               </template>
               <template #header-priceWithVat>
-                <span>Price (with VAT)</span>
+                <span>Price (with VAT) (AED)</span>
               </template>
               <template #header-action>
                 <span>Action</span>
