@@ -21,10 +21,8 @@ class AdnicBookPolicyService
 {
     use GenericQueriesAllLobs;
 
-    public function __construct(
-        private AdnicValidationService $validationService,
-        private AdnicResponseHandler $responseHandler,
-    ) {}
+    public function __construct()
+    {}
 
     /**
      * Get steps locking status for UI

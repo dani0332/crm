@@ -14,9 +14,7 @@ use App\Models\HealthInsurerRequestResponse;
 
 class AdnicValidationService
 {
-    public function __construct(
-        private AdnicDocumentHandler $documentHandler,
-    ) {}
+    public function __construct() {}
 
     /**
      * Validate required data for policy issuance

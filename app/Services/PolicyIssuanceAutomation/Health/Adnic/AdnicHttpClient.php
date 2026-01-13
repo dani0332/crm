@@ -87,12 +87,12 @@ class AdnicHttpClient
             ->retry(
                 times: 5,
                 sleepMilliseconds: 10000,
-                when: function ($exception, $request) {
+                when: function ($exception) {
                     // Retry on connection and timeout exceptions
                     if ($exception instanceof ConnectionException) {
-                        $isTimeout = str_contains($exception->getMessage(), 'timeout') || 
+                        $isTimeout = str_contains($exception->getMessage(), 'timeout') ||
                                     str_contains($exception->getMessage(), 'timed out');
-                        
+
                         LoggerService::warning('ADNIC API retry attempt', extra: [
                             'reason' => $isTimeout ? 'timeout' : 'connection_error',
                             'exception_message' => $exception->getMessage(),

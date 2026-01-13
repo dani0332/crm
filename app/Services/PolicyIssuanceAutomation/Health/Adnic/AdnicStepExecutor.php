@@ -16,7 +16,6 @@ class AdnicStepExecutor
     public $healthInsurerResponse = '';
     public function __construct(
         private AdnicApiService $apiService,
-        private AdnicBookPolicyService $bookPolicyService,
     ) {}
 
     /**

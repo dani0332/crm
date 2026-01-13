@@ -7,7 +7,6 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\AdnicEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Models\HealthUMAFResponse;
 
 class AdnicRequestBuilder
 {
@@ -79,21 +78,21 @@ class AdnicRequestBuilder
                 ],
                 'QuestionnarieInfo' => (array) $insuredMember->QuestionnarieInfo,
                 'PregnantStatus' => $currentlyPregnant ?? AdnicEnum::NO,
-                'PreviouslyCovered' => $previouslyCovered ?? AdnicEnum::NO,  
+                'PreviouslyCovered' => $previouslyCovered ?? AdnicEnum::NO,
                 'EmiratesId' => $emiratesId ?? '',
-                'EntryPermitNoOrFileNo' => $visaFileNumber ?? '',  
+                'EntryPermitNoOrFileNo' => $visaFileNumber ?? '',
                 'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
-                'MemberCategory' => $memberCategory ?? '',  
+                'MemberCategory' => $memberCategory ?? '',
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null),
                 'Commission' => AdnicEnum::NO, // Optional Field, set as default value
-                'VisaType' => $visaType ?? '', 
+                'VisaType' => $visaType ?? '',
                 'City' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
                 'Nationality' => $this->mappingNationality($quote->nationality?->name ?? null),
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
                 'WorkLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
                 'ResidenceLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
-                'Industry' => $industry ?? '',  
+                'Industry' => $industry ?? '',
                 'DocumentInfo' => $this->uploadedDocumentsInfo($uploadDocumentsResponse),
                 'PreviousVisaEmirate' => $insuredMember?->PreviousVisaEmirate,
             ];
@@ -115,14 +114,14 @@ class AdnicRequestBuilder
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null), // TODO:: Some attributes need to be created
                 'EmiratesId' => $emiratesId ?? '',
                 'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
-                'SponserCategory' => $sponsorCategory ?? '',  
+                'SponserCategory' => $sponsorCategory ?? '',
                 'MaritalStatus' => $this->mappingMaritalStatus($quote->marital_status_id ?? null),
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
-                'MemberCategory' => $memberCategory ?? '', 
-                'VisaType' => $visaType ?? '',  
+                'MemberCategory' => $memberCategory ?? '',
+                'VisaType' => $visaType ?? '',
                 'PreviousVisaEmirate' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
-                'CustomerClassification' => $customerClassification ?? '1',  
+                'CustomerClassification' => $customerClassification ?? '1',
             ],
             'QuoteInfo' => [
                 'PartnerReferenceNo' => $this->httpClient->getPartnerReferenceNo(),

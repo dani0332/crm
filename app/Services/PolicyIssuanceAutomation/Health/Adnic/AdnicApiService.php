@@ -207,11 +207,11 @@ class AdnicApiService
             return $validationResult;
         }
 
-        $generatePolicyResponse = json_decode($generatePolicyResponse?->response); 
+        $generatePolicyResponse = json_decode($generatePolicyResponse?->response);
         $policyIssueResponse = $generatePolicyResponse?->data;
         $policyDocuments = $policyIssueResponse?->PolicyDocumentInfo;
 
-        foreach ($policyDocuments as $policyDocumentKey => $policyDocumentId) { 
+        foreach ($policyDocuments as $policyDocumentKey => $policyDocumentId) {
             $payload = $this->requestBuilder->buildDownloadDocumentPayload($policyIssueResponse, $policyDocumentId);
 
             $httpResponse = AdnicHttpFacade::post($endPoint, $payload);
