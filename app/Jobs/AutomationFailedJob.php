@@ -107,14 +107,8 @@ class AutomationFailedJob implements ShouldQueue
             $cc['advisoremail'] = $quote?->advisor?->email ?? '';
         }
 
-        $notificationContext = app(CyberQuoteService::class)
-            ->applyAutomationFailureNotificationRules(
-                $quote,
-                $cc,
-                $this->processInvolved,
-                $this->recipientEmail,
-                $this->recipientName
-            );
+        $notificationContext = $this->addLobViseDataFormMail($quoteType, $quote, $cc);
+        
 
         $ccEmails = $notificationContext['cc'] ?? [];
         $this->recipientEmail = $notificationContext['recipientEmail'];
@@ -171,4 +165,26 @@ class AutomationFailedJob implements ShouldQueue
         return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
     }
 
+    private function addLobViseDataFormMail($quoteType, $quote, $cc) {
+        switch ($quoteType) {
+            case QuoteTypes::CYBER->value:
+                $notificationContext = app(CyberQuoteService::class)
+                    ->applyAutomationFailureNotificationRules(
+                        $quote,
+                        $cc,
+                        $this->processInvolved,
+                        $this->recipientEmail,
+                        $this->recipientName
+                    );
+                break;
+            default:
+                return [
+                    'recipientEmail' => $this->recipientEmail,
+                    'recipientName' => $this->recipientName,
+                    'processInvolved' => $this->processInvolved,
+                ];
+                break;
+        }
+
+    }
 }
