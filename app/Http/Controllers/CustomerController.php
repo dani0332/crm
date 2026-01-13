@@ -188,7 +188,7 @@ class CustomerController extends Controller
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if (!$quoteObject) {
             if (isset($request->isInertia) && $request->isInertia) {
-                return redirect()->back()->with(['error' => ['message' => 'Quote not found.']]);
+                return redirect()->back()->with('error', 'Quote not found.');
             }
 
             return response()->json(['error' => ['message' => 'Quote not found.']], 404);
@@ -200,7 +200,7 @@ class CustomerController extends Controller
         $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
 
         if (isset($request->isInertia) && $request->isInertia) {
-            return redirect()->back();
+            return redirect()->back()->with('success', 'Primary Contact Updated');
         }
 
         return response()->json(['data' => [
