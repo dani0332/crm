@@ -26,6 +26,8 @@ const page = usePage();
 const insuranceProviderId = ref(null);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 const modals = reactive({
   apiLog: false,
@@ -191,7 +193,7 @@ const onLoadAuditLogData = async () => {
             Policy Issuance API Logs
           </h3>
           <div
-            v-if="hasRole(rolesEnum.Engineering) && policyIssuanceId"
+            v-if="(hasRole(rolesEnum.Engineering) || (can(permissionsEnum.CYBER_API_TRIGGER) && props.quoteTypeId == 19)) && policyIssuanceId"
             class="flex gap-2"
             @click.stop
           >
@@ -206,9 +208,9 @@ const onLoadAuditLogData = async () => {
           </div>
           <div
             v-if="
-              hasRole(rolesEnum.Engineering) &&
-              apiLogs.data?.length == 0 &&
-              apiLogs.policyIssuance == null
+              (hasRole(rolesEnum.Engineering) || (can(permissionsEnum.CYBER_API_TRIGGER) && props.quoteTypeId == 19))
+              &&
+              (apiLogs.data?.length == 0 && apiLogs.policyIssuance == null)
             "
             class="flex gap-2"
             @click.stop

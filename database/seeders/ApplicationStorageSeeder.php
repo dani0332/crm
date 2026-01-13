@@ -1243,7 +1243,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        $ccEmails = env('APP_ENV') === 'production' ? 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com' : 'diya.lekhwani@myalfred.com, productionapproval@yopmail.com, sheza.moeen@myalfred.com, tasawar.hussain@myalfred.com';
+        $ccEmails = config('app.env') === 'production' ? 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com' : 'diya.lekhwani@myalfred.com, productionapproval@yopmail.com, sheza.moeen@myalfred.com, tasawar.hussain@myalfred.com';
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_FAILURE_EMAIL],
@@ -1255,7 +1255,19 @@ class ApplicationStorageSeeder extends Seeder
             ]
         );
 
-        $escalationLink = env('APP_ENV') === 'production' ? 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T' : 'https://imcrmuat.alfred.ae/';
+        $cyberCaptureFailureEmail = config('app.env') === 'production' ? 'production.approval.team@insurancemarket.ae' : 'productionapproval@yopmail.com';
+        
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_CAPTURE_FAILURE_EMAIL],
+            [
+                'value' => $cyberCaptureFailureEmail,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        $escalationLink = config('app.env') === 'production' ? 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T' : 'https://imcrmuat.alfred.ae/';
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_ESCALATION_LINK],

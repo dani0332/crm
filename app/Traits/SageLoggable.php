@@ -2,16 +2,19 @@
 
 namespace App\Traits;
 
+use App\Enums\QuoteTypes;
 use App\Models\SageApiLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 trait SageLoggable
 {
+
     public function logSageApiCall($payload, $response = [], $section = null, $model = null, $step = null, $totalSteps = null, $status = 'success', $loggedInUserId = null)
     {
         try {
             $userId = $section->userId ?? ($loggedInUserId ?? Auth::id());
+            $isCyberLob = $model?->quote_type_id === QuoteTypes::getId(QuoteTypes::CYBER) ? true : false;
             // Ensure mandatory fields are populated
             SageApiLog::updateOrCreate(
                 [
@@ -22,14 +25,14 @@ trait SageLoggable
                     'entry_type' => $payload['entry_type'] ?? '',
                 ],
                 [
-                    'user_id' => $userId,
+                    'user_id' => !$isCyberLob ? $userId : null,
                     'total_steps' => $totalSteps,
                     'sage_end_point' => $payload['endPoint'],
                     'sage_payload' => json_encode($payload['payload'] ?? []),
                     'response' => json_encode($response),
                     'status' => $status,
                     'model_id' => optional($model)->id,
-                    'model_type' => optional($model)->getMorphClass(),
+                    'model_type' =>  optional($model)->getMorphClass(),
                 ]
             );
         } catch (\Exception $e) {

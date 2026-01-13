@@ -406,6 +406,16 @@ class PolicyIssuanceService
         }
     }
 
+    /**
+     * This function is used to allocate a lead to an advisor for failed and passed cases both no just for the failure case
+     *
+     * @param [type] $quoteType
+     * @param [type] $quote
+     * @param [type] $isInsurerApiStatusAlreadyFailed
+     * @param string $statusAPIFailed
+     * @param string $processInvolved
+     * @return void
+     */
     public function allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed = '', $processInvolved = '')
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' allocation of failed lead executed');
@@ -418,17 +428,10 @@ class PolicyIssuanceService
         ]);
 
         $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
-        $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
-        if (! $advisorId && $quoteType === QuoteTypes::CYBER->value) {
-            $response = QuoteTypes::CYBER->allocate($uuid, $unassistedTeamId);
-            if ($response && $response['advisorId']) {
-                $advisorId = $response['advisorId'];
-            }
-            LoggerService::info('fn:allocateLead - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation when advisor id is not assigned during policy issuance automation', extra: [
-                'advisorId' => $advisorId,
-                'allocation_response' => $response,
-            ]);
+        // Assign advisor to lead for cyber policy issuance automation if not assigned and policy is booked only for cyber
+        if (! $advisorId && $isPolicyBooked && $quoteType == QuoteTypes::CYBER->value) {
+            $this->assignAdvisorToLead($quoteType, $quote, $advisorId);
         }
 
         if (
@@ -596,5 +599,24 @@ class PolicyIssuanceService
             ],
             'status_code' => 200,
         ];
+    }
+
+    /**
+     * This function is used to assign an advisor to a lead for  policy issuance automation if not assigned and policy is booked for the given quote type
+     * @param string $quoteType
+     * @param object $quote
+     * @param int $advisorId
+     * @return void
+     */
+    private function assignAdvisorToLead($quoteType, $quote, &$advisorId)
+    {
+        $response = QuoteTypes::from($quoteType)?->allocate($quote->uuid);
+        if ($response && $response['advisorId']) {
+            $advisorId = $response['advisorId'];
+        }
+        LoggerService::info('fn:allocateLead - Quote Code : ' . $quote->code . ' -  Assigned Advisor through Allocation when advisor id is not assigned during policy issuance automation', extra: [
+            'advisorId' => $advisorId,
+            'allocation_response' => $response,
+        ]);
     }
 }

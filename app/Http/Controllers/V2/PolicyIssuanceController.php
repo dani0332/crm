@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Http\Controllers\Controller;
 use App\Jobs\PolicyIssuanceJob;
@@ -11,16 +12,25 @@ use App\Models\PolicyIssuance;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class PolicyIssuanceController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    public function __construct()
+    {
+        $this->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, ['only' => ['triggerPolicyIssuance', 'manualTriggerPolicyIssuance']]);
+    }
+
     public function triggerPolicyIssuance($policyIssuanceId, Request $request)
     {
         $policyIssuance = PolicyIssuance::find($policyIssuanceId);
         if (! $policyIssuance) {
-            return response()->json(['message' => 'Policy issuance not found'], 404);
+            return response()->json(['message' => 'Policy issuance not found'], Response::HTTP_NOT_FOUND);
+        }
+        if ($policyIssuance->status == PolicyIssuanceEnum::PROCESSING_STATUS || $policyIssuance->status == PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS){
+            return response()->json(['message' => 'Policy issuance still in processing state cannot start another'], Response::HTTP_BAD_REQUEST);
         }
         $policyIssuance->status = PolicyIssuanceEnum::PENDING_STATUS;
         if ($request->has('completed_step')) {
@@ -29,7 +39,7 @@ class PolicyIssuanceController extends Controller
         $policyIssuance->save();
         PolicyIssuanceJob::dispatch($policyIssuance->id)->onQueue('policy-issuance-automation');
 
-        return response()->json(['message' => 'Policy issuance triggered successfully'], 200);
+        return response()->json(['message' => 'Policy issuance triggered successfully'], Response::HTTP_OK);
     }
 
     public function manualTriggerPolicyIssuance(Request $request)
@@ -44,7 +54,7 @@ class PolicyIssuanceController extends Controller
                 [
                     'message' => 'Quote already has a policy issuance, re-trigger the policy process if needs to run again',
                     'policy_issuance_id' => $quote->policyIssuance->id,
-                ], 400);
+                ], Response::HTTP_BAD_REQUEST);
         }
         $policyIssuance = PolicyIssuance::create([
             'insurance_provider_id' => $insuranceProvider->id,
@@ -60,6 +70,6 @@ class PolicyIssuanceController extends Controller
             [
                 'message' => 'Manual policy issuance triggered successfully',
                 'policy_issuance_id' => $policyIssuance->id,
-            ], 200);
+            ], Response::HTTP_OK);
     }
 }

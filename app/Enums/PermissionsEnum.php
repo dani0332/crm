@@ -471,6 +471,7 @@ final class PermissionsEnum extends Enum
     public const CYBER_LEAD_ALLOCATION_DASHBOARD = 'cyber-lead-allocation-dashboard';
     public const CYBER_AS_AT_REPORT_MANAGER = 'cyber-as-at-report-manager';
     public const CYBER_LEADPOOL = 'cyber-leadpool';
+    public const CYBER_API_TRIGGER = 'cyber-api-trigger';
     // End of Cyber Permissions
 
     public static function getAdvisorConversionReportPermissions()

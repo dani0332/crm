@@ -270,6 +270,7 @@ class CyberQuoteDataSeeder extends Seeder
             PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::ILA_CONFIG_ALL_LOB,
             PermissionsEnum::CYBER_LEADPOOL,
+            PermissionsEnum::CYBER_API_TRIGGER,
         ], [RolesEnum::Engineering, RolesEnum::Admin]);
 
         $this->seedPermissions([

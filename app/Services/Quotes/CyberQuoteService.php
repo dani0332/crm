@@ -29,12 +29,6 @@ use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
-    // TODO: Ahmed Gadit please move these to application storage thank you
-    private const CYBER_BOOKING_TEAM_EMAIL = 'production.approval.team@insurancemarket.ae';
-    private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
-    private const CYBER_BOOKING_TEAM_EMAIL_TEST = 'productionapproval@yopmail.com';
-    private const CYBER_BOOKING_TEAM_NAME_TEST = 'Production Approval Team Test';
-
     public function __construct(
         private CustomerInsuredService $customerInsuredService
     ) {
@@ -385,7 +379,7 @@ class CyberQuoteService extends BaseQuoteService
         }
 
         if (! $recipientEmail) {
-            // this is additional check to get pa contact details if recipient email is not set and this situation can be use for OE user which is not updated by BA yet 26-dec-2025
+            // OE user not updated by BA yet, production approval team will be the default recipient
             [$recipientEmail, $recipientName] = $this->getPaContactDetails();
         }
 
@@ -424,26 +418,10 @@ class CyberQuoteService extends BaseQuoteService
     private function getPaContactDetails(): array
     {
         if (! app()->environment('production')) {
-            return [self::CYBER_BOOKING_TEAM_EMAIL_TEST, self::CYBER_BOOKING_TEAM_NAME_TEST];
+            return [getAppStorageValueByKey(ApplicationStorageEnums::CYBER_CAPTURE_FAILURE_EMAIL), 'Production Approval Team'];
         }
 
-        return [self::CYBER_BOOKING_TEAM_EMAIL, self::CYBER_BOOKING_TEAM_NAME];
-    }
-
-    private function getAdvisorManagerEmail(PersonalQuote $quote): ?string
-    {
-        if (! $quote?->advisor) {
-            return null;
-        }
-
-        $cyberManager = $quote->advisor
-            ->managers()
-            ->get()
-            ->first(function (User $manager) {
-                return $manager->isCyberManager();
-            });
-
-        return $cyberManager?->email;
+        return [getAppStorageValueByKey(ApplicationStorageEnums::CYBER_CAPTURE_FAILURE_EMAIL, useCache: true), 'Production Approval Team'];
     }
 
     /**
