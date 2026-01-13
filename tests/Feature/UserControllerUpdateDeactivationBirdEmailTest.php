@@ -10,7 +10,7 @@ use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createUserManagementSchema();
+    TestSchemaCreator::createMinimalSchema();
 
     $this->admin = TestDataSeeder::createAdminUser(['email' => fake()->unique()->safeEmail()]);
 
