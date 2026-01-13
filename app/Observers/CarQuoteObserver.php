@@ -180,6 +180,12 @@ class CarQuoteObserver
                     ]);
                 }
             }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            in_array($lead->quote_status_id, [QuoteStatusEnum::PolicyBooked])
+        ) {
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
         if (
@@ -190,7 +196,6 @@ class CarQuoteObserver
             LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
-            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PaymentPending) {
 
