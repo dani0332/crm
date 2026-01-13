@@ -736,8 +736,8 @@ foreach ($quotePlan->addons as &$addon) {
             style="position: relative;top: 10px;margin-bottom: 70px;table-layout: fixed">
             <thead>
                 <tr>
-                    <th class="alfred" id="alfred-th">
-                        <img style="max-width:120px; height:auto;" src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-halfalfredstandingfoldinghandsinsuit.png" />
+                    <th class="alfred" id="alfred-th" style="text-align:center; vertical-align:middle;">
+                        <img style="max-width:120px; height:auto; display:block; margin:0 auto;" src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-halfalfredstandingfoldinghandsinsuit.png" />
                     </th>
                     @foreach ($planIds as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf;">

@@ -731,8 +731,8 @@
         <table class="table-fixed text-center tbl-plans" style="position: relative;top: 10px;margin-bottom: 200px;">
             <thead>
                 <tr>
-                    <th class="alfred" rowspan="3">
-                        <img style="max-width:120px; height:auto;" src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-halfalfredstandingfoldinghandsinsuit.png" />
+                    <th class="alfred" rowspan="3" style="text-align:center; vertical-align:middle;">
+                        <img style="max-width:120px; height:auto; display:block; margin:0 auto;" src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-halfalfredstandingfoldinghandsinsuit.png" />
                     </th>
                     @foreach ($planIds as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf;">
