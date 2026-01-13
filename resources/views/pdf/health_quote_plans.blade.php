@@ -728,7 +728,7 @@
 
     {{-- PDF Page Inner Content --}}
     <main>
-        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 200px;">
+        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 10px;margin-bottom: 200px;">
             <thead>
                 <tr>
                     <th class="alfred" rowspan="3">

@@ -733,7 +733,7 @@ foreach ($quotePlan->addons as &$addon) {
 {{-- End of PDF Page Footer Section --}}
     <main>
         <table class="table-fixed text-center tbl-plans"
-            style="position: relative;top: 100px;margin-bottom: 70px;table-layout: fixed">
+            style="position: relative;top: 10px;margin-bottom: 70px;table-layout: fixed">
             <thead>
                 <tr>
                     <th class="alfred" id="alfred-th">
