@@ -34,7 +34,7 @@ class AdnicValidationService
             $missing[] = 'Health UMAF Response';
         }
 
-        if (! $quote->payments) {
+        if ($quote->payments->isEmpty()) {
             $missing[] = 'payments';
         }
 

@@ -184,6 +184,8 @@ class AdnicApiService
             'endpoint' => '/GeneratePolicyDocument',
         ]);
 
+        $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_POLICY_DOCS);
+
         $generatePolicyResponse = $process->policyIssuanceLogs()->where([
             'step' => AdnicEnum::STEP_ISSUE_POLICY,
             'status' => PolicyIssuanceEnum::SUCCESS_STATUS,
@@ -194,8 +196,7 @@ class AdnicApiService
 
             return $response;
         }
-
-        $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_POLICY_DOCS);
+        
         $endPoint = '/GeneratePolicyDocument';
 
         $uploadedDocumentsToIMCRM = collect();
@@ -207,7 +208,7 @@ class AdnicApiService
             return $validationResult;
         }
 
-        $generatePolicyResponse = json_decode($generatePolicyResponse?->response);
+        $generatePolicyResponse = $generatePolicyResponse?->response ? json_decode($generatePolicyResponse->response) : null;
         $policyIssueResponse = $generatePolicyResponse?->data;
         $policyDocuments = $policyIssueResponse?->PolicyDocumentInfo;
 
