@@ -9,7 +9,6 @@ use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\PersonalQuote;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\Helpers\TestDataSeeder;
@@ -93,7 +92,6 @@ function createPersonalQuoteForCarQuote(CarQuote $quote): int
 
 afterEach(function () {
     Mockery::close();
-    Cache::flush();
 });
 
 test('switch primary email keeps existing primary email when keep_existing_primary_email is true', function () {

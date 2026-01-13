@@ -7,7 +7,6 @@ use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Services\CustomerService;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -36,7 +35,6 @@ beforeEach(function () {
 
 afterEach(function () {
     Mockery::close();
-    Cache::flush();
 });
 
 test('makeAdditionalContactPrimary creates additional contact when keepExistingPrimaryEmail is true and customer exists', function () {

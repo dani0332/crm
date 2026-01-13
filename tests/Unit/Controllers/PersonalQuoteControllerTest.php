@@ -6,13 +6,11 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Requests\ChangePrimaryContactRequest;
-use App\Models\PersonalQuote;
 use App\Services\CustomerService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
-use Mockery;
 use Tests\Helpers\TestSchemaCreator;
 
 if (!defined('QUOTE_TYPE')) {
