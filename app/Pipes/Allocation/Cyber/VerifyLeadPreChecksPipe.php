@@ -126,9 +126,9 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             $this->allocationRequest->set('isCHSAdvisor', true);
             LoggerService::info(self::class.':fetchLead - it is AWNI and automation is completed so proceed with allocation');
             $allowAllocation = true;
+        } else {
+            LoggerService::info(self::class.':fetchLead - it is AWNI and automation is not yet completed, skipping allocation');
         }
-
-        LoggerService::info(self::class.':fetchLead - it is AWNI and automation is not yet completed, skipping allocation');
 
         return $allowAllocation;
     }
