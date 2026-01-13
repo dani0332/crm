@@ -193,7 +193,12 @@ const onLoadAuditLogData = async () => {
             Policy Issuance API Logs
           </h3>
           <div
-            v-if="(hasRole(rolesEnum.Engineering) || (can(permissionsEnum.CYBER_API_TRIGGER) && props.quoteTypeId == 19)) && policyIssuanceId"
+            v-if="
+              (hasRole(rolesEnum.Engineering) ||
+                (can(permissionsEnum.CYBER_API_TRIGGER) &&
+                  props.quoteTypeId == 19)) &&
+              policyIssuanceId
+            "
             class="flex gap-2"
             @click.stop
           >
@@ -208,9 +213,11 @@ const onLoadAuditLogData = async () => {
           </div>
           <div
             v-if="
-              (hasRole(rolesEnum.Engineering) || (can(permissionsEnum.CYBER_API_TRIGGER) && props.quoteTypeId == 19))
-              &&
-              (apiLogs.data?.length == 0 && apiLogs.policyIssuance == null)
+              (hasRole(rolesEnum.Engineering) ||
+                (can(permissionsEnum.CYBER_API_TRIGGER) &&
+                  props.quoteTypeId == 19)) &&
+              apiLogs.data?.length == 0 &&
+              apiLogs.policyIssuance == null
             "
             class="flex gap-2"
             @click.stop
