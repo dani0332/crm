@@ -120,6 +120,7 @@ defineProps({
   isAddionalFieldsEnabled: Boolean,
   rtaConfigurationData: Object,
   carTypeofInsurance: Object,
+  genericRequestEnum: Array,
 });
 
 const page = usePage();
@@ -149,6 +150,7 @@ const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const leadSource = page.props.leadSourceEnum;
+const genericRequestEnum = page.props.genericRequestEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -1452,7 +1454,7 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
 
   entity_id: page.props.record.entity_id ?? null,
-  trade_license_no: page.props.record.trade_license_no ?? null,
+  trade_license_no: page.props.record.insured_id_type === genericRequestEnum.TRADE_LICENSE ? page.props.record.insured_id_number : null,
   company_name: page.props.record.company_name ?? null,
   company_address: page.props.record.company_address ?? null,
   entity_type_code: page.props.record.entity_type_code ?? 'Parent',
@@ -1507,8 +1509,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -1533,7 +1535,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.record.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -1543,7 +1545,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
