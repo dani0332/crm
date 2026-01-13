@@ -2253,8 +2253,6 @@ class RenewalsUploadService
                                     }
                                 }
 
-                                
-
                                 // if the lead is a Genesis lead, then the Insurer Quote No is not required
                                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no && ! $isGenesisLead['status']) {
                                     $leadValidationErrors->push('Insurer Quote No is required');
@@ -2285,7 +2283,7 @@ class RenewalsUploadService
                                     info('currentlyInsuredWith:'.$currentlyInsuredWith);
                                     $providerName = trim($leadData->provider_name ?? '');
                                     info('providerName:'.$providerName);
-                                    if ($currentlyInsuredWith !== '' && $providerName !== '' && strcasecmp($currentlyInsuredWith, $providerName) !== 0 && !$isGenesisLead['status']) {
+                                    if ($currentlyInsuredWith !== '' && $providerName !== '' && strcasecmp($currentlyInsuredWith, $providerName) !== 0 && ! $isGenesisLead['status']) {
                                         $leadValidationErrors->push('Provider Name must match Currently Insured With');
                                     }
                                 }
@@ -3470,11 +3468,10 @@ class RenewalsUploadService
             $status = $isGigPlan ? true : false;
             $carPlan = $isGigPlan ? $isGigPlan : null;
         } else {
-            if($currentInsuranceProvider != null) {
+            if ($currentInsuranceProvider != null) {
                 $carPlan = CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $currentInsuranceProvider->id)->first();
             }
         }
-
 
         LoggerService::info('fn: isGenesisLead - status: '.$status);
 

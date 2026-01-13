@@ -391,7 +391,6 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
-
     public function plansProcessesStatus($batch, $renewalStatusProcessId)
     {
         $query = RenewalQuoteProcess::where([
@@ -403,6 +402,7 @@ class RenewalsUploadController extends Controller
             ['step_errors', '!=', null],
         ])->with(['renewalUploadLead', 'carQuote']);
         $process = $query->simplePaginate();
+
         return inertia('Renewals/PlanProcessesStatus', [
             'renewalLeads' => $process,
             'batch' => $batch,
