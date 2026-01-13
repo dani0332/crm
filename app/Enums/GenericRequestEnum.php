@@ -64,6 +64,6 @@ final class GenericRequestEnum extends Enum
     public const TRADE_LICENSE = 'tradeLicense';
     public const EMIRATES_ID = 'emiratesId';
     public const PASSPORT = 'passport';
-    public const TRDATE_LICENSE_SHORT_CODE = 'TL';
+    public const TRADE_LICENSE_SHORT_CODE = 'TL';
     public const EMIRATES_ID_SHORT_CODE = 'EID';
 }

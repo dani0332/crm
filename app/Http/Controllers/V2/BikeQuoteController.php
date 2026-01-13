@@ -288,7 +288,6 @@ class BikeQuoteController extends Controller
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
-            'genericRequestEnum' => GenericRequestEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
