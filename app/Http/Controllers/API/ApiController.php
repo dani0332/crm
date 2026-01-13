@@ -48,6 +48,7 @@ use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CQF\CarCQFFileExportService;
+use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -69,6 +70,8 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
+    private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
+
     use GenericQueriesAllLobs, PrivateClient;
 
     private const REQUIRED_STRING = 'required|string';
@@ -716,6 +719,26 @@ class ApiController extends Controller
         }
     }
 
+    public function exportFailedIlaLeads($quoteType)
+    {
+        try {
+            $response = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
+
+            $fileResponse = $response['file'];
+            // Add custom header for total leads count
+            $fileResponse->headers->set('X-Total-Leads', $response['total_leads'] ?? 0);
+
+            return $fileResponse;
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.': Failed to export failed ILA leads', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export failed ILA leads',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
     public function getLeadOCRComparison(Request $request)
     {
         $request->validate(
@@ -724,6 +747,7 @@ class ApiController extends Controller
                 'start_date' => 'required_without:uuid|date_format:Y-m-d',
                 'end_date' => 'required_without:uuid|date_format:Y-m-d',
                 'recalculate_comparison' => 'sometimes|boolean',
+                'limit' => 'sometimes|integer|min:1|max:15',
             ],
             [
                 'uuid.required_without_all' => 'UUID is required when start date and end date are not provided',
@@ -732,6 +756,9 @@ class ApiController extends Controller
                 'end_date.required_without' => 'End date is required when UUID is not provided',
                 'end_date.date_format' => 'End date must be in YYYY-MM-DD format',
                 'recalculate_comparison.boolean' => 'Recalculate comparison must be true or false',
+                'limit.integer' => 'Limit must be an integer',
+                'limit.min' => 'Limit must be at least 1',
+                'limit.max' => 'Limit cannot exceed 15',
             ]
         );
 
@@ -744,15 +771,7 @@ class ApiController extends Controller
             : null;
 
         $recalculateComparison = $request->boolean('recalculate_comparison', false);
-
-        LoggerService::info(self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'uuid' => $request->uuid,
-            'recalculate_comparison' => $recalculateComparison,
-            'user_agent' => $request->userAgent(),
-            'ip' => $request->ip(),
-        ]);
+        $limit = $request->integer('limit', 15);
 
         if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
             return apiResponse(null, Response::HTTP_OK, 'OCR util processing is disabled');
@@ -763,7 +782,17 @@ class ApiController extends Controller
             return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job is already running');
         }
 
-        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate, $recalculateComparison)
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'uuid' => $request->uuid,
+            'recalculate_comparison' => $recalculateComparison,
+            'user_agent' => $request->userAgent(),
+            'ip' => $request->ip(),
+            'limit' => $limit,
+        ]);
+
+        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate, $recalculateComparison, $limit)
             ->onConnection('redis')
             ->onQueue('lead_ocr_data_comparison');
 
