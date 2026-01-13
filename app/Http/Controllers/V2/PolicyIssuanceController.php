@@ -48,7 +48,7 @@ class PolicyIssuanceController extends Controller
         $quoteType = QuoteType::where('id', $request->quote_type_Id)->first();
         $quote = $this->getQuoteObject($quoteType->code, $request->model_id);
         $model = $this->getModelObject($quoteType->code);
-        if ($quote->policyIssuance()->exists()) {
+        if ($quote && $quote->policyIssuance()->exists()) {
             return response()->json(
                 [
                     'message' => 'Quote already has a policy issuance, re-trigger the policy process if needs to run again',
