@@ -67,4 +67,5 @@ enum LoggerFeatureEnum: string
     case CLAIM_DOCUMENT_S3_URL = 'claim-document-s3-url';
     case CLAIM_DOCUMENT_DOWNLOAD_ALL = 'claim-document-download-all';
     case CLAIM_GOOGLE_REVIEW_EMAIL = 'claim-google-review-email';
+    case CLAIM_DOCUMENT_UPLOAD_UTILITY = 'claim-document-upload-utility';
 }
