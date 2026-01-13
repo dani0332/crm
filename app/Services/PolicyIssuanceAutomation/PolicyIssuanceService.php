@@ -430,7 +430,7 @@ class PolicyIssuanceService
 
         // Assign advisor to lead for cyber policy issuance automation if not assigned and policy is booked only for cyber
         if (! $advisorId && $isPolicyBooked && $quoteType == QuoteTypes::CYBER->value) {
-            $this->assignAdvisorToLead($quoteType, $quote, $advisorId);
+            $this->triggerAdvisorAllocation($quoteType, $quote, $advisorId);
         }
 
         if (
@@ -608,7 +608,7 @@ class PolicyIssuanceService
      * @param  int  $advisorId
      * @return void
      */
-    private function assignAdvisorToLead($quoteType, $quote, &$advisorId)
+    private function triggerAdvisorAllocation($quoteType, $quote, &$advisorId)
     {
         $response = QuoteTypes::from($quoteType)?->allocate($quote->uuid);
         if ($response && $response['advisorId']) {
