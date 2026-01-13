@@ -39,6 +39,12 @@ abstract class TestCase extends BaseTestCase
             app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
         }
         
+        // Close Mockery to prevent mock state pollution between tests
+        \Mockery::close();
+        
+        // Clear any resolved Facade instances to prevent state pollution
+        \Illuminate\Support\Facades\Facade::clearResolvedInstances();
+        
         parent::tearDown();
     }
 }

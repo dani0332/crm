@@ -544,6 +544,15 @@ class CoreSchema
                 $table->timestamps();
                 $table->softDeletes();
             },
+            'insured_kyc' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('insured_id')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('id_type')->nullable();
+                $table->string('id_number')->nullable();
+                $table->timestamps();
+            },
             'customer_insured' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('quote_type_id');
@@ -613,6 +622,7 @@ class CoreSchema
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
+                $table->integer('sort_order')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('payment_gateway_id')->nullable();
                 $table->timestamps();

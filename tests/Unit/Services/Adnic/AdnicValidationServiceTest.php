@@ -43,16 +43,16 @@ test('validate download documents checks for required document IDs', function ()
 // CRITICAL TEST: Response structure
 test('validation service returns consistent structure', function () {
     $quoteMock = Mockery::mock();
-    
+
     // Test successful validation
     $docTypeCodeForIMCRM = [
         'PolicyDocumentId' => 1,
         'CommisionNoteDocumentId' => 2,
         'TaxInvoiceDocumentId' => 3,
     ];
-    
+
     $result = $this->service->validateDownloadDocuments($quoteMock, $docTypeCodeForIMCRM);
-    
+
     expect($result)
         ->toHaveKey('status')
         ->and($result['status'])->toBeTrue();
