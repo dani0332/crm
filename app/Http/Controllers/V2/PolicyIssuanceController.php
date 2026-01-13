@@ -29,7 +29,7 @@ class PolicyIssuanceController extends Controller
         if (! $policyIssuance) {
             return response()->json(['message' => 'Policy issuance not found'], Response::HTTP_NOT_FOUND);
         }
-        if ($policyIssuance->status == PolicyIssuanceEnum::PROCESSING_STATUS || $policyIssuance->status == PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS){
+        if ($policyIssuance->status == PolicyIssuanceEnum::PROCESSING_STATUS || $policyIssuance->status == PolicyIssuanceEnum::BOOKING_PROCESSING_STATUS) {
             return response()->json(['message' => 'Policy issuance still in processing state cannot start another'], Response::HTTP_BAD_REQUEST);
         }
         $policyIssuance->status = PolicyIssuanceEnum::PENDING_STATUS;

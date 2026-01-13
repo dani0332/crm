@@ -10,7 +10,6 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\TeamNameEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
@@ -412,8 +411,8 @@ class PolicyIssuanceService
      * @param [type] $quoteType
      * @param [type] $quote
      * @param [type] $isInsurerApiStatusAlreadyFailed
-     * @param string $statusAPIFailed
-     * @param string $processInvolved
+     * @param  string  $statusAPIFailed
+     * @param  string  $processInvolved
      * @return void
      */
     public function allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed = '', $processInvolved = '')
@@ -603,9 +602,10 @@ class PolicyIssuanceService
 
     /**
      * This function is used to assign an advisor to a lead for  policy issuance automation if not assigned and policy is booked for the given quote type
-     * @param string $quoteType
-     * @param object $quote
-     * @param int $advisorId
+     *
+     * @param  string  $quoteType
+     * @param  object  $quote
+     * @param  int  $advisorId
      * @return void
      */
     private function assignAdvisorToLead($quoteType, $quote, &$advisorId)
@@ -614,7 +614,7 @@ class PolicyIssuanceService
         if ($response && $response['advisorId']) {
             $advisorId = $response['advisorId'];
         }
-        LoggerService::info('fn:allocateLead - Quote Code : ' . $quote->code . ' -  Assigned Advisor through Allocation when advisor id is not assigned during policy issuance automation', extra: [
+        LoggerService::info('fn:allocateLead - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation when advisor id is not assigned during policy issuance automation', extra: [
             'advisorId' => $advisorId,
             'allocation_response' => $response,
         ]);

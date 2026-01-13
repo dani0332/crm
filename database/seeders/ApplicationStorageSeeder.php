@@ -1256,7 +1256,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         $cyberCaptureFailureEmail = config('app.env') === 'production' ? 'production.approval.team@insurancemarket.ae' : 'productionapproval@yopmail.com';
-        
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_CAPTURE_FAILURE_EMAIL],
             [
