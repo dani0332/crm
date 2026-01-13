@@ -21,6 +21,8 @@ class AggregateQuoteOCRComparison implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
+
     public $timeout = 120;
     public $tries = 2;
 
@@ -31,7 +33,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         $quote = CarQuote::with(['personalQuote'])->find($this->quoteId);
 
         if (! $quote || ! $quote->personalQuote) {
-            LoggerService::info(self::class.' - Quote or PersonalQuote not found', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Quote or PersonalQuote not found', [
                 'quote_id' => $this->quoteId,
             ]);
 
@@ -40,7 +42,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
 
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::LEAD_OCR_DATA_COMPARISON);
 
-        LoggerService::info(self::class.' - Starting aggregation', [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Starting aggregation', [
             'quote_id' => $quote->id,
             'quote_uuid' => $quote->uuid,
         ]);
@@ -50,7 +52,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             ->get();
 
         if ($documentResults->isEmpty()) {
-            LoggerService::warning(self::class.' - No document results found for aggregation', [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - No document results found for aggregation', [
                 'quote_id' => $this->quoteId,
             ]);
 
@@ -70,7 +72,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             $ocrResponseStructure[$docType] = json_decode($result->ocr_response, true) ?? [];
 
             if (empty($leadDataStructure[$docType])) {
-                LoggerService::warning(self::class.' - Invalid or empty lead data for document, skipping comparison', [
+                LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - Invalid or empty lead data for document, skipping comparison', [
                     'quote_id' => $quote->id,
                     'document_id' => $result->document_id,
                     'doc_type' => $docType,
@@ -149,7 +151,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
                     : 0,
             ];
 
-            LoggerService::info(self::class.' - Document comparison calculated', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Document comparison calculated', [
                 'quote_id' => $quote->id,
                 'doc_type' => $docType,
                 'total_fields' => $totalFields,
@@ -159,7 +161,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         }
 
         if (empty($comparisonStructure)) {
-            LoggerService::warning(self::class.' - No valid documents to compare, all data was corrupted or empty', [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - No valid documents to compare, all data was corrupted or empty', [
                 'quote_id' => $quote->id,
             ]);
 
@@ -172,7 +174,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
             ? number_format(($totalMatches / $totalFields) * 100, 2)
             : 0;
 
-        LoggerService::info(self::class.' - Overall comparison score calculated', [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Overall comparison score calculated', [
             'quote_id' => $quote->id,
             'total_fields' => $totalFields,
             'total_matches' => $totalMatches,
@@ -212,14 +214,14 @@ class AggregateQuoteOCRComparison implements ShouldQueue
                 ->where('quote_id', $quote->id)
                 ->delete();
 
-            LoggerService::info(self::class.' - Data saved and intermediate results cleaned up', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Data saved and intermediate results cleaned up', [
                 'quote_id' => $quote->id,
                 'quote_uuid' => $quote->uuid,
                 'record_action' => $comparisonRecord->wasRecentlyCreated ? 'created' : 'updated',
             ]);
         });
 
-        LoggerService::info(self::class.' - Aggregation completed successfully', [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Aggregation completed successfully', [
             'quote_id' => $quote->id,
             'quote_uuid' => $quote->uuid,
             'comparison_score' => $comparisonScore.'%',
@@ -229,7 +231,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         // Clear aggregation cache to allow recalculation
         Cache::forget('ocr_aggregation_dispatched_'.$this->quoteId);
 
-        LoggerService::info(self::class.' - Aggregation cache cleared', [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Aggregation cache cleared', [
             'quote_id' => $this->quoteId,
         ]);
     }
@@ -239,7 +241,7 @@ class AggregateQuoteOCRComparison implements ShouldQueue
         // Clear aggregation cache to allow retry
         Cache::forget('ocr_aggregation_dispatched_'.$this->quoteId);
 
-        LoggerService::error(self::class.' - Aggregation job failed', extra: [
+        LoggerService::error(self::OCR_UTIL_FEAT.' - '.self::class.' - Aggregation job failed', extra: [
             'quote_id' => $this->quoteId,
             'attempts' => $this->attempts(),
             'exception' => $exception->getMessage(),
