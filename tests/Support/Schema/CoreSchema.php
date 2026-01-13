@@ -516,6 +516,7 @@ class CoreSchema
                 $table->string('emirates_id_number')->nullable();
                 $table->date('emirates_id_expiry_date')->nullable();
                 $table->date('dob')->nullable();
+                $table->string('code')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
                 $table->string('email')->nullable();
