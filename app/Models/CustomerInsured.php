@@ -39,6 +39,9 @@ class CustomerInsured extends Model
     /**
      * Create or update an active customer-insured record and deactivate previous ones
      *
+     * Uses row-level locking to prevent race conditions where concurrent requests
+     * could create multiple active records for the same quote.
+     *
      * @param  array  $conditions  Must include quote_type_id and quote_request_id
      * @param  array  $attributes  Additional attributes to set
      */
@@ -50,11 +53,15 @@ class CustomerInsured extends Model
         }
 
         return DB::transaction(function () use ($conditions, $attributes) {
-            // Deactivate all existing records for this quote
+            // Deactivate all existing records for this quote with row-level locking
+            // This prevents race conditions where concurrent requests could both
+            // deactivate records and then both create new active records
             static::forQuote(
                 $conditions['quote_type_id'],
                 $conditions['quote_request_id']
-            )->update(['is_active' => false]);
+            )->lockForUpdate()->get()->each(function ($record) {
+                $record->update(['is_active' => false]);
+            });
 
             // Create or update the active record
             return static::updateOrCreate($conditions, array_merge($attributes, [

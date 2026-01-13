@@ -1835,9 +1835,12 @@ class AMLService
             $isCustomerInsuredAssociationUpdated = true;
 
             DB::transaction(function () use ($orphanedRecord, $quoteTypeId, $quote) {
-                // Deactivate existing records for this quote first
+                // Deactivate existing records for this quote first with row-level locking
+                // This prevents race conditions where concurrent requests could create multiple active records
                 CustomerInsured::forQuote($quoteTypeId, $quote->id)
-                    ->update(['is_active' => false]);
+                    ->lockForUpdate()->get()->each(function ($record) {
+                        $record->update(['is_active' => false]);
+                    });
 
                 // Activate the orphaned record
                 $orphanedRecord->update([
