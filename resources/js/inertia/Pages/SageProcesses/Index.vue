@@ -379,11 +379,11 @@ async function exportExcel() {
       <!-- REF ID Column - Main Lead -->
       <template #item-ref_id="item">
         <Link
-          v-if="item.model_type !== SEND_UPDATE_LOG_MODEL_TYPE"
+          v-if="item.model?.code || item.model?.personal_quote?.code"
           :href="getDetailPageRoute(item)"
           class="text-primary-500 hover:underline"
         >
-          <span>{{ item.model?.code }}</span>
+          <span>{{ item.model?.personal_quote?.code || item.model?.code }}</span>
         </Link>
         <span v-else>N/A</span>
       </template>
@@ -418,7 +418,8 @@ async function exportExcel() {
       <template #item-price_vat_applicable="item">
         <span>{{
           item.model?.payments?.[0]?.price_vat != 0
-            ? item.model?.payments?.[0]?.price_vat_applicable
+            ? item.model?.payments?.[0]?.price_vat_applicable ?
+            item.model?.price_vat_applicable : item.model?.price_vat_applicable
             : 'N/A'
         }}</span>
       </template>
@@ -428,46 +429,47 @@ async function exportExcel() {
         <span>{{
           item.model?.payments?.[0]?.price_vat == 0
             ? item.model?.payments?.[0]?.price_vat_applicable
+            ? item.model?.price_vat_not_applicable : item.model?.price_vat_not_applicable
             : 'N/A'
         }}</span>
       </template>
 
       <!-- Price Vat -->
       <template #item-price_vat="item">
-        <span>{{ item.model?.payments?.[0]?.price_vat || 'N/A' }}</span>
+        <span>{{ item.model?.payments?.[0]?.price_vat || item.model?.total_vat_amount || 'N/A' }}</span>
       </template>
 
       <!-- Discount -->
       <template #item-discount_value="item">
-        <span>{{ item.model?.payments?.[0]?.discount_value || 'N/A' }}</span>
+        <span>{{ item.model?.payments?.[0]?.discount_value || item.model?.discount || 'N/A' }}</span>
       </template>
 
       <!-- Total Price -->
       <template #item-total_price="item">
-        <span>{{ item.model?.payments?.[0]?.total_price || 'N/A' }}</span>
+        <span>{{ item.model?.payments?.[0]?.total_price || item.model?.price_with_vat || 'N/A' }}</span>
       </template>
 
       <!-- Commission Vat Applicable -->
       <template #item-commission_vat_applicable="item">
         <span>{{
-          item.model?.payments?.[0]?.commission_vat_applicable || 'N/A'
+          item.model?.payments?.[0]?.commission_vat_applicable || item.model?.commission_vat_applicable || 'N/A'
         }}</span>
       </template>
       <!-- Commission Vat Applicable -->
       <template #item-commission_vat_not_applicable="item">
         <span>{{
-          item.model?.payments?.[0]?.commission_vat_not_applicable || 'N/A'
+          item.model?.payments?.[0]?.commission_vat_not_applicable || item.model?.commission_vat_not_applicable || 'N/A'
         }}</span>
       </template>
 
       <!-- Commission Vat -->
       <template #item-commission_vat="item">
-        <span>{{ item.model?.payments?.[0]?.commission_vat || 'N/A' }}</span>
+        <span>{{ item.model?.payments?.[0]?.commission_vat || item.model?.vat_on_commission || 'N/A' }}</span>
       </template>
 
       <!-- Total Commission -->
       <template #item-total_commission="item">
-        <span>{{ item.model?.payments?.[0]?.commission || 'N/A' }}</span>
+        <span>{{ item.model?.payments?.[0]?.commission || item.model?.total_commission || 'N/A' }}</span>
       </template>
 
       <!-- Payment Date -->
