@@ -513,28 +513,26 @@
 
 {{-- PDF Page Header --}}
 <header>
-    <div class="header">
-        <div class="logo">
-            <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo">
+    {{-- Header Image --}}
+    <div style="margin: 0; padding: 0; background: white;">
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+    </div>
+    {{-- Quote Details Bar --}}
+    <div style="background: #FFFFFF; color: #333; padding: 8px 15px; display: table; width: 100%; font-size: 11px; border-top: 1px solid rgba(51, 51, 51, 0.2); border-bottom: 1px solid rgba(51, 51, 51, 0.2);">
+        <!-- Left Side Text -->
+        <div style="display: table-cell; text-align: left; vertical-align: middle; width: 70%;">
+            <strong>Car Insurance Comparison Table</strong>
+            <span style="color: #5B5F60; padding: 0 8px;">|</span>
+            Name: <strong>{{ $quote->first_name }} {{ $quote->last_name }}</strong>
+            <span style="color: #5B5F60; padding: 0 8px;">|</span>
+            Car Type: <strong>{{ @$quote->carMake->text }} {{ @$quote->carModel->text }}</strong>
+            <span style="color: #5B5F60; padding: 0 8px;">|</span>
+            Year: <strong>{{ @$quote->year_of_manufacture }}</strong>
         </div>
-        <div class="header-bottom">
-            <!-- Left Side Text -->
-            <div class="header-text">
-                <strong class="raleway-font" style="font-weight: 600 !important;">Car Insurance Comparison Table</strong>
-                <span class="separator">|</span>
-                Name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
-                <span class="separator">|</span>
-                Car Type: <span class="header-text-highlight">{{ @$quote->carMake->text . ' ' . @$quote->carModel->text . ' ' . @$quote->year_of_manufacture }}</span>
-                <span class="separator">|</span>
-                Year: <span class="header-text-highlight">{{ @$quote->year_of_manufacture }}</span>
-            </div>
-
-            <!-- Right Side Quote Number -->
-            <div class="quote-number">
-                Quote reference number: <strong>{{ $quote->code }}</strong>
-            </div>
+        <!-- Right Side Quote Number -->
+        <div style="display: table-cell; text-align: right; vertical-align: middle; width: 30%;">
+            Quote Reference Number: <strong>{{ $quote->code }}</strong>
         </div>
-
     </div>
 </header>
 
