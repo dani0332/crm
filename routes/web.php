@@ -1036,4 +1036,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return view('pdf.bor-document', $pdfData);
     });
+    Route::get('claims/upload-documents', [ClaimsController::class, 'uploadDocuments']);
+
 });
