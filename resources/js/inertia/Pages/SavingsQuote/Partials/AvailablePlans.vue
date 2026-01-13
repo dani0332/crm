@@ -50,7 +50,7 @@ const availablePlansTable = reactive({
     },
     {
       text: 'Type of Plan',
-      value: 'typeOfPlan',
+      value: 'planTypeName',
     },
     {
       text: 'Insurer Quote Number',
@@ -62,7 +62,7 @@ const availablePlansTable = reactive({
     },
     {
       text: 'Price',
-      value: 'price',
+      value: 'actualPremium',
     },
     {
       text: 'Exchange Rate',
