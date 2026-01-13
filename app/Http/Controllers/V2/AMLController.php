@@ -335,7 +335,6 @@ class AMLController extends Controller
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
             'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
             'isPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
-            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 

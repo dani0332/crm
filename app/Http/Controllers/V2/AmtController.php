@@ -558,7 +558,6 @@ class AmtController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'activities' => $activities,
             'advisors' => $advisors,
-            'genericRequestEnum' => GenericRequestEnum::asArray(),
         ]);
     }
 
