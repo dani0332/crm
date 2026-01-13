@@ -187,7 +187,11 @@ class CustomerController extends Controller
     {
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if (!$quoteObject) {
-            return redirect()->back()->with(['error' => ['message' => 'Quote not found.']]);
+            if (isset($request->isInertia) && $request->isInertia) {
+                return redirect()->back()->with(['error' => ['message' => 'Quote not found.']]);
+            }
+
+            return response()->json(['error' => ['message' => 'Quote not found.']], 404);
         }
 
         $keepExistingPrimaryEmail = isset($request->keep_existing_primary_email) ? $request->keep_existing_primary_email : 1;
