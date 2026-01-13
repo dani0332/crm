@@ -44,8 +44,7 @@ class PolicyIssuanceController extends Controller
 
     public function manualTriggerPolicyIssuance(Request $request)
     {
-        // TODO: Ahmed Gaddit please use InsuranceProviderEnum::AWNI->value here
-        $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::AWNI)->first();
+        $insuranceProvider = InsuranceProvider::where('code', InsuranceProviderEnum::AWNI->value)->first();
         $quoteType = QuoteType::where('id', $request->quote_type_Id)->first();
         $quote = $this->getQuoteObject($quoteType->code, $request->model_id);
         $model = $this->getModelObject($quoteType->code);
