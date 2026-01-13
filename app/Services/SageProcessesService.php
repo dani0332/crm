@@ -330,9 +330,6 @@ class SageProcessesService extends BaseService
 
     /**
      * Decode JSON response and handle double-encoded JSON strings
-     *
-     * @param  string  $jsonString
-     * @return array|null
      */
     protected function decodeJsonResponse(string $jsonString): ?array
     {
