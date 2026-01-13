@@ -346,6 +346,16 @@ class CentralController extends Controller
 
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
+            if (! $response['status']) {
+                return response()->json([
+                    'errors' => [
+                        'message' => [
+                            $response['message'],
+                        ],
+                    ],
+                ], 422);
+            }
+
             return response()->json(['message' => $response['message']], 200);
         }
     }
@@ -839,7 +849,8 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::CAPTURE_PAYMENT_VALIDATION);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
-        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode);
+        $quote = $this->getQuoteObjectBy($request->modelType, $request->uuid, 'uuid');
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode, $quote);
 
         $logContext = [
             'ref_id' => $request->quoteCode,

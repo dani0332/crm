@@ -1647,10 +1647,10 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->tpa = $quote?->plan?->healthNetwork->text;
-            $emailData->numberOfMembersCovered = (string) count($quote->members);
+            $emailData->numberOfMembersCovered = (string) count($quote->activeMembers);
             $emailData->policyHolderName = implode(', ', array_map(function ($member) {
                 return $member['first_name'];
-            }, $quote->members->toArray()));
+            }, $quote->activeMembers->toArray()));
 
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
@@ -1973,9 +1973,18 @@ class CentralService extends BaseService
 
     }
 
-    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode, $quote)
     {
         try {
+            $isQuotePolicyAutomationEnabled = true;
+            $isCarQuote = $quoteTypeId == QuoteTypeId::Car;
+
+            if ($isCarQuote) {
+                $isQuotePolicyAutomationEnabled = $quote?->isQuotePolicyIssuanceAutomationEnabled();
+            }
+            if (! $isQuotePolicyAutomationEnabled) {
+                return ['status' => PaymentCaptureValidationEnum::SUCCESS, 'message' => 'Quote Policy Issuance Automation disabled for this Lead.'];
+            }
             $data = [
                 'quoteUID' => $uuid,
                 'quoteTypeId' => $quoteTypeId,
@@ -2182,7 +2191,7 @@ class CentralService extends BaseService
                 $captureAmount = $payment->premium_authorized;
             }
 
-            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code);
+            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code, $quote);
             $responsePremiumAmount = isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null;
 
             $logExtra = [

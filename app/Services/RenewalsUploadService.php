@@ -35,6 +35,7 @@ use App\Enums\RenewalsUploadType;
 use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Exceptions\FetchPlansUpdateException;
 use App\Exceptions\RenewalProcessException;
 use App\Exports\RenewalQuotesExport;
 use App\Facades\Capi;
@@ -1231,6 +1232,9 @@ class RenewalsUploadService
                 unset($quoteData['additional_notes']);
             }
 
+            // update advisor assigned datetime before update the quote
+            $this->updateAdvisorAssignmentOrMarkedAsSIC($quote, $advisorId, $renewalUploadLead, $quoteType, $previousAdvisor, $logPrefix);
+
             $quote->update($quoteData);
 
             if (! $isPersonalQuote) {
@@ -1241,34 +1245,8 @@ class RenewalsUploadService
             }
             LoggerService::info($logPrefix.' quote updated UUID: '.$quote->uuid);
 
-            if (! empty($advisorId) && $quote->advisor_id != $advisorId) {
-                $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
-                LoggerService::info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
-            } else {
-                if ($renewalUploadLead->is_sic == 1) {
-                    // add entry to quote tag as SIC
-                    $quoteTagPayload = [
-                        'name' => QuoteSegmentEnum::SIC->tag(),
-                        'quote_type_id' => QuoteTypeId::Car,
-                        'value' => 1,
-                        'quote_uuid' => $quote->uuid,
-                    ];
-
-                    $checkExisted = QuoteTag::where('quote_uuid', $quote->uuid)->where('name', QuoteSegmentEnum::SIC->tag())->first();
-                    ! $checkExisted && QuoteTag::create($quoteTagPayload);
-                    // processing the SIC workflow trigger only and don't send OCB email
-                    SendCarOCBIntroEmailJob::dispatch($quote->uuid, $previousAdvisor, true, true);
-                    LoggerService::info($logPrefix.' Quote Tag created. : '.QuoteSegmentEnum::SIC->tag().' for UUID: '.$quote->uuid);
-                }
-            }
-
             // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
-            RenewalQuoteProcess::where([
-                'quote_id' => $quote->id,
-                'status' => RenewalProcessStatuses::PROCESSED,
-                'type' => RenewalsUploadType::UPDATE_LEADS,
-                'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->where('id', '!=', $renewalQuoteProcess->id)->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+            $this->markOtherFetchPlansOutdated($quote, $renewalQuoteProcess);
 
             // mark renewal quote process as processed and assign quote id
             $renewalQuoteProcess->update([
@@ -3504,4 +3482,107 @@ class RenewalsUploadService
         return ['status' => $status, 'carPlan' => $carPlan, 'insuranceProvider' => $insuranceProvider];
     }
 
+    private function updateAdvisorAssignmentOrMarkedAsSIC($quote, $advisorId, $renewalUploadLead, $quoteType, $previousAdvisor, $logPrefix)
+    {
+        if (! empty($advisorId) && $quote->advisor_id != $advisorId) {
+            $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
+            LoggerService::info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
+        } else {
+            if ($renewalUploadLead->is_sic == 1) {
+                // add entry to quote tag as SIC
+                $quoteTagPayload = [
+                    'name' => QuoteSegmentEnum::SIC->tag(),
+                    'quote_type_id' => QuoteTypeId::Car,
+                    'value' => 1,
+                    'quote_uuid' => $quote->uuid,
+                ];
+
+                $checkExisted = QuoteTag::where('quote_uuid', $quote->uuid)->where('name', QuoteSegmentEnum::SIC->tag())->first();
+                ! $checkExisted && QuoteTag::create($quoteTagPayload);
+                // processing the SIC workflow trigger only and don't send OCB email
+                SendCarOCBIntroEmailJob::dispatch($quote->uuid, $previousAdvisor, true, true);
+                LoggerService::info($logPrefix.' Quote Tag created. : '.QuoteSegmentEnum::SIC->tag().' for UUID: '.$quote->uuid);
+            }
+        }
+    }
+
+    /**
+     * This function is used to mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
+     *
+     * @param  PersonalQuote|CarQuote|TravelQuote|HomeQuote  $quote
+     * @param  RenewalQuoteProcess  $renewalQuoteProcess
+     * @return void
+     */
+    public function markOtherFetchPlansOutdated($quote, $renewalQuoteProcess)
+    {
+        // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
+        // To mitigate serialization deadlocks, update in smaller batches with retries
+        // Using chunkById with size 1 and ORDER BY id to ensure consistent lock ordering
+        // This prevents deadlocks by ensuring all concurrent processes acquire locks in the same order
+        RenewalQuoteProcess::where([
+            'quote_id' => $quote->id,
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
+        ])
+            ->where('id', '!=', $renewalQuoteProcess->id)
+            ->orderBy('id') // Critical: ensures consistent lock ordering to prevent deadlocks
+            ->chunkById(1, function ($processes) {
+                // Process one record at a time to minimize lock contention
+                foreach ($processes as $process) {
+                    $this->updateProcessIdWithRetry($process->id);
+                }
+            });
+    }
+
+    /**
+     * Update a single process ID with retry logic to handle deadlocks
+     * Only updates records that are still in PENDING status to prevent race conditions
+     * Uses explicit WHERE id = ? with ORDER BY to ensure consistent lock ordering
+     * Note: When called within a transaction, deadlocks are not retried here to preserve
+     * transaction atomicity. The deadlock exception will propagate for higher-level retry.
+     *
+     * @return void
+     *
+     * @throws \Illuminate\Database\QueryException
+     * @throws FetchPlansUpdateException
+     */
+    public function updateProcessIdWithRetry(int $processId, int $maxRetries = 3)
+    {
+        $isInTransaction = DB::transactionLevel() > 0;
+
+        for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+            try {
+                // Update single record with explicit WHERE clause to ensure consistent lock ordering
+                // The WHERE clause with fetch_plans_status check prevents race conditions
+                RenewalQuoteProcess::where('id', $processId)
+                    ->where('fetch_plans_status', FetchPlansStatuses::PENDING)
+                    ->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+
+                return;
+            } catch (\Illuminate\Database\QueryException $e) {
+                $isDeadlock = strpos($e->getMessage(), 'Deadlock found') !== false
+                    || strpos($e->getMessage(), 'Lock wait timeout') !== false
+                    || $e->getCode() === '40001'; // SQLSTATE 40001 is serialization failure
+
+                if (! $isDeadlock) {
+                    // Non-deadlock exception - throw immediately
+                    throw $e;
+                }
+
+                // If we're in a transaction, don't retry - let the deadlock propagate
+                // so the entire transaction can be retried at a higher level
+                if ($isInTransaction) {
+                    throw $e;
+                }
+
+                // If this is the last attempt, throw custom exception
+                if ($attempt === $maxRetries - 1) {
+                    throw new FetchPlansUpdateException([$processId], $maxRetries, 0, $e);
+                }
+
+                usleep(200000); // wait 200ms before retry
+            }
+        }
+    }
 }

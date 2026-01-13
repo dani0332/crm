@@ -1,6 +1,4 @@
 <script setup>
-import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
-
 const notification = useToast();
 
 defineProps({
@@ -63,7 +61,6 @@ function onSubmit(isValid) {
       preserveScroll: true,
       onBefore: () => (loader.table = true),
       onSuccess: () => {
-        setExportStrings();
         loader.table = false;
       },
     });
@@ -95,12 +92,9 @@ function setQueryStringFilters() {
   }
 }
 
-function setExportStrings() {
+function handleExport() {
   let queryParams = window.location.search;
-  let exportLink = document.getElementById('export_link');
-  if (exportLink != null) {
-    exportLink.href = '/renewals/search/export' + queryParams;
-  }
+  window.open('/renewals/search/export' + queryParams, '_blank');
 }
 
 function getProductName(id) {
@@ -115,7 +109,6 @@ function getProductName(id) {
 }
 onMounted(() => {
   setQueryStringFilters();
-  setExportStrings();
 });
 const source_type_list = [
   { text: 'All', value: '' },
@@ -236,28 +229,26 @@ const permissionsEnum = page.props.permissionsEnum;
           placeholder="Search by Policy Number"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_NO_CONTACTINFO)"
+            id="export_link"
+            size="sm"
+            color="emerald"
+            @click="handleExport"
+          >
+            Export
+          </x-button>
+        </div>
+        <div class="flex gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
-    <div
-      class="flex justify-end gap-3 mb-4 mt-4"
-      v-if="can(permissionsEnum.EXPORT_NO_CONTACTINFO)"
-    >
-      <a
-        id="export_link"
-        target="_blank"
-        class="border appearance-none rounded-md shadow-sm py-2 text-sm px-4 cursor-pointer"
-        href=""
-        size="sm"
-        color="emerald"
-      >
-        Export
-      </a>
-    </div>
 
     <DataTable
       table-class-name="tablefixed"

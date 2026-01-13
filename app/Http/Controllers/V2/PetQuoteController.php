@@ -163,7 +163,7 @@ class PetQuoteController extends Controller
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::PET->id());
         $personalPlans = PersonalPlanRepository::get();
