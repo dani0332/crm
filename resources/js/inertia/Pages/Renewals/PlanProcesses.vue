@@ -75,7 +75,12 @@ const permissionsEnum = page.props.permissionsEnum;
           size="xs"
           light
           color="error"
-          :href="route('batch-plans-processes-status', { id: batch, renewalStatusProcessId: id })"
+          :href="
+            route('batch-plans-processes-status', {
+              id: batch,
+              renewalStatusProcessId: id,
+            })
+          "
         >
           {{ total_failed }}
         </x-button>
