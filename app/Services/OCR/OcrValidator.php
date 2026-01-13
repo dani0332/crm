@@ -50,12 +50,18 @@ trait OcrValidator
         InsuranceProviderEnum::DIC->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::CIG->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::SI->value => [QuoteTypes::GROUP_MEDICAL],
-        // Savings
-        InsuranceProviderEnum::OIC->value => [QuoteTypes::SAVINGS],
+    ];
+    private const QUOTE_TYPE_PROVIDER_SKIP_OCR = [
+        QuoteTypes::SAVINGS,
     ];
 
     public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
     {
+        // Check if no provider required for this quote type
+        if (in_array($quoteType, self::QUOTE_TYPE_PROVIDER_SKIP_OCR)) {
+            return true;
+        }
+
         return in_array($quoteType, self::PROVIDER_QUOTE_TYPE_MAPPING[$provider] ?? [], true);
     }
 
