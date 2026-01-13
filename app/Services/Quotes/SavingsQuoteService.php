@@ -283,7 +283,7 @@ class SavingsQuoteService extends BaseQuoteService
     public function getLocalLookups(): array
     {
         // Plan types from lookups table
-        $planTypes = Lookup::where('key', 'plan_type')
+        $planTypes = Lookup::where('key', 'plan-type')
             ->where('quote_type_id', QuoteTypeId::Savings)
             ->where('is_active', 1)
             ->select('id', 'code', 'text')
@@ -292,7 +292,7 @@ class SavingsQuoteService extends BaseQuoteService
         // Insurance provider plans from insurance_provider_plans table
         $providerPlans = InsuranceProviderPlan::where('quote_type_id', QuoteTypeId::Savings)
             ->active()
-            ->with(['eligibilities', 'currencyCoverages.currency'])
+            ->with(['eligibilities', 'currencyCoverages.currency', 'riders'])
             ->get();
 
         // Investment frequencies from lookups table
@@ -454,6 +454,51 @@ class SavingsQuoteService extends BaseQuoteService
         }
 
         return $response;
+    }
+
+    /**
+     * Toggle visibility for multiple savings plans (Show/Hide)
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return int|string
+     */
+    public function updateManualPlansBulk($request)
+    {
+        if ($request->planIds && isset($request->toggle) && isset($request->quote_uuid)) {
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-savings-quote-plan';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            $isDisabled = filter_var($request->toggle, FILTER_VALIDATE_BOOLEAN);
+            $plansArray = [];
+
+            foreach ($request->planIds as $planId) {
+                $plansArray[] = [
+                    'planId' => (int) $planId,
+                    'isDisabled' => $isDisabled,
+                ];
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->quote_uuid,
+                'update' => true,
+                'plans' => $plansArray,
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            return $this->httpService->processRequest($dataArray, $apiCreds);
+        }
+
+        return 'Invalid request parameters';
     }
 
     public function isPlanModifyAllowed($data)

@@ -43,4 +43,20 @@ class InsuranceProviderPlan extends Model
     {
         return $this->hasMany(CurrencyCoverage::class, 'plan_id');
     }
+
+    /**
+     * Get rider options for this plan (from rider_option table)
+     */
+    public function riderOptions()
+    {
+        return $this->hasMany(RiderOption::class, 'plan_id');
+    }
+
+    /**
+     * Get riders for this plan with rider details
+     */
+    public function riders()
+    {
+        return $this->hasMany(RiderOption::class, 'plan_id')->with('rider');
+    }
 }

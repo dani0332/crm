@@ -85,20 +85,12 @@ const addPlanForm = useForm({
   lumpsum_payout: null,
   insurer_quote_no: '',
   is_manual_update: true,
-  // Riders
-  life_cover_enabled: false,
-  life_cover_value: 0,
-  life_cover_value_2: 0,
-  critical_illness_enabled: false,
-  critical_illness_value: 0,
-  critical_illness_value_2: 0,
-  total_permanent_disability_enabled: false,
-  total_permanent_disability_value: 0,
-  total_permanent_disability_value_2: 0,
-  waiver_of_premium_enabled: false,
-  waiver_of_premium_value: 0,
-  waiver_of_premium_value_2: 0,
+  // Dynamic Riders - will be populated based on selected plan
+  riders: [],
 });
+
+// Dynamic rider values storage (keyed by rider id)
+const riderValues = ref({});
 
 // Plan Type Options - from localLookups
 const planTypeOptions = computed(() => {
@@ -193,11 +185,6 @@ const tenureOfSavingsOptions = computed(() => {
   return options;
 });
 
-// Show riders section only for "Whole of Life" plan type
-const showRiders = computed(() => {
-  return addPlanForm.plan_type === 'whole_of_life';
-});
-
 // Map payment term to frequency for calculator
 const getFrequencyFromPaymentTerm = term => {
   const map = {
@@ -254,18 +241,76 @@ const selectedPlanData = computed(() => {
   );
 });
 
+// Get riders from selected plan
+const planRiders = computed(() => {
+  return selectedPlanData.value?.riders || [];
+});
+
+// Show riders section if the selected plan has riders
+const showRiders = computed(() => {
+  return planRiders.value.length > 0;
+});
+
+// Initialize rider values when plan changes
+const initializeRiderValues = riders => {
+  const newRiderValues = {};
+  riders.forEach(riderOption => {
+    // riderOption has: id, plan_id, rider_id, input_type, input_required, max_age, cover_type
+    // riderOption.rider has: id, code, text, type, etc.
+    const rider = riderOption.rider || {};
+    newRiderValues[riderOption.id] = {
+      id: riderOption.id,
+      riderId: riderOption.rider_id,
+      code: rider.code || riderOption.code,
+      text: rider.text || riderOption.text || 'Rider',
+      enabled: false,
+      coverValue: 0,
+      coverValue2: 0,
+      inputRequired: riderOption.input_required || false,
+      inputType: riderOption.input_type || null,
+      coverType: riderOption.cover_type || null,
+      maxAge: riderOption.max_age || null,
+    };
+  });
+  riderValues.value = newRiderValues;
+
+  // Update form riders array
+  addPlanForm.riders = Object.values(newRiderValues);
+};
+
+// Sync rider values to form
+const syncRidersToForm = () => {
+  addPlanForm.riders = Object.values(riderValues.value);
+};
+
 // Watch for plan selection to auto-populate dependent fields
 watch(
   () => addPlanForm.savings_plan_id,
   newPlanId => {
     if (newPlanId && selectedPlanData.value) {
       const plan = selectedPlanData.value;
+      console.log('Selected plan:', plan);
+      console.log('Plan riders:', plan.riders);
+
       // Auto-populate fields from plan data if available
       // These can be adjusted based on actual plan data structure
       addPlanForm.currency = plan.currency || 'AED';
       addPlanForm.investment_frequency = plan.investment_frequency || null;
       addPlanForm.expected_rate_of_return = plan.expected_return || null;
       // addPlanForm.tenure_of_savings = plan.policyTerm || null;
+
+      // Initialize riders if plan has them
+      if (plan.riders?.length) {
+        console.log('Initializing riders:', plan.riders);
+        initializeRiderValues(plan.riders);
+      } else {
+        riderValues.value = {};
+        addPlanForm.riders = [];
+      }
+    } else {
+      // Reset riders when no plan selected
+      riderValues.value = {};
+      addPlanForm.riders = [];
     }
   },
 );
@@ -579,145 +624,72 @@ const validateDecimal = event => {
       </div>
     </div>
 
-    <!-- RIDERS Section (Only for Whole of Life) -->
+    <!-- RIDERS Section (Dynamic based on selected plan) -->
     <div v-if="showRiders" class="border-t border-gray-200 pt-5 mt-2">
       <div class="bg-gray-100 px-2 py-2 mb-4 rounded-lg">
         <h4 class="font-bold text-gray-800 text-md">RIDERS</h4>
       </div>
 
       <div class="px-4">
-        <!-- Life Cover -->
-        <div class="flex items-center gap-4 mb-4">
+        <!-- Dynamic Riders -->
+        <div
+          v-for="riderOption in planRiders"
+          :key="riderOption.id"
+          class="flex w-full items-center mb-4 gap-4"
+        >
+          <!-- Rider Name -->
           <div class="w-[20%]">
-            <span class="text-sm text-gray-700">Life Cover</span>
-          </div>
-          <div class="w-[15%]">
-            <span class="">Included</span>
-          </div>
-          <div class="w-[20%]">
-            <x-input
-              v-model="addPlanForm.life_cover_value"
-              type="number"
-              size="sm"
-              placeholder="0"
-            />
-          </div>
-          <div class="w-[15%] flex justify-center">
-            <x-toggle
-              v-model="addPlanForm.life_cover_enabled"
-              color="success"
-              size="sm"
-            />
-          </div>
-          <div class="w-[20%]">
-            <x-input
-              v-model="addPlanForm.life_cover_value_2"
-              type="number"
-              size="sm"
-              placeholder="0"
-            />
-          </div>
-        </div>
-
-        <!-- Critical Illness -->
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-[20%]">
-            <span class="text-sm text-gray-700">Critical Illness</span>
-          </div>
-          <div class="w-[15%]">
-            <span class="">Included</span>
-          </div>
-          <div class="w-[20%]">
-            <x-input
-              v-model="addPlanForm.critical_illness_value"
-              type="number"
-              size="sm"
-              placeholder="0"
-            />
-          </div>
-          <div class="w-[15%] flex justify-center">
-            <x-toggle
-              v-model="addPlanForm.critical_illness_enabled"
-              color="success"
-              size="sm"
-            />
-          </div>
-          <div class="w-[20%]">
-            <x-input
-              v-model="addPlanForm.critical_illness_value_2"
-              type="number"
-              size="sm"
-              placeholder="0"
-            />
-          </div>
-        </div>
-
-        <!-- Total Permanent Disability -->
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-[20%]">
-            <span class="text-sm text-gray-700"
-              >Total Permanent Disability</span
+            <span class="text-sm text-gray-700">{{
+              riderOption.rider?.text || 'Rider'
+            }}</span>
+            <span
+              v-if="riderOption.input_required"
+              class="ml-1 text-xs text-orange-500"
+              title="Input Required"
+              >*</span
             >
           </div>
+          <!-- Status -->
           <div class="w-[15%]">
-            <span class="">Optional</span>
+            <span class="text-sm text-gray-500">Included</span>
           </div>
+          <!-- First Input -->
           <div class="w-[20%]">
             <x-input
-              v-model="addPlanForm.total_permanent_disability_value"
+              v-model="riderValues[riderOption.id].coverValue"
               type="number"
               size="sm"
               placeholder="0"
+              class="!mb-0 [&>label]:!mb-0"
+              :disabled="!riderValues[riderOption.id]?.enabled"
+              @update:modelValue="syncRidersToForm"
             />
           </div>
+          <!-- Toggle -->
           <div class="w-[15%] flex justify-center">
             <x-toggle
-              v-model="addPlanForm.total_permanent_disability_enabled"
+              v-model="riderValues[riderOption.id].enabled"
               color="success"
               size="sm"
+              @update:modelValue="syncRidersToForm"
             />
           </div>
+          <!-- Second Input -->
           <div class="w-[20%]">
             <x-input
-              v-model="addPlanForm.total_permanent_disability_value_2"
+              v-model="riderValues[riderOption.id].coverValue2"
               type="number"
               size="sm"
               placeholder="0"
+              class="!mb-0 [&>label]:!mb-0"
+              :disabled="!riderValues[riderOption.id]?.enabled"
+              @update:modelValue="syncRidersToForm"
             />
           </div>
         </div>
 
-        <!-- Waiver of Premium -->
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-[20%]">
-            <span class="text-sm text-gray-700">Waiver of Premium</span>
-          </div>
-          <div class="w-[15%]">
-            <span class="">Optional</span>
-          </div>
-          <div class="w-[20%]">
-            <x-input
-              v-model="addPlanForm.waiver_of_premium_value"
-              type="number"
-              size="sm"
-              placeholder="0"
-            />
-          </div>
-          <div class="w-[15%] flex justify-center">
-            <x-toggle
-              v-model="addPlanForm.waiver_of_premium_enabled"
-              color="success"
-              size="sm"
-            />
-          </div>
-          <div class="w-[20%]">
-            <x-input
-              v-model="addPlanForm.waiver_of_premium_value_2"
-              type="number"
-              size="sm"
-              placeholder="0"
-            />
-          </div>
+        <div v-if="!planRiders.length" class="text-center text-gray-500 py-4">
+          No riders available for this plan
         </div>
       </div>
     </div>

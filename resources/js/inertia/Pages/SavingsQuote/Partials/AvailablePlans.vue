@@ -82,7 +82,7 @@ const availablePlansTable = reactive({
     },
     {
       text: 'Tenure of Savings',
-      value: 'tenureOfSavings',
+      value: 'tenure',
     },
     {
       text: 'Expected Rate of Return',
@@ -112,6 +112,38 @@ const selectedPlanType = ref(null);
 const toggleLoader = ref(false);
 const viewButtonLoading = ref(false);
 const planDetails = ref(null);
+
+// Toggle plans visibility (Show/Hide)
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = [...new Set(selectedPlans.value.map(p => p.id))];
+
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      planIds: planIds,
+      quote_uuid: props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans have been updated',
+        position: 'top',
+      });
+      onLoadAvailablePlansData();
+      selectedPlans.value = [];
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error updating plans',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+    });
+};
 
 // Exchange Rate Logic (Frontend-only, all rates from API)
 const exchangeRates = ref({}); // { currency: rate } from API (USD base)
@@ -239,6 +271,29 @@ const getEligibilityValue = (plan, code) => {
     return found ? found.value : 'N/A';
   }
   return 'N/A';
+};
+
+// Calculate total annual price based on payment term
+const calculateTotalAnnualPrice = item => {
+  const price = parseFloat(item.actualPremium || item.price || 0);
+  if (!price) return null;
+
+  const paymentTerm = (item.paymentTerm || 'Monthly').toLowerCase();
+  let multiplier = 12; // Default to monthly
+
+  if (paymentTerm.includes('quarter')) {
+    multiplier = 4;
+  } else if (paymentTerm.includes('semi')) {
+    multiplier = 2;
+  } else if (
+    paymentTerm.includes('annual') ||
+    paymentTerm.includes('single') ||
+    paymentTerm.includes('yearly')
+  ) {
+    multiplier = 1;
+  }
+
+  return price * multiplier;
 };
 
 const getPlanDetails = id => {
@@ -444,6 +499,22 @@ onMounted(() => {
                 </div>
               </template>
             </x-tooltip>
+
+            <!-- Show/Hide Button Group -->
+            <x-button-group v-if="selectedPlans.length > 0" size="sm">
+              <x-button
+                @click.prevent="onTogglePlans(false)"
+                :loading="toggleLoader"
+              >
+                Show
+              </x-button>
+              <x-button
+                @click.prevent="onTogglePlans(true)"
+                :loading="toggleLoader"
+              >
+                Hide
+              </x-button>
+            </x-button-group>
           </div>
 
           <div class="flex gap-2">
@@ -715,22 +786,30 @@ onMounted(() => {
               <span>{{ item.investmentFrequency || 'N/A' }}</span>
             </template>
             <template #item-paymentTerm="item">
-              <span>{{ item.paymentTerm || 'N/A' }}</span>
+              <span>{{ item.paymentTerm || 'Monthly' }}</span>
             </template>
-            <template #item-tenureOfSavings="item">
-              <span>{{ item.tenureOfSavings || 'N/A' }}</span>
+            <template #item-tenure="item">
+              <span>{{ item.tenure ? `${item.tenure} years` : 'N/A' }}</span>
             </template>
-            <template #item-expectedRateOfReturn="item">
-              <span>{{ item.expectedRateOfReturn || 'N/A' }}</span>
+            <template #item-expectedRor="item">
+              <span>{{
+                item.expectedRor ? `${item.expectedRor}%` : 'N/A'
+              }}</span>
             </template>
             <template #item-lumpsumAmount="item">
               <span>{{ item.lumpsumAmount || 'N/A' }}</span>
             </template>
             <template #item-totalAnnualPrice="item">
-              <span>{{ item.totalAnnualPrice || 'N/A' }}</span>
+              <span>{{
+                calculateTotalAnnualPrice(item)
+                  ? fmt(calculateTotalAnnualPrice(item))
+                  : 'N/A'
+              }}</span>
             </template>
             <template #item-totalAnnualPriceAed="item">
-              <span>{{ fmt(toAED(item.totalAnnualPrice || 0, item)) }}</span>
+              <span>{{
+                fmt(toAED(calculateTotalAnnualPrice(item) || 0, item))
+              }}</span>
             </template>
             <template #item-action="item">
               <div class="flex gap-3">
