@@ -595,9 +595,15 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(HealthUMAFResponse::class, 'quote_uuid', 'uuid');
     }
 
-    public function isSTPCase()
+    /**
+     * Check if this quote is a Straight Through Processing (STP) case
+     *
+     * @return bool
+     */
+    public function isSTPCase(): bool
     {
-        return (bool) $this->healthUmafResponse?->stp_rating['is_stp'] ?? false;
+        // Use data_get for safe nested access with default value
+        return (bool) data_get($this->healthUmafResponse, 'stp_rating.is_stp', false);
     }
 
     public function isBookingFailed()
