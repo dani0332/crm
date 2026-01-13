@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Models\PersonalQuote;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -58,7 +59,7 @@ beforeEach(function () {
         ->withEmail(EMAIL_CUSTOMER_A)
         ->create();
 
-    createPersonalQuoteForCarQuote($this->quoteA);
+    $this->personalQuoteId = createPersonalQuoteForCarQuote($this->quoteA);
 
     // Create common additional contact (used by all tests)
     $this->additionalContactB = CustomerAdditionalContact::factory()
@@ -70,10 +71,11 @@ beforeEach(function () {
 
 /**
  * Helper function to create a personal_quotes entry for a CarQuote
+ * Returns the ID of the created PersonalQuote
  */
-function createPersonalQuoteForCarQuote(CarQuote $quote): void
+function createPersonalQuoteForCarQuote(CarQuote $quote): int
 {
-    DB::connection('sqlite')->table('personal_quotes')->insert([
+    $personalQuoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
         'code' => $quote->code,
         'uuid' => $quote->uuid,
         'first_name' => $quote->first_name,
@@ -85,6 +87,8 @@ function createPersonalQuoteForCarQuote(CarQuote $quote): void
         'created_at' => now(),
         'updated_at' => now(),
     ]);
+    
+    return $personalQuoteId;
 }
 
 afterEach(function () {
@@ -228,4 +232,117 @@ test('delete additional contact without permission returns error and does not de
     // Verify record still exists
     $recordStillExists = CustomerAdditionalContact::find($this->additionalContactB->id);
     expect($recordStillExists)->not->toBeNull();
+});
+
+test('change primary contact via personal-quotes endpoint keeps existing primary email when keep_existing_primary_email is true', function () {
+    // Action: Make HTTP PATCH request to change primary contact with keep_existing_primary_email = true
+    $response = $this->patch("/personal-quotes/{$this->personalQuoteId}/change-primary-contact", [
+        'isInertia' => true,
+        'quote_id' => $this->quoteA->id,
+        'quote_type' => QUOTE_TYPE->value,
+        'key' => GenericRequestEnum::EMAIL,
+        'value' => EMAIL_CUSTOMER_B,
+        'quote_customer_id' => $this->quoteA->customer_id,
+        'quote_primary_email_address' => $this->quoteA->email,
+        'quote_primary_mobile_no' => $this->quoteA->mobile_no,
+        'keep_existing_primary_email' => 1,
+    ]);
+
+    // Assertions
+    expect($response->isRedirect())->toBeTrue()
+        ->and($response->getSession()->get('error'))->toBeNull();
+
+    // QuoteA's email should be updated to CustomerB's email
+    $switchedQuote = PersonalQuote::find($this->personalQuoteId);
+    expect($switchedQuote->email)->toBe(EMAIL_CUSTOMER_B);
+
+    // CustomerB's additional contacts should contain CustomerA's email
+    $customerBAdditionalContacts = CustomerAdditionalContact::where([
+        'customer_id' => $switchedQuote->customer_id,
+        'key' => GenericRequestEnum::EMAIL,
+        'value' => EMAIL_CUSTOMER_A,
+    ])->get();
+
+    expect($customerBAdditionalContacts)->not->toBeEmpty();
+    
+    // The additional contact with CustomerB's email should be removed from CustomerA
+    $contactWithCustomerBEmailInCustomerA = CustomerAdditionalContact::where([
+        'customer_id' => $this->customerA->id,
+        'key' => GenericRequestEnum::EMAIL,
+        'value' => EMAIL_CUSTOMER_B,
+    ])->first();
+    
+    expect($contactWithCustomerBEmailInCustomerA)->toBeNull();
+});
+
+test('change primary contact via personal-quotes endpoint does not keep existing primary email when keep_existing_primary_email is false', function () {
+    // Action: Make HTTP PATCH request to change primary contact with keep_existing_primary_email = false
+    $response = $this->patch("/personal-quotes/{$this->personalQuoteId}/change-primary-contact", [
+        'isInertia' => true,
+        'quote_id' => $this->quoteA->id,
+        'quote_type' => QUOTE_TYPE->value,
+        'key' => GenericRequestEnum::EMAIL,
+        'value' => EMAIL_CUSTOMER_B,
+        'quote_customer_id' => $this->quoteA->customer_id,
+        'quote_primary_email_address' => $this->quoteA->email,
+        'quote_primary_mobile_no' => $this->quoteA->mobile_no,
+        'keep_existing_primary_email' => 0,
+    ]);
+
+    // Assertions
+    expect($response->isRedirect())->toBeTrue()
+        ->and($response->getSession()->get('error'))->toBeNull();
+
+    // QuoteA's email should be updated to CustomerB's email
+    $switchedQuote = PersonalQuote::find($this->personalQuoteId);
+    expect($switchedQuote->email)->toBe(EMAIL_CUSTOMER_B);
+
+    // CustomerB's additional contacts should NOT contain CustomerA's email
+    $customerBAdditionalContacts = CustomerAdditionalContact::where([
+        'customer_id' => $switchedQuote->customer_id,
+        'key' => GenericRequestEnum::EMAIL,
+        'value' => EMAIL_CUSTOMER_A,
+    ])->get();
+
+    expect($customerBAdditionalContacts)->toBeEmpty();
+    
+    // The additional contact with CustomerB's email should be removed from CustomerA
+    $contactWithCustomerBEmailInCustomerA = CustomerAdditionalContact::where([
+        'customer_id' => $this->customerA->id,
+        'key' => GenericRequestEnum::EMAIL,
+        'value' => EMAIL_CUSTOMER_B,
+    ])->first();
+    
+    expect($contactWithCustomerBEmailInCustomerA)->toBeNull();
+});
+
+test('change primary contact via personal-quotes endpoint returns 404 when quote not found', function () {
+    // Action: Make HTTP PATCH request with non-existent quote ID
+    // findOrFail will throw ModelNotFoundException which Laravel converts to 404
+    $response = $this->patch("/personal-quotes/99999/change-primary-contact", [
+        'isInertia' => true,
+        'quote_id' => $this->quoteA->id,
+        'quote_type' => QUOTE_TYPE->value,
+        'key' => GenericRequestEnum::EMAIL,
+        'value' => EMAIL_CUSTOMER_B,
+        'quote_customer_id' => $this->quoteA->customer_id,
+        'quote_primary_email_address' => $this->quoteA->email,
+        'quote_primary_mobile_no' => $this->quoteA->mobile_no,
+        'keep_existing_primary_email' => 1,
+    ]);
+
+    // Assertions: findOrFail throws ModelNotFoundException which results in 404
+    expect($response->status())->toBe(404);
+});
+
+test('change primary contact via personal-quotes endpoint validates required fields', function () {
+    // Action: Make HTTP PATCH request without required fields
+    $response = $this->patch("/personal-quotes/{$this->personalQuoteId}/change-primary-contact", [
+        'isInertia' => true,
+        // Missing required fields: key, value, quote_id, quote_type
+    ]);
+
+    // Assertions - should return validation errors
+    expect($response->status())->toBe(302) // Redirect with validation errors
+        ->and($response->getSession()->has('errors'))->toBeTrue();
 });
