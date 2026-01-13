@@ -869,11 +869,11 @@ class AMLService
                     LoggerService::info('Failed to retrieve quote details from insurer', extra: [
                         'quote_type_id' => $quoteTypeId,
                         'customer_type' => $customerType,
-                        'error' => $getQuoteResponse['message'] ?? 'Unknown error',
+                        'error' => $getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR,
                     ]);
                     $screeningResponse = [
                         'status' => AMLStatusCode::AMLPending,
-                        'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
+                        'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR).')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR).')',
                         'screening_type' => $screeningType,
                     ];
 
@@ -890,7 +890,7 @@ class AMLService
                         LoggerService::info('GetQuote API failed: Setting to Pending', extra: [
                             'quote_type_id' => $quoteTypeId,
                             'customer_type' => $customerType,
-                            'error' => $getQuoteResponse['message'] ?? 'Unknown error',
+                            'error' => $getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR,
                         ]);
                         $screeningResponse['message'] = $getQuoteResponse['message'] ?? 'Insurer GetQuote API failed';
                         $screeningResponse['is_get_quote_api_failed'] = true;
