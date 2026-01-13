@@ -111,7 +111,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             LoggerService::info(self::class." - verifyFetchLeadPreChecks: isAWNI: {$isAWNI} - isAutomationEnabled: {$isAutomationEnabled}");
 
             if ($isAWNI && $isAutomationEnabled && $lead->isPaid()) {
-                if ($lead->isAutomationCompleted() || $lead->isBookingFailed()) {
+                if ($lead->isAutomationCompleted()) {
                     $this->allocationRequest->set('isCHSAdvisor', true);
                     LoggerService::info(self::class.':fetchLead - it is AWNI and automation is completed or booking failed so proceed with allocation');
                 } else {
