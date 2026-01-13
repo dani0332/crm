@@ -111,24 +111,25 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             LoggerService::info(self::class." - verifyFetchLeadPreChecks: isAWNI: {$isAWNI} - isAutomationEnabled: {$isAutomationEnabled}");
 
             if ($isAWNI && $isAutomationEnabled && $lead->isPaid()) {
-                if ($lead->isAutomationCompleted()) {
-                    $this->allocationRequest->set('isCHSAdvisor', true);
-                    LoggerService::info(self::class.':fetchLead - it is AWNI and automation is completed or booking failed so proceed with allocation');
-                } else {
-                    if (! $lead->isAutomationCompleted()) {
-                        LoggerService::info(self::class.':fetchLead - it is AWNI and automation is not yet completed so check fail cases');
-                        if ($lead->isPolicyIssuanceFailed()) {
-                            LoggerService::info(self::class.':fetchLead - it is AWNI and automation is not yet completed but policy issuance failed so proceed with allocation');
-
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
+                return $this->handleAwniAutomationStatus();
             }
         }
 
         return true;
+    }
+
+    private function handleAwniAutomationStatus(): bool
+    {
+        $allowAllocation = false;
+
+        if ($this->lead->isAutomationCompleted()) {
+            $this->allocationRequest->set('isCHSAdvisor', true);
+            LoggerService::info(self::class.':fetchLead - it is AWNI and automation is completed so proceed with allocation');
+            $allowAllocation = true;
+        }
+
+        LoggerService::info(self::class.':fetchLead - it is AWNI and automation is not yet completed, skipping allocation');
+
+        return $allowAllocation;
     }
 }
