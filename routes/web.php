@@ -91,6 +91,7 @@ use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SageProcessesController;
 use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
@@ -806,6 +807,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('update-insured-kyc', [AMLController::class, 'insuredKycDetailsUpdate'])->name('update-insured-kyc');
     Route::post('get-quote-details-from-insurer', [AMLController::class, 'getQuoteDetailsFromInsurer'])->name('get-quote-details-from-insurer');
+    Route::post('toggle-policy-issuance-automation', [AMLController::class, 'togglePolicyIssuanceAutomation'])->name('toggle-policy-issuance-automation');
     Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
     Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
@@ -853,6 +855,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['middleware' => ['readonly_db']], function () {
         Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
         Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+
+        // Sage Failed Processes Routes
+        Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.index');
+        Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.export');
     });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
