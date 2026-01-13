@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\SLAActionTypeEnum;
-use App\Http\Requests\ChangePrimaryContactRequest;
+use App\Http\Requests\CustomerPrimaryEmailRequest;
 use App\Http\Requests\DeleteAdditionalContactRequest;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
@@ -183,7 +183,7 @@ class CustomerController extends Controller
         return response()->json(['error' => ['message' => $result['message']]], 404);
     }
 
-    public function makeAdditionalContactPrimary(ChangePrimaryContactRequest $request)
+    public function makeAdditionalContactPrimary(CustomerPrimaryEmailRequest $request)
     {
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if (!$quoteObject) {
