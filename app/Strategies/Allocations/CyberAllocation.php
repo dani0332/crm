@@ -51,9 +51,14 @@ class CyberAllocation implements Allocation
             ])->thenReturn();
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred in Cyber allocation pipeline', extra: [
+            LoggerService::warning(self::class.' - Exception occurred in Cyber allocation pipeline', extra: [
                 'uuid' => $this->uuid,
-            ], exception: $e);
+                'exception' => $e->getMessage(),
+                'exception_class' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }
