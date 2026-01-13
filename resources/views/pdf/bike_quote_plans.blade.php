@@ -564,7 +564,7 @@
                 <div style="display: table-cell; text-align: right; vertical-align: middle; width: 30%;">
                     Quote Reference Number: <strong>{{ $quote->code }}</strong>
                 </div>
-            </div>
+        </div>
         </header>
 
         <div class="container">
@@ -573,7 +573,7 @@
                     <tr>
 
                         <th class="alfred" rowspan="3">
-                            <img style="" src="{{ public_path('images/alfred.png') }}" />
+                            <img style="max-width:120px; height:auto;" src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-halfalfredstandingfoldinghandsinsuit.png" />
                         </th>
 
                         @foreach ($planIds as $planId)
@@ -799,7 +799,7 @@
         <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$quote->uuid])
-    @endcomponent
+@endcomponent
 </body>
 
 </html>

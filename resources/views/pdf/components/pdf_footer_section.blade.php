@@ -295,27 +295,23 @@
                             </div>
                             @else
                               <!-- Alfred Photo -->
-                              <div style="margin-right:10px;">
+                              <div style="margin-bottom:4px;">
                                 <a
                                 class="text-white"
                                 href="{{$ecomInsuranceLink."/?IA=true"}}">
-                                <img src="{{ public_path('images/headset-with-bg.png') }}" 
-                                    alt="Alfred Photo" 
-                                    style="width:40px; height:40px; border-radius:55%; object-fit:cover;">
+                                <img src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-alfredadvisorwithheadphonewithbg.png" 
+                                    alt="Alfred" 
+                                    style="width:35px; height:35px; object-fit:contain;">
                                 </a>
-                                </div>
+                              </div>
                              
-                                <!-- Alfred Details -->
-                            <div>
-                         
-                              <p style="margin:0; font-weight:400; font-size:12px;">Alfred</p>
-                              <p style="margin:0; font-size:10px; color:#555;">Chat with InstantAlfred instantly</p>
-                              <p style=" font-size:9px; line-height:1 !important;  margin-top: 5px;">
-                                You're in the driver's seat - no advisor calls
-                                <br>will come your way without your request<br>
-                                  
-                              </p>
-                              
+                              <!-- Alfred Details -->
+                              <div style="text-align:left;">
+                                <p style="margin:0 0 1px 0; font-weight:700; font-size:10px; color:#333;">Alfred</p>
+                                <p style="margin:0 0 2px 0; font-size:8px; color:#666;">Chat with InstantAlfred instantly</p>
+                                <p style="font-size:7px; line-height:1.2 !important; margin:0; color:#555;">
+                                  You're in the driver's seat - no advisor calls<br>will come your way without your request
+                                </p>
                               </div>
                             @endif
                         </div>

@@ -380,6 +380,17 @@
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
         <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/travel_first_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
+    @endcomponent
+    <div style="page-break-after: always;"></div>
+
+    {{-- Second Page --}}
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
+    @endcomponent
+    <div style="page-break-after: always;"></div>
 
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -726,7 +737,7 @@ foreach ($quotePlan->addons as &$addon) {
             <thead>
                 <tr>
                     <th class="alfred" id="alfred-th">
-                        <img src="{{ public_path('images/alfred.png') }}" />
+                        <img style="max-width:120px; height:auto;" src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-halfalfredstandingfoldinghandsinsuit.png" />
                     </th>
                     @foreach ($planIds as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf;">
@@ -963,14 +974,20 @@ foreach ($quotePlan->addons as &$addon) {
 
     <div style="page-break-after: always;"></div>
 
-    {{-- Last Page --}}
+    {{-- Second Last Page --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" class="full-page-image"  style="height: 90%;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
-      
-     
-@endcomponent
+    @endcomponent
+    <div style="page-break-after: always;"></div>
+
+    {{-- Last Page --}}
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
+    @endcomponent
 </body>
 
 </html>
