@@ -441,7 +441,7 @@ class CRUDService extends BaseService
         } else {
             $query->whereIn('r.name', [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR']);
         }
-        
+
         return $query->orderBy('r.name')->distinct()->get();
     }
 
