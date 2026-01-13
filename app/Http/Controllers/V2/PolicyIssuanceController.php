@@ -18,11 +18,6 @@ class PolicyIssuanceController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    public function __construct()
-    {
-        $this->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, ['only' => ['triggerPolicyIssuance', 'manualTriggerPolicyIssuance']]);
-    }
-
     public function triggerPolicyIssuance($policyIssuanceId, Request $request)
     {
         $policyIssuance = PolicyIssuance::find($policyIssuanceId);
