@@ -1860,6 +1860,12 @@ class RenewalsUploadService
                 $previousAdvisor = $this->getPreviousAdvisor($carQuote);
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+                $leadData = $renewalQuoteProcess->lead_data;
+                $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+                if ($checkGenesisLead['status']) {
+                    // todo: need to remove current insurance provider as "" or null we are not showing GIG as it will lead customer to false information
+                    $emailData->currentInsurer = "";
+                }
                 LoggerService::info($logPrefix.' Renewals OCB Email email data created');
 
                 $this->attachPdfIfNeeded($carQuote, $listQuotePlans, $emailData);
