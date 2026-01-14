@@ -749,7 +749,31 @@ class SavingsQuoteService extends BaseQuoteService
     }
 
     /**
-     * Get savings plans by insurance provider
+     * Get provider plans from database (like Life)
+     */
+    public function getProviderPlans($providerId)
+    {
+        return InsuranceProviderPlan::where(['provider_id' => $providerId, 'quote_type_id' => QuoteTypeId::Savings])
+            ->active()
+            ->with(['eligibilities', 'currencyCoverages.currency'])
+            ->get();
+    }
+
+    /**
+     * Get riders for a plan (like Life)
+     */
+    public function getRiders($planId)
+    {
+        return \App\Models\RiderOption::where('plan_id', $planId)
+            ->select('id', 'rider_id', 'plan_id', 'input_required', 'input_type', 'max_age', 'cover_type')
+            ->with(['rider' => function ($query) {
+                $query->select('id', 'text', 'code');
+            }])
+            ->get();
+    }
+
+    /**
+     * Get savings plans by insurance provider (KEN API)
      */
     public function getSavingsPlansByProvider($insuranceProviderId, $quoteUuId = null)
     {

@@ -208,6 +208,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('quotes/savings/{quoteUuId}/send-oca', [SavingsQuoteController::class, 'sendOCAEmail'])->name('savingsSendOCAEmail');
     Route::post('quotes/savings/{quoteUuId}/savings-plan-manual-process', [SavingsQuoteController::class, 'savingsPlanManualProcess'])->name('savingsPlanManualProcess');
     Route::get('/savings-insurance-provider-plans', [SavingsQuoteController::class, 'savingsPlansByInsuranceProvider'])->name('savingsInsuranceProviderPlans');
+    Route::get('personal-quotes/savings/provider-plans/{providerId}', [SavingsQuoteController::class, 'getProviderPlans'])->name('savings-provider-plans');
+    Route::get('personal-quotes/savings/riders/{planId}', [SavingsQuoteController::class, 'riders'])->name('savings-plan-riders');
 
     // life routes with check_route_access middleware
     Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');

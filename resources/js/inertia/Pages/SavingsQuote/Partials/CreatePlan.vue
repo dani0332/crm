@@ -60,13 +60,10 @@ const isEmptyField = ref(false);
 
 const { isRequired, maxPrice, minPrice } = useRules();
 
-const quotePlansTable = reactive({
-  columns: [
-    { text: 'Provider Name', value: 'providerName' },
-    { text: 'Plan Name', value: 'name' },
-    { text: 'Investment Frequency', value: 'investmentFrequency' },
-    { text: 'Price', value: 'actualPremium' },
-  ],
+// Options for dynamically fetched data
+const options = reactive({
+  providerPlans: [],
+  loading: false,
 });
 
 const addPlanForm = useForm({
@@ -88,9 +85,6 @@ const addPlanForm = useForm({
   // Dynamic Riders - will be populated based on selected plan
   riders: [],
 });
-
-// Dynamic rider values storage (keyed by rider id)
-const riderValues = ref({});
 
 // Plan Type Options - from localLookups
 const planTypeOptions = computed(() => {
@@ -206,32 +200,57 @@ const insuranceProviderOptions = computed(() => {
   );
 });
 
-// Level 2: Plans filtered by Provider + Plan Type
+// Level 2: Plans filtered by Provider - fetched from API
 const insuranceProviderPlanOptions = computed(() => {
   if (!addPlanForm.insurance_provider_id) return [];
 
-  let plans = props.localLookups?.providerPlans || [];
-
-  // Filter by insurance provider
-  plans = plans.filter(
-    plan => plan.provider_id === addPlanForm.insurance_provider_id,
-  );
-
-  // Filter by plan type if selected (based on plan's code or text containing the type)
-  // This filtering logic can be adjusted based on actual data structure
-  if (addPlanForm.plan_type) {
-    // For now, we'll show all plans from the provider
-    // Adjust this if providerPlans has a plan_type_id field
-  }
-
-  return plans.map(plan => ({
+  return options.providerPlans.map(plan => ({
     value: plan.id,
     label: plan.text || plan.code,
     ...plan, // Keep full plan data for auto-population
   }));
 });
 
-const isLoadingPlans = ref(false);
+// Fetch provider plans from API (like Life)
+const fetchProviderPlans = () => {
+  if (!addPlanForm.insurance_provider_id) {
+    options.providerPlans = [];
+    return;
+  }
+
+  options.loading = true;
+  options.providerPlans = [];
+
+  axios
+    .get(
+      `/personal-quotes/savings/provider-plans/${addPlanForm.insurance_provider_id}`,
+    )
+    .then(res => {
+      if (res.data.plans) {
+        // TODO: Filter out plans that already exist in availablePlans (commented for now)
+        // options.providerPlans = res.data.plans.filter(
+        //   plan =>
+        //     !props.availablePlans?.some(
+        //       existingPlan => existingPlan.planId === plan.id,
+        //     ),
+        // );
+        options.providerPlans = res.data.plans;
+      } else {
+        options.providerPlans = [];
+      }
+    })
+    .catch(err => {
+      console.error('Error fetching provider plans:', err);
+      notification.error({
+        title: 'Failed to fetch plans',
+        position: 'top',
+      });
+      options.providerPlans = [];
+    })
+    .finally(() => {
+      options.loading = false;
+    });
+};
 
 // Level 3: Auto-populate fields when plan is selected
 const selectedPlanData = computed(() => {
@@ -241,78 +260,54 @@ const selectedPlanData = computed(() => {
   );
 });
 
-// Get riders from selected plan
-const planRiders = computed(() => {
-  return selectedPlanData.value?.riders || [];
-});
+const ridersData = ref([]);
 
-// Show riders section if the selected plan has riders
 const showRiders = computed(() => {
-  return planRiders.value.length > 0;
+  return ridersData.value.length > 0;
 });
 
-// Initialize rider values when plan changes
-const initializeRiderValues = riders => {
-  const newRiderValues = {};
-  riders.forEach(riderOption => {
-    // riderOption has: id, plan_id, rider_id, input_type, input_required, max_age, cover_type
-    // riderOption.rider has: id, code, text, type, etc.
-    const rider = riderOption.rider || {};
-    newRiderValues[riderOption.id] = {
-      id: riderOption.id,
-      riderId: riderOption.rider_id,
-      code: rider.code || riderOption.code,
-      text: rider.text || riderOption.text || 'Rider',
-      enabled: false,
+const getRiderDetails = async planId => {
+  try {
+    const res = await axios.get(`/personal-quotes/savings/riders/${planId}`);
+
+    // Map riders data like Life
+    ridersData.value = res.data.map(rider => ({
+      riderId: rider.rider_id,
+      active: 0,
+      price: 0,
       coverValue: 0,
-      coverValue2: 0,
-      inputRequired: riderOption.input_required || false,
-      inputType: riderOption.input_type || null,
-      coverType: riderOption.cover_type || null,
-      maxAge: riderOption.max_age || null,
-    };
-  });
-  riderValues.value = newRiderValues;
-
-  // Update form riders array
-  addPlanForm.riders = Object.values(newRiderValues);
+      text: rider.rider?.text || 'Rider',
+      inputRequired: rider.input_required,
+    }));
+  } catch (error) {
+    console.error('Error fetching rider details:', error);
+    notification.error({
+      title: 'Error fetching rider details',
+      position: 'top',
+    });
+    ridersData.value = [];
+  }
 };
 
-// Sync rider values to form
-const syncRidersToForm = () => {
-  addPlanForm.riders = Object.values(riderValues.value);
-};
-
-// Watch for plan selection to auto-populate dependent fields
 watch(
   () => addPlanForm.savings_plan_id,
   newPlanId => {
-    if (newPlanId && selectedPlanData.value) {
-      const plan = selectedPlanData.value;
-      console.log('Selected plan:', plan);
-      console.log('Plan riders:', plan.riders);
+    if (newPlanId) {
+      getRiderDetails(newPlanId);
 
-      // Auto-populate fields from plan data if available
-      // These can be adjusted based on actual plan data structure
-      addPlanForm.currency = plan.currency || 'AED';
-      addPlanForm.investment_frequency = plan.investment_frequency || null;
-      addPlanForm.expected_rate_of_return = plan.expected_return || null;
-      // addPlanForm.tenure_of_savings = plan.policyTerm || null;
-
-      // Initialize riders if plan has them
-      if (plan.riders?.length) {
-        console.log('Initializing riders:', plan.riders);
-        initializeRiderValues(plan.riders);
-      } else {
-        riderValues.value = {};
-        addPlanForm.riders = [];
+      // Auto-populate fields from selected plan if available
+      if (selectedPlanData.value) {
+        const plan = selectedPlanData.value;
+        addPlanForm.currency = plan.currency || 'AED';
+        addPlanForm.investment_frequency = plan.investment_frequency || null;
+        addPlanForm.expected_rate_of_return = plan.expected_return || null;
       }
     } else {
       // Reset riders when no plan selected
-      riderValues.value = {};
-      addPlanForm.riders = [];
+      ridersData.value = [];
     }
   },
+  { immediate: true },
 );
 
 // Level 4: Payment Terms from selected plan's eligibilities (type = PAYMENT_TERM)
@@ -365,11 +360,16 @@ watch(
   },
 );
 
-// Reset plan when provider changes
+// Fetch plans when provider changes
 watch(
   () => addPlanForm.insurance_provider_id,
-  () => {
+  newProviderId => {
     addPlanForm.savings_plan_id = null;
+    if (newProviderId) {
+      fetchProviderPlans();
+    } else {
+      options.providerPlans = [];
+    }
   },
 );
 
@@ -382,7 +382,7 @@ watch(
       addPlanForm.payment_term = 'single_payment';
     } else if (
       newFreq === 'regular' &&
-      addPlanForm.payment_term === 'single_payment'
+      addPlanForm.payment_term === 'monthly'
     ) {
       addPlanForm.payment_term = null; // Reset if was single payment
     }
@@ -402,6 +402,16 @@ const createQuotePlan = isValid => {
 
   if (!isValid) return;
 
+  // Process riders data like Life
+  const processedRiders = ridersData.value.map(rider => ({
+    ...rider,
+    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+  }));
+
+  // Add riders to form
+  addPlanForm.riders = processedRiders;
+
   addPlanForm.post(
     `/quotes/savings/${page.props.quote.uuid}/savings-plan-manual-process`,
     {
@@ -413,6 +423,7 @@ const createQuotePlan = isValid => {
         });
         emit('success');
         addPlanForm.reset();
+        ridersData.value = []; // Reset riders
       },
       onError: errors => {
         notification.error({
@@ -511,7 +522,7 @@ const validateDecimal = event => {
           :options="insuranceProviderPlanOptions"
           placeholder="Select Plan"
           class="w-full"
-          :loading="isLoadingPlans"
+          :loading="options.loading"
         />
       </div>
       <div class="w-full md:w-1/2">
@@ -633,17 +644,15 @@ const validateDecimal = event => {
       <div class="px-4">
         <!-- Dynamic Riders -->
         <div
-          v-for="riderOption in planRiders"
-          :key="riderOption.id"
+          v-for="(rider, index) in ridersData"
+          :key="index"
           class="flex w-full items-center mb-4 gap-4"
         >
           <!-- Rider Name -->
           <div class="w-[20%]">
-            <span class="text-sm text-gray-700">{{
-              riderOption.rider?.text || 'Rider'
-            }}</span>
+            <span class="text-sm text-gray-700">{{ rider.text }}</span>
             <span
-              v-if="riderOption.input_required"
+              v-if="rider.inputRequired"
               class="ml-1 text-xs text-orange-500"
               title="Input Required"
               >*</span
@@ -651,44 +660,41 @@ const validateDecimal = event => {
           </div>
           <!-- Status -->
           <div class="w-[15%]">
-            <span class="text-sm text-gray-500">Included</span>
+            <span class="text-sm text-gray-500">{{
+              rider.active ? 'Included' : 'Optional'
+            }}</span>
           </div>
-          <!-- First Input -->
+          <!-- First Input (Cover Value) -->
           <div class="w-[20%]">
             <x-input
-              v-model="riderValues[riderOption.id].coverValue"
+              v-model="rider.coverValue"
               type="number"
               size="sm"
               placeholder="0"
               class="!mb-0 [&>label]:!mb-0"
-              :disabled="!riderValues[riderOption.id]?.enabled"
-              @update:modelValue="syncRidersToForm"
+              :disabled="!rider.active"
+              min="0"
             />
           </div>
           <!-- Toggle -->
           <div class="w-[15%] flex justify-center">
-            <x-toggle
-              v-model="riderValues[riderOption.id].enabled"
-              color="success"
-              size="sm"
-              @update:modelValue="syncRidersToForm"
-            />
+            <x-toggle v-model="rider.active" color="success" size="sm" />
           </div>
-          <!-- Second Input -->
+          <!-- Second Input (Price) -->
           <div class="w-[20%]">
             <x-input
-              v-model="riderValues[riderOption.id].coverValue2"
+              v-model="rider.price"
               type="number"
               size="sm"
               placeholder="0"
               class="!mb-0 [&>label]:!mb-0"
-              :disabled="!riderValues[riderOption.id]?.enabled"
-              @update:modelValue="syncRidersToForm"
+              :disabled="!rider.active"
+              min="0"
             />
           </div>
         </div>
 
-        <div v-if="!planRiders.length" class="text-center text-gray-500 py-4">
+        <div v-if="!ridersData.length" class="text-center text-gray-500 py-4">
           No riders available for this plan
         </div>
       </div>

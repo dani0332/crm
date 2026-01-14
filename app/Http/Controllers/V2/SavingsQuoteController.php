@@ -266,7 +266,27 @@ class SavingsQuoteController extends Controller
     }
 
     /**
-     * Get savings plans by insurance provider
+     * Get provider plans from database (like Life)
+     */
+    public function getProviderPlans($providerId)
+    {
+        $providerPlans = $this->savingsQuoteService->getProviderPlans($providerId);
+
+        return response()->json(['plans' => $providerPlans]);
+    }
+
+    /**
+     * Get riders for a plan (like Life)
+     */
+    public function riders(Request $request)
+    {
+        $riders = $this->savingsQuoteService->getRiders($request->planId);
+
+        return response()->json($riders);
+    }
+
+    /**
+     * Get savings plans by insurance provider (KEN API)
      */
     public function savingsPlansByInsuranceProvider(Request $request)
     {
