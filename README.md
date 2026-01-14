@@ -192,12 +192,12 @@ I have created separate Docker files and configurations for local environments. 
 
 By following these steps, you can easily run the project locally on Docker. Docker provides a convenient and isolated environment for development, ensuring consistency across different systems. If you encounter any issues, refer to the Docker documentation or seek assistance from the project team.
 
-
 <!-- todo: Must be in public storage will remove after prod deployment -->
+
 Claims form ka doucment woo public directory ma store ho ga
 documents/claims/1767599725_efbb7bfa-2726-4a76-823a-aa6f616d68d9.pdf
 
-Ratings coverage health 
+Ratings coverage health
 imcrmdev/ratings/health/sample/sample_upload_coverages.xlsx
 imcrmdev/ratings/health/2026-01-13_13-25-50_2222dsadsa.xlsx
 
@@ -206,6 +206,4 @@ renewals/renewals_upload_create_m3.xlsx
 renewals/renewals_home_upload_update_m4.xlsx
 renewals/renewals_health_upload_update_m4.xlsx
 
-Policy wording ka folder need to verify on storage 
-
-
+Policy wording ka folder need to verify on storage
