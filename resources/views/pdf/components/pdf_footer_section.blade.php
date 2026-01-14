@@ -260,48 +260,48 @@
               
                 <!-- Right Column -->
                     <td class="footer-td" style="width:27%; @if(isset($quoteType) && $quoteType != 'Life') padding:10px; @endif text-align:left; margin-left:15px; vertical-align:middle;">
-                        <div style="background:#ffffff; color:#000; @if(isset($quoteType) && $quoteType != 'Life') padding:8px; @else padding:6px; @endif border-radius:12px; font-size:10px; width:65%; @if(isset($quoteType) && $quoteType != 'Life') height:100px; @else height:105px; @endif margin-top:5px; text-align:left;">
+                        <div style="background:#ffffff; color:#000; padding:10px; border-radius:12px; font-size:10px; width:70%; height:auto; margin-top:5px; text-align:left;">
                         
                           @if(!empty($quote->advisor))
                             <!-- Advisor Photo - Left aligned on top -->
                             <div style="text-align:left; margin-top:5px;">
                               <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}" 
                                   alt="Advisor Photo" 
-                                  style="width:35px; height:35px; border-radius:50%; object-fit:cover;">
+                                  style="width:45px; height:45px; border-radius:50%; object-fit:cover;">
                             </div>
                             <!-- Advisor Details - Below image, left aligned -->
-                            <div style="text-align:left; margin-top:3px;">
-                              <p style="margin:0; font-weight:400; font-size:10px;">{{ $quote->advisor->name }}</p>
-                              <p style="margin:0; font-size:8px; color:#555;">Insurance Advisor</p>
-                              <p style="font-size:8px; line-height:1.1 !important; margin-top:2px;">
+                            <div style="text-align:left; margin-top:5px;">
+                              <p style="margin:0; font-weight:600; font-size:12px;">{{ $quote->advisor->name }}</p>
+                              <p style="margin:0; font-size:10px; color:#555;">Insurance Advisor</p>
+                              <p style="font-size:9px; line-height:1.2 !important; margin-top:3px;">
                                 <a href="mailto:{{ $quote->advisor->email }}" style="color:#000;"><img src="{{ public_path('images/quote_plans_pages/icons/mail.svg') }}"
-                                style="width: 8px; height: 8px; vertical-align: baseline; display: inline-block;"> 
+                                style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;"> 
                                {{ $quote->advisor->email }}</a><br>
                                    <img src="{{ public_path('images/quote_plans_pages/icons/mobile.svg') }}"
-                                   style="width: 8px; height: 8px; vertical-align: baseline; display: inline-block;"><a href="tel:+{{ formatMobileNumber($quote->advisor->mobile_no) }}" style="color:#000; text-decoration:none;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</a>
+                                   style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;"><a href="tel:+{{ formatMobileNumber($quote->advisor->mobile_no) }}" style="color:#000; text-decoration:none;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</a>
                                   <a href="https://wa.me/{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}" target="_blank">
                                     <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png" 
-                                    width="8" 
-                                    style="vertical-align:middle; margin-left:2px;">
+                                    width="10" 
+                                    style="vertical-align:middle; margin-left:3px;">
                                   </a><br>
                                   <img src="{{ public_path('images/quote_plans_pages/icons/call.svg') }}"
-                                  style="width: 8px; height: 8px; vertical-align: baseline; display: inline-block;"> <a href="tel:{{ $quote->advisor->landline_no }}" style="color:#000; text-decoration:none;">{{ $quote->advisor->landline_no }}</a>
+                                  style="width: 10px; height: 10px; vertical-align: baseline; display: inline-block;"> <a href="tel:{{ $quote->advisor->landline_no }}" style="color:#000; text-decoration:none;">{{ $quote->advisor->landline_no }}</a>
                               </p>
                             </div>
                           @else
                             <!-- Alfred Photo - Left aligned on top with margin -->
-                            <div style="margin-top:8px; margin-left:0; padding-left:0;">
+                            <div style="margin-top:5px; margin-left:0; padding-left:0;">
                               <a href="{{$ecomInsuranceLink."/?IA=true"}}" style="display:block;">
                                 <img src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-alfredadvisorwithheadphonewithbg.png" 
                                     alt="Alfred" 
-                                    style="width:35px; height:35px; object-fit:contain; display:block;">
+                                    style="width:45px; height:45px; object-fit:contain; display:block;">
                               </a>
                             </div>
                             <!-- Alfred Details - Below image, left aligned -->
-                            <div style="margin-left:0; padding-left:0;">
-                              <p style="margin:0; font-weight:700; font-size:9px; color:#333; text-align:left;">Alfred</p>
-                              <p style="margin:0; font-size:7px; color:#666; text-align:left;">Chat with InstantAlfred instantly</p>
-                              <p style="font-size:6px; margin:0; color:#555; text-align:left;">
+                            <div style="margin-left:0; padding-left:0; margin-top:5px;">
+                              <p style="margin:0; font-weight:700; font-size:11px; color:#333; text-align:left;">Alfred</p>
+                              <p style="margin:0; font-size:9px; color:#666; text-align:left;">Chat with InstantAlfred instantly</p>
+                              <p style="font-size:8px; margin:0; margin-top:2px; color:#555; text-align:left;">
                                 You're in the driver's seat - no advisor calls<br>will come your way without your request
                               </p>
                             </div>
