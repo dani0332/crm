@@ -39,6 +39,7 @@ final class PolicyIssuanceEnum extends Enum
     const PIA_OCR_PROCESSING_API_FAILED_STATUS_ID = 5;
     const PIA_BOOK_POLICY_API_FAILED_STATUS_ID = 6;
     const PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID = 99;
+    const PIA_LEGACY_NON_API_STATUS_ID = 101;
 
     // Policy Issuance Automation Insurer Statuses Messages
     const PIA_AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
@@ -48,6 +49,7 @@ final class PolicyIssuanceEnum extends Enum
     const PIA_OCR_PROCESSING_API_FAILED = 'OCR Processing Failed';
     const PIA_BOOK_POLICY_API_FAILED = 'Send and Book Policy Failed';
     const PIA_PREVIOUS_POLICY_EXPIRED = 'Previous policy has expired';
+    const PIA_LEGACY_NON_API = 'Legacy NON API';
 
     // Policy Issuance Automation Insurer Statuses Action Messages
     const PIA_AUTO_CAPTURE_ACTION_MESSAGE = 'Auto Capture Payment';
@@ -57,6 +59,7 @@ final class PolicyIssuanceEnum extends Enum
     const PIA_OCR_PROCESSING_API_ACTION_MESSAGE = 'OCR Processing via API';
     const PIA_BOOK_POLICY_API_ACTION_MESSAGE = 'Book Policy via API';
     const PIA_PREVIOUS_POLICY_EXPIRED_ACTION_MESSAGE = 'Previous policy has expired';
+    const PIA_LEGACY_NON_ACTION_MESSAGE = 'Legacy NON API';
 
     // Policy Issuance AutomationRTA statuses
     const PIA_RTA_UPLOAD_STATUS_PENDING = '0';
@@ -96,6 +99,15 @@ final class PolicyIssuanceEnum extends Enum
 
     const LIVA_AML_ACTIVE = 1;
     const LIVA_AML_ACCEPTED = 23;
+
+    // Process Involved
+    const PROCESS_INVOLVED_ISSUE_POLICY = 'Issue Policy';
+    const PROCESS_INVOLVED_UPLOAD_DOCUMENTS = 'Upload Documents';
+    const PROCESS_INVOLVED_BOOK_POLICY = 'Send and Book Policy';
+    const PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM = 'Get and Upload Policy Documents to IMCRM';
+    const PROCESS_INVOLVED_OCR_PROCESSING = 'OCR Processing';
+    const PROCESS_INVOLVED_QUOTE_FINALIZATION = 'Quote Finalization';
+    const PROCESS_INVOLVED_PAYMENT_CAPTURE = 'Payment Capture';
 
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
     {

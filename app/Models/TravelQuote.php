@@ -11,6 +11,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +21,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class TravelQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
     protected $table = 'travel_quote_request';
     protected $guarded = [];
@@ -425,5 +426,21 @@ class TravelQuote extends Model implements AuditableContract
     public function personalQuote()
     {
         return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Travel);
+    }
+
+    public function customerAcceptanceLogs()
+    {
+        return $this->hasMany(CustomerAcceptanceLog::class, 'quote_uuid', 'uuid')
+            ->where('quote_type_id', QuoteTypeId::Travel);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function branchOverride()
+    {
+        return $this->morphOne(BranchOverride::class, 'quote_request');
     }
 }

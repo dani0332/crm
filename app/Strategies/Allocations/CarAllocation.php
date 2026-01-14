@@ -3,8 +3,10 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Pipes\Allocation\Car\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Car\AssignLeadPipe;
+use App\Pipes\Allocation\Car\EvaluateCatAEligibleAdvisorPipe;
 use App\Pipes\Allocation\Car\EvaluateTeamPipe;
 use App\Pipes\Allocation\Car\EvaluateTierPipe;
 use App\Pipes\Allocation\Car\FetchEligibleAdvisorsPipe;
@@ -45,27 +47,51 @@ class CarAllocation implements Allocation
             evaluateTierOnly: $this->evaluateTierOnly
         );
 
+        $lead = CarQuote::where('uuid', $this->uuid)->first();
+        if (! $lead) {
+            return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, new Exception('Lead not found'));
+        }
+        $pipes = $this->getPipes($lead);
+
         try {
-            return Pipeline::send($allocationRequest)->through([
-                FetchLeadPipe::class,
-                VerifyLeadPreChecksPipe::class,
-                VerifyAlreadyInProgressAllocationPipe::class,
-                EvaluateTierPipe::class,
-                ValidateNationalityConfigPipe::class,
-                EvaluateTeamPipe::class,
-                FetchTierUsersPipe::class,
-                ApplyRuleExclusionPipe::class,
-                FetchEligibleAdvisorsPipe::class,
-                ResetNationalityConfigPipe::class,
-                ApplyRuleExclusionPipe::class,
-                FetchEligibleAdvisorsPipe::class,
-                FinalizeEligibleAdvisorPipe::class,
-                AssignLeadPipe::class,
-                MakeResponsePipe::class,
-            ])->thenReturn();
+            return Pipeline::send($allocationRequest)->through($pipes)->thenReturn();
 
         } catch (Exception $e) {
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }
+    }
+
+    private function getPipes(CarQuote $lead)
+    {
+        $basePipes = [
+            FetchLeadPipe::class,
+            VerifyLeadPreChecksPipe::class,
+            VerifyAlreadyInProgressAllocationPipe::class,
+            EvaluateTierPipe::class,
+        ];
+
+        if ($lead && $lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A)) {
+            return [
+                ...$basePipes,
+                EvaluateCatAEligibleAdvisorPipe::class,
+                AssignLeadPipe::class,
+                MakeResponsePipe::class,
+            ];
+        }
+
+        return [
+            ...$basePipes,
+            ValidateNationalityConfigPipe::class,
+            EvaluateTeamPipe::class,
+            FetchTierUsersPipe::class,
+            ApplyRuleExclusionPipe::class,
+            FetchEligibleAdvisorsPipe::class,
+            ResetNationalityConfigPipe::class,
+            ApplyRuleExclusionPipe::class,
+            FetchEligibleAdvisorsPipe::class,
+            FinalizeEligibleAdvisorPipe::class,
+            AssignLeadPipe::class,
+            MakeResponsePipe::class,
+        ];
     }
 }

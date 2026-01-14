@@ -376,7 +376,7 @@ class CarQuoteService extends BaseService
         }
     }
 
-    private function verifyOCRData(CarQuote $carQuote): void
+    public function verifyOCRData(CarQuote $carQuote): void
     {
         // Get OCR enabled status
         $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
@@ -584,6 +584,10 @@ class CarQuoteService extends BaseService
                 'ss.description as sub_source_description',
                 'sso.text as sub_source_option_text',
                 'sso.description as sub_source_option_description',
+                'ub.branch_id as advisor_primary_branch_id',
+                'b.name as lead_branch_name',
+                'b.id as lead_branch_id',
+                'cqr.is_branch_applicable',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -633,6 +637,12 @@ class CarQuoteService extends BaseService
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'cqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'cqr.branch_id')
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
             ->first();
@@ -1069,6 +1079,15 @@ class CarQuoteService extends BaseService
             });
     }
 
+    public function postProcessCarQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car));
+
+            return $quote;
+        });
+    }
+
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('car_quote_request as cqr')
@@ -1231,6 +1250,7 @@ class CarQuoteService extends BaseService
         $client = new \GuzzleHttp\Client;
 
         try {
+            LoggerService::info('Calling KEN get-car-quote-plans to update plans', ['quote_uuid' => $quoteUuId, 'data' => $plansDataArr]);
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
@@ -2042,7 +2062,8 @@ class CarQuoteService extends BaseService
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
-                'u.email as assignedadvisoremail'
+                'u.email as assignedadvisoremail',
+                'd.name as departmentname'
             )
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'q.id')
@@ -2051,6 +2072,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as d', 'u.department_id', '=', 'd.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
@@ -2183,7 +2205,8 @@ class CarQuoteService extends BaseService
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
-                'u.email as assignedadvisoremail'
+                'u.email as assignedadvisoremail',
+                'd.name as departmentname'
             )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('payments as p', function ($join) {
@@ -2195,6 +2218,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as d', 'u.department_id', '=', 'd.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')

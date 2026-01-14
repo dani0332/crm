@@ -65,6 +65,12 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
     public const OE_ASSIGNMENT = 'oe_assignment';
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
+    public const CAR_MISSING_DOC_REMINDER = 'car_missing_doc_reminder';
     public const TRAVEL_AUTOMATED_FOLLOWUPS = 'travel_automated_followups';
+    public const TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS = 'travel_renewal_automated_followups';
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
+
+    // Misreport Enum
+    public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
+    public const SEND_FAILED_ILA_EMAILS = 'send_failed_ila_emails';
 }

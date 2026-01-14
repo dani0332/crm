@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\DTO\EpBookingContext;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -17,6 +20,8 @@ use Error;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class EpEcbService extends EpBookingService
@@ -138,12 +143,12 @@ class EpEcbService extends EpBookingService
             $this->executeWorkflowFromStep();
 
             LoggerService::info($this->logPrefix.' Purchase flow completed successfully', extra: $this->logExtra);
-        } catch (EpEcbException $e) {
+        } catch (EpEcbException|ValidationException $e) {
             LoggerService::info($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
                 'error' => $e->getMessage(),
             ]);
-            throw $e;
+            throw new EpEcbException($e->getMessage());
         } catch (Exception $e) {
             LoggerService::error($this->logPrefix.' Purchase flow failed', extra: [
                 ...$this->logExtra,
@@ -280,6 +285,115 @@ class EpEcbService extends EpBookingService
         };
     }
 
+    private function getValidationRules(string $step): array
+    {
+        $documentTypeRule = implode(',', [QuoteDocumentsEnum::COMPANY_CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY]);
+        $customerIdTypeRule = implode(',', ['TL', 'EID']);
+        $policySoldDateRules = 'required|date|date_equals:today';
+        $documentUrlRules = 'required|url|active_url';
+
+        $validationRules = [];
+        switch ($step) {
+            case self::STEP_GET_QUOTE:
+                $validationRules = [
+                    'client_reference_number' => 'nullable',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'transaction_currency' => "required|in:{$this->transactionCurrency}",
+                    'product_info.policy_product' => "required|in:{$this->policyProduct}",
+                    'customer_info.customer_type' => 'nullable',
+                    'vehicle_info.vehicle_make' => 'required',
+                    'vehicle_info.vehicle_model' => 'required',
+                    'vehicle_info.vehicle_model_year' => 'required',
+                ];
+                break;
+            case self::STEP_CREATE_POLICY_FROM_QUOTE:
+                $validationRules = [
+                    'client_reference_number' => 'nullable',
+                    'quote_reference_number' => 'required',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'payment_reference_number' => 'required',
+                    'sales_info.policy_sold_date' => $policySoldDateRules,
+                    'customer_info.customer_fname' => 'required',
+                    'customer_info.customer_lname' => 'required',
+                    'customer_info.customer_id_type' => "required|in:{$customerIdTypeRule}",
+                    'customer_info.customer_id_no' => 'required',
+                    'vehicle_info.vehicle_chassis_no' => 'required',
+                    'motor_insurance_info.mi_policy_number' => 'required|in:NA',
+                    'motor_insurance_info.mi_policy_issuer' => 'required',
+                    'motor_insurance_info.mi_start_date' => 'required|date',
+                    'motor_insurance_info.mi_end_date' => 'required|date',
+                    'motor_insurance_info.mi_coverage_area' => 'required|in:NA',
+                    'motor_insurance_info.mi_sum_insured' => 'required',
+                    'motor_insurance_info.mi_policy_excess' => 'required',
+                    'document_info' => 'required|array|size:2',
+                    'document_info.*.document_type' => "required|in:{$documentTypeRule}",
+                    'document_info.*.document_name' => 'required',
+                    'document_info.*.document_url' => $documentUrlRules,
+                ];
+                break;
+            case self::STEP_CREATE_POLICY_WITHOUT_QUOTE:
+                $validationRules = [
+                    'client_reference_number' => 'nullable',
+                    'transaction_country' => "required|in:{$this->transactionCountry}",
+                    'payment_reference_number' => 'required',
+                    'sales_info.policy_sold_date' => 'required|date|date_equals:today',
+                    'sales_info.policy_currency' => "required|in:{$this->transactionCurrency}",
+                    'product_info.policy_product' => "required|in:{$this->policyProduct}",
+                    'product_info.policy_coverage_type' => "required|in:{$this->policyProduct}",
+                    'product_info.policy_plan_type' => "required|in:{$this->policyProduct}-STANDARD",
+                    'customer_info.customer_fname' => 'required',
+                    'customer_info.customer_lname' => 'required',
+                    'customer_info.customer_id_type' => "required|in:{$customerIdTypeRule}",
+                    'customer_info.customer_id_no' => 'required',
+                    'vehicle_info.vehicle_make' => 'required',
+                    'vehicle_info.vehicle_model' => 'required',
+                    'vehicle_info.vehicle_first_regn_date' => 'required|date',
+                    'vehicle_info.vehicle_model_year' => 'required',
+                    'vehicle_info.vehicle_chassis_no' => 'required',
+                    'motor_insurance_info.mi_policy_number' => 'required|in:NA',
+                    'motor_insurance_info.mi_policy_issuer' => 'required',
+                    'motor_insurance_info.mi_start_date' => 'required|date',
+                    'motor_insurance_info.mi_end_date' => 'required|date',
+                    'motor_insurance_info.mi_coverage_area' => 'required|in:NA',
+                    'motor_insurance_info.mi_sum_insured' => 'required',
+                    'motor_insurance_info.mi_policy_excess' => 'required',
+                    'document_info' => 'required|array|size:2',
+                    'document_info.*.document_type' => "required|in:{$documentTypeRule}",
+                    'document_info.*.document_name' => 'required',
+                    'document_info.*.document_url' => $documentUrlRules,
+                ];
+                break;
+            case self::STEP_GET_POLICY_DOCUMENTS:
+                $validationRules = ['policyNumber' => 'required'];
+                break;
+            default:
+                break;
+        }
+
+        return $validationRules;
+    }
+    private function validatePayload($operation, $payload)
+    {
+        $validationRules = $this->getValidationRules($operation);
+        $validator = Validator::make($payload, $validationRules);
+        if ($validator->fails()) {
+
+            InsurerRequestResponse::create([
+                'quote_uuid' => $this->quote?->uuid,
+                'provider_id' => $this->context->insuranceProviderId, // You may want to set this based on your provider mapping
+                'call_type' => 'EpEcb',
+                'request' => json_encode($payload),
+                'response' => json_encode($validator->errors()->toArray()),
+                'status' => 'failed',
+                'execution_method' => $operation,
+            ]);
+
+            LoggerService::info("{$this->logPrefix} API {$operation} payload validation (failed)", extra: [...$this->logExtra, 'validation_errors' => $validator->errors()->toArray()]);
+        }
+
+        return $validator->validate();
+    }
+
     /**
      * Step 1: Get authentication token
      */
@@ -338,14 +452,16 @@ class EpEcbService extends EpBookingService
         }
 
         // Build quote request payload based on your business requirements
+        $operation = self::STEP_GET_QUOTE;
         $payload = $this->buildQuotePayload();
+        $this->validatePayload($operation, $payload);
 
         $response = $this->makeApiCall(
             'POST',
             '/api/Quote/GetQuote',
             $payload,
             true,
-            self::STEP_GET_QUOTE
+            $operation
         );
 
         if (! $response['success']) {
@@ -384,14 +500,16 @@ class EpEcbService extends EpBookingService
         }
 
         // Build policy creation payload
+        $operation = self::STEP_CREATE_POLICY_FROM_QUOTE;
         $payload = $this->buildPolicyFromQuotePayload();
+        $this->validatePayload($operation, $payload);
 
         $response = $this->makeApiCall(
             'POST',
             '/api/Policy/CreatePolicyFromQuote',
             $payload,
             true,
-            self::STEP_CREATE_POLICY_FROM_QUOTE
+            $operation
         );
 
         if (! $response['success']) {
@@ -428,14 +546,16 @@ class EpEcbService extends EpBookingService
         }
 
         // Build policy creation payload
+        $operation = self::STEP_CREATE_POLICY_WITHOUT_QUOTE;
         $payload = $this->buildPolicyWithoutQuotePayload();
+        $this->validatePayload($operation, $payload);
 
         $response = $this->makeApiCall(
             'POST',
             '/api/Policy/CreatePolicy',
             $payload,
             true,
-            self::STEP_CREATE_POLICY_WITHOUT_QUOTE
+            $operation
         );
 
         if (! $response['success']) {
@@ -549,12 +669,17 @@ class EpEcbService extends EpBookingService
         }
 
         $this->executeGetToken();
+
+        $operation = self::STEP_GET_POLICY_DOCUMENTS;
+        $payload = ['policyNumber' => $this->policyNumber];
+        $this->validatePayload($operation, $payload);
+
         $response = $this->makeApiCall(
             'GET',
             '/api/Policy/GetPolicyDocuments',
-            ['policyNumber' => $this->policyNumber],
+            $payload,
             true,
-            self::STEP_GET_POLICY_DOCUMENTS
+            $operation
         );
 
         if (! $response['success']) {
@@ -939,26 +1064,17 @@ class EpEcbService extends EpBookingService
         ];
     }
 
-    private function getEmirateIdNumber(): string
-    {
-        $latestInsuredData = $this->quote?->latestInsured;
-        $insuredKyc = $latestInsuredData?->insuredKyc;
-
-        $emirateIdNumber = str_replace('-', '', $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '');
-
-        if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
-            $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
-                .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
-        }
-
-        return $emirateIdNumber;
-    }
-
     private function getDocumentsInfo(): array
     {
-        $documentsInfo = $this->quote->documents()->whereIn('document_type_code', [QuoteDocumentsEnum::CAR_EMIRATE_ID, QuoteDocumentsEnum::CAR_MULKIY])
+        $carQuoteDocumentCodes = [QuoteDocumentsEnum::CAR_MULKIY];
+        $carQuoteDocumentCodes[] = $this->quote?->registration_type == CarRegistrationType::COMPANY
+            ? QuoteDocumentsEnum::COMPANY_CAR_EMIRATE_ID : QuoteDocumentsEnum::CAR_EMIRATE_ID;
+
+        $documentsInfo = $this->quote->documents()->whereIn('document_type_code', $carQuoteDocumentCodes)
             ->select('document_type_code', 'doc_name', 'doc_url')
             ->get()
+            ->unique('document_type_code')
+            ->values()
             ->map(function ($document) {
                 return [
                     'document_type' => $document->document_type_code,
@@ -969,23 +1085,37 @@ class EpEcbService extends EpBookingService
 
         return $documentsInfo->toArray();
     }
+    private function getCustomerTypeInfo(): array
+    {
+        $latestInsuredData = $this->quote?->latestInsured;
+
+        $proceedWithTradeLicense = $this->quote?->registration_type == CarRegistrationType::COMPANY
+            && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE
+            && $latestInsuredData?->customer_type == CustomerTypeEnum::Entity;
+
+        $customerIdType = $proceedWithTradeLicense ? 'TL' : 'EID';
+        $customerIdNo = $customerIdType == 'TL'
+            ? $latestInsuredData?->trade_license_no
+            : ($latestInsuredData?->id_type == 'emiratesId' ? formatEmiratesIdNumber($latestInsuredData?->id_number ?? '') : '');
+
+        return [
+            'customer_id_type' => $customerIdType,
+            'customer_id_no' => $customerIdNo,
+        ];
+    }
 
     private function getCustomerInfo(string $step): array
     {
-        $emirateIdNumber = $this->getEmirateIdNumber();
-        if (empty($emirateIdNumber)) {
-            throw new EpEcbException('Emirate ID number is not found');
-        }
+        $customerTypeInfo = $this->getCustomerTypeInfo();
 
         $customerDetails = [
+            ...$customerTypeInfo,
             'customer_type' => null,
             'customer_fname' => $this->quote?->first_name,
             'customer_lname' => $this->quote?->last_name,
             'customer_mobile_no' => null,
             'customer_whatsapp_no' => null,
             'customer_email_id' => null,
-            'customer_id_type' => 'EID',
-            'customer_id_no' => $emirateIdNumber,
             'customer_id_expiry_date' => null,
             'customer_address' => null,
             'customer_address_city' => null,

@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -162,6 +163,7 @@ class HandleInertiaRequests extends Middleware
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
             'genericRequestEnum' => GenericRequestEnum::asArray(),
+            'collectionTypeEnum' => CollectionTypeEnum::asArray(),
         ];
     }
 
@@ -360,6 +362,10 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
             $nav = $nav->add('Search', route('search-leads'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT)) {
+            $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
         }
 
         /* personal quotes section */
@@ -653,6 +659,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::COMMERCIAL_KEYWORDS,
             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
             PermissionsEnum::QUOTE_SYNC_LOGS,
+            PermissionsEnum::ILA_CONFIG_ALL_LOB,
         ];
         if (auth()->user()->hasAnyPermission($adminMenuPermissions) || auth()->user()->hasAnyRole([RolesEnum::Engineering])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
@@ -676,6 +683,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Activity Logs',
+                        route('admin.activity-logs.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::RoleList),
                         'Roles',
                         route('roles.index'),
@@ -691,6 +704,18 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
                         'Departments',
                         url('admin/departments'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BRANCHES),
+                        'Branches',
+                        url('admin/branches'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BRANCH_ASSIGNMENTS),
+                        'Branch Assignment',
+                        url('admin/branch-assignments'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
@@ -755,6 +780,7 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::TeamThresholdView,
                             PermissionsEnum::COMMERCIAL_KEYWORDS,
                             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+                            PermissionsEnum::ILA_CONFIG_ALL_LOB,
                         ]),
                         'Allocation Config',
                         route('tiers.index'),

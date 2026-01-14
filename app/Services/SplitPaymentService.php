@@ -731,10 +731,10 @@ class SplitPaymentService
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             // Log message for creating Sage receipt
             LoggerService::info("Creating Sage receipt for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} - Current Sage receipt ID: {$paymentSplit->sage_reciept_id}");
-            $isHealthAUH = $this->isHealthAUHLead($modelType, $mainLeadObject);
+            $isAbuDhabiBranch = $this->isAbuDhabiBranch($modelType, $mainLeadObject);
             $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quoteModel, $paymentSplit); /* Handle NRA case where payment is approved after policy/send update is booked */
             info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' trigger creation of Premium Sage receipt  : ', ['shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
-            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isHealthAUH && empty($paymentSplit->sage_reciept_id)) {
+            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isAbuDhabiBranch && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
                 $sageRequest = new stdClass;
                 $sageRequest->userId = auth()->id();
@@ -933,6 +933,18 @@ class SplitPaymentService
 
         $masterPayment = $quoteModel->payments->first();
 
+        if (! $masterPayment) {
+            LoggerService::info('Master payment not found during capture payment for quote code: '.$quoteModel->code);
+            $errorMessage = 'Master payment not found for quote code: '.$quoteModel->code;
+
+            if ($isFromJob && $splitPaymentId > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
+                LoggerService::error('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' - Master payment not found');
+            }
+
+            return $errorMessage;
+        }
+
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $masterPaymentStatus = $masterPayment->payment_status_id;
 
@@ -1074,23 +1086,77 @@ class SplitPaymentService
         $maxRetries = 5;
 
         $response = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $commission, $commissionSplitSumWithoutLastSplit) {
+            LoggerService::info('Starting commission split calculation', extra: [
+                'payment_id' => $payment->id,
+                'total_commission' => $commission,
+                'total_payment_splits' => count($paymentSplits),
+                'initial_commission_split_sum' => $commissionSplitSumWithoutLastSplit,
+                'commission_vat' => $payment->commission_vat,
+            ]);
+
             foreach ($paymentSplits as $paymentSplit) {
                 $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+
+                LoggerService::info('Processing payment split', extra: [
+                    'payment_id' => $payment->id,
+                    'payment_split_id' => $paymentSplit->id,
+                    'sr_no' => $paymentSplit->sr_no,
+                    'calculated_commission_split' => $commissionSplitAmount,
+                    'current_commission_split_sum' => $commissionSplitSumWithoutLastSplit,
+                ]);
+
                 /* to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
                  and then subtract that amount from the total commission without vat and use the result as commission for last commission split */
                 if ($paymentSplit->sr_no == count($paymentSplits)) {
+                    $originalCommissionSplitAmount = $commissionSplitAmount;
                     $commissionSplitAmount = (float) sprintf(
                         '%.2f',
                         $commission - $commissionSplitSumWithoutLastSplit
                     );
+
+                    LoggerService::info('Last payment split - adjusting for rounding', extra: [
+                        'payment_id' => $payment->id,
+                        'payment_split_id' => $paymentSplit->id,
+                        'sr_no' => $paymentSplit->sr_no,
+                        'original_commission_split' => $originalCommissionSplitAmount,
+                        'adjusted_commission_split' => $commissionSplitAmount,
+                        'total_commission' => $commission,
+                        'commission_split_sum_without_last' => $commissionSplitSumWithoutLastSplit,
+                        'difference' => $commissionSplitAmount - $originalCommissionSplitAmount,
+                    ]);
                 } else {
                     $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+
+                    LoggerService::info('Accumulated commission split sum', extra: [
+                        'payment_id' => $payment->id,
+                        'payment_split_id' => $paymentSplit->id,
+                        'sr_no' => $paymentSplit->sr_no,
+                        'added_amount' => $commissionSplitAmount,
+                        'new_total_sum' => $commissionSplitSumWithoutLastSplit,
+                    ]);
                 }
+
                 $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
                 /* Add Vat on commission to the first Installment of commission */
                 $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+
+                LoggerService::info('Saving payment split with commission values', extra: [
+                    'payment_id' => $payment->id,
+                    'payment_split_id' => $paymentSplit->id,
+                    'sr_no' => $paymentSplit->sr_no,
+                    'commission_vat_applicable' => $paymentSplit->commission_vat_applicable,
+                    'commission_vat' => $paymentSplit->commission_vat,
+                    'is_first_split' => $paymentSplit->sr_no == 1,
+                ]);
+
                 $paymentSplit->save();
             }
+
+            LoggerService::info('Completed commission split calculation', extra: [
+                'payment_id' => $payment->id,
+                'total_commission' => $commission,
+                'final_commission_split_sum' => $commissionSplitSumWithoutLastSplit,
+            ]);
         }, $maxRetries);
 
         if (isset($response['status']) && in_array($response['status'], [GenericRequestEnum::FAILED, GenericRequestEnum::ERROR])) {
@@ -1208,10 +1274,17 @@ class SplitPaymentService
                     'price_vat_not_applicable' => $quoteModel->price_vat_not_applicable,
                 ]);
             }
+
+            if ($send_update_id > 0 && isset($quoteModel->price_with_vat) && $quoteModel->price_with_vat > 0) {
+                $computedPrice = $quoteModel->price_with_vat;
+                LoggerService::info('SplitPaymentService - Using price_with_vat from send update log for payment code: '.$paymentCode, extra: [
+                    'price_with_vat' => $quoteModel->price_with_vat,
+                ]);
+            }
         }
 
         if ($computedPrice > 0) {
-            if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
+            if (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
                 $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
                 LoggerService::info('SplitPaymentService - ecommLob VAT calculation for payment code: '.$paymentCode, extra: [

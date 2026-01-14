@@ -12,6 +12,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SLAActionTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
+use App\Http\Requests\MemberDeleteRequest;
 use App\Http\Requests\MemberDetailRequest;
 use App\Models\HealthQuote;
 use App\Repositories\HealthQuoteRepository;
@@ -120,10 +121,14 @@ class HealthQuoteController extends Controller
         $response = $this->healthQuoteService->healthPlanModifyV2($request);
 
         $message = '';
-        if ($response['message'] && $response['message'] === 'health quote plan updated successfully') {
+        // Safely check if 'message' key exists and its value
+        if (is_array($response) && isset($response['message']) && $response['message'] === 'health quote plan updated successfully') {
             $message = 'Plan has been updated';
         } else {
-            if (isset($response->message)) {
+            // Use array syntax if $response is array, object syntax if object, else fallback to value
+            if (is_array($response) && isset($response['message'])) {
+                $responseMessage = $response['message'];
+            } elseif (is_object($response) && isset($response->message)) {
                 $responseMessage = $response->message;
             } else {
                 $responseMessage = $response;
@@ -174,6 +179,11 @@ class HealthQuoteController extends Controller
     {
         $request->validated();
 
+        $quote = HealthQuote::where('uuid', $request->quoteId)->first();
+        if ($quote?->is_quote_locked) {
+            return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
+
         $response = $this->healthQuoteService->healthQuoteAddMember($request);
 
         $message = '';
@@ -197,6 +207,11 @@ class HealthQuoteController extends Controller
     {
         $request->validated();
 
+        $quote = HealthQuote::where('uuid', $request->quoteId)->first();
+        if ($quote?->is_quote_locked) {
+            return redirect()->back()->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
+
         $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
 
         $message = '';
@@ -216,7 +231,7 @@ class HealthQuoteController extends Controller
         return redirect()->back();
     }
 
-    public function healthQuoteDeleteMember(Request $request)
+    public function healthQuoteDeleteMember(MemberDeleteRequest $request)
     {
         $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
 

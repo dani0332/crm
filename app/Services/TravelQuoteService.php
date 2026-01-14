@@ -200,6 +200,10 @@ class TravelQuoteService extends BaseService
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
             'sso.description as sub_source_option_description',
+            'ub.branch_id as advisor_primary_branch_id',
+            'b.name as lead_branch_name',
+            'b.id as lead_branch_id',
+            'tqr.is_branch_applicable',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -232,7 +236,13 @@ class TravelQuoteService extends BaseService
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
             ->leftJoin('lookups as ss', 'ss.id', '=', 'tqr.sub_source_id')
-            ->leftJoin('lookups as sso', 'sso.id', '=', 'tqr.sub_source_options_id');
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'tqr.sub_source_options_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'tqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'tqr.branch_id');
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
@@ -436,6 +446,15 @@ class TravelQuoteService extends BaseService
 
         return $query;
 
+    }
+
+    public function postProcessTravelQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel));
+
+            return $quote;
+        });
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -1088,6 +1107,17 @@ class TravelQuoteService extends BaseService
                     $duplicateDestination->quote_id = $duplicateLead->id;
                     $duplicateDestination->uuid = $duplicateLead->uuid;
                     $duplicateDestination->save();
+                });
+            }
+
+            // duplicate customer acceptance logs
+            $customerAcceptanceLogs = $leadModal->customerAcceptanceLogs()->get();
+            if ($customerAcceptanceLogs->count() > 0) {
+                LoggerService::info("Duplicating {$customerAcceptanceLogs->count()} customer acceptance logs for lead {$duplicateLead->code}");
+                $customerAcceptanceLogs->each(function ($customerAcceptanceLog) use ($duplicateLead) {
+                    $duplicateCustomerAcceptanceLog = $customerAcceptanceLog->replicate();
+                    $duplicateCustomerAcceptanceLog->quote_uuid = $duplicateLead->uuid;
+                    $duplicateCustomerAcceptanceLog->save();
                 });
             }
 

@@ -2,15 +2,18 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -49,6 +52,12 @@ class EndorsementReportService extends ManagementReport
                 EndorsementStatusEnum::CORRECTION_OF_POLICY_DETAILS,
             ])
             ->pluck('id')->toArray();
+
+        $statues = [SendUpdateLogStatusEnum::UPDATE_BOOKED];
+        $includeFailedBookings = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS);
+        if ($includeFailedBookings) {
+            $statues[] = SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED;
+        }
 
         $query = SendUpdateLog::query()
             ->select(
@@ -141,7 +150,10 @@ class EndorsementReportService extends ManagementReport
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
                 'ls.text as sub_source',
-                'sso.text as sub_source_option'
+                'sso.text as sub_source_option',
+                'pq.frequency as payment_frequency',
+                'personal_quotes.created_at as quote_created_at',
+                'ipp.text as plan_name',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -155,6 +167,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('insurance_provider as ip3', 'ip3.id', '=', 'personal_quotes.insurance_provider_id')
+            ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'pq.plan_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
@@ -178,7 +191,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
             ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
             ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
-            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->whereIn('send_update_logs.status', $statues)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
         $this->applyFilters($query, $request);
@@ -261,7 +274,10 @@ class EndorsementReportService extends ManagementReport
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
                 'ls.text as sub_source',
-                'sso.text as sub_source_option'
+                'sso.text as sub_source_option',
+                'pq.frequency as payment_frequency',
+                'personal_quotes.created_at as quote_created_at',
+                'ipp.text as plan_name',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -275,6 +291,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('insurance_provider as ip3', 'ip3.id', '=', 'personal_quotes.insurance_provider_id')
+            ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'pq.plan_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
@@ -296,7 +313,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
             ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
-            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->whereIn('send_update_logs.status', $statues)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
@@ -400,6 +417,16 @@ class EndorsementReportService extends ManagementReport
             } else {
                 $item->travel_coverage = 'N/A';
                 $item->traveling_where = 'N/A';
+            }
+
+            if ($item->quote_type_id != QuoteTypeId::Life) {
+                $item->insurance_provider_name = 'N/A';
+                $item->payment_frequency = 'N/A';
+                $item->plan_name = 'N/A';
+                $item->quote_created_at = 'N/A';
+            } else {
+                $item->insurance_provider_name = $item->insurer;
+                $item->quote_created_at = ! empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
             }
         });
     }

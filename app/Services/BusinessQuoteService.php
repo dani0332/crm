@@ -57,6 +57,8 @@ class BusinessQuoteService extends BaseService
                 'bti.TEXT AS business_type_of_insurance_id_text',
                 'bqr.advisor_id',
                 'u.name as advisor_id_text',
+                'bqr.support_user_id',
+                'su.name as support_user_name',
                 'bqr.previous_advisor_id',
                 'uadv.name AS previous_advisor_id_text',
                 'bqr.quote_status_id',
@@ -141,7 +143,11 @@ class BusinessQuoteService extends BaseService
                         WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                         ELSE insurer_aml_status
                     END AS insurer_aml_status_display
-                ')
+                '),
+                'ub.branch_id as advisor_primary_branch_id',
+                'b.name as lead_branch_name',
+                'b.id as lead_branch_id',
+                'bqr.is_branch_applicable',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -151,6 +157,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'bqr.transaction_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
+            ->leftJoin('users as su', 'su.id', '=', 'bqr.support_user_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
@@ -169,7 +176,22 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
             // Sub-source lookup joins
             ->leftJoin('lookups as ss', 'ss.id', '=', 'bqr.sub_source_id')
-            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id');
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'bqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+    }
+
+    public function postProcessBusinessQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::Business));
+
+            return $quote;
+        });
     }
 
     public function getEntity($id)
@@ -405,6 +427,10 @@ class BusinessQuoteService extends BaseService
                 $query->where('bqr.policy_number', $request->previous_quote_policy_number)
                     ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
+        }
+        // Filter by support user (OE/AE)
+        if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
+            $this->query->whereIn('bqr.support_user_id', $request->support_user_id);
         }
         if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
             $this->query->whereIn('bqr.renewal_batch_id', $request->renewal_batches);
@@ -814,7 +840,7 @@ class BusinessQuoteService extends BaseService
             $id = explode('|', $leadId)[0];
 
             // Get the quote object using the trait method
-            $quote = $this->getQuoteObject('business', $id);
+            $quote = $this->getQuoteObject(QuoteTypes::BUSINESS->value, $id);
             if ($quote) {
                 $quote->support_user_id = $supportUserId;
                 $quote->save();

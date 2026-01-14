@@ -42,6 +42,10 @@ use setasign\Fpdi\Fpdi;
 
 class QuoteDocumentService extends BaseService
 {
+    private const MIME_TYPE_PDF = 'application/pdf';
+    private const CREATED_BY_RELATION = 'createdBy:id,name,email';
+    private const LOG_WITH_KEY = ' with key: ';
+
     protected $client;
     use GenericQueriesAllLobs;
 
@@ -170,7 +174,7 @@ class QuoteDocumentService extends BaseService
      * @param  $uuid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false)
+    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false, $isHealthQuestionnaire = false)
     {
         LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
 
@@ -198,7 +202,7 @@ class QuoteDocumentService extends BaseService
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-                $fileMimeType = 'application/pdf';
+                $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
@@ -230,11 +234,25 @@ class QuoteDocumentService extends BaseService
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-                $fileMimeType = 'application/pdf';
+                $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/homeSAL/'.$fileNameAzure;
+                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                if (! $uploaded) {
+                    return false;
+                }
+            } elseif ($isHealthQuestionnaire) {
+                $originalName = $data['pdf_filename'].'.pdf';
+
+                // Generate a unique filename
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+                $fileMimeType = self::MIME_TYPE_PDF;
+
+                // Set the filename for Azure storage
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
@@ -283,7 +301,7 @@ class QuoteDocumentService extends BaseService
             LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
             $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
 
-            if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL) {
+            if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
                     $data['quote_uuid'],
@@ -362,7 +380,7 @@ class QuoteDocumentService extends BaseService
             // Return documents filtered by document type codes if provided
             // If watermarked_doc_url is not null then we can send watermarked document in email
             // Bor Signature document is not show on document section
-            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with('createdBy:id,name,email')->latest()->get();
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with(self::CREATED_BY_RELATION)->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Exclude documents that contain "Certificate of Insurance" followed by any text or space
@@ -374,7 +392,7 @@ class QuoteDocumentService extends BaseService
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
-        return $quote ? $quote->documents()->with('createdBy:id,name,email')->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
+        return $quote ? $quote->documents()->with(self::CREATED_BY_RELATION)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
     }
 
     /**
@@ -455,7 +473,7 @@ class QuoteDocumentService extends BaseService
     {
         $sendUpdateLog = SendUpdateLog::where('id', $sendUpdateLogId)->firstOrFail();
 
-        return $sendUpdateLog->documents()->with('createdBy:id,name,email')->latest()->get();
+        return $sendUpdateLog->documents()->with(self::CREATED_BY_RELATION)->latest()->get();
     }
 
     /**
@@ -547,22 +565,22 @@ class QuoteDocumentService extends BaseService
 
             $healthNetwork = $plan->healthNetwork;
             $code = str_replace(' ', '_', trim($healthNetwork->text)).'_HEALTH_DOC';
-            LoggerService::info('Trying health network doc for quote code: '.$quote->code.' with key: '.$code);
+            LoggerService::info('Trying health network doc for quote code: '.$quote->code.self::LOG_WITH_KEY.$code);
             $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
 
             // If no document found network provider  will check provider document
             if ($providerHealthDoc == null) {
                 $code = trim($plan->insuranceProvider->code).'_HEALTH_DOC';
-                LoggerService::info('Provider doc for quote code: '.$quote->code.' with key: '.$code);
+                LoggerService::info('Provider doc for quote code: '.$quote->code.self::LOG_WITH_KEY.$code);
                 $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
             }
             // If these two documents then we send complete url
             if (in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])) {
-                LoggerService::info('Direct link used for quote code: '.$quote->code.' with key: '.$code);
+                LoggerService::info('Direct link used for quote code: '.$quote->code.self::LOG_WITH_KEY.$code);
                 $appDownloadLink = $providerHealthDoc;
             } else {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
-                LoggerService::info('Base URL prepended for quote code: '.$quote->code.' with key: '.$code);
+                LoggerService::info('Base URL prepended for quote code: '.$quote->code.self::LOG_WITH_KEY.$code);
                 $appDownloadLink = $baseUrl.$providerHealthDoc;
             }
         }
@@ -655,92 +673,114 @@ class QuoteDocumentService extends BaseService
         }
     }
 
+    /**
+     * Watermark a PDF while preserving form appearances:
+     * - Decrypts the source (blank password) to a temp copy and logs qpdf output.
+     * - Preprocesses with qpdf (force v1.4) for FPDI compatibility and logs output.
+     * - Builds a watermark-only PDF (FPDI) sized per page; no original content rewritten here.
+     * - Overlays the watermark PDF onto the preprocessed original via qpdf overlay to keep fields intact.
+     * - Stores the watermarked media; cleans up temp artifacts in finally.
+     */
     private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
     {
-        // Preprocess the PDF with qpdf for FPDI compatibility
-        $tempFilePath = storage_path('temp/preprocessed_'.$docName);
-        $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
+        $watermarkOverlayPath = storage_path('temp/watermark_'.$docName);
 
-        $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
-        $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
-            escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
+        try {
+            // Preprocess the PDF with qpdf for FPDI compatibility
+            $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+            $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
 
-        shell_exec($decryptCommand);
+            $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+            $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
+                escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
 
-        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
-            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+            shell_exec($decryptCommand);
 
-            if (strpos($logOutput, 'invalid password') !== false) {
-                /** PDF has password, falling back to original document*/
+            if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
 
-                // Copy the original file to the output path
-                copy($sourceFilePath, $outputPath);
+                if (strpos($logOutput, 'invalid password') !== false) {
+                    /** PDF has password, falling back to original document*/
 
-                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+                    // Copy the original file to the output path
+                    copy($sourceFilePath, $outputPath);
 
-            } else {
-                throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
-            }
-        }
+                    return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
 
-        // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
-        $qpdfCommand = 'qpdf '.
-            '--no-warn '. // Suppress warnings
-            '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
-            escapeshellarg($decryptedTempPath).' '.
-            escapeshellarg($tempFilePath).' > '.
-            escapeshellarg($qpdfLogPath).' 2>&1';
-
-        $output = shell_exec($qpdfCommand);
-
-        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
-            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
-            LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
-            throw new \Exception('qpdf preprocessing failed');
-        }
-
-        // region Apply watermark with FPDI
-        $pdf = new Fpdi;
-        $pageCount = $pdf->setSourceFile($tempFilePath);
-
-        $watermarkImagePath = public_path('images/watermark1.png');
-        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-
-            // Layer the original page content first
-            $pdf->useTemplate($templateId);
-
-            // Add watermark as overlay (on top)
-            if ($size['orientation'] === 'P') {
-                $pdf->Image(
-                    $watermarkImagePath,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
-            } else {
-                $pdf->Image(
-                    $watermarkImageAA4Path,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
+                } else {
+                    throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+                }
             }
 
+            // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
+            $qpdfCommand = 'qpdf '.
+                '--no-warn '. // Suppress warnings
+                '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
+                escapeshellarg($decryptedTempPath).' '.
+                escapeshellarg($tempFilePath).' > '.
+                escapeshellarg($qpdfLogPath).' 2>&1';
+
+            $output = shell_exec($qpdfCommand);
+
+            if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+                LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
+                throw new \Exception('qpdf preprocessing failed');
+            }
+
+            // region Apply watermark with FPDI
+            $pdf = new Fpdi;
+            $pageCount = $pdf->setSourceFile($tempFilePath);
+
+            $watermarkImagePath = public_path('images/watermark1.png');
+            $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
+
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $templateId = $pdf->importPage($pageNo);
+                $size = $pdf->getTemplateSize($templateId);
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+
+                // Add watermark as overlay (on top)
+                if ($size['orientation'] === 'P') {
+                    $pdf->Image(
+                        $watermarkImagePath,
+                        0, 0, $size['width'], $size['height'],
+                        '', '', '', false, 300, '', false, false, 0
+                    );
+                } else {
+                    $pdf->Image(
+                        $watermarkImageAA4Path,
+                        0, 0, $size['width'], $size['height'],
+                        '', '', '', false, 300, '', false, false, 0
+                    );
+                }
+
+            }
+
+            $pdf->Output($watermarkOverlayPath, 'F');
+            // endregion
+
+            // Apply the watermark overlay using qpdf to preserve form fields/annotations
+            $overlayCommand = 'qpdf --overlay '.escapeshellarg($watermarkOverlayPath).' -- '.
+                escapeshellarg($tempFilePath).' '.
+                escapeshellarg($outputPath).' >> '.
+                escapeshellarg($qpdfLogPath).' 2>&1';
+
+            shell_exec($overlayCommand);
+
+            // Check if the output file was created successfully
+            if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+                LoggerService::error("qpdf overlay failed for UUID: $uuid. Output: $logOutput");
+                throw new \Exception('qpdf overlay failed');
+            }
+
+            return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+        } finally {
+            if (file_exists($watermarkOverlayPath)) {
+                unlink($watermarkOverlayPath);
+            }
         }
-
-        $pdf->Output($outputPath, 'F');
-        // endregion
-
-        // Check if the output file was created successfully
-        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
-            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
-            throw new \Exception('FPDI watermarking failed');
-        }
-
-        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
     /**
@@ -971,6 +1011,16 @@ class QuoteDocumentService extends BaseService
      */
     public function updateQuoteAndPaymentStatusToPaymentPending($quote)
     {
+        // if Quote status is in already in the list of statuses to don't update payment status
+        $statuses = [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::TransactionApproved];
+        if (in_array($quote->quote_status_id, $statuses)) {
+            LoggerService::info("Quote status is already in the list of statuses to don't update payment status", extra: [
+                'quote_status_id' => $quote->quote_status_id,
+                'statuses' => $statuses,
+            ]);
+
+            return;
+        }
         $quote->quote_status_id = QuoteStatusEnum::PaymentPending;
         $quote->save();
         $payment = $quote->getLastPaymentWithInsurerPaymentLink();
@@ -1095,7 +1145,7 @@ class QuoteDocumentService extends BaseService
             $documentType,
             $quote,
             $filePathAzure,
-            $fileMimeType
+            $fileMimeType,
         );
     }
 

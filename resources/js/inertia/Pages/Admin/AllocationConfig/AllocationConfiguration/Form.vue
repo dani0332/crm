@@ -3,6 +3,12 @@ import { onMounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 import SavingsAllocationConfigTemplate from './Savings/SavingsAllocationConfigTemplate.vue';
+import HomeAllocationConfigTemplate from './Home/HomeAllocationConfigTemplate.vue';
+import LifeAllocationConfigTemplate from './Life/LifeAllocationConfigTemplate.vue';
+import SimpleAllocationConfigTemplate from './Simple/SimpleAllocationConfigTemplate.vue';
+import CommonAllocationConfigTemplate from './Simple/CommonAllocationConfigTemplate.vue';
+import CorplineAllocationConfigTemplate from './Corpline/CorplineAllocationConfigTemplate.vue';
+import GroupMedicalAllocationConfigTemplate from './GroupMedical/GroupMedicalAllocationConfigTemplate.vue';
 import ErrorDisplay from './components/ErrorDisplay.vue';
 import { useErrorHandling } from './composables/useErrorHandling.js';
 import { useAllocationForm } from './composables/useAllocationForm.js';
@@ -36,14 +42,27 @@ const {
   templateData,
   advisorOptions,
   nationalityOptions,
+  teamOptions,
+  businessTypeOptions,
+  planTypeOptions,
+  locationOptions,
   currentConfiguration,
   savingsTemplateRef,
+  homeTemplateRef,
+  lifeTemplateRef,
+  simpleTemplateRef,
+  commonTemplateRef,
+  corplineTemplateRef,
+  groupMedicalTemplateRef,
   auditLogsKey,
   form,
   quoteTypeOptions,
+  isViewMode,
   initializeOptions,
   onTemplateDataUpdate,
   onSubmit,
+  enableEditMode,
+  cancelEdit,
 } = formLogic;
 
 onMounted(() => {
@@ -65,7 +84,7 @@ onMounted(() => {
           <div class="max-w-md">
             <x-field label="Line of business" required>
               <x-select
-                v-model="form.quote_type_id"
+                v-model="form.selectedQuoteTypeCode"
                 :options="quoteTypeOptions"
                 placeholder="Select line of business"
                 filterable
@@ -75,14 +94,14 @@ onMounted(() => {
             </x-field>
 
             <div
-              v-if="!form.quote_type_id && !isQuoteTypeLoading"
+              v-if="!form.selectedQuoteTypeCode && !isQuoteTypeLoading"
               class="mt-2 text-sm text-gray-500"
             >
               Please select a line of business to begin configuration
             </div>
 
             <div
-              v-if="form.quote_type_id && !isQuoteTypeLoading"
+              v-if="form.selectedQuoteTypeCode && !isQuoteTypeLoading"
               class="mt-2 text-sm text-gray-600"
             >
               <div class="flex items-center space-x-2">
@@ -168,8 +187,71 @@ onMounted(() => {
             :configuration="currentConfiguration"
             :advisor-options="advisorOptions"
             :nationality-options="nationalityOptions"
+            :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"
             ref="savingsTemplateRef"
+          />
+        </div>
+
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.Home">
+          <HomeAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :location-options="locationOptions"
+            :nationality-options="nationalityOptions"
+            :view-mode="isViewMode"
+            @data-update="onTemplateDataUpdate"
+            ref="homeTemplateRef"
+          />
+        </div>
+
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.Life">
+          <LifeAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :nationality-options="nationalityOptions"
+            :view-mode="isViewMode"
+            @data-update="onTemplateDataUpdate"
+            ref="lifeTemplateRef"
+          />
+        </div>
+
+        <div
+          v-else-if="
+            form.quote_type === quoteTypeCodeEnum.Pet ||
+            form.quote_type === quoteTypeCodeEnum.Yacht ||
+            form.quote_type === quoteTypeCodeEnum.Cycle
+          "
+        >
+          <CommonAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :view-mode="isViewMode"
+            :lob-name="form.quote_type"
+            @data-update="onTemplateDataUpdate"
+            ref="commonTemplateRef"
+          />
+        </div>
+
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.CORPLINE">
+          <CorplineAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :business-type-options="businessTypeOptions"
+            :view-mode="isViewMode"
+            @data-update="onTemplateDataUpdate"
+            ref="corplineTemplateRef"
+          />
+        </div>
+
+        <div v-else-if="form.quote_type === quoteTypeCodeEnum.GroupMedical">
+          <GroupMedicalAllocationConfigTemplate
+            :configuration="currentConfiguration"
+            :advisor-options="advisorOptions"
+            :plan-type-options="planTypeOptions"
+            :view-mode="isViewMode"
+            @data-update="onTemplateDataUpdate"
+            ref="groupMedicalTemplateRef"
           />
         </div>
 
@@ -225,7 +307,46 @@ onMounted(() => {
         class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-4"
       >
         <div class="p-6 bg-white border-b border-gray-200">
-          <div class="flex justify-end gap-3 mb-4">
+          <!-- View Mode Buttons -->
+          <div
+            v-if="isViewMode && currentConfiguration"
+            class="flex justify-end gap-3 mb-4"
+          >
+            <x-tooltip>
+              <x-button
+                size="md"
+                color="#ff5e00"
+                type="button"
+                @click="enableEditMode"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  Click to edit the {{ form.quote_type }} configuration.
+                </span>
+              </template>
+            </x-tooltip>
+          </div>
+
+          <div v-if="!isViewMode" class="flex justify-end gap-3 mb-4">
+            <x-tooltip v-if="currentConfiguration">
+              <x-button
+                size="md"
+                color="secondary"
+                type="button"
+                outlined
+                @click="cancelEdit"
+              >
+                Cancel
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  Cancel editing and return to view mode without saving changes.
+                </span>
+              </template>
+            </x-tooltip>
+
             <x-tooltip>
               <x-button
                 size="md"

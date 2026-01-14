@@ -123,8 +123,8 @@ const dateToDMYWithTime = date => {
   return '';
 };
 
-let isHealthAUHLead = ref(
-  page.props.bookPolicyDetails.isHealthAUHLead || false,
+let isAbuDhabiBranch = ref(
+  page.props.bookPolicyDetails.isAbuDhabiBranch || false,
 );
 
 const commissionErrorMessage =
@@ -1495,19 +1495,10 @@ const isDocTypeLoading = docType => {
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
-              <div
-                v-if="
-                  props.quoteType === quoteTypeCodeEnum.Health.toLowerCase()
-                "
-                class="grid sm:grid-cols-2"
-              >
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Branch</dt>
                 <dd>
-                  {{
-                    page.props.branchOptions?.find(
-                      item => item.id === props.quote.emirate_of_your_visa_id,
-                    )?.branch
-                  }}
+                  {{ quote.branch_name }}
                 </dd>
               </div>
             </dl>
@@ -2036,9 +2027,9 @@ const isDocTypeLoading = docType => {
                 </template>
               </template>
             </div>
-            <template v-if="isHealthAUHLead">
+            <template v-if="isAbuDhabiBranch">
               <p class="text-gray-500 text-sm text-right mt-3 mb-2 mx-4">
-                {{ productionProcessTooltipEnum.HEALTH_AUH_BOOKING_NOTE }}
+                {{ productionProcessTooltipEnum.ABU_DHABI_BRANCH_BOOKING_NOTE }}
               </p>
             </template>
           </div>

@@ -80,6 +80,8 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'api_issuance_status_id',
             'insurer_api_status_id',
             'plan_id',
+            'branch_id',
+            'is_branch_applicable',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -96,6 +98,8 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'paymentStatus:id,text',
             'quoteViewCount:quote_id,quote_type_id,user_id,visit_count',
             'advisor:id,name',
+            'advisor.primaryBranch',
+            'branch:id,name',
             'carTypeInsurance:id,text',
             'customer:id,pcp_tag',
             'quoteTags:quote_uuid,name',

@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Enums\quoteStatusCode;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Traits\ExcelExportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -81,7 +80,7 @@ class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeading
             $payment != null ? $payment->commission : 'N/A',
             (isset($quote->pc_qualified) && $quote->pc_qualified == 1) ? 'Yes' : 'No',
             $quote->customer?->pcp_tag == 1 ? 'Yes' : 'No',
-            $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == 5 ? quoteStatusCode::GROUP_MEDICAL : quoteTypeCode::CORPLINE) : '',
+            $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == 5 ? quoteStatusCode::GROUP_MEDICAL : ($quote->businessTypeOfInsurance?->text ?? 'N/A')) : '',
         ];
     }
 

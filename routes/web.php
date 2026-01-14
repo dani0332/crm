@@ -7,12 +7,15 @@ use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\AllocationConfigurationController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
+use App\Http\Controllers\BranchAssignmentController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CommercialKeywordsController;
@@ -57,6 +60,7 @@ use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserStatusLogController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\ActivityLogController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
 use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
@@ -88,6 +92,7 @@ use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SageProcessesController;
 use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
@@ -436,7 +441,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
-    Route::post('/lead-allocation/update-hard-stop', [LeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
@@ -500,6 +504,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
         Route::get('user-status-logs', [UserStatusLogController::class, 'index'])->name('admin.user-status-logs.index');
+        Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('admin.activity-logs.index');
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
         Route::resource('sic-health-config', SICConfigurableController::class)->names([
@@ -508,6 +513,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
+        Route::resource('branches', BranchController::class);
+        Route::prefix('branch-assignments')->name('branch-assignments.')->group(function () {
+            Route::get('/', [BranchAssignmentController::class, 'index'])->name('index');
+            Route::get('/{user}', [BranchAssignmentController::class, 'show'])->name('show');
+            Route::post('/{user}', [BranchAssignmentController::class, 'store'])->name('store');
+            Route::patch('/{user}/branches/{branch_id}', [BranchAssignmentController::class, 'disableAssignment'])->name('delete');
+            Route::patch('/{user_id}/branches/{branch_id}/make-primary', [BranchAssignmentController::class, 'makePrimary'])->name('make-primary');
+        });
 
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
@@ -553,6 +566,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::prefix('config')->group(function () {
                 Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
+                Route::post('fetch-nationalities', [BuyLeadConfigController::class, 'fetchNationalities'])->name('admin.buy-leads.config.fetch-nationalities');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
         });
@@ -618,7 +632,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
         Route::post('assignSupportUser', [CRUDController::class, 'assignSupportUser'])->name('assign-support-user');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
-
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
@@ -658,6 +671,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
+        Route::get('car/{quoteId}/update-ocr-webform', [CarQuoteController::class, 'updateOcrWebformData'])->name('update-ocr-webform');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
     });
@@ -795,6 +809,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('update-insured-kyc', [AMLController::class, 'insuredKycDetailsUpdate'])->name('update-insured-kyc');
     Route::post('get-quote-details-from-insurer', [AMLController::class, 'getQuoteDetailsFromInsurer'])->name('get-quote-details-from-insurer');
+    Route::post('toggle-policy-issuance-automation', [AMLController::class, 'togglePolicyIssuanceAutomation'])->name('toggle-policy-issuance-automation');
     Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
     Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
@@ -842,6 +857,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['middleware' => ['readonly_db']], function () {
         Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
         Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+
+        // Sage Failed Processes Routes
+        Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.index');
+        Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.export');
     });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
@@ -862,14 +881,22 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('admin.nationality-allocation-config.audit-logs');
 
     // Allocation Configuration Routes
-    Route::get('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'index'])
+    Route::get('allocation-configuration', [AllocationConfigurationController::class, 'index'])
         ->name('admin.allocation-configuration.index');
-    Route::post('allocation-configuration/fetch', [\App\Http\Controllers\AllocationConfigurationController::class, 'fetchConfiguration'])
+    Route::post('allocation-configuration/fetch', [AllocationConfigurationController::class, 'fetchConfiguration'])
         ->name('admin.allocation-configuration.fetch');
-    Route::post('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'store'])
+    Route::post('allocation-configuration', [AllocationConfigurationController::class, 'store'])
         ->name('admin.allocation-configuration.store');
-    Route::put('allocation-configuration/{allocationConfiguration}', [\App\Http\Controllers\AllocationConfigurationController::class, 'update'])
+    Route::put('allocation-configuration/{allocationConfiguration}', [AllocationConfigurationController::class, 'update'])
         ->name('admin.allocation-configuration.update');
+    Route::get('/teams', [AllocationConfigurationController::class, 'getTeams'])
+        ->name('admin.allocation-configuration.teams');
+    Route::get('/api/plan-types', [AllocationConfigurationController::class, 'getPlanTypes'])
+        ->name('admin.allocation-configuration.plan-types');
+    Route::get('/api/business-types', [AllocationConfigurationController::class, 'getBusinessTypes'])
+        ->name('admin.allocation-configuration.business-types');
+    Route::get('/api/sub-areas', [AllocationConfigurationController::class, 'getSubAreas'])
+        ->name('admin.allocation-configuration.sub-areas');
 
     Route::get('/add-batch-number', function () {
         $addBtchNuimber = new AddBatchForNonMotors;
@@ -878,8 +905,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Command to bulk send policy documents
-    Route::get('/run-policy-bulk-send', function () {
-
+    Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {
         // Check if user has admin role
         if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
             return response()->json(['error' => 'Not authorized'], 403);
@@ -897,12 +923,33 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         try {
-            // Execute the command
-            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+            // Check if fetching from sage_process_type flag
+            $fromSageProcess = $request->query('from_sage_process', false);
+            $startDate = $request->query('start_date');
+            $sageProcessId = $request->query('sage_process_id');
+
+            // Build command parameters
+            $params = [];
+            if ($fromSageProcess) {
+                $params['--from-sage-process'] = true;
+
+                if ($startDate) {
+                    $params['--start-date'] = $startDate;
+                }
+
+                if ($sageProcessId) {
+                    $params['--sage-process-id'] = $sageProcessId;
+                }
+            }
+
+            \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents', $params);
 
             return response()->json([
                 'message' => 'Command executed successfully!',
                 'status' => 'completed',
+                'from_sage_process' => (bool) $fromSageProcess,
+                'start_date' => $startDate,
+                'sage_process_id' => $sageProcessId,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -910,7 +957,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 'status' => 'failed',
             ], 500);
         } finally {
-            // Always release the lock
             $lock->release();
         }
     })->name('run-policy-bulk-send');

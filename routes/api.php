@@ -68,12 +68,25 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
 
+    // Missing docs reminder and verify missing docs routes
+    Route::prefix('imcrm')->group(function () {
+        Route::post('/missing-docs-reminder/{quoteUuid}', [ApiController::class, 'missingDocsReminder'])->name('missingDocsReminder');
+        Route::get('/verify-missing-docs/{quoteUuid}/{quoteType}', [ApiController::class, 'verifyMissingDocs'])->name('verifyMissingDocs');
+    });
+
+    Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
+
+    Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
+        ->name('pc-customer-assignment');
+    Route::post('/remove-pc-qualified', [ApiController::class, 'removePcQualified'])->name('remove-pc-qualified');
+
+    Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
-Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClientss'])->name('tagPrivateClientss');
+// Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClients'])->name('tagPrivateClientss');
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
@@ -116,6 +129,10 @@ Route::prefix('v1')->group(function () {
 
     // User management routes
     Route::get('users/first-manager/{email}', [UserController::class, 'getFirstManager'])->name('getFirstManager');
+
+    // upload to metlife API route
+    Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
+    Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
 
 });
 

@@ -125,6 +125,7 @@ defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
+const isLoadingVerificationDataUpdate = ref(false);
 
 const { formatString } = usePayment();
 
@@ -590,6 +591,26 @@ const leadStatusDisabled = computed(() => {
 const assumptionState = reactive({
   isEditing: false,
 });
+
+const refreshComponent = () => {
+  isLoadingVerificationDataUpdate.value = true;
+  onLoadAvailablePlansData();
+
+  // Reload customer verification data
+  router.reload({
+    only: ['customerVerificationData'],
+    onFinish: () => {
+      // Show success for CustomerVerificationDetails update
+      notification.success({
+        title: 'OCR webform data updated successfully',
+        position: 'top',
+      });
+
+      modals.customerVerification = false;
+      isLoadingVerificationDataUpdate.value = false;
+    },
+  });
+};
 
 const assumptionsForm = useForm({
   cylinder: page.props.record.cylinder || null,
@@ -1426,7 +1447,8 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.record.id,
   insured_first_name: page.props.record.insured_first_name || '',
   insured_last_name: page.props.record.insured_last_name || '',
-  emirates_id_number: page.props.record.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.record.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
 
   entity_id: page.props.record.entity_id ?? null,
@@ -4682,8 +4704,10 @@ const handleCancelConfirmationModal = () => {
 
   <CustomerVerificationDetails
     v-if="isCustomerVerificationEnabled"
-    :quote="quote"
+    :quoteId="$page.props.record.id"
     :modals="modals"
     :customerVerificationData="customerVerificationData"
+    :isLoadingVerificationDataUpdate="isLoadingVerificationDataUpdate"
+    @ocr-webform-updated="refreshComponent"
   />
 </template>

@@ -88,8 +88,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             // Initialize payment source and get quote model
             $paymentSource = 'Main Lead';
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-            LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::CREATE_PAYMENT);
             $quoteCode = $quoteModel->code;
+            LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::CREATE_PAYMENT, $quoteCode);
             LoggerService::info("Starting manual payment creation process for quote code: {$quoteCode}");
             $masterPayment = (object) $request->payment;
 
@@ -684,13 +684,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $quote = $masterPayment?->paymentable;
         $sageResponseStatus = false;
 
-        $isHealthAUH = $this->isHealthAUHLead(ucfirst($request->modelType), $quote);
+        $isAbuDhabiBranch = $this->isAbuDhabiBranch(ucfirst($request->modelType), $quote);
         /* Handle NRA case where payment is approved after policy/send update is booked */
         $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quote, $splitPayment);
         info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
 
         // Process Sage API call outside transaction if needed
-        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isHealthAUH) {
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isAbuDhabiBranch) {
             $sageRequest = $request->safe();
             $sageRequest->userId = auth()->id();
             $sageRequest->quoteType = $request->modelType;

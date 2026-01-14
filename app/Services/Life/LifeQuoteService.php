@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LifeRiderEnum;
 use App\Enums\LookupsEnum;
@@ -36,6 +37,7 @@ use App\Models\QuoteBatches;
 use App\Repositories\CurrencyTypeRepository;
 use App\Repositories\UserRepository;
 use App\Services\BaseService;
+use App\Services\BranchAssignmentService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -65,6 +67,7 @@ class LifeQuoteService extends BaseService
     public function getLifeQuoteData($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
         $quotes = $this->getLifeQuotes($isExportRequest, $isTotalLeadCountRequest);
+        $this->postProcessLifeQuote($quotes);
         $leadStatuses = $this->getPersonalQuoteStatuses(QuoteTypeId::Life)->get();
         $advisors = $this->getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $authorizedDays = $this->getPaymentAuthorisedDays();
@@ -76,6 +79,15 @@ class LifeQuoteService extends BaseService
         $quoteSegments = QuoteSegmentEnum::withLabels(QuoteTypeId::Life);
 
         return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes', 'quoteSegments');
+    }
+
+    private function postProcessLifeQuote($quotes)
+    {
+        $quotes->map(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life));
+
+            return $item;
+        });
     }
 
     public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
@@ -90,6 +102,7 @@ class LifeQuoteService extends BaseService
 
         $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)->with([
             'advisor',
+            'advisor.primaryBranch',
             'quoteStatus',
             'nationality',
             'quoteDetail.lostReason:id,text',
@@ -108,6 +121,7 @@ class LifeQuoteService extends BaseService
                     'subType:id,code',
                 ]);
             },
+            'branch:id,name',
         ])
             ->when(auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->user()->id);
@@ -321,6 +335,7 @@ class LifeQuoteService extends BaseService
             ->with([
                 'quoteCustomerPlan',
                 'advisor',
+                'advisor.primaryBranch',
                 'quoteStatus',
                 'nationality',
                 'lifeQuote' => function ($q) {
@@ -366,6 +381,7 @@ class LifeQuoteService extends BaseService
                 },
                 'subSource',
                 'subSourceOption',
+                'branch:id,name',
             ])
             ->select([
                 'personal_quotes.*',
@@ -385,6 +401,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $lifeQuote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $lifeQuote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        $lifeQuote->branch_name = ! $lifeQuote->is_branch_applicable ? 'N/A' : ($lifeQuote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($lifeQuote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life));
 
         return $lifeQuote;
     }
@@ -498,6 +515,7 @@ class LifeQuoteService extends BaseService
             'currencyOptions' => CurrencyTypeRepository::withActive()->get(),
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'lifeCutOffDate' => $lifeCutOffDate,
+            'insuranceProviderCodeEnum' => InsuranceProviderEnum::asArray(),
         ];
 
     }
@@ -824,11 +842,13 @@ class LifeQuoteService extends BaseService
 
         $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
 
+        $insuranceProviderEnum = InsuranceProviderEnum::asArray();
+
         $pdf = PDF::setOption([
             'isHtml5ParserEnabled' => true,
             'dpi' => 150,
             'isRemoteEnabled' => true,
-        ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
+        ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans', 'insuranceProviderEnum'));
 
         return ['pdf' => $pdf, 'name' => $this->generatePdfFilename($quote)];
     }

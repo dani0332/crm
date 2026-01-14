@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class RenewalsUploadLeads extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, SpatieActivityLog;
 
     protected $fillable = ['file_name', 'file_path', 'quote_type', 'total_records', 'cannot_upload', 'good', 'status', 'renewal_import_code', 'renewal_import_type', 'created_by_id', 'skip_plans', 'is_sic'];
     protected $table = 'renewals_upload_leads';
