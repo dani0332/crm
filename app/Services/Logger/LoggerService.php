@@ -10,12 +10,19 @@ use Illuminate\Support\Facades\Log;
 
 class LoggerService
 {
-    public static function startFeatureLogging(LoggerFeatureEnum $feature)
+    public static function startFeatureLogging(LoggerFeatureEnum $feature, $code = null)
     {
         Log::withContext(['feature' => $feature->value]);
+
+        // Add feature to context for activity log
+        Context::add('feature', $feature->value);
+
+        if ($code) {
+            Context::add('code', $code);
+        }
     }
 
-    public static function startQuoteLogging(Model|string|null $lead, ?LoggerFeatureEnum $feature = null)
+    public static function startQuoteLogging(Model|string|null $lead, ?LoggerFeatureEnum $feature = null, $code = null)
     {
         if (empty($lead)) {
             self::alert('startQuoteLogging - Lead is empty');
@@ -35,13 +42,17 @@ class LoggerService
         Log::withContext(['ref_id' => $refID]);
 
         if ($feature) {
-            self::startFeatureLogging($feature);
+            self::startFeatureLogging($feature, $code);
         }
     }
 
     public static function endLogging()
     {
         Log::withoutContext();
+
+        // Clear Context facade values to prevent leaking into subsequent activity logs
+        Context::forget('feature');
+        Context::forget('code');
     }
 
     private static function addExtra(array|string $extra = [])

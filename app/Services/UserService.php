@@ -402,6 +402,19 @@ class UserService extends BaseService
         }
     }
 
+    /**
+     * Get all users for filter dropdown
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    public function getAllUsers(): \Illuminate\Database\Eloquent\Collection
+    {
+        return User::select('id', 'name', 'email')
+            ->activeUser()
+            ->orderBy('name')
+            ->get();
+    }
+
     public function getEmployeeCode($email)
     {
         $employeeData = $this->hrmRequestService->getEmployeeCodes([$email]);

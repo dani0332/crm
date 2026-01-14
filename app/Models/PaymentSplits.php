@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\SageEnum;
+use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,8 +15,9 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class PaymentSplits extends Model implements Auditable
 {
-    use AuditableTrait, HasFactory;
+    use AuditableTrait, HasFactory, SpatieActivityLog;
 
+    protected $activityLogName = 'Payment Split';
     protected $auditEvents = [
         'updated',
     ];
