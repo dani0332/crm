@@ -267,7 +267,7 @@
                           @if(!empty($quote->advisor))
                             <!-- Advisor Photo -->
                             <div style="margin-right:10px;">
-                            <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}" 
+                            <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : 'https://cdn-prod.myalfred.me/media/assets/insurancemarket-alfredadvisorwithheadphonewithbg.png' }}" 
                                 alt="Advisor Photo" 
                                 style="width:40px; height:40px; border-radius:55%; object-fit:cover;">
                             </div>
