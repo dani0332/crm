@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\BusinessTypeOfInsurance;
 use App\Models\Claim;
 use App\Models\GenericDocument;
+use App\Models\InsuranceProvider;
 use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\File;
@@ -19,9 +21,17 @@ use Illuminate\Support\Str;
  * This is a one-time use utility class.
  *
  * Folder structure expected:
+ * For BUSINESS LOB:
  * claims/
- *   {LOB}/           (e.g., Travel, Yacht)
- *     {insurance_provider_id}/  (e.g., 40, 5)
+ *   BUSINESS/
+ *     {business_type_of_insurance_id}/
+ *       {insurance_provider_id}/
+ *         {filename}.pdf
+ *
+ * For other LOBs (Travel, Yacht, etc.):
+ * claims/
+ *   {LOB}/
+ *     {insurance_provider_id}/
  *       {filename}.pdf
  */
 class ClaimsDocumentUploadUtility
@@ -79,63 +89,182 @@ class ClaimsDocumentUploadUtility
                 continue;
             }
 
-            // Get all insurance provider folders
-            $providerFolders = File::directories($lobFolder);
+            // Check if this is BUSINESS LOB (has extra folder level for business_type_of_insurance_id)
+            $isBusiness = strtoupper($lobName) === 'BUSINESS';
 
-            foreach ($providerFolders as $providerFolder) {
-                $providerId = (int) basename($providerFolder);
+            if ($isBusiness) {
+                // For BUSINESS: claims/BUSINESS/{business_type_of_insurance_id}/{insurance_provider_id}/{filename}.pdf
+                $businessTypeFolders = File::directories($lobFolder);
 
-                if (! is_numeric(basename($providerFolder))) {
-                    $error = "Invalid insurance provider ID folder: {$providerFolder}";
-                    $stats['errors'][] = $error;
-                    LoggerService::warning('Invalid insurance provider ID folder', extra: [
-                        'provider_folder' => $providerFolder,
-                        'lob_name' => $lobName,
-                    ]);
-                    continue;
-                }
+                foreach ($businessTypeFolders as $businessTypeFolder) {
+                    $businessTypeId = (int) basename($businessTypeFolder);
 
-                // Get all files in the provider folder - only PDF files
-                $files = File::files(directory: $providerFolder);
-
-                foreach ($files as $file) {
-                    // Only process PDF files
-                    $extension = strtolower(File::extension($file->getPathname()));
-                    if ($extension !== 'pdf') {
-                        $error = "Skipping non-PDF file: {$file->getFilename()}";
+                    if (! is_numeric(basename($businessTypeFolder))) {
+                        $error = "Invalid business type of insurance ID folder: {$businessTypeFolder}";
                         $stats['errors'][] = $error;
-                        LoggerService::debug('Skipping non-PDF file', extra: [
-                            'filename' => $file->getFilename(),
-                            'extension' => $extension,
+                        LoggerService::warning('Invalid business type of insurance ID folder', extra: [
+                            'business_type_folder' => $businessTypeFolder,
+                            'lob_name' => $lobName,
                         ]);
                         continue;
                     }
 
-                    $stats['processed']++;
-
-                    try {
-                        $result = $this->processDocument(
-                            $file->getPathname(),
-                            $file->getFilename(),
-                            $quoteType->id,
-                            $providerId
-                        );
-
-                        if ($result['success']) {
-                            $stats['uploaded']++;
-                        } else {
-                            $stats['failed']++;
-                            $stats['errors'][] = $result['error'] ?? "Failed to process: {$file->getFilename()}";
-                        }
-                    } catch (\Exception $e) {
-                        $stats['failed']++;
-                        $stats['errors'][] = "Error processing {$file->getFilename()}: {$e->getMessage()}";
+                    // If folder name is 0, set to null
+                    if ($businessTypeId === 0) {
+                        $businessTypeId = null;
                     }
+
+                    // Get all insurance provider folders inside business type folder
+                    $providerFolders = File::directories($businessTypeFolder);
+
+                        foreach ($providerFolders as $providerFolder) {
+                        $providerId = (int) basename($providerFolder);
+
+                        if (! is_numeric(basename($providerFolder))) {
+                            $error = "Invalid insurance provider ID folder: {$providerFolder}";
+                            $stats['errors'][] = $error;
+                            LoggerService::warning('Invalid insurance provider ID folder', extra: [
+                                'provider_folder' => $providerFolder,
+                                'business_type_id' => $businessTypeId,
+                                'lob_name' => $lobName,
+                            ]);
+                            continue;
+                        }
+
+                        // Validate insurance provider exists
+                        if (! InsuranceProvider::where('id', $providerId)->exists()) {
+                            $error = "Insurance provider ID {$providerId} does not exist in database";
+                            $stats['errors'][] = $error;
+                            LoggerService::warning('Insurance provider ID not found', extra: [
+                                'provider_id' => $providerId,
+                                'provider_folder' => $providerFolder,
+                                'business_type_id' => $businessTypeId,
+                                'lob_name' => $lobName,
+                            ]);
+                            continue;
+                        }
+
+                        // Validate business type of insurance exists (if not null)
+                        if ($businessTypeId !== null && ! BusinessTypeOfInsurance::where('id', $businessTypeId)->exists()) {
+                            $error = "Business type of insurance ID {$businessTypeId} does not exist in database";
+                            $stats['errors'][] = $error;
+                            LoggerService::warning('Business type of insurance ID not found', extra: [
+                                'business_type_id' => $businessTypeId,
+                                'provider_id' => $providerId,
+                                'lob_name' => $lobName,
+                            ]);
+                            continue;
+                        }
+
+                        // Process files in this provider folder
+                        $this->processFilesInFolder(
+                            $providerFolder,
+                            $quoteType->id,
+                            $providerId,
+                            $businessTypeId,
+                            $stats
+                        );
+                    }
+                }
+            } else {
+                // For other LOBs: claims/{LOB}/{insurance_provider_id}/{filename}.pdf
+                $providerFolders = File::directories($lobFolder);
+
+                foreach ($providerFolders as $providerFolder) {
+                    $providerId = (int) basename($providerFolder);
+
+                    if (! is_numeric(basename($providerFolder))) {
+                        $error = "Invalid insurance provider ID folder: {$providerFolder}";
+                        $stats['errors'][] = $error;
+                        LoggerService::warning('Invalid insurance provider ID folder', extra: [
+                            'provider_folder' => $providerFolder,
+                            'lob_name' => $lobName,
+                        ]);
+                        continue;
+                    }
+
+                    // Validate insurance provider exists
+                    if (! InsuranceProvider::where('id', $providerId)->exists()) {
+                        $error = "Insurance provider ID {$providerId} does not exist in database";
+                        $stats['errors'][] = $error;
+                        LoggerService::warning('Insurance provider ID not found', extra: [
+                            'provider_id' => $providerId,
+                            'provider_folder' => $providerFolder,
+                            'lob_name' => $lobName,
+                        ]);
+                        continue;
+                    }
+
+                    // Process files in this provider folder (business_type_of_insurance_id is null for non-BUSINESS)
+                    $this->processFilesInFolder(
+                        $providerFolder,
+                        $quoteType->id,
+                        $providerId,
+                        null,
+                        $stats
+                    );
                 }
             }
         }
 
         return $stats;
+    }
+
+    /**
+     * Process all files in a provider folder
+     *
+     * @param string $providerFolder Path to provider folder
+     * @param int $quoteTypeId Quote type ID
+     * @param int $insuranceProviderId Insurance provider ID
+     * @param int|null $businessTypeOfInsuranceId Business type of insurance ID (null for non-BUSINESS LOBs)
+     * @param array $stats Statistics array (passed by reference)
+     * @return void
+     */
+    private function processFilesInFolder(
+        string $providerFolder,
+        int $quoteTypeId,
+        int $insuranceProviderId,
+        ?int $businessTypeOfInsuranceId,
+        array &$stats
+    ): void {
+        // Get all files in the provider folder - only PDF files
+        $files = File::files(directory: $providerFolder);
+
+        foreach ($files as $file) {
+            // Only process PDF files
+            $extension = strtolower(File::extension($file->getPathname()));
+            if ($extension !== 'pdf') {
+                $error = "Skipping non-PDF file: {$file->getFilename()}";
+                $stats['errors'][] = $error;
+                LoggerService::debug('Skipping non-PDF file', extra: [
+                    'filename' => $file->getFilename(),
+                    'extension' => $extension,
+                ]);
+                continue;
+            }
+
+            $stats['processed']++;
+
+            try {
+                $result = $this->processDocument(
+                    $file->getPathname(),
+                    $file->getFilename(),
+                    $quoteTypeId,
+                    $insuranceProviderId,
+                    $businessTypeOfInsuranceId
+                );
+
+                if ($result['success']) {
+                    $stats['uploaded']++;
+                } else {
+                    $stats['failed']++;
+                    $stats['errors'][] = $result['error'] ?? "Failed to process: {$file->getFilename()}";
+                }
+            } catch (\Exception $e) {
+                $stats['failed']++;
+                $stats['errors'][] = "Error processing {$file->getFilename()}: {$e->getMessage()}";
+            }
+        }
     }
 
     /**
@@ -145,13 +274,15 @@ class ClaimsDocumentUploadUtility
      * @param string $originalFileName Original filename
      * @param int $quoteTypeId Quote type ID
      * @param int $insuranceProviderId Insurance provider ID
+     * @param int|null $businessTypeOfInsuranceId Business type of insurance ID (null for non-BUSINESS LOBs)
      * @return array Result with success status
      */
     private function processDocument(
         string $filePath,
         string $originalFileName,
         int $quoteTypeId,
-        int $insuranceProviderId
+        int $insuranceProviderId,
+        ?int $businessTypeOfInsuranceId = null
     ): array {
         try {
             // Read file content
@@ -240,6 +371,7 @@ class ClaimsDocumentUploadUtility
                 'mime_type' => $mimeType,
                 'created_by_id' => self::CREATED_BY_ID,
                 'insurance_provider_id' => $insuranceProviderId,
+                'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -250,6 +382,7 @@ class ClaimsDocumentUploadUtility
                 'azure_path' => $azurePath,
                 'quote_type_id' => $quoteTypeId,
                 'insurance_provider_id' => $insuranceProviderId,
+                'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
             ]);
 
             return [
