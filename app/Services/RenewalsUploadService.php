@@ -1718,7 +1718,7 @@ class RenewalsUploadService
         $plan = [
             'planId' => $carPlan->id,
             'isDisabled' => false,
-            'isManualUpdate' => false,
+            'isManualUpdate' => $isGenesisLead['status'] ? true : false,
             'actualPremium' => $data['premium'] ?? 0,
             'discountPremium' => $data['premium'] ?? 0,
             'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
