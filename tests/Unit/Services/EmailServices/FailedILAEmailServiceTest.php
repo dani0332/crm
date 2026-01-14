@@ -7,7 +7,6 @@ namespace Tests\Unit\Services\EmailServices;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\EmailServices\FailedILAEmailService;
-use Illuminate\Support\Collection;
 use Mockery;
 use Tests\TestCase;
 
