@@ -9,14 +9,12 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Http\Requests\InslyAdvisorRequest;
-use App\Jobs\SendManagerDeactivationAttemptEmailJob;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\InslyAdvisor;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\DepartmentService;
 use App\Services\LeadAllocationService;
-use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
@@ -330,7 +328,6 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, User $user)
