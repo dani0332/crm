@@ -74,7 +74,6 @@ const props = defineProps({
   isAUHLead: Boolean,
   branchOptions: Object,
   hasPecTag: Boolean,
-  genericRequestEnum: Array,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 

@@ -52,7 +52,6 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
-  genericRequestEnum: Array,
 });
 
 const page = usePage();

@@ -196,10 +196,6 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  genericRequestEnum: {
-    type: Array,
-    required: true,
-  },
 });
 
 const page = usePage();
@@ -213,7 +209,6 @@ const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const can = permission => useCan(permission);
-
 const genericRequestEnum = page.props.genericRequestEnum;
 
 const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);

@@ -120,7 +120,6 @@ defineProps({
   isAddionalFieldsEnabled: Boolean,
   rtaConfigurationData: Object,
   carTypeofInsurance: Object,
-  genericRequestEnum: Array,
 });
 
 const page = usePage();

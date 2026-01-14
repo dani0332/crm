@@ -71,7 +71,6 @@ const props = defineProps({
   emailStatuses: Array,
   isBetaUser: Boolean,
   lifeCutOffDate: String,
-  genericRequestEnum: Array,
 });
 
 const genericRequestEnum = page.props.genericRequestEnum;

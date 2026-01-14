@@ -45,7 +45,6 @@ const props = defineProps({
   isFuncsEnabled: Array,
   activities: Array,
   advisors: Array,
-  genericRequestEnum: Array,
 });
 
 const page = usePage();

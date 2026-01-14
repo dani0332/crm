@@ -65,7 +65,6 @@ const props = defineProps({
   isFuncsEnabled: Array,
   quoteStatuses: Object,
   homeCutOffDate: String,
-  genericRequestEnum: Array,
 });
 
 const page = usePage();

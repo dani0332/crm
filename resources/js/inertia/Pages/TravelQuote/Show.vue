@@ -71,7 +71,6 @@ defineProps({
   isFuncsEnabled: Array,
   isAllianceProvider: Boolean,
   customerAddressData: Object,
-  genericRequestEnum: Array,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';

@@ -53,7 +53,6 @@ const props = defineProps({
   amlStatusName: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
-  genericRequestEnum: Array,
 });
 
 const page = usePage();

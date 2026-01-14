@@ -62,7 +62,6 @@ defineProps({
   amlStatusName: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
-  genericRequestEnum: Array,
 });
 
 const assumptionState = reactive({
@@ -83,7 +82,6 @@ const leadSource = page.props.leadSource;
 const notification = useToast();
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
-
 const genericRequestEnum = page.props.genericRequestEnum;
 
 const bike_current_insurance_status = computed(() => {

@@ -55,7 +55,6 @@ const props = defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   borLogs: Array,
-  genericRequestEnum: Array,
 });
 
 const page = usePage();
