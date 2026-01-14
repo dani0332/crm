@@ -350,10 +350,10 @@ class SendEmailCustomerService extends BaseService
 
             // Clean document URLs to avoid attachment name errors brevo send attachment error
             $cleanedDocumentUrls = [];
-            if (!empty($emailData->documentUrl) && $emailData->documentUrl !== null) {
+            if (! empty($emailData->documentUrl) && $emailData->documentUrl !== null) {
                 $documentUrls = is_array($emailData->documentUrl) ? $emailData->documentUrl : [$emailData->documentUrl];
                 foreach ($documentUrls as $documentURL) {
-                    if (!empty($documentURL)) {
+                    if (! empty($documentURL)) {
                         $cleanUrl = strtok($documentURL, '?');
                         $cleanUrl = preg_replace('/\s+$/m', '', $cleanUrl);
                         $cleanedDocumentUrls[] = $cleanUrl;
@@ -361,7 +361,7 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            $emailAttachments = !empty($cleanedDocumentUrls) ? $cleanedDocumentUrls : null;
+            $emailAttachments = ! empty($cleanedDocumentUrls) ? $cleanedDocumentUrls : null;
 
             if ($emailAttachments) {
                 LoggerService::info(self::class.' - sendRenewalsOcbEmail - Processing email attachments', extra: [

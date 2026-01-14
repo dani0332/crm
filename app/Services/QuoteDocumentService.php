@@ -926,7 +926,7 @@ class QuoteDocumentService extends BaseService
     /**
      * Get document file extension from file path
      *
-     * @param string $filePath
+     * @param  string  $filePath
      * @return string
      */
     public function getDocumentExtension($filePath)
@@ -937,7 +937,7 @@ class QuoteDocumentService extends BaseService
 
         // Clean the URL by removing query parameters
         $cleanPath = strtok($filePath, '?');
-        
+
         // Remove trailing whitespace
         $cleanPath = preg_replace('/\s+$/m', '', $cleanPath);
 
