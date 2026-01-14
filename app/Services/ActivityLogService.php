@@ -158,9 +158,9 @@ class ActivityLogService extends BaseService
             $properties['request_payload'] = $this->sanitizePayload($requestData['payload']);
         }
 
-        // Add query parameters (sanitized to prevent sensitive data leakage)
+        // Add query parameters
         if (! empty($requestData['query_params'])) {
-            $properties['query_params'] = $this->sanitizePayload($requestData['query_params']);
+            $properties['query_params'] = $requestData['query_params'];
         }
 
         // Add route information
