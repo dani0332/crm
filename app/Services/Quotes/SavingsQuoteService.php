@@ -225,28 +225,68 @@ class SavingsQuoteService extends BaseQuoteService
             ->where('uuid', $uuid)->firstOrFail();
     }
 
-    public function update(string $uuid, array $data)
+    public function update($uuid, $data)
     {
+        $isAnyFieldChanged = false;
+        $quote = null;
 
-        return DB::transaction(function () use ($uuid, $data) {
+        LoggerService::startQuoteLogging($uuid);
+
+        [$quote, $isAnyFieldChanged] = DB::transaction(function () use ($uuid, $data) {
+            $isAnyFieldChanged = false;
+
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
                 'sub_source_id', 'sub_source_options_id', 'notes',
             ]);
-
             $quoteData['updated_by_id'] = Auth::id();
-
+            LoggerService::info('updateSavingsQuote: ', $quoteData);
             $quote->update($quoteData);
 
-            $quote->savingsQuote()->updateOrCreate(
-                ['personal_quote_id' => $quote->id],
-                $data
-            );
+            if ($quote->savingsQuote) {
+                LoggerService::info('fn: updateSavingsQuote - Savings Quote Found');
 
-            return $quote;
+                $fieldsToRevisePlans = [
+                    'dob',
+                    'nationality_id',
+                    'gender',
+                    'tenure_id',
+                    'currency_id',
+                    'investment_amount',
+                    'investment_criteria_id',
+                    'purpose_id',
+                    'marital_status_id',
+                ];
+
+                $savingsQuote = $quote->savingsQuote;
+                foreach ($fieldsToRevisePlans as $field) {
+                    if (isset($data[$field]) && $data[$field] != $savingsQuote->$field) {
+                        $isAnyFieldChanged = true;
+                        break;
+                    }
+                }
+
+                $savingsQuoteData = Arr::only($data, app(SavingsQuote::class)->getFillable());
+                $quote->savingsQuote->fill($savingsQuoteData);
+                $quote->savingsQuote->save();
+            } else {
+                LoggerService::info('fn: updateSavingsQuote - Savings Quote Not Found, Creating New One');
+
+                $savingsQuoteData = Arr::only($data, app(SavingsQuote::class)->getFillable());
+                $savingsQuote = $quote->savingsQuote()->create($savingsQuoteData);
+            }
+
+            return [$quote, $isAnyFieldChanged];
         });
+
+        if ($isAnyFieldChanged) {
+            $this->getQuotePlans($uuid, true);
+            LoggerService::info('fn: updateSavingsQuote - Fields Changed, Plans to be revised');
+        }
+
+        return $quote;
     }
 
     public function getShowData(string $uuid)
@@ -353,9 +393,8 @@ class SavingsQuoteService extends BaseQuoteService
         return $listQuotePlans;
     }
 
-    public function getQuotePlans($id, $extraData = [])
+    public function getQuotePlans(string $uuid, bool $getLatestRating = false)
     {
-        $quoteUuId = SavingsQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-savings-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
@@ -364,10 +403,10 @@ class SavingsQuoteService extends BaseQuoteService
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
-            'quoteUID' => $quoteUuId,
+            'quoteUID' => $uuid,
+            'getLatestRating' => $getLatestRating,
             'lang' => 'en',
             'callSource' => 'imcrm',
-            ...$extraData,
         ];
 
         $client = new \GuzzleHttp\Client;
