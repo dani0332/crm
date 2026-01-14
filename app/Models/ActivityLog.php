@@ -7,6 +7,14 @@ use Spatie\Activitylog\Models\Activity as SpatieActivity;
 class ActivityLog extends SpatieActivity
 {
     /**
+     * The database connection name for the model.
+     * Always use the writable 'mysql' connection, even when default connection is set to 'mysql_read'.
+     *
+     * @var string|null
+     */
+    protected $connection = 'mysql';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
