@@ -1,4 +1,5 @@
 <script setup>
+import { Head } from '@inertiajs/vue3';
 import ActivityLogDetailModal from './ActivityLogDetailModal.vue';
 
 const props = defineProps({
