@@ -499,7 +499,9 @@ onMounted(() => {
                 </div>
               </template>
             </x-tooltip>
+          </div>
 
+          <div class="flex gap-2">
             <!-- Show/Hide Button Group -->
             <x-button-group v-if="selectedPlans.length > 0" size="sm">
               <x-button
@@ -515,9 +517,7 @@ onMounted(() => {
                 Hide
               </x-button>
             </x-button-group>
-          </div>
 
-          <div class="flex gap-2">
             <!-- Send OCA Email Button -->
             <x-tooltip placement="top" align="left">
               <x-button
