@@ -917,8 +917,8 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->where('code', $request->code);
         }
 
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $partialQuery->where('renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && $request->renewal_batches != '') {
+            $partialQuery->whereIn('renewal_batch_id', $request->renewal_batches);
         }
 
         if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
