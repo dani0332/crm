@@ -9,6 +9,7 @@ import {
   useObjToUrl,
 } from '@/inertia/Composables/utilities.js';
 import { formattedDateYmdWithTime } from '../../Composables/utilities';
+const { isEmail } = useRules();
 
 const props = defineProps({
   claims: Object,
@@ -193,6 +194,16 @@ const isPendingClaimRequestType = ref(
 
 function searchClaims(isValid) {
   if (isValid) {
+    if (filters.email) {
+      const emailValidation = isEmail(filters.email);
+      if (emailValidation !== true) {
+        notification.error({
+          title: emailValidation,
+          position: 'top',
+        });
+        return;
+      }
+    }
     // Validate date range before proceeding
     if (!validateDateRange()) {
       notification.error({
@@ -560,6 +571,7 @@ watch(
         />
         <x-input
           v-model="filters.email"
+          :rules="[isEmail]"
           type="email"
           name="email"
           label="Email Address"
