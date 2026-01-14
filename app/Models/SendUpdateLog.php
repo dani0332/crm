@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
-    use Auditable;
+    use Auditable, SpatieActivityLog;
 
     protected $guarded = [];
     protected $casts = [
