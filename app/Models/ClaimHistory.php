@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\SpatieActivityLog;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ClaimHistory extends BaseModel
 {

@@ -43,7 +43,7 @@ class IndexActivityLogRequest extends FormRequest
             'event' => $this->input('event'),
         ];
 
-        return array_filter($filters, fn($value) => !empty($value));
+        return array_filter($filters, fn ($value) => ! empty($value));
     }
 
     /**
@@ -59,4 +59,3 @@ class IndexActivityLogRequest extends FormRequest
         ]);
     }
 }
-

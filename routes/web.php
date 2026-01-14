@@ -101,7 +101,6 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Models\BorLog;
-use App\Models\CarQuote;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;

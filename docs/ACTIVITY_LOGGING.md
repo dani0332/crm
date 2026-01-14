@@ -78,12 +78,14 @@ This document explains how the Activity Logging system works in the application.
 **Location:** `app/Http/Middleware/ActivityLogBatchMiddleware.php`
 
 **How it works:**
+
 - Registered in `RouteServiceProvider` for all web and API routes
 - Runs at the **start** of every request
 - Uses `try...finally` to ensure batch always ends, even if exceptions occur
 - Uses **Spatie's LogBatch** facade for automatic batch UUID management
 
 **Code Example:**
+
 ```php
 public function handle(Request $request, Closure $next): Response
 {
@@ -103,6 +105,7 @@ public function handle(Request $request, Closure $next): Response
 ```
 
 **How Spatie's LogBatch Works:**
+
 - `LogBatch::startBatch()` generates a UUID and stores it in context
 - All activities created while the batch is open automatically get the same `batch_uuid`
 - Spatie's `ActivityLogger` automatically sets `batch_uuid` on each activity before saving
@@ -110,6 +113,7 @@ public function handle(Request $request, Closure $next): Response
 - Activities save individually but share the same `batch_uuid` for grouping
 
 **Why `try...finally`?**
+
 - The `finally` block **always executes**, regardless of:
   - Successful request completion
   - Exceptions thrown during request processing
@@ -118,6 +122,7 @@ public function handle(Request $request, Closure $next): Response
 - Without `finally`, if an exception occurs, the batch context might remain open
 
 **Flow:**
+
 ```
 Request arrives
   ↓
@@ -150,6 +155,7 @@ try {
 **Location:** `app/Models/ActivityLog.php`
 
 **Key Features:**
+
 - Extends Spatie's `Activity` model
 - Adds custom fillable attributes: `url`, `feature`, `ip_address`, `code`
 - Spatie automatically handles `batch_uuid` assignment when `LogBatch` is open
@@ -166,6 +172,7 @@ try {
 **Key Methods:**
 
 #### `getActivitylogOptions()`
+
 - Configures Spatie package:
   - `logAll()` - Log all attributes
   - `logOnlyDirty()` - Only log changed attributes
@@ -173,7 +180,9 @@ try {
   - `setDescriptionForEvent()` - Human-readable description
 
 #### `tapActivity(Activity $activity, string $eventName)`
+
 Called **before** activity is saved. Enriches activity with:
+
 - `url` - Current request URI
 - `feature` - From Context (set by LoggerService)
 - `ip_address` - Client IP address
@@ -193,12 +202,15 @@ Called **before** activity is saved. Enriches activity with:
   ```
 
 **Old/New Value Tracking:**
+
 - Uses `getOriginal()` to get old values
 - Uses `getChanges()` to get new values
 - Stores both in `properties` JSON column
 
 #### `getActivityLogName()`
+
 Determines log name with priority:
+
 1. `$activityLogName` property (if exists)
 2. `getModelActivityLogName()` method (if exists)
 3. Convert class name: `PaymentSplits` → `"Payment Splits"`
@@ -281,23 +293,27 @@ Determines log name with priority:
 ## Key Benefits
 
 ### 1. **Request Grouping**
+
 - All activities in same request automatically share same `batch_uuid`
 - Easy to query: `Activity::forBatch($batchUuid)->get()`
 - Useful for debugging and auditing
 - Example: When a user deletes an Author, all cascading Book deletions share the same batch_uuid
 
 ### 2. **Old/New Value Tracking**
+
 - For updates, both old and new values are stored
 - Stored in `properties` JSON column
 - Frontend can display side-by-side comparison
 
 ### 3. **Automatic**
+
 - No manual batching code needed
 - Works automatically for all models with `SpatieActivityLog` trait
 - Middleware handles batch lifecycle automatically
 - Spatie's LogBatch handles batch UUID assignment automatically
 
 ### 4. **Simple & Clean**
+
 - Uses Spatie's built-in batching functionality
 - Minimal code, maximum functionality
 
@@ -444,9 +460,9 @@ The Activity Logging system works in these key steps:
 7. **Grouping:** All activities share same `batch_uuid` for easy querying
 
 This approach provides:
+
 - ✅ Request-level grouping (all activities share same batch_uuid)
 - ✅ Complete audit trail with old/new values
 - ✅ Zero manual intervention needed
 - ✅ Simple implementation using Spatie's built-in functionality
 - ✅ Easy querying: `Activity::forBatch($batchUuid)->get()`
-

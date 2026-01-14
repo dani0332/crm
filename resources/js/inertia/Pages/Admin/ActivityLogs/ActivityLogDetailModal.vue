@@ -31,7 +31,7 @@ const getEventTagColor = event => {
 
 const formatProperties = properties => {
   if (!properties) return null;
-  
+
   // Handle string properties (JSON string)
   if (typeof properties === 'string') {
     try {
@@ -41,7 +41,7 @@ const formatProperties = properties => {
       return null;
     }
   }
-  
+
   // Check if properties have old and attributes structure
   if (properties.old && properties.attributes) {
     const formatted = [];
@@ -49,7 +49,7 @@ const formatProperties = properties => {
       ...Object.keys(properties.old || {}),
       ...Object.keys(properties.attributes || {}),
     ]);
-    
+
     allKeys.forEach(key => {
       formatted.push({
         key,
@@ -57,10 +57,10 @@ const formatProperties = properties => {
         new: properties.attributes[key] ?? null,
       });
     });
-    
+
     return formatted;
   }
-  
+
   return null;
 };
 
@@ -69,15 +69,17 @@ const formattedProperties = computed(() => {
   return formatProperties(props.log.properties);
 });
 
-const filterNullValues = (obj) => {
+const filterNullValues = obj => {
   if (obj === null || obj === undefined) {
     return undefined;
   }
-  
+
   if (Array.isArray(obj)) {
-    return obj.map(item => filterNullValues(item)).filter(item => item !== undefined);
+    return obj
+      .map(item => filterNullValues(item))
+      .filter(item => item !== undefined);
   }
-  
+
   if (typeof obj === 'object') {
     const filtered = {};
     for (const [key, value] of Object.entries(obj)) {
@@ -88,15 +90,15 @@ const filterNullValues = (obj) => {
     }
     return Object.keys(filtered).length > 0 ? filtered : undefined;
   }
-  
+
   return obj;
 };
 
 const filteredProperties = computed(() => {
   if (!props.log?.properties) return null;
-  
+
   let properties = props.log.properties;
-  
+
   // Handle string properties (JSON string)
   if (typeof properties === 'string') {
     try {
@@ -106,7 +108,7 @@ const filteredProperties = computed(() => {
       return properties;
     }
   }
-  
+
   // Filter out null values recursively
   const filtered = filterNullValues(properties);
   return filtered !== undefined ? filtered : null;
@@ -212,7 +214,8 @@ const closeModal = () => {
               <dd>
                 <pre
                   class="bg-white p-3 rounded border text-xs overflow-auto max-h-40"
-                >{{ JSON.stringify(log.subject, null, 2) }}</pre>
+                  >{{ JSON.stringify(log.subject, null, 2) }}</pre
+                >
               </dd>
             </div>
           </dl>
@@ -229,7 +232,10 @@ const closeModal = () => {
         <!-- Properties -->
         <div v-if="log.properties">
           <h3 class="text-lg font-semibold mb-2">Properties</h3>
-          <div v-if="formattedProperties" class="bg-gray-50 p-4 rounded border overflow-auto max-h-96">
+          <div
+            v-if="formattedProperties"
+            class="bg-gray-50 p-4 rounded border overflow-auto max-h-96"
+          >
             <div class="space-y-3">
               <div
                 v-for="item in formattedProperties"
@@ -241,36 +247,60 @@ const closeModal = () => {
                 </div>
                 <div class="grid md:grid-cols-2 gap-3">
                   <div>
-                    <div class="text-xs font-medium text-gray-600 mb-1">Old Value:</div>
+                    <div class="text-xs font-medium text-gray-600 mb-1">
+                      Old Value:
+                    </div>
                     <div
                       class="bg-red-50 border border-red-200 rounded p-2 text-sm break-words"
                       :class="{
-                        'text-gray-400 italic': item.old === null || item.old === '',
+                        'text-gray-400 italic':
+                          item.old === null || item.old === '',
                       }"
                     >
-                      {{ item.old === null || item.old === '' ? '(empty)' : item.old }}
+                      {{
+                        item.old === null || item.old === ''
+                          ? '(empty)'
+                          : item.old
+                      }}
                     </div>
                   </div>
                   <div>
-                    <div class="text-xs font-medium text-gray-600 mb-1">New Value:</div>
+                    <div class="text-xs font-medium text-gray-600 mb-1">
+                      New Value:
+                    </div>
                     <div
                       class="bg-green-50 border border-green-200 rounded p-2 text-sm break-words"
                       :class="{
-                        'text-gray-400 italic': item.new === null || item.new === '',
+                        'text-gray-400 italic':
+                          item.new === null || item.new === '',
                       }"
                     >
-                      {{ item.new === null || item.new === '' ? '(empty)' : item.new }}
+                      {{
+                        item.new === null || item.new === ''
+                          ? '(empty)'
+                          : item.new
+                      }}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div v-else-if="filteredProperties" class="bg-gray-50 p-4 rounded border overflow-auto max-h-96">
-            <pre class="text-xs">{{ JSON.stringify(filteredProperties, null, 2) }}</pre>
+          <div
+            v-else-if="filteredProperties"
+            class="bg-gray-50 p-4 rounded border overflow-auto max-h-96"
+          >
+            <pre class="text-xs">{{
+              JSON.stringify(filteredProperties, null, 2)
+            }}</pre>
           </div>
-          <div v-else class="bg-gray-50 p-4 rounded border overflow-auto max-h-96">
-            <pre class="text-xs text-gray-400 italic">No properties data available</pre>
+          <div
+            v-else
+            class="bg-gray-50 p-4 rounded border overflow-auto max-h-96"
+          >
+            <pre class="text-xs text-gray-400 italic">
+No properties data available</pre
+            >
           </div>
         </div>
 
@@ -285,4 +315,3 @@ const closeModal = () => {
     </template>
   </x-modal>
 </template>
-
