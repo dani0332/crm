@@ -7,8 +7,11 @@ use App\Enums\ClaimsEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Facades\CustomerPortalApiFacade;
 use App\Facades\InstantWriterAIFacade;
+use App\Jobs\SendClaimSubStatusUpdateNotificationEmailJob;
+use App\Models\BusinessTypeOfInsurance;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\ClaimActivity;
@@ -135,7 +138,10 @@ class ClaimsService extends BaseService
                 'insuranceProvider:id,code,text',
                 'claimRequestType:id,code,text',
                 'claimRequestDetails' => function ($query) {
-                    $query->with('serviceType:id,code,text');
+                    $query->with([
+                        'serviceType:id,code,text',
+                        'tpaOption:id,code,text',
+                    ]);
                 },
                 'personalQuote' => function ($query) {
                     $query->with('advisor:id,name', 'insuranceProvider:id,code,text');
@@ -225,6 +231,10 @@ class ClaimsService extends BaseService
             $query->where('quote_type_id', $filters['quote_type_id']);
         }
 
+        if (! empty($filters['business_type_of_insurance_id'])) {
+            $query->where('business_type_of_insurance_id', $filters['business_type_of_insurance_id']);
+        }
+
         if (! empty($filters['policy_number'])) {
             $query->where('policy_number', $filters['policy_number']);
         }
@@ -292,6 +302,7 @@ class ClaimsService extends BaseService
             'manager_id',
             'manager_assigned_date',
             'quote_type_id',
+            'business_type_of_insurance_id',
             'policy_number',
             'complaint_status_id',
             'next_followup_datetime',
@@ -435,7 +446,16 @@ class ClaimsService extends BaseService
             // Make API call to create claim
             $response = CustomerPortalApiFacade::request('/api/claims/save-claim', 'post', $apiData);
 
-            return $response->data;
+            $responseData = $response->data;
+            $user = auth()->user();
+            $isClaimManager = $user->hasRole(RolesEnum::CLAIM_MANAGER);
+
+            if ($responseData['success'] && $isClaimManager) {
+                $claim = $this->getClaimById($responseData['claimUID']);
+                $claim->update(['manager_id' => $user->id]);
+            }
+
+            return $responseData;
 
         } catch (\Exception $e) {
             LoggerService::error(' Error creating claim request', extra: [
@@ -778,6 +798,7 @@ class ClaimsService extends BaseService
             'carMake' => $this->getCarMake(),
             'carModel' => $carMake ? $this->getCarModelByMake($carMake) : [],
             'carModelYear' => $this->getCarModelYear(),
+            'businessTypeOfInsurance' => $this->getBusinessTypeOfInsurance(),
         ];
     }
 
@@ -819,6 +840,16 @@ class ClaimsService extends BaseService
                 ->toArray();
         });
 
+    }
+
+    public function getBusinessTypeOfInsurance(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::BUSINESS_TYPE_OF_INSURANCE_KEY, function () {
+            return BusinessTypeOfInsurance::select('id', 'text')
+                ->active()
+                ->get()
+                ->toArray();
+        });
     }
 
     /**
@@ -890,6 +921,8 @@ class ClaimsService extends BaseService
             $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
             $request->customer_message, $request->ai_optimized_message
         );
+
+        SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->ai_optimized_message);
 
         return $claimActivity;
     }

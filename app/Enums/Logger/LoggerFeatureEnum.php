@@ -7,6 +7,7 @@ enum LoggerFeatureEnum: string
     case ALLOCATION = 'allocation';
     case ALLOCATION_AUDIT = 'allocation-audit';
     case FTC_EMAIL = 'ftc-email';
+    case FTC_EMAIL_LOG = 'ftc-email-log';
     case TRAVEL_RENEWALS = 'travel-renewals';
     case OCR = 'ocr';
     case PCP_CLIENT = 'private-client';
@@ -48,6 +49,10 @@ enum LoggerFeatureEnum: string
     case CC_PAYMENT_PROCESS_COMMAND = 'cc-payment-process-command';
     case SEND_AND_BOOK_POLICY_FAILED_BULK_EMAIL_JOB = 'send-and-book-policy-failed-bulk-email-job';
     case INSURER_AML_SCREENING_WITH_KYC_DOCUMENT = 'insurer-aml-screening-with-kyc-document';
+    case LEAD_OCR_DATA_COMPARISON = 'lead-ocr-data-comparison';
+    case WATERMARK_DOCUMENT = 'watermark-document';
+
+    case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
 
     /* Claims Module */
     case CLAIM_CREATION = 'claim-creation';
@@ -68,4 +73,5 @@ enum LoggerFeatureEnum: string
     case CLAIM_DOCUMENT_DOWNLOAD_ALL = 'claim-document-download-all';
     case CLAIM_GOOGLE_REVIEW_EMAIL = 'claim-google-review-email';
     case CLAIM_DOCUMENT_UPLOAD_UTILITY = 'claim-document-upload-utility';
+    case CLAIM_SUB_STATUS_CUSTOMER_UPDATE_EMAIL = 'claim-sub-status-customer-update-email';
 }

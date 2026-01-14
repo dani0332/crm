@@ -20,6 +20,7 @@ enum ClaimsEnum: string
     case CLAIM_REQUEST_TYPES_KEY = 'claim-request-types';
     case CLAIM_SERVICE_TYPES_KEY = 'claim-service-types';
     case CLAIM_STATUS_ACCESS_TYPES_KEY = 'claim-status-access-types';
+    case CLAIM_TPA_OPTIONS_KEY = 'claim-tpa-options';
 
     // Claim Types Codes
     case CLAIM_TYPE_OWN_DAMAGE_CLAIM_CODE = 'own-damage-claim';
@@ -38,6 +39,7 @@ enum ClaimsEnum: string
     // Claim Service Type Codes
     case CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE = 'in-patient-request';
     case CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE = 'out-patient-request';
+    case CLAIM_SERVICE_TYPE_OTHERS_REQUEST_CODE = 'others';
 
     // Claim Request Access Type Codes
     case CLAIM_REQUEST_ACCESS_TYPE_SYSTEM_GENERATED_CODE = 'system-generated';
@@ -140,13 +142,14 @@ enum ClaimsEnum: string
     }
 
     /**
-     * Get all claim service type codes
+     * Get all claim Service Type codes
      */
     public static function getClaimServiceTypeCodes(): array
     {
         return [
             self::CLAIM_SERVICE_TYPE_IN_PATIENT_REQUEST_CODE->value,
             self::CLAIM_SERVICE_TYPE_OUT_PATIENT_REQUEST_CODE->value,
+            self::CLAIM_SERVICE_TYPE_OTHERS_REQUEST_CODE->value,
         ];
     }
 

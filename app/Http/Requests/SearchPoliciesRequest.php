@@ -23,7 +23,7 @@ class SearchPoliciesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email|max:255',
+            'email' => 'required|email:rfc,dns|max:255',
             'quote_type_id' => 'required|integer|exists:quote_type,id',
             'policy_number' => 'nullable|string|max:100',
             'page' => 'nullable|integer|min:1',

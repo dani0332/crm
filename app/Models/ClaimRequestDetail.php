@@ -154,4 +154,9 @@ class ClaimRequestDetail extends Model implements AuditableContract
 
         return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    public function tpaOption(): BelongsTo
+    {
+        return $this->belongsTo(Lookup::class, 'tpa_option_id');
+    }
 }

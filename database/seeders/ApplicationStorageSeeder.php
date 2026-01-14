@@ -134,7 +134,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAutoCaptureEPPayments();
         $this->seedEnableVoiceAIIntegration();
         $this->seedSla();
-        $this->seedTravelAutomatedFollowUps();
+        // $this->seedTravelAutomatedFollowUps();
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
@@ -145,6 +145,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedMrIncludeFailedBookings();
         $this->seedLegacyPolicyKeys();
         $this->seedBranchData();
+        $this->seedOcrUtilEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -772,7 +773,7 @@ class ApplicationStorageSeeder extends Seeder
     private function claimGoogleReviewEmail()
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL],
+            ['key_name' => ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f440f3b1-7c43-445c-a229-2b694e71179c/invoke-sync',
                 'created_at' => now(),
@@ -1017,10 +1018,10 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedTravelAutomatedFollowUps()
     {
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_AUTOMATED_FOLLOWUPS],
             [
-                'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/6ac637e8-4bf6-418b-8f65-7485ce47687f/invoke-sync',
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/d2390476-791f-493e-a68e-a3625839261c/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1279,6 +1280,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_MISREPORT_JOB_WORKFLOW],
             [
                 'value' => $birdWorkflowUrl,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOcrUtilEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_UTIL_ENABLED],
+            [
+                'value' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

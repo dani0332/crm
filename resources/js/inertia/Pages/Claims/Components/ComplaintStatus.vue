@@ -20,9 +20,9 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 
 const complaintStatusForm = useForm({
-  complaint_status_id: props.claim?.complaint_status_id || '',
-  notes: props.claim?.complaint_notes || '',
-  complaint_datetime: props.claim?.complaint_datetime || '',
+  complaint_status_id: '',
+  notes: '',
+  complaint_datetime: '',
 });
 
 // Client-side validation rules
@@ -108,7 +108,12 @@ watch(
 
 // Computed property to disable submit button
 const isSubmitDisabled = computed(() => {
-  return complaintStatusForm.processing || !isFormValid.value;
+  return (
+    complaintStatusForm.processing ||
+    !isFormValid.value ||
+    !complaintStatusForm.complaint_status_id ||
+    !complaintStatusForm.complaint_datetime
+  );
 });
 
 const updateComplaintStatus = isValid => {
@@ -134,7 +139,9 @@ const updateComplaintStatus = isValid => {
     {
       preserveScroll: true,
       onSuccess: response => {
-        console.log('response', response);
+        router.visit(route('claims.show', props.claim?.uuid), {
+          preserveScroll: true,
+        });
       },
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
@@ -193,7 +200,8 @@ const updateComplaintStatus = isValid => {
                   class="w-full"
                   :max-date="maxDate"
                   required
-                  :utc="true"
+                  withTime
+                  :utc="'preserve'"
                   :is-24="true"
                   @update:model-value="validateFormOnChange"
                 />

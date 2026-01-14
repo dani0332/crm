@@ -19,6 +19,7 @@ enum CacheKeyEnum: string
     case CLAIM_REQUEST_TYPE_KEY = 'claim_request_type_key';
     case CLAIM_SERVICE_TYPE_KEY = 'claim_service_type_key';
     case CLAIM_TYPE_KEY = 'claim_type_key';
+    case BUSINESS_TYPE_OF_INSURANCE_KEY = 'business_type_of_insurance_key';
     case CAR_MODEL_YEAR_KEY = 'car_model_year_key';
 
     public function expiry()
@@ -33,6 +34,7 @@ enum CacheKeyEnum: string
             self::CLAIM_REQUEST_TYPE_KEY,
             self::CLAIM_SERVICE_TYPE_KEY,
             self::CLAIM_TYPE_KEY,
+            self::BUSINESS_TYPE_OF_INSURANCE_KEY,
             self::CAR_MODEL_YEAR_KEY => now()->addHours(4),
             self::HOME_LOOKUPS => now()->endOfDay(),
             self::SAVINGS_QUOTE_LOOKUPS => now()->endOfDay(),

@@ -10,4 +10,9 @@ class BusinessTypeOfInsurance extends Model
     use HasFactory;
 
     protected $table = 'business_type_of_insurance';
+
+    public function scopeActive($query)
+    {
+        $query->where('is_active', 1);
+    }
 }

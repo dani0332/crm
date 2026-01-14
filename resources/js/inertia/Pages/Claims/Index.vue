@@ -99,6 +99,15 @@ const claimSubStatusOptions = computed(() => {
   );
 });
 
+const businessTypeOfInsuranceOptions = computed(() => {
+  return (
+    props.claimDropdownOptions?.businessTypeOfInsurance?.map(bt => ({
+      value: bt.id,
+      label: bt.text,
+    })) || []
+  );
+});
+
 const managersOptions = computed(() => {
   return (
     props.claimDropdownOptions?.claimsManagers?.map(manager => ({
@@ -516,7 +525,7 @@ watch(
       <h2 class="text-xl font-semibold">Claims List</h2>
       <div class="flex gap-2">
         <Link v-if="can(permissionsEnum.CLAIM_CREATE)" href="/claim/create">
-          <x-button size="sm" color="primary">Add New Claim</x-button>
+          <x-button size="sm" color="primary">Create Claim</x-button>
         </Link>
       </div>
     </div>
@@ -592,7 +601,14 @@ watch(
           filterPlaceholder="Filter Line of Business...."
           clearable
         />
-
+        <x-select
+          v-model="filters.business_type_of_insurance_id"
+          label="Search by Business Type of Insurance"
+          placeholder="Select  "
+          :options="businessTypeOfInsuranceOptions"
+          filterable
+          filterPlaceholder="Filter Business Type of Insurance...."
+        />
         <x-select
           v-model="filters.claim_status_id"
           label="Claim Status"

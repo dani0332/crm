@@ -59,6 +59,7 @@ class ClaimSearchRequest extends FormRequest
             // Assignment and policy filters
             'manager_id' => 'nullable|integer|exists:users,id',
             'quote_type_id' => 'nullable|integer|exists:quote_type,id',
+            'business_type_of_insurance_id' => 'nullable|integer|exists:business_type_of_insurance,id',
             'policy_number' => 'nullable|string|max:100',
             'assigned_status' => 'nullable|in:assigned,un-assigned',
 

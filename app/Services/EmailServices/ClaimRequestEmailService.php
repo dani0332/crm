@@ -35,16 +35,13 @@ class ClaimRequestEmailService extends BaseService
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'customer_email' => $claimRequest->email,
-                'isLifeLOB' => $isLifeLob
+                'isLifeLOB' => $isLifeLob,
             ]);
 
-
-            if(!$isLifeLob){
+            if (! $isLifeLob) {
                 // Dispatch the job to send Google review email
                 SendClaimGoogleReviewEmailJob::dispatch($claimRequest->uuid);
             }
-
-
 
         } catch (\Exception $e) {
             LoggerService::error(' Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -76,7 +73,7 @@ class ClaimRequestEmailService extends BaseService
             $emailData = $this->buildClaimGoogleReviewEmailData($claimRequest);
 
             // Get Bird webhook URL from application storage
-            $googleReviewEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::CLAIM_GOOGLE_REVIEW_EMAIL)->first();
+            $googleReviewEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL)->first();
 
             if (! $googleReviewEvent) {
                 LoggerService::warning(' Google review email workflow key not found - Claim UUID: '.$claimRequest->uuid, [
@@ -124,13 +121,88 @@ class ClaimRequestEmailService extends BaseService
         return (object) [
             'customerName' => $claimRequest->full_name ?? '',
             'customerEmail' => $claimRequest->email ?? '',
-            'advisorName' => $claimRequest->manager?->name ?? '',
-            'advisorEmail' => $claimRequest->manager?->email ?? '',
-            'advisorLandLine' => $claimRequest->manager?->landline_no ?? '',
-            'advisorMobileNoWithoutSpaces' => $phoneNumber,
-            'advisorMobilePhone' => $phoneNumber,
-            'advisorProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
+            'managerName' => $claimRequest->manager?->name ?? '',
+            'managerEmail' => $claimRequest->manager?->email ?? '',
+            'managerLandLine' => $claimRequest->manager?->landline_no ?? '',
+            'managerMobileNoWithoutSpaces' => $phoneNumber,
+            'managerMobilePhone' => $phoneNumber,
+            'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
             'workflowType' => $workflowType,
+        ];
+    }
+
+    /**
+     * Send Google review email to customer
+     *
+     * @param  ClaimRequest  $claimRequest  The claim request that was closed
+     * @return int|null HTTP status code or null if failed
+     */
+    public function sendClaimSubStatusCustomerUpdateEmail(ClaimRequest $claimRequest, $message): ?int
+    {
+        try {
+            LoggerService::info(' Sending Google review email - Claim UUID: '.$claimRequest->uuid, [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'customer_email' => $claimRequest->email,
+                'claim_status_id' => $claimRequest->claim_status_id,
+            ]);
+
+            // Build email data
+            $emailData = $this->buildClaimSubStatusCustomerUpdateEmailData($claimRequest, $message);
+
+            // Get Bird webhook URL from application storage
+            $googleReviewEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL)->first();
+
+            if (! $googleReviewEvent) {
+                LoggerService::warning(' Google review email workflow key not found - Claim UUID: '.$claimRequest->uuid, [
+                    'claim_request_id' => $claimRequest->id,
+                    'claim_uuid' => $claimRequest->uuid,
+                ]);
+
+                return null;
+            }
+
+            // Trigger Bird webhook
+            $response = app(BirdService::class)->triggerWebHookRequest($googleReviewEvent->value, $emailData);
+
+            LoggerService::info(' Google review email workflow triggered - Claim UUID: '.$claimRequest->uuid, [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'response_status' => $response->status_code,
+                'time' => now(),
+            ]);
+
+            return $response->status_code;
+
+        } catch (Exception $e) {
+            LoggerService::error(' Error sending Google review email - Claim UUID: '.$claimRequest->uuid, [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    private function buildClaimSubStatusCustomerUpdateEmailData(ClaimRequest $claimRequest, $message): object
+    {
+        $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
+        $workflowType = WorkflowTypeEnum::CLAIM_SUB_STATUS_CUSTOMER_NOTIFICATION;
+
+        return (object) [
+            'claimUID' => $claimRequest->code ?? '',
+            'customerName' => $claimRequest->full_name ?? '',
+            'customerEmail' => $claimRequest->email ?? '',
+            'managerName' => $claimRequest->manager?->name ?? '',
+            'managerEmail' => $claimRequest->manager?->email ?? '',
+            'managerLandLine' => $claimRequest->manager?->landline_no ?? '',
+            'managerMobileNoWithoutSpaces' => $phoneNumber,
+            'managerMobilePhone' => $phoneNumber,
+            'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
+            'workflowType' => $workflowType,
+            'message' => $message,
         ];
     }
 

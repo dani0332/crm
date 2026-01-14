@@ -465,6 +465,10 @@ watch(
                 <dd>{{ claim.source || '-' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Emirate ID</dt>
+                <dd>{{ claim.claim_request_details?.emirates_id_number }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Line Of Business</dt>
                 <dd>{{ claim.quote_type?.text }}</dd>
               </div>
@@ -602,7 +606,7 @@ watch(
                     class="grid sm:grid-cols-2"
                   >
                     <dt class="font-medium">
-                      HEALTH CLAIM SERVICE TYPE
+                      HEALTH Service Type
                       <span class="text-red-500">*</span>
                     </dt>
                     <dd>
@@ -674,6 +678,12 @@ watch(
                     :utc="true"
                     :rules="[validationRules.incidentDate]"
                   />
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Claim TPA Option</dt>
+                <dd>
+                  {{ claim.claim_request_details?.tpa_option?.text || 'N/A' }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">

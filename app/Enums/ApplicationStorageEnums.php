@@ -275,8 +275,8 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 
-    /* Google Review Email */
-    public const CLAIM_GOOGLE_REVIEW_EMAIL = 'claim_google_review_email';
+    /* Claim Email Workflow URLs */
+    public const CLAIM_EMAILS_WORKFLOW_URL = 'CLAIM_EMAILS_WORKFLOW_URL';
 
     /* CPA Australia Home CC Emails */
     public const CPA_AUSTRALIA_HOME_BCC_EMAILS = 'CPA_AUSTRALIA_HOME_BCC_EMAILS';
@@ -328,4 +328,11 @@ final class ApplicationStorageEnums extends Enum
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
+
+    // Failed ILA Email Switch
+    public const SEND_FAILED_ILA_EMAILS_SWITCH = 'SEND_FAILED_ILA_EMAILS_SWITCH';
+    public const BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW = 'BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW';
+
+    // OCR Util Feature Toggle
+    public const OCR_UTIL_ENABLED = 'OCR_UTIL_ENABLED';
 }
