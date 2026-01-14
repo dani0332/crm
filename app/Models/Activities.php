@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use App\Traits\SpatieActivityLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Activities extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory;
+    use Auditable, FilterCriteria, HasFactory, SpatieActivityLog;
 
     protected $guarded = [];
     protected $table = 'activities';
