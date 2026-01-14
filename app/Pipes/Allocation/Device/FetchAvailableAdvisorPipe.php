@@ -18,27 +18,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         LoggerService::info(self::class.' - Starting to fetch available Device advisor');
 
         $this->setRequest($request);
-        if ($this->allocationRequest->shouldAssignToHappinessUser()) {
-            LoggerService::info(self::class.' - Paid Device lead - Fetching Happiness Support User');
-
-            $advisor = $this->getHappinessUser();
-
-            if (! $advisor) {
-                LoggerService::warning(self::class.' - Happiness Support User not found');
-                $this->allocationRequest->markAsFailed();
-                $this->throw('Happiness Support User not found', self::NOT_FOUND);
-            }
-
-            LoggerService::info(self::class.' - Happiness Support User found successfully', extra: [
-                'advisorId' => $advisor->id,
-                'advisorName' => $advisor->name,
-                'advisorEmail' => $advisor->email,
-            ]);
-            $this->allocationRequest->setAdvisor($advisor);
-
-            return $next($request);
-        }
-
+       
         LoggerService::info(self::class.' - Unpaid Device lead with SIC request - Fetching advisor using hardcoded email list');
 
         $advisor = $this->findAvailableAdvisor(teamId: null);
@@ -205,24 +185,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return [$primaryEmail];
     }
 
-    private function getHappinessUser(): ?User
-    {
-        $email = DeviceAllocation::HAPPINESS_SUPPORT_USER_EMAIL;
-
-        LoggerService::info(self::class.' - Fetching Happiness Support User by email', extra: [
-            'email' => $email,
-        ]);
-
-        $user = User::where('email', $email)->first();
-
-        if (! $user) {
-            LoggerService::warning(self::class.' - Happiness Support User not found in database', extra: [
-                'email' => $email,
-            ]);
-        }
-
-        return $user;
-    }
+   
 
     private function getBackupAdvisor(): ?User
     {
