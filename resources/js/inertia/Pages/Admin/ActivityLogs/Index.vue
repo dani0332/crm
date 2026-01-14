@@ -258,4 +258,3 @@ const hasFiltersApplied = computed(() => {
     @close="closeDetailModal"
   />
 </template>
-
