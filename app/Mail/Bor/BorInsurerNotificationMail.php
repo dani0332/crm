@@ -98,6 +98,10 @@ class BorInsurerNotificationMail extends Mailable
         $recipientEmail = $insurerEmails[0] ?? '';
         $ccEmails = array_slice($insurerEmails, 1);
 
+        // Add advisor email to CCs if available and not already present
+        $advisorEmail = $this->advisorData['advisorEmail'] ?? null;
+        $advisorEmail != null && $ccEmails[] = $advisorEmail;
+
         return [
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
