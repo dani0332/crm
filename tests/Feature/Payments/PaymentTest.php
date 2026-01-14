@@ -2,6 +2,7 @@
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
+use App\Services\OCR\OCRService;
 use Database\Factories\ApplicationStorageFactory;
 use Tests\Feature\Services\PaymentTestQueryService;
 use Tests\Helpers\Payments\PaymentTestAssertionHelper;
@@ -16,6 +17,12 @@ beforeEach(function () {
     ApplicationStorageFactory::createVatValueForSqlite('5');
 
     $this->user = TestDataSeeder::createAdminUser();
+    
+    // Mock OCRService to avoid dependency resolution issues in HandleInertiaRequests middleware
+    $ocrServiceMock = Mockery::mock(OCRService::class);
+    $ocrServiceMock->shouldReceive('getEligibleProviders')->andReturn([]);
+    $this->app->instance(OCRService::class, $ocrServiceMock);
+    
     $this->actingAs($this->user);
     PaymentTestDataHelper::setupPaymentPermissions($this->user);
 

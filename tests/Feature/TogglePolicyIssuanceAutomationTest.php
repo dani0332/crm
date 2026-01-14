@@ -5,6 +5,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
+use App\Services\OCR\OCRService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Spatie\Permission\Models\Permission;
 use Tests\Helpers\TestDataSeeder;
@@ -24,6 +25,11 @@ beforeEach(function () {
     // Clear permission cache to ensure permissions are available immediately
     app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     $this->user->refresh();
+
+    // Mock OCRService to avoid dependency resolution issues in HandleInertiaRequests middleware
+    $ocrServiceMock = Mockery::mock(OCRService::class);
+    $ocrServiceMock->shouldReceive('getEligibleProviders')->andReturn([]);
+    $this->app->instance(OCRService::class, $ocrServiceMock);
 
     $this->actingAs($this->user);
 
