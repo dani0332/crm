@@ -7,6 +7,7 @@ namespace Tests\Unit\Services\EmailServices;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\EmailServices\FailedILAEmailService;
+use Illuminate\Support\Collection;
 use Mockery;
 use Tests\TestCase;
 
@@ -30,7 +31,7 @@ class FailedILAEmailServiceTest extends TestCase
     {
         $result = $this->service->getFailedILALeads('UnknownType');
 
-        $this->assertIsArray($result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
     }
 
