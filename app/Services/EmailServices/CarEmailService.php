@@ -907,5 +907,4 @@ class CarEmailService extends BaseService
             LoggerService::error(self::class.' - sendFollowUpEmailForCQF - Error while sending quote workflow for lead ', exception: $exception);
         }
     }
-
 }

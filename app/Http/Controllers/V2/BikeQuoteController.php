@@ -77,7 +77,9 @@ class BikeQuoteController extends Controller
      */
     public function index()
     {
-        $personalQuotes = BikeQuoteRepository::getData();
+        $personalQuotes = BikeQuoteRepository::getData()->simplePaginate(10)->withQueryString();
+        BikeQuoteRepository::postProcessBikeQuote($personalQuotes);
+
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
@@ -85,7 +87,7 @@ class BikeQuoteController extends Controller
         $subSources = app(LookupService::class)->getSubSource();
 
         return inertia('BikeQuote/Index', [
-            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
+            'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
@@ -185,7 +187,7 @@ class BikeQuoteController extends Controller
             })->values();
         }
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BIKE->id());
         $personalPlans = PersonalPlanRepository::get();

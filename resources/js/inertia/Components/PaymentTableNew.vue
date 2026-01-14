@@ -31,6 +31,7 @@ const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
+const collectionTypeEnum = page.props.collectionTypeEnum;
 
 const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
@@ -511,9 +512,9 @@ const addPaymentModal = async () => {
       props.quoteSubType != quoteTypeCodeEnum.CORPLINE) ||
     !createPaymentFormRef.value.isBrokerHavePermission()
   ) {
-    paymentFormUpdateData.collection_type = 'insurer';
+    paymentFormUpdateData.collection_type = collectionTypeEnum.INSURER;
   } else {
-    paymentFormUpdateData.collection_type = 'broker';
+    paymentFormUpdateData.collection_type = collectionTypeEnum.BROKER;
   }
 
   paymentFormUpdateData.amount = '';
@@ -652,7 +653,7 @@ const editPaymentModal = async (
   }
 
   if (
-    payment.collection_type === 'insurer' &&
+    payment.collection_type === collectionTypeEnum.INSURER &&
     isEditPaymentEnabled(payment) &&
     split_payment_id == 0 &&
     sr_no == 0 &&
@@ -671,10 +672,14 @@ const editPaymentModal = async (
     const splitPayment = payment?.payment_splits?.find(
       split => split.id === split_payment_id,
     );
+    const paymentMethods = [
+      paymentMethodsEnums.InsurerPayment,
+      paymentMethodsEnums.InsurerPaymentLink,
+    ];
     if (
-      payment.collection_type === 'insurer' &&
+      payment.collection_type === collectionTypeEnum.INSURER &&
       splitPayment &&
-      splitPayment.payment_method.code == paymentMethodsEnums.InsurerPayment
+      paymentMethods.includes(splitPayment.payment_method.code)
     ) {
       showInsurerReceiptNumberInputField.value = true;
     }
@@ -1178,8 +1183,8 @@ watch(
                       :paymentMethodsForm="paymentMethodsFormReplicated"
                       :sendUpdateStatusEnum="sendUpdateStatusEnum"
                       :quoteType="quoteType"
-                      :isHealthAUHLead="
-                        page.props?.bookPolicyDetails?.isHealthAUHLead
+                      :isAbuDhabiBranch="
+                        page.props?.bookPolicyDetails?.isAbuDhabiBranch
                       "
                       @view-payment="
                         (payment, splitId, splitNo, action) =>

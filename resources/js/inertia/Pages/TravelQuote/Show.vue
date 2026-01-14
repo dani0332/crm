@@ -1244,7 +1244,8 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.quote.id,
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
-  emirates_id_number: page.props.quote.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.quote.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
@@ -1650,7 +1651,7 @@ const fullAddress = computed(() => {
       <h2 class="text-xl font-semibold">
         Travel Detail
         <x-button
-          v-if="quote?.pc_qualified == true"
+          v-if="quote?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"
