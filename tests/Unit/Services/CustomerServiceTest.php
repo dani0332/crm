@@ -357,7 +357,7 @@ test('deleteCustomerAdditionalContacts deletes all matching records', function (
     ])->count();
     
     expect($result['success'])->toBeTrue()
-        ->and($result['message'])->toContain('3 additional contacts deleted successfully')
+        ->and($result['message'])->toContain('3 additional contact deleted.')
         ->and($afterCount)->toBe(0)
         ->and(CustomerAdditionalContact::find($contact1->id))->toBeNull()
         ->and(CustomerAdditionalContact::find($contact2->id))->toBeNull()
@@ -382,7 +382,7 @@ test('deleteCustomerAdditionalContacts deletes single record and returns correct
     
     // Assert: Record deleted, correct message returned
     expect($result['success'])->toBeTrue()
-        ->and($result['message'])->toBe('Additional contact deleted successfully.')
+        ->and($result['message'])->toBe('1 additional contact deleted.')
         ->and(CustomerAdditionalContact::find($contact->id))->toBeNull();
 });
 
@@ -394,6 +394,35 @@ test('deleteCustomerAdditionalContacts returns error when contact not found', fu
     // Assert: Returns ['success' => false, 'message' => '...']
     expect($result['success'])->toBeFalse()
         ->and($result['message'])->toBe('Additional contact not found.');
+});
+
+test('deleteCustomerAdditionalContacts handles NULL customer_id correctly', function () {
+    // Setup: Create contact with NULL customer_id
+    $contact = CustomerAdditionalContact::factory()
+        ->email()
+        ->withValue(EMAIL_CUSTOMER_B)
+        ->create(['customer_id' => null]);
+    
+    // Create another contact with same key/value but different customer_id to ensure it's not deleted
+    $customer = Customer::factory()
+        ->withEmail(EMAIL_CUSTOMER_A)
+        ->create();
+    
+    $otherContact = CustomerAdditionalContact::factory()
+        ->forCustomer($customer->id)
+        ->email()
+        ->withValue(EMAIL_CUSTOMER_B)
+        ->create();
+    
+    // Action: Call service method
+    $customerService = new CustomerService();
+    $result = $customerService->deleteCustomerAdditionalContacts($contact->id);
+
+    // Assert: Only the NULL customer_id contact is deleted
+    expect($result['success'])->toBeTrue()
+        ->and($result['message'])->toBe('1 additional contact deleted.')
+        ->and(CustomerAdditionalContact::find($contact->id))->toBeNull()
+        ->and(CustomerAdditionalContact::find($otherContact->id))->not->toBeNull();
 });
 
 test('makeAdditionalContactPrimary removes advisor emails from additional contacts', function () {

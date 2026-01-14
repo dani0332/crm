@@ -329,17 +329,16 @@ class CustomerService extends BaseService
         $filters = $additionalContact->only(['key', 'value', 'customer_id']);
         $deleteCount = CustomerAdditionalContact::where($filters)->delete();
 
-        $message = $deleteCount > 1 
-            ? "{$deleteCount} additional contacts deleted successfully."
-            : 'Additional contact deleted successfully.';
+        @[$success, $message] = $deleteCount > 0
+            ? [true, "{$deleteCount} additional contact deleted."]
+            : [false, "No additional contacts were deleted."];
 
         LoggerService::info(__CLASS__.' fn:deleteCustomerAdditionalContacts', [
-            'filters' => $filters,
-            'message' => $message,
-            'deleted_count' => $deleteCount,
+            ...$filters,
+            'message' => $message
         ]);
 
-        return ['success' => true, 'message' => $message];
+        return ['success' => $success, 'message' => $message];
     }
 
     private function removeAdditionalEmailContactIfExitst($email, $customerId)
