@@ -135,11 +135,11 @@ class ClaimsDocumentUploadUtility
                         if (! InsuranceProvider::where('id', $providerId)->exists()) {
                             $error = "Insurance provider ID {$providerId} does not exist in database";
                             $stats['errors'][] = $error;
-                            LoggerService::warning('Insurance provider ID not found', extra: [
-                                'provider_id' => $providerId,
+                            LoggerService::warning('Insurance provider ID not found - skipping provider folder', extra: [
+                                'lob' => $lobName,
+                                'business_type_of_insurance_id' => $businessTypeId,
+                                'insurance_provider_id' => $providerId,
                                 'provider_folder' => $providerFolder,
-                                'business_type_id' => $businessTypeId,
-                                'lob_name' => $lobName,
                             ]);
                             continue;
                         }
@@ -148,10 +148,11 @@ class ClaimsDocumentUploadUtility
                         if ($businessTypeId !== null && ! BusinessTypeOfInsurance::where('id', $businessTypeId)->exists()) {
                             $error = "Business type of insurance ID {$businessTypeId} does not exist in database";
                             $stats['errors'][] = $error;
-                            LoggerService::warning('Business type of insurance ID not found', extra: [
-                                'business_type_id' => $businessTypeId,
-                                'provider_id' => $providerId,
-                                'lob_name' => $lobName,
+                            LoggerService::warning('Business type of insurance ID not found - skipping provider folder', extra: [
+                                'lob' => $lobName,
+                                'business_type_of_insurance_id' => $businessTypeId,
+                                'insurance_provider_id' => $providerId,
+                                'provider_folder' => $providerFolder,
                             ]);
                             continue;
                         }
@@ -162,6 +163,7 @@ class ClaimsDocumentUploadUtility
                             $quoteType->id,
                             $providerId,
                             $businessTypeId,
+                            $lobName,
                             $stats
                         );
                     }
@@ -187,10 +189,11 @@ class ClaimsDocumentUploadUtility
                     if (! InsuranceProvider::where('id', $providerId)->exists()) {
                         $error = "Insurance provider ID {$providerId} does not exist in database";
                         $stats['errors'][] = $error;
-                        LoggerService::warning('Insurance provider ID not found', extra: [
-                            'provider_id' => $providerId,
+                        LoggerService::warning('Insurance provider ID not found - skipping provider folder', extra: [
+                            'lob' => $lobName,
+                            'business_type_of_insurance_id' => null,
+                            'insurance_provider_id' => $providerId,
                             'provider_folder' => $providerFolder,
-                            'lob_name' => $lobName,
                         ]);
                         continue;
                     }
@@ -201,6 +204,7 @@ class ClaimsDocumentUploadUtility
                         $quoteType->id,
                         $providerId,
                         null,
+                        $lobName,
                         $stats
                     );
                 }
@@ -217,6 +221,7 @@ class ClaimsDocumentUploadUtility
      * @param int $quoteTypeId Quote type ID
      * @param int $insuranceProviderId Insurance provider ID
      * @param int|null $businessTypeOfInsuranceId Business type of insurance ID (null for non-BUSINESS LOBs)
+     * @param string $lobName LOB name (e.g., "Business", "Travel")
      * @param array $stats Statistics array (passed by reference)
      * @return void
      */
@@ -225,6 +230,7 @@ class ClaimsDocumentUploadUtility
         int $quoteTypeId,
         int $insuranceProviderId,
         ?int $businessTypeOfInsuranceId,
+        string $lobName,
         array &$stats
     ): void {
         // Get all files in the provider folder - only PDF files
@@ -237,6 +243,9 @@ class ClaimsDocumentUploadUtility
                 $error = "Skipping non-PDF file: {$file->getFilename()}";
                 $stats['errors'][] = $error;
                 LoggerService::debug('Skipping non-PDF file', extra: [
+                    'lob' => $lobName,
+                    'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                    'insurance_provider_id' => $insuranceProviderId,
                     'filename' => $file->getFilename(),
                     'extension' => $extension,
                 ]);
@@ -251,18 +260,35 @@ class ClaimsDocumentUploadUtility
                     $file->getFilename(),
                     $quoteTypeId,
                     $insuranceProviderId,
-                    $businessTypeOfInsuranceId
+                    $businessTypeOfInsuranceId,
+                    $lobName
                 );
 
                 if ($result['success']) {
                     $stats['uploaded']++;
                 } else {
                     $stats['failed']++;
-                    $stats['errors'][] = $result['error'] ?? "Failed to process: {$file->getFilename()}";
+                    $errorMessage = $result['error'] ?? "Failed to process: {$file->getFilename()}";
+                    $stats['errors'][] = $errorMessage;
+                    LoggerService::error('Failed to process document', extra: [
+                        'lob' => $lobName,
+                        'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                        'insurance_provider_id' => $insuranceProviderId,
+                        'filename' => $file->getFilename(),
+                        'error' => $errorMessage,
+                    ]);
                 }
             } catch (\Exception $e) {
                 $stats['failed']++;
-                $stats['errors'][] = "Error processing {$file->getFilename()}: {$e->getMessage()}";
+                $errorMessage = "Error processing {$file->getFilename()}: {$e->getMessage()}";
+                $stats['errors'][] = $errorMessage;
+                LoggerService::error('Exception processing document', extra: [
+                    'lob' => $lobName,
+                    'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                    'insurance_provider_id' => $insuranceProviderId,
+                    'filename' => $file->getFilename(),
+                    'error' => $e->getMessage(),
+                ], exception: $e);
             }
         }
     }
@@ -275,6 +301,7 @@ class ClaimsDocumentUploadUtility
      * @param int $quoteTypeId Quote type ID
      * @param int $insuranceProviderId Insurance provider ID
      * @param int|null $businessTypeOfInsuranceId Business type of insurance ID (null for non-BUSINESS LOBs)
+     * @param string $lobName LOB name (e.g., "Business", "Travel")
      * @return array Result with success status
      */
     private function processDocument(
@@ -282,7 +309,8 @@ class ClaimsDocumentUploadUtility
         string $originalFileName,
         int $quoteTypeId,
         int $insuranceProviderId,
-        ?int $businessTypeOfInsuranceId = null
+        ?int $businessTypeOfInsuranceId = null,
+        string $lobName = ''
     ): array {
         try {
             // Read file content
@@ -291,8 +319,11 @@ class ClaimsDocumentUploadUtility
             if (! $fileContent) {
                 $error = "Could not read file: {$filePath}";
                 LoggerService::error('Failed to read file', extra: [
+                    'lob' => $lobName,
+                    'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                    'insurance_provider_id' => $insuranceProviderId,
+                    'filename' => $originalFileName,
                     'file_path' => $filePath,
-                    'original_filename' => $originalFileName,
                 ]);
 
                 return [
@@ -306,8 +337,10 @@ class ClaimsDocumentUploadUtility
             if ($extension !== 'pdf') {
                 $error = "Only PDF files are allowed. File: {$originalFileName}";
                 LoggerService::warning('Non-PDF file skipped', extra: [
-                    'file_path' => $filePath,
-                    'original_filename' => $originalFileName,
+                    'lob' => $lobName,
+                    'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                    'insurance_provider_id' => $insuranceProviderId,
+                    'filename' => $originalFileName,
                     'extension' => $extension,
                 ]);
 
@@ -334,8 +367,10 @@ class ClaimsDocumentUploadUtility
             if (! $uploaded) {
                 $error = "Failed to upload to Azure: {$azurePath}";
                 LoggerService::error('Azure upload failed', extra: [
-                    'file_path' => $filePath,
-                    'original_filename' => $originalFileName,
+                    'lob' => $lobName,
+                    'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                    'insurance_provider_id' => $insuranceProviderId,
+                    'filename' => $originalFileName,
                     'azure_path' => $azurePath,
                 ]);
 
@@ -349,8 +384,10 @@ class ClaimsDocumentUploadUtility
             if (! Storage::disk('azureIM')->exists($azurePath)) {
                 $error = "File uploaded but verification failed: {$azurePath}";
                 LoggerService::error('Azure verification failed', extra: [
-                    'file_path' => $filePath,
-                    'original_filename' => $originalFileName,
+                    'lob' => $lobName,
+                    'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                    'insurance_provider_id' => $insuranceProviderId,
+                    'filename' => $originalFileName,
                     'azure_path' => $azurePath,
                 ]);
 
@@ -377,12 +414,13 @@ class ClaimsDocumentUploadUtility
             ]);
 
             LoggerService::info('Document uploaded successfully', extra: [
-                'original_filename' => $originalFileName,
+                'lob' => $lobName,
+                'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                'insurance_provider_id' => $insuranceProviderId,
+                'filename' => $originalFileName,
                 'sanitized_name' => $sanitizedName,
                 'azure_path' => $azurePath,
                 'quote_type_id' => $quoteTypeId,
-                'insurance_provider_id' => $insuranceProviderId,
-                'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
             ]);
 
             return [
@@ -393,8 +431,10 @@ class ClaimsDocumentUploadUtility
         } catch (\Exception $e) {
             $error = $e->getMessage();
             LoggerService::error('Exception during document processing', extra: [
-                'file_path' => $filePath,
-                'original_filename' => $originalFileName,
+                'lob' => $lobName,
+                'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                'insurance_provider_id' => $insuranceProviderId,
+                'filename' => $originalFileName,
                 'error' => $error,
             ], exception: $e);
 
