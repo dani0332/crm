@@ -637,6 +637,15 @@ class CoreSchema
                 $table->timestamps();
                 $table->softDeletes();
             },
+            'insured_kyc' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('insured_id');
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('id_type')->nullable();
+                $table->string('id_number')->nullable();
+                $table->timestamps();
+            },
         ]);
     }
 
