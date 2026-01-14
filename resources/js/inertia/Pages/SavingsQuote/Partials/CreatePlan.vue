@@ -651,12 +651,12 @@ const validateDecimal = event => {
           <!-- Rider Name -->
           <div class="w-[20%]">
             <span class="text-sm text-gray-700">{{ rider.text }}</span>
-            <span
+            <!-- <span
               v-if="rider.inputRequired"
               class="ml-1 text-xs text-orange-500"
               title="Input Required"
               >*</span
-            >
+            > -->
           </div>
           <!-- Status -->
           <div class="w-[15%]">

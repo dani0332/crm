@@ -52,7 +52,6 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
-  savingsCalculatorUrl: String,
   ecomSavingsInsuranceQuoteUrl: String,
   websiteURL: String,
   lookUpData: Object,
@@ -996,7 +995,6 @@ const onCopyText = text => {
       :quote="quote"
       :payments="payments"
       :insuranceProviders="insuranceProviders"
-      :savingsCalculatorUrl="savingsCalculatorUrl"
       :ecomSavingsInsuranceQuoteUrl="ecomSavingsInsuranceQuoteUrl"
       :websiteURL="websiteURL"
       :lockLeadSectionsDetails="lockLeadSectionsDetails"

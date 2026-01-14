@@ -303,7 +303,6 @@ class SavingsQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
-            'savingsCalculatorUrl' => config('constants.ECOM_SAVINGS_CALCULATOR_URL', config('constants.WEBSITE_URL').'/savings-insurance/calculator/'),
             'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL', config('constants.WEBSITE_URL').'/savings-insurance/quote/'),
             'websiteURL' => config('constants.WEBSITE_URL'),
             'lookUpData' => $lookUpData,

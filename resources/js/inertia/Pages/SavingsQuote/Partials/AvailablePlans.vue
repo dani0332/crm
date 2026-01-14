@@ -10,7 +10,6 @@ const props = defineProps({
   quote: Object,
   payments: Array,
   insuranceProviders: Object,
-  savingsCalculatorUrl: String,
   ecomSavingsInsuranceQuoteUrl: String,
   websiteURL: String,
   lockLeadSectionsDetails: Object,
