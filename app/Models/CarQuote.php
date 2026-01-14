@@ -528,6 +528,11 @@ class CarQuote extends BaseModel
         return $this->is_renewal_tier_email_sent == 1;
     }
 
+    public function isQuotePolicyIssuanceAutomationEnabled()
+    {
+        return $this->policy_issuance_automation_enabled == 1;
+    }
+
     public function isProvider($code)
     {
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;

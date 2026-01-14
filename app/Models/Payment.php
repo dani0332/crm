@@ -9,6 +9,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -16,9 +17,7 @@ use App\Traits\SpatieActivityLog;
 
 class Payment extends Model implements Auditable
 {
-    use AuditableTrait, SpatieActivityLog;
-
-    protected $activityLogName = 'Payment';
+    use AuditableTrait, SpatieActivityLog, HasFactory;
 
     protected $auditEvents = [
         'updated',
@@ -32,7 +31,7 @@ class Payment extends Model implements Auditable
         'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason', 'discount_custom_reason',
         'commission_vat', 'commission_without_vat', 'commission_vat_applicable', 'commission_vat_not_applicable', 'commission', 'tax_invoice_number', 'broker_invoice_number', 'insurer_invoice_date', 'invoice_description', 'insurer_payment_link', 'insurer_tax_number', 'transaction_payment_status', 'insurer_commmission_invoice_number', 'commmission_percentage',
         'send_update_log_id', 'policy_expiry_date', 'paymentable_id', 'paymentable_type', 'price_vat_applicable', 'price_vat',
-        'commission_based_on_currency', 'exchange_rate', 'currency', 'sage_commission_receipt_id',
+        'commission_based_on_currency', 'exchange_rate', 'currency', 'sage_commission_receipt_id', 'payment_gateway_id ',
     ];
     protected $forceDeleting = true;
     protected $casts = [

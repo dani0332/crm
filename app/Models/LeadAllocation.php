@@ -14,7 +14,7 @@ class LeadAllocation extends Model implements AuditableContract
     use Auditable, HasFactory, Logable;
 
     protected $table = 'lead_allocation';
-    protected $fillable = ['is_hardstop'];
+    protected $fillable = [];
 
     public function getCreatedAtAttribute($table)
     {

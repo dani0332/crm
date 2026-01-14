@@ -933,6 +933,18 @@ class SplitPaymentService
 
         $masterPayment = $quoteModel->payments->first();
 
+        if (! $masterPayment) {
+            LoggerService::info('Master payment not found during capture payment for quote code: '.$quoteModel->code);
+            $errorMessage = 'Master payment not found for quote code: '.$quoteModel->code;
+
+            if ($isFromJob && $splitPaymentId > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
+                LoggerService::error('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' - Master payment not found');
+            }
+
+            return $errorMessage;
+        }
+
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $masterPaymentStatus = $masterPayment->payment_status_id;
 
@@ -1262,10 +1274,17 @@ class SplitPaymentService
                     'price_vat_not_applicable' => $quoteModel->price_vat_not_applicable,
                 ]);
             }
+
+            if ($send_update_id > 0 && isset($quoteModel->price_with_vat) && $quoteModel->price_with_vat > 0) {
+                $computedPrice = $quoteModel->price_with_vat;
+                LoggerService::info('SplitPaymentService - Using price_with_vat from send update log for payment code: '.$paymentCode, extra: [
+                    'price_with_vat' => $quoteModel->price_with_vat,
+                ]);
+            }
         }
 
         if ($computedPrice > 0) {
-            if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
+            if (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
                 $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
                 LoggerService::info('SplitPaymentService - ecommLob VAT calculation for payment code: '.$paymentCode, extra: [

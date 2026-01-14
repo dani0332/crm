@@ -30,7 +30,12 @@ class Kernel extends ConsoleKernel
         Commands\Dtt::class,
         Commands\DttFollowUp::class,
         Commands\UpdateUserStatus::class,
-        Commands\QuoteAllocation::class,
+        Commands\RetryCarAllocation::class,
+        Commands\RetryCarRevivalAllocation::class,
+        Commands\RetryHealthAllocation::class,
+        Commands\RetryTravelAllocation::class,
+        Commands\RetryBikeAllocation::class,
+        Commands\RetryAllocation::class,
         Commands\LeadsReassignment::class,
         Commands\ResetLeadAllocationCounts::class,
         Commands\QuoteSyncUpdateCommand::class,
@@ -93,13 +98,38 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('AddBatchNumberNonMotors:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(5);
 
-        $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryCarAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryCarRevivalAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryHealthAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryTravelAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryBikeAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType="Group Medical"')->name('retry_allocation:cron:group_medical')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Home')->name('retry_allocation:cron:home')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Life')->name('retry_allocation:cron:life')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=CorpLine')->name('retry_allocation:cron:corpline')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Cycle')->name('retry_allocation:cron:cycle')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Pet')->name('retry_allocation:cron:pet')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Yacht')->name('retry_allocation:cron:yacht')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Savings')->name('retry_allocation:cron:savings')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('activitylog:cleanup')->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Car')->name('send-failed-ila-leads:cron:car')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Bike')->name('send-failed-ila-leads:cron:bike')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Health')->name('send-failed-ila-leads:cron:health')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Life')->name('send-failed-ila-leads:cron:life')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Travel')->name('send-failed-ila-leads:cron:travel')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Home')->timezone('Asia/Dubai')->name('send-failed-ila-leads:cron:home')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Pet')->name('send-failed-ila-leads:cron:pet')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Cycle')->name('send-failed-ila-leads:cron:cycle')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Savings')->name('send-failed-ila-leads:cron:savings')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType="Group Medical"')->name('send-failed-ila-leads:cron:group_medical')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=CorpLine')->name('send-failed-ila-leads:cron:corpline')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Yacht')->name('send-failed-ila-leads:cron:yacht')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-failed-ila-leads --quoteType=Jetski')->name('send-failed-ila-leads:cron:jetski')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('QuoteSyncUpdate:cron')
             ->everyThreeMinutes()
