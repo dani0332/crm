@@ -44,6 +44,7 @@ class LeadAllocationController extends Controller
 
         $todayTotalLeadCount = $this->leadAllocationDashboardService->getTodaysTotalLeadsCount($quoteType);
         $todayTotalUnAssignedLeadCount = $this->leadAllocationDashboardService->getTodaysTotalUnAssignedLeadsCount($quoteType);
+   
         $data = $this->leadAllocationDashboardService->getAdvisors($quoteType);
 
         foreach ($data as $value) {
