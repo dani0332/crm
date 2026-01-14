@@ -111,7 +111,7 @@ const filteredProperties = computed(() => {
 
   // Filter out null values recursively
   const filtered = filterNullValues(properties);
-  return filtered !== undefined ? filtered : null;
+  return filtered === undefined ? null : filtered;
 });
 
 const closeModal = () => {

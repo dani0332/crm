@@ -261,31 +261,28 @@ class ActivityLogService extends BaseService
     private function extractPayload(Request $request, string $method, string $contentType): array
     {
         $methodUpper = strtoupper($method);
+        $payload = [];
 
         // For GET and DELETE, use query parameters as payload
         if (in_array($methodUpper, self::QUERY_PARAM_METHODS, true)) {
             if ($request->query->count() > 0) {
-                return $request->query->all();
+                $payload = $request->query->all();
             }
-
-            return [];
-        }
-
-        // For POST, PUT, PATCH - extract based on content type
-        if (str_contains($contentType, self::JSON_CONTENT_TYPE)) {
+        } elseif (str_contains($contentType, self::JSON_CONTENT_TYPE)) {
+            // For POST, PUT, PATCH - extract based on content type (JSON)
             $jsonContent = $request->getContent();
             if (! empty($jsonContent)) {
                 $decoded = json_decode($jsonContent, true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                    return $decoded;
+                    $payload = $decoded;
                 }
             }
-
-            return [];
+        } else {
+            // For form data
+            $payload = $request->except(array_keys($request->allFiles()));
         }
 
-        // For form data
-        return $request->except(array_keys($request->allFiles()));
+        return $payload;
     }
 
     /**
