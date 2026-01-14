@@ -397,7 +397,7 @@ watch(
                     >Investment Frequency</span
                   >
                   <x-select
-                    v-model="planDetails.investmentFrequency"
+                    v-model="planDetails.investmentCriteriaId"
                     :options="investmentFrequencyOptions"
                     placeholder="Select Frequency"
                     size="sm"
