@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\ActivityLogCleanupCommand;
 use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
@@ -52,6 +53,7 @@ class Kernel extends ConsoleKernel
         PolicyIssuanceDataCleanUpCommand::class,
         PolicyIssuanceMarkFailedCommand::class,
         PolicyBulkSendDocuments::class,
+        ActivityLogCleanupCommand::class,
     ];
 
     /**
@@ -114,6 +116,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
 
+        $schedule->command('activitylog:cleanup')->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Car')->name('send-failed-ila-leads:cron:car')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Bike')->name('send-failed-ila-leads:cron:bike')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Health')->name('send-failed-ila-leads:cron:health')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
