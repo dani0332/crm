@@ -917,7 +917,7 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->where('code', $request->code);
         }
 
-        if (isset($request->renewal_batches) && $request->renewal_batches != '') {
+        if (isset($request->renewal_batches) && is_array($request->renewal_batches) && count($request->renewal_batches) > 0) {
             $partialQuery->whereIn('renewal_batch_id', $request->renewal_batches);
         }
 
@@ -1801,9 +1801,7 @@ if (! function_exists('formatEmiratesIdNumber')) {
     function formatEmiratesIdNumber($idNumber): string
     {
         $eidNumber = str_replace('-', '', $idNumber);
-        $formattedIdNumber = substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
+        return substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
             .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
-
-        return $formattedIdNumber;
     }
 }

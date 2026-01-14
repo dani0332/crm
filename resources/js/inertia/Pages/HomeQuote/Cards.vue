@@ -98,7 +98,7 @@ const filters = reactive({
   is_ecommerce: '',
   is_renewal: props.is_renewal,
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
