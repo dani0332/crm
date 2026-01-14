@@ -22,4 +22,9 @@ class SageProcess extends Model
         return $this->belongsTo(InsuranceProvider::class);
     }
 
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
 }
