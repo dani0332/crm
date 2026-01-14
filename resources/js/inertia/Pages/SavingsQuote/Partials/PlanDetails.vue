@@ -211,52 +211,50 @@ const modalVisible = computed({
   set: val => emit('update:modelValue', val),
 });
 
-// Dynamic rider values storage (keyed by rider id)
-const riderValues = ref({});
-
-// Get riders from planDetails first, fallback to providerPlanData
-const planRiders = computed(() => {
-  // First check if planDetails has riders directly
-  if (props.planDetails?.riders?.length) {
-    return props.planDetails.riders;
-  }
-  // Fallback to providerPlanData
-  return providerPlanData.value?.riders || [];
-});
+// Riders data storage
+const ridersData = ref([]);
 
 // Show riders section if the plan has riders
 const showRiders = computed(() => {
-  return planRiders.value.length > 0;
+  return ridersData.value.length > 0;
 });
 
-// Initialize rider values when plan details modal is opened
-const initializeRiderValues = riders => {
-  const newRiderValues = {};
-  riders.forEach(riderOption => {
-    const rider = riderOption.rider || {};
-    newRiderValues[riderOption.id] = {
-      id: riderOption.id,
-      riderId: riderOption.rider_id,
-      code: rider.code || riderOption.code,
-      text: rider.text || riderOption.text || 'Rider',
-      enabled: false,
+// Get rider details from API and populate ridersData
+const getRiderDetails = async planId => {
+  if (!planId) return;
+
+  try {
+    const res = await axios.get(`/personal-quotes/savings/riders/${planId}`);
+
+    // Populate ridersData directly from API response
+    ridersData.value = res.data.map(item => ({
+      id: item.id,
+      riderId: item.rider_id,
+      text: item.rider?.text || 'Rider',
+      code: item.rider?.code,
+      active: 0,
       coverValue: 0,
       coverValue2: 0,
-      inputRequired: riderOption.input_required || false,
-      inputType: riderOption.input_type || null,
-      coverType: riderOption.cover_type || null,
-      maxAge: riderOption.max_age || null,
-    };
-  });
-  riderValues.value = newRiderValues;
+      inputRequired: item.input_required || false,
+      inputType: item.input_type || null,
+      coverType: item.cover_type || null,
+      maxAge: item.max_age || null,
+    }));
+  } catch (error) {
+    console.error('Error fetching rider details:', error);
+    ridersData.value = [];
+  }
 };
 
-// Watch for modal visibility and planDetails changes to initialize riders
+// Watch for modal visibility and planDetails changes to fetch riders
 watch(
   [() => props.modelValue, () => props.planDetails],
   ([newVisible, newPlanDetails]) => {
-    if (newVisible && planRiders.value.length > 0) {
-      initializeRiderValues(planRiders.value);
+    if (newVisible && newPlanDetails) {
+      const planId = newPlanDetails.planId || newPlanDetails.id;
+      if (planId) {
+        getRiderDetails(planId);
+      }
     }
   },
   { immediate: true },
@@ -581,7 +579,7 @@ watch(
                 </div>
               </div>
 
-              <!-- RIDERS Section (Dynamic based on selected plan) -->
+              <!-- RIDERS Section (Dynamic based on selected plan - same pattern as Life) -->
               <div v-if="showRiders" class="border-t border-gray-200 pt-5 mt-2">
                 <div class="bg-gray-100 px-2 py-2 mb-4 rounded-lg">
                   <h4 class="font-bold text-gray-800 text-md">RIDERS</h4>
@@ -590,17 +588,17 @@ watch(
                 <div class="px-4">
                   <!-- Dynamic Riders -->
                   <div
-                    v-for="riderOption in planRiders"
-                    :key="riderOption.id"
+                    v-for="rider in ridersData"
+                    :key="rider.id"
                     class="flex w-full items-center mb-4 gap-4"
                   >
                     <!-- Rider Name -->
                     <div class="w-[20%]">
                       <span class="text-sm text-gray-700">{{
-                        riderOption.text || 'Rider'
+                        rider.text || 'Rider'
                       }}</span>
                       <span
-                        v-if="riderOption.input_required"
+                        v-if="rider.inputRequired"
                         class="ml-1 text-xs text-orange-500"
                         title="Input Required"
                         >*</span
@@ -608,18 +606,20 @@ watch(
                     </div>
                     <!-- Status -->
                     <div class="w-[15%]">
-                      <span class="text-sm text-gray-500">Included</span>
+                      <span class="text-sm text-gray-500">{{
+                        rider.active ? 'Included' : 'Optional'
+                      }}</span>
                     </div>
                     <!-- Cover Input -->
                     <div class="w-[20%]">
                       <x-input
-                        v-model="riderValues[riderOption.id].coverValue"
+                        v-model="rider.coverValue"
                         type="number"
                         size="sm"
                         placeholder="0"
                         class="!mb-0 [&>label]:!mb-0"
                         :disabled="
-                          !riderValues[riderOption.id]?.enabled ||
+                          !rider.active ||
                           lockLeadSectionsDetails?.plan_selection
                         "
                       />
@@ -627,7 +627,7 @@ watch(
                     <!-- Toggle -->
                     <div class="w-[15%] flex justify-center">
                       <x-toggle
-                        v-model="riderValues[riderOption.id].enabled"
+                        v-model="rider.active"
                         color="success"
                         size="sm"
                         :disabled="lockLeadSectionsDetails?.plan_selection"
@@ -636,13 +636,13 @@ watch(
                     <!-- Price Input -->
                     <div class="w-[20%]">
                       <x-input
-                        v-model="riderValues[riderOption.id].coverValue2"
+                        v-model="rider.coverValue2"
                         type="number"
                         size="sm"
                         placeholder="0"
                         class="!mb-0 [&>label]:!mb-0"
                         :disabled="
-                          !riderValues[riderOption.id]?.enabled ||
+                          !rider.active ||
                           lockLeadSectionsDetails?.plan_selection
                         "
                       />
@@ -650,7 +650,7 @@ watch(
                   </div>
 
                   <div
-                    v-if="!planRiders.length"
+                    v-if="!ridersData.length"
                     class="text-center text-gray-500 py-4"
                   >
                     No riders available for this plan
