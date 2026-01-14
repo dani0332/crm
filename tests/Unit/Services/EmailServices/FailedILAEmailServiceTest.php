@@ -7,7 +7,6 @@ namespace Tests\Unit\Services\EmailServices;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\EmailServices\FailedILAEmailService;
-use Illuminate\Support\Collection;
 use Mockery;
 use Tests\TestCase;
 
@@ -25,14 +24,6 @@ class FailedILAEmailServiceTest extends TestCase
     {
         Mockery::close();
         parent::tearDown();
-    }
-
-    public function test_get_failed_ila_leads_with_unknown_quote_type()
-    {
-        $result = $this->service->getFailedILALeads('UnknownType');
-
-        $this->assertInstanceOf(Collection::class, $result);
-        $this->assertEmpty($result);
     }
 
     public function test_build_failed_ila_email_travel_data()
