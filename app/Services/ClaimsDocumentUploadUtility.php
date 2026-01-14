@@ -518,6 +518,7 @@ class ClaimsDocumentUploadUtility
     /**
      * Generate a unique UUID string
      * Format: f669c058f922425c8a8e (similar to the example)
+     * Ensures uniqueness by checking against existing GenericDocument records
      *
      * @return string
      */
@@ -528,6 +529,13 @@ class ClaimsDocumentUploadUtility
         $prefix = uniqid('', true); // e.g., "67890abc123def.12345678"
         $uuid = str_replace('.', '', $prefix); // Remove dot
         $uuid = substr($uuid, 0, 20); // Limit to ~20 characters like example
+
+        // Check for collisions and regenerate until unique (following EmbeddedProductRepository pattern)
+        while (GenericDocument::where('uuid', $uuid)->first()) {
+            $prefix = uniqid('', true).rand(1, 100);
+            $uuid = str_replace('.', '', $prefix);
+            $uuid = substr($uuid, 0, 20);
+        }
 
         return $uuid;
     }
