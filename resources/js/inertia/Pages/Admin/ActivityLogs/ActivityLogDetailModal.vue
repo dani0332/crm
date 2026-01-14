@@ -36,7 +36,8 @@ const formatProperties = properties => {
   if (typeof properties === 'string') {
     try {
       properties = JSON.parse(properties);
-    } catch (e) {
+    } catch (error) {
+      console.warn('Failed to parse properties JSON:', error.message);
       return null;
     }
   }
@@ -100,7 +101,8 @@ const filteredProperties = computed(() => {
   if (typeof properties === 'string') {
     try {
       properties = JSON.parse(properties);
-    } catch (e) {
+    } catch (error) {
+      console.warn('Failed to parse properties JSON:', error.message);
       return properties;
     }
   }
