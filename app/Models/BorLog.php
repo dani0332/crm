@@ -4,16 +4,17 @@ namespace App\Models;
 
 use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCode;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Traits\SpatieActivityLog;
 
 class BorLog extends Model
 {
     use SpatieActivityLog;
+
     /**
      * The attributes that are mass assignable.
      *

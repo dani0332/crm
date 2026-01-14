@@ -5,10 +5,10 @@ namespace App\Models;
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\RolesEnum;
 use App\Enums\SageEmbeddedProductEnum;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\SpatieActivityLog;
 
 class EmbeddedTransaction extends Model
 {

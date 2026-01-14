@@ -7,17 +7,17 @@ use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
+use App\Traits\SpatieActivityLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Traits\SpatieActivityLog;
 
 class Payment extends Model implements Auditable
 {
-    use AuditableTrait, SpatieActivityLog, HasFactory;
+    use AuditableTrait, HasFactory, SpatieActivityLog;
 
     protected $auditEvents = [
         'updated',

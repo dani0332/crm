@@ -14,8 +14,7 @@ class ActivityLogBatchMiddleware
 {
     public function __construct(
         protected ActivityLogService $activityLogService
-    ) {
-    }
+    ) {}
 
     /**
      * Automatically starts and ends Spatie's LogBatch for each HTTP request.

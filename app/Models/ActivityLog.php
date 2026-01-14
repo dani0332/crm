@@ -25,6 +25,6 @@ class ActivityLog extends SpatieActivity
         'code',
         'feature',
         'ip_address',
-        'user_agent'
+        'user_agent',
     ];
 }

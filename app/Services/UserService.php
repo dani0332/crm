@@ -412,7 +412,7 @@ class UserService extends BaseService
             ->orderBy('name')
             ->get();
     }
-    
+
     public function getEmployeeCode($email)
     {
         $employeeData = $this->hrmRequestService->getEmployeeCodes([$email]);

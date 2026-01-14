@@ -25,15 +25,12 @@ class ActivityLogController extends Controller
 
     /**
      * Display a listing of activity logs
-     *
-     * @param IndexActivityLogRequest $request
-     * @return Response
      */
     public function index(IndexActivityLogRequest $request): Response
     {
         $filters = $request->getFilters();
         $activityLogs = $this->activityLogService->getActivityLogs($filters);
-        
+
         $users = $this->userService->getAllUsers();
         $eventOptions = ActivityLogEventEnum::getOptions();
 
@@ -46,4 +43,3 @@ class ActivityLogController extends Controller
     }
 
 }
-
