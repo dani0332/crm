@@ -483,7 +483,7 @@ test('travel quotes index returns only active advisors via CRUDService', functio
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
             // dump('Advisors in closure:', $advisors);
             if (!is_array($advisors) && !($advisors instanceof \Illuminate\Support\Collection)) {
-                dump('Advisors is not array or collection, type:', gettype($advisors));
+                // dump('Advisors is not array or collection, type:', gettype($advisors));
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
