@@ -312,6 +312,9 @@ class ClaimsDocumentUploadUtility
         ?int $businessTypeOfInsuranceId = null,
         string $lobName = ''
     ): array {
+        // Initialize azurePath to track uploaded file for cleanup on failure
+        $azurePath = null;
+
         try {
             // Read file content
             $fileContent = File::get($filePath);
@@ -429,6 +432,32 @@ class ClaimsDocumentUploadUtility
                 'name' => $sanitizedName,
             ];
         } catch (\Exception $e) {
+            // If file was uploaded to Azure but database insert failed, delete the orphaned file
+            if ($azurePath !== null) {
+                try {
+                    if (Storage::disk('azureIM')->exists($azurePath)) {
+                        Storage::disk('azureIM')->delete($azurePath);
+                        LoggerService::info('Deleted orphaned file from Azure Storage after database insert failure', extra: [
+                            'lob' => $lobName,
+                            'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                            'insurance_provider_id' => $insuranceProviderId,
+                            'filename' => $originalFileName,
+                            'azure_path' => $azurePath,
+                        ]);
+                    }
+                } catch (\Exception $deleteException) {
+                    // Log deletion failure but don't fail the entire operation
+                    LoggerService::error('Failed to delete orphaned file from Azure Storage', extra: [
+                        'lob' => $lobName,
+                        'business_type_of_insurance_id' => $businessTypeOfInsuranceId,
+                        'insurance_provider_id' => $insuranceProviderId,
+                        'filename' => $originalFileName,
+                        'azure_path' => $azurePath,
+                        'delete_error' => $deleteException->getMessage(),
+                    ], exception: $deleteException);
+                }
+            }
+
             $error = $e->getMessage();
             LoggerService::error('Exception during document processing', extra: [
                 'lob' => $lobName,
