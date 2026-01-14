@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Traits\SpatieActivityLog;
 
 class BikeQuoteRequestDetail extends Model implements AuditableContract
 {

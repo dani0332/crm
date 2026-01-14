@@ -7,11 +7,11 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Traits\SpatieActivityLog;
 
 class HomeQuote extends Model implements AuditableContract
 {

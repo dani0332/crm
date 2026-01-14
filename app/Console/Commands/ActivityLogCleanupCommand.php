@@ -40,7 +40,7 @@ class ActivityLogCleanupCommand extends Command
         $recordsToDelete = ActivityLog::where('created_at', '<', $cutoffDate)->count();
 
         if ($recordsToDelete === 0) {
-            $this->info('No activity log records found older than ' . $days . ' days.');
+            $this->info('No activity log records found older than '.$days.' days.');
             LoggerService::info('Activity Log Cleanup Command executed: No records to delete.', extra: [
                 'days' => $days,
                 'cutoff_date' => $cutoffDate->toDateTimeString(),
@@ -52,7 +52,7 @@ class ActivityLogCleanupCommand extends Command
         // Delete records older than the cutoff date
         $deletedCount = ActivityLog::where('created_at', '<', $cutoffDate)->delete();
 
-        $this->info('Successfully deleted ' . $deletedCount . ' activity log records older than ' . $days . ' days.');
+        $this->info('Successfully deleted '.$deletedCount.' activity log records older than '.$days.' days.');
 
         LoggerService::info('Activity Log Cleanup Command executed successfully.', extra: [
             'deleted_count' => $deletedCount,
@@ -63,4 +63,3 @@ class ActivityLogCleanupCommand extends Command
         return Command::SUCCESS;
     }
 }
-

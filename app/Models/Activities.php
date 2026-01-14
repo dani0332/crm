@@ -4,12 +4,12 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use App\Traits\SpatieActivityLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Traits\SpatieActivityLog;
 
 class Activities extends Model implements AuditableContract
 {

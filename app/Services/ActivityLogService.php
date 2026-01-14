@@ -29,9 +29,7 @@ class ActivityLogService extends BaseService
     /**
      * Get paginated activity logs with optional filters
      *
-     * @param array<string, mixed> $filters Optional filters: user_id, date_from, date_to, event
-     * @param int $perPage
-     * @return LengthAwarePaginator
+     * @param  array<string, mixed>  $filters  Optional filters: user_id, date_from, date_to, event
      */
     public function getActivityLogs(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
@@ -39,20 +37,20 @@ class ActivityLogService extends BaseService
 
         // Filter by user (causer) - optional
         $query->when(
-            !empty($filters['user_id']),
+            ! empty($filters['user_id']),
             fn ($q) => $q->where('causer_id', $filters['user_id'])
                 ->where('causer_type', User::class)
         );
 
         // Filter by event - optional
         $query->when(
-            !empty($filters['event']),
+            ! empty($filters['event']),
             fn ($q) => $q->where('event', $filters['event'])
         );
 
         // Filter by date from
         $query->when(
-            !empty($filters['date_from']),
+            ! empty($filters['date_from']),
             function ($q) use ($filters) {
                 try {
                     $dateFrom = Carbon::parse($filters['date_from'])->startOfDay();
@@ -68,7 +66,7 @@ class ActivityLogService extends BaseService
 
         // Filter by date to
         $query->when(
-            !empty($filters['date_to']),
+            ! empty($filters['date_to']),
             function ($q) use ($filters) {
                 try {
                     $dateTo = Carbon::parse($filters['date_to'])->endOfDay();
@@ -93,7 +91,7 @@ class ActivityLogService extends BaseService
     public function logHttpRequest(Request $request): void
     {
         try {
-            if (!$this->shouldLogRequest($request)) {
+            if (! $this->shouldLogRequest($request)) {
                 return;
             }
 
@@ -103,7 +101,7 @@ class ActivityLogService extends BaseService
 
             // Extract controller name and method name from route action
             $logName = $this->extractLogName($route);
-            
+
             // Build description: "User Name Sent Request to URL"
             $description = $this->buildDescription($user?->name, $path);
 
@@ -121,7 +119,7 @@ class ActivityLogService extends BaseService
             // Log error but don't break the request
             // Only pass Exception to LoggerService::error(), not Error types
             $exception = $e instanceof \Exception ? $e : null;
-            
+
             LoggerService::error('ActivityLogService: Failed to log HTTP request', [
                 'error' => $e->getMessage(),
                 'error_type' => get_class($e),
@@ -142,7 +140,7 @@ class ActivityLogService extends BaseService
     /**
      * Build properties array for activity log
      *
-     * @param array<string, mixed> $requestData
+     * @param  array<string, mixed>  $requestData
      * @return array<string, mixed>
      */
     private function buildProperties(Request $request, array $requestData, ?Route $route): array
@@ -156,12 +154,12 @@ class ActivityLogService extends BaseService
         ];
 
         // Add request payload if available
-        if (!empty($requestData['payload'])) {
+        if (! empty($requestData['payload'])) {
             $properties['request_payload'] = $this->sanitizePayload($requestData['payload']);
         }
 
         // Add query parameters
-        if (!empty($requestData['query_params'])) {
+        if (! empty($requestData['query_params'])) {
             $properties['query_params'] = $requestData['query_params'];
         }
 
@@ -205,8 +203,8 @@ class ActivityLogService extends BaseService
 
     /**
      * Extract log name from route action (ControllerName@methodName)
-     * 
-     * @param Route|null $route The route instance, which may be null for unregistered routes
+     *
+     * @param  Route|null  $route  The route instance, which may be null for unregistered routes
      * @return string The log name in format "Controller@method" or default log name
      */
     private function extractLogName(?Route $route): string
@@ -217,16 +215,17 @@ class ActivityLogService extends BaseService
 
         // Safe to call getActionName() here since we've verified $route is not null
         $actionName = $route->getActionName();
-        
+
         if ($actionName && is_string($actionName) && str_contains($actionName, '@')) {
             $parts = explode('@', $actionName);
             if (count($parts) === 2) {
                 $controller = class_basename($parts[0]);
                 $method = $parts[1];
+
                 return sprintf('%s@%s', $controller, $method);
             }
         }
-        
+
         return config('activitylog.default_log_name', 'default');
     }
 
@@ -237,20 +236,20 @@ class ActivityLogService extends BaseService
     {
         $method = $request->method();
         $contentType = $request->header('Content-Type', '');
-        
+
         $requestData = [];
-        
+
         // Extract payload based on method and content type
         $payload = $this->extractPayload($request, $method, $contentType);
-        if (!empty($payload)) {
+        if (! empty($payload)) {
             $requestData['payload'] = $payload;
         }
-        
+
         // Collect query parameters
         if ($request->query->count() > 0) {
             $requestData['query_params'] = $request->query->all();
         }
-        
+
         return $requestData;
     }
 
@@ -262,27 +261,29 @@ class ActivityLogService extends BaseService
     private function extractPayload(Request $request, string $method, string $contentType): array
     {
         $methodUpper = strtoupper($method);
-        
+
         // For GET and DELETE, use query parameters as payload
         if (in_array($methodUpper, self::QUERY_PARAM_METHODS, true)) {
             if ($request->query->count() > 0) {
                 return $request->query->all();
             }
+
             return [];
         }
-        
+
         // For POST, PUT, PATCH - extract based on content type
         if (str_contains($contentType, self::JSON_CONTENT_TYPE)) {
             $jsonContent = $request->getContent();
-            if (!empty($jsonContent)) {
+            if (! empty($jsonContent)) {
                 $decoded = json_decode($jsonContent, true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                     return $decoded;
                 }
             }
+
             return [];
         }
-        
+
         // For form data
         return $request->except(array_keys($request->allFiles()));
     }
@@ -290,7 +291,7 @@ class ActivityLogService extends BaseService
     /**
      * Sanitize sensitive fields in payload (recursively handles nested arrays)
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function sanitizePayload(array $data): array
@@ -321,7 +322,7 @@ class ActivityLogService extends BaseService
                 $data[$key] = $this->sanitizePayload($value);
             }
         }
-        
+
         return $data;
     }
 
@@ -331,12 +332,12 @@ class ActivityLogService extends BaseService
     private function shouldLogRequest(Request $request): bool
     {
         // Skip logging in testing environment or if disabled
-        if (app()->environment('testing') || !config('activitylog.enabled', true)) {
+        if (app()->environment('testing') || ! config('activitylog.enabled', true)) {
             return false;
         }
 
         // Skip if route should be excluded or user is not authenticated
-        if ($this->shouldSkipLogging($request) || !$request->user()) {
+        if ($this->shouldSkipLogging($request) || ! $request->user()) {
             return false;
         }
 
@@ -349,7 +350,7 @@ class ActivityLogService extends BaseService
     private function shouldSkipLogging(Request $request): bool
     {
         $excludedPaths = config('activitylog.excluded_paths', []);
-        
+
         if (empty($excludedPaths)) {
             return false;
         }
@@ -358,7 +359,7 @@ class ActivityLogService extends BaseService
 
         foreach ($excludedPaths as $excludedPath) {
             $normalizedExcluded = ltrim($excludedPath, '/');
-            
+
             if (str_starts_with($path, $normalizedExcluded)) {
                 return true;
             }

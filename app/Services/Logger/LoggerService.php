@@ -49,7 +49,7 @@ class LoggerService
     public static function endLogging()
     {
         Log::withoutContext();
-        
+
         // Clear Context facade values to prevent leaking into subsequent activity logs
         Context::forget('feature');
         Context::forget('code');
