@@ -159,6 +159,13 @@ function additionalContactPrimaryConfirmed(keepExistingPrimaryEmail = true) {
         modals.contactPrimaryConfirm = false;
         modals.customerAlreadyPrimaryConfirm = false;
       },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      },
     },
   );
 }
