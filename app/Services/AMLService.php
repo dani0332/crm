@@ -1748,6 +1748,7 @@ class AMLService
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
+                'trade_license_no' => $request->screening_id_number,
             ]);
         } else {
             // Reminder:: remove get insured details after id_number format is consistent

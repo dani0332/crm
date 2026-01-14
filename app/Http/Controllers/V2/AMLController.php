@@ -669,6 +669,7 @@ class AMLController extends Controller
     {
         $entity = Insured::where([
             'customer_type' => CustomerTypeEnum::Entity,
+            'trade_license_no' => $request->trade_license,
             'id_type' => GenericRequestEnum::TRADE_LICENSE,
             'id_number' => $request->trade_license,
         ])->first();
@@ -757,6 +758,7 @@ class AMLController extends Controller
             'customer_type' => $request->customer_type,
             'id_type' => $request->id_type,
             'id_number' => $request->id_number,
+            'trade_license' => $request->id_number ?? null,
         ]);
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
