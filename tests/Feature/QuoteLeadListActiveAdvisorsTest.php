@@ -474,25 +474,16 @@ test('travel quotes index returns only active advisors via CRUDService', functio
 
     $response->assertStatus(200);
     
-    // Debug: Output response data
-    $page = $response->viewData('page');
-    
     // Verify advisors array contains only active users
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            // dump('Advisors in closure:', $advisors);
             if (!is_array($advisors) && !($advisors instanceof \Illuminate\Support\Collection)) {
-                // dump('Advisors is not array or collection, type:', gettype($advisors));
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
-            // dump('Advisor IDs found:', $advisorIds);
-            $hasActive = in_array($activeAdvisor->id, $advisorIds);
-            $hasInactive = in_array($inactiveAdvisor->id, $advisorIds);
-            // dump('Has active advisor:', $hasActive);
-            // dump('Has inactive advisor:', $hasInactive);
-            return $hasActive && !$hasInactive;
+            return in_array($activeAdvisor->id, $advisorIds) &&
+                   !in_array($inactiveAdvisor->id, $advisorIds);
         })
     );
 });
