@@ -22,6 +22,7 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BorLog;
 use App\Models\CarPlanPolicyWording;
+use App\Models\Claim;
 use App\Models\DocumentType;
 use App\Models\GenericDocument;
 use App\Models\GenericDocumentType;
@@ -1130,18 +1131,21 @@ class QuoteDocumentService extends BaseService
      */
     public function getClaimDocuments(): array
     {
-        $documentType = GenericDocumentType::byCode(GenericDocumentTypeCode::CLAIM_FORM->value)
-            ->with(['morphDocuments' => function ($query) {
-                $query->with(['insuranceProvider', 'businessTypeOfInsurance']);
-            }])
-            ->first();
+        // Get quote type IDs for claim documents
+        $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
 
-        // Fallback to empty response structure if no document type or documents are found
-        if (!$documentType || $documentType->morphDocuments->isEmpty()) {
+        // Query documents linked to Claim model only (from ClaimsDocumentUploadUtility)
+        $documents = GenericDocument::whereIn('quote_type_id', $quoteTypeIds)
+            ->where('documentable_type', Claim::class)
+            ->with(['insuranceProvider', 'businessTypeOfInsurance'])
+            ->get();
+
+        // Fallback to empty response structure if no documents are found
+        if ($documents->isEmpty()) {
             return $this->getEmptyClaimDocumentsResponseStructure();
         }
 
-        $grouped = $this->groupClaimDocumentsByQuoteType($documentType->morphDocuments);
+        $grouped = $this->groupClaimDocumentsByQuoteType($documents);
         
         // Ensure all quote types are present in response even if empty
         $emptyStructure = $this->getEmptyClaimDocumentsResponseStructure();
@@ -1217,7 +1221,7 @@ class QuoteDocumentService extends BaseService
             ];
 
             // Only include business_type_of_insurance for Business LOB (quote_type_id = 5)
-            if ($quoteTypeId === QuoteTypeId::Business) {
+            if ($quoteTypeId === QuoteTypeId::Business && !empty($document->business_type_of_insurance_id)) {
                 $docData['businessTypeOfInsuranceId'] = $document->business_type_of_insurance_id;
                 $docData['businessTypeOfInsurance'] = $document->businessTypeOfInsurance ? [
                     'id' => $document->businessTypeOfInsurance->id,
