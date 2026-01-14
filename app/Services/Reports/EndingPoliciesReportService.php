@@ -185,14 +185,14 @@ class EndingPoliciesReportService extends ManagementReport
                 $item->travel_coverage = 'N/A';
                 $item->traveling_where = 'N/A';
             }
-            
+
             if ($item->quote_type_id != QuoteTypeId::Life) {
                 $item->insurance_provider_name = 'N/A';
                 $item->payment_frequency = 'N/A';
                 $item->plan_name = 'N/A';
                 $item->quote_created_at = 'N/A';
             } else {
-                $item->quote_created_at = !empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
+                $item->quote_created_at = ! empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
             }
         });
     }

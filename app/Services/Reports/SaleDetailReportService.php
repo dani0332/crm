@@ -228,7 +228,7 @@ class SaleDetailReportService extends ManagementReport
                 $item->plan_name = 'N/A';
                 $item->quote_created_at = 'N/A';
             } else {
-                $item->quote_created_at = !empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
+                $item->quote_created_at = ! empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
             }
         });
     }

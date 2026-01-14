@@ -426,7 +426,7 @@ class EndorsementReportService extends ManagementReport
                 $item->quote_created_at = 'N/A';
             } else {
                 $item->insurance_provider_name = $item->insurer;
-                $item->quote_created_at = !empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
+                $item->quote_created_at = ! empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
             }
         });
     }
