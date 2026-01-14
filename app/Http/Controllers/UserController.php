@@ -330,7 +330,7 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\User  $user
+     * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, User $user)
@@ -446,37 +446,7 @@ class UserController extends Controller
             $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
 
             if ($previouslyActive && ! $isActive) {
-                $subordinates = $this->userService->getSubordinates($user->id);
-
-                $attemptedByUserId = Auth::id() ?: null;
-
-                $deactivationAttemptEmailPayload = [
-                    'manager_user_id' => $user->id,
-                    'subordinate_ids' => $subordinates->pluck('id')->all(),
-                    'attempted_by_user_id' => (int) $attemptedByUserId,
-                    'subordinates_count' => $subordinates->count(),
-                ];
-
-                $logDetails = [
-                    'manager_user_id' => $deactivationAttemptEmailPayload['manager_user_id'],
-                    'subordinates_count' => $deactivationAttemptEmailPayload['subordinates_count'],
-                    'attempted_by_user_id' => $deactivationAttemptEmailPayload['attempted_by_user_id'],
-                ];
-
-                if ($subordinates->isNotEmpty()) {
-                    DB::afterCommit(function () use ($deactivationAttemptEmailPayload, $logDetails) {
-                        LoggerService::info('Dispatching SendManagerDeactivationAttemptEmailJob', $logDetails);
-
-                        SendManagerDeactivationAttemptEmailJob::dispatch(
-                            $deactivationAttemptEmailPayload['manager_user_id'],
-                            $deactivationAttemptEmailPayload['attempted_by_user_id']
-                        );
-                    });
-                } else {
-                    LoggerService::info('Skipping SendManagerDeactivationAttemptEmailJob dispatch: manager has no subordinates', [
-                        'manager_user_id' => $user->id,
-                    ]);
-                }
+                $this->userService->sendManagerDeactivationEmail($user, Auth::id() ?: null);
             }
         });
 

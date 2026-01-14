@@ -6,6 +6,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Jobs\SendManagerDeactivationAttemptEmailJob;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -461,5 +462,46 @@ class UserService extends BaseService
             })
             ->activeUser()
             ->get();
+    }
+
+    /**
+     * Dispatch the manager deactivation attempt email job after the DB transaction commits.
+     *
+     * This should be triggered when a manager user is being deactivated. If the user has
+     * active subordinates, we queue a notification job; otherwise we log and skip dispatch.
+     */
+    public function sendManagerDeactivationEmail(User $managerUser, ?int $attemptedByUserId): void
+    {
+        $subordinates = $this->getSubordinates($managerUser->id);
+
+        $deactivationAttemptEmailPayload = [
+            'manager_user_id' => $managerUser->id,
+            'subordinate_ids' => $subordinates->pluck('id')->all(),
+            'attempted_by_user_id' => (int) $attemptedByUserId,
+            'subordinates_count' => $subordinates->count(),
+        ];
+
+        $logDetails = [
+            'manager_user_id' => $deactivationAttemptEmailPayload['manager_user_id'],
+            'subordinates_count' => $deactivationAttemptEmailPayload['subordinates_count'],
+            'attempted_by_user_id' => $deactivationAttemptEmailPayload['attempted_by_user_id'],
+        ];
+
+        if ($subordinates->isNotEmpty()) {
+            DB::afterCommit(function () use ($deactivationAttemptEmailPayload, $logDetails) {
+                LoggerService::info('Dispatching SendManagerDeactivationAttemptEmailJob', $logDetails);
+
+                SendManagerDeactivationAttemptEmailJob::dispatch(
+                    $deactivationAttemptEmailPayload['manager_user_id'],
+                    $deactivationAttemptEmailPayload['attempted_by_user_id']
+                );
+            });
+
+            return;
+        }
+
+        LoggerService::info('Skipping SendManagerDeactivationAttemptEmailJob dispatch: manager has no subordinates', [
+            'manager_user_id' => $managerUser->id,
+        ]);
     }
 }
