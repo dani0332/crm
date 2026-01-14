@@ -33,4 +33,3 @@ class CarMakeFactory extends Factory
         ];
     }
 }
-

@@ -23,8 +23,8 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
@@ -2024,23 +2024,25 @@ class SendEmailCustomerService extends BaseService
 
         if (empty($workflowUrl)) {
             LoggerService::error('Manager Deactivation Attempt: BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW not found in ApplicationStorage.');
+
             return null;
         }
 
         if (empty($itSupportEmail)) {
             LoggerService::error('Manager Deactivation Attempt: IT_SUPPORT_EMAIL not found in ApplicationStorage.');
+
             return null;
         }
 
-        $emailData = (object)[
+        $emailData = (object) [
             'recipientEmail' => $itSupportEmail,
-            'recipientName' => "IT Support AFIA",
-            'managerIds' => $baseManagers->pluck('id')->filter()->values()->implode(","),
+            'recipientName' => 'IT Support AFIA',
+            'managerIds' => $baseManagers->pluck('id')->filter()->values()->implode(','),
             'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
             'timestamp' => now()->toDateTimeString(),
         ];
 
-        /*Base user's manager's */
+        /* Base user's manager's */
         $managerEmails = $baseManagers
             ->flatMap(fn ($manager) => collect(data_get($manager, 'managers', [])))
             ->pluck('email')
@@ -2055,7 +2057,7 @@ class SendEmailCustomerService extends BaseService
         LoggerService::info('Sending manager deactivation attempt email via Bird', [
             'manager_ids' => $emailData->managerIds,
             'attempted_by' => $attemptedBy->id,
-            'emailData' => $emailData
+            'emailData' => $emailData,
         ]);
 
         return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);

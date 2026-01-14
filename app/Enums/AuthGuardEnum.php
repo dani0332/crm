@@ -8,4 +8,3 @@ enum AuthGuardEnum: string
 {
     case Web = 'web';
 }
-

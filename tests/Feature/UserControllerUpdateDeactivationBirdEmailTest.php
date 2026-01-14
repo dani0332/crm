@@ -21,9 +21,8 @@ beforeEach(function () {
     // Keep full route middleware (auth/last_login_check/check_route_access) enabled; skip CSRF only.
     $this->withoutMiddleware(VerifyCsrfToken::class);
 
-
     $this->workflowUrl = 'https://example.test/bird/manager-deactivation-workflow';
-    $this->itSupportEmail = 'it-support-' . uniqid() . '@example.test';
+    $this->itSupportEmail = 'it-support-'.uniqid().'@example.test';
 
     TestDataSeeder::seedApplicationStorage([
         \App\Enums\ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW => $this->workflowUrl,
@@ -66,7 +65,6 @@ test('deactivating a manager with subordinates sends Bird email', function () {
         'is_active' => 0,
     ]);
 
-
     if (session()->has('errors')) {
         throw new RuntimeException(json_encode([
             'label' => 'manager-with-subordinates',
@@ -85,13 +83,13 @@ test('deactivating a manager with subordinates sends Bird email', function () {
     $response->assertSessionHas('success');
 
     $manager->refresh();
-    expect((int)$manager->is_active)->toBe(0);
+    expect((int) $manager->is_active)->toBe(0);
 
     // 2) Job should be enlisted in sqlite in-memory `jobs` table (queued after DB::afterCommit).
     $jobsCount = DB::connection('sqlite')->table('jobs')->count();
     expect($jobsCount)->toBe(1);
 
-    $payload = (string)DB::connection('sqlite')->table('jobs')->value('payload');
+    $payload = (string) DB::connection('sqlite')->table('jobs')->value('payload');
     expect($payload)->toContain('SendManagerDeactivationAttemptEmailJob');
 
     // 3) Process the queued job to assert BirdRequest was successful via the mock expectation.
@@ -138,7 +136,7 @@ test('deactivating a user with no subordinates does not send Bird email', functi
     $response->assertSessionHas('success');
 
     $user->refresh();
-    expect((int)$user->is_active)->toBe(0);
+    expect((int) $user->is_active)->toBe(0);
 
     // No subordinates => controller skips dispatch (no DB::afterCommit job).
     expect(DB::connection('sqlite')->table('jobs')->count())->toBe(0);

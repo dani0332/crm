@@ -24,15 +24,11 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
 
     public $tries = 3;
     public $timeout = 60;
-
     private int $deactivatingUserId;
     private int $attemptedByUserId;
 
     /**
      * Create a new job instance.
-     *
-     * @param  int  $deactivatingUserId
-     * @param  int  $attemptedByUserId
      */
     public function __construct(int $deactivatingUserId, int $attemptedByUserId)
     {
@@ -46,7 +42,7 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        LoggerService::info("SendManagerDeactivationAttemptEmailJob Started");
+        LoggerService::info('SendManagerDeactivationAttemptEmailJob Started');
         try {
             $managerUser = User::query()
                 ->with('managers:email')
@@ -66,7 +62,7 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
                 return;
             }
 
-            $managerPayload =  collect([$managerUser->only(['id', 'name', 'email','managers'])]);
+            $managerPayload = collect([$managerUser->only(['id', 'name', 'email', 'managers'])]);
             $attemptedByPayload = (object) $attemptedBy->only(['id', 'name', 'email']);
 
             LoggerService::info('Sending manager deactivation attempt email', [
