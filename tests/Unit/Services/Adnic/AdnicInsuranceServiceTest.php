@@ -57,7 +57,7 @@ test('automation is enabled returns correct value', function () {
     expect($this->service->isPolicyIssuanceAutomationEnabled())->toBeFalse();
 });
 
-// CRITICAL TEST: Retry configuration  
+// CRITICAL TEST: Retry configuration
 test('automation retry for timeout is enabled returns correct value', function () {
     mockAutomationEnabled(true, true);
     expect($this->service->isPolicyIssuanceAutomationRetryEnabledForTimeout())->toBeTrue();

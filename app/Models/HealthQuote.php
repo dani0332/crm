@@ -33,9 +33,8 @@ class HealthQuote extends Model implements AuditableContract
 
     protected $appends = [
         'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
-        'pc_qualified_formatted', 'has_pec_tag', 'api_issuance_status', 'insurer_api_status'
+        'pc_qualified_formatted', 'has_pec_tag', 'api_issuance_status', 'insurer_api_status',
     ];
-
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -598,8 +597,6 @@ class HealthQuote extends Model implements AuditableContract
 
     /**
      * Check if this quote is a Straight Through Processing (STP) case
-     *
-     * @return bool
      */
     public function isSTPCase(): bool
     {

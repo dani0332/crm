@@ -6,7 +6,6 @@ namespace Database\Factories;
 
 use App\Models\InsuranceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 class InsuranceProviderFactory extends Factory
 {
@@ -27,15 +26,12 @@ class InsuranceProviderFactory extends Factory
 
     /**
      * Define the model's default state.
-     *
-     * @return array
      */
-
     public function definition(): array
     {
         return [
             'code' => $this->faker->unique()->lexify('???'),
-            'text' => $this->faker->company() .' Insurance',
+            'text' => $this->faker->company().' Insurance',
             'sort_order' => $this->faker->numberBetween(1, 100),
             'is_active' => 1,
             'created_at' => now(),
@@ -75,4 +71,3 @@ class InsuranceProviderFactory extends Factory
         ]);
     }
 }
-

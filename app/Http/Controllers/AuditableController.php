@@ -4,15 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
 use App\Http\Requests\OcrLogsRequest;
+use App\Models\HealthInsurerRequestResponse;
+use App\Models\HealthQuote;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
 use App\Models\LifeQuote;
-use App\Models\HealthQuote;
 use App\Models\OcrLog;
 use App\Models\TravelInsurerRequestResponses;
-use App\Models\HealthInsurerRequestResponse;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;

@@ -61,4 +61,3 @@ class QuoteDocumentFactory extends Factory
         });
     }
 }
-

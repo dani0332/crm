@@ -57,4 +57,3 @@ class PolicyIssuanceFactory extends Factory
         });
     }
 }
-

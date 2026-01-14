@@ -7,22 +7,14 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\AdnicEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\SendPolicyTypeEnum;
-use App\Http\Requests\BookPolicyRequest;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
-use Exception;
-use Illuminate\Support\Facades\Validator;
 
 class AdnicBookPolicyService
 {
     use GenericQueriesAllLobs;
 
-    public function __construct()
-    {}
+    public function __construct() {}
 
     /**
      * Get steps locking status for UI

@@ -8,7 +8,7 @@ use App\Models\HealthQuote;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicQuoteUpdaterService;
 
 beforeEach(function () {
-    $this->service = new AdnicQuoteUpdaterService();
+    $this->service = new AdnicQuoteUpdaterService;
 });
 
 afterEach(function () {
@@ -40,16 +40,16 @@ test('update quote from issue policy response updates policy fields', function (
                 && $data['policy_issuance_status_id'] === PolicyIssuanceStatusEnum::PolicyIssued;
         }))
         ->andReturn(true);
-    
+
     // Create mock issue policy result
-    $issuePolicyResult = new \stdClass();
-    $issuePolicyResult->PolicyInfo = new \stdClass();
+    $issuePolicyResult = new \stdClass;
+    $issuePolicyResult->PolicyInfo = new \stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL123';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = '2024-01-01';
     $issuePolicyResult->PolicyInfo->PolicyEndDate = '2024-12-31';
-    
+
     $this->service->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-    
+
     expect(true)->toBeTrue(); // If we reach here, the mock assertions passed
 });
 
@@ -67,15 +67,15 @@ test('update quote from issue policy response filters null values', function () 
                 && isset($data['policy_issuance_status_id']);
         }))
         ->andReturn(true);
-    
-    $issuePolicyResult = new \stdClass();
-    $issuePolicyResult->PolicyInfo = new \stdClass();
+
+    $issuePolicyResult = new \stdClass;
+    $issuePolicyResult->PolicyInfo = new \stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL456';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = null;
     $issuePolicyResult->PolicyInfo->PolicyEndDate = null;
-    
+
     $this->service->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-    
+
     expect(true)->toBeTrue();
 });
 
@@ -89,15 +89,15 @@ test('update quote from issue policy response sets correct status', function () 
                 && $data['policy_issuance_status_id'] === PolicyIssuanceStatusEnum::PolicyIssued;
         }))
         ->andReturn(true);
-    
-    $issuePolicyResult = new \stdClass();
-    $issuePolicyResult->PolicyInfo = new \stdClass();
+
+    $issuePolicyResult = new \stdClass;
+    $issuePolicyResult->PolicyInfo = new \stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL789';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = '2024-01-01';
     $issuePolicyResult->PolicyInfo->PolicyEndDate = '2024-12-31';
-    
+
     $this->service->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-    
+
     expect(true)->toBeTrue();
 });
 
@@ -111,18 +111,18 @@ test('update quote from issue policy response handles missing policy info', func
             return isset($data['quote_status_id'])
                 && isset($data['policy_issuance_status_id'])
                 && isset($data['quote_status_date'])
-                && !isset($data['policy_number']); // Should not set policy_number when null
+                && ! isset($data['policy_number']); // Should not set policy_number when null
         }))
         ->andReturn(true);
-    
-    $issuePolicyResult = new \stdClass();
-    $issuePolicyResult->PolicyInfo = new \stdClass();
+
+    $issuePolicyResult = new \stdClass;
+    $issuePolicyResult->PolicyInfo = new \stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = null;
     $issuePolicyResult->PolicyInfo->PolicyStartDate = null;
     $issuePolicyResult->PolicyInfo->PolicyEndDate = null;
-    
+
     $this->service->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-    
+
     expect(true)->toBeTrue();
 });
 
@@ -135,7 +135,7 @@ test('update payment from issue policy response method exists', function () {
 test('update payment from issue policy response has correct signature', function () {
     $reflection = new ReflectionClass($this->service);
     $method = $reflection->getMethod('updatePaymentFromIssuePolicyResponse');
-    
+
     expect($method->getNumberOfParameters())->toBe(2);
 });
 
@@ -149,15 +149,15 @@ test('update quote from issue policy response sets quote status date', function 
                 && $data['quote_status_date'] instanceof \Illuminate\Support\Carbon;
         }))
         ->andReturn(true);
-    
-    $issuePolicyResult = new \stdClass();
-    $issuePolicyResult->PolicyInfo = new \stdClass();
+
+    $issuePolicyResult = new \stdClass;
+    $issuePolicyResult->PolicyInfo = new \stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL999';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = '2024-01-01';
     $issuePolicyResult->PolicyInfo->PolicyEndDate = '2024-12-31';
-    
+
     $this->service->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-    
+
     expect(true)->toBeTrue();
 });
 
@@ -170,21 +170,21 @@ test('update quote from issue policy response handles partial policy info', func
             // Should only have non-null fields from PolicyInfo
             return isset($data['policy_number'])
                 && $data['policy_number'] === 'POL-PARTIAL'
-                && !isset($data['policy_start_date']) // Filtered out because null
-                && !isset($data['policy_expiry_date']) // Filtered out because null
+                && ! isset($data['policy_start_date']) // Filtered out because null
+                && ! isset($data['policy_expiry_date']) // Filtered out because null
                 && isset($data['quote_status_id'])
                 && isset($data['policy_issuance_status_id'])
                 && isset($data['quote_status_date']);
         }))
         ->andReturn(true);
-    
-    $issuePolicyResult = new \stdClass();
-    $issuePolicyResult->PolicyInfo = new \stdClass();
+
+    $issuePolicyResult = new \stdClass;
+    $issuePolicyResult->PolicyInfo = new \stdClass;
     $issuePolicyResult->PolicyInfo->PolicyNo = 'POL-PARTIAL';
     $issuePolicyResult->PolicyInfo->PolicyStartDate = null;
     $issuePolicyResult->PolicyInfo->PolicyEndDate = null;
-    
+
     $this->service->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-    
+
     expect(true)->toBeTrue();
 });

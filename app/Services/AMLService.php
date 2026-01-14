@@ -2491,7 +2491,7 @@ class AMLService
         return $response;
     }
 
-    public function autoCaptureAMLValidationCheck($quote , $isHealthAndSTPCase = false)
+    public function autoCaptureAMLValidationCheck($quote, $isHealthAndSTPCase = false)
     {
         if ($quote->aml_status != AMLStatusCode::AMLScreeningCleared) {
             LoggerService::info(__FUNCTION__.' - Auto capture payment process failed - AML Screening is not cleared');

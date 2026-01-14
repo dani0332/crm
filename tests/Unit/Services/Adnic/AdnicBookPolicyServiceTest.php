@@ -7,7 +7,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicBookPolicyService;
 
 beforeEach(function () {
-    $this->service = new AdnicBookPolicyService();
+    $this->service = new AdnicBookPolicyService;
 });
 
 afterEach(function () {
@@ -21,7 +21,7 @@ test('book policy service initializes correctly', function () {
 
 // CRITICAL TEST: Steps locking with automation enabled
 test('get steps locking status returns all editable for automation', function () {
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;
@@ -36,7 +36,7 @@ test('get steps locking status returns all editable for automation', function ()
 
 // CRITICAL TEST: No policy issuance record
 test('get steps locking status returns all editable when no policy issuance', function () {
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;
@@ -51,11 +51,11 @@ test('get steps locking status returns all editable when no policy issuance', fu
 
 // CRITICAL TEST: Failed policy issuance with no completed step
 test('get steps locking status returns all editable for failed status with no step', function () {
-    $policyIssuance = new \stdClass();
+    $policyIssuance = new \stdClass;
     $policyIssuance->status = PolicyIssuanceEnum::FAILED_STATUS;
     $policyIssuance->completed_step = null;
 
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;
@@ -70,11 +70,11 @@ test('get steps locking status returns all editable for failed status with no st
 
 // CRITICAL TEST: Failed policy issuance at upload documents step
 test('get steps locking status returns all editable for failed at upload documents', function () {
-    $policyIssuance = new \stdClass();
+    $policyIssuance = new \stdClass;
     $policyIssuance->status = PolicyIssuanceEnum::FAILED_STATUS;
     $policyIssuance->completed_step = AdnicEnum::STEP_UPLOAD_DOCUMENTS;
 
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;
@@ -89,11 +89,11 @@ test('get steps locking status returns all editable for failed at upload documen
 
 // CRITICAL TEST: Failed policy issuance at issue policy step
 test('get steps locking status handles failed at issue policy step', function () {
-    $policyIssuance = new \stdClass();
+    $policyIssuance = new \stdClass;
     $policyIssuance->status = PolicyIssuanceEnum::FAILED_STATUS;
     $policyIssuance->completed_step = AdnicEnum::STEP_ISSUE_POLICY;
 
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;
@@ -108,11 +108,11 @@ test('get steps locking status handles failed at issue policy step', function ()
 
 // CRITICAL TEST: Failed policy issuance at upload policy docs step
 test('get steps locking status handles failed at upload policy docs step', function () {
-    $policyIssuance = new \stdClass();
+    $policyIssuance = new \stdClass;
     $policyIssuance->status = PolicyIssuanceEnum::FAILED_STATUS;
     $policyIssuance->completed_step = AdnicEnum::STEP_UPLOAD_POLICY_DOCS;
 
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;
@@ -127,11 +127,11 @@ test('get steps locking status handles failed at upload policy docs step', funct
 
 // CRITICAL TEST: Processing status at upload policy docs step
 test('get steps locking status handles processing at upload policy docs', function () {
-    $policyIssuance = new \stdClass();
+    $policyIssuance = new \stdClass;
     $policyIssuance->status = PolicyIssuanceEnum::PROCESSING_STATUS;
     $policyIssuance->completed_step = AdnicEnum::STEP_UPLOAD_POLICY_DOCS;
 
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;
@@ -145,7 +145,7 @@ test('get steps locking status handles processing at upload policy docs', functi
 
 // CRITICAL TEST: Response structure consistency
 test('get steps locking status always returns consistent structure', function () {
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;
@@ -159,11 +159,11 @@ test('get steps locking status always returns consistent structure', function ()
 
 // CRITICAL TEST: Completed step without failed status
 test('get steps locking status handles completed step with empty status', function () {
-    $policyIssuance = new \stdClass();
+    $policyIssuance = new \stdClass;
     $policyIssuance->status = '';
     $policyIssuance->completed_step = AdnicEnum::STEP_ISSUE_POLICY;
 
-    $quote = new \stdClass();
+    $quote = new \stdClass;
     $quote->id = 1;
     $quote->code = 'HQ123';
     $quote->insurer_api_status = null;

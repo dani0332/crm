@@ -11,7 +11,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Force SQLite for tests regardless of environment variables
         // This ensures tests use in-memory database even when Doppler is active
         if (app()->environment('testing')) {
@@ -22,29 +22,29 @@ abstract class TestCase extends BaseTestCase
                 'prefix' => '',
                 'foreign_key_constraints' => true,
             ]]);
-            
+
             // Clear any existing connections to force reconnection with new config
             app('db')->purge('mysql');
             app('db')->purge('sqlite');
-            
+
             // Reconnect to ensure clean state
             app('db')->reconnect('sqlite');
         }
     }
-    
+
     protected function tearDown(): void
     {
         // Clear permission cache after each test to prevent state pollution
         if (class_exists(\Spatie\Permission\PermissionRegistrar::class)) {
             app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
         }
-        
+
         // Close Mockery to prevent mock state pollution between tests
         \Mockery::close();
-        
+
         // Clear any resolved Facade instances to prevent state pollution
         \Illuminate\Support\Facades\Facade::clearResolvedInstances();
-        
+
         parent::tearDown();
     }
 }

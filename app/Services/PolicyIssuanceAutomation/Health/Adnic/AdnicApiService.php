@@ -70,7 +70,7 @@ class AdnicApiService
         ]);
 
         $this->quoteUpdater->updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult);
-        //$this->quoteUpdater->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
+        // $this->quoteUpdater->updatePaymentFromIssuePolicyResponse($quote->code, $issuePolicyResult);
 
         $response['status'] = true;
         $response['message'] = 'Policy issued successfully';
@@ -196,7 +196,7 @@ class AdnicApiService
 
             return $response;
         }
-        
+
         $endPoint = '/GeneratePolicyDocument';
 
         $uploadedDocumentsToIMCRM = collect();

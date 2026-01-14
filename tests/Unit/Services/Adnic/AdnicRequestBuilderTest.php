@@ -27,27 +27,27 @@ test('request builder has http client dependency', function () {
     $reflection = new ReflectionClass($this->builder);
     $property = $reflection->getProperty('httpClient');
     $property->setAccessible(true);
-    
+
     expect($property->getValue($this->builder))->toBeInstanceOf(AdnicHttpClient::class);
 });
 
 // CRITICAL TEST: Upload documents payload structure
 test('build upload documents payload creates correct structure', function () {
     $base64Content = base64_encode('test content');
-    
-    $healthInsurerResponse = new \stdClass();
-    $healthInsurerResponse->QuoteInfo = new \stdClass();
+
+    $healthInsurerResponse = new \stdClass;
+    $healthInsurerResponse->QuoteInfo = new \stdClass;
     $healthInsurerResponse->QuoteInfo->QuotationNo = 'QUOTE123';
-    
-    $insuredMember = new \stdClass();
+
+    $insuredMember = new \stdClass;
     $insuredMember->MemberSeqNo = 1;
-    
-    $quoteDocument = new \stdClass();
+
+    $quoteDocument = new \stdClass;
     $quoteDocument->original_name = 'passport.pdf';
     $quoteDocument->doc_name = 'passport_copy.pdf';
-    
+
     $insurerDocCode = '1';
-    
+
     $result = $this->builder->buildUploadDocumentsPayload(
         $base64Content,
         $healthInsurerResponse,
@@ -55,7 +55,7 @@ test('build upload documents payload creates correct structure', function () {
         $insurerDocCode,
         $quoteDocument
     );
-    
+
     expect($result)
         ->toHaveKeys(['PartnerInfo', 'DocumentInfo'])
         ->and($result['PartnerInfo']['PartnerId'])->toBe('TEST_PARTNER_ID')
@@ -70,20 +70,20 @@ test('build upload documents payload creates correct structure', function () {
 // CRITICAL TEST: Upload documents uses doc_name when original_name is null
 test('build upload documents payload uses doc name fallback', function () {
     $base64Content = base64_encode('test content');
-    
-    $healthInsurerResponse = new \stdClass();
-    $healthInsurerResponse->QuoteInfo = new \stdClass();
+
+    $healthInsurerResponse = new \stdClass;
+    $healthInsurerResponse->QuoteInfo = new \stdClass;
     $healthInsurerResponse->QuoteInfo->QuotationNo = 'QUOTE123';
-    
-    $insuredMember = new \stdClass();
+
+    $insuredMember = new \stdClass;
     $insuredMember->MemberSeqNo = 1;
-    
-    $quoteDocument = new \stdClass();
+
+    $quoteDocument = new \stdClass;
     $quoteDocument->doc_name = 'passport_copy.pdf';
     // original_name is not set
-    
+
     $insurerDocCode = '1';
-    
+
     $result = $this->builder->buildUploadDocumentsPayload(
         $base64Content,
         $healthInsurerResponse,
@@ -91,22 +91,22 @@ test('build upload documents payload uses doc name fallback', function () {
         $insurerDocCode,
         $quoteDocument
     );
-    
+
     expect($result['DocumentInfo']['DocumentName'])->toBe('passport_copy.pdf');
 });
 
 // CRITICAL TEST: Download document payload structure
 test('build download document payload creates correct structure', function () {
-    $generatePolicyResponse = new \stdClass();
-    $generatePolicyResponse->QuoteInfo = new \stdClass();
+    $generatePolicyResponse = new \stdClass;
+    $generatePolicyResponse->QuoteInfo = new \stdClass;
     $generatePolicyResponse->QuoteInfo->QuotationNo = 'QUOTE123';
-    $generatePolicyResponse->PolicyInfo = new \stdClass();
+    $generatePolicyResponse->PolicyInfo = new \stdClass;
     $generatePolicyResponse->PolicyInfo->PolicyNo = 'POL123';
-    
+
     $docId = 'DOC123';
-    
+
     $result = $this->builder->buildDownloadDocumentPayload($generatePolicyResponse, $docId);
-    
+
     expect($result)
         ->toHaveKeys(['PartnerInfo', 'PolicyDocumentInfo'])
         ->and($result['PartnerInfo']['PartnerId'])->toBe('TEST_PARTNER_ID')
@@ -119,7 +119,7 @@ test('build download document payload creates correct structure', function () {
 // CRITICAL TEST: Mapping methods accessibility
 test('request builder has mapping methods for data transformation', function () {
     $reflection = new ReflectionClass($this->builder);
-    
+
     // Check that private mapping methods exist
     expect($reflection->hasMethod('mappingSalaryBand'))->toBeTrue()
         ->and($reflection->hasMethod('mappingNationality'))->toBeTrue()
@@ -132,7 +132,7 @@ test('mapping gender returns correct values', function () {
     $reflection = new ReflectionClass($this->builder);
     $method = $reflection->getMethod('mappingGender');
     $method->setAccessible(true);
-    
+
     // Test female variations (based on GenericRequestEnum values)
     expect($method->invoke($this->builder, 'Female'))->toBe('F')
         ->and($method->invoke($this->builder, 'female'))->toBe('F')
@@ -141,7 +141,7 @@ test('mapping gender returns correct values', function () {
         ->and($method->invoke($this->builder, 'FM'))->toBe('F')
         ->and($method->invoke($this->builder, 'Female-Single'))->toBe('F')
         ->and($method->invoke($this->builder, 'Female-Married'))->toBe('F');
-    
+
     // Test male (default)
     expect($method->invoke($this->builder, 'Male'))->toBe('M')
         ->and($method->invoke($this->builder, 'M'))->toBe('M')
@@ -154,7 +154,7 @@ test('mapping salary band returns correct values', function () {
     $reflection = new ReflectionClass($this->builder);
     $method = $reflection->getMethod('mappingSalaryBand');
     $method->setAccessible(true);
-    
+
     expect($method->invoke($this->builder, 1))->toBe(1) // 4000 and less
         ->and($method->invoke($this->builder, 2))->toBe(2) // More than 4000
         ->and($method->invoke($this->builder, 99))->toBeNull(); // Invalid
@@ -165,7 +165,7 @@ test('mapping marital status returns correct values', function () {
     $reflection = new ReflectionClass($this->builder);
     $method = $reflection->getMethod('mappingMaritalStatus');
     $method->setAccessible(true);
-    
+
     expect($method->invoke($this->builder, 1))->toBe(1) // Single
         ->and($method->invoke($this->builder, 2))->toBe(2) // Married
         ->and($method->invoke($this->builder, 3))->toBe(4) // Widowed
@@ -178,7 +178,7 @@ test('mapping nationality returns correct adnic codes', function () {
     $reflection = new ReflectionClass($this->builder);
     $method = $reflection->getMethod('mappingNationality');
     $method->setAccessible(true);
-    
+
     expect($method->invoke($this->builder, 'EMIRATI'))->toBe(1)
         ->and($method->invoke($this->builder, 'JORDANIAN'))->toBe(11)
         ->and($method->invoke($this->builder, 'LEBANESE'))->toBe(12)
@@ -192,17 +192,17 @@ test('mapping nationality returns correct adnic codes', function () {
 // CRITICAL TEST: Document upload date format
 test('build upload documents payload includes iso formatted upload date', function () {
     $base64Content = base64_encode('test');
-    
-    $healthInsurerResponse = new \stdClass();
-    $healthInsurerResponse->QuoteInfo = new \stdClass();
+
+    $healthInsurerResponse = new \stdClass;
+    $healthInsurerResponse->QuoteInfo = new \stdClass;
     $healthInsurerResponse->QuoteInfo->QuotationNo = 'Q123';
-    
-    $insuredMember = new \stdClass();
+
+    $insuredMember = new \stdClass;
     $insuredMember->MemberSeqNo = 1;
-    
-    $quoteDocument = new \stdClass();
+
+    $quoteDocument = new \stdClass;
     $quoteDocument->original_name = 'test.pdf';
-    
+
     $result = $this->builder->buildUploadDocumentsPayload(
         $base64Content,
         $healthInsurerResponse,
@@ -210,7 +210,7 @@ test('build upload documents payload includes iso formatted upload date', functi
         '1',
         $quoteDocument
     );
-    
+
     expect($result['DocumentInfo'])->toHaveKey('DocumentUploadDate')
         ->and($result['DocumentInfo']['DocumentUploadDate'])->toBeString();
 });

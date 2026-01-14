@@ -20,7 +20,7 @@ trait CreatesApplication
         $_ENV['DB_DATABASE'] = ':memory:';
         $_SERVER['DB_CONNECTION'] = 'sqlite';
         $_SERVER['DB_DATABASE'] = ':memory:';
-        
+
         $app = require __DIR__.'/../bootstrap/app.php';
 
         $app->make(Kernel::class)->bootstrap();

@@ -160,15 +160,15 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_get_document_by_type_returns_matching_documents(): void
     {
-        $doc1 = new \stdClass();
+        $doc1 = new \stdClass;
         $doc1->document_type_code = DocumentTypeCode::HEA_EID;
 
-        $doc2 = new \stdClass();
+        $doc2 = new \stdClass;
         $doc2->document_type_code = DocumentTypeCode::HEA_VISA;
 
         $documents = collect([$doc1, $doc2]);
 
-        $quote = new \stdClass();
+        $quote = new \stdClass;
         $quote->documents = $documents;
 
         $result = $this->handler->getDocumentByType($quote, [DocumentTypeCode::HEA_EID, DocumentTypeCode::HEA_VISA]);
@@ -182,7 +182,7 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_get_document_by_type_returns_null_when_no_documents_found(): void
     {
-        $quote = new \stdClass();
+        $quote = new \stdClass;
         $quote->documents = collect();
 
         $result = $this->handler->getDocumentByType($quote, [DocumentTypeCode::HEA_EID]);
@@ -192,7 +192,7 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_get_document_by_type_returns_null_when_documents_is_null(): void
     {
-        $quote = new \stdClass();
+        $quote = new \stdClass;
         $quote->documents = null;
 
         $result = $this->handler->getDocumentByType($quote, [DocumentTypeCode::HEA_EID]);
@@ -202,18 +202,18 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_get_document_by_type_filters_by_type_codes(): void
     {
-        $doc1 = new \stdClass();
+        $doc1 = new \stdClass;
         $doc1->document_type_code = DocumentTypeCode::HEA_EID;
 
-        $doc2 = new \stdClass();
+        $doc2 = new \stdClass;
         $doc2->document_type_code = DocumentTypeCode::HEA_VISA;
 
-        $doc3 = new \stdClass();
+        $doc3 = new \stdClass;
         $doc3->document_type_code = 'OTHER_DOC';
 
         $documents = collect([$doc1, $doc2, $doc3]);
 
-        $quote = new \stdClass();
+        $quote = new \stdClass;
         $quote->documents = $documents;
 
         $result = $this->handler->getDocumentByType($quote, [DocumentTypeCode::HEA_EID, DocumentTypeCode::HEA_VISA]);
@@ -227,12 +227,12 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_get_document_by_type_returns_single_document(): void
     {
-        $doc1 = new \stdClass();
+        $doc1 = new \stdClass;
         $doc1->document_type_code = DocumentTypeCode::HEA_EID;
 
         $documents = collect([$doc1]);
 
-        $quote = new \stdClass();
+        $quote = new \stdClass;
         $quote->documents = $documents;
 
         $result = $this->handler->getDocumentByType($quote, [DocumentTypeCode::HEA_EID]);
@@ -246,7 +246,7 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_upload_and_attach_to_quote_documents_builds_correct_data_array(): void
     {
-        $quote = new \stdClass();
+        $quote = new \stdClass;
         $quote->uuid = 'test-uuid-123';
 
         // Simulating base64 encoded content as it comes from AdnicApiService
@@ -254,7 +254,7 @@ class AdnicDocumentHandlerTest extends TestCase
         $documentCode = DocumentTypeCode::POLC;
         $originalName = 'policy.pdf';
 
-        $quoteDocumentServiceMock = Mockery::mock('overload:' . QuoteDocumentService::class);
+        $quoteDocumentServiceMock = Mockery::mock('overload:'.QuoteDocumentService::class);
         $quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
             ->once()
             ->with(
@@ -277,14 +277,14 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_upload_and_attach_to_quote_documents_handles_null_original_name(): void
     {
-        $quote = new \stdClass();
+        $quote = new \stdClass;
         $quote->uuid = 'test-uuid-123';
 
         // Base64 encoded content as expected in the flow
         $documentContent = base64_encode('sample content');
         $documentCode = DocumentTypeCode::TI;
 
-        $quoteDocumentServiceMock = Mockery::mock('overload:' . QuoteDocumentService::class);
+        $quoteDocumentServiceMock = Mockery::mock('overload:'.QuoteDocumentService::class);
         $quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
             ->once()
             ->with(
@@ -303,10 +303,10 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_upload_and_attach_to_quote_documents_always_sets_base64_flag(): void
     {
-        $quote = new \stdClass();
+        $quote = new \stdClass;
         $quote->uuid = 'test-uuid-123';
 
-        $quoteDocumentServiceMock = Mockery::mock('overload:' . QuoteDocumentService::class);
+        $quoteDocumentServiceMock = Mockery::mock('overload:'.QuoteDocumentService::class);
         $quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
             ->once()
             ->with(
@@ -344,12 +344,12 @@ class AdnicDocumentHandlerTest extends TestCase
     {
         // This test verifies that fetchDocumentContent returns raw content
         // The base64 encoding happens in AdnicApiService, not in the handler
-        
+
         // We can't easily test the actual file reading without mocking file_get_contents
         // But we can verify the behavior by checking other tests that validate:
         // 1. fetchDocumentContent returns status and content
         // 2. AdnicApiService does base64_encode on the content
-        
+
         // This is a documentation test to ensure developers understand the flow
         $this->assertTrue(true, 'fetchDocumentContent returns raw content, base64 encoding is done in AdnicApiService');
     }

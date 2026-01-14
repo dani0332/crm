@@ -23,4 +23,3 @@ class NationalityFactory extends Factory
         ];
     }
 }
-

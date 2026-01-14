@@ -98,6 +98,7 @@ class AdnicHttpClient
                             'exception_message' => $exception->getMessage(),
                             'attempt' => 'retrying',
                         ]);
+
                         return true;
                     }
 

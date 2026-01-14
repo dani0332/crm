@@ -261,13 +261,13 @@ test('handles exceptions and returns 500', function () {
     ]);
 
     $response->assertStatus(500);
-    
+
     // Check that we get an error response (message may vary based on exception handling)
     $json = $response->json();
     expect($json)->toHaveKey('message')
         ->and(in_array($json['message'], [
             'Unable to toggle policy issuance automation, Please try again later.',
-            'Server Error'
+            'Server Error',
         ]))->toBeTrue();
 });
 

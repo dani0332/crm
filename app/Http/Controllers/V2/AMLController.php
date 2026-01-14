@@ -974,14 +974,14 @@ class AMLController extends Controller
             $isAmlAndKycCleared = $quote?->aml_status == AMLStatusCode::AMLScreeningCleared && $quote?->kyc_decision == Kyc::COMPLETE;
             $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             $isPolicyAutomationEnabled = $policyAutomation->isPolicyIssuanceAutomationEnabled();
-            LoggerService::info('Policy Automation AutoCapture Checks' , extra: [
+            LoggerService::info('Policy Automation AutoCapture Checks', extra: [
                 'QuoteType' => $quoteType,
                 'STP Case' => $quote?->isSTPCase(),
                 'AML Status' => $quote?->aml_status,
                 'KYC Status' => $quote?->kyc_decision,
-                'Automation Enabled' => $isPolicyAutomationEnabled
+                'Automation Enabled' => $isPolicyAutomationEnabled,
             ]);
-            if($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyAutomationEnabled){
+            if ($isHealthAndSTPCase && $isAmlAndKycCleared && $isPolicyAutomationEnabled) {
                 $isAutoCaptureStarted = app(CentralService::class)->autoCapturePaymentProcess($insuredKycRequest->quote_type_id, $quote);
                 $response['autoCaptureStatus'] = $isAutoCaptureStarted['autoCaptureStatus'];
                 $response['autoCaptureMessage'] = $isAutoCaptureStarted['autoCaptureMessage'];

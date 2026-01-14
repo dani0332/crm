@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\AdnicEnum;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicApiService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicDocumentHandler;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicQuoteUpdaterService;
@@ -10,7 +9,6 @@ use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicRequestBuilder;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicValidationService;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     $this->requestBuilderMock = Mockery::mock(AdnicRequestBuilder::class);
@@ -42,7 +40,7 @@ test('api service has request builder dependency', function () {
     $reflection = new ReflectionClass($this->service);
     $property = $reflection->getProperty('requestBuilder');
     $property->setAccessible(true);
-    
+
     expect($property->getValue($this->service))->toBeInstanceOf(AdnicRequestBuilder::class);
 });
 
@@ -51,7 +49,7 @@ test('api service has response handler dependency', function () {
     $reflection = new ReflectionClass($this->service);
     $property = $reflection->getProperty('responseHandler');
     $property->setAccessible(true);
-    
+
     expect($property->getValue($this->service))->toBeInstanceOf(AdnicResponseHandler::class);
 });
 
@@ -60,7 +58,7 @@ test('api service has document handler dependency', function () {
     $reflection = new ReflectionClass($this->service);
     $property = $reflection->getProperty('documentHandler');
     $property->setAccessible(true);
-    
+
     expect($property->getValue($this->service))->toBeInstanceOf(AdnicDocumentHandler::class);
 });
 
@@ -69,7 +67,7 @@ test('api service has quote updater dependency', function () {
     $reflection = new ReflectionClass($this->service);
     $property = $reflection->getProperty('quoteUpdater');
     $property->setAccessible(true);
-    
+
     expect($property->getValue($this->service))->toBeInstanceOf(AdnicQuoteUpdaterService::class);
 });
 
@@ -78,6 +76,6 @@ test('api service has validation service dependency', function () {
     $reflection = new ReflectionClass($this->service);
     $property = $reflection->getProperty('validationService');
     $property->setAccessible(true);
-    
+
     expect($property->getValue($this->service))->toBeInstanceOf(AdnicValidationService::class);
 });

@@ -65,7 +65,7 @@ test('parse http response handles successful response', function () {
 test('parse http response handles api error with error list', function () {
     $responseData = (object) [
         'ErrorInfo' => [
-            (object) ['ErrorMsg' => 'API validation failed']
+            (object) ['ErrorMsg' => 'API validation failed'],
         ],
     ];
 
@@ -94,7 +94,7 @@ test('parse http response handles null response object', function () {
 test('parse http response handles is success n', function () {
     $responseData = (object) [
         'ErrorInfo' => [
-            (object) ['ErrorMsg' => 'Operation failed']
+            (object) ['ErrorMsg' => 'Operation failed'],
         ],
     ];
 
@@ -136,7 +136,7 @@ test('parse http response handles generic http error', function () {
 test('parse http response extracts error from message field', function () {
     $responseData = (object) [
         'ErrorInfo' => [
-            (object) ['ErrorMsg' => 'Custom error message']
+            (object) ['ErrorMsg' => 'Custom error message'],
         ],
     ];
 

@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Services\ApplicationStorageService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicHttpClient;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -27,7 +26,7 @@ beforeEach(function () {
         'constants.ADNIC_SUBSCRIPTION_KEY' => 'test_subscription_key',
     ]);
 
-    $this->client = new AdnicHttpClient();
+    $this->client = new AdnicHttpClient;
 });
 
 afterEach(function () {
@@ -102,7 +101,7 @@ test('http client retries on connection timeout', function () {
 
     Http::fake(function () use (&$attemptCount) {
         $attemptCount++;
-        
+
         // Fail first 3 attempts, succeed on 4th (after 3 retries = 4 total attempts)
         if ($attemptCount < 4) {
             throw new ConnectionException('Connection timeout');
@@ -126,7 +125,7 @@ test('http client does not retry on server errors', function () {
 
     Http::fake(function () use (&$attemptCount) {
         $attemptCount++;
-        
+
         return Http::response([
             'isSuccess' => 'N',
             'message' => 'Server error - no retry',
@@ -179,6 +178,7 @@ test('http client handles 4xx errors without retry', function () {
 
     Http::fake(function () use (&$attemptCount) {
         $attemptCount++;
+
         return Http::response([
             'isSuccess' => 'N',
             'message' => 'Bad Request',
@@ -198,6 +198,7 @@ test('http client handles 404 errors without retry', function () {
 
     Http::fake(function () use (&$attemptCount) {
         $attemptCount++;
+
         return Http::response([
             'isSuccess' => 'N',
             'message' => 'Not Found',
