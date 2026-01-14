@@ -153,6 +153,7 @@ class YachtQuoteController extends Controller
      */
     public function show($uuid)
     {
+
         /* Start - Temporarily adding for correcting historic data */
         $quote = YachtQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
