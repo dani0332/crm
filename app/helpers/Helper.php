@@ -917,10 +917,6 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->where('code', $request->code);
         }
 
-        if (isset($request->renewal_batches) && is_array($request->renewal_batches) && count($request->renewal_batches) > 0) {
-            $partialQuery->whereIn('renewal_batch_id', $request->renewal_batches);
-        }
-
         if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $partialQuery->whereIn('quote_status_id', $request->quote_status);
         }
@@ -966,8 +962,8 @@ if (! function_exists('getCardViewRequestFilters')) {
             });
         }
 
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $partialQuery->where('renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && is_array($request->renewal_batches) && count($request->renewal_batches) > 0) {
+            $partialQuery->whereIn('renewal_batch_id', $request->renewal_batches);
         }
 
         if (isset($request->sub_team) && $request->sub_team != '') {
