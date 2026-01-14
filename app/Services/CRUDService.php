@@ -147,7 +147,7 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($modelType, $leadCode) {
+        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($leadCode) {
             $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
             
             $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
