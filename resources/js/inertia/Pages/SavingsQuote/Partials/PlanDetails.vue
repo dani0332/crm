@@ -39,7 +39,7 @@ const currencyOptions = computed(() => {
     return providerPlanData.value.currency_coverages
       .filter(cc => cc.currency)
       .map(cc => ({
-        value: cc.currency.code,
+        value: cc.currency.id,
         label: cc.currency.text || cc.currency.code,
       }));
   }
@@ -210,6 +210,57 @@ const modalVisible = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val),
 });
+
+// Dynamic rider values storage (keyed by rider id)
+const riderValues = ref({});
+
+// Get riders from planDetails first, fallback to providerPlanData
+const planRiders = computed(() => {
+  // First check if planDetails has riders directly
+  if (props.planDetails?.riders?.length) {
+    return props.planDetails.riders;
+  }
+  // Fallback to providerPlanData
+  return providerPlanData.value?.riders || [];
+});
+
+// Show riders section if the plan has riders
+const showRiders = computed(() => {
+  return planRiders.value.length > 0;
+});
+
+// Initialize rider values when plan details modal is opened
+const initializeRiderValues = riders => {
+  const newRiderValues = {};
+  riders.forEach(riderOption => {
+    const rider = riderOption.rider || {};
+    newRiderValues[riderOption.id] = {
+      id: riderOption.id,
+      riderId: riderOption.rider_id,
+      code: rider.code || riderOption.code,
+      text: rider.text || riderOption.text || 'Rider',
+      enabled: false,
+      coverValue: 0,
+      coverValue2: 0,
+      inputRequired: riderOption.input_required || false,
+      inputType: riderOption.input_type || null,
+      coverType: riderOption.cover_type || null,
+      maxAge: riderOption.max_age || null,
+    };
+  });
+  riderValues.value = newRiderValues;
+};
+
+// Watch for modal visibility and planDetails changes to initialize riders
+watch(
+  [() => props.modelValue, () => props.planDetails],
+  ([newVisible, newPlanDetails]) => {
+    if (newVisible && planRiders.value.length > 0) {
+      initializeRiderValues(planRiders.value);
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -308,13 +359,13 @@ const modalVisible = computed({
                 <div class="flex items-center">
                   <span class="text-sm text-gray-600 w-36">Plan Type</span>
                   <span class="text-sm text-gray-900">{{
-                    planDetails.planType || 'Savings'
+                    planDetails.planTypeName
                   }}</span>
                 </div>
                 <div class="flex items-center">
                   <span class="text-sm text-gray-600 w-36">Currency</span>
                   <x-select
-                    v-model="planDetails.currency"
+                    v-model="planDetails.currencyId"
                     :options="currencyOptions"
                     placeholder="Select Currency"
                     size="sm"
@@ -408,7 +459,7 @@ const modalVisible = computed({
                     >Tenure of Savings (Years)</span
                   >
                   <x-input
-                    v-model="planDetails.tenureOfSavings"
+                    v-model="planDetails.tenure"
                     placeholder="Enter tenure"
                     size="sm"
                     type="number"
@@ -530,194 +581,90 @@ const modalVisible = computed({
                 </div>
               </div>
 
-              <!-- Riders Section -->
-              <div class="mb-8">
-                <div class="grid grid-cols-12 gap-4 mb-4 items-center">
-                  <div class="col-span-3">
-                    <h4 class="text-sm font-bold text-gray-800">Riders</h4>
-                  </div>
-                  <div class="col-span-2"></div>
-                  <div class="col-span-3">
-                    <span class="text-sm font-semibold text-gray-700"
-                      >Cover</span
-                    >
-                  </div>
-                  <div class="col-span-1"></div>
-                  <div class="col-span-3">
-                    <span class="text-sm font-semibold text-gray-700"
-                      >Price</span
-                    >
-                  </div>
+              <!-- RIDERS Section (Dynamic based on selected plan) -->
+              <div v-if="showRiders" class="border-t border-gray-200 pt-5 mt-2">
+                <div class="bg-gray-100 px-2 py-2 mb-4 rounded-lg">
+                  <h4 class="font-bold text-gray-800 text-md">RIDERS</h4>
                 </div>
 
-                <!-- Life Cover -->
-                <div class="grid grid-cols-12 gap-4 mb-4 items-center">
-                  <div class="col-span-3">
-                    <span class="text-sm text-gray-700">Life Cover</span>
+                <div class="px-4">
+                  <!-- Dynamic Riders -->
+                  <div
+                    v-for="riderOption in planRiders"
+                    :key="riderOption.id"
+                    class="flex w-full items-center mb-4 gap-4"
+                  >
+                    <!-- Rider Name -->
+                    <div class="w-[20%]">
+                      <span class="text-sm text-gray-700">{{
+                        riderOption.text || 'Rider'
+                      }}</span>
+                      <span
+                        v-if="riderOption.input_required"
+                        class="ml-1 text-xs text-orange-500"
+                        title="Input Required"
+                        >*</span
+                      >
+                    </div>
+                    <!-- Status -->
+                    <div class="w-[15%]">
+                      <span class="text-sm text-gray-500">Included</span>
+                    </div>
+                    <!-- Cover Input -->
+                    <div class="w-[20%]">
+                      <x-input
+                        v-model="riderValues[riderOption.id].coverValue"
+                        type="number"
+                        size="sm"
+                        placeholder="0"
+                        class="!mb-0 [&>label]:!mb-0"
+                        :disabled="
+                          !riderValues[riderOption.id]?.enabled ||
+                          lockLeadSectionsDetails?.plan_selection
+                        "
+                      />
+                    </div>
+                    <!-- Toggle -->
+                    <div class="w-[15%] flex justify-center">
+                      <x-toggle
+                        v-model="riderValues[riderOption.id].enabled"
+                        color="success"
+                        size="sm"
+                        :disabled="lockLeadSectionsDetails?.plan_selection"
+                      />
+                    </div>
+                    <!-- Price Input -->
+                    <div class="w-[20%]">
+                      <x-input
+                        v-model="riderValues[riderOption.id].coverValue2"
+                        type="number"
+                        size="sm"
+                        placeholder="0"
+                        class="!mb-0 [&>label]:!mb-0"
+                        :disabled="
+                          !riderValues[riderOption.id]?.enabled ||
+                          lockLeadSectionsDetails?.plan_selection
+                        "
+                      />
+                    </div>
                   </div>
-                  <div class="col-span-2">
-                    <span class="text-sm text-gray-900">{{
-                      planDetails.lifeCoverIncluded ? 'Included' : 'Optional'
-                    }}</span>
-                  </div>
-                  <div class="col-span-3">
-                    <x-input
-                      v-model="planDetails.lifeCoverAmount"
-                      type="number"
-                      size="sm"
-                      placeholder="0"
-                      :disabled="
-                        !planDetails.lifeCoverEnabled ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <x-toggle
-                      v-model="planDetails.lifeCoverEnabled"
-                      color="success"
-                      :disabled="lockLeadSectionsDetails?.plan_selection"
-                    />
-                  </div>
-                  <div class="col-span-3">
-                    <x-input
-                      v-model="planDetails.lifeCoverPrice"
-                      type="number"
-                      size="sm"
-                      placeholder="0"
-                      :disabled="
-                        !planDetails.lifeCoverEnabled ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
-                    />
+
+                  <div
+                    v-if="!planRiders.length"
+                    class="text-center text-gray-500 py-4"
+                  >
+                    No riders available for this plan
                   </div>
                 </div>
+              </div>
 
-                <!-- Critical Illness - Accelerated -->
-                <div class="grid grid-cols-12 gap-4 mb-4 items-center">
-                  <div class="col-span-3">
-                    <span class="text-sm text-gray-700"
-                      >Critical Illness - Accelerated</span
-                    >
-                  </div>
-                  <div class="col-span-2">
-                    <span class="text-sm text-gray-900">Optional</span>
-                  </div>
-                  <div class="col-span-3">
-                    <x-input
-                      v-model="planDetails.criticalIllnessAmount"
-                      type="number"
-                      size="sm"
-                      placeholder="0"
-                      :disabled="
-                        !planDetails.criticalIllnessEnabled ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <x-toggle
-                      v-model="planDetails.criticalIllnessEnabled"
-                      color="success"
-                      :disabled="lockLeadSectionsDetails?.plan_selection"
-                    />
-                  </div>
-                  <div class="col-span-3">
-                    <x-input
-                      v-model="planDetails.criticalIllnessPrice"
-                      type="number"
-                      size="sm"
-                      placeholder="0"
-                      :disabled="
-                        !planDetails.criticalIllnessEnabled ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
-                    />
-                  </div>
+              <!-- No Riders Section -->
+              <div v-else class="border-t border-gray-200 pt-5 mt-2">
+                <div class="bg-gray-100 px-2 py-2 mb-4 rounded-lg">
+                  <h4 class="font-bold text-gray-800 text-md">RIDERS</h4>
                 </div>
-
-                <!-- Total Permanent Disability -->
-                <div class="grid grid-cols-12 gap-4 mb-4 items-center">
-                  <div class="col-span-3">
-                    <span class="text-sm text-gray-700"
-                      >Total Permanent Disability</span
-                    >
-                  </div>
-                  <div class="col-span-2">
-                    <span class="text-sm text-gray-900">Optional</span>
-                  </div>
-                  <div class="col-span-3">
-                    <x-input
-                      v-model="planDetails.tpdAmount"
-                      type="number"
-                      size="sm"
-                      placeholder="0"
-                      :disabled="
-                        !planDetails.tpdEnabled ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <x-toggle
-                      v-model="planDetails.tpdEnabled"
-                      color="success"
-                      :disabled="lockLeadSectionsDetails?.plan_selection"
-                    />
-                  </div>
-                  <div class="col-span-3">
-                    <x-input
-                      v-model="planDetails.tpdPrice"
-                      type="number"
-                      size="sm"
-                      placeholder="0"
-                      :disabled="
-                        !planDetails.tpdEnabled ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
-                    />
-                  </div>
-                </div>
-
-                <!-- Waiver of Premium -->
-                <div class="grid grid-cols-12 gap-4 mb-4 items-center">
-                  <div class="col-span-3">
-                    <span class="text-sm text-gray-700">Waiver of Premium</span>
-                  </div>
-                  <div class="col-span-2">
-                    <span class="text-sm text-gray-900">Optional</span>
-                  </div>
-                  <div class="col-span-3">
-                    <x-input
-                      v-model="planDetails.waiverOfPremiumAmount"
-                      type="number"
-                      size="sm"
-                      placeholder="0"
-                      :disabled="
-                        !planDetails.waiverOfPremiumEnabled ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
-                    />
-                  </div>
-                  <div class="col-span-1">
-                    <x-toggle
-                      v-model="planDetails.waiverOfPremiumEnabled"
-                      color="success"
-                      :disabled="lockLeadSectionsDetails?.plan_selection"
-                    />
-                  </div>
-                  <div class="col-span-3">
-                    <x-input
-                      v-model="planDetails.waiverOfPremiumPrice"
-                      type="number"
-                      size="sm"
-                      placeholder="0"
-                      :disabled="
-                        !planDetails.waiverOfPremiumEnabled ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
-                    />
-                  </div>
+                <div class="px-4 text-sm text-gray-500">
+                  No riders available for this plan
                 </div>
               </div>
 
