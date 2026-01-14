@@ -37,7 +37,7 @@
     "sentry/sentry-laravel": "^4.4.1",
     "setasign/fpdf": "^1.8",
     "setasign/fpdi": "^2.6",
-    "spatie/laravel-activitylog": "^4.10",
+    "spatie/laravel-activitylog": "dev-main",
     "spatie/laravel-navigation": "^1.2",
     "spatie/laravel-permission": "^6.4.0",
     "tightenco/ziggy": "^2.0"
