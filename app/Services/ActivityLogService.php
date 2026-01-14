@@ -306,7 +306,7 @@ class ActivityLogService extends BaseService
             // Check if key is sensitive (case-insensitive)
             $isSensitive = false;
             foreach ($sensitiveKeys as $sensitiveKey) {
-                if (strcasecmp($key, $sensitiveKey) === 0) {
+                if (strcasecmp((string) $key, (string) $sensitiveKey) === 0) {
                     $isSensitive = true;
                     break;
                 }
