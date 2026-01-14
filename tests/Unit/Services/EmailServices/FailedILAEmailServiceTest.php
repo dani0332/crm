@@ -26,7 +26,6 @@ class FailedILAEmailServiceTest extends TestCase
         parent::tearDown();
     }
 
-
     public function test_build_failed_ila_email_travel_data()
     {
         $quoteType = QuoteTypes::TRAVEL;
