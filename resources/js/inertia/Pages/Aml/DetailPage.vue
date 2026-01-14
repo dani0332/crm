@@ -43,7 +43,6 @@ const props = defineProps({
     default: () => ({}),
   },
   isAddionalFieldsEnabled: Boolean,
-  genericRequestEnum: Array,
 });
 const page = usePage();
 const hasRole = role => useHasRole(role);

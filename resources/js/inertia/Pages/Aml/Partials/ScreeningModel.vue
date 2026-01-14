@@ -187,7 +187,7 @@ const screeningFormDetails = useForm({
   screening_id_type: page.props.insuredDetails?.insured?.id_type ?? null,
   screening_id_number:
     page.props.insuredDetails?.insured?.id_number &&
-    page.props.insuredDetails?.insured?.id_type === page.props.genericRequestEnum.EMIRATES_ID
+    page.props.insuredDetails?.insured?.id_type === genericRequestEnum.EMIRATES_ID
       ? applyScreeningIdMask(page.props.insuredDetails.insured.id_number)
       : (page.props.insuredDetails?.insured?.id_number ?? null),
   insured_first_name:
@@ -217,7 +217,7 @@ const screeningFormDetails = useForm({
   entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
   trade_license_no: 
     (page.props.insuredDetails?.insured?.id_number &&
-    page.props.insuredDetails?.insured?.id_type === page.props.genericRequestEnum.TRADE_LICENSE) ? page.props.insuredDetails?.insured?.id_number : null,
+    page.props.insuredDetails?.insured?.id_type === genericRequestEnum.TRADE_LICENSE) ? page.props.insuredDetails?.insured?.id_number : null,
   company_name: page.props.insuredDetails?.insured?.company_name ?? null,
   company_address: page.props.insuredDetails?.insured?.company_address,
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
@@ -308,7 +308,7 @@ const updateScreeningDetails = () => {
 const documentIDTypeForScreening = computed(() => {
   return page.props.lookups.id_type
     ?.filter(docIDTypeScreening =>
-      [page.props.genericRequestEnum.EMIRATES_ID, page.props.genericRequestEnum.PASSPORT].includes(docIDTypeScreening.code),
+      [genericRequestEnum.EMIRATES_ID, genericRequestEnum.PASSPORT].includes(docIDTypeScreening.code),
     )
     ?.map(docIDTypeScreening => ({
       value: docIDTypeScreening.code,
@@ -363,7 +363,7 @@ const individualSearchValidation = computed(() => {
     });
     return false;
   } else {
-    if (screeningFormDetails.screening_id_type === page.props.genericRequestEnum.EMIRATES_ID) {
+    if (screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID) {
       let validateEmirate = rules.emirateNumberCheck(
         screeningFormDetails.screening_id_number,
       );
@@ -372,7 +372,7 @@ const individualSearchValidation = computed(() => {
         return false;
       }
     }
-    if (screeningFormDetails.screening_id_type === page.props.genericRequestEnum.PASSPORT) {
+    if (screeningFormDetails.screening_id_type === genericRequestEnum.PASSPORT) {
       let validatePassport = rules.passportNumberCheck(
         screeningFormDetails.screening_id_number,
       );
@@ -386,7 +386,7 @@ const individualSearchValidation = computed(() => {
   }
   screeningFormDetails.clearErrors('screening_id_number');
 
-  screeningFormDetails.screening_id_type = page.props.genericRequestEnum.TRADE_LICENSE;
+  screeningFormDetails.screening_id_type = genericRequestEnum.TRADE_LICENSE;
   screeningFormDetails.screening_id_number = screeningFormDetails.trade_license_no;
 
   return true;
@@ -510,7 +510,7 @@ function screeningFormValidate() {
     screeningFormDetails.customer_type == customerTypeEnum.Individual ||
     screeningFormDetails.customer_type == null
   ) {
-    if (screeningFormDetails.screening_id_type === page.props.genericRequestEnum.EMIRATES_ID) {
+    if (screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID) {
       if (!screeningFormDetails.screening_id_number) {
         screeningFormDetails.setError(
           'screening_id_number',
@@ -526,7 +526,7 @@ function screeningFormValidate() {
           isValid = false;
         }
       }
-    } else if (screeningFormDetails.screening_id_type === page.props.genericRequestEnum.PASSPORT) {
+    } else if (screeningFormDetails.screening_id_type === genericRequestEnum.PASSPORT) {
       if (!screeningFormDetails.screening_id_number) {
         screeningFormDetails.setError(
           'screening_id_number',
@@ -714,8 +714,8 @@ function updateScreeningIdType() {
     screeningFormDetails.screening_id_type =
       page.props.quoteType.id === page.props.quoteTypeIdEnum.Travel &&
       quoteRequest.direction_code === 'travelUaeInbound'
-        ? page.props.genericRequestEnum.PASSPORT
-        : page.props.genericRequestEnum.EMIRATES_ID;
+        ? genericRequestEnum.PASSPORT
+        : genericRequestEnum.EMIRATES_ID;
   }
 }
 
@@ -802,7 +802,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
         </x-field>
         <x-field label="ID number" required>
           <template
-            v-if="screeningFormDetails.screening_id_type === page.props.genericRequestEnum.EMIRATES_ID"
+            v-if="screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID"
           >
             <x-input
               v-model="screeningFormDetails.screening_id_number"
