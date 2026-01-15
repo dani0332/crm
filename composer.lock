@@ -14714,5 +14714,5 @@
   "platform-overrides": {
     "ext-mongodb": "2.1.0"
   },
-  "plugin-api-version": "2.9.0"
+  "plugin-api-version": "2.6.0"
 }
