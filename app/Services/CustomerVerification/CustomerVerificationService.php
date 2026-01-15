@@ -609,6 +609,7 @@ class CustomerVerificationService
 
         $quoteType = match (true) {
             $quote instanceof CarQuote => QuoteTypes::CAR,
+            $quote instanceof PersonalQuote => QuoteTypes::PERSONAL,
             // Add other quote types here as needed
             default => null,
         };
