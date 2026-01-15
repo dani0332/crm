@@ -96,7 +96,18 @@ class FailedILAEmailService
     public function buildFailedIlaEmailData($quoteType, $managerEmails)
     {
         return (object) [
-            'managerEmails' => $managerEmails,
+            // The first email is advisor, the rest are managers. Use named destructuring for clarity and efficiency.
+            ...(
+                count($managerEmails) > 0
+                ? [
+                    'advisorEmail' => $managerEmails[0],
+                    'managerEmails' => array_slice($managerEmails, 1),
+                  ]
+                : [
+                    'advisorEmail' => null,
+                    'managerEmails' => [],
+                  ]
+            ),
             'quoteType' => $quoteType,
             'workflowType' => WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS,
             'dateOfAttempt' => now()->format('Y-m-d'),
