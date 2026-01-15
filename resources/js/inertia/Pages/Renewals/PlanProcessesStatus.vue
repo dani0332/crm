@@ -20,17 +20,11 @@ const tableHeader = [
 ];
 </script>
 <template>
-  <Head title="Vaidation Failed Detail" />
+  <Head title="Fetch Plan Failed Details" />
+  <title>Fetch Plan Failed Details</title>
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Validation Failed Details</h2>
+    <h2 class="text-xl font-semibold">Fetch Plan Failed Details</h2>
     <div class="space-x-3">
-      <!-- <x-button
-        size="sm"
-        color="emerald"
-        :href="route('validation-failed-download', { id: batchId })"
-        class="btn-2"
-        >Export</x-button
-      > -->
       <x-button
         size="sm"
         color="#ff5e00"
