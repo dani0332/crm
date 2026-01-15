@@ -561,7 +561,12 @@ class RenewalsUploadService
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
             }
         } else {
-            LoggerService::info($logPrefix.' QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
+            $message = 'QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number;
+            LoggerService::info($logPrefix.' '.$message);
+            $renewalQuoteProcess->update([
+                'step_errors' => [$message],
+                'retry_count' => $renewalQuoteProcess->retry_count + 1,
+            ]);
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
