@@ -4,18 +4,16 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
+use App\Enums\TiersEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\FailedIlaLeadsExport;
-use App\Models\User;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Enums\TiersEnum;
-use App\Enums\EnvEnum;
 
 class FailedILAEmailService
 {
@@ -46,6 +44,7 @@ class FailedILAEmailService
                 $emails = array_values(array_filter(array_map('trim', explode(',', $emailsString))));
             }
         }
+
         return $emails;
 
     }
@@ -89,11 +88,11 @@ class FailedILAEmailService
                 ? [
                     'advisorEmail' => $managerEmails[0],
                     'managerEmails' => array_slice($managerEmails, 1),
-                  ]
+                ]
                 : [
                     'advisorEmail' => null,
                     'managerEmails' => [],
-                  ]
+                ]
             ),
             'quoteType' => $quoteType,
             'workflowType' => WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS,
@@ -157,18 +156,19 @@ class FailedILAEmailService
     {
         $model = $quoteType->model();
         $tableName = $model->getTable();
+
         return $model
             ->when(
                 $quoteType === QuoteTypes::HEALTH,
                 fn ($query) => $query->whereBetween("{$tableName}.created_at", [now()->subMonths(3)->startOfDay(), now()->endOfDay()])
-             
+
             )
             ->when(
                 $quoteType === QuoteTypes::CAR,
                 fn ($query) => $query->whereBetween("{$tableName}.created_at", [now()->startOfDay(), now()->subMinutes(2)->toDateTimeString()])
             )
             ->when(
-                !in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH], true),
+                ! in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH], true),
                 fn ($query) => $query->whereBetween("{$tableName}.created_at", [now()->startOfDay(), now()->endOfDay()])
             )
             ->whereNull("{$tableName}.advisor_id")
@@ -196,12 +196,13 @@ class FailedILAEmailService
 
     public function getHealthFailedILALeads(bool $justCount = false)
     {
-          // Allowed ECOM sources (insurancemarket.ae variants, CALL_DESK, INSURANCE_WALLET)
-          $ecomSources = [
+        // Allowed ECOM sources (insurancemarket.ae variants, CALL_DESK, INSURANCE_WALLET)
+        $ecomSources = [
             LeadSourceEnum::INSURANCE_MARKET,
             LeadSourceEnum::CALL_DESK,
             LeadSourceEnum::INSURANCE_WALLET,
         ];
+
         return $this->getBaseQuery(QuoteTypes::HEALTH)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
             ->whereNotNull('price_starting_from')
@@ -272,22 +273,22 @@ class FailedILAEmailService
     public function getCarFailedILALeads(bool $justCount = false)
     {
         return $this->getBaseQuery(QuoteTypes::CAR)
-        ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->where('tiers.name', '!=', TiersEnum::TIER_R)
-        ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
-            $query->distinct()
-                ->select('quote_uuid')
-                ->from('quote_tags')
-                ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                ->where('quote_tags.name', 'SIC')
-                ->where('quote_type.code', QuoteTypes::CAR->value);
-        })
-        ->select('car_quote_request.id', 'car_quote_request.code', 'car_quote_request.uuid', 'car_quote_request.first_name', 'car_quote_request.last_name', 'car_quote_request.created_at', 'car_quote_request.quote_status_id', 'car_quote_request.paid_at', 'car_quote_request.lead_allocation_failed_at')
-        ->when(
-            $justCount,
-            fn ($query) => $query->count(),
-            fn ($query) => $query->get(),
-        );
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->where('tiers.name', '!=', TiersEnum::TIER_R)
+            ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
+                $query->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                    ->where('quote_tags.name', 'SIC')
+                    ->where('quote_type.code', QuoteTypes::CAR->value);
+            })
+            ->select('car_quote_request.id', 'car_quote_request.code', 'car_quote_request.uuid', 'car_quote_request.first_name', 'car_quote_request.last_name', 'car_quote_request.created_at', 'car_quote_request.quote_status_id', 'car_quote_request.paid_at', 'car_quote_request.lead_allocation_failed_at')
+            ->when(
+                $justCount,
+                fn ($query) => $query->count(),
+                fn ($query) => $query->get(),
+            );
     }
 
     public function exportFailedIlaLeads($quoteType)
