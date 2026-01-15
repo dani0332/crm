@@ -400,7 +400,6 @@ class RenewalsUploadService
 
     /**
      * call get plans
-     * todo: refine later.
      *
      * @return mixed|string|null
      */
@@ -603,7 +602,6 @@ class RenewalsUploadService
                 }
                 $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
-                // todo: correct these values
                 $validRows = $renewalsUpload->getValidCount();
                 $failedRows = $renewalsUpload->getFailedCount();
 
@@ -2903,34 +2901,9 @@ class RenewalsUploadService
             LoggerService::error($logPrefix.' one of batch is failed. Exception : '.$exception->getMessage());
             $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
         }
-
-        // todo: remove this code
-        //        foreach ($batchLeads as $key => $batchLead) {
-        //            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
-        //            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
-        //            sleep(0.5);
-        //        }
     }
 
-    // todo: remove this code
-    //    public function updateRenewalQuoteEmailSent($batch, $quoteId)
-    //    {
-    //        LoggerService::info( 'updateRenewalQuoteEmailSent START batch: '.$batch.' quoteId: '.$quoteId);
-    //        $emailSent = RenewalQuoteProcess::where([
-    //            'quote_type' => QuoteTypeShortCode::CAR,
-    //            'batch' => $batch,
-    //            'type' => RenewalsUploadType::UPDATE_LEADS,
-    //            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-    //            'email_sent' => 0,
-    //            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-    //            'quote_id' => $quoteId,
-    //        ])->first();
-    //        if ($emailSent) {
-    //            $emailSent->email_sent = 1;
-    //            $emailSent->save();
-    //        }
-    //        LoggerService::info( 'updateRenewalQuoteEmailSent END emailSent->id: '.$emailSent->id);
-    //    }
+ 
 
     /**
      * Travel renewals upload and create.
