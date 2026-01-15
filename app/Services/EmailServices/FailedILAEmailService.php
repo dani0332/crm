@@ -21,45 +21,31 @@ class FailedILAEmailService
 {
     protected function getManagerEmailsByQuoteType($quoteType)
     {
-
-        // Use match expression to map quote type to role name for type-safe matching
-        // Map QuoteType to static email arrays as per business mapping.
-        $emails = match ($quoteType->value) {
-            QuoteTypes::CAR->value => [
-                'veeral.joshi@insurancemarket.ae',
-                'arsalan.khan@insurancemarket.ae',
-                'jerin.mathew@insurancemarket.ae',
-            ],
-            QuoteTypes::JETSKI->value,
-            QuoteTypes::BIKE->value => [
-                'jerin.mathew@insurancemarket.ae',
-            ],
-            QuoteTypes::HEALTH->value => [
-                'murryell.tuppil@insurancemarket.ae',
-                'farjad.ahmed@insurancemarket.ae',
-                'agatha.alicdan@insurancemarket.ae',
-            ],
-            QuoteTypes::TRAVEL->value => [
-                'ashmy.arackal@insurancemarket.ae',
-            ],
-            QuoteTypes::LIFE->value, 
-            QuoteTypes::SAVINGS->value => [
-                'divya.mandke@insurancemarket.ae',
-                'komal.rajput@afia.ae',
-            ],
-            QuoteTypes::HOME->value, 
-            QuoteTypes::CORPLINE->value, 
-            QuoteTypes::YACHT->value, 
-            QuoteTypes::PET->value, 
-            QuoteTypes::CYCLE->value => [
-                'divya.mandke@insurancemarket.ae',
-            ],
-            QuoteTypes::GROUP_MEDICAL->value => [
-                'rachit.jhamb@insurancemarket.ae',
-            ],
+        $storageKey = match ($quoteType->value) {
+            QuoteTypes::CAR->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_CAR,
+            QuoteTypes::JETSKI->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_JETSKI,
+            QuoteTypes::BIKE->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_BIKE,
+            QuoteTypes::HEALTH->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_HEALTH,
+            QuoteTypes::TRAVEL->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_TRAVEL,
+            QuoteTypes::LIFE->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_LIFE,
+            QuoteTypes::SAVINGS->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_SAVINGS,
+            QuoteTypes::HOME->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_HOME,
+            QuoteTypes::CORPLINE->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_CORPLINE,
+            QuoteTypes::YACHT->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_YACHT,
+            QuoteTypes::PET->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_PET,
+            QuoteTypes::CYCLE->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_CYCLE,
+            QuoteTypes::GROUP_MEDICAL->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_GROUP_MEDICAL,
             default => [],
         };
 
+        $emails = [];
+        if ($storageKey) {
+            // Fetch from app storage, expect a comma-separated list
+            $emailsString = getAppStorageValueByKey($storageKey, useCache: true);
+            if ($emailsString) {
+                $emails = array_values(array_filter(array_map('trim', explode(',', $emailsString))));
+            }
+        }
         return $emails;
 
     }
