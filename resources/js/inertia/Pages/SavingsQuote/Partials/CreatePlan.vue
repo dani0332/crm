@@ -384,7 +384,7 @@ watchEffect(
 );
 
 // Sync tenure ID when tenure changes
-watchEffect(
+watch(
   () => addPlanForm.tenure_of_savings,
   () => {
     const selectedOption = tenureOfSavingsOptions.value.find(
@@ -436,6 +436,7 @@ const createQuotePlan = isValid => {
     plans: [
       {
         planId: addPlanForm.savings_plan_id,
+        plan_type: addPlanForm.plan_type,
         isDisabled: addPlanForm.is_disabled,
         isManualUpdate: addPlanForm.is_manual_update,
         insurerQuoteNo: addPlanForm.insurer_quote_no || '',

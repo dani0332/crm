@@ -61,14 +61,23 @@ const investmentFrequencyOptions = computed(() => {
   }));
 });
 
-// Payment Term Options - from localLookups (using ID for API) - same as CreatePlan
 // Payment term API values: 0 = Single Payment, 1 = Annual, 3 = Quarterly, 6 = Semi-Annual, 12 = Monthly
 const paymentTermOptions = computed(() => {
-  return props.localLookups?.paymentTerms?.map(item => ({
-    // Use id if available, otherwise try to parse code, fallback to value
+  let paymentTerms = props.localLookups?.paymentTerms?.map(item => ({
     value: item.value,
     label: item.text,
   }));
+
+  if (isLumpsumFrequency.value) {
+    paymentTerms = paymentTerms.filter(term =>
+      term.label?.toLowerCase().includes('single'),
+    );
+  } else {
+    paymentTerms = paymentTerms.filter(
+      term => !term.label?.toLowerCase().includes('single'),
+    );
+  }
+  return paymentTerms;
 });
 
 // Tenure of Savings Options - from lookUpData or CMS plan policy terms - same as CreatePlan
@@ -150,8 +159,6 @@ const calculatePlan = () => {
   const frequency = isLumpsumFrequency.value
     ? 'Single Payment'
     : getFrequencyFromPaymentTerm(props.planDetails.paymentTerm);
-
-  console.log({ amount, rate, years, frequency });
   // Calculate and set lumpsum payout
   const payout = calculatePayout({ amount, rate, years, frequency });
   props.planDetails.lumpSumPayout = payout; // Note: camelCase 'lumpSumPayout'
