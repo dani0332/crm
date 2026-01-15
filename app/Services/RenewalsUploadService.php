@@ -1862,8 +1862,8 @@ class RenewalsUploadService
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
                 $leadData = $renewalQuoteProcess->lead_data;
                 $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+                // if the lead is a Genesis lead, then set the current insurer to empty
                 if ($checkGenesisLead['status']) {
-                    // todo: need to remove current insurance provider as "" or null we are not showing GIG as it will lead customer to false information
                     $emailData->currentInsurer = "";
                 }
                 LoggerService::info($logPrefix.' Renewals OCB Email email data created');
