@@ -37,6 +37,7 @@ class CarLeadAllocationDashboardService extends BaseService
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
+                ->where('users.is_ai_user', false)
                 ->activeUser()
                 ->where('la.quote_type_id', QuoteTypes::CAR->id())
                 ->groupBy('users.name', 'users.id', 'la.id')
@@ -70,7 +71,34 @@ class CarLeadAllocationDashboardService extends BaseService
                 $users = $users->whereIn('users.id', $userIds);
             }
 
-            return $users->get();
+            $aiUsers = User::join('lead_allocation as la', 'la.user_id', 'users.id')
+                ->activeUser()
+                ->where('la.quote_type_id', QuoteTypes::CAR->id())
+                ->where('users.is_ai_user', true)
+                ->groupBy('users.name', 'users.id', 'la.id')
+                ->select(
+                    'users.id as userId',
+                    'users.name as userName',
+                    DB::RAW('NULL AS tiers'),
+                    DB::RAW('NULL AS quads'),
+                    DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
+                    DB::RAW("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
+                    'la.max_capacity as maxCapacity',
+                    'users.status as isAvailable',
+                    DB::RAW("DATE_FORMAT(users.last_login, '%d-%m-%Y %H:%i:%s') as lastLogin"),
+                    'la.id as id',
+                    'la.manual_assignment_count as manualAllocationCount',
+                    'la.auto_assignment_count as autoAllocationCount',
+                    'la.reset_cap',
+                    'la.buy_lead_max_capacity as BLMaxCapacity',
+                    'la.buy_lead_allocation_count as BLAllocationCount',
+                    'la.buy_lead_cat_a_allocation_count as BLCATAAllocationCount',
+                    'la.buy_lead_status as BLStatus',
+                    'la.normal_allocation_enabled as normalAllocationEnabled',
+                    'la.buy_lead_reset_capacity as blResetCap',
+                );
+
+            return $users->union($aiUsers)->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
