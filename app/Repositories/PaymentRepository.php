@@ -88,8 +88,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             // Initialize payment source and get quote model
             $paymentSource = 'Main Lead';
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-            LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::CREATE_PAYMENT);
             $quoteCode = $quoteModel->code;
+            LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::CREATE_PAYMENT, $quoteCode);
             LoggerService::info("Starting manual payment creation process for quote code: {$quoteCode}");
             $masterPayment = (object) $request->payment;
 
