@@ -501,7 +501,7 @@ class RenewalsUploadService
     public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
         $logPrefix = 'FetchPlans FN: fetchQuotePlans';
-        $leadData = (object) $renewalQuoteProcess->data;
+        $leadData = (object) $renewalQuoteProcess->data ?? [];
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
@@ -1858,7 +1858,7 @@ class RenewalsUploadService
                 $previousAdvisor = $this->getPreviousAdvisor($carQuote);
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-                $leadData = (object) $renewalQuoteProcess->data ?? [];
+                $leadData = (object) $renewalQuoteProcess?->data ?? [];
                 $leadValidationErrors = collect();
                 $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
                 // if the lead is a Genesis lead, then set the current insurer to empty
