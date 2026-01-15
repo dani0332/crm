@@ -1176,7 +1176,7 @@ class CarQuoteService extends BaseService
                 'previous_quote_policy_number',
                 'previous_policy_expiry_date',
             ]
-        )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
+        )->with(['advisor', 'carMake', 'carModel', 'latestUpdateRenewalQuoteProcess', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name', 'pcp_tag')->with(['additionalContacts' => function ($q) {
                 $q->where('key', 'email');
             }]);
@@ -1205,6 +1205,10 @@ class CarQuoteService extends BaseService
                 ];
             }
         }
+
+        $leadValidationErrors = collect();
+        $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($carQuote->latestUpdateRenewalQuoteProcess->data ?? [], $leadValidationErrors);
+        $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
 
         $carQuote->plans = $plans;
 

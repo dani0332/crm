@@ -3454,7 +3454,7 @@ class RenewalsUploadService
      * @param [type] $currentInsuranceProvider
      * @param [type] $leadValidationErrors
      */
-    private function isGenesisLead($leadData, &$leadValidationErrors): array
+    public function isGenesisLead($leadData, &$leadValidationErrors): array
     {
         $currentInsuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->where('code', $leadData->insurer)->first();
         LoggerService::info('isGenesisLead - currentInsuranceProvider: '.json_encode($currentInsuranceProvider));

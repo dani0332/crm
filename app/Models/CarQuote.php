@@ -8,6 +8,8 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RenewalProcessStatuses;
+use App\Enums\RenewalsUploadType;
 use App\Events\QuoteEmailUpdated;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
@@ -642,5 +644,15 @@ class CarQuote extends BaseModel
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+
+    public function latestUpdateRenewalQuoteProcess()
+    {
+        return $this->hasOne(RenewalQuoteProcess::class, 'quote_id', 'id')
+            ->where('type', RenewalsUploadType::UPDATE_LEADS)
+            ->where('status', RenewalProcessStatuses::PLANS_FETCHED)
+            ->where('email_sent', 1)
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->latest('created_at');
     }
 }
