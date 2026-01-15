@@ -1206,7 +1206,7 @@ class CarQuoteService extends BaseService
             }
         }
 
-        if($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
             $leadValidationErrors = collect();
             $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
             $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
