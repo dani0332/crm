@@ -105,30 +105,12 @@ const planTypeOptions = computed(() => {
 
 // Currency Options - from selected plan's currency_coverages or fallback to localLookups
 const currencyOptions = computed(() => {
-  // If a plan is selected, use its currency coverages
-  if (selectedPlanData.value?.currency_coverages?.length) {
-    return selectedPlanData.value.currency_coverages
-      .filter(cc => cc.currency) // Ensure currency relation is loaded
-      .map(cc => ({
-        value: cc.currency.code,
-        label: cc.currency.text || cc.currency.code,
-        id: cc.currency.id,
-      }));
-  }
-
   // Fallback to localLookups currencies
-  return (
-    props.localLookups?.currencies?.map(item => ({
-      value: item.code || item.id,
-      label: item.text,
-      id: item.id,
-    })) || [
-      { value: 'AED', label: 'AED', id: 2 },
-      { value: 'USD', label: 'USD', id: 1 },
-      { value: 'EUR', label: 'EUR', id: 3 },
-      { value: 'GBP', label: 'GBP', id: 4 },
-    ]
-  );
+  return props.localLookups?.currencies?.map(item => ({
+    value: item.code || item.id,
+    label: item.text,
+    id: item.id,
+  }));
 });
 
 // Investment Frequency Options - from CMS (NOT dependent on plan)
@@ -146,19 +128,12 @@ const investmentFrequencyOptions = computed(() => {
 });
 
 // Payment Term Options - from localLookups (using ID for API)
+// Payment term API values: 0 = Single Payment, 1 = Annual, 3 = Quarterly, 6 = Semi-Annual, 12 = Monthly
 const paymentTermOptions = computed(() => {
-  return (
-    props.localLookups?.paymentTerms?.map(item => ({
-      value: item.value,
-      label: item.text,
-    })) || [
-      { value: 1, label: 'Monthly' },
-      { value: 2, label: 'Quarterly' },
-      { value: 3, label: 'Semi-Annually' },
-      { value: 4, label: 'Annually' },
-      { value: 5, label: 'Single Payment' },
-    ]
-  );
+  return props.localLookups?.paymentTerms?.map(item => ({
+    value: item.value,
+    label: item.text,
+  }));
 });
 
 // Tenure of Savings Options - from lookUpData or generate 1-30 years
@@ -455,12 +430,6 @@ const createQuotePlan = isValid => {
 
   // Build API payload in expected format
   const apiPayload = {
-    // Snake_case fields for backend validation
-    insurance_provider_id: addPlanForm.insurance_provider_id,
-    savings_plan_id: addPlanForm.savings_plan_id,
-    actual_premium: parseFloat(addPlanForm.investment_amount) || 0,
-    insurer_quote_no: addPlanForm.insurer_quote_no || '',
-
     // CamelCase structure for Ken API
     quoteUID: page.props.quote.uuid,
     update: !addPlanForm.is_create, // false for new plan, true for update
@@ -473,7 +442,7 @@ const createQuotePlan = isValid => {
         investmentAmount: parseFloat(addPlanForm.investment_amount) || 0,
         currency: addPlanForm.currency,
         currencyId: addPlanForm.currency_id,
-        paymentTerm: addPlanForm.payment_term,
+        paymentTerm: parseInt(addPlanForm.payment_term) || 0, // Ensure number
         tenure: addPlanForm.tenure_of_savings,
         tenureId: addPlanForm.tenure_id,
         ror: parseFloat(addPlanForm.expected_rate_of_return) || 0,

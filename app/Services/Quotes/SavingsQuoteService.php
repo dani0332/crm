@@ -348,7 +348,7 @@ class SavingsQuoteService extends BaseQuoteService
         // Payment terms (static values based on investment frequency)
         $paymentTerms = collect([
             ['id' => 'monthly', 'code' => 'monthly', 'text' => 'Monthly', 'value' => 12],
-            ['id' => 'quarterly', 'code' => 'quarterly', 'text' => 'Quarterly', 'value' => 4],
+            ['id' => 'quarterly', 'code' => 'quarterly', 'text' => 'Quarterly', 'value' => 3],
             ['id' => 'semi_annually', 'code' => 'semi_annually', 'text' => 'Semi-Annually', 'value' => 2],
             ['id' => 'annually', 'code' => 'annually', 'text' => 'Annually', 'value' => 1],
             ['id' => 'single_payment', 'code' => 'single_payment', 'text' => 'Single Payment', 'value' => 0],
@@ -708,9 +708,9 @@ class SavingsQuoteService extends BaseQuoteService
     }
 
     /**
-     * Create a new savings plan manually
+     * Process savings plan (create or update) - handles new payload structure
      */
-    public function createSavingsPlan($request, $quoteUuId)
+    public function processSavingsPlan(array $payload, string $quoteUuId)
     {
         $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-savings-quote-plan';
         $apiToken = config('constants.KEN_API_TOKEN');
@@ -718,23 +718,50 @@ class SavingsQuoteService extends BaseQuoteService
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
 
+        // Build the payload for Ken API
         $savingsPlanData = [
-            'quoteUID' => $quoteUuId,
-            'update' => false,
-            'url' => strval($request->current_url ?? ''),
+            'quoteUID' => $payload['quoteUID'] ?? $quoteUuId,
+            'update' => $payload['update'] ?? false,
+            'url' => strval(request()->url()),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
             'userId' => strval(Auth::id()),
-            'plans' => [
-                [
-                    'planId' => (int) $request->savings_plan_id,
-                    'actualPremium' => (float) ($request->actual_premium ?? 0),
-                    'isDisabled' => false,
-                    'insurerQuoteNo' => strval($request->insurer_quote_no ?? ''),
-                    'isManualUpdate' => true,
-                ],
-            ],
+            'plans' => [],
         ];
+
+        // Process each plan in the payload
+        foreach ($payload['plans'] ?? [] as $plan) {
+            $processedPlan = [
+                'planId' => (int) ($plan['planId'] ?? 0),
+                'isDisabled' => (bool) ($plan['isDisabled'] ?? false),
+                'isManualUpdate' => (bool) ($plan['isManualUpdate'] ?? true),
+                'insurerQuoteNo' => strval($plan['insurerQuoteNo'] ?? ''),
+                'investmentAmount' => (float) ($plan['investmentAmount'] ?? 0),
+                'currency' => strval($plan['currency'] ?? 'AED'),
+                'currencyId' => (int) ($plan['currencyId'] ?? 0),
+                'paymentTerm' => (int) ($plan['paymentTerm'] ?? 0),
+                'tenure' => (int) ($plan['tenure'] ?? 0),
+                'tenureId' => isset($plan['tenureId']) ? (int) $plan['tenureId'] : null,
+                'ror' => (float) ($plan['ror'] ?? 0),
+                'investmentFrequency' => strval($plan['investmentFrequency'] ?? 'Regular'),
+                'investmentFrequencyId' => isset($plan['investmentFrequencyId']) ? (int) $plan['investmentFrequencyId'] : null,
+                'lumpSumPayout' => isset($plan['lumpSumPayout']) ? (float) $plan['lumpSumPayout'] : null,
+            ];
+
+            // Process riders if present
+            if (isset($plan['riders']) && is_array($plan['riders'])) {
+                $processedPlan['riders'] = array_map(function ($rider) {
+                    return [
+                        'riderId' => (int) ($rider['riderId'] ?? 0),
+                        'active' => (bool) ($rider['active'] ?? false),
+                        'price' => isset($rider['price']) ? (float) $rider['price'] : 0,
+                        'coverValue' => isset($rider['coverValue']) ? (float) $rider['coverValue'] : 0,
+                    ];
+                }, $plan['riders']);
+            }
+
+            $savingsPlanData['plans'][] = $processedPlan;
+        }
 
         $apiCreds = [
             'apiEndPoint' => $apiEndPoint,
@@ -744,7 +771,43 @@ class SavingsQuoteService extends BaseQuoteService
             'apiPassword' => $apiPassword,
         ];
 
+        LoggerService::info('SavingsQuoteService - processSavingsPlan', [
+            'quote_uuid' => $quoteUuId,
+            'update' => $savingsPlanData['update'],
+            'plans_count' => count($savingsPlanData['plans']),
+        ]);
+
         return $this->httpService->processRequest($savingsPlanData, $apiCreds);
+    }
+
+    /**
+     * Create a new savings plan manually (deprecated - use processSavingsPlan)
+     * @deprecated Use processSavingsPlan instead
+     */
+    public function createSavingsPlan($request, $quoteUuId)
+    {
+        // Legacy support - convert old format to new format
+        $payload = [
+            'quoteUID' => $quoteUuId,
+            'update' => false,
+            'plans' => [
+                [
+                    'planId' => $request->savings_plan_id,
+                    'investmentAmount' => $request->actual_premium ?? 0,
+                    'currency' => 'AED',
+                    'currencyId' => 2,
+                    'paymentTerm' => 1,
+                    'tenure' => 10,
+                    'ror' => 0,
+                    'investmentFrequency' => 'Regular',
+                    'isDisabled' => false,
+                    'isManualUpdate' => true,
+                    'insurerQuoteNo' => $request->insurer_quote_no ?? '',
+                ],
+            ],
+        ];
+
+        return $this->processSavingsPlan($payload, $quoteUuId);
     }
 
     /**

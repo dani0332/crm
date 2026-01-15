@@ -35,78 +35,50 @@ const providerPlanData = computed(() => {
 // Currency Options - from plan's currency_coverages or fallback to localLookups
 const currencyOptions = computed(() => {
   // If plan has currency coverages, use them
-  if (providerPlanData.value?.currency_coverages?.length) {
-    return providerPlanData.value.currency_coverages
-      .filter(cc => cc.currency)
-      .map(cc => ({
-        value: cc.currency.id,
-        label: cc.currency.text || cc.currency.code,
-      }));
-  }
+  // if (providerPlanData.value?.currency_coverages?.length) {
+  //   return providerPlanData.value.currency_coverages
+  //     .filter(cc => cc.currency)
+  //     .map(cc => ({
+  //       value: cc.currency.id,
+  //       label: cc.currency.text || cc.currency.code,
+  //     }));
+  // }
 
   // Fallback to localLookups currencies
+  return props.localLookups?.currencies?.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
+});
+
+// Investment Frequency Options - from CMS (NOT dependent on plan) - same as CreatePlan
+const investmentFrequencyOptions = computed(() => {
   return (
-    props.localLookups?.currencies?.map(item => ({
-      value: item.code || item.id,
+    props.localLookups?.investmentFrequencies?.map(item => ({
+      value: item.code?.toLowerCase() || item.text?.toLowerCase(),
       label: item.text,
+      id: item.id,
     })) || [
-      { value: 'AED', label: 'AED' },
-      { value: 'USD', label: 'USD' },
-      { value: 'EUR', label: 'EUR' },
-      { value: 'GBP', label: 'GBP' },
+      { value: 'regular', label: 'Regular', id: null },
+      { value: 'lumpsum', label: 'Lumpsum', id: null },
     ]
   );
 });
 
-// Investment Frequency Options - filtered by plan's investment_frequency
-const investmentFrequencyOptions = computed(() => {
-  const allFrequencies = props.localLookups?.investmentFrequencies?.map(
-    item => ({
-      value: item.id,
-      label: item.text,
-    }),
-  ) || [
-    { value: 'regular', label: 'Regular' },
-    { value: 'lumpsum', label: 'Lumpsum' },
-  ];
-
-  // If plan has investment_frequency, show only that option
-  if (providerPlanData.value?.investment_frequency) {
-    const planFrequencyId = providerPlanData.value.investment_frequency;
-    const filtered = allFrequencies.filter(f => f.value === planFrequencyId);
-    return filtered.length ? filtered : allFrequencies;
-  }
-
-  return allFrequencies;
-});
-
-// Payment Term Options - from plan's eligibilities (type = PAYMENT_TERM)
+// Payment Term Options - from localLookups (using ID for API) - same as CreatePlan
+// Payment term API values: 0 = Single Payment, 1 = Annual, 3 = Quarterly, 6 = Semi-Annual, 12 = Monthly
 const paymentTermOptions = computed(() => {
-  // If plan has eligibilities with PAYMENT_TERM type, use them
-  if (providerPlanData.value?.eligibilities?.length) {
-    const planPaymentTerms = providerPlanData.value.eligibilities
-      .filter(e => e.type === 'PAYMENT_TERM')
-      .map(e => ({
-        value: e.code?.toLowerCase(),
-        label: e.text || e.code,
-      }));
-
-    if (planPaymentTerms.length) {
-      return planPaymentTerms;
-    }
-  }
-
-  // Fallback to localLookups payment terms
   return (
     props.localLookups?.paymentTerms?.map(item => ({
-      value: item.code,
+      // Use id if available, otherwise try to parse code, fallback to value
+      value: item.id || parseInt(item.code) || item.value,
       label: item.text,
     })) || [
-      { value: 'monthly', label: 'Monthly' },
-      { value: 'quarterly', label: 'Quarterly' },
-      { value: 'semi_annually', label: 'Semi-Annually' },
-      { value: 'annually', label: 'Annually' },
-      { value: 'single_payment', label: 'Single Payment' },
+      { value: 12, label: 'Monthly' },
+      { value: 3, label: 'Quarterly' },
+      { value: 6, label: 'Semi-Annually' },
+      { value: 1, label: 'Annually' },
+      { value: 0, label: 'Single Payment' },
     ]
   );
 });
@@ -148,29 +120,99 @@ const onToggleManual = () => {
 const onUpdateIndividualPlan = () => {
   if (!props.planDetails) return;
 
-  planForm.quote_uuid = props.quote.uuid;
-  planForm.plan_id = props.planDetails.id;
-  planForm.provider_name = props.planDetails.providerName;
-  planForm.actual_premium = props.planDetails.actualPremium || 0;
-  planForm.insurer_quote_no = props.planDetails.insurerQuoteNo || '';
-  planForm.is_disabled = props.planDetails.isDisabled;
-  planForm.is_manual_update = props.planDetails.isManualUpdate;
-  planForm.current_url = usePage().url;
+  // Process riders data for API payload (handle empty riders)
+  const processedRiders =
+    ridersData.value.length > 0
+      ? ridersData.value.map(rider => ({
+          riderId: rider.riderId,
+          active: rider.active ? true : false,
+          price: Number(parseFloat(rider.price || 0).toFixed(2)) || 0,
+          coverValue: Number(parseFloat(rider.coverValue || 0).toFixed(2)) || 0,
+        }))
+      : [];
 
-  planForm.post(route('savingsPlanUpdate'), {
-    preserveScroll: true,
-    onSuccess: () => {
-      emit('update');
-    },
-    onError: errors => {
-      Object.keys(errors).forEach(function (key) {
-        notification.error({
-          title: errors[key],
-          position: 'top',
-        });
+  // Get investment frequency label for API (same as CreatePlan)
+  const investmentFrequencyOption = investmentFrequencyOptions.value.find(
+    opt => opt.value === props.planDetails.investmentFrequency,
+  );
+
+  // Get currency code from currencyId
+  const currencyOption = currencyOptions.value.find(
+    opt =>
+      opt.value === props.planDetails.currencyId ||
+      opt.id === props.planDetails.currencyId,
+  );
+
+  // Get provider ID from planDetails or providerPlanData
+  const providerId =
+    props.planDetails.providerId || providerPlanData.value?.provider_id || null;
+
+  // Build API payload matching CreatePlan format
+  const apiPayload = {
+    // Snake_case fields for backend validation
+    insurance_provider_id: providerId,
+    savings_plan_id: props.planDetails.id || props.planDetails.planId,
+    actual_premium: parseFloat(props.planDetails.actualPremium) || 0,
+    insurer_quote_no: props.planDetails.insurerQuoteNo || '',
+    currency_id: props.planDetails.currencyId,
+
+    // CamelCase structure for Ken API
+    quoteUID: props.quote.uuid,
+    update: true, // true for update
+    plans: [
+      {
+        planId: props.planDetails.id || props.planDetails.planId,
+        isDisabled: props.planDetails.isDisabled || false,
+        isManualUpdate: props.planDetails.isManualUpdate || false,
+        insurerQuoteNo: props.planDetails.insurerQuoteNo || '',
+        investmentAmount: parseFloat(props.planDetails.actualPremium) || 0,
+        currency:
+          currencyOption?.value ||
+          currencyOption?.label ||
+          props.planDetails.currency ||
+          'AED',
+        currencyId: props.planDetails.currencyId,
+        paymentTerm: parseInt(props.planDetails.paymentTerm) || 0, // Ensure number
+        tenure: props.planDetails.tenure,
+        tenureId: props.planDetails.tenureId,
+        ror: parseFloat(props.planDetails.expectedRor) || 0,
+        investmentFrequency: investmentFrequencyOption?.label || 'Regular',
+        investmentFrequencyId:
+          investmentFrequencyOption?.id ||
+          props.planDetails.investmentFrequencyId,
+        lumpSumPayout: parseFloat(props.planDetails.lumpSumPayout) || 0,
+        riders: processedRiders,
+      },
+    ],
+  };
+
+  // Submit using axios with same API endpoint as CreatePlan
+  axios
+    .post(
+      `/quotes/savings/${props.quote.uuid}/savings-plan-manual-process`,
+      apiPayload,
+    )
+    .then(() => {
+      notification.success({
+        title: 'Plan updated successfully',
+        position: 'top',
       });
-    },
-  });
+      emit('update');
+    })
+    .catch(error => {
+      notification.error({
+        title: error.response?.data?.message || 'Failed to update plan',
+        position: 'top',
+      });
+      if (error.response?.data?.errors) {
+        Object.keys(error.response.data.errors).forEach(function (key) {
+          notification.error({
+            title: error.response.data.errors[key][0],
+            position: 'top',
+          });
+        });
+      }
+    });
 };
 
 // Tooltip mappings for plan details
@@ -258,6 +300,36 @@ watch(
     }
   },
   { immediate: true },
+);
+
+// Sync investment frequency ID when investmentFrequency changes (same as CreatePlan)
+watch(
+  () => props.planDetails?.investmentFrequency,
+  newFreq => {
+    if (!newFreq || !props.planDetails) return;
+
+    const selectedOption = investmentFrequencyOptions.value.find(
+      opt => opt.value === newFreq || opt.id === newFreq,
+    );
+    if (selectedOption && props.planDetails) {
+      props.planDetails.investmentFrequencyId = selectedOption.id || null;
+    }
+  },
+);
+
+// Initialize investmentFrequency from investmentCriteriaId when modal opens
+watch(
+  () => props.modelValue,
+  newVisible => {
+    if (newVisible && props.planDetails?.investmentFrequencyId) {
+      const option = investmentFrequencyOptions.value.find(
+        opt => opt.id === props.planDetails.investmentFrequencyId,
+      );
+      if (option && props.planDetails) {
+        props.planDetails.investmentFrequency = option.value;
+      }
+    }
+  },
 );
 </script>
 
@@ -397,7 +469,7 @@ watch(
                     >Investment Frequency</span
                   >
                   <x-select
-                    v-model="planDetails.investmentCriteriaId"
+                    v-model="planDetails.investmentFrequency"
                     :options="investmentFrequencyOptions"
                     placeholder="Select Frequency"
                     size="sm"

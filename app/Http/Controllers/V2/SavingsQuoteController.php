@@ -18,6 +18,7 @@ use App\Services\LookupService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Services\Savings\SavingsEmailService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SavingsQuoteController extends Controller
 {
@@ -234,34 +235,38 @@ class SavingsQuoteController extends Controller
      */
     public function savingsPlanManualProcess(Request $request, string $quoteUuId)
     {
-        $request->validate([
-            'insurance_provider_id' => 'required|integer',
-            'savings_plan_id' => 'required|integer',
-            'actual_premium' => 'required|numeric|min:0',
-            'insurer_quote_no' => 'required|string|max:50',
-        ]);
-
         try {
             $quote = PersonalQuote::where('uuid', $quoteUuId)->firstOrFail();
 
             LoggerService::info('SavingsQuoteController - savingsPlanManualProcess', [
                 'quote_uuid' => $quoteUuId,
-                'insurance_provider_id' => $request->insurance_provider_id,
-                'savings_plan_id' => $request->savings_plan_id,
+                'update' => $request->update ?? false,
+                'plans_count' => count($request->plans ?? []),
             ]);
 
-            // Call the service to create the plan
-            $response = $this->savingsQuoteService->createSavingsPlan($request, $quoteUuId);
+            // Call the service to process the plan
+            $response = $this->savingsQuoteService->processSavingsPlan($request->all(), $quoteUuId);
 
             if ($response === 200 || $response === 201) {
-                return redirect()->back()->with('message', 'Savings plan created successfully');
+                return response()->json([
+                    'message' => $request->update ? 'Savings plan updated successfully' : 'Savings plan created successfully',
+                ], 200);
             }
 
-            return redirect()->back()->withErrors(['error' => 'Failed to create savings plan']);
+            return response()->json([
+                'message' => 'Failed to process savings plan',
+            ], 400);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
             LoggerService::error('SavingsQuoteController - savingsPlanManualProcess failed', exception: $e);
 
-            return redirect()->back()->withErrors(['error' => 'Failed to create savings plan: '.$e->getMessage()]);
+            return response()->json([
+                'message' => 'Failed to process savings plan: '.$e->getMessage(),
+            ], 500);
         }
     }
 
