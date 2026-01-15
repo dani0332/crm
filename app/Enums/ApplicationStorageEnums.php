@@ -327,6 +327,10 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
 
+    // Failed ILA Email Switch
+    public const SEND_FAILED_ILA_EMAILS_SWITCH = 'SEND_FAILED_ILA_EMAILS_SWITCH';
+    public const BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW = 'BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW';
+
     // OCR Util Feature Toggle
     public const OCR_UTIL_ENABLED = 'OCR_UTIL_ENABLED';
 }
