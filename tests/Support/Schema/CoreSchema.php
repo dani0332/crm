@@ -263,6 +263,7 @@ class CoreSchema
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->timestamp('payment_paid_at')->nullable(); // Required for payment approval updates
                 $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->timestamp('aig_flow_executed_at')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->string('previous_quote_policy_number')->nullable();
                 $table->date('previous_policy_expiry_date')->nullable();
@@ -282,6 +283,15 @@ class CoreSchema
                 $table->boolean('policy_issuance_automation_enabled')->default(false);
                 $table->timestamps();
                 $table->softDeletes(); // BaseModel uses SoftDeletes trait
+            },
+            'quotes_flow_details' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_uuid');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->integer('flow_type')->nullable();
+                $table->string('flow_id');
+                $table->timestamp('started_at')->nullable();
+                $table->timestamps();
             },
             'device_quote' => function (Blueprint $table) {
                 $table->id();
