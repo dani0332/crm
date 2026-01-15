@@ -401,6 +401,22 @@ const isOcaButtonDisabled = ref(false);
 const processingOCAEmail = ref(false);
 
 const confirmSendOCAEmail = () => {
+  if (selectedPlans.value.length === 0) {
+    notification.error({
+      title: 'Please select at least one plan',
+      position: 'top',
+    });
+    return;
+  }
+
+  if (selectedPlans.value.length > 6) {
+    notification.error({
+      title: 'Maximum 5 plans can be selected',
+      position: 'top',
+    });
+    return;
+  }
+
   const first_name = props.quote.first_name || '';
   const last_name = props.quote.last_name || '';
   processingOCAEmail.value = true;
