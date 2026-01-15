@@ -272,23 +272,46 @@ const getEligibilityValue = (plan, code) => {
   return 'N/A';
 };
 
+// Get payment term label from numeric value
+// Payment term values: 0 = Lumpsum, 1 = Annual, 12 = Monthly, 3 = Quarterly, 6 = Semi-Annual
+const getPaymentTermLabel = paymentTerm => {
+  const term = parseInt(paymentTerm);
+  switch (term) {
+    case 0:
+      return 'Lumpsum';
+    case 1:
+      return 'Annual';
+    case 3:
+      return 'Quarterly';
+    case 6:
+      return 'Semi-Annual';
+    case 12:
+      return 'Monthly';
+    default:
+      return 'N/A';
+  }
+};
+
 // Calculate total annual price based on payment term
+// Payment term values: 0 = Lumpsum, 1 = Annual, 12 = Monthly, 3 = Quarterly, 6 = Semi-Annual
 const calculateTotalAnnualPrice = item => {
   const price = parseFloat(item.actualPremium || item.price || 0);
   if (!price) return null;
 
-  const paymentTerm = (item.paymentTerm || 'Monthly').toLowerCase();
-  let multiplier = 12; // Default to monthly
+  const paymentTerm = parseInt(item.paymentTerm);
+  let multiplier = 1; // Default to annual/lumpsum
 
-  if (paymentTerm.includes('quarter')) {
+  if (paymentTerm === 12) {
+    // Monthly - multiply by 12
+    multiplier = 12;
+  } else if (paymentTerm === 3) {
+    // Quarterly - multiply by 4
     multiplier = 4;
-  } else if (paymentTerm.includes('semi')) {
+  } else if (paymentTerm === 6) {
+    // Semi-Annual - multiply by 2
     multiplier = 2;
-  } else if (
-    paymentTerm.includes('annual') ||
-    paymentTerm.includes('single') ||
-    paymentTerm.includes('yearly')
-  ) {
+  } else if (paymentTerm === 1 || paymentTerm === 0) {
+    // Annual or Lumpsum - multiply by 1
     multiplier = 1;
   }
 
@@ -785,7 +808,7 @@ onMounted(() => {
               <span>{{ item.investmentFrequency || 'N/A' }}</span>
             </template>
             <template #item-paymentTerm="item">
-              <span>{{ item.paymentTerm || 'Monthly' }}</span>
+              <span>{{ getPaymentTermLabel(item.paymentTerm) }}</span>
             </template>
             <template #item-tenure="item">
               <span>{{ item.tenure ? `${item.tenure} years` : 'N/A' }}</span>

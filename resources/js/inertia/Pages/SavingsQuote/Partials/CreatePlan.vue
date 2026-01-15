@@ -68,17 +68,21 @@ const options = reactive({
 
 const addPlanForm = useForm({
   quote_uuid: page.props.quote.uuid,
-  is_disabled: 0,
-  is_create: 1,
+  is_disabled: false,
+  is_create: true,
   plan_type: null,
   insurance_provider_id: '',
   savings_plan_id: null,
   currency: 'AED',
+  currency_id: null,
   investment_amount: null,
+  actual_premium: null, // Required by backend (same as investment_amount)
   investment_frequency: null,
+  investment_frequency_id: null,
   payment_term: null,
   expected_rate_of_return: null,
   tenure_of_savings: null,
+  tenure_id: null,
   lumpsum_payout: null,
   insurer_quote_no: '',
   is_manual_update: true,
@@ -108,6 +112,7 @@ const currencyOptions = computed(() => {
       .map(cc => ({
         value: cc.currency.code,
         label: cc.currency.text || cc.currency.code,
+        id: cc.currency.id,
       }));
   }
 
@@ -116,49 +121,42 @@ const currencyOptions = computed(() => {
     props.localLookups?.currencies?.map(item => ({
       value: item.code || item.id,
       label: item.text,
+      id: item.id,
     })) || [
-      { value: 'AED', label: 'AED' },
-      { value: 'USD', label: 'USD' },
-      { value: 'EUR', label: 'EUR' },
-      { value: 'GBP', label: 'GBP' },
+      { value: 'AED', label: 'AED', id: 2 },
+      { value: 'USD', label: 'USD', id: 1 },
+      { value: 'EUR', label: 'EUR', id: 3 },
+      { value: 'GBP', label: 'GBP', id: 4 },
     ]
   );
 });
 
-// Investment Frequency Options - filtered by selected plan's investment_frequency
+// Investment Frequency Options - from CMS (NOT dependent on plan)
 const investmentFrequencyOptions = computed(() => {
-  const allFrequencies = props.localLookups?.investmentFrequencies?.map(
-    item => ({
-      value: item.id,
+  return (
+    props.localLookups?.investmentFrequencies?.map(item => ({
+      value: item.code?.toLowerCase() || item.text?.toLowerCase(),
       label: item.text,
-    }),
-  ) || [
-    { value: 'regular', label: 'Regular' },
-    { value: 'lumpsum', label: 'Lumpsum' },
-  ];
-
-  // If a plan is selected, show only its investment frequency
-  if (selectedPlanData.value?.investment_frequency) {
-    const planFrequencyId = selectedPlanData.value.investment_frequency;
-    const filtered = allFrequencies.filter(f => f.value === planFrequencyId);
-    return filtered.length ? filtered : allFrequencies;
-  }
-
-  return allFrequencies;
+      id: item.id,
+    })) || [
+      { value: 'regular', label: 'Regular', id: null },
+      { value: 'lumpsum', label: 'Lumpsum', id: null },
+    ]
+  );
 });
 
-// Payment Term Options - from localLookups
+// Payment Term Options - from localLookups (using ID for API)
 const paymentTermOptions = computed(() => {
   return (
     props.localLookups?.paymentTerms?.map(item => ({
-      value: item.code || item.id,
+      value: item.id,
       label: item.text,
     })) || [
-      { value: 'monthly', label: 'Monthly' },
-      { value: 'quarterly', label: 'Quarterly' },
-      { value: 'semi_annually', label: 'Semi-Annually' },
-      { value: 'annually', label: 'Annually' },
-      { value: 'single_payment', label: 'Single Payment' },
+      { value: 1, label: 'Monthly' },
+      { value: 2, label: 'Quarterly' },
+      { value: 3, label: 'Semi-Annually' },
+      { value: 4, label: 'Annually' },
+      { value: 5, label: 'Single Payment' },
     ]
   );
 });
@@ -167,27 +165,31 @@ const paymentTermOptions = computed(() => {
 const tenureOfSavingsOptions = computed(() => {
   if (props.lookUpData?.savingsTenure?.length) {
     return props.lookUpData.savingsTenure.map(item => ({
-      value: parseInt(item.code) || item.id,
+      value: parseInt(item.code) || parseInt(item.text) || item.id,
       label: item.text,
+      id: item.id,
     }));
   }
   // Fallback: generate 1-30 years
   const options = [];
   for (let i = 1; i <= 30; i++) {
-    options.push({ value: i, label: `${i} Year${i > 1 ? 's' : ''}` });
+    options.push({ value: i, label: `${i} Year${i > 1 ? 's' : ''}`, id: null });
   }
   return options;
 });
 
 // Map payment term to frequency for calculator
+// Payment term values: 0 = Lumpsum, 1 = Annual, 3 = Quarterly, 6 = Semi-Annual, 12 = Monthly
 const getFrequencyFromPaymentTerm = term => {
+  const termValue = parseInt(term);
   const map = {
-    monthly: 'Monthly',
-    quarterly: 'Quarterly',
-    semi_annual: 'Half Yearly',
-    annual: 'Yearly',
+    12: 'Monthly',
+    3: 'Quarterly',
+    6: 'Half Yearly',
+    1: 'Yearly',
+    0: 'Single Payment',
   };
-  return map[term] || 'Monthly';
+  return map[termValue] || 'Monthly';
 };
 
 // Level 1: Insurance Provider Options (all providers for now)
@@ -296,10 +298,10 @@ watch(
       getRiderDetails(newPlanId);
 
       // Auto-populate fields from selected plan if available
+      // Note: Investment Frequency and Payment Terms are NOT based on plan
       if (selectedPlanData.value) {
         const plan = selectedPlanData.value;
         addPlanForm.currency = plan.currency || 'AED';
-        addPlanForm.investment_frequency = plan.investment_frequency || null;
         addPlanForm.expected_rate_of_return = plan.expected_return || null;
       }
     } else {
@@ -310,41 +312,35 @@ watch(
   { immediate: true },
 );
 
-// Level 4: Payment Terms from selected plan's eligibilities (type = PAYMENT_TERM)
+// Helper to check if investment frequency is lumpsum type
+const isLumpsumFrequency = computed(() => {
+  const freq = addPlanForm.investment_frequency;
+  if (!freq) return false;
+
+  // Check by string value
+  if (typeof freq === 'string' && freq.toLowerCase() === 'lumpsum') return true;
+
+  // Check by ID - find the selected option and check its label
+  const selectedOption = investmentFrequencyOptions.value.find(
+    opt => opt.value === freq || opt.id === freq,
+  );
+  return selectedOption?.label?.toLowerCase() === 'lumpsum';
+});
+
+// Payment Terms - filtered by Investment Frequency only (NOT dependent on plan)
 const filteredPaymentTermOptions = computed(() => {
-  // If a plan is selected, use its eligibilities for payment terms
-  if (selectedPlanData.value?.eligibilities?.length) {
-    const planEligibilities = selectedPlanData.value.eligibilities
-      .filter(e => e.type === 'PAYMENT_TERM')
-      .map(e => ({
-        value: e.code?.toLowerCase(),
-        label: e.text || e.code,
-      }));
-
-    if (planEligibilities.length) {
-      // Further filter based on investment frequency
-      if (addPlanForm.investment_frequency === 'lumpsum') {
-        return planEligibilities.filter(
-          term => term.value === 'single_payment',
-        );
-      } else if (addPlanForm.investment_frequency === 'regular') {
-        return planEligibilities.filter(
-          term => term.value !== 'single_payment',
-        );
-      }
-      return planEligibilities;
-    }
-  }
-
-  // Fallback to localLookups payment terms
   const allTerms = paymentTermOptions.value;
 
-  if (addPlanForm.investment_frequency === 'lumpsum') {
-    // Lumpsum → Single Payment only
-    return allTerms.filter(term => term.value === 'single_payment');
-  } else if (addPlanForm.investment_frequency === 'regular') {
-    // Regular → Monthly, Quarterly, Semi-Annually, Annually (exclude Single Payment)
-    return allTerms.filter(term => term.value !== 'single_payment');
+  if (isLumpsumFrequency.value) {
+    // Lumpsum → Single Payment only (filter by label)
+    return allTerms.filter(term =>
+      term.label?.toLowerCase().includes('single'),
+    );
+  } else if (addPlanForm.investment_frequency) {
+    // Regular → All except Single Payment
+    return allTerms.filter(
+      term => !term.label?.toLowerCase().includes('single'),
+    );
   }
 
   // If no investment frequency selected, show all
@@ -373,19 +369,62 @@ watch(
   },
 );
 
-// Reset payment term when investment frequency changes
+// Reset payment term when investment frequency changes and sync ID
 watch(
   () => addPlanForm.investment_frequency,
   newFreq => {
+    // Sync investment frequency ID first
+    const selectedOption = investmentFrequencyOptions.value.find(
+      opt => opt.value === newFreq || opt.id === newFreq,
+    );
+    addPlanForm.investment_frequency_id = selectedOption?.id || null;
+
+    // Check if lumpsum frequency
+    const isLumpsum =
+      selectedOption?.label?.toLowerCase() === 'lumpsum' ||
+      (typeof newFreq === 'string' && newFreq.toLowerCase() === 'lumpsum');
+
+    // Find Single Payment option by label
+    const singlePaymentOption = paymentTermOptions.value.find(opt =>
+      opt.label?.toLowerCase().includes('single'),
+    );
+
     // Auto-select payment term based on frequency
-    if (newFreq === 'lumpsum') {
-      addPlanForm.payment_term = 'single_payment';
-    } else if (
-      newFreq === 'regular' &&
-      addPlanForm.payment_term === 'monthly'
-    ) {
+    if (isLumpsum && singlePaymentOption) {
+      addPlanForm.payment_term = singlePaymentOption.value; // Single Payment ID
+    } else if (addPlanForm.payment_term === singlePaymentOption?.value) {
       addPlanForm.payment_term = null; // Reset if was single payment
     }
+  },
+);
+
+// Sync currency ID when currency changes
+watch(
+  () => addPlanForm.currency,
+  newCurrency => {
+    const selectedOption = currencyOptions.value.find(
+      opt => opt.value === newCurrency,
+    );
+    addPlanForm.currency_id = selectedOption?.id || null;
+  },
+);
+
+// Sync tenure ID when tenure changes
+watch(
+  () => addPlanForm.tenure_of_savings,
+  newTenure => {
+    const selectedOption = tenureOfSavingsOptions.value.find(
+      opt => opt.value === newTenure,
+    );
+    addPlanForm.tenure_id = selectedOption?.id || null;
+  },
+);
+
+// Sync actual_premium with investment_amount (backend requires both)
+watch(
+  () => addPlanForm.investment_amount,
+  newAmount => {
+    addPlanForm.actual_premium = parseFloat(newAmount) || 0;
   },
 );
 
@@ -402,16 +441,21 @@ const createQuotePlan = isValid => {
 
   if (!isValid) return;
 
-  // Process riders data like Life
+  // Process riders data for API payload
   const processedRiders = ridersData.value.map(rider => ({
-    ...rider,
+    riderId: rider.riderId,
+    active: rider.active ? true : false,
     price: Number(parseFloat(rider.price).toFixed(2)) || 0,
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
 
-  // Add riders to form
+  // Add processed riders to form
   addPlanForm.riders = processedRiders;
 
+  // Set actual_premium from investment_amount for backend validation
+  addPlanForm.actual_premium = parseFloat(addPlanForm.investment_amount) || 0;
+
+  // Submit using useForm (sends snake_case fields as expected by backend)
   addPlanForm.post(
     `/quotes/savings/${page.props.quote.uuid}/savings-plan-manual-process`,
     {
@@ -451,10 +495,9 @@ const calculatePlan = () => {
   }
 
   // Determine frequency based on investment type
-  const frequency =
-    addPlanForm.investment_frequency === 'lumpsum'
-      ? 'Single Payment'
-      : getFrequencyFromPaymentTerm(addPlanForm.payment_term);
+  const frequency = isLumpsumFrequency.value
+    ? 'Single Payment'
+    : getFrequencyFromPaymentTerm(addPlanForm.payment_term);
 
   // Calculate and set lumpsum payout
   const payout = calculatePayout({ amount, rate, years, frequency });
