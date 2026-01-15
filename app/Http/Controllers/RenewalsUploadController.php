@@ -398,7 +398,7 @@ class RenewalsUploadController extends Controller
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
-            'fetch_plans_status' => FetchPlansStatuses::PENDING
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])->whereNotNull('step_errors')->with(['renewalUploadLead', 'carQuote']);
         $process = $query->simplePaginate();
 
