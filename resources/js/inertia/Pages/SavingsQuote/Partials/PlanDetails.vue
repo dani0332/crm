@@ -1,4 +1,6 @@
 <script setup>
+import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
+import { useFormatPrice } from '@/inertia/Composables/utilities';
 import { createReusableTemplate } from '@vueuse/core';
 
 const emit = defineEmits(['update', 'close']);
@@ -14,6 +16,15 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useNotifications('toast');
+
+// Use savings calculator composable for lumpsum payout calculation
+const { calculatePayout } = useSavingsCalculator();
+
+// Format price with commas and 2 decimals - same as CreatePlan
+const formatPrice = value => {
+  if (!value && value !== 0) return '';
+  return useFormatPrice(value, true);
+};
 
 // Define tabs for plan details modal
 const planDetailsTabs = ref([
@@ -34,16 +45,6 @@ const providerPlanData = computed(() => {
 
 // Currency Options - from plan's currency_coverages or fallback to localLookups
 const currencyOptions = computed(() => {
-  // If plan has currency coverages, use them
-  // if (providerPlanData.value?.currency_coverages?.length) {
-  //   return providerPlanData.value.currency_coverages
-  //     .filter(cc => cc.currency)
-  //     .map(cc => ({
-  //       value: cc.currency.id,
-  //       label: cc.currency.text || cc.currency.code,
-  //     }));
-  // }
-
   // Fallback to localLookups currencies
   return props.localLookups?.currencies?.map(item => ({
     value: item.id,
@@ -53,34 +54,42 @@ const currencyOptions = computed(() => {
 
 // Investment Frequency Options - from CMS (NOT dependent on plan) - same as CreatePlan
 const investmentFrequencyOptions = computed(() => {
-  return (
-    props.localLookups?.investmentFrequencies?.map(item => ({
-      value: item.code?.toLowerCase() || item.text?.toLowerCase(),
-      label: item.text,
-      id: item.id,
-    })) || [
-      { value: 'regular', label: 'Regular', id: null },
-      { value: 'lumpsum', label: 'Lumpsum', id: null },
-    ]
-  );
+  return props.localLookups?.investmentFrequencies?.map(item => ({
+    value: item.code?.toLowerCase() || item.text?.toLowerCase(),
+    label: item.text,
+    id: item.id,
+  }));
 });
 
 // Payment Term Options - from localLookups (using ID for API) - same as CreatePlan
 // Payment term API values: 0 = Single Payment, 1 = Annual, 3 = Quarterly, 6 = Semi-Annual, 12 = Monthly
 const paymentTermOptions = computed(() => {
-  return (
-    props.localLookups?.paymentTerms?.map(item => ({
-      // Use id if available, otherwise try to parse code, fallback to value
-      value: item.id || parseInt(item.code) || item.value,
+  return props.localLookups?.paymentTerms?.map(item => ({
+    // Use id if available, otherwise try to parse code, fallback to value
+    value: item.value,
+    label: item.text,
+  }));
+});
+
+// Tenure of Savings Options - from lookUpData or CMS plan policy terms - same as CreatePlan
+const tenureOfSavingsOptions = computed(() => {
+  if (props.lookUpData?.savingsTenure?.length) {
+    return props.lookUpData.savingsTenure.map(item => ({
+      value: parseInt(item.code) || parseInt(item.text) || item.id,
       label: item.text,
-    })) || [
-      { value: 12, label: 'Monthly' },
-      { value: 3, label: 'Quarterly' },
-      { value: 6, label: 'Semi-Annually' },
-      { value: 1, label: 'Annually' },
-      { value: 0, label: 'Single Payment' },
-    ]
-  );
+      id: item.id,
+    }));
+  }
+  return [];
+});
+
+// Format price with commas and 2 decimal places
+const formattedPrice = computed(() => {
+  const price = parseFloat(props.planDetails?.actualPremium || 0);
+  return price.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 });
 
 // Form for individual plan updates
@@ -95,10 +104,60 @@ const planForm = useForm({
   current_url: '',
 });
 
-// Calculate functionality placeholder
+const getFrequencyFromPaymentTerm = term => {
+  const termValue = parseInt(term);
+  const map = {
+    12: 'Monthly',
+    3: 'Quarterly',
+    6: 'Half Yearly',
+    1: 'Yearly',
+    0: 'Single Payment',
+  };
+  return map[termValue] || 'Monthly';
+};
+
+// Helper to check if investment frequency is lumpsum type - same as CreatePlan
+const isLumpsumFrequency = computed(() => {
+  const freq = props.planDetails?.investmentFrequency;
+  if (!freq) return false;
+
+  // Check by string value
+  if (typeof freq === 'string' && freq.toLowerCase() === 'lumpsum') return true;
+
+  // Check by ID if investmentFrequencyOptions are available
+  const lumpsumOption = investmentFrequencyOptions.value?.find(
+    opt => opt.value === 'lumpsum' || opt.label?.toLowerCase() === 'lumpsum',
+  );
+  return lumpsumOption && lumpsumOption.value === freq;
+});
+
+// Calculate functionality - same as CreatePlan
 const calculatePlan = () => {
-  notification.info({
-    title: 'Calculate functionality will be implemented',
+  const amount = parseFloat(props.planDetails.actualPremium) || 0;
+  const rate = parseFloat(props.planDetails.expectedRor) || 0;
+  const years = parseInt(props.planDetails.tenure) || 0;
+
+  // Validate required fields
+  if (!amount || !rate || !years) {
+    notification.warning({
+      title: 'Please fill Investment Amount, Rate of Return, and Tenure',
+      position: 'top',
+    });
+    return;
+  }
+
+  // Determine frequency based on investment type - same as CreatePlan
+  const frequency = isLumpsumFrequency.value
+    ? 'Single Payment'
+    : getFrequencyFromPaymentTerm(props.planDetails.paymentTerm);
+
+  console.log({ amount, rate, years, frequency });
+  // Calculate and set lumpsum payout
+  const payout = calculatePayout({ amount, rate, years, frequency });
+  props.planDetails.lumpSumPayout = payout; // Note: camelCase 'lumpSumPayout'
+
+  notification.success({
+    title: `Lumpsum Payout: ${formatPrice(payout)}`,
     position: 'top',
   });
 };
@@ -149,13 +208,6 @@ const onUpdateIndividualPlan = () => {
 
   // Build API payload matching CreatePlan format
   const apiPayload = {
-    // Snake_case fields for backend validation
-    insurance_provider_id: providerId,
-    savings_plan_id: props.planDetails.id || props.planDetails.planId,
-    actual_premium: parseFloat(props.planDetails.actualPremium) || 0,
-    insurer_quote_no: props.planDetails.insurerQuoteNo || '',
-    currency_id: props.planDetails.currencyId,
-
     // CamelCase structure for Ken API
     quoteUID: props.quote.uuid,
     update: true, // true for update
@@ -331,6 +383,21 @@ watch(
     }
   },
 );
+
+// Sync tenure ID when tenure value changes
+watch(
+  () => props.planDetails?.tenure,
+  newTenure => {
+    if (!newTenure || !props.planDetails) return;
+
+    const selectedOption = tenureOfSavingsOptions.value.find(
+      opt => opt.value === newTenure,
+    );
+    if (selectedOption && props.planDetails) {
+      props.planDetails.tenureId = selectedOption.id || null;
+    }
+  },
+);
 </script>
 
 <template>
@@ -452,17 +519,23 @@ watch(
               <div class="grid md:grid-cols-2 gap-x-8 gap-y-4 mb-4">
                 <div class="flex items-center">
                   <span class="text-sm text-gray-600 w-36">Price</span>
-                  <x-input
-                    v-model="planDetails.actualPremium"
-                    placeholder="Enter price"
-                    size="sm"
-                    type="number"
-                    class="flex-1"
-                    :disabled="
-                      !planDetails.isManualUpdate ||
-                      lockLeadSectionsDetails?.plan_selection
-                    "
-                  />
+                  <div class="flex-1">
+                    <x-input
+                      v-model="planDetails.actualPremium"
+                      placeholder="Enter price"
+                      size="sm"
+                      type="number"
+                      step="any"
+                      class="w-full"
+                      :disabled="
+                        !planDetails.isManualUpdate ||
+                        lockLeadSectionsDetails?.plan_selection
+                      "
+                    />
+                    <div class="text-xs text-gray-500 mt-1">
+                      Formatted: {{ formattedPrice }}
+                    </div>
+                  </div>
                 </div>
                 <div class="flex items-center">
                   <span class="text-sm text-gray-600 w-36"
@@ -505,14 +578,10 @@ watch(
                   <div class="flex-1 relative">
                     <x-input
                       v-model="planDetails.expectedRor"
-                      placeholder="Enter rate"
+                      placeholder="CMS value"
                       size="sm"
                       type="number"
                       class="w-full"
-                      :disabled="
-                        !planDetails.isManualUpdate ||
-                        lockLeadSectionsDetails?.plan_selection
-                      "
                     />
                     <span
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
@@ -528,11 +597,11 @@ watch(
                   <span class="text-sm text-gray-600 w-36"
                     >Tenure of Savings (Years)</span
                   >
-                  <x-input
+                  <x-select
                     v-model="planDetails.tenure"
-                    placeholder="Enter tenure"
+                    :options="tenureOfSavingsOptions"
+                    placeholder="Select Tenure"
                     size="sm"
-                    type="number"
                     class="flex-1"
                     :disabled="
                       !planDetails.isManualUpdate ||
@@ -541,17 +610,14 @@ watch(
                   />
                 </div>
                 <div class="flex items-center">
-                  <span class="text-sm text-gray-600 w-36">Lumpsum Amount</span>
+                  <span class="text-sm text-gray-600 w-36">Lumpsum Payout</span>
                   <x-input
                     v-model="planDetails.lumpSumPayout"
-                    placeholder="Enter amount"
+                    placeholder="Calculated amount"
                     size="sm"
                     type="number"
                     class="flex-1"
-                    :disabled="
-                      !planDetails.isManualUpdate ||
-                      lockLeadSectionsDetails?.plan_selection
-                    "
+                    disabled
                   />
                 </div>
               </div>
