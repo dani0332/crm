@@ -1860,7 +1860,7 @@ class RenewalsUploadService
                 $previousAdvisor = $this->getPreviousAdvisor($carQuote);
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-                $leadData = $renewalQuoteProcess->lead_data;
+                $leadData = $renewalQuoteProcess->data;
                 $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
                 // if the lead is a Genesis lead, then set the current insurer to empty
                 if ($checkGenesisLead['status']) {
