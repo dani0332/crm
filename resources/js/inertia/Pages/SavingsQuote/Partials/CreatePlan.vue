@@ -388,8 +388,6 @@ watch(
     const singlePaymentOption = paymentTermOptions.value.find(opt =>
       opt.label?.toLowerCase().includes('single'),
     );
-
-    console.log(singlePaymentOption, 'singlePaymentOption');
     // Auto-select payment term based on frequency
     if (isLumpsum && singlePaymentOption) {
       addPlanForm.payment_term = singlePaymentOption.value; // Single Payment ID
@@ -703,6 +701,7 @@ const validateDecimal = event => {
           v-model="addPlanForm.insurer_quote_no"
           :rules="[isRequired]"
           class="w-full"
+          required
           placeholder="Enter Insurer Quote Number"
           maxlength="50"
         />
