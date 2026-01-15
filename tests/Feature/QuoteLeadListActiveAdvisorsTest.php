@@ -45,6 +45,30 @@ beforeEach(function () {
     config(['constants.CENTRAL_API_TIMEOUT' => 30]);
     
     TestSchemaCreator::createMinimalSchema();
+    
+    // Ensure activity_log table exists on mysql connection as well
+    // (ActivityLog model uses mysql connection, but schema is only created on sqlite)
+    if (!\Illuminate\Support\Facades\Schema::connection('mysql')->hasTable('activity_log')) {
+        \Illuminate\Support\Facades\Schema::connection('mysql')->create('activity_log', function ($table) {
+            $table->id();
+            $table->string('log_name')->nullable();
+            $table->text('description')->nullable();
+            $table->string('url')->nullable();
+            $table->string('feature')->nullable();
+            $table->ipAddress('ip_address')->nullable();
+            $table->string('subject_type')->nullable();
+            $table->string('event')->nullable();
+            $table->unsignedBigInteger('subject_id')->nullable();
+            $table->string('causer_type')->nullable();
+            $table->unsignedBigInteger('causer_id')->nullable();
+            $table->text('properties')->nullable();
+            $table->string('batch_uuid')->nullable();
+            $table->string('code')->nullable();
+            $table->string('user_agent')->nullable();
+            $table->timestamps();
+        });
+    }
+    
     // Set up minimal ApplicationStorage data
     $db = \Illuminate\Support\Facades\DB::connection('sqlite');
     $db->table('application_storage')->insertOrIgnore([
