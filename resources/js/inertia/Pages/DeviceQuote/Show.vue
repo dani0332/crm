@@ -811,7 +811,7 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ quote.payment_status_id_text ?? 'N/A' }}</dd>
+                <dd>{{quote?.payment_status?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
