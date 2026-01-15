@@ -134,7 +134,10 @@ const tableHeader2 = [
   { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
   { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
   { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
-  { text: 'Previous Total Price with VAT', value: 'previous_quote_policy_premium' },
+  {
+    text: 'Previous Total Price with VAT',
+    value: 'previous_quote_policy_premium',
+  },
   { text: 'Lead Level PC Tag', value: 'pc_qualified' },
   { text: 'Nationality', value: 'nationality.text' },
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
