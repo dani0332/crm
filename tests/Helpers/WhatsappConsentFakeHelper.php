@@ -44,4 +44,3 @@ final class WhatsappConsentFakeHelper
         return $mock;
     }
 }
-
