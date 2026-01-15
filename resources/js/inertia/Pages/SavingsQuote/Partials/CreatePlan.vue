@@ -4,7 +4,7 @@ import {
   cleanFormattedValueToFloat,
   useFormatPrice,
 } from '@/inertia/Composables/utilities';
-import { defineEmits } from 'vue';
+import { defineEmits, watchEffect } from 'vue';
 
 const emit = defineEmits(['success', 'error']);
 
@@ -74,7 +74,7 @@ const addPlanForm = useForm({
   insurance_provider_id: '',
   savings_plan_id: null,
   currency: 'AED',
-  currency_id: null,
+  currency_id: 1,
   investment_amount: null,
   actual_premium: null, // Required by backend (same as investment_amount)
   investment_frequency: null,
@@ -149,7 +149,7 @@ const investmentFrequencyOptions = computed(() => {
 const paymentTermOptions = computed(() => {
   return (
     props.localLookups?.paymentTerms?.map(item => ({
-      value: item.id,
+      value: item.value,
       label: item.text,
     })) || [
       { value: 1, label: 'Monthly' },
@@ -389,6 +389,7 @@ watch(
       opt.label?.toLowerCase().includes('single'),
     );
 
+    console.log(singlePaymentOption, 'singlePaymentOption');
     // Auto-select payment term based on frequency
     if (isLumpsum && singlePaymentOption) {
       addPlanForm.payment_term = singlePaymentOption.value; // Single Payment ID
@@ -399,22 +400,22 @@ watch(
 );
 
 // Sync currency ID when currency changes
-watch(
+watchEffect(
   () => addPlanForm.currency,
-  newCurrency => {
+  () => {
     const selectedOption = currencyOptions.value.find(
-      opt => opt.value === newCurrency,
+      opt => opt.value === addPlanForm.currency,
     );
     addPlanForm.currency_id = selectedOption?.id || null;
   },
 );
 
 // Sync tenure ID when tenure changes
-watch(
+watchEffect(
   () => addPlanForm.tenure_of_savings,
-  newTenure => {
+  () => {
     const selectedOption = tenureOfSavingsOptions.value.find(
-      opt => opt.value === newTenure,
+      opt => opt.value === addPlanForm.tenure_of_savings,
     );
     addPlanForm.tenure_id = selectedOption?.id || null;
   },
@@ -449,35 +450,65 @@ const createQuotePlan = isValid => {
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
 
-  // Add processed riders to form
-  addPlanForm.riders = processedRiders;
-
-  // Set actual_premium from investment_amount for backend validation
-  addPlanForm.actual_premium = parseFloat(addPlanForm.investment_amount) || 0;
-
-  // Submit using useForm (sends snake_case fields as expected by backend)
-  addPlanForm.post(
-    `/quotes/savings/${page.props.quote.uuid}/savings-plan-manual-process`,
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Savings plan created successfully',
-          position: 'top',
-        });
-        emit('success');
-        addPlanForm.reset();
-        ridersData.value = []; // Reset riders
-      },
-      onError: errors => {
-        notification.error({
-          title: 'Failed to create plan',
-          position: 'top',
-        });
-        emit('error', errors);
-      },
-    },
+  // Get investment frequency label for API
+  const investmentFrequencyOption = investmentFrequencyOptions.value.find(
+    opt => opt.value === addPlanForm.investment_frequency,
   );
+
+  // Build API payload in expected format
+  const apiPayload = {
+    // Snake_case fields for backend validation
+    insurance_provider_id: addPlanForm.insurance_provider_id,
+    savings_plan_id: addPlanForm.savings_plan_id,
+    actual_premium: parseFloat(addPlanForm.investment_amount) || 0,
+    insurer_quote_no: addPlanForm.insurer_quote_no || '',
+
+    // CamelCase structure for Ken API
+    quoteUID: page.props.quote.uuid,
+    update: !addPlanForm.is_create, // false for new plan, true for update
+    plans: [
+      {
+        planId: addPlanForm.savings_plan_id,
+        isDisabled: addPlanForm.is_disabled,
+        isManualUpdate: addPlanForm.is_manual_update,
+        insurerQuoteNo: addPlanForm.insurer_quote_no || '',
+        investmentAmount: parseFloat(addPlanForm.investment_amount) || 0,
+        currency: addPlanForm.currency,
+        currencyId: addPlanForm.currency_id,
+        paymentTerm: addPlanForm.payment_term,
+        tenure: addPlanForm.tenure_of_savings,
+        tenureId: addPlanForm.tenure_id,
+        ror: parseFloat(addPlanForm.expected_rate_of_return) || 0,
+        investmentFrequency: investmentFrequencyOption?.label || 'Regular',
+        investmentFrequencyId: addPlanForm.investment_frequency_id,
+        lumpSumPayout: parseFloat(addPlanForm.lumpsum_payout) || 0,
+        riders: processedRiders,
+      },
+    ],
+  };
+
+  // Submit using axios with camelCase payload
+  axios
+    .post(
+      `/quotes/savings/${page.props.quote.uuid}/savings-plan-manual-process`,
+      apiPayload,
+    )
+    .then(() => {
+      notification.success({
+        title: 'Savings plan created successfully',
+        position: 'top',
+      });
+      emit('success');
+      addPlanForm.reset();
+      ridersData.value = []; // Reset riders
+    })
+    .catch(error => {
+      notification.error({
+        title: error.response?.data?.message || 'Failed to create plan',
+        position: 'top',
+      });
+      emit('error', error.response?.data?.errors || {});
+    });
 };
 
 const calculatePlan = () => {
