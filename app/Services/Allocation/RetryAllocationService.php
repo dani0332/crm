@@ -33,7 +33,7 @@ class RetryAllocationService
         $quoteAllocationSwitch = getAppStorageValueByKey(ApplicationStorageEnums::QUOTE_ALLOCATION_SWITCH, useCache: true);
 
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
-        $startTime = $quoteType == QuoteTypes::CAR ? now()->subDays(60)->startOfDay()->toDateTimeString() : now()->subWeek()->startOfDay()->toDateTimeString();
+        $startTime = now()->subWeek()->startOfDay()->toDateTimeString();
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $endTime = now()->subMinutes(5)->toDateTimeString();
 
@@ -75,7 +75,13 @@ class RetryAllocationService
                 'quote_status_id',
                 'tier_id',
             ])
-            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->where(function ($q) use ($allocationStartDate, $to) {
+                $q->whereBetween('created_at', [$allocationStartDate, $to])
+                ->orWhere(function ($sq) use ($to) {
+                    $sq->advisorRequestedOrPaymentAuthorizedOrDeclined()
+                    ->whereBetween('created_at', [now()->subDays(60), $to]);
+                });
+            })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
             ->orderByDesc('created_at')
