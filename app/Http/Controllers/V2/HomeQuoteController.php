@@ -218,9 +218,11 @@ class HomeQuoteController extends Controller
         // Fetch advisors and lead statuses
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Home);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,
+            'renewalBatches' => $renewalBatches,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,
