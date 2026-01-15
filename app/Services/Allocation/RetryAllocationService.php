@@ -77,7 +77,10 @@ class RetryAllocationService
             ])
             ->where(function ($q) use ($allocationStartDate, $to) {
                 $q->whereBetween('created_at', [$allocationStartDate, $to])
-                    ->orWhere->advisorRequestedOrPaymentAuthorizedOrDeclined();
+                    ->orWhere(function ($sq) use ($to) {
+                        $sq->advisorRequestedOrPaymentAuthorizedOrDeclined()
+                            ->whereBetween('created_at', [now()->subDays(60), $to]);
+                    });
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
