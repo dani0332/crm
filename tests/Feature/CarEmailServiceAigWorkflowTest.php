@@ -8,9 +8,11 @@ use App\Services\EmailServices\CarEmailService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Tests\Helpers\CarAigWorkflowMockHelper;
+use Illuminate\Support\Facades\Http;
+use Tests\Helpers\BirdHttpFakeHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
+use Tests\Helpers\WhatsappConsentFakeHelper;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
@@ -42,30 +44,30 @@ test('triggers AIG workflow and sets aig_flow_executed_at (and creates flow deta
         'aig_flow_executed_at' => null,
     ]);
 
-    CarAigWorkflowMockHelper::mockQuoteAdditionalDetailNoConsent();
-    CarAigWorkflowMockHelper::mockBirdServiceTrigger(
-        expectedUrl: $workflowUrl,
-        runId: 'test-run-id',
-        statusCode: 200,
-        payloadAssert: function ($payload) use ($quote) {
-            if (! is_object($payload)) {
-                return false;
-            }
+    WhatsappConsentFakeHelper::noConsent();
 
-            return ($payload->quoteUID ?? null) === $quote->uuid
-                && ($payload->uuid ?? null) === $quote->uuid
-                && ($payload->customerEmail ?? null) === $quote->email
-                && ($payload->refID ?? null) === $quote->code
-                && ($payload->advisorId ?? null) === $quote->advisor_id
-                && ($payload->workflowType ?? null) === WorkflowTypeEnum::AIG_WORKFLOW
-                && ($payload->whatsappConsent ?? null) === false;
-        }
+    BirdHttpFakeHelper::preventStrayRequests();
+    BirdHttpFakeHelper::fakeJsonResponse(
+        url: $workflowUrl,
+        status: 200,
+        headers: ['Run-Id' => 'test-run-id'],
+        body: []
     );
 
     $response = app(CarEmailService::class)->sendAIGWorkflow($quote->fresh());
 
     expect($response)->not->toBeNull()
         ->and($response->status_code)->toBe(200);
+
+    BirdHttpFakeHelper::assertSentJson($workflowUrl, function (array $payload) use ($quote) {
+        return ($payload['quoteUID'] ?? null) === $quote->uuid
+            && ($payload['uuid'] ?? null) === $quote->uuid
+            && ($payload['customerEmail'] ?? null) === $quote->email
+            && ($payload['refID'] ?? null) === $quote->code
+            && ($payload['advisorId'] ?? null) === $quote->advisor_id
+            && ($payload['workflowType'] ?? null) === WorkflowTypeEnum::AIG_WORKFLOW
+            && ($payload['whatsappConsent'] ?? null) === false;
+    });
 
     $quoteAfter = CarQuote::on('sqlite')->where('uuid', $quote->uuid)->firstOrFail();
     expect($quoteAfter->aig_flow_executed_at)->not->toBeNull();
@@ -92,15 +94,15 @@ test('does not trigger workflow when already executed', function () {
         'aig_flow_executed_at' => now(),
     ]);
 
-    CarAigWorkflowMockHelper::mockQuoteAdditionalDetailNoConsent();
+    WhatsappConsentFakeHelper::noConsent();
 
-    // Ensure BirdService was not called.
-    $birdMock = Mockery::mock(\App\Services\BirdService::class);
-    $birdMock->shouldNotReceive('triggerWebHookRequest');
-    app()->instance(\App\Services\BirdService::class, $birdMock);
+    BirdHttpFakeHelper::preventStrayRequests();
+    Http::fake();
 
     $response = app(CarEmailService::class)->sendAIGWorkflow($quote->fresh());
     expect($response)->toBeNull();
+
+    BirdHttpFakeHelper::assertNothingSent();
 });
 
 test('does not trigger workflow when workflow key missing', function () {
@@ -117,15 +119,15 @@ test('does not trigger workflow when workflow key missing', function () {
         'aig_flow_executed_at' => null,
     ]);
 
-    CarAigWorkflowMockHelper::mockQuoteAdditionalDetailNoConsent();
+    WhatsappConsentFakeHelper::noConsent();
 
-    // Ensure BirdService was not called.
-    $birdMock = Mockery::mock(\App\Services\BirdService::class);
-    $birdMock->shouldNotReceive('triggerWebHookRequest');
-    app()->instance(\App\Services\BirdService::class, $birdMock);
+    BirdHttpFakeHelper::preventStrayRequests();
+    Http::fake();
 
     $response = app(CarEmailService::class)->sendAIGWorkflow($quote->fresh());
     expect($response)->toBeNull();
+
+    BirdHttpFakeHelper::assertNothingSent();
 
     $quoteAfter = CarQuote::on('sqlite')->where('uuid', $quote->uuid)->firstOrFail();
     expect($quoteAfter->aig_flow_executed_at)->toBeNull();

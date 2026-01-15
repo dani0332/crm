@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+node_modules
+vendor
+logs
+storage/logs
+storage/framework
+storage/app
+public/uploads
+public/exports
+docker-build
+*.log
+*.md
+tests

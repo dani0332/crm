@@ -187,6 +187,33 @@ class TestDataSeeder
     }
 
     /**
+     * Seed the Bird AccessKey used for access-key authenticated Bird calls.
+     */
+    public static function seedBirdAccessKey(string $accessKey = 'test-access-key'): void
+    {
+        $db = DB::connection('sqlite');
+
+        $existingId = $db->table('application_storage')
+            ->where('key_name', ApplicationStorageEnums::BIRD_ACCESS_KEY)
+            ->value('id');
+
+        if ($existingId) {
+            $db->table('application_storage')
+                ->where('id', $existingId)
+                ->update(['value' => $accessKey, 'updated_at' => now()]);
+
+            return;
+        }
+
+        $db->table('application_storage')->insert([
+            'key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY,
+            'value' => $accessKey,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
      * Create a minimal CarQuote record for AIG workflow tests (SQLite connection).
      */
     public static function createCarQuote(array $overrides = []): CarQuote
