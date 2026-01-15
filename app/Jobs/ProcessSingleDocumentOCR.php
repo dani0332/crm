@@ -29,6 +29,8 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
+
     public $timeout = 120;
     public $tries = 3;
     public $backoff = [10, 30, 60];
@@ -44,7 +46,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
     public function handle(): void
     {
         if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
-            LoggerService::warning(self::class.' - OCR util processing is disabled, skipping document processing', extra: [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - OCR util processing is disabled, skipping document processing', extra: [
                 'quote_id' => $this->quoteId,
                 'document_id' => $this->documentId,
                 'message' => 'OCR util processing has been disabled via application_storages flag',
@@ -56,7 +58,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         $document = QuoteDocument::find($this->documentId);
 
         if (! $document) {
-            LoggerService::info(self::class.' - Document not found, skipping', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Document not found, skipping', [
                 'document_id' => $this->documentId,
             ]);
 
@@ -75,7 +77,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         ])->find($this->quoteId);
 
         if (! $quote) {
-            LoggerService::info(self::class.' - Quote not found, skipping', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Quote not found, skipping', [
                 'quote_id' => $this->quoteId,
             ]);
 
@@ -89,7 +91,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             ->first();
 
         if (! $documentType) {
-            LoggerService::info(self::class.' - DocumentType not found', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - DocumentType not found', [
                 'quote_id' => $quote->id,
                 'document_type_code' => $document->document_type_code,
             ]);
@@ -100,7 +102,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         $isDocOCREnabled = OCRDocumentTypeEnum::isOCREnabled($documentType, QuoteTypes::CAR);
 
         if (! $isDocOCREnabled) {
-            LoggerService::info(self::class.' - Document type not OCR enabled', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Document type not OCR enabled', [
                 'quote_id' => $quote->id,
                 'document_type_code' => $document->document_type_code,
             ]);
@@ -110,7 +112,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
         $ocrDocType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
-        LoggerService::info(self::class.' - Starting document processing', [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Starting document processing', [
             'quote_id' => $quote->id,
             'quote_uuid' => $quote->uuid,
             'document_id' => $document->id,
@@ -133,7 +135,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                 $ocrResponseData = $ocrResponseJson[$ocrDocType->value];
                 $ocrDataStructure = $ocrDataJson[$ocrDocType->value];
 
-                LoggerService::info(self::class.' - Using cached OCR data from database', [
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Using cached OCR data from database', [
                     'quote_id' => $quote->id,
                     'doc_type' => $ocrDocType->value,
                 ]);
@@ -193,13 +195,13 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         );
 
         if (! empty($ocrDataStructure)) {
-            LoggerService::info(self::class.' - Document processing completed', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Document processing completed', [
                 'quote_id' => $quote->id,
                 'document_id' => $document->id,
                 'doc_type' => $ocrDocType->value,
             ]);
         } else {
-            LoggerService::warning(self::class.' - Document processing completed with no OCR data (failed or skipped)', [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - Document processing completed with no OCR data (failed or skipped)', [
                 'quote_id' => $quote->id,
                 'document_id' => $document->id,
                 'doc_type' => $ocrDocType->value,
@@ -222,7 +224,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                     ->where('quote_id', $this->quoteId)
                     ->count();
 
-                LoggerService::info(self::class.' - Checking aggregation trigger', [
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Checking aggregation trigger', [
                     'quote_id' => $this->quoteId,
                     'total_documents' => $totalDocuments,
                     'processed_documents' => $processedDocuments,
@@ -232,7 +234,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                     $alreadyDispatched = Cache::get('ocr_aggregation_dispatched_'.$this->quoteId);
 
                     if ($alreadyDispatched) {
-                        LoggerService::info(self::class.' - Aggregation already dispatched, skipping', [
+                        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Aggregation already dispatched, skipping', [
                             'quote_id' => $this->quoteId,
                         ]);
 
@@ -241,7 +243,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
                     Cache::put('ocr_aggregation_dispatched_'.$this->quoteId, true, now()->addMinutes(10));
 
-                    LoggerService::info(self::class.' - All documents processed, triggering aggregation', [
+                    LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - All documents processed, triggering aggregation', [
                         'quote_id' => $this->quoteId,
                     ]);
 
@@ -253,7 +255,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                 $lock->release();
             }
         } else {
-            LoggerService::info(self::class.' - Could not acquire lock for aggregation check, another worker is handling it', [
+            LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Could not acquire lock for aggregation check, another worker is handling it', [
                 'quote_id' => $this->quoteId,
             ]);
         }
@@ -268,7 +270,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
         $docUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url);
 
         if (! $docUrl) {
-            LoggerService::warning(self::class.' - Failed to get document URL', [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - Failed to get document URL', [
                 'quote_uuid' => $quote->uuid,
                 'document_id' => $document->id,
                 'doc_url' => $document->doc_url,
@@ -287,7 +289,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             'image' => false,
         ];
 
-        LoggerService::info(self::class.' - Calling OCR API', [
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - Calling OCR API', [
             'quote_uuid' => $quote->uuid,
             'doc_type' => $docType,
             'provider_code' => $providerCode,
@@ -304,7 +306,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
             $responseData = $response->json();
 
             if ($response->successful()) {
-                LoggerService::info(self::class.' - OCR API call successful', [
+                LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.' - OCR API call successful', [
                     'quote_uuid' => $quote->uuid,
                     'document_id' => $document->id,
                     'doc_type' => $docType,
@@ -313,7 +315,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
                 return json_decode(json_encode($responseData));
             }
 
-            LoggerService::warning(self::class.' - OCR API call failed', [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - OCR API call failed', [
                 'quote_uuid' => $quote->uuid,
                 'document_id' => $document->id,
                 'response_status' => $response->status(),
@@ -321,7 +323,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
             return null;
         } catch (\Exception $e) {
-            LoggerService::warning(self::class.' - OCR API call exception', [
+            LoggerService::warning(self::OCR_UTIL_FEAT.' - '.self::class.' - OCR API call exception', [
                 'quote_uuid' => $quote->uuid,
                 'message' => $e->getMessage(),
             ]);
@@ -781,7 +783,7 @@ class ProcessSingleDocumentOCR implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        LoggerService::error(self::class.' - Job failed after all retries', extra: [
+        LoggerService::error(self::OCR_UTIL_FEAT.' - '.self::class.' - Job failed after all retries', extra: [
             'quote_id' => $this->quoteId,
             'document_id' => $this->documentId,
             'attempts' => $this->attempts(),

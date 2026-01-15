@@ -237,4 +237,40 @@ class TestDataSeeder
 
         return CarQuote::on('sqlite')->findOrFail($id);
     }
+
+    /**
+     * Seed required lookup data for CarQuote tests.
+     *
+     * @return array Array of created lookup IDs
+     */
+    public static function seedCarQuoteLookups(): array
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        // Create Insurance Provider (RSA)
+        $insuranceProviderId = $db->table('insurance_provider')->where('code', \App\Enums\InsuranceProvidersEnum::RSA)->value('id');
+        if (! $insuranceProviderId) {
+            $insuranceProviderId = $db->table('insurance_provider')->insertGetId([
+                'code' => \App\Enums\InsuranceProvidersEnum::RSA,
+                'text' => 'RSA Insurance',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Create Car Plan
+        $carPlanId = $db->table('car_plan')->insertGetId([
+            'provider_id' => $insuranceProviderId,
+            'plan_name' => 'Test Car Plan',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return [
+            'insurance_provider_id' => $insuranceProviderId,
+            'plan_id' => $carPlanId,
+        ];
+    }
 }

@@ -121,7 +121,6 @@ const leadData = ref([
     cap: 0,
     BlMaxcap: 0,
     BlCapEdit: false,
-    BlAllocationStatus: false,
     capEdit: false,
     status: '1',
     loading: false,
@@ -432,6 +431,27 @@ watch(
   },
 );
 
+// Watch for changes in props.data to update leadData
+watch(
+  () => props.data,
+  newData => {
+    if (newData && newData.length > 0) {
+      leadData.value = newData.map(item => {
+        return {
+          id: item.id,
+          userId: item.userId,
+          cap: item.maxCapacity,
+          capEdit: false,
+          status: item.isAvailable,
+          BlMaxcap: item.BLMaxCapacity,
+          BlCapEdit: false,
+        };
+      });
+    }
+  },
+  { deep: true },
+);
+
 onMounted(() => {
   setQueryStringFilters(params, filters);
   tableHeader.value = tableHeader.value.filter(column => {
@@ -449,6 +469,8 @@ onMounted(() => {
       cap: item.maxCapacity,
       capEdit: false,
       status: item.isAvailable,
+      BlMaxcap: item.BLMaxCapacity,
+      BlCapEdit: false,
     };
   });
 });
