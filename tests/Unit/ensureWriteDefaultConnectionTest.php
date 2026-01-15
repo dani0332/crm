@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
-uses(TestCase::class);
-
 beforeEach(function (): void {
     $GLOBALS['__originalDefaultDbConnection'] = DB::getDefaultConnection();
     Log::spy();
