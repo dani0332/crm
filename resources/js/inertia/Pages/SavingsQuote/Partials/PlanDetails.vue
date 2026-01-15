@@ -185,7 +185,10 @@ const onUpdateIndividualPlan = () => {
       ? ridersData.value.map(rider => ({
           riderId: rider.riderId,
           active: rider.active ? true : false,
-          price: Number(parseFloat(rider.price || 0).toFixed(2)) || 0,
+          price:
+            Number(
+              parseFloat(rider.coverValue2 || rider.price || 0).toFixed(2),
+            ) || 0,
           coverValue: Number(parseFloat(rider.coverValue || 0).toFixed(2)) || 0,
         }))
       : [];
@@ -308,10 +311,49 @@ const modalVisible = computed({
 // Riders data storage
 const ridersData = ref([]);
 
+// Track previous total rider price to calculate difference
+const previousTotalRiderPrice = ref(0);
+
 // Show riders section if the plan has riders
 const showRiders = computed(() => {
   return ridersData.value.length > 0;
 });
+
+// Calculate total rider price from active riders
+const totalRiderPrice = computed(() => {
+  return ridersData.value
+    .filter(rider => rider.active)
+    .reduce((total, rider) => {
+      const price = parseFloat(rider.coverValue2 || rider.price || 0);
+      return total + price;
+    }, 0);
+});
+
+// Update actualPremium when rider prices change - only add/subtract the difference
+watch(
+  () => totalRiderPrice.value,
+  newRiderPrice => {
+    if (props.planDetails) {
+      const currentPremium = parseFloat(props.planDetails.actualPremium || 0);
+      const previousPrice = previousTotalRiderPrice.value || 0;
+      const newPrice = parseFloat(newRiderPrice || 0);
+
+      // Calculate the difference
+      const difference = newPrice - previousPrice;
+
+      // Only update if there's a change
+      if (Math.abs(difference) > 0.01) {
+        // Add/subtract the difference to current actualPremium
+        const updatedPremium = currentPremium + difference;
+        props.planDetails.actualPremium = updatedPremium;
+
+        // Update previous total for next calculation
+        previousTotalRiderPrice.value = newPrice;
+      }
+    }
+  },
+  { immediate: false },
+);
 
 // Get rider details from API and populate ridersData
 const getRiderDetails = async planId => {
@@ -329,6 +371,7 @@ const getRiderDetails = async planId => {
       active: 0,
       coverValue: 0,
       coverValue2: 0,
+      price: 0, // Sync with coverValue2 for API payload
       inputRequired: item.input_required || false,
       inputType: item.input_type || null,
       coverType: item.cover_type || null,
@@ -345,13 +388,32 @@ watch(
   [() => props.modelValue, () => props.planDetails],
   ([newVisible, newPlanDetails]) => {
     if (newVisible && newPlanDetails) {
+      // Initialize previous rider price when modal opens
+      previousTotalRiderPrice.value = 0;
+
       const planId = newPlanDetails.planId || newPlanDetails.id;
       if (planId) {
         getRiderDetails(planId);
       }
+    } else if (!newVisible) {
+      // Reset when modal closes
+      previousTotalRiderPrice.value = 0;
+      ridersData.value = [];
     }
   },
   { immediate: true },
+);
+
+// Watch for changes in rider coverValue2 and sync to price field
+watch(
+  () => ridersData.value,
+  () => {
+    ridersData.value.forEach(rider => {
+      // Sync coverValue2 to price for API payload
+      rider.price = parseFloat(rider.coverValue2 || 0);
+    });
+  },
+  { deep: true },
 );
 
 // Sync investment frequency ID when investmentFrequency changes (same as CreatePlan)
