@@ -313,7 +313,7 @@ class SageProcessesService extends BaseService
         }
 
         try {
-            $responseData = json_decode($firstFailedLog->response, true);
+            $responseData = $this->decodeJsonResponse($firstFailedLog->response);
 
             // Safely extract nested error message value with validation
             return ! empty($responseData['error']['message']['value'])
@@ -326,6 +326,21 @@ class SageProcessesService extends BaseService
 
             return null;
         }
+    }
+
+    /**
+     * Decode JSON response and handle double-encoded JSON strings
+     */
+    protected function decodeJsonResponse(string $jsonString): ?array
+    {
+        $decoded = json_decode($jsonString, true);
+
+        // Check if response is double-encoded JSON string and decode again
+        if (is_string($decoded)) {
+            $decoded = json_decode($decoded, true);
+        }
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     /**
