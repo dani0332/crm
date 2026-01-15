@@ -1,6 +1,7 @@
 <script setup>
 import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
+import { computed } from 'vue';
 
 defineProps({
   quote: Object,
@@ -39,6 +40,8 @@ const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const documentTypeEnum = page.props.documentTypeEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -81,7 +84,7 @@ const docForm = reactive({
   file: null,
 });
 
-const uploadFile = (doc, filesWithInfo) => {
+const uploadFile = (doc, filesWithInfo, documentTypeKey) => {
   successStatus.value[doc.id] = false;
   errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
@@ -102,6 +105,8 @@ const uploadFile = (doc, filesWithInfo) => {
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
   formData.append('quote_type', usePage().props.quoteType);
+  formData.append('document_type_key', documentTypeKey);
+
   files.forEach(file => {
     formData.append('files[]', file.file);
   });
@@ -250,6 +255,31 @@ onUnmounted(() => {
     handleDocumentNotification,
   );
 });
+
+const issuanceDocDisableToolTip = ref('');
+const isPolicyLocked = (quoteStatusId) => {
+  return [quoteStatusEnum.PolicyBooked, quoteStatusEnum.POLICY_BOOKING_QUEUED, quoteStatusEnum.POLICY_BOOKING_FAILED].includes(quoteStatusId);
+};
+
+const isIssuingDocumentsTabDisabled = (key) => {
+  let quoteStatusId = page.props.quote.quote_status_id;
+  if (key === documentTypeEnum.ISSUING_DOCUMENTS && isPolicyLocked(quoteStatusId)) {
+    let status = '';
+    if (quoteStatusId === quoteStatusEnum.PolicyBooked) {
+      status = 'booked';
+    } else if (quoteStatusId === quoteStatusEnum.POLICY_BOOKING_QUEUED) {
+      status = 'in queued';
+    } else if (quoteStatusId === quoteStatusEnum.POLICY_BOOKING_FAILED) {
+      status = 'failed';
+    }
+
+    issuanceDocDisableToolTip.value = `Issuing Document uploads are not allowed after policy is ${status}. Please use Send Update (CPU) to upload additional issuing documents.`;
+
+    return true;
+  }
+
+  return false;
+};
 </script>
 
 <template>
@@ -424,11 +454,21 @@ onUnmounted(() => {
           v-for="(docType, key, index) in documentTypes"
           :key="index"
           :disabled="
-            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
+            (key === documentTypeEnum.ISSUING_DOCUMENTS &&
             !quote.insurance_provider_id &&
-            !quote.plan_id
+            !quote.plan_id) || isIssuingDocumentsTabDisabled(key)
           "
         >
+          <template #tab v-if="isIssuingDocumentsTabDisabled(key)">
+            <div class="flex items-center justify-center">
+              <x-tooltip placement="right">
+                <span class="font-medium">{{ key.replace(/_/g, ' ') }}</span>
+                <template #tooltip>
+                  {{ issuanceDocDisableToolTip }}
+                </template>
+              </x-tooltip>
+            </div>
+          </template>
           <div
             v-for="documentType in docType"
             :key="documentType.id"
@@ -480,7 +520,7 @@ onUnmounted(() => {
                   !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
                 "
                 :multiple="true"
-                @change="uploadFile(documentType, $event)"
+                @change="uploadFile(documentType, $event, key)"
               />
 
               <template
