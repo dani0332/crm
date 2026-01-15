@@ -8,6 +8,7 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Events\QuoteEmailUpdated;
@@ -653,7 +654,7 @@ class CarQuote extends BaseModel
             ->where('type', RenewalsUploadType::UPDATE_LEADS)
             ->where('status', RenewalProcessStatuses::PLANS_FETCHED)
             ->where('email_sent', 1)
-            ->where('quote_type_id', QuoteTypeId::Car)
+            ->where('quote_type', QuoteTypeShortCode::CAR)
             ->latest('created_at');
     }
 }
