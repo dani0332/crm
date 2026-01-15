@@ -428,6 +428,7 @@ class CoreSchema
                 $table->string('sage_commission_receipt_id')->nullable();
                 $table->unsignedBigInteger('payment_gateway_id')->nullable();
                 $table->morphs('paymentable'); // Creates paymentable_id and paymentable_type
+                $table->boolean('is_main_lead_payment')->default(false);
                 $table->timestamps();
                 $table->softDeletes();
             },
