@@ -73,4 +73,5 @@ final class WorkflowTypeEnum extends Enum
 
     // Misreport Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
+    public const SEND_FAILED_ILA_EMAILS = 'send_failed_ila_emails';
 }
