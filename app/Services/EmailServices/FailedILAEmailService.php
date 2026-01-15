@@ -30,6 +30,7 @@ class FailedILAEmailService
                 'arsalan.khan@insurancemarket.ae',
                 'jerin.mathew@insurancemarket.ae',
             ],
+            QuoteTypes::JETSKI->value,
             QuoteTypes::BIKE->value => [
                 'jerin.mathew@insurancemarket.ae',
             ],
