@@ -78,7 +78,6 @@ const permissionsEnum = page.props.permissionsEnum;
           :href="
             route('batch-plans-processes-status', {
               id: batch,
-              renewalStatusProcessId: id,
             })
           "
         >

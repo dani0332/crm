@@ -391,16 +391,15 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
-    public function plansProcessesStatus($batch, $renewalStatusProcessId)
+    public function plansProcessesStatus($batch)
     {
         $query = RenewalQuoteProcess::where([
             'status' => RenewalProcessStatuses::PROCESSED,
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
-            'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ['step_errors', '!=', null],
-        ])->with(['renewalUploadLead', 'carQuote']);
+            'fetch_plans_status' => FetchPlansStatuses::PENDING
+        ])->whereNotNull('step_errors')->with(['renewalUploadLead', 'carQuote']);
         $process = $query->simplePaginate();
 
         return inertia('Renewals/PlanProcessesStatus', [

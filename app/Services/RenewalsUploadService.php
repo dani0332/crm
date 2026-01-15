@@ -551,7 +551,13 @@ class RenewalsUploadService
             } else {
                 LoggerService::info($logPrefix.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
 
-                $renewalQuoteProcess->update(['step_errors' => [$plansResponse], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
+                // Properly extract or stringify $plansResponse for step_errors so Vue renders useful info.
+                $errorMsg = is_string($plansResponse)
+                    ? $plansResponse
+                    : (is_object($plansResponse) || is_array($plansResponse)
+                        ? json_encode($plansResponse)
+                        : strval($plansResponse));
+                $renewalQuoteProcess->update(['step_errors' => [$errorMsg], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
             }
         } else {
