@@ -86,8 +86,7 @@ class DeviceQuoteService extends BaseQuoteService
                     'customer',
                     'customer.additionalContactInfo',
                     'insuranceProvider:id,text,code',
-                    'insuranceProviderPlan',
-                    'insuranceProvider',
+                    'insuranceProviderPlan.insuranceProvider',
                     'payments' => function ($q) {
                         $q->with([
                             'paymentStatus',

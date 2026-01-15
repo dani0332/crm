@@ -342,12 +342,11 @@ const planDetailsTabs = ref([
   { index: 1, label: 'Included Benefits' },
   { index: 2, label: 'Policy Wordings' },
 ]);
-
 const selectedProviderPlan = ref({
   id: page.props?.quote?.plan_id,
-  planName: page.props?.quote?.plans?.name,
-  providerName: page.props?.quote?.plans?.providerName,
-  premium: page.props?.quote?.plans?.premium,
+  planName: page.props?.quote?.insurance_provider_plan?.text,
+  providerName: page.props?.quote?.insurance_provider_plan?.insurance_provider?.text,
+  premium: page.props?.quote?.premium,
 });
 
 const handlePlanSelected = plan => {
@@ -824,7 +823,7 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>Al Wathba National Insurance Company</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
