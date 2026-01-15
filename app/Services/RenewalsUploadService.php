@@ -1864,7 +1864,7 @@ class RenewalsUploadService
                 $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
                 // if the lead is a Genesis lead, then set the current insurer to empty
                 if ($checkGenesisLead['status']) {
-                    $emailData->currentInsurer = "";
+                    $emailData->currentInsurer = '';
                 }
                 LoggerService::info($logPrefix.' Renewals OCB Email email data created');
 
