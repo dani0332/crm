@@ -45,7 +45,7 @@ const tableHeader = [
     hide-footer
   >
     <template #item-renewal_upload_lead="{ renewal_upload_lead }">
-      {{ renewal_upload_lead?.file_name ?? "-" }}
+      {{ renewal_upload_lead?.file_name ?? '-' }}
     </template>
     <template #item-step_errors="{ step_errors }">
       <ul class="list-disc m-2 marker:text-red-600">
