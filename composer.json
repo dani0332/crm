@@ -43,8 +43,8 @@
     "tightenco/ziggy": "^2.0"
   },
   "require-dev": {
-    "spatie/laravel-ignition": "^2.3",
     "fakerphp/faker": "^1.9.1",
+    "laravel/boost": "^1.8",
     "laravel/pint": "^1.0",
     "laravel/sail": "^1.6",
     "laravel/ui": "^4.2.2",
@@ -52,7 +52,8 @@
     "nunomaduro/collision": "^8.1",
     "pestphp/pest": "^3.8.2",
     "pestphp/pest-plugin-laravel": "^3.0",
-    "phpunit/phpunit": "^11.5.15"
+    "phpunit/phpunit": "^11.5.15",
+    "spatie/laravel-ignition": "^2.3"
   },
   "autoload": {
     "files": [
