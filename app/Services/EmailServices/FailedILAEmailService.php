@@ -51,7 +51,7 @@ class FailedILAEmailService
             return;
         }
 
-        $leadsCount = $this->getFailedILALeads($quoteType, justCount: true);
+        $leadsCount = $this->getFailedILALeads($quoteType->value, justCount: true);
 
         if ($leadsCount === 0) {
             LoggerService::info(self::class." - sendFailedIlaEmails - No failed ILA leads found for quote type: {$quoteType->value}");
@@ -132,7 +132,7 @@ class FailedILAEmailService
                 break;
 
             default:
-                $leads = [];
+                $leads = $justCount ? 0 : collect();
                 break;
         }
 
