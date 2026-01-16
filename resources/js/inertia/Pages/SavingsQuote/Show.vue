@@ -1,7 +1,7 @@
 <script setup>
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { createReusableTemplate } from '@vueuse/core';
-import { reactive } from 'vue';
+import { reactive, watch, onMounted, nextTick } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -278,6 +278,21 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  
+  // Handle initial state: if plan is already selected and is ecommerce,
+  // ensure ecomDetail is updated once plans are loaded
+  // The handlePlansLoaded event handler will update ecomDetail when plans arrive,
+  // but we also check here as a fallback in case plans are already loaded
+  if (props.quote?.is_ecommerce && props.quote?.plan_id) {
+    // Use nextTick to ensure child components (AvailablePlans) have mounted
+    nextTick(() => {
+      // If plans are already loaded, update immediately
+      // Otherwise, wait for the plans-loaded event
+      if (sharedAvailablePlans.value.length > 0) {
+        updateEcomDetailFromPlans();
+      }
+    });
+  }
 });
 
 const sectionExpanded = computed(() => true);
@@ -299,12 +314,12 @@ const handlePlanSelected = plan => {
     preserveScroll: true,
     only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
   });
-  // Reload ecom data after plan selection
-  if (props.quote?.is_ecommerce) {
-    setTimeout(() => {
-      onLoadAvailablePlansData();
-    }, 500);
-  }
+};
+
+// Handle plans loaded event from AvailablePlans component
+const handlePlansLoaded = plans => {
+  sharedAvailablePlans.value = plans || [];
+  updateEcomDetailFromPlans();
 };
 
 const { copy, copied } = useClipboard();
@@ -320,7 +335,9 @@ const onCopyText = text => {
 // Ecom section - track selected plan for ecom display (similar to Life)
 const ecomDetail = ref(null);
 const planExchangeRate = ref(1);
-const availablePlansData = ref([]);
+
+// Shared available plans data from AvailablePlans component
+const sharedAvailablePlans = ref([]);
 
 // Get payment term label helper
 const getPaymentTermTitle = paymentTerm => {
@@ -409,60 +426,59 @@ const numberFormat = value => {
   }).format(value);
 };
 
-// Load available plans and find selected plan for ecom (similar to Life)
-const onLoadAvailablePlansData = async () => {
-  if (!props.quote?.is_ecommerce) return;
+// Update ecomDetail from shared available plans data
+const updateEcomDetailFromPlans = () => {
+  if (!props.quote?.is_ecommerce) {
+    ecomDetail.value = null;
+    return;
+  }
 
-  try {
-    const res = await axios.post(
-      `/quotes/savings/available-plans/${props.quote.uuid}`,
-      {
-        jsonData: true,
-      },
-    );
+  if (!sharedAvailablePlans.value.length) {
+    ecomDetail.value = null;
+    return;
+  }
 
-    const planData = res?.data || [];
-    availablePlansData.value = planData;
+  // Find the selected plan - check multiple ID fields
+  const selectedPlanId = props.quote?.plan_id;
+  if (!selectedPlanId) {
+    ecomDetail.value = null;
+    return;
+  }
 
-    // Find the selected plan (similar to Life quote)
-    const selectedPlanId = props.quote?.plan_id;
-    if (selectedPlanId && planData.length > 0) {
-      const foundPlan = planData.find(
-        plan => plan.id === selectedPlanId && !plan.isDisabled,
-      );
+  // Try to find plan by id, planId, or plan_id
+  const foundPlan = sharedAvailablePlans.value.find(
+    plan =>
+      (String(plan.id) === String(selectedPlanId) ||
+        String(plan.planId) === String(selectedPlanId) ||
+        String(plan.plan_id) === String(selectedPlanId)) &&
+      !plan.isDisabled,
+  );
 
-      if (foundPlan) {
-        ecomDetail.value = {
-          ...foundPlan,
-          providerName: foundPlan.providerName || foundPlan.provider?.text,
-          planName: foundPlan.name || foundPlan.planName,
-          actualPremium: parseFloat(foundPlan.actualPremium || 0),
-          totalPrice: parseFloat(foundPlan.actualPremium || 0),
-          currency: foundPlan.currency || 'AED',
-          paymentTerm: foundPlan.paymentTerm,
-          isApi: foundPlan.isApi || false,
-          isUnderwritten: foundPlan.isUnderwritten || false,
-        };
-      } else {
-        ecomDetail.value = null;
-      }
-    } else {
-      ecomDetail.value = null;
-    }
-  } catch (err) {
-    console.error('Error loading available plans for ecom:', err);
+  if (foundPlan) {
+    ecomDetail.value = {
+      ...foundPlan,
+      providerName: foundPlan.providerName || foundPlan.provider?.text || foundPlan.providerName,
+      planName: foundPlan.name || foundPlan.planName || foundPlan.text,
+      actualPremium: parseFloat(foundPlan.actualPremium || foundPlan.totalPrice || 0),
+      totalPrice: parseFloat(foundPlan.actualPremium || foundPlan.totalPrice || 0),
+      currency: foundPlan.currency || foundPlan.currencyName || 'AED',
+      paymentTerm: foundPlan.paymentTerm,
+      isApi: foundPlan.isApi || false,
+      isUnderwritten: foundPlan.isUnderwritten || false,
+    };
+  } else {
     ecomDetail.value = null;
   }
 };
 
-// Watch for quote changes and load ecom data
+// Watch for quote changes
 watch(
   () => props.quote?.is_ecommerce,
   isEcom => {
-    if (isEcom) {
-      onLoadAvailablePlansData();
-    } else {
+    if (!isEcom) {
       ecomDetail.value = null;
+    } else {
+      updateEcomDetailFromPlans();
     }
   },
   { immediate: true },
@@ -472,29 +488,19 @@ watch(
 watch(
   () => props.quote?.plan_id,
   () => {
-    if (props.quote?.is_ecommerce && availablePlansData.value.length > 0) {
-      const selectedPlanId = props.quote?.plan_id;
-      const foundPlan = availablePlansData.value.find(
-        plan => plan.id === selectedPlanId && !plan.isDisabled,
-      );
+    updateEcomDetailFromPlans();
+  },
+);
 
-      if (foundPlan) {
-        ecomDetail.value = {
-          ...foundPlan,
-          providerName: foundPlan.providerName || foundPlan.provider?.text,
-          planName: foundPlan.name || foundPlan.planName,
-          actualPremium: parseFloat(foundPlan.actualPremium || 0),
-          totalPrice: parseFloat(foundPlan.actualPremium || 0),
-          currency: foundPlan.currency || 'AED',
-          paymentTerm: foundPlan.paymentTerm,
-          isApi: foundPlan.isApi || false,
-          isUnderwritten: foundPlan.isUnderwritten || false,
-        };
-      } else {
-        ecomDetail.value = null;
-      }
+// Watch for shared plans changes to update ecomDetail
+watch(
+  () => sharedAvailablePlans.value,
+  () => {
+    if (props.quote?.is_ecommerce) {
+      updateEcomDetailFromPlans();
     }
   },
+  { deep: true },
 );
 </script>
 
@@ -1187,6 +1193,7 @@ watch(
       :lookUpData="lookUpData"
       :localLookups="localLookups"
       @plan-selected="handlePlanSelected"
+      @plans-loaded="handlePlansLoaded"
     />
 
     <!-- Ecom Plan Detail -->

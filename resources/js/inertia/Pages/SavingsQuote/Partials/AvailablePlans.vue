@@ -4,7 +4,7 @@ import SelectPlan from '@/inertia/Components/SelectPlan.vue';
 import LazyCreatePlan from './CreatePlan.vue';
 import PlanDetails from './PlanDetails.vue';
 
-const emit = defineEmits(['plan-selected']);
+const emit = defineEmits(['plan-selected', 'plans-loaded']);
 
 const props = defineProps({
   quote: Object,
@@ -215,7 +215,7 @@ const fmt = v =>
     : 'N/A';
 
 const handlePlanSelected = plan => {
-  if(plan.insurerQuoteNo === '' || plan.insurerQuoteNo === null) {
+  if (plan.insurerQuoteNo === '' || plan.insurerQuoteNo === null) {
     notification.error({
       title: 'Please select a plan with an insurer quote number',
       position: 'top',
@@ -261,10 +261,15 @@ const onLoadAvailablePlansData = async () => {
       }));
 
       availablePlansTable.data = processedPlans;
+
+      // Emit plans-loaded event for parent component (Show.vue) to use for ecom section
+      emit('plans-loaded', processedPlans);
     })
     .catch(err => {
       console.log(err);
       availablePlansTable.data = [];
+      // Emit empty array so parent can update ecomDetail
+      emit('plans-loaded', []);
     })
     .finally(() => {
       availablePlansTable.isLoading = false;
