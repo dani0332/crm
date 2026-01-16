@@ -5,7 +5,6 @@ use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
-use Mockery;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
