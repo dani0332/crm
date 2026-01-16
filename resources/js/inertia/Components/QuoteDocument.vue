@@ -1,7 +1,6 @@
 <script setup>
 import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
-import { computed } from 'vue';
 
 defineProps({
   quote: Object,
