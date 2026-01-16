@@ -4615,6 +4615,7 @@ const handleCancelConfirmationModal = () => {
       :canDelete="false"
       :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

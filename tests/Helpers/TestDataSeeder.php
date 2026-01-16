@@ -2,10 +2,13 @@
 
 namespace Tests\Helpers;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\CarQuote;
 use App\Enums\AuthGuardEnum;
 use App\Enums\PermissionsEnum;
 use App\Models\Nationality;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class TestDataSeeder
@@ -231,6 +234,85 @@ class TestDataSeeder
         self::seedRolePermissions(\App\Enums\RolesEnum::Admin, $permissionsToSeed);
 
         return $user;
+    }
+
+    /**
+     * Seed the Bird workflow URL used by AIG workflow (same key as NB motor workflow).
+     */
+    public static function seedBirdNbMotorWorkflowUrl(string $url = 'https://example.test/workflow'): void
+    {
+        $db = DB::connection('sqlite');
+
+        $existingId = $db->table('application_storage')
+            ->where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)
+            ->value('id');
+
+        if ($existingId) {
+            $db->table('application_storage')
+                ->where('id', $existingId)
+                ->update(['value' => $url, 'updated_at' => now()]);
+
+            return;
+        }
+
+        $db->table('application_storage')->insert([
+            'key_name' => ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW,
+            'value' => $url,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * Seed the Bird AccessKey used for access-key authenticated Bird calls.
+     */
+    public static function seedBirdAccessKey(string $accessKey = 'test-access-key'): void
+    {
+        $db = DB::connection('sqlite');
+
+        $existingId = $db->table('application_storage')
+            ->where('key_name', ApplicationStorageEnums::BIRD_ACCESS_KEY)
+            ->value('id');
+
+        if ($existingId) {
+            $db->table('application_storage')
+                ->where('id', $existingId)
+                ->update(['value' => $accessKey, 'updated_at' => now()]);
+
+            return;
+        }
+
+        $db->table('application_storage')->insert([
+            'key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY,
+            'value' => $accessKey,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * Create a minimal CarQuote record for AIG workflow tests (SQLite connection).
+     */
+    public static function createCarQuote(array $overrides = []): CarQuote
+    {
+        $defaults = [
+            'uuid' => 'test-car-quote-uuid-'.uniqid(),
+            'code' => 'TEST-'.uniqid(),
+            'first_name' => 'Test',
+            'last_name' => 'Customer',
+            'email' => 'customer@example.com',
+            'mobile_no' => '0500000000',
+            'advisor_id' => null,
+            'quote_status_id' => null,
+            'aig_flow_executed_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $db = DB::connection('sqlite');
+        $id = $db->table('car_quote_request')->insertGetId(array_merge($defaults, $overrides));
+
+        return CarQuote::on('sqlite')->findOrFail($id);
     }
 
     /**
