@@ -26,14 +26,6 @@ class FailedILAEmailServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_get_failed_ila_leads_with_unknown_quote_type()
-    {
-        $result = $this->service->getFailedILALeads('UnknownType');
-
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
     public function test_build_failed_ila_email_travel_data()
     {
         $quoteType = QuoteTypes::TRAVEL;

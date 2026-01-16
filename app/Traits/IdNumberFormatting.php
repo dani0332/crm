@@ -52,4 +52,19 @@ trait IdNumberFormatting
             }
         );
     }
+
+    /**
+     * Normalize Emirates ID in the given attributes array
+     * Removes hyphens from id_number when id_type is emiratesId
+     */
+    protected static function normalizeEmiratesId(array $attributes): array
+    {
+        if (isset($attributes['id_type'], $attributes['id_number'])
+            && $attributes['id_type'] === 'emiratesId'
+            && is_string($attributes['id_number'])) {
+            $attributes['id_number'] = str_replace('-', '', $attributes['id_number']);
+        }
+
+        return $attributes;
+    }
 }
