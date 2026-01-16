@@ -215,10 +215,18 @@ const fmt = v =>
     : 'N/A';
 
 const handlePlanSelected = plan => {
-  selectedProviderPlan.value.id = plan.id;
-  selectedProviderPlan.value.planName = plan.planName;
-  selectedProviderPlan.value.providerName = plan.providerName;
-  selectedProviderPlan.value.premium = plan.premium;
+  if(plan.insurerQuoteNo === '' || plan.insurerQuoteNo === null) {
+    notification.error({
+      title: 'Please select a plan with an insurer quote number',
+      position: 'top',
+    });
+    return;
+  } else {
+    selectedProviderPlan.value.id = plan.id;
+    selectedProviderPlan.value.planName = plan.planName;
+    selectedProviderPlan.value.providerName = plan.providerName;
+    selectedProviderPlan.value.premium = plan.premium;
+  }
   router.reload({
     preserveState: true,
     preserveScroll: true,
