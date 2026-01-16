@@ -22,6 +22,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SLA\SLAService;
 use Illuminate\Http\Request;
 
@@ -378,6 +379,7 @@ class HealthQuoteController extends Controller
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         $newBusiness = [
             QuoteStatusEnum::Quoted => 0,
@@ -478,6 +480,7 @@ class HealthQuoteController extends Controller
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
+            'renewalBatches' => $renewalBatches,
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,

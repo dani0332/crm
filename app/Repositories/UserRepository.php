@@ -83,6 +83,7 @@ class UserRepository extends BaseRepository
         }
 
         return $this->with(['roles'])
+            ->activeUser()
             ->whereHas('roles', function ($q) use ($roles) {
                 $q->whereIn('name', $roles);  // todo: add required roles here
             })->get();
