@@ -107,7 +107,7 @@ const onAdditionalContactSubmit = isValid => {
 const isPrimaryEmailLocked = computed(() => {
   return [
     quoteStatusEnum.POLICY_BOOKING_QUEUED,
-    quoteStatusEnum.POLICY_BOOKING_FAILED
+    quoteStatusEnum.POLICY_BOOKING_FAILED,
   ].includes(page.props.quote?.quote_status_id);
 });
 
@@ -256,16 +256,12 @@ onMounted(() => {
                 v-if="isPrimaryEmailLocked && item.key === 'email'"
                 placement="bottom"
               >
-                <x-button
-                  size="xs"
-                  color="red"
-                  outlined
-                  disabled
-                >
+                <x-button size="xs" color="red" outlined disabled>
                   Make Primary
                 </x-button>
                 <template #tooltip>
-                  Primary email ID cannot be changed while the policy booking is in progress.
+                  Primary email ID cannot be changed while the policy booking is
+                  in progress.
                 </template>
               </x-tooltip>
               <x-button
