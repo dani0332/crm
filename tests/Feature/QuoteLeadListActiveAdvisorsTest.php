@@ -10,12 +10,6 @@ use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    // Create minimal .env file if it doesn't exist to prevent warnings
-    $envPath = base_path('.env');
-    if (!file_exists($envPath)) {
-        @file_put_contents($envPath, "APP_KEY=base64:QG4xG8/vfc0DROuK5Kg0SfKBxxdajm9MzjfprF738JI=\n");
-    }
-    
     // Ensure default database connection is sqlite for tests
     config(['database.default' => 'sqlite']);
     \Illuminate\Support\Facades\DB::setDefaultConnection('sqlite');

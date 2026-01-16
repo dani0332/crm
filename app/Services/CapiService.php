@@ -21,7 +21,7 @@ class CapiService
         $this->baseUrl = config('constants.CENTRAL_API_ENDPOINT');
 
         $timeout = config('constants.CENTRAL_API_TIMEOUT');
-        $timeout = $timeout === '' || $timeout === null ? 30 : (int) $timeout;
+        $timeout = empty($timeout) ? 30 : (int) $timeout;
 
         $this->client = Http::withBasicAuth(config('constants.CENTRAL_API_USER'), config('constants.CENTRAL_API_PWD'))
             ->withHeaders([
