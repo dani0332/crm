@@ -1471,6 +1471,13 @@ const additionalContactPrimaryConfirmed = () => {
         contactLoader.value = false;
         modals.contactPrimaryConfirm = false;
       },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      },
     },
   );
 };
