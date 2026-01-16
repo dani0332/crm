@@ -39,7 +39,7 @@ class CustomerPrimaryEmailRequest extends FormRequest
             if ($this->key === GenericRequestEnum::EMAIL) {
                 $quote = $this->getQuoteObject($this->quote_type, $this->quote_id);
                 if (
-                    in_array($quote->quote_status_id, [
+                    in_array($quote?->quote_status_id, [
                         QuoteStatusEnum::POLICY_BOOKING_QUEUED,
                         QuoteStatusEnum::POLICY_BOOKING_FAILED,
                     ])
