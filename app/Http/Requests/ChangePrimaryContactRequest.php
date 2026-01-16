@@ -47,8 +47,19 @@ class ChangePrimaryContactRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            // Use route parameter 'quoteId' instead of body parameter 'quote_id' to prevent bypass
+            $routeQuoteId = $this->route('quoteId');
+            $bodyQuoteId = $this->quote_id;
+
+            // Ensure body parameter matches route parameter if both exist
+            if ($routeQuoteId && $bodyQuoteId && $routeQuoteId != $bodyQuoteId) {
+                $validator->errors()->add('error', 'Quote ID in request body does not match the URL parameter.');
+            }
+
             if ($this->key === GenericRequestEnum::EMAIL) {
-                $quote = PersonalQuoteRepository::findOrFail($this->quote_id);
+                // Prioritize route parameter over body parameter
+                $quoteId = $routeQuoteId ?? $bodyQuoteId;
+                $quote = PersonalQuoteRepository::findOrFail($quoteId);
                 if (
                     in_array($quote->quote_status_id, [
                         QuoteStatusEnum::POLICY_BOOKING_QUEUED,
