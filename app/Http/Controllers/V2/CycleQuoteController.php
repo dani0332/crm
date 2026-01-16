@@ -399,6 +399,7 @@ class CycleQuoteController extends Controller
 
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Cycle);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Cycle);
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('CycleQuote/Cards', [
             'quotes' => $quotes,
@@ -415,6 +416,7 @@ class CycleQuoteController extends Controller
             // 'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
             'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
+            'renewalBatches' => $renewalBatches,
         ]);
     }
 }
