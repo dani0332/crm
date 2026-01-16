@@ -129,7 +129,7 @@ class UserService extends BaseService
         return User::query()
             ->join('user_manager', 'user_manager.user_id', '=', 'users.id')
             ->where('user_manager.manager_id', $userId)
-            ->ActiveUser()
+            ->activeUser()
             ->select(['users.id', 'users.name', 'users.email'])
             ->get();
     }

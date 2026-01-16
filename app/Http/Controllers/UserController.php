@@ -518,7 +518,7 @@ class UserController extends Controller
         return User::join('model_has_roles', 'model_has_roles.model_id', 'users.id')
             ->join('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', $combinedRoleNames)
-            ->ActiveUser()
+            ->activeUser()
             ->select(
                 'users.id',
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
