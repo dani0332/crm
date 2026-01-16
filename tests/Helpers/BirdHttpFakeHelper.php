@@ -165,4 +165,3 @@ final class BirdHttpFakeHelper
         return $normalized;
     }
 }
-

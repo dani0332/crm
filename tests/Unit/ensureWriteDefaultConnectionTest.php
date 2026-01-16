@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\DatabaseConnectionEnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Tests\TestCase;
 
 beforeEach(function (): void {
     $GLOBALS['__originalDefaultDbConnection'] = DB::getDefaultConnection();
@@ -69,4 +68,3 @@ it('does not log warning when no switch occurs', function (): void {
 
     Log::shouldNotHaveReceived('warning');
 });
-
