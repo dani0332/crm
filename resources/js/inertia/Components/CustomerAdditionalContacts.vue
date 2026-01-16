@@ -25,10 +25,10 @@ const props = defineProps({
     required: false,
     default: true,
   },
-  expanded: {
-    type: Boolean,
-    default: false,
+  quoteStatusId: {
+    type: Number,
     required: false,
+    default: null,
   },
 });
 
@@ -38,6 +38,7 @@ const notification = useNotifications('toast');
 const page = usePage();
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const contactLoader = ref(false);
 const EmailCheckLoader = ref(false);
@@ -98,6 +99,13 @@ const onAdditionalContactSubmit = isValid => {
       },
     });
 };
+
+const isPrimaryEmailLocked = computed(() => {
+  return [
+    quoteStatusEnum.POLICY_BOOKING_QUEUED,
+    quoteStatusEnum.POLICY_BOOKING_FAILED,
+  ].includes(props.quoteStatusId);
+});
 
 const confirmData = reactive({
   contactPrimary: null,
@@ -266,12 +274,24 @@ const readOnlyMode = reactive({
           </template>
           <template #item-action="item">
             <div class="space-x-4">
+              <x-tooltip
+                v-if="isPrimaryEmailLocked && item.key === 'email'"
+                placement="bottom"
+              >
+                <x-button size="xs" color="red" outlined disabled>
+                  Make Primary
+                </x-button>
+                <template #tooltip>
+                  Primary email ID cannot be changed while the policy booking is
+                  in progress.
+                </template>
+              </x-tooltip>
               <x-button
+                v-else-if="readOnlyMode.isDisable === true"
                 size="xs"
                 color="emerald"
                 outlined
                 @click.prevent="additionalContactPrimary(item)"
-                v-if="readOnlyMode.isDisable === true"
               >
                 Make Primary
               </x-button>

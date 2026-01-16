@@ -1963,6 +1963,7 @@ const updateProfileDetails = isValid => {
       :contacts="customerAdditionalContactsData"
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail
