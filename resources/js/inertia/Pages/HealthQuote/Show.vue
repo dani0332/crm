@@ -3285,8 +3285,8 @@ const isPrimaryEmailLocked = computed(() => {
                     Make Primary
                   </x-button>
                   <template #tooltip>
-                    Primary email ID cannot be changed while the policy booking is
-                    in progress.
+                    Primary email ID cannot be changed while the policy booking
+                    is in progress.
                   </template>
                 </x-tooltip>
                 <x-button
