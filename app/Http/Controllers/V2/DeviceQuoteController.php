@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -34,11 +35,13 @@ class DeviceQuoteController extends Controller
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
         $paymentStatuses = app(LookupService::class)->getPaymentStatuses();
         $query = $this->deviceQuoteService->getData();
+   
         $totalCount = count(request()->all()) > 1 || $this->deviceQuoteService->hasOtherFilters() ? $query->count() :
                     $this->deviceQuoteService->getData(forExport: true, getTotalCount: true);
         $data = $query->simplePaginate(10)->withQueryString();
-        $deviceCoverages = $this->deviceQuoteService->getDeviceCoverages();
 
+        $deviceCoverages = $this->deviceQuoteService->getDeviceCoverages();
+     
         return inertia('DeviceQuote/Index', [
             'quotes' => $data,
             'quoteStatuses' => $quoteStatuses,
@@ -49,6 +52,8 @@ class DeviceQuoteController extends Controller
             'paymentStatuses' => $paymentStatuses,
             'devicePlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::DEVICE->id())->select(['id', 'code', 'text'])->get(),
             'deviceCoverages' => $deviceCoverages,
+            'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+            'renewalBatches' => $this->deviceQuoteService->getRenewalBatches(),
         ]);
     }
 

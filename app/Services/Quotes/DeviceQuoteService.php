@@ -14,6 +14,7 @@ use App\Services\LookupService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DeviceQuoteService extends BaseQuoteService
 {
@@ -46,6 +47,10 @@ class DeviceQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->filterByAdvisorAssignedDates('quoteDetail', ['advisor_assigned_date_start', 'advisor_assigned_date_end'], verifyQuoteStatus: true)
+            ->filterIn('renewal_batch_id')
+            ->filterBy('assignment_type', ignoreAll: true)
+            ->filterByPrivateClient(request('private_client'))
             ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_tax_number', request('insurer_tax_invoice_number'));
@@ -55,6 +60,36 @@ class DeviceQuoteService extends BaseQuoteService
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
                 });
+            })
+            ->when(request()->filled('payment_authorised_date'), function ($q) {
+                $authorizedAtRange = request('payment_authorised_date');
+                if (is_array($authorizedAtRange) && count($authorizedAtRange) >= 2) {
+                    $startDate = $authorizedAtRange[0];
+                    $endDate = $authorizedAtRange[1];
+                    if ($startDate && $endDate) {
+                        $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when(request()->filled('payment_capture_date'), function ($q) {
+                $capturedAtRange = request('payment_capture_date');
+                if (is_array($capturedAtRange) && count($capturedAtRange) >= 2) {
+                    $startDate = $capturedAtRange[0];
+                    $endDate = $capturedAtRange[1];
+                    if ($startDate && $endDate) {
+                        $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                              Carbon::parse($startDate)->startOfDay(),
+                               Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
             });
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
