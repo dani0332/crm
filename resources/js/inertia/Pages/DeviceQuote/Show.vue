@@ -55,6 +55,7 @@ const props = defineProps({
   emailStatuses: Array,
   isFuncsEnabled: Object,
   paymentGatewayEnum: Array,
+  planURL: String,
 });
 
 const page = usePage();
@@ -416,6 +417,7 @@ const onLoadAvailablePlansData = async () => {
 
 const getPlanDetails = id => {
   viewButtonLoading.value = true;
+ 
   try {
     const foundPlan = availablePlansTable.data.find(plan => plan.id === id);
     if (foundPlan) {
@@ -1437,16 +1439,17 @@ const copyLink = () => {
 
                   <TabPanel>
                     <div class="p-6">
+                    
                       <div
                         v-if="
                           planDetails.benefits &&
-                          planDetails.benefits.INCLUSION &&
-                          planDetails.benefits.INCLUSION.length > 0
+                          planDetails.benefits.inclusion &&
+                          planDetails.benefits.inclusion.length > 0
                         "
                         class="space-y-3 max-w-3xl"
                       >
                         <div
-                          v-for="benefit in planDetails.benefits.INCLUSION"
+                          v-for="benefit in planDetails.benefits.inclusion"
                           :key="benefit.code"
                           class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-150"
                         >

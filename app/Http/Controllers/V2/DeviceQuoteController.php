@@ -14,9 +14,12 @@ use App\Services\AMLService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Quotes\DeviceQuoteService;
+use App\Traits\CentralTrait;
 
 class DeviceQuoteController extends Controller
 {
+    use CentralTrait;
+
     public function __construct(
         private DeviceQuoteService $deviceQuoteService,
         private QuoteDocumentService $quoteDocumentService
@@ -91,10 +94,12 @@ class DeviceQuoteController extends Controller
     public function show($uuid)
     {
         $data = $this->deviceQuoteService->getShowData($uuid);
+        $planURL = $this->getEcomQuoteLink(QuoteTypes::DEVICE, $uuid);
 
         return inertia('DeviceQuote/Show', array_merge($data,
             [
                 'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+                'planURL' => $planURL,
             ]));
     }
 
