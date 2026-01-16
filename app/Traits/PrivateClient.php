@@ -328,7 +328,7 @@ trait PrivateClient
     {
         $wasLeadUpdated = false;
 
-        if (is_null($model->pc_qualified)) {
+        if ($model->pc_qualified != true) {
             $updateData = ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
 
             $model->update($updateData);
