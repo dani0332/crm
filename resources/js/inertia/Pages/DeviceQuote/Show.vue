@@ -378,31 +378,53 @@ const onLoadAvailablePlansData = async () => {
         res.data?.quotes?.plans &&
         Array.isArray(res.data.quotes.plans)
       ) {
-        availablePlansTable.data = res.data.quotes.plans.map(plan => ({
-          ...plan,
-          isManualUpdate: plan.isManualUpdate ?? false,
-          isDisabled: plan.isDisabled ?? false,
-          coverageUpTo: plan.coverage ?? '-',
-          quoteNumber: plan.insurerQuoteNo ?? '-',
-          priceWithoutVat: plan.discountPremium ?? '0',
-          vat: plan.vat ?? '0',
-          priceWithVat: (
-            parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
-          ).toFixed(2),
-        }));
+        availablePlansTable.data = res.data.quotes.plans.map(plan => {
+          const priceWithoutVat = plan.discountPremium ?? plan.actualPremium ?? '0';
+          const vat = plan.vat ?? '0';
+          const priceWithVat = (
+            parseFloat(priceWithoutVat) + parseFloat(vat)
+          ).toFixed(2);
+          
+          return {
+            ...plan,
+            isManualUpdate: plan.isManualUpdate ?? false,
+            isDisabled: plan.isDisabled ?? false,
+            coverageUpTo: plan.coverage ?? '-',
+            quoteNumber: plan.insurerQuoteNo ?? '-',
+            providerName: plan.providerName ?? '',
+            name: plan.planName ?? plan.name ?? '',
+            priceWithoutVat: priceWithoutVat,
+            vat: vat,
+            priceWithVat: priceWithVat,
+            quote_premium: priceWithoutVat,
+            quote_VATamount: vat,
+            quote_premium_withVAT: priceWithVat,
+          };
+        });
       } else if (Array.isArray(res.data) && res.data.length > 0) {
-        availablePlansTable.data = res.data.map(plan => ({
-          ...plan,
-          isManualUpdate: plan.isManualUpdate ?? false,
-          isDisabled: plan.isDisabled ?? false,
-          coverageUpTo: plan.coverage ?? '-',
-          quoteNumber: plan.insurerQuoteNo ?? '-',
-          priceWithoutVat: plan.discountPremium ?? '0',
-          vat: plan.vat ?? '0',
-          priceWithVat: (
-            parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
-          ).toFixed(2),
-        }));
+        availablePlansTable.data = res.data.map(plan => {
+          const priceWithoutVat = plan.discountPremium ?? plan.actualPremium ?? '0';
+          const vat = plan.vat ?? '0';
+          const priceWithVat = (
+            parseFloat(priceWithoutVat) + parseFloat(vat)
+          ).toFixed(2);
+          
+          return {
+            ...plan,
+            isManualUpdate: plan.isManualUpdate ?? false,
+            isDisabled: plan.isDisabled ?? false,
+            coverageUpTo: plan.coverage ?? '-',
+            quoteNumber: plan.insurerQuoteNo ?? '-',
+            providerName: plan.providerName ?? '',
+            name: plan.planName ?? plan.name ?? '',
+            priceWithoutVat: priceWithoutVat,
+            vat: vat,
+            priceWithVat: priceWithVat,
+            quote_premium: priceWithoutVat,
+            quote_VATamount: vat,
+            quote_premium_withVAT: priceWithVat,
+          };
+        });
       } else {
         availablePlansTable.data = [];
       }
@@ -428,7 +450,23 @@ const getPlanDetails = id => {
       axios
         .get(`/device/${page.props.quote.uuid}/plan_details/${id}`)
         .then(res => {
-          planDetails.value = res.data;
+          const priceWithoutVat = res.data.discountPremium ?? res.data.actualPremium ?? '0';
+          const vat = res.data.vat ?? '0';
+          const priceWithVat = (
+            parseFloat(priceWithoutVat) + parseFloat(vat)
+          ).toFixed(2);
+          
+          planDetails.value = {
+            ...res.data,
+            providerName: res.data.providerName ?? '',
+            name: res.data.planName ?? res.data.name ?? '',
+            priceWithoutVat: priceWithoutVat,
+            vat: vat,
+            priceWithVat: priceWithVat,
+            quote_premium: priceWithoutVat,
+            quote_VATamount: vat,
+            quote_premium_withVAT: priceWithVat,
+          };
           modals.planDetails = true;
           viewButtonLoading.value = false;
         })
@@ -1360,7 +1398,7 @@ const copyLink = () => {
           <x-modal
             v-model="modals.planDetails"
             size="xl"
-            :title="`${planDetails?.providerName} - ${planDetails?.name}`"
+            :title="`${planDetails?.providerName} - Alfred's Smartphone Insurance`"
             show-close
             backdrop
           >
@@ -1418,10 +1456,38 @@ const copyLink = () => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                           <dt class="text-sm font-medium text-gray-700">
-                            Price
+                            Price (without VAT)
                           </dt>
                           <dd class="text-gray-900">
-                            {{ planDetails.actualPremium ?? '0' }}
+                            {{
+                              planDetails.quote_premium
+                                ? parseFloat(planDetails.quote_premium).toFixed(2)
+                                : '0.00'
+                            }}
+                          </dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700">
+                            VAT
+                          </dt>
+                          <dd class="text-gray-900">
+                            {{
+                              planDetails.quote_VATamount
+                                ? parseFloat(planDetails.quote_VATamount).toFixed(2)
+                                : '0.00'
+                            }}
+                          </dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700">
+                            Total Price (with VAT)
+                          </dt>
+                          <dd class="text-gray-900">
+                            {{
+                              planDetails.quote_premium_withVAT
+                                ? parseFloat(planDetails.quote_premium_withVAT).toFixed(2)
+                                : '0.00'
+                            }}
                           </dd>
                         </div>
 
