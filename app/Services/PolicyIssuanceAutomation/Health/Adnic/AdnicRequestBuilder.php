@@ -34,10 +34,10 @@ class AdnicRequestBuilder
         $inceptionDate = $healthUmafQuestionCollection->where('question_code', 'inceptionDate')->first()['answer_text'] ?? null;
         $currentlyPregnant = $healthUmafQuestionCollection->where('question_code', 'currentlyPregnant')->first()['answer_text'] ?? null;
         $emiratesId = $healthUmafQuestionCollection->where('question_code', 'emiratesId')->first()['answer_text'] ?? null;
-        $passportNumber = $healthUmafQuestionCollection->where('question_code', 'passportNumber')->first()['answer_text'];
+        $passportNumber = $healthUmafQuestionCollection->where('question_code', 'passportNumber')->first()['answer_text'] ?? null;
         $previouslyCovered = $healthUmafQuestionCollection->where('question_code', 'adnicInsured')->first()['answer_text'] ?? null;
         $sponsorCategory = $healthUmafQuestionCollection->where('question_code', 'sponsorCategory')->first()['answer_text'] ?? null;
-        $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()['answer_text'];
+        $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()['answer_text'] ?? null;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()['answer_text'] ?? null;
         $visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
         $customerClassification = AdnicEnum::CUSTOMER_CLASSIFICATION_NATURAL_PERSONS; // FIX Value
