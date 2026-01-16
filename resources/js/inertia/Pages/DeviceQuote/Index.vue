@@ -108,6 +108,7 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'PAYMENT AUTHORIZED DATE', value: 'authorized_at', is_active: true },
+  { text: 'PAYMENT CAPTURED DATE', value: 'captured_at', is_active: true },
   {
     text: 'LAST MODIFIED DATE',
     value: 'updated_at',
@@ -849,6 +850,11 @@ const assignmentTypeOptions = computed(() => {
       <template #item-authorized_at="item">
         <p v-if="item?.payment_status?.text === 'AUTHORISED'">
           {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-captured_at="item">
+        <p v-if="item?.payments[0]?.captured_at">
+          {{ item?.payments[0]?.captured_at }}
         </p>
       </template>
       <template #item-advisor="{ advisor }">
