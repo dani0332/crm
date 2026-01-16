@@ -61,29 +61,7 @@ class QuotesDocumentRequest extends FormRequest
                 return;
             }
 
-            // for safe side, if UI is not refreshed, then the issuance documents tab will be enabled, so we need to check the quote status here as well.
-            $quote = $this->getQuoteObject(request()->quote_type, request()->quote_id);
-            $quoteStatusId = $quote?->quote_status_id ?? null;
-
-            if (
-                request()->document_type_key === DocumentTypeEnum::ISSUING_DOCUMENTS &&
-                $quoteStatusId &&
-                in_array($quoteStatusId, [
-                    QuoteStatusEnum::PolicyBooked,
-                    QuoteStatusEnum::POLICY_BOOKING_QUEUED,
-                    QuoteStatusEnum::POLICY_BOOKING_FAILED
-                ])
-            ) {
-                if ($quoteStatusId == QuoteStatusEnum::PolicyBooked) {
-                    $status = 'booked';
-                } elseif ($quoteStatusId == QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
-                    $status = 'in queued';
-                } elseif ($quoteStatusId == QuoteStatusEnum::POLICY_BOOKING_FAILED) {
-                    $status = 'failed';
-                }
-
-                $validator->errors()->add('error', "Issuing Document uploads are not allowed after policy is {$status}. Please use Send Update (CPU) to upload additional issuing documents.");
-            }
+            $this->validateLockedQuoteStatus($validator);
 
             $uploadedDocuments = 0;
             $newFilesCount = count(request()->file('files') ?? []);
@@ -103,6 +81,33 @@ class QuotesDocumentRequest extends FormRequest
                 );
             }
         });
+    }
+
+    protected function validateLockedQuoteStatus($validator)
+    {
+        // for safe side, if UI is not refreshed, then the issuance documents tab will be enabled, so we need to check the quote status here as well.
+        $quote = $this->getQuoteObject(request()->quote_type, request()->quote_id);
+        $quoteStatusId = $quote?->quote_status_id ?? null;
+
+        if (
+            request()->document_type_key === DocumentTypeEnum::ISSUING_DOCUMENTS &&
+            $quoteStatusId &&
+            in_array($quoteStatusId, [
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+                QuoteStatusEnum::POLICY_BOOKING_FAILED
+            ])
+        ) {
+            if ($quoteStatusId == QuoteStatusEnum::PolicyBooked) {
+                $status = 'booked';
+            } elseif ($quoteStatusId == QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
+                $status = 'in queued';
+            } elseif ($quoteStatusId == QuoteStatusEnum::POLICY_BOOKING_FAILED) {
+                $status = 'failed';
+            }
+
+            $validator->errors()->add('error', "Issuing Document uploads are not allowed after policy is {$status}. Please use Send Update (CPU) to upload additional issuing documents.");
+        }
     }
 
     protected function validateSendUpdate($validator, &$uploadedDocuments)
