@@ -1,7 +1,7 @@
 <script setup>
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { createReusableTemplate } from '@vueuse/core';
-import { reactive, watch, onMounted, nextTick } from 'vue';
+import { nextTick, onMounted, reactive, watch } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -278,12 +278,12 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-  
+
   // Handle initial state: if plan is already selected and is ecommerce,
   // ensure ecomDetail is updated once plans are loaded
   // The handlePlansLoaded event handler will update ecomDetail when plans arrive,
   // but we also check here as a fallback in case plans are already loaded
-  if (props.quote?.is_ecommerce && props.quote?.plan_id) {
+  if (props.quote?.plan_id) {
     // Use nextTick to ensure child components (AvailablePlans) have mounted
     nextTick(() => {
       // If plans are already loaded, update immediately
@@ -428,11 +428,6 @@ const numberFormat = value => {
 
 // Update ecomDetail from shared available plans data
 const updateEcomDetailFromPlans = () => {
-  if (!props.quote?.is_ecommerce) {
-    ecomDetail.value = null;
-    return;
-  }
-
   if (!sharedAvailablePlans.value.length) {
     ecomDetail.value = null;
     return;
@@ -457,10 +452,17 @@ const updateEcomDetailFromPlans = () => {
   if (foundPlan) {
     ecomDetail.value = {
       ...foundPlan,
-      providerName: foundPlan.providerName || foundPlan.provider?.text || foundPlan.providerName,
+      providerName:
+        foundPlan.providerName ||
+        foundPlan.provider?.text ||
+        foundPlan.providerName,
       planName: foundPlan.name || foundPlan.planName || foundPlan.text,
-      actualPremium: parseFloat(foundPlan.actualPremium || foundPlan.totalPrice || 0),
-      totalPrice: parseFloat(foundPlan.actualPremium || foundPlan.totalPrice || 0),
+      actualPremium: parseFloat(
+        foundPlan.actualPremium || foundPlan.totalPrice || 0,
+      ),
+      totalPrice: parseFloat(
+        foundPlan.actualPremium || foundPlan.totalPrice || 0,
+      ),
       currency: foundPlan.currency || foundPlan.currencyName || 'AED',
       paymentTerm: foundPlan.paymentTerm,
       isApi: foundPlan.isApi || false,

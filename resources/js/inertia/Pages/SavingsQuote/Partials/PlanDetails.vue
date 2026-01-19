@@ -101,6 +101,44 @@ const formattedPrice = computed(() => {
   });
 });
 
+const addOns = [
+  {
+    code: 'myAlfred',
+    text: 'myAlfred membership',
+    text_ar: null,
+    description:
+      'As an InsuranceMarket.ae customer you get access to the myAlfred app, which includes exclusive offers and discounts from a whole host of non-insurance brands which add up to total savings of over AED 8,000.',
+    description_ar: null,
+    type: 'checkbox',
+    options: [
+      {
+        value: 'Included',
+        value_ar: null,
+        price: 0,
+        description:
+          'As an InsuranceMarket.ae customer you get access to the myAlfred app, which includes exclusive offers and discounts...',
+      },
+    ],
+  },
+  {
+    code: 'fastTrackClaim',
+    text: 'Fast track claims service',
+    text_ar: null,
+    description:
+      'Through the fast track claims service, a dedicated claims manager mediates your claim with the insurance companies, right from claim registration to the the completion of vehicle repairs, all in a timely manner helping you every step of the way.',
+    description_ar: null,
+    type: 'checkbox',
+    options: [
+      {
+        value: 'Included',
+        value_ar: null,
+        price: 0,
+        description: null,
+      },
+    ],
+  },
+];
+
 // Form for individual plan updates
 const planForm = useForm({
   quote_uuid: '',
@@ -181,6 +219,48 @@ const onToggleManual = () => {
   setTimeout(() => {
     toggleManualLoader.value = false;
   }, 300);
+};
+
+// Hide/Unhide toggle state
+const toggleHideLoader = ref(false);
+
+const onToggleHidePlan = async () => {
+  if (!props.planDetails?.id || !props.quote?.uuid) {
+    return;
+  }
+
+  toggleHideLoader.value = true;
+
+  // Read the current value (v-model updates before @change fires)
+  const toggleValue = props.planDetails.isDisabled; // true = hide, false = show
+  const previousValue = !toggleValue;
+
+  try {
+    await axios.post(route('manualPlanToggle', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      planIds: [props.planDetails.id],
+      quote_uuid: props.quote.uuid,
+      toggle: toggleValue, // true = hide, false = show
+    });
+
+    notification.success({
+      title: `Plan has been ${toggleValue ? 'hidden' : 'shown'}`,
+      position: 'top',
+    });
+
+    // Emit update event to refresh plan details in parent
+    emit('update');
+  } catch (error) {
+    console.error('Error toggling plan visibility:', error);
+    notification.error({
+      title: 'Error updating plan visibility',
+      position: 'top',
+    });
+    // Revert the toggle on error
+    props.planDetails.isDisabled = previousValue;
+  } finally {
+    toggleHideLoader.value = false;
+  }
 };
 
 const onUpdateIndividualPlan = () => {
@@ -513,7 +593,12 @@ watch(
                     v-model="planDetails.isDisabled"
                     color="default"
                     label="Hide Plan?"
-                    :disabled="lockLeadSectionsDetails?.plan_selection"
+                    :disabled="
+                      lockLeadSectionsDetails?.plan_selection ||
+                      toggleHideLoader
+                    "
+                    :loading="toggleHideLoader"
+                    @change="onToggleHidePlan"
                   />
                 </div>
                 <div>
@@ -767,12 +852,9 @@ watch(
               <!-- Add on Section -->
               <div class="mb-8">
                 <h4 class="text-sm font-bold text-gray-800 mb-4">Add on</h4>
-                <div
-                  v-if="planDetails.addons && planDetails.addons.length > 0"
-                  class="space-y-3"
-                >
+                <div v-if="addOns && addOns.length > 0" class="space-y-3">
                   <div
-                    v-for="addon in planDetails.addons"
+                    v-for="addon in addOns"
                     :key="addon.id"
                     class="flex items-center"
                   >
