@@ -131,7 +131,7 @@ test('cyber quote test data supports coverage variants', function () {
 test('cyber ila assign leads endpoint requires authentication', function () {
     // Logout to test unauthenticated access
     auth()->logout();
-    
+
     $response = $this->postJson(route('assign-leads'), [
         'quoteUUID' => 'test-uuid-123',
         'quoteTypeId' => 19, // Cyber quote type ID
@@ -206,7 +206,7 @@ test('cyber ila pipeline executes allocation steps', function () {
 test('cyber ila allocation success happy path', function () {
     // Happy path: successful allocation with valid data
     $testUuid = 'cyber-quote-'.uniqid();
-    
+
     $response = $this->postJson(route('assign-leads'), [
         'quoteUUID' => $testUuid,
         'quoteTypeId' => 19, // Cyber quote type ID
@@ -214,7 +214,7 @@ test('cyber ila allocation success happy path', function () {
 
     // Should return valid response (200, 201, 302, 422, etc)
     expect($response->status())->toBeInt();
-    
+
     // Response should be valid JSON
     expect($response->json())->toBeArray();
 });
