@@ -1255,7 +1255,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true, $isHomeRenewalLead = false)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true, $isVatManuallyChanged = false)
     {
         LoggerService::info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
@@ -1267,7 +1267,12 @@ class CentralService extends BaseService
             if ($insuranceProviderId) {
                 $payment->insurance_provider_id = $insuranceProviderId;
             }
-            app(PaymentService::class)->processMasterPayment($payment, $quoteObject, $isCreditCardEnabled);
+
+            if ($isVatManuallyChanged) {
+                app(PaymentService::class)->processMasterPaymentWithoutEvents($payment, $quoteObject, $isCreditCardEnabled);
+            } else {
+                app(PaymentService::class)->processMasterPayment($payment, $quoteObject, $isCreditCardEnabled);
+            }
             app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled);
 
             return $this->isLackingPayment($payment);

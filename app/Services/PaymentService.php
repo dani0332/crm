@@ -6,6 +6,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Http\Controllers\V2\CentralController;
+use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
@@ -39,7 +40,7 @@ class PaymentService extends BaseService
         $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference);
 
         $payment->total_price = $priceWithVat;
-        $this->setTotalAmount($payment);
+        $this->setTotalAmount(payment: $payment);
 
         if (! $isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
             $payment->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
@@ -47,6 +48,40 @@ class PaymentService extends BaseService
 
         if ($payment->isDirty()) {
             $payment->save();
+        }
+    }
+
+    public function processMasterPaymentWithoutEvents($payment, $quoteObject, $isCreditCardEnabled = true)
+    {
+        LoggerService::info('fn:processMasterPaymentWithoutEvents - PaymentService');
+        $infoMessage = 'Quote Code: '.$payment->code;
+        $priceWithVat = round($quoteObject->price_with_vat, 2);
+        $capturedAmount = $payment->captured_amount;
+        $discountValue = $payment->discount_value;
+        $totalPaymentAmount = $capturedAmount + $discountValue;
+        $initialDifference = $priceWithVat - $totalPaymentAmount;
+        $difference = round($initialDifference, 2);
+
+        $infoMessage .= 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
+        $infoMessage .= 'ID: '.$difference.' ';
+
+        LoggerService::info('Message Information', extra: ['infoMessage' => $infoMessage]);
+
+        $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference);
+
+        $payment->total_price = $priceWithVat;
+        $payment->price_vat_applicable = $quoteObject->price_vat_applicable + $quoteObject->price_vat_not_applicable;
+        $payment->price_vat = $quoteObject->vat;
+        $this->setTotalAmount(payment: $payment);
+
+        if (! $isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
+            $payment->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
+        }
+
+        if ($payment->isDirty()) {
+            Payment::withoutEvents(function () use ($payment) {
+                $payment->save();
+            });
         }
     }
 
