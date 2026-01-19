@@ -79,7 +79,6 @@ class CyberQuoteMockHelper
             'email' => $data['email'],
             'mobile_no' => $data['mobileNo'],
             'dob' => $data['dob'],
-            'nationality_id' => $data['nationalityId'],
             'source' => $data['source'] ?? 'IMCRM',
             'device' => $data['device'] ?? 'DESKTOP',
             'code' => 'CYBER-'.uniqid(),
@@ -90,6 +89,7 @@ class CyberQuoteMockHelper
         CyberQuote::create([
             'personal_quote_id' => $personalQuote->id,
             'emirate_of_registration_id' => $data['emirateOfRegistrationId'],
+            'nationality_id' => $data['nationalityId'],
             'coverage_id' => $data['coverageId'] ?? null,
         ]);
 
