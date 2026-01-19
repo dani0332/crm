@@ -592,6 +592,14 @@ class CoreSchema
                 $table->integer('max_capacity')->default(0);
                 $table->timestamps();
             },
+            'cyber_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id')->nullable();
+                $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->unsignedBigInteger('coverage_id')->nullable();
+                $table->timestamps();
+            },
         ]);
     }
 
