@@ -34,7 +34,7 @@ class SendFailedIlaEmailsCommand extends Command
             if (! $sendFailedIlaEmailsSwitch) {
                 LoggerService::warning(self::class.' - sendFailedIlaEmails - Send failed ILA emails switch is not enabled');
 
-                return Command::FAILURE;
+                return Command::SUCCESS;
             }
             $quoteType = $this->option('quoteType');
             $quoteType = QuoteTypes::tryFrom($quoteType);
@@ -42,7 +42,7 @@ class SendFailedIlaEmailsCommand extends Command
             if (! $quoteType) {
                 LoggerService::warning(self::class.' - sendFailedIlaEmails - Quote type is required');
 
-                return Command::FAILURE;
+                return Command::SUCCESS;
             }
             LoggerService::info(self::class.' - sendFailedIlaEmails - Starting to send failed ILA emails to managers for quote type: '.$quoteType->value);
             switch ($quoteType) {

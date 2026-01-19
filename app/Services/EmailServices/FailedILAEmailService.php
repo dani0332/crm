@@ -4,13 +4,13 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
+use App\Enums\TiersEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\FailedIlaLeadsExport;
-use App\Models\User;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Maatwebsite\Excel\Facades\Excel;
@@ -19,26 +19,34 @@ class FailedILAEmailService
 {
     protected function getManagerEmailsByQuoteType($quoteType)
     {
-
-        // Use match expression to map quote type to role name for type-safe matching
-        $roleName = match ($quoteType->value) {
-            QuoteTypes::CAR->value => RolesEnum::CarManager,
-            QuoteTypes::BIKE->value => RolesEnum::BikeManager,
-            QuoteTypes::HEALTH->value => RolesEnum::HealthManager,
-            QuoteTypes::LIFE->value => RolesEnum::LifeManager,
-            QuoteTypes::TRAVEL->value => RolesEnum::TravelManager,
-            QuoteTypes::HOME->value => RolesEnum::HomeManager,
-            QuoteTypes::PET->value => RolesEnum::PetManager,
-            QuoteTypes::CYCLE->value => RolesEnum::CycleManager,
-            QuoteTypes::SAVINGS->value => RolesEnum::SavingsManager,
-            QuoteTypes::GROUP_MEDICAL->value => RolesEnum::GMManager,
-            QuoteTypes::CORPLINE->value => RolesEnum::CorplineManager,
-            QuoteTypes::YACHT->value => RolesEnum::YachtManager,
-            QuoteTypes::JETSKI->value => RolesEnum::JetskiManager,
-            default => null,
+        $storageKey = match ($quoteType->value) {
+            QuoteTypes::CAR->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_CAR,
+            QuoteTypes::JETSKI->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_JETSKI,
+            QuoteTypes::BIKE->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_BIKE,
+            QuoteTypes::HEALTH->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_HEALTH,
+            QuoteTypes::TRAVEL->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_TRAVEL,
+            QuoteTypes::LIFE->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_LIFE,
+            QuoteTypes::SAVINGS->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_SAVINGS,
+            QuoteTypes::HOME->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_HOME,
+            QuoteTypes::CORPLINE->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_CORPLINE,
+            QuoteTypes::YACHT->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_YACHT,
+            QuoteTypes::PET->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_PET,
+            QuoteTypes::CYCLE->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_CYCLE,
+            QuoteTypes::GROUP_MEDICAL->value => ApplicationStorageEnums::FAILED_ILA_MANAGERS_GROUP_MEDICAL,
+            default => [],
         };
 
-        return $this->getManagerEmails($roleName);
+        $emails = [];
+        if ($storageKey) {
+            // Fetch from app storage, expect a comma-separated list
+            $emailsString = getAppStorageValueByKey($storageKey, useCache: true);
+            if ($emailsString) {
+                $emails = array_values(array_filter(array_map('trim', explode(',', $emailsString))));
+            }
+        }
+
+        return $emails;
+
     }
 
     public function sendFailedIlaEmails(QuoteTypes $quoteType)
@@ -51,8 +59,9 @@ class FailedILAEmailService
             return;
         }
 
-        $leadsCount = $this->getFailedILALeads($quoteType, justCount: true);
+        $leadsCount = $this->getFailedILALeads($quoteType->value, justCount: true);
 
+        LoggerService::info(self::class." - sendFailedIlaEmails - Failed ILA leads count: {$leadsCount} for quote type: {$quoteType->value}");
         if ($leadsCount === 0) {
             LoggerService::info(self::class." - sendFailedIlaEmails - No failed ILA leads found for quote type: {$quoteType->value}");
 
@@ -70,17 +79,21 @@ class FailedILAEmailService
         }
     }
 
-    public function getManagerEmails($roleName)
-    {
-        $managerEmails = User::role($roleName)->pluck('email')->toArray();
-
-        return $managerEmails;
-    }
-
     public function buildFailedIlaEmailData($quoteType, $managerEmails)
     {
         return (object) [
-            'managerEmails' => $managerEmails,
+            // The first email is advisor, the rest are managers. Use named destructuring for clarity and efficiency.
+            ...(
+                count($managerEmails) > 0
+                ? [
+                    'advisorEmail' => $managerEmails[0],
+                    'managerEmails' => array_slice($managerEmails, 1),
+                ]
+                : [
+                    'advisorEmail' => null,
+                    'managerEmails' => [],
+                ]
+            ),
             'quoteType' => $quoteType,
             'workflowType' => WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS,
             'dateOfAttempt' => now()->format('Y-m-d'),
@@ -132,7 +145,7 @@ class FailedILAEmailService
                 break;
 
             default:
-                $leads = [];
+                $leads = $justCount ? 0 : collect();
                 break;
         }
 
@@ -141,12 +154,26 @@ class FailedILAEmailService
 
     private function getBaseQuery(QuoteTypes $quoteType)
     {
-        return $quoteType->model()
-            ->whereBetween('created_at', [now()->subDays(60)->startOfDay(), now()->endOfDay()])
-            ->whereNull('advisor_id')
-            ->whereNotNull('lead_allocation_failed_at')
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL])
+        $model = $quoteType->model();
+        $tableName = $model->getTable();
+
+        return $model
+            ->when(
+                $quoteType === QuoteTypes::HEALTH,
+                fn ($query) => $query->whereBetween("{$tableName}.created_at", [now()->subMonths(3)->startOfDay(), now()->endOfDay()])
+
+            )
+            ->when(
+                $quoteType === QuoteTypes::CAR,
+                fn ($query) => $query->whereBetween("{$tableName}.created_at", [now()->startOfDay(), now()->subMinutes(2)->toDateTimeString()])
+            )
+            ->when(
+                ! in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH], true),
+                fn ($query) => $query->whereBetween("{$tableName}.created_at", [now()->startOfDay(), now()->endOfDay()])
+            )
+            ->whereNull("{$tableName}.advisor_id")
+            ->whereNotIn("{$tableName}.quote_status_id", [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->whereNotIn("{$tableName}.source", [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL])
             ->with('quoteStatus');
     }
 
@@ -169,8 +196,48 @@ class FailedILAEmailService
 
     public function getHealthFailedILALeads(bool $justCount = false)
     {
+        // Allowed ECOM sources (insurancemarket.ae variants, CALL_DESK, INSURANCE_WALLET)
+        $ecomSources = [
+            LeadSourceEnum::INSURANCE_MARKET,
+            LeadSourceEnum::CALL_DESK,
+            LeadSourceEnum::INSURANCE_WALLET,
+        ];
+
         return $this->getBaseQuery(QuoteTypes::HEALTH)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
+            ->whereNotNull('price_starting_from')
+            ->where(function ($query) use ($ecomSources) {
+                // ECOM leads criteria
+                $query->where(function ($ecomQuery) use ($ecomSources) {
+                    $ecomQuery->where(function ($sourceQuery) use ($ecomSources) {
+                        // Match exact sources or environment-based source (insurancemarket.ae for prod, alfred.ae for others)
+                        $sourceQuery->whereIn('source', $ecomSources)
+                            ->orWhere('source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
+                    })
+                        ->where(function ($ecomCriteria) {
+                            // SIC leads with advisor_requested = Yes
+                            $ecomCriteria->where(function ($sicQuery) {
+                                $sicQuery->where('sic_advisor_requested', 1);
+                            })
+                            // OR Non-SIC Ecom inquiry leads (no SIC tag in quote_tags)
+                                ->orWhere(function ($nonSicQuery) {
+                                    $nonSicQuery->isNonSICLead(QuoteTypes::HEALTH);
+                                })
+                            // OR PEC marked with Plan selected
+                                ->orWhere(function ($pecQuery) {
+                                    $pecQuery->hasPecTag()
+                                        ->whereNotNull('plan_id');
+                                })
+                            // OR Clicked proceed with application (payment link requested or authorized)
+                                ->orWhereIn('quote_status_id', [
+                                    QuoteStatusEnum::ApplicationPending,
+                                    QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+                                ]);
+                        });
+                })
+                // OR REVIVAL leads (replied to OCB email or source = REVIVAL_REPLIED)
+                    ->orWhere('source', LeadSourceEnum::REVIVAL_REPLIED);
+            })
             ->when(
                 $justCount,
                 fn ($query) => $query->count(),
@@ -182,6 +249,7 @@ class FailedILAEmailService
     {
         return $this->getBaseQuery(QuoteTypes::TRAVEL)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
+            ->isNonSICLead(QuoteTypes::TRAVEL)
             ->when(
                 $justCount,
                 fn ($query) => $query->count(),
@@ -193,6 +261,7 @@ class FailedILAEmailService
     {
         return $this->getBaseQuery($quoteType)
             ->where('quote_type_id', $quoteType->id())
+            ->isNonSICLead($quoteType)
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
             ->when(
                 $justCount,
@@ -204,7 +273,17 @@ class FailedILAEmailService
     public function getCarFailedILALeads(bool $justCount = false)
     {
         return $this->getBaseQuery(QuoteTypes::CAR)
-            ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->where('tiers.name', '!=', TiersEnum::TIER_R)
+            ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
+                $query->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                    ->where('quote_tags.name', 'SIC')
+                    ->where('quote_type.code', QuoteTypes::CAR->value);
+            })
+            ->select('car_quote_request.id', 'car_quote_request.code', 'car_quote_request.uuid', 'car_quote_request.first_name', 'car_quote_request.last_name', 'car_quote_request.created_at', 'car_quote_request.quote_status_id', 'car_quote_request.paid_at', 'car_quote_request.lead_allocation_failed_at')
             ->when(
                 $justCount,
                 fn ($query) => $query->count(),
