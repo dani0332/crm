@@ -551,6 +551,8 @@ watch(
         multiple
         truncate
         filterable
+        required
+        :rules="[isRequired]"
         placeholder="Select Manager"
         filterPlaceholder="Filter managers...."
         label="MANAGER"

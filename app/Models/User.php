@@ -376,7 +376,8 @@ class User extends Authenticatable implements AuditableContract
      */
     public function managers()
     {
-        return $this->belongsToMany(User::class, 'user_manager', 'user_id', 'manager_id')->select(['user_id', 'name', 'email']);
+        return $this->belongsToMany(User::class, 'user_manager', 'user_id', 'manager_id')
+            ->select(['users.id', 'users.name', 'users.email']);
     }
 
     public function sessions()
