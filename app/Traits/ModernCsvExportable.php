@@ -85,7 +85,9 @@ trait ModernCsvExportable
 
                     // Flush to output and manage memory periodically
                     if ($totalRecords % $flushInterval === 0) {
-                        ob_flush();
+                        if (ob_get_level()) {
+                            ob_flush();
+                        }
                         flush();
                         gc_collect_cycles();
                     }
@@ -105,7 +107,9 @@ trait ModernCsvExportable
 
                 // Flush periodically for large collections
                 if ($totalRecords % $flushInterval === 0) {
-                    ob_flush();
+                    if (ob_get_level()) {
+                        ob_flush();
+                    }
                     flush();
                     gc_collect_cycles();
                 }
@@ -113,7 +117,9 @@ trait ModernCsvExportable
         }
 
         // Final flush
-        ob_flush();
+        if (ob_get_level()) {
+            ob_flush();
+        }
         flush();
 
         return $totalRecords;
