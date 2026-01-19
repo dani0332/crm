@@ -468,29 +468,34 @@
     </div>
 
 <div class="page">
-    {{-- Header Image --}}
-    <div style="margin: 0; padding: 0; background: white;">
-        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
-    </div>
-    {{-- Quote Details Bar --}}
-    <div style="background: #FFFFFF; color: #333; padding: 8px 15px; display: table; width: 100%; font-size: 11px; border-top: 1px solid rgba(51, 51, 51, 0.2); border-bottom: 1px solid rgba(51, 51, 51, 0.2);">
-        <!-- Left Side Text -->
-        <div style="display: table-cell; text-align: left; vertical-align: middle; width: 70%;">
-            <strong>Car Insurance Comparison Table</strong>
-            <span style="color: #5B5F60; padding: 0 8px;">|</span>
-            Name: <strong>{{ $quote->first_name }} {{ $quote->last_name }}</strong>
-            <span style="color: #5B5F60; padding: 0 8px;">|</span>
-            Car Type: <strong>{{ @$quote->carMake->text }} {{ @$quote->carModel->text }}</strong>
-            <span style="color: #5B5F60; padding: 0 8px;">|</span>
-            Year: <strong>{{ @$quote->year_of_manufacture }}</strong>
+    {{-- PDF Page Header --}}
+    <header>
+        {{-- Header Image --}}
+        <div style="margin: 0; padding: 0; background: white;">
+            <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
         </div>
-        <!-- Right Side Quote Number -->
-        <div style="display: table-cell; text-align: right; vertical-align: middle; width: 30%;">
-            Quote Reference Number: <strong>CAR-{{ $quote->uuid }}</strong>
+        {{-- Quote Details Bar --}}
+        <div style="background: #FFFFFF; color: #333; padding: 8px 15px; display: table; width: 100%; font-size: 11px; border-top: 1px solid rgba(51, 51, 51, 0.2); border-bottom: 1px solid rgba(51, 51, 51, 0.2);">
+            <!-- Left Side Text -->
+            <div style="display: table-cell; text-align: left; vertical-align: middle; width: 70%;">
+                <strong>Car Insurance Comparison Table</strong>
+                <span style="color: #5B5F60; padding: 0 8px;">|</span>
+                Name: <strong>{{ $quote->first_name }} {{ $quote->last_name }}</strong>
+                <span style="color: #5B5F60; padding: 0 8px;">|</span>
+                Car Type: <strong>{{ @$quote->carMake->text }} {{ @$quote->carModel->text }}</strong>
+                <span style="color: #5B5F60; padding: 0 8px;">|</span>
+                Year: <strong>{{ @$quote->year_of_manufacture }}</strong>
+            </div>
+            <!-- Right Side Quote Number -->
+            <div style="display: table-cell; text-align: right; vertical-align: middle; width: 30%;">
+                Quote Reference Number: <strong>CAR-{{ $quote->uuid }}</strong>
+            </div>
         </div>
-    </div>
+    </header>
 
-    <div style="margin: 20px auto;">
+    {{-- PDF Page Inner Content --}}
+    <main>
+        <div style="margin-top: 10px;">
         @if(count($planIds) > 0)
         @php
             // Limit to maximum 5 plans
@@ -715,8 +720,8 @@
         <div class="disclaimer">
             <p><strong>Disclaimer:</strong> This is a comparison table for illustrative purposes only. The prices and benefits are subject to change without prior notice. Please refer to the official terms and conditions of the insurance provider for the most accurate and current information.</p>
         </div>
-    </div>
-
+        </div>
+    </main>
 
      <!-- third page with second banner image -->
      <div class="page" style="page-break-before: always !important;">

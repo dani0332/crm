@@ -25,7 +25,7 @@
         }
 
         header {
-            height: 85px;
+            height: auto;
             width: 100%;
             display: block;
             background: white;
