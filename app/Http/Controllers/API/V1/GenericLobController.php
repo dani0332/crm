@@ -171,9 +171,8 @@ class GenericLobController extends Controller
 
             return response()->json(['message' => 'Welcome email job dispatched successfully'], 200);
         } catch (\Exception $e) {
-            LoggerService::warning('MyAlfred Welcome Email - Exception occurred', [
+            LoggerService::error('MyAlfred Welcome Email - Exception occurred', [], exception: $e, context: [
                 'customer_email' => $request->email ?? null,
-                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
