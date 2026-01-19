@@ -526,7 +526,7 @@
             // Limit to maximum 5 plans
             $displayPlans = array_slice($planIds, 0, 5);
         @endphp
-        <table class="main-table is-full" style="margin-top:200px">
+        <table class="main-table is-full" style="margin-top:10px">
             <thead>
             <tr>
                     <th class="bg-light-blue" rowspan="2">
