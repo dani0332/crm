@@ -299,12 +299,11 @@ const exportReport = async (exportType = 'download') => {
       }
     }
 
-    // Check lead_created_at date range
+    // Check lead_created_at date range (extract date only to avoid timezone issues)
     if (filters.lead_created_at && filters.lead_created_at.length === 2) {
-      const leadDays = calculateDaysDifference(
-        filters.lead_created_at[0],
-        filters.lead_created_at[1],
-      );
+      const start = new Date(filters.lead_created_at[0].substring(0, 10));
+      const end = new Date(filters.lead_created_at[1].substring(0, 10));
+      const leadDays = Math.round((end - start) / 86400000) + 1;
 
       if (leadDays > 31) {
         notification.error({

@@ -20,6 +20,7 @@ use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
@@ -171,6 +172,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'roles' => 'required',
             'password' => 'required',
+            'manager' => 'required',
             'products' => 'required',
             'teams' => 'required',
             'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
@@ -326,7 +328,6 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\User  $user
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, User $user)
@@ -340,11 +341,15 @@ class UserController extends Controller
             ],
             'roles' => 'required',
             'teams' => 'required',
+            'manager' => 'required',
             'permissions' => 'nullable|array',
             'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
         ]);
 
         // Updating user
+        $previouslyActive = (bool) $user->is_active;
+        $isActive = $request->boolean('is_active');
+
         $user->name = $request->name;
         $user->email = $request->email;
         $user->mobile_no = $request->mobile_no;
@@ -356,91 +361,91 @@ class UserController extends Controller
         if (isset($request->password)) {
             $user->password = bcrypt($request->password);
         }
-        $user->is_active = $request->is_active ? 1 : 0;
+        $user->is_active = $isActive ? 1 : 0;
 
-        if ($request->department_ids != null) {
-            app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
-        } else {
-            app(DepartmentService::class)->syncUserDepartments($user, []);
-        }
-        /*
-         * temp fix: health lead allocation is using team_id to target health product
-         * this needs to be updated with new team/product structure
-         */
-        $products = $this->getAllProducts();
-        if (! empty($request->products)) {
-            $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
-            if (! empty($products_types)) {
-                foreach ($products_types as $key => $type) {
-                    if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
-                        $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
-                    } else {
-                        $quoteTypeName = $type->name;
-                    }
-                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
-                    if (! empty($quoteTypeId)) {
-                        $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
-                        if (empty($isLead)) {
-                            $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+        DB::transaction(function () use ($request, $user, $previouslyActive, $isActive) {
+            if ($request->department_ids != null) {
+                app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
+            } else {
+                app(DepartmentService::class)->syncUserDepartments($user, []);
+            }
+            /*
+             * temp fix: health lead allocation is using team_id to target health product
+             * this needs to be updated with new team/product structure
+             */
+            $products = $this->getAllProducts();
+            if (! empty($request->products)) {
+                $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
+                if (! empty($products_types)) {
+                    foreach ($products_types as $key => $type) {
+                        if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
+                            $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
+                        } else {
+                            $quoteTypeName = $type->name;
+                        }
+                        $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
+                        if (! empty($quoteTypeId)) {
+                            $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
+                            if (empty($isLead)) {
+                                $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (! empty($request->additionalTeams) && isset($request->additionalTeams)) {
-            if (count((array) $request->additionalTeams) > 1) {
-                $user->additional_team_ids = implode(',', $request->additionalTeams);
+            if (! empty($request->additionalTeams) && isset($request->additionalTeams)) {
+                if (count((array) $request->additionalTeams) > 1) {
+                    $user->additional_team_ids = implode(',', $request->additionalTeams);
+                } else {
+                    $user->additional_team_ids = $request->additionalTeams[0];
+                }
             } else {
-                $user->additional_team_ids = $request->additionalTeams[0];
+                $user->additional_team_ids = null;
             }
-        } else {
-            $user->additional_team_ids = null;
-        }
 
-        if (! empty($request->sub_team_id) && $request->sub_team_id != '0') {
-            $user->sub_team_id = $request->sub_team_id;
-        }
-
-        $user->save();
-        if (isset($request->manager) && $request->manager != '0') {
-            DB::table('user_manager')->where('user_id', $user->id)->delete();
-            foreach ($request->manager as $managerId) {
-                DB::table('user_manager')->insert([
-                    'user_id' => $user->id,
-                    'manager_id' => $managerId,
-                ]);
+            if (! empty($request->sub_team_id) && $request->sub_team_id != '0') {
+                $user->sub_team_id = $request->sub_team_id;
             }
-        }
 
-        if ($request->teams != '0') {
-            DB::table('user_team')->where('user_id', $user->id)->delete();
-            foreach ($request->teams as $teamId) {
-                DB::table('user_team')->insert([
-                    'user_id' => $user->id,
-                    'team_id' => $teamId,
-                ]);
+            $user->save();
+            if (isset($request->manager) && $request->manager != '0') {
+                $user->managers()->sync($request->manager);
             }
-        }
 
-        if (isset($request->products) && $request->products != '0') {
-            DB::table('user_products')->where('user_id', $user->id)->delete();
-            foreach ($request->products as $productId) {
-                DB::table('user_products')->insert([
-                    'user_id' => $user->id,
-                    'product_id' => $productId,
-                ]);
+            if ($request->teams != '0') {
+                DB::table('user_team')->where('user_id', $user->id)->delete();
+                foreach ($request->teams as $teamId) {
+                    DB::table('user_team')->insert([
+                        'user_id' => $user->id,
+                        'team_id' => $teamId,
+                    ]);
+                }
             }
-        }
 
-        $permissions = (! empty($request->permissions) && count($request->permissions)) ? $request->permissions : [];
-        $user->syncPermissions($permissions);
+            if (isset($request->products) && $request->products != '0') {
+                DB::table('user_products')->where('user_id', $user->id)->delete();
+                foreach ($request->products as $productId) {
+                    DB::table('user_products')->insert([
+                        'user_id' => $user->id,
+                        'product_id' => $productId,
+                    ]);
+                }
+            }
 
-        // Updating user roles
-        $user->syncRoles($request->input('roles'));
+            $permissions = (! empty($request->permissions) && count($request->permissions)) ? $request->permissions : [];
+            $user->syncPermissions($permissions);
 
-        // if Corpline Advisor exists, then set Business Types otherwise set it as empty
-        $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
+            // Updating user roles
+            $user->syncRoles($request->input('roles'));
+
+            // if Corpline Advisor exists, then set Business Types otherwise set it as empty
+            $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
+
+            if ($previouslyActive && ! $isActive) {
+                $this->userService->sendManagerDeactivationEmail($user, Auth::id() ?: null);
+            }
+        });
 
         return redirect(route('users.show', $user->id))->with('success', 'User has been updated');
     }
@@ -513,6 +518,7 @@ class UserController extends Controller
         return User::join('model_has_roles', 'model_has_roles.model_id', 'users.id')
             ->join('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', $combinedRoleNames)
+            ->activeUser()
             ->select(
                 'users.id',
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
@@ -524,7 +530,7 @@ class UserController extends Controller
         $currentDateTime = Carbon::now();
         $startDateTime = Carbon::parse('18:30:00'); // 6:30 PM
         $endDateTime = Carbon::parse('08:59:00')->addDay(); // 8:59 AM of the next day
-        $user = User::find(auth()->user()->id);
+        $user = User::find((int) Auth::id());
         $user->status = $request->user_status == true ? UserStatusEnum::ONLINE : UserStatusEnum::MANUAL_OFFLINE;
         $user->update();
         if (

@@ -53,6 +53,8 @@ class AIGWorkflowJob implements ShouldQueue
                 return;
             }
 
+            ensureWriteDefaultConnection();
+
             $quote = $quoteType->model()->where('uuid', $this->quoteUuid)->first();
 
             if (! $quote) {
