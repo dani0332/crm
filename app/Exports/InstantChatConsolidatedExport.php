@@ -30,6 +30,13 @@ class InstantChatConsolidatedExport implements CsvExportableInterface
      */
     public function getQuery(array $requestParams = []): \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder|null
     {
+        // Merge export parameters with the current request to ensure filters are applied
+        // This is critical for streaming downloads where request context may be lost
+        if (! empty($requestParams)) {
+            $mappedParams = $this->mapExportParameters($requestParams);
+            request()->merge($mappedParams);
+        }
+
         $instantAlfredService = app(InstantAlfredService::class);
         $query = $instantAlfredService->getChatConsolidateReportQuery($requestParams);
 
