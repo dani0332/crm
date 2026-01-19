@@ -147,11 +147,9 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($modelType, $leadCode) {
+        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($leadCode) {
             $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
-            if (strtolower($modelType) == 'business') {
-                $modelType = 'Corpline';
-            }
+
             $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
                 return $item;
             });
@@ -417,7 +415,8 @@ class CRUDService extends BaseService
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
+            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"))
+            ->activeUser();
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
