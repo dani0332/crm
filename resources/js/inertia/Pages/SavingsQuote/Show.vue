@@ -1,7 +1,7 @@
 <script setup>
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { createReusableTemplate } from '@vueuse/core';
-import { reactive } from 'vue';
+import { nextTick, onMounted, reactive, watch } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -278,6 +278,21 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  // Handle initial state: if plan is already selected and is ecommerce,
+  // ensure ecomDetail is updated once plans are loaded
+  // The handlePlansLoaded event handler will update ecomDetail when plans arrive,
+  // but we also check here as a fallback in case plans are already loaded
+  if (props.quote?.plan_id) {
+    // Use nextTick to ensure child components (AvailablePlans) have mounted
+    nextTick(() => {
+      // If plans are already loaded, update immediately
+      // Otherwise, wait for the plans-loaded event
+      if (sharedAvailablePlans.value.length > 0) {
+        updateEcomDetailFromPlans();
+      }
+    });
+  }
 });
 
 const sectionExpanded = computed(() => true);
@@ -301,6 +316,12 @@ const handlePlanSelected = plan => {
   });
 };
 
+// Handle plans loaded event from AvailablePlans component
+const handlePlansLoaded = plans => {
+  sharedAvailablePlans.value = plans || [];
+  updateEcomDetailFromPlans();
+};
+
 const { copy, copied } = useClipboard();
 const onCopyText = text => {
   copy(text);
@@ -310,6 +331,179 @@ const onCopyText = text => {
       position: 'top',
     });
 };
+
+// Ecom section - track selected plan for ecom display (similar to Life)
+const ecomDetail = ref(null);
+const planExchangeRate = ref(1);
+
+// Shared available plans data from AvailablePlans component
+const sharedAvailablePlans = ref([]);
+
+// Get payment term label helper
+const getPaymentTermTitle = paymentTerm => {
+  if (!paymentTerm && paymentTerm !== 0) return null;
+  const term = parseInt(paymentTerm);
+  const map = {
+    0: 'Single Payment',
+    1: 'Annual',
+    3: 'Quarterly',
+    6: 'Semi-Annual',
+    12: 'Monthly',
+  };
+  return map[term] || null;
+};
+
+// Get ecom display price (similar to Life)
+const getEcomDisplayPrice = item => {
+  if (!item) return 0;
+  // For savings, use actualPremium directly
+  return parseFloat(item.actualPremium || item.totalPrice || 0);
+};
+
+// Calculate total annual price
+const totalAnnualPrice = computed(() => {
+  if (!ecomDetail.value) return 'N/A';
+
+  const displayPrice = getEcomDisplayPrice(ecomDetail.value);
+  const paymentTerm =
+    ecomDetail.value?.paymentTerm ??
+    props.quote?.savings_quote?.payment_term ??
+    1;
+
+  // Calculate multiplier based on payment term
+  const multiplier =
+    paymentTerm === 0
+      ? 1
+      : paymentTerm === 1
+        ? 1
+        : paymentTerm === 3
+          ? 4
+          : paymentTerm === 6
+            ? 2
+            : paymentTerm === 12
+              ? 12
+              : 1;
+
+  const totalPrice = displayPrice * multiplier;
+  return totalPrice;
+});
+
+// Get total annual price in AED
+const getTotalAnnualPriceAED = () => {
+  if (!ecomDetail.value) return 'N/A';
+
+  const displayPrice = getEcomDisplayPrice(ecomDetail.value);
+  const priceInAED =
+    Math.round(displayPrice * planExchangeRate.value * 100) / 100;
+  const paymentTerm =
+    ecomDetail.value?.paymentTerm ??
+    props.quote?.savings_quote?.payment_term ??
+    1;
+
+  // Calculate multiplier based on payment term
+  const multiplier =
+    paymentTerm === 0
+      ? 1
+      : paymentTerm === 1
+        ? 1
+        : paymentTerm === 3
+          ? 4
+          : paymentTerm === 6
+            ? 2
+            : paymentTerm === 12
+              ? 12
+              : 1;
+
+  return numberFormat(priceInAED * multiplier);
+};
+
+// Number format helper
+const numberFormat = value => {
+  if (value === 'N/A' || value === null || value === undefined) return 'N/A';
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+// Update ecomDetail from shared available plans data
+const updateEcomDetailFromPlans = () => {
+  if (!sharedAvailablePlans.value.length) {
+    ecomDetail.value = null;
+    return;
+  }
+
+  // Find the selected plan - check multiple ID fields
+  const selectedPlanId = props.quote?.plan_id;
+  if (!selectedPlanId) {
+    ecomDetail.value = null;
+    return;
+  }
+
+  // Try to find plan by id, planId, or plan_id
+  const foundPlan = sharedAvailablePlans.value.find(
+    plan =>
+      (String(plan.id) === String(selectedPlanId) ||
+        String(plan.planId) === String(selectedPlanId) ||
+        String(plan.plan_id) === String(selectedPlanId)) &&
+      !plan.isDisabled,
+  );
+
+  if (foundPlan) {
+    ecomDetail.value = {
+      ...foundPlan,
+      providerName:
+        foundPlan.providerName ||
+        foundPlan.provider?.text ||
+        foundPlan.providerName,
+      planName: foundPlan.name || foundPlan.planName || foundPlan.text,
+      actualPremium: parseFloat(
+        foundPlan.actualPremium || foundPlan.totalPrice || 0,
+      ),
+      totalPrice: parseFloat(
+        foundPlan.actualPremium || foundPlan.totalPrice || 0,
+      ),
+      currency: foundPlan.currency || foundPlan.currencyName || 'AED',
+      paymentTerm: foundPlan.paymentTerm,
+      isApi: foundPlan.isApi || false,
+      isUnderwritten: foundPlan.isUnderwritten || false,
+    };
+  } else {
+    ecomDetail.value = null;
+  }
+};
+
+// Watch for quote changes
+watch(
+  () => props.quote?.is_ecommerce,
+  isEcom => {
+    if (!isEcom) {
+      ecomDetail.value = null;
+    } else {
+      updateEcomDetailFromPlans();
+    }
+  },
+  { immediate: true },
+);
+
+// Watch for plan_id changes to update ecomDetail
+watch(
+  () => props.quote?.plan_id,
+  () => {
+    updateEcomDetailFromPlans();
+  },
+);
+
+// Watch for shared plans changes to update ecomDetail
+watch(
+  () => sharedAvailablePlans.value,
+  () => {
+    if (props.quote?.is_ecommerce) {
+      updateEcomDetailFromPlans();
+    }
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -464,6 +658,103 @@ const onCopyText = text => {
       </template>
     </x-modal>
 
+    <!-- Ecom Plan Detail -->
+    <div v-show="ecomDetail != null" class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">E-COM Detail</h3>
+          </div>
+        </template>
+
+        <template #body>
+          <x-divider class="my-4" />
+          <div>
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Price</dt>
+                <dd>
+                  {{ numberFormat(getEcomDisplayPrice(ecomDetail)) }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Total Annual Price</dt>
+                <dd>
+                  {{ numberFormat(totalAnnualPrice) }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
+              >
+                <dt class="font-medium uppercase">Total Price AED</dt>
+                <dd>
+                  {{
+                    numberFormat(
+                      getEcomDisplayPrice(ecomDetail) * planExchangeRate,
+                    )
+                  }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
+              >
+                <dt class="font-medium uppercase">Total Annual Price AED</dt>
+                <dd>
+                  {{ getTotalAnnualPriceAED() }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Payment Term</dt>
+                <dd>
+                  {{ getPaymentTermTitle(ecomDetail?.paymentTerm) ?? 'N/A' }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Authorised AT</dt>
+                <dd>{{ quote?.payments?.[0]?.authorized_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">PAID AT</dt>
+                <dd>{{ quote?.payment_paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote?.payment_status?.text ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ ecomDetail?.providerName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT METHOD</dt>
+                <dd>
+                  {{ quote?.payments?.[0]?.payment_method?.name ?? 'N/A' }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ ecomDetail?.planName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ECOMMERCE</dt>
+                <dd>{{ quote.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">QUOTE LINK</dt>
+                <dd>{{ ecomSavingsInsuranceQuoteUrl + quote.uuid }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN SOURCE</dt>
+                <dd v-if="ecomDetail == null">N/A</dd>
+                <dd v-else>{{ ecomDetail?.isApi ? 'API' : 'Manual' }}</dd>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1001,6 +1292,7 @@ const onCopyText = text => {
       :lookUpData="lookUpData"
       :localLookups="localLookups"
       @plan-selected="handlePlanSelected"
+      @plans-loaded="handlePlansLoaded"
     />
 
     <MigratePayment

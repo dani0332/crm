@@ -4,7 +4,7 @@ import SelectPlan from '@/inertia/Components/SelectPlan.vue';
 import LazyCreatePlan from './CreatePlan.vue';
 import PlanDetails from './PlanDetails.vue';
 
-const emit = defineEmits(['plan-selected']);
+const emit = defineEmits(['plan-selected', 'plans-loaded']);
 
 const props = defineProps({
   quote: Object,
@@ -215,10 +215,18 @@ const fmt = v =>
     : 'N/A';
 
 const handlePlanSelected = plan => {
-  selectedProviderPlan.value.id = plan.id;
-  selectedProviderPlan.value.planName = plan.planName;
-  selectedProviderPlan.value.providerName = plan.providerName;
-  selectedProviderPlan.value.premium = plan.premium;
+  if (plan.insurerQuoteNo === '' || plan.insurerQuoteNo === null) {
+    notification.error({
+      title: 'Please select a plan with an insurer quote number',
+      position: 'top',
+    });
+    return;
+  } else {
+    selectedProviderPlan.value.id = plan.id;
+    selectedProviderPlan.value.planName = plan.planName;
+    selectedProviderPlan.value.providerName = plan.providerName;
+    selectedProviderPlan.value.premium = plan.premium;
+  }
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -253,10 +261,15 @@ const onLoadAvailablePlansData = async () => {
       }));
 
       availablePlansTable.data = processedPlans;
+
+      // Emit plans-loaded event for parent component (Show.vue) to use for ecom section
+      emit('plans-loaded', processedPlans);
     })
     .catch(err => {
       console.log(err);
       availablePlansTable.data = [];
+      // Emit empty array so parent can update ecomDetail
+      emit('plans-loaded', []);
     })
     .finally(() => {
       availablePlansTable.isLoading = false;
