@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportPlansPdfLinkRequest;
@@ -14,7 +15,6 @@ use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
 use App\Models\Customer;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
