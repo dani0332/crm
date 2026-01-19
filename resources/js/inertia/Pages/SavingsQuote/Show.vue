@@ -658,6 +658,103 @@ watch(
       </template>
     </x-modal>
 
+    <!-- Ecom Plan Detail -->
+    <div v-show="ecomDetail != null" class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">E-COM Detail</h3>
+          </div>
+        </template>
+
+        <template #body>
+          <x-divider class="my-4" />
+          <div>
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Price</dt>
+                <dd>
+                  {{ numberFormat(getEcomDisplayPrice(ecomDetail)) }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Total Annual Price</dt>
+                <dd>
+                  {{ numberFormat(totalAnnualPrice) }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
+              >
+                <dt class="font-medium uppercase">Total Price AED</dt>
+                <dd>
+                  {{
+                    numberFormat(
+                      getEcomDisplayPrice(ecomDetail) * planExchangeRate,
+                    )
+                  }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
+              >
+                <dt class="font-medium uppercase">Total Annual Price AED</dt>
+                <dd>
+                  {{ getTotalAnnualPriceAED() }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Payment Term</dt>
+                <dd>
+                  {{ getPaymentTermTitle(ecomDetail?.paymentTerm) ?? 'N/A' }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Authorised AT</dt>
+                <dd>{{ quote?.payments?.[0]?.authorized_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">PAID AT</dt>
+                <dd>{{ quote?.payment_paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote?.payment_status?.text ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ ecomDetail?.providerName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT METHOD</dt>
+                <dd>
+                  {{ quote?.payments?.[0]?.payment_method?.name ?? 'N/A' }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ ecomDetail?.planName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ECOMMERCE</dt>
+                <dd>{{ quote.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">QUOTE LINK</dt>
+                <dd>{{ ecomSavingsInsuranceQuoteUrl + quote.uuid }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN SOURCE</dt>
+                <dd v-if="ecomDetail == null">N/A</dd>
+                <dd v-else>{{ ecomDetail?.isApi ? 'API' : 'Manual' }}</dd>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1197,109 +1294,6 @@ watch(
       @plan-selected="handlePlanSelected"
       @plans-loaded="handlePlansLoaded"
     />
-
-    <!-- Ecom Plan Detail -->
-    <div v-show="ecomDetail != null" class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex flex-wrap gap-4 justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">E-COM Detail</h3>
-          </div>
-        </template>
-
-        <template #body>
-          <x-divider class="my-4" />
-          <div>
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">Price</dt>
-                <dd>
-                  {{ numberFormat(getEcomDisplayPrice(ecomDetail)) }}
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">Total Annual Price</dt>
-                <dd>
-                  {{ numberFormat(totalAnnualPrice) }}
-                </dd>
-              </div>
-              <div
-                class="grid sm:grid-cols-2"
-                v-if="ecomDetail?.currency != 'AED'"
-              >
-                <dt class="font-medium uppercase">Total Price AED</dt>
-                <dd>
-                  {{
-                    numberFormat(
-                      getEcomDisplayPrice(ecomDetail) * planExchangeRate,
-                    )
-                  }}
-                </dd>
-              </div>
-              <div
-                class="grid sm:grid-cols-2"
-                v-if="ecomDetail?.currency != 'AED'"
-              >
-                <dt class="font-medium uppercase">Total Annual Price AED</dt>
-                <dd>
-                  {{ getTotalAnnualPriceAED() }}
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">Payment Term</dt>
-                <dd>
-                  {{ getPaymentTermTitle(ecomDetail?.paymentTerm) ?? 'N/A' }}
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">Authorised AT</dt>
-                <dd>{{ quote?.payments?.[0]?.authorized_at ?? 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">PAID AT</dt>
-                <dd>{{ quote?.payment_paid_at ?? 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ quote?.payment_status?.text ?? 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ ecomDetail?.providerName }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PAYMENT METHOD</dt>
-                <dd>
-                  {{ quote?.payments?.[0]?.payment_method?.name ?? 'N/A' }}
-                </dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ ecomDetail?.planName }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ECOMMERCE</dt>
-                <dd>{{ quote.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">QUOTE LINK</dt>
-                <dd>{{ ecomSavingsInsuranceQuoteUrl + quote.uuid }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">UNDER WRITTEN</dt>
-                <dd v-if="ecomDetail == null">N/A</dd>
-                <dd v-else>{{ ecomDetail?.isUnderwritten ? 'Yes' : 'No' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PLAN SOURCE</dt>
-                <dd v-if="ecomDetail == null">N/A</dd>
-                <dd v-else>{{ ecomDetail?.isApi ? 'API' : 'Manual' }}</dd>
-              </div>
-            </dl>
-          </div>
-        </template>
-      </Collapsible>
-    </div>
 
     <MigratePayment
       v-if="!isNewPaymentStructure"

@@ -205,12 +205,12 @@ const fetchProviderPlans = () => {
     .then(res => {
       if (res.data.plans) {
         // TODO: Filter out plans that already exist in availablePlans (commented for now)
-        // options.providerPlans = res.data.plans.filter(
-        //   plan =>
-        //     !props.availablePlans?.some(
-        //       existingPlan => existingPlan.planId === plan.id,
-        //     ),
-        // );
+        options.providerPlans = res.data.plans.filter(
+          plan =>
+            !props.availablePlans?.some(
+              existingPlan => existingPlan.planId === plan.id,
+            ),
+        );
         options.providerPlans = res.data.plans;
       } else {
         options.providerPlans = [];
