@@ -24,14 +24,10 @@
         }
 
         header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 85px;
+            height: auto;
             width: 100%;
             display: block;
             background: white;
-            z-index: 1;
         }
 
         div,
@@ -356,11 +352,20 @@
 <body style="margin: 0; padding: 0;">
     {{-- First Page Cover --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/comparison-table-health.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/health_first_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
     @endcomponent
     <div style="page-break-after: always; clear: both;"></div>
+
+    {{-- Second Page --}}
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
+    @endcomponent
+    <div style="page-break-after: always; clear: both;"></div>
+
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
@@ -695,10 +700,24 @@
         $features = array_merge($features, $featureItems);
     @endphp
 
-    {{-- PDF Page Header - Only for comparison pages --}}
+    {{-- PDF Page Header --}}
     <header>
-        <div>
-            <img src="{{ public_path('images/header.png') }}">
+        {{-- Header Image --}}
+        <div style="margin: 0; padding: 0; background: white;">
+            <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        </div>
+        {{-- Quote Details Bar --}}
+        <div style="background: #FFFFFF; color: #333; padding: 8px 15px; display: table; width: 100%; font-size: 11px; border-top: 1px solid rgba(51, 51, 51, 0.2); border-bottom: 1px solid rgba(51, 51, 51, 0.2);">
+            <!-- Left Side Text -->
+            <div style="display: table-cell; text-align: left; vertical-align: middle; width: 70%;">
+                <strong>Health Insurance Comparison Table</strong>
+                <span style="color: #5B5F60; padding: 0 8px;">|</span>
+                Name: <strong>{{ $quote->first_name }} {{ $quote->last_name }}</strong>
+            </div>
+            <!-- Right Side Quote Number -->
+            <div style="display: table-cell; text-align: right; vertical-align: middle; width: 30%;">
+                Quote Reference Number: <strong>{{ $quote->code }}</strong>
+            </div>
         </div>
     </header>
 
@@ -709,11 +728,11 @@
 
     {{-- PDF Page Inner Content --}}
     <main>
-        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 200px;">
+        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 10px;margin-bottom: 200px;">
             <thead>
                 <tr>
-                    <th class="alfred" rowspan="3">
-                        <img src="{{ public_path('images/alfred.png') }}" />
+                    <th class="alfred" rowspan="3" style="text-align:center; vertical-align:middle;">
+                        <img style="max-width:120px; height:auto; display:block; margin:0 auto;" src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-halfalfredstandingfoldinghandsinsuit.png" />
                     </th>
                     @foreach ($planIds as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf;">
@@ -935,8 +954,22 @@
         </table>
     </main>
 
+    <div style="page-break-after: always;"></div>
+
+    {{-- Second Last Page --}}
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
+    @endcomponent
+    <div style="page-break-after: always;"></div>
+
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/rm-p3-2.png') }}" class="full-page-image" style="height:90%;" />
+    <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" class="full-page-image" style="height: 90%;"/>
+    </div>
+    @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quote->uuid])
+    @endcomponent
 </body>
 
 </html>
