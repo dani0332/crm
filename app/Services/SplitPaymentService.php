@@ -593,7 +593,8 @@ class SplitPaymentService
                 LoggerService::info("Generating embedded payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
                 $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
                 $lob = strtolower($modelType);
-                $paymentLink = "{$paymentLink}/{$lob}-insurance/quote/{$request->quoteUuid}/payment";
+                $urlIdentifier = $this->getPaymentLinkURLIdentifier($modelType);
+                $paymentLink = "{$paymentLink}/{$urlIdentifier}-insurance/quote/{$request->quoteUuid}/payment";
 
                 $insuranceProvider = getInsuranceProvider($payment, $lob);
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -628,6 +629,15 @@ class SplitPaymentService
         $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
 
         return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+    }
+
+    private function getPaymentLinkURLIdentifier($modelType)
+    {
+        $urlIdentifier = strtolower(string: $modelType);
+        if ($modelType == QuoteTypes::DEVICE->value) {
+            $urlIdentifier = 'smartphone';
+        }
+        return $urlIdentifier;
     }
 
     public function generateInsurerPaymentLink($request)
