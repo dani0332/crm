@@ -2,6 +2,7 @@
 
 namespace App\Builders;
 
+use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 
@@ -11,13 +12,23 @@ trait QueryBuildable
 
     protected function parseDate($date, $isStartOfDay)
     {
-        if ($date && $date != '') {
-            if ($isStartOfDay) {
-                return Carbon::parse($date)->startOfDay()->toDateTimeString();
-            } else {
-                return Carbon::parse($date)->endOfDay()->toDateTimeString();
-            }
+        if ($date === null || $date === '') {
+            return null;
         }
+
+        try {
+            $parsedDate = Carbon::parse($date);
+        } catch (\Throwable $e) {
+            LoggerService::warning('QueryBuildable::parseDate invalid date', [
+                'date' => $date,
+            ], exception: $e);
+
+            return null;
+        }
+
+        return $isStartOfDay
+            ? $parsedDate->copy()->startOfDay()->toDateTimeString()
+            : $parsedDate->copy()->endOfDay()->toDateTimeString();
     }
 
     protected function shouldApplyDatesFilter($requestParams = [])

@@ -1447,7 +1447,8 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.record.id,
   insured_first_name: page.props.record.insured_first_name || '',
   insured_last_name: page.props.record.insured_last_name || '',
-  emirates_id_number: page.props.record.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.record.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
 
   entity_id: page.props.record.entity_id ?? null,
@@ -4614,6 +4615,7 @@ const handleCancelConfirmationModal = () => {
       :canDelete="false"
       :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

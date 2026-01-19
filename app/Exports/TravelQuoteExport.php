@@ -6,6 +6,7 @@ use App\Contracts\CsvExportableInterface;
 use App\Enums\AMLStatusCode;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteTypeId;
+use App\Services\BranchAssignmentService;
 use App\Services\TravelQuoteService;
 use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
@@ -45,6 +46,7 @@ class TravelQuoteExport implements CsvExportableInterface
             'INSURER AML STATUS',
             'ADVISOR REQUESTED',
             'ADVISOR',
+            'BRANCH',
             'ADVISOR ASSIGNED DATE AND TIME',
             'API ISSUANCE STATUS',
             'INSURER API STATUS',
@@ -86,6 +88,7 @@ class TravelQuoteExport implements CsvExportableInterface
     public function map($quote): array
     {
         $ageGroup = $this->getAgeGroup($quote);
+        $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel));
 
         return [
             $quote->code,
@@ -96,6 +99,7 @@ class TravelQuoteExport implements CsvExportableInterface
             AMLStatusCode::getName($quote->insurer_aml_status, 'N/A') ?? '',
             $quote->sic_advisor_requested == '0' ? 'No' : 'Yes',
             optional($quote->advisor)->name,
+            $branchName,
             $quote->travelQuoteRequestDetail->advisor_assigned_date ?? '',
             $quote->api_issuance_status ? $quote->api_issuance_status : '',
             $quote->insurer_api_status ? $quote->insurer_api_status : '',

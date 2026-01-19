@@ -15,7 +15,7 @@ class RemovePcpTagCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'remove-pcp-tag';
+    protected $signature = 'remove-pcp-tag {customer_id?}';
 
     /**
      * The console command description.
@@ -35,8 +35,9 @@ class RemovePcpTagCommand extends Command
     public function handle()
     {
         LoggerService::info('cmd:RemovePcpTagCommand - Remove PCP tag from customers Started');
+        $customerId = $this->argument('customer_id');
 
-        $this->removePcpTag();
+        $this->removePcpTag($customerId);
 
         LoggerService::info('cmd:RemovePcpTagCommand - Remove PCP tag from customers Ended');
     }
