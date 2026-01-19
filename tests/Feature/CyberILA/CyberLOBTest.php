@@ -92,7 +92,7 @@ test('cyber quote api payload has correct format', function () {
         'device',
         'source',
     ])
-        ->and($payload['quoteTypeId'])->toBe(119)
+        ->and($payload['quoteTypeId'])->toBe(19)
         ->and($payload['lang'])->toBe('EN');
 });
 

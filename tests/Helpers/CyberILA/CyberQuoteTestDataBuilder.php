@@ -67,7 +67,7 @@ class CyberQuoteTestDataBuilder
             'dob' => $data['dob'],
             'nationalityId' => $data['nationality_id'],
             'emirateOfRegistrationId' => $data['emirate_of_registration_id'],
-            'quoteTypeId' => 119, // Cyber quote type
+            'quoteTypeId' => 19, // Cyber quote type (QuoteTypeId::Cyber)
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => 'IMCRM',

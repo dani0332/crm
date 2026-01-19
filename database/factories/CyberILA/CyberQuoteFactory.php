@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Factories\CyberILA;
 
 use App\Models\CyberQuote;
 use App\Models\PersonalQuote;
@@ -15,7 +15,7 @@ class CyberQuoteFactory extends Factory
         // Use lazy factory relationship - let Laravel handle create() or make() based on context
         return [
             'personal_quote_id' => PersonalQuote::factory([
-                'quote_type_id' => 119, // Cyber quote type ID
+                'quote_type_id' => 19, // Cyber quote type ID (QuoteTypeId::Cyber)
             ]),
             'emirate_of_registration_id' => 1,
             'coverage_id' => null,
