@@ -12,7 +12,7 @@ class QuoteTypeFactory extends Factory
     public function definition()
     {
         return [
-            'name' => 'Cyber', // simple type for testing
+            'text' => 'Cyber', // simple type for testing
         ];
     }
 }
