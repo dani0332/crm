@@ -17,6 +17,7 @@ trait PersonalQuoteLobs
             : ["{$roleSuffix}_ADVISOR"];
 
         return User::with(['roles' => fn ($q) => $q->whereIn('name', $roles)])
+            ->activeUser()
             ->whereHas('roles', function ($q) use ($roles) {
                 $q->whereIn('name', $roles);
             })->get();
