@@ -174,7 +174,6 @@ class GenericLobController extends Controller
             LoggerService::warning('MyAlfred Welcome Email - Exception occurred', [
                 'customer_email' => $request->email ?? null,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
