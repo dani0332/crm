@@ -39,14 +39,8 @@ class EmbeddedTransactionService extends BaseService
      */
     private function triggerBirdWorkflowForRetargetingEpReminder($quote, int $quoteTypeId, EmbeddedTransaction $epTransaction)
     {
-        $birdWorkflowUrl = getAppStorageValueByKey(
-            ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL, 
-            'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/14dadaed-1800-4d7a-b483-050159c1d6f8/invoke-sync'
-        );
-        $retargetingEpReminderBirdFlowUrl = getAppStorageValueByKey(
-            ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_FLOW_URL, 
-            'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/08c1d960-bcf7-4f5f-bc9a-eb3e0a9450dd/invoke-sync'
-        );
+        $birdWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL);
+        $retargetingEpReminderBirdFlowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_FLOW_URL);
 
         if (empty($birdWorkflowUrl) || empty($retargetingEpReminderBirdFlowUrl)) {
             LoggerService::info("triggerBirdWorkflowForRetargetingEpReminder: Configuration URLs not found");
