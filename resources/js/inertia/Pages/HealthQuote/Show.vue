@@ -91,6 +91,8 @@ const can = permission => useCan(permission);
 
 const showPlans = ref(!props.hashCollapsibleStatuses);
 const contactLoader = ref(false);
+const emailCheckLoader = ref(false);
+const keepExistingPrimaryEmailLoader = ref(null);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -150,6 +152,10 @@ const modals = reactive({
   planFilters: false,
   sendConfirm: false,
   memberPrincipal: false,
+  addContact: false,
+  contactPrimaryConfirm: false,
+  contactDeleteConfirm: false,
+  customerAlreadyPrimaryConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -202,6 +208,37 @@ const confirmDeleteData = reactive({
   activity: null,
   contact: null,
 });
+
+const additionalContactDelete = id => {
+  modals.contactDeleteConfirm = true;
+  confirmDeleteData.contact = id;
+};
+
+const additionalContactDeleteConfirmed = () => {
+  router.post(
+    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
+    {
+      isInertia: true,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
+      onFinish: () => {
+        contactLoader.value = false;
+        modals.contactDeleteConfirm = false;
+      },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      },
+    },
+  );
+};
 
 const confirmPrincipalData = reactive({
   member: null,
@@ -1443,8 +1480,35 @@ const additionalContactPrimary = data => {
   confirmData.contactPrimary = data;
 };
 
-const additionalContactPrimaryConfirmed = () => {
+const customerAlreadyPrimaryCheck = async () => {
+  let data = {
+    isInertia: true,
+    key: confirmData.contactPrimary.key,
+    value: confirmData.contactPrimary.value,
+  };
+
+  emailCheckLoader.value = true;
+
+  axios
+    .post('/customer-primary-email-check', data)
+    .then(res => {
+      if (res.data.response === true) {
+        modals.contactPrimaryConfirm = false;
+        emailCheckLoader.value = false;
+        modals.customerAlreadyPrimaryConfirm = true;
+      } else {
+        additionalContactPrimaryConfirmed();
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const additionalContactPrimaryConfirmed = (keepExistingPrimaryEmail = true) => {
   const isEmail = confirmData.contactPrimary.key === 'email';
+  keepExistingPrimaryEmailLoader.value = keepExistingPrimaryEmail;
+
   router.post(
     `/customer-additional-contact/${
       isEmail ? confirmData.contactPrimary.id : 0
@@ -1455,21 +1519,26 @@ const additionalContactPrimaryConfirmed = () => {
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
       quote_type: 'health',
+      keep_existing_primary_email: keepExistingPrimaryEmail ? 1 : 0,
     },
     {
       preserveScroll: true,
       onBefore: () => {
         contactLoader.value = true;
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Primary Contact Updated',
-          position: 'top',
-        });
-      },
       onFinish: () => {
         contactLoader.value = false;
+        emailCheckLoader.value = false;
+        keepExistingPrimaryEmailLoader.value = null;
         modals.contactPrimaryConfirm = false;
+        modals.customerAlreadyPrimaryConfirm = false;
+      },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
       },
     },
   );
@@ -3206,6 +3275,35 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
               </div>
             </template>
           </x-modal>
+
+          <x-modal
+            v-model="modals.contactDeleteConfirm"
+            title="Delete Additional Contact"
+            show-close
+            backdrop
+          >
+            <p>Are you sure you want to delete this?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.contactDeleteConfirm = false"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  @click.prevent="additionalContactDeleteConfirmed"
+                  :loading="contactLoader"
+                >
+                  Delete
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
+
         </template>
       </x-accordion-item>
     </x-accordion>
@@ -3262,15 +3360,30 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
             </template>
 
             <template #item-action="item">
-              <x-button
-                size="xs"
-                color="emerald"
-                outlined
-                @click.prevent="additionalContactPrimary(item)"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Make Primary
-              </x-button>
+              <div class="space-x-4">
+                <x-button
+                  size="xs"
+                  color="emerald"
+                  outlined
+                  @click.prevent="additionalContactPrimary(item)"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Make Primary
+                </x-button>
+                <x-button
+                  size="xs"
+                  color="red"
+                  outlined
+                  @click.prevent="additionalContactDelete(item.id)"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    typeof item.id === 'number' &&
+                    can(permissionsEnum.DELETE_ADDITIONAL_CONTACT)
+                  "
+                >
+                  Delete
+                </x-button>
+              </div>
             </template>
           </DataTable>
         </template>
@@ -3347,10 +3460,55 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
             <x-button
               size="sm"
               color="emerald"
-              @click.prevent="additionalContactPrimaryConfirmed"
-              :loading="contactLoader"
+              @click.prevent="customerAlreadyPrimaryCheck"
+              :loading="emailCheckLoader"
             >
               Confirm
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+
+      <x-modal
+        v-model="modals.customerAlreadyPrimaryConfirm"
+        title="Primary Additional Contact"
+        show-close
+        backdrop
+      >
+        <p>
+          Do you want to keep the existing primary email ID as the additional contact for this lead?
+        </p>
+        <br />
+        <p>Are you sure you want to continue?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              color="primary"
+              @click.prevent="additionalContactPrimaryConfirmed(true)"
+              :loading="
+                keepExistingPrimaryEmailLoader === true && contactLoader
+              "
+              :disabled="
+                keepExistingPrimaryEmailLoader === false && contactLoader
+              "
+            >
+              Yes
+            </x-button>
+            <x-button
+              size="sm"
+              ghost
+              color="red"
+              outlined
+              @click.prevent="additionalContactPrimaryConfirmed(false)"
+              :loading="
+                keepExistingPrimaryEmailLoader === false && contactLoader
+              "
+              :disabled="
+                keepExistingPrimaryEmailLoader === true && contactLoader
+              "
+            >
+              No
             </x-button>
           </div>
         </template>
