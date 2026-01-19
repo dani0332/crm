@@ -1,9 +1,9 @@
 <?php
 
-use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
 use Tests\Helpers\CyberILA\CyberQuoteMockHelper;
 use Tests\Helpers\CyberILA\CyberQuoteTestDataBuilder;
+use Tests\Helpers\TestDataSeeder;
+use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
@@ -50,10 +50,10 @@ test('cyber quote data builder creates valid data', function () {
         'nationality_id',
         'emirate_of_registration_id',
     ])
-    ->and($quoteData['first_name'])->toBeString()
-    ->and($quoteData['email'])->toContain('@')
-    ->and($quoteData['nationality_id'])->toBeInt()
-    ->and($quoteData['emirate_of_registration_id'])->toBeInt();
+        ->and($quoteData['first_name'])->toBeString()
+        ->and($quoteData['email'])->toContain('@')
+        ->and($quoteData['nationality_id'])->toBeInt()
+        ->and($quoteData['emirate_of_registration_id'])->toBeInt();
 });
 
 test('cyber quote test data builder has female customer variant', function () {
@@ -92,8 +92,8 @@ test('cyber quote api payload has correct format', function () {
         'device',
         'source',
     ])
-    ->and($payload['quoteTypeId'])->toBe(119)
-    ->and($payload['lang'])->toBe('EN');
+        ->and($payload['quoteTypeId'])->toBe(119)
+        ->and($payload['lang'])->toBe('EN');
 });
 
 test('cyber quote data builder has default values', function () {
@@ -147,8 +147,8 @@ test('cyber ila assign leads validates required fields', function () {
 
 test('cyber ila assign leads accepts valid cyber quote uuid', function () {
     // Test with valid quote UUID
-    $testUuid = 'cyber-quote-' . uniqid();
-    
+    $testUuid = 'cyber-quote-'.uniqid();
+
     $response = $this->postJson(route('assign-leads'), [
         'quoteUuid' => $testUuid,
         'quoteType' => 'CYBER', // or 119
@@ -161,8 +161,8 @@ test('cyber ila assign leads accepts valid cyber quote uuid', function () {
 test('cyber ila handles disabled lead allocation endpoint', function () {
     // Test when lead allocation is disabled
     // This would typically be mocked via configuration or service
-    $testUuid = 'cyber-quote-' . uniqid();
-    
+    $testUuid = 'cyber-quote-'.uniqid();
+
     $response = $this->postJson(route('assign-leads'), [
         'quoteUuid' => $testUuid,
         'quoteType' => 'CYBER',
@@ -185,8 +185,8 @@ test('cyber ila returns error on invalid quote uuid', function () {
 
 test('cyber ila pipeline executes allocation steps', function () {
     // Test complete allocation pipeline
-    $testUuid = 'cyber-quote-' . uniqid();
-    
+    $testUuid = 'cyber-quote-'.uniqid();
+
     $response = $this->postJson(route('assign-leads'), [
         'quoteUuid' => $testUuid,
         'quoteType' => 'CYBER',
@@ -209,4 +209,3 @@ test('cyber ila allocation request has correct structure', function () {
         ->and($payload['quoteUuid'])->toBeString()
         ->and($payload['quoteType'])->toBe('CYBER');
 });
-

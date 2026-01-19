@@ -42,6 +42,7 @@ class CyberQuoteFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $attributes['personal_quote_id'] = null;
+
             return $attributes;
         });
     }

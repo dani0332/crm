@@ -5,7 +5,6 @@ namespace Tests\Helpers\CyberILA;
 use App\Enums\QuoteTypeId;
 use App\Models\CyberQuote;
 use App\Models\PersonalQuote;
-use App\Services\Quotes\CyberQuoteService;
 use Mockery;
 
 class CyberQuoteMockHelper
@@ -32,9 +31,9 @@ class CyberQuoteMockHelper
     public static function mockKenService(array $plans = []): \Mockery\MockInterface
     {
         $mock = Mockery::mock('alias:App\Facades\Ken');
-        
+
         $defaultPlans = ! empty($plans) ? $plans : self::getDefaultPlans();
-        
+
         $mock->shouldReceive('request')
             ->with('/cyber/get-quote-plans', 'post', Mockery::type('array'))
             ->andReturn((object) [
