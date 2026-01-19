@@ -38,8 +38,15 @@ class CustomerPrimaryEmailRequest extends FormRequest
         $validator->after(function ($validator) {
             if ($this->key === GenericRequestEnum::EMAIL) {
                 $quote = $this->getQuoteObject($this->quote_type, $this->quote_id);
+
+                if (! $quote) {
+                    $validator->errors()->add('quote_id', 'Invalid quote type or quote ID provided');
+
+                    return;
+                }
+
                 if (
-                    $quote && in_array($quote->quote_status_id, [
+                    in_array($quote?->quote_status_id, [
                         QuoteStatusEnum::POLICY_BOOKING_QUEUED,
                         QuoteStatusEnum::POLICY_BOOKING_FAILED,
                     ])
