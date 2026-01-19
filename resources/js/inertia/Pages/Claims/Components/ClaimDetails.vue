@@ -191,44 +191,57 @@ const validationRules = {
   incidentDate: v => {
     if (!v) return 'Incident date is required.';
 
-    let date;
-    // Handle different date formats
-    if (v instanceof Date) {
-      date = new Date(v);
-    } else if (typeof v === 'string') {
-      // Try parsing the string - handle various formats
-      date = new Date(v);
-
-      // If invalid, try parsing as ISO date format
-      if (isNaN(date.getTime())) {
-        const isoDate = v.includes('T') ? v : v + 'T00:00:00';
-        date = new Date(isoDate);
+    // Helper function to parse date string
+    const parseDateString = str => {
+      // DD-MM-YYYY or DD/MM/YYYY format
+      const ddmmyyyy = /^(\d{2})[-\/](\d{2})[-\/](\d{4})$/;
+      const match = str.match(ddmmyyyy);
+      if (match) {
+        return new Date(
+          parseInt(match[3], 10),
+          parseInt(match[2], 10) - 1,
+          parseInt(match[1], 10),
+        );
       }
 
-      // If still invalid, try parsing DD/MM/YYYY format
-      if (isNaN(date.getTime()) && v.includes('/')) {
-        const parts = v.split('/');
-        if (parts.length === 3) {
-          // Assuming DD/MM/YYYY format
-          const day = parseInt(parts[0]);
-          const month = parseInt(parts[1]) - 1; // Month is 0-indexed
-          const year = parseInt(parts[2]);
-          date = new Date(year, month, day);
-        }
+      // YYYY-MM-DD format (ISO)
+      const yyyymmdd = /^(\d{4})-(\d{2})-(\d{2})$/;
+      const isoMatch = str.match(yyyymmdd);
+      if (isoMatch) {
+        return new Date(
+          parseInt(isoMatch[1], 10),
+          parseInt(isoMatch[2], 10) - 1,
+          parseInt(isoMatch[3], 10),
+        );
       }
-    } else {
-      date = new Date(v);
-    }
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // Set to end of today to allow today's date
+      // Fallback to native Date parsing
+      return new Date(str);
+    };
 
+    // Parse the date value
+    const date =
+      v instanceof Date
+        ? new Date(v)
+        : typeof v === 'string'
+          ? parseDateString(v)
+          : new Date(v);
+
+    // Validate the parsed date
     if (isNaN(date.getTime())) {
       return 'Incident date must be a valid date.';
     }
 
-    if (date > today) {
-      return 'Incident date cannot be in the future.';
+    // Normalize to date-only (remove time component) for comparison
+    const normalizeDate = d =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const normalizedDate = normalizeDate(date);
+    const normalizedToday = normalizeDate(new Date());
+
+    // Compare normalized dates - must be before today (yesterday or earlier)
+    if (normalizedDate >= normalizedToday) {
+      return 'Incident date must be before today.';
     }
 
     return true;
@@ -674,7 +687,7 @@ watch(
                     :error="claimForm.errors.incident_date"
                     :clearable="false"
                     type="date"
-                    max-date="today"
+                    max-date="yesterday"
                     :utc="true"
                     :rules="[validationRules.incidentDate]"
                   />
