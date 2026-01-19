@@ -177,7 +177,7 @@ trait PrivateClient
             ->where($whereClause);
 
         // Disabled it since there is no quote type specific conditions for now
-        // Hoever keep it to enable later for any quote type when neede
+        // Hoever keep it to enable later for any quote type when needed
         // $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
 
         LoggerService::sql('doesLeadMatchPcpCriteria', $query);
