@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\CyberILA;
+namespace Tests\Helpers\CyberILA;
 
 use Illuminate\Testing\TestResponse;
 

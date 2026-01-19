@@ -84,7 +84,7 @@ class CyberQuoteMockHelper
             'source' => $data['source'] ?? 'IMCRM',
             'device' => $data['device'] ?? 'DESKTOP',
             'code' => 'CYBER-'.uniqid(),
-            'created_by_id' => auth()->user()->id ?? null,
+            'created_by_id' => auth()->user()?->id ?? null,
             'advisor_id' => $data['advisorId'] ?? null,
         ]);
 

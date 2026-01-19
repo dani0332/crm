@@ -12,13 +12,11 @@ class CyberQuoteFactory extends Factory
 
     public function definition(): array
     {
-        // First create a PersonalQuote
-        $personalQuote = PersonalQuote::factory()->create([
-            'quote_type_id' => 119, // Cyber quote type ID
-        ]);
-
+        // Use lazy factory relationship - let Laravel handle create() or make() based on context
         return [
-            'personal_quote_id' => $personalQuote->id,
+            'personal_quote_id' => PersonalQuote::factory([
+                'quote_type_id' => 119, // Cyber quote type ID
+            ]),
             'emirate_of_registration_id' => 1,
             'coverage_id' => null,
             'created_at' => now(),
