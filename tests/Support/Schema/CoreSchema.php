@@ -84,7 +84,6 @@ class CoreSchema
                 $table->integer('status')->nullable();
                 $table->timestamp('logout_at')->nullable();
                 // User-management columns used in UserController@update and related flows.
-                $table->boolean('is_active')->default(1);
                 $table->string('mobile_no')->nullable();
                 $table->string('landline_no')->nullable();
                 $table->string('calendar_link')->nullable();
