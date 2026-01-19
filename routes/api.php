@@ -97,6 +97,7 @@ Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteSta
 Route::post('/email-status/update-customer-replied', [ApiController::class, 'updateCustomerRepliedStatus'])->name('updateCustomerRepliedStatus');
 
 Route::get('/get-status-retargeting-ep-reminder', [EmbeddedProductController::class, 'getStatusRetargetingEpReminder'])->name('get.status.retargeting-ep-reminder');
+Route::post('/retargeting-ep-reminder-callback', [ApiController::class, 'retargetingEpReminderCallback'])->name('retargeting-ep-reminder-callback');
 
 Route::prefix('v1')->group(function () {
 

@@ -95,9 +95,11 @@ class EmbeddedProductController extends Controller
             "advisorProfilePhotoPath" => $advisorInfo?->profile_photo_path,
             "DisplayName" => "InsuranceMarket.ae"
         ];
+
         $data = [
             'quote' => Arr::only($quote->toArray(), $quoteFields),
             'embeddedTransaction' => Arr::only($epTransaction, $epTransactionFields),
+            'retargetingEpReminderCallbackEndpoint' => route('retargeting-ep-reminder-callback'),
             'reminderContent' => $reminderContent,
         ];
         return apiResponse($data, Response::HTTP_OK, 'Retargeting EP Reminder status retrieved');

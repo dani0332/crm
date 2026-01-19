@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -66,6 +68,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -797,5 +800,37 @@ class ApiController extends Controller
             ->onQueue('lead_ocr_data_comparison');
 
         return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
+    }
+
+    public function retargetingEpReminderCallback(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car,
+            'quoteId' => 'required|integer|exists:car_quote_request,id',
+            'customerIdentity' => 'required|string',
+            'messageId' => 'required|string',
+            'templateId' => 'required|string',
+            'customerId' => 'required|integer',
+            'subject' => 'required|string',
+            'responseCode' => 'required',
+            'reminderType' => 'required|string|in:'.GenericRequestEnum::EMAIL,
+        ]);
+
+        if ($validator->fails()) {
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, $validator->errors()->first());
+        }
+
+        $newEmailStatus = (object) [
+            'quoteTypeId' => $request->quoteTypeId,
+            'quoteId' => $request->quoteId,
+            'customerEmail' => $request->customerIdentity,
+            'templateId' => $request->templateId,
+            'customerId' => $request->customerId
+        ];
+
+        $status = $request->responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
+        $emailStatusId = $this->emailStatusService->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, 'Retargeting EP Reminder Email Sent');
+
+        return apiResponse(['email_status_id' => $emailStatusId], Response::HTTP_OK, 'Retargeting EP Reminder Email Sent');
     }
 }
