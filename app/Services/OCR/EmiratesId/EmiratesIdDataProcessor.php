@@ -22,6 +22,8 @@ use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 
 class EmiratesIdDataProcessor
 {
@@ -54,7 +56,10 @@ class EmiratesIdDataProcessor
 
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
-            $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
+
+            if (!($this->quote->registration_type == CarRegistrationType::COMPANY && $this->quote->vehicle_use == CarVehicleUse::PRIVATE)) {
+                $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
+            }
 
             // Trigger OCR success validation
             $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);
@@ -83,14 +88,15 @@ class EmiratesIdDataProcessor
                 'driver_gender' => $this->extractedData['sex'],
             ]);
 
-            if (! empty($fieldsToUpdate)) {
+
+            if (!($quote->registration_type == CarRegistrationType::COMPANY && $quote->vehicle_use == CarVehicleUse::PRIVATE)) {
                 $quote->vehicleDriverDetail()->updateOrCreate(
                     ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
                     $fieldsToUpdate
                 );
-
-                LoggerService::info('VehicleDriverDetail updated successfully');
             }
+
+            LoggerService::info('VehicleDriverDetail updated successfully');
 
             return true;
 

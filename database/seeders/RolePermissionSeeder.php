@@ -45,6 +45,7 @@ class RolePermissionSeeder extends Seeder
         $this->sageProcessTrackerPermissions();
         $this->addBranchesPermission();
         $this->addCarLegacyKycSkipInsurerApiPermission();
+        $this->addCarDriverEmiratesIdUpdatePermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -551,6 +552,27 @@ class RolePermissionSeeder extends Seeder
         if ($roles) {
             foreach ($roles as $role) {
                 if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                }
+            }
+        }
+    }
+
+    private function addCarDriverEmiratesIdUpdatePermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::COMPANY_PRIVATE_CAR_DRIVER_UPDATES,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (!$role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
                 }
             }

@@ -860,7 +860,7 @@ class CRUDController extends Controller
                 } else {
                     $documentQuoteTypeId = QuoteTypeId::Car;
                 }
-                @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId);
+                @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId, null, null, null, $quote);
                 $quoteDocuments = array_values($quoteDocuments->toArray());
                 $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
                 $storageUrl = storageUrl();

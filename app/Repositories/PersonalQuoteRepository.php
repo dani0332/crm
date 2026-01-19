@@ -32,7 +32,9 @@ use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
 {
-    use GenericQueriesAllLobs, OcrUtils;
+    use GenericQueriesAllLobs, OcrUtils {
+        GenericQueriesAllLobs::getNationalityId insteadof OcrUtils;
+    }
 
     public function model()
     {

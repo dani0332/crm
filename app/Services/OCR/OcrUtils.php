@@ -16,6 +16,7 @@ use App\Services\LookupService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Nationality;
 
 trait OcrUtils
 {
@@ -486,5 +487,19 @@ trait OcrUtils
         return $issuancePlaces->first(function ($place) use ($issuancePlace) {
             return strtolower($place->text) === strtolower($issuancePlace);
         })?->code ?? null;
+    }
+
+    protected function getNationalityId(?string $nationality): ?int
+    {
+        LoggerService::info('Getting nationality ID for nationality: ' . $nationality);
+        if (empty($nationality)) {
+            return null;
+        }
+
+        $query = Nationality::where('text', $nationality)
+            ->orWhere('country_name', $nationality)
+            ->orWhere('code', $nationality);
+
+        return $query->value('id');
     }
 }

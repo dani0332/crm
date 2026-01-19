@@ -3,11 +3,13 @@
 namespace App\Services\OCR;
 
 use App\Enums\DocumentTypeCategory;
+use App\Enums\DocumentTypeCode;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
+use App\Services\OCR\EmiratesId\DriverEmiratesIdDataProcessor;
 use App\Services\OCR\EmiratesId\EmiratesIdDataProcessor;
 use App\Services\OCR\Mulkiya\MulkiyaDataProcessor;
 use App\Services\OCR\PolicySchedule\PolicyScheduleDataProcessor;
@@ -15,6 +17,7 @@ use App\Services\OCR\TaxInvoice\TaxInvoiceDataProcessor;
 use App\Services\OCR\TaxInvoiceRaisedByBuyer\TaxInvoiceRaisedByBuyerDataProcessor;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\CarQuote;
 
 trait OcrFillable
 {
@@ -173,6 +176,31 @@ trait OcrFillable
         }
     }
 
+    private function fillDriverEmiratesId(CarQuote $quote, object $data)
+    {
+        try {
+            $processor = new DriverEmiratesIdDataProcessor($quote, $data, $this->documentTypeCode);
+            $success = $processor->processDriverEmiratesIdData();
+
+            if ($success) {
+                $summary = $processor->getProcessingSummary();
+
+                LoggerService::info(self::class . ' - Driver Emirates ID data processing completed successfully - Quote UUID: ' . $quote->uuid, extra: [
+                    'processing_summary' => $summary,
+                ]);
+            } else {
+                LoggerService::warning(self::class . ' - Driver Emirates ID data processing failed - Quote UUID: ' . $quote->uuid);
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class . ' - Exception occurred during Emirates ID data filling - Quote UUID: ' . $quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
     private function fillMulkiya(Model $quote, object $data)
     {
         try {
@@ -293,6 +321,7 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
                 OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data),
+                OCRDocumentTypeEnum::DRIVER_EMIRATES_ID => $this->fillDriverEmiratesId($quote, $data),
                 OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
                 OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL], true)
