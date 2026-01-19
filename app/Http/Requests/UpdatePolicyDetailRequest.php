@@ -58,6 +58,8 @@ class UpdatePolicyDetailRequest extends FormRequest
                 'quote_policy_issuance_status_other' => 'nullable',
                 'modelType' => 'required',
                 'quote_id' => 'required',
+                'quote_code' => 'nullable',
+                'is_vat_manually_changed' => 'nullable',
             ];
 
             if (request()->modelType == strtolower(quoteTypeCode::Life)) {

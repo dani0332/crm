@@ -2193,11 +2193,13 @@ class CRUDController extends Controller
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
         $request = (object) $policyDetailRequest->validated();
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_QUOTE_POLICY,$request->quote_code ?? null);
+        LoggerService::info('fn: updateQuotePolicy called');
+
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
-        info('Quote Code: '.$quoteModel->code.' fn: updateQuotePolicy called');
 
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
@@ -2242,10 +2244,10 @@ class CRUDController extends Controller
         $centralService = app(CentralService::class);
         $centralService->synchronizePaymentInformation($quoteModel);
         $centralService->updateQuoteInformation($request->modelType, $request->quote_id);
-        info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
+        LoggerService::info('Policy detail updated successfully');
         if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
-            info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
+            LoggerService::info('BIN Generated for transactional leads');
         }
 
         return redirect()->back()->with([
