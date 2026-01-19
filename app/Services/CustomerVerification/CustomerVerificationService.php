@@ -624,8 +624,20 @@ class CustomerVerificationService
             return;
         }
 
+        $quoteTypeId = $this->getQuoteTypeId($quote);
+        if (! $quoteTypeId) {
+            LoggerService::warning('Unable to determine quote type ID for customer verification status update', extra: [
+                'quote_id' => $quote->id ?? null,
+                'quote_uuid' => $quote->uuid ?? null,
+                'quote_type' => $quoteTypeValue,
+                'quote_class' => $quote::class,
+            ]);
+
+            return;
+        }
+
         $requestData = ['quoteUuid' => $quote->uuid,
-            'quoteTypeId' => $this->getQuoteTypeId($quote),
+            'quoteTypeId' => $quoteTypeId,
             'callSource' => LeadSourceEnum::IMCRM,
         ];
 
@@ -667,9 +679,14 @@ class CustomerVerificationService
         };
     }
 
-    private function getQuoteTypeId($quote)
+    private function getQuoteTypeId(Model $quote): ?int
     {
-        return ($quote instanceof CarQuote) ? QuoteTypes::CAR->id() : $quote->quote_type_id;
+        return match (true) {
+            $quote instanceof CarQuote => QuoteTypes::CAR->id(),
+            $quote instanceof PersonalQuote => $quote->quote_type_id ? (int) $quote->quote_type_id : null,
+            // Add other quote types here as needed
+            default => $quote->quote_type_id ? (int) $quote->quote_type_id : null,
+        };
     }
 
     public function isCustomerVerificationEnabled(): bool
