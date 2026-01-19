@@ -153,6 +153,23 @@ trait PrivateClient
         return $conditions;
     }
 
+    private function applyAdditionalConditions($query)
+    {
+        $conditions[] = [
+            'column' => 'quote_status_id',
+            'operator' => '=',
+            'value' => QuoteStatusEnum::PolicyBooked,
+        ];
+
+        LoggerService::info('Additional conditions', ['Additional conditions' => $conditions]);
+
+        foreach ($conditions as $condition) {
+            $query->where($condition['column'], $condition['operator'], $condition['value']);
+        }
+
+        return $query;
+    }
+
     private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass, int $quoteTypeId): bool
     {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
@@ -177,6 +194,9 @@ trait PrivateClient
             ->where($whereClause);
 
         $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
+
+        // Check for additional conditions
+        $query = $this->applyAdditionalConditions($query);
 
         LoggerService::sql('doesLeadMatchPcpCriteria', $query);
 

@@ -1441,6 +1441,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail
