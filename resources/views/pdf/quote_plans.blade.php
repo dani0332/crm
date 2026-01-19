@@ -539,7 +539,7 @@
 
 {{-- PDF Page Inner Content --}}
 <main>
-    <table class="main-table {{ $tableClass ?? 'is-full' }}" style="margin-top:100px">
+    <table class="main-table {{ $tableClass ?? 'is-full' }}" style="margin-top:10px">
         <thead>
         <tr>
             <th class="bg-light-blue" rowspan="2">

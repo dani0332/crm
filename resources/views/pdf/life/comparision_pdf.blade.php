@@ -718,7 +718,7 @@
     </header>
  
     {{-- PDF Page Inner Content --}}
-    <main style="margin-top: 100px;">
+    <main style="margin-top: 10px;">
         @if(count($planIds) > 0)
         @php
             // Limit to maximum 5 plans
@@ -726,7 +726,6 @@
         @endphp
         <table class="main-table {{ $tableClass }}">
             <thead>
-                <p style="margin-top:100px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
                         <p class="quote-info raleway-font" style="font-weight:700;">Insurance company
