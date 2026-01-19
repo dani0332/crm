@@ -1,6 +1,6 @@
 <script setup>
 import moment from 'moment';
-import { ref, onMounted, onUnmounted, h, defineComponent } from 'vue';
+import { ref, onMounted, onUnmounted, h, defineComponent, nextTick } from 'vue';
 const { isRequired } = useRules();
 import AccuracyMatrix from './AccuracyMatrix.vue';
 
@@ -151,6 +151,14 @@ const setQuoteInsurerNumber = () => {
 const policyDetailsState = reactive({
   isEditing: false,
 });
+
+// Track if VAT was manually changed
+const isVatManuallyChanged = ref(false);
+// Track the auto-calculated VAT value for comparison
+const autoCalculatedVat = ref(0);
+// Flag to prevent watch from triggering during auto-calculation
+const isAutoCalculating = ref(false);
+
 const policyDetailsForm = useForm({
   quote_policy_number:
     page.props.quote.policy_number == 'NULL'
@@ -217,6 +225,9 @@ const calculateVatAmount = (
   isVatAmountRecalculated = false,
   isInitialLoad = false,
 ) => {
+  // Set flag to indicate we're auto-calculating
+  isAutoCalculating.value = true;
+  
   let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
 
@@ -225,7 +236,11 @@ const calculateVatAmount = (
     let vat = policyDetailsForm.vat;
     if (isVatAmountRecalculated || (isInitialLoad && vat == 0)) {
       vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
-      policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+      const calculatedVat = useRoundIt(vat).toFixed(2);
+      policyDetailsForm.vat = calculatedVat;
+      autoCalculatedVat.value = Number(calculatedVat);
+      // VAT is auto-calculated, so flag should be false
+      isVatManuallyChanged.value = false;
     }
     policyDetailsForm.amount_with_vat = useRoundIt(
       Number(vat) + Number(priceVatApplicable) + Number(priceVatNotApplicable),
@@ -234,7 +249,11 @@ const calculateVatAmount = (
     let vat = policyDetailsForm.vat;
     if (isVatAmountRecalculated || (isInitialLoad && vat == 0)) {
       vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
-      policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+      const calculatedVat = useRoundIt(vat).toFixed(2);
+      policyDetailsForm.vat = calculatedVat;
+      autoCalculatedVat.value = Number(calculatedVat);
+      // VAT is auto-calculated, so flag should be false
+      isVatManuallyChanged.value = false;
     }
     policyDetailsForm.amount_with_vat = useRoundIt(
       Number(vat) + Number(priceVatApplicable),
@@ -246,7 +265,14 @@ const calculateVatAmount = (
   } else {
     policyDetailsForm.vat = 0;
     policyDetailsForm.amount_with_vat = 0;
+    autoCalculatedVat.value = 0;
+    isVatManuallyChanged.value = false;
   }
+  
+  // Reset the auto-calculating flag after a short delay to allow watch to process
+  nextTick(() => {
+    isAutoCalculating.value = false;
+  });
 };
 const quoteType = page.props.quoteType.toLowerCase();
 const isLifeQuote = quoteType == quoteTypeCodeEnum.Life.toLowerCase();
@@ -433,6 +459,13 @@ const rules = {
 
 const onUpdatePolicyDetails = isValid => {
   if (!isValid) return;
+  
+  // Add the flag to the form data
+  policyDetailsForm.transform(data => ({
+    ...data,
+    is_vat_manually_changed: isVatManuallyChanged.value,
+  }));
+  
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
@@ -445,6 +478,8 @@ const onUpdatePolicyDetails = isValid => {
         });
       }
       policyDetailsState.isEditing = false;
+      // Reset the flag after successful submission
+      isVatManuallyChanged.value = false;
     },
     onError: errors => {
       Object.keys(errors).forEach(function (key) {
@@ -465,7 +500,11 @@ const onUpdatePolicyDetails = isValid => {
 };
 
 onBeforeMount(() => {
+  // Initialize auto-calculated VAT with the current VAT value
+  autoCalculatedVat.value = Number(policyDetailsForm.vat) || 0;
   calculateVatAmount(false, true);
+  // Initialize flag to false on mount
+  isVatManuallyChanged.value = false;
 });
 
 watch(
@@ -576,18 +615,50 @@ const readOnlyMode = reactive({
 
 watch(
   () => policyDetailsForm.vat,
-  newValue => {
+  (newValue, oldValue) => {
     if (Number(newValue) < 0) {
       policyDetailsForm.vat = 0;
+      return;
+    }
+    
+    // Skip if we're auto-calculating (to prevent false positives)
+    if (isAutoCalculating.value) {
+      return;
+    }
+    
+    // Check if VAT was manually changed (not from auto-calculation)
+    // Only check if we're in editing mode and the value actually changed
+    if (policyDetailsState.isEditing && newValue !== oldValue) {
+      const vatValue = Number(newValue);
+      const autoCalculated = Number(autoCalculatedVat.value);
+      
+      // If the manual value differs from auto-calculated value, flag as manually changed
+      // Use a small tolerance for floating point comparison (0.01)
+      if (Math.abs(vatValue - autoCalculated) > 0.01) {
+        isVatManuallyChanged.value = true;
+      } else {
+        // If it matches the auto-calculated value, it's not manually changed
+        isVatManuallyChanged.value = false;
+      }
     }
   },
 );
 
 watch(
   () => policyDetailsForm.price_vat_applicable,
-  newValue => {
+  (newValue, oldValue) => {
     if (Number(newValue) < 0) {
       policyDetailsForm.price_vat_applicable = 0;
+      return;
+    }
+    
+    // If price_vat_applicable changes, reset VAT to 0 first, then recalculate
+    if (newValue !== oldValue && policyDetailsState.isEditing) {
+      // Set auto-calculating flag before resetting VAT
+      isAutoCalculating.value = true;
+      policyDetailsForm.vat = 0;
+      // Recalculate VAT (this will auto-calculate and set flag to false)
+      calculateVatAmount(true);
     }
   },
 );
@@ -618,6 +689,16 @@ const calculateTotalPrice = () => {
   ).toFixed(2);
   policyDetailsForm.amount_with_vat = amountWithVat;
   policyDetailsForm.vat = vat;
+  
+  // When calculateTotalPrice is called from VAT field change, it means VAT was manually changed
+  // Compare with auto-calculated value to determine if it's different
+  const vatValue = Number(vat);
+  const autoCalculated = Number(autoCalculatedVat.value);
+  if (Math.abs(vatValue - autoCalculated) > 0.01) {
+    isVatManuallyChanged.value = true;
+  } else {
+    isVatManuallyChanged.value = false;
+  }
 };
 
 // Define a custom field wrapper component to handle loading state consistently
@@ -1100,6 +1181,8 @@ const FieldLoader = defineComponent({
                       policyDetailsForm.reset();
                       calculateVatAmount();
                       setQuotePlanInsurerNumber();
+                      // Reset the flag when cancelling
+                      isVatManuallyChanged.value = false;
                     }
                   "
                 >
