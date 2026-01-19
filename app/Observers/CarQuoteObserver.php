@@ -25,6 +25,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\EmbeddedTransactionService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -113,6 +114,15 @@ class CarQuoteObserver
                 $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
             } catch (Exception $e) {
                 Log::error('CarQuoteObserver - update personal quote failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $lead->uuid,
+                ]);
+            }
+
+            try {
+                app(EmbeddedTransactionService::class)->retargetEpReminder($lead, QuoteTypeId::Car);
+            } catch (Exception $e) {
+                Log::error('CarQuoteObserver - retarget ep reminder failed', [
                     'error' => $e->getMessage(),
                     'uuid' => $lead->uuid,
                 ]);

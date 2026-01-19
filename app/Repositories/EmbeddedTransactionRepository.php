@@ -35,4 +35,13 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->whereNot('policy_status', EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE)
             ->get();
     }
+
+    public function getDraftEpTransactions($quoteId, $quoteTypeId, $epShortCodes = []): Collection
+    {
+        return $this->with('product:id,embedded_product_id', 'product.embeddedProduct:id,short_code')
+            ->select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id', 'policy_status')
+            ->where(['quote_request_id' => $quoteId, 'quote_type_id' => $quoteTypeId, 'payment_status_id' => PaymentStatusEnum::DRAFT])
+            ->whereHas('product.embeddedProduct', fn ($q) => $q->whereIn('short_code', $epShortCodes))
+            ->get();
+    }
 }
