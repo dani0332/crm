@@ -331,8 +331,6 @@ class SendUpdateLogRepository extends BaseRepository
             $isNegative = $sendUpdateLogService->isNegativeValue($sendUpdate);
             $bookingDetails = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
-                // 'booking_date' => $data['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
-                // 'invoice_description' => $data['invoice_description'],
                 'transaction_payment_status' => $data['transaction_payment_status'],
                 'invoice_date' => $data['invoice_date'],
                 'insurer_tax_invoice_number' => $data['insurer_tax_invoice_number'] ?? null,
@@ -348,24 +346,26 @@ class SendUpdateLogRepository extends BaseRepository
                 'commission_vat_applicable' => strToFloat($data['commission_vat_applicable'] ?? null, $isNegative),
                 'price_with_vat' => $data['price_with_vat'] ?? null,
             ];
-            // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
-            // booking details, so we don't need to add null reversal_invoice on other options details.
+
             if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD) {
                 $bookingDetails['reversal_invoice'] = $data['reversal_invoice'];
             }
 
             $result = $sendUpdate->update($bookingDetails);
             LoggerService::info('Send Update Log Updated successfully');
-            $sendUpdate->save(); // This save is used because sometime object not refresh properly
+            $sendUpdate->save(); 
             $sendUpdate->refresh();
 
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 LoggerService::info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
-                app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $payment);
+
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
+
+                app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $payment);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
+
                 if ($payment->discount_value && (empty($sendUpdate->discount) || $sendUpdate->discount == 0)) {
                     $sendUpdate->update(['discount' => $payment->discount_value]);
                 }
