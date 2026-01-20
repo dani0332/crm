@@ -109,9 +109,9 @@ class EmbeddedProductController extends Controller
             'customerId' => $request->customerId
         ];
 
-        $status = in_array($request->responseCode, [200, 201, 202]) ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
         $reminderNumberTitle = $request->reminderNumber == 1 ? 'First' : 'Second';
-        $emailStatusId = app(EmailStatusService::class)->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, "{$reminderNumberTitle} Reminder Email Sent");
+        $status = in_array($request->responseCode, [200, 201, 202]) ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
+        $emailStatusId = app(EmailStatusService::class)->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, "{$reminderNumberTitle} Reminder Email {$status}");
 
         return apiResponse(['email_status_id' => $emailStatusId], Response::HTTP_OK, 'Retargeting EP Reminder Email Sent');
     }
