@@ -151,9 +151,9 @@ class PaymentObserver
                 $query->whereIn('name', $managerRoles);
             })
                 ->whereHas('teams', function ($query) use ($advisorTeamIds) {
-                    $query->whereIn('id', $advisorTeamIds);
+                    $query->whereIn('teams.id', $advisorTeamIds);
                 })
-                ->pluck('id')
+                ->pluck('users.id')
                 ->toArray();
 
             $affectedUserIds = array_unique(array_merge($affectedUserIds, $managerUserIds));
