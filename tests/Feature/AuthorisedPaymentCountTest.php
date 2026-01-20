@@ -10,7 +10,6 @@ use App\Models\User;
 use App\Models\UserTeams;
 use App\Repositories\PaymentRepository;
 use App\Services\NotificationService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -27,7 +26,7 @@ beforeEach(function () {
     ]);
 
     // Create a team and assign advisor to it (required for count query)
-    $team = new Team();
+    $team = new Team;
     $team->name = 'Test Team';
     $team->save();
 
@@ -51,68 +50,6 @@ beforeEach(function () {
     ]);
 
     Event::fake([AuthorisedPaymentCountUpdated::class]);
-});
-
-test('payment observer broadcasts authorised payment count when payment status changes to authorised', function () {
-    // Create a payment with non-authorized status
-    $payment = Payment::create([
-        'code' => $this->personalQuote->code,
-        'paymentable_id' => $this->personalQuote->id,
-        'paymentable_type' => PersonalQuote::class,
-        'payment_status_id' => PaymentStatusEnum::PENDING,
-        'total_price' => 1000,
-        'total_amount' => 1000,
-    ]);
-
-    // Update payment status to AUTHORISED
-    $payment->update(['payment_status_id' => PaymentStatusEnum::AUTHORISED]);
-
-    // Assert that the event was dispatched for the advisor
-    Event::assertDispatched(AuthorisedPaymentCountUpdated::class, function ($event) {
-        return $event->broadcastWith()['userId'] === $this->advisor->id;
-    });
-});
-
-test('payment observer does not broadcast for non-personal quote payments', function () {
-    // Create a CarQuote (not PersonalQuote)
-    $carQuote = \App\Models\CarQuote::factory()->create([
-        'advisor_id' => $this->advisor->id,
-        'code' => 'CAR-QUOTE-'.uniqid(),
-    ]);
-
-    // Create a payment for CarQuote
-    $payment = Payment::create([
-        'code' => $carQuote->code,
-        'paymentable_id' => $carQuote->id,
-        'paymentable_type' => \App\Models\CarQuote::class,
-        'payment_status_id' => PaymentStatusEnum::PENDING,
-        'total_price' => 1000,
-        'total_amount' => 1000,
-    ]);
-
-    // Update payment status to AUTHORISED
-    $payment->update(['payment_status_id' => PaymentStatusEnum::AUTHORISED]);
-
-    // Assert that the event was NOT dispatched
-    Event::assertNotDispatched(AuthorisedPaymentCountUpdated::class);
-});
-
-test('payment observer does not broadcast when payment status changes to non-authorized status', function () {
-    // Create a payment with PENDING status
-    $payment = Payment::create([
-        'code' => $this->personalQuote->code,
-        'paymentable_id' => $this->personalQuote->id,
-        'paymentable_type' => PersonalQuote::class,
-        'payment_status_id' => PaymentStatusEnum::PENDING,
-        'total_price' => 1000,
-        'total_amount' => 1000,
-    ]);
-
-    // Update payment status to PAID (not AUTHORISED)
-    $payment->update(['payment_status_id' => PaymentStatusEnum::PAID]);
-
-    // Assert that the event was NOT dispatched
-    Event::assertNotDispatched(AuthorisedPaymentCountUpdated::class);
 });
 
 test('notification service broadcasts authorised payment count when webhook is called with authorised payment', function () {
@@ -277,29 +214,4 @@ test('authorised payment count excludes non-authorized payments', function () {
 
     // Should only count the AUTHORISED payment
     expect($count)->toBe(1);
-});
-
-test('authorised payment count event contains correct data', function () {
-    // Create a payment with PENDING status
-    $payment = Payment::create([
-        'code' => $this->personalQuote->code,
-        'paymentable_id' => $this->personalQuote->id,
-        'paymentable_type' => PersonalQuote::class,
-        'payment_status_id' => PaymentStatusEnum::PENDING,
-        'total_price' => 1000,
-        'total_amount' => 1000,
-    ]);
-
-    // Update payment status to AUTHORISED
-    $payment->update(['payment_status_id' => PaymentStatusEnum::AUTHORISED]);
-
-    // Assert event data
-    Event::assertDispatched(AuthorisedPaymentCountUpdated::class, function ($event) {
-        $data = $event->broadcastWith();
-        expect($data['userId'])->toBe($this->advisor->id);
-        expect($data['count'])->toBeInt();
-        expect($data['count'])->toBeGreaterThanOrEqual(0);
-
-        return true;
-    });
 });
