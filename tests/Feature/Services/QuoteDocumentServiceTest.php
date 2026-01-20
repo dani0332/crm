@@ -17,7 +17,7 @@ beforeEach(function () {
 describe('QuoteDocumentService - Document Type Filtering', function () {
     test('getQuoteDocumentsToReceive returns documents where registration_type is null or matches', function () {
         // Create document types
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_NULL',
             'text' => 'Document with null registration',
             'is_active' => 1,
@@ -28,7 +28,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 1,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_COMPANY',
             'text' => 'Document for Company',
             'is_active' => 1,
@@ -39,7 +39,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 2,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_PERSONAL',
             'text' => 'Document for Personal',
             'is_active' => 1,
@@ -65,7 +65,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
 
     test('getQuoteDocumentsToReceive returns documents where vehicle_use is null or matches', function () {
         // Create document types
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_NULL',
             'text' => 'Document with null vehicle use',
             'is_active' => 1,
@@ -76,7 +76,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 1,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_PRIVATE',
             'text' => 'Document for Private',
             'is_active' => 1,
@@ -87,7 +87,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 2,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_COMPANY',
             'text' => 'Document for Company',
             'is_active' => 1,
@@ -113,7 +113,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
 
     test('getQuoteDocumentsToReceive applies both filters correctly', function () {
         // Create document types with various combinations
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_NULL_NULL',
             'text' => 'Document null/null',
             'is_active' => 1,
@@ -124,7 +124,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 1,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_COMPANY_PRIVATE',
             'text' => 'Document Company/Private',
             'is_active' => 1,
@@ -135,7 +135,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 2,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_COMPANY_NULL',
             'text' => 'Document Company/null',
             'is_active' => 1,
@@ -146,7 +146,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 3,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_NULL_PRIVATE',
             'text' => 'Document null/Private',
             'is_active' => 1,
@@ -157,7 +157,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 4,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_PERSONAL_PRIVATE',
             'text' => 'Document Personal/Private',
             'is_active' => 1,
@@ -168,7 +168,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 5,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_COMPANY_COMPANY',
             'text' => 'Document Company/Company',
             'is_active' => 1,
@@ -187,7 +187,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
         );
 
         $codes = $documents->pluck('code')->toArray();
-        
+
         // Should include: null/null, Company/Private, Company/null, null/Private
         expect($codes)->toContain('DOC_NULL_NULL')
             ->and($codes)->toContain('DOC_COMPANY_PRIVATE')
@@ -199,7 +199,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
 
     test('getQuoteDocumentsToReceive filtering only applies to CompanyCar quote type', function () {
         // Create documents for different quote types
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_PERSONAL_CAR',
             'text' => 'Personal Car Document',
             'is_active' => 1,
@@ -210,7 +210,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 1,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_PERSONAL_CAR_2',
             'text' => 'Personal Car Document 2',
             'is_active' => 1,
@@ -237,7 +237,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
 
     test('getQuoteDocumentsToReceive returns only active documents', function () {
         // Create active and inactive documents
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_ACTIVE',
             'text' => 'Active Document',
             'is_active' => 1,
@@ -248,7 +248,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 1,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_INACTIVE',
             'text' => 'Inactive Document',
             'is_active' => 0,
@@ -272,7 +272,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
 
     test('getQuoteDocumentsToReceive returns only documents that receive from customer', function () {
         // Create documents with different receive_from_customer values
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_RECEIVE',
             'text' => 'Receive Document',
             'is_active' => 1,
@@ -283,7 +283,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 1,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_NOT_RECEIVE',
             'text' => 'Not Receive Document',
             'is_active' => 1,
@@ -307,7 +307,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
 
     test('getQuoteDocumentsToReceive returns documents sorted by sort_order', function () {
         // Create documents with different sort orders
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_THIRD',
             'text' => 'Third',
             'is_active' => 1,
@@ -318,7 +318,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 30,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_FIRST',
             'text' => 'First',
             'is_active' => 1,
@@ -329,7 +329,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 10,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_SECOND',
             'text' => 'Second',
             'is_active' => 1,
@@ -354,7 +354,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
 
     test('getQuoteDocumentsToReceive works without filters', function () {
         // Create documents - for CompanyCar, only documents with null fields will be returned when no filters provided
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC1',
             'text' => 'Document 1',
             'is_active' => 1,
@@ -365,7 +365,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
             'sort_order' => 1,
         ]);
 
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC2',
             'text' => 'Document 2',
             'is_active' => 1,
@@ -384,7 +384,7 @@ describe('QuoteDocumentService - Document Type Filtering', function () {
 
     test('getQuoteDocumentsToReceive returns empty collection when no documents match', function () {
         // Create document with specific registration_type
-        DocumentType::forceCreate([
+        DocumentType::factory()->create([
             'code' => 'DOC_PERSONAL',
             'text' => 'Personal Document',
             'is_active' => 1,

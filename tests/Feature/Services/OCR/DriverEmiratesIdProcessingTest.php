@@ -10,8 +10,6 @@ use App\Models\Nationality;
 use App\Models\QuoteDocument;
 use App\Models\VehicleDriverDetail;
 use App\Services\OCR\EmiratesId\DriverEmiratesIdDataProcessor;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -21,7 +19,7 @@ beforeEach(function () {
 describe('Driver Emirates ID OCR Processing Flow', function () {
     test('processes OCR data and updates VehicleDriverDetail with driver_eid_number and gender', function () {
         // Create CarQuote
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-quote-uuid-1',
             'code' => 'TEST-001',
             'registration_type' => CarRegistrationType::PERSONAL,
@@ -54,16 +52,11 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
     });
 
     test('processes OCR data and updates CarQuote for Company + Private combination', function () {
-        // Create nationality (temporarily disable mass assignment protection)
-        Model::unguard();
-        $nationality = Nationality::create([
-            'text' => 'United Arab Emirates',
-            'code' => 'UAE',
-        ]);
-        Model::reguard();
+        // Create nationality
+        $nationality = Nationality::factory()->uae()->create();
 
         // Create CarQuote with Company registration and Private use
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-quote-uuid-2',
             'code' => 'TEST-002',
             'registration_type' => CarRegistrationType::COMPANY,
@@ -103,11 +96,14 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
 
     test('does not update CarQuote for non-Company-Private combinations', function () {
         // Create CarQuote with Company registration and Company use
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-quote-uuid-3',
             'code' => 'TEST-003',
             'registration_type' => CarRegistrationType::COMPANY,
             'vehicle_use' => CarVehicleUse::COMMERCIAL,
+            'driver_name' => null,
+            'dob' => null,
+            'nationality_id' => null,
         ]);
 
         // Prepare OCR data
@@ -141,7 +137,7 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
 
     test('handles transaction rollback on failure', function () {
         // Create a valid CarQuote
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-rollback-uuid',
             'code' => 'ROLLBACK-001',
             'registration_type' => CarRegistrationType::PERSONAL,
@@ -160,7 +156,7 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
 
     test('returns false when no data to update', function () {
         // Create CarQuote
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-quote-uuid-4',
             'code' => 'TEST-004',
             'registration_type' => CarRegistrationType::PERSONAL,
@@ -182,7 +178,7 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
 
     test('updates existing VehicleDriverDetail if already exists', function () {
         // Create CarQuote
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-quote-uuid-5',
             'code' => 'TEST-005',
             'registration_type' => CarRegistrationType::PERSONAL,
@@ -227,16 +223,11 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
     });
 
     test('generates processing summary correctly', function () {
-        // Create nationality (temporarily disable mass assignment protection)
-        Model::unguard();
-        $nationality = Nationality::create([
-            'text' => 'United Arab Emirates',
-            'code' => 'UAE',
-        ]);
-        Model::reguard();
+        // Create nationality
+        $nationality = Nationality::factory()->uae()->create();
 
         // Create CarQuote
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-quote-uuid-6',
             'code' => 'TEST-006',
             'registration_type' => CarRegistrationType::COMPANY,
@@ -273,7 +264,7 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
 
     test('validates and updates QuoteDocument OCR flag on success', function () {
         // Create CarQuote
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-quote-uuid-7',
             'code' => 'TEST-007',
             'registration_type' => CarRegistrationType::PERSONAL,
@@ -306,7 +297,7 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
 
     test('handles partial data extraction', function () {
         // Create CarQuote
-        $quote = CarQuote::create([
+        $quote = CarQuote::factory()->create([
             'uuid' => 'test-quote-uuid-8',
             'code' => 'TEST-008',
             'registration_type' => CarRegistrationType::PERSONAL,
