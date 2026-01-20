@@ -26,7 +26,21 @@ beforeEach(function () {
 });
 
 afterEach(function () {
+    // Aggressive Mockery cleanup
     Mockery::close();
+    Mockery::getContainer()->mockery_close();
+
+    // Explicitly unset test properties to free memory
+    unset($this->validationService, $this->apiService, $this->documentHandler, $this->policyIssuanceService, $this->service);
+
+    // Clear service container bindings
+    app()->forgetInstance(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class);
+
+    // Reset Ngi facade to clear any mock instances
+    \App\Facades\Ngi::clearResolvedInstances();
+
+    // Force garbage collection
+    gc_collect_cycles();
 });
 
 describe('Service Dependencies', function () {

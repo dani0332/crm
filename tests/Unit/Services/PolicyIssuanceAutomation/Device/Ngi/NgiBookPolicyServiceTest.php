@@ -8,10 +8,22 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use Database\Factories\DeviceQuoteFactory;
+// Global variables for shared instances (Pest compatible)
+$sharedResponseHandler = null;
+
+beforeAll(function () {
+    global $sharedResponseHandler;
+
+    // Create shared stateless service instances once per test class
+    $sharedResponseHandler = new NgiResponseHandler;
+});
+
 beforeEach(function () {
+    global $sharedResponseHandler;
+
     // Create real dependencies where appropriate, mock others
     $this->validationService = Mockery::mock(NgiValidationService::class);
-    $this->responseHandler = new NgiResponseHandler;
+    $this->responseHandler = $sharedResponseHandler; // Reuse shared instance
 
     $this->bookPolicyService = new NgiBookPolicyService(
         $this->validationService,
@@ -20,7 +32,22 @@ beforeEach(function () {
 });
 
 afterEach(function () {
+    // Aggressive Mockery cleanup
     Mockery::close();
+    Mockery::getContainer()->mockery_close();
+
+    // Explicitly unset test properties to free memory (keep shared instances)
+    unset($this->validationService, $this->bookPolicyService);
+    // Note: $this->responseHandler is a shared instance, don't unset it
+
+    // Clear service container bindings
+    app()->forgetInstance(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class);
+
+    // Reset Ngi facade to clear any mock instances
+    \App\Facades\Ngi::clearResolvedInstances();
+
+    // Force garbage collection
+    gc_collect_cycles();
 });
 
 describe('getStepsLockingStatus', function () {

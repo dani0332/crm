@@ -112,83 +112,133 @@ class DeviceQuoteFactory extends Factory
     }
 
     /**
-     * Create a mock quote object with customer relationship for unit tests.
+     * Create a lightweight mock quote object with customer relationship for unit tests.
+     * Optimized for memory usage by using plain objects and minimal mocking.
      *
      * @param  array<string, mixed>  $overrides
      */
-    public static function makeMockWithRelations(array $overrides = []): \Mockery\MockInterface
+    public static function makeMockWithRelations(array $overrides = []): object
     {
         $quote = self::makeMock($overrides);
 
-        $mock = \Mockery::mock('stdClass');
+        // Use plain object instead of Mockery mock for better memory efficiency
+        $mock = new class($quote) {
+            public function __construct($quote)
+            {
+                // Copy all properties from quote object
+                foreach ((array) $quote as $key => $value) {
+                    $this->{$key} = $value;
+                }
 
-        // Set all properties from the quote object
-        foreach ((array) $quote as $key => $value) {
-            $mock->{$key} = $value;
-        }
+                // Set up relationships as plain objects (not mocks)
+                $this->customer = (object) [
+                    'id' => 1,
+                    'emirates_id_number' => '784-1234-12345678-1', // Static data for consistency
+                    'emirates_id_expiry_date' => '2026-01-15',
+                    'dob' => '1990-01-15',
+                    'first_name' => $quote->first_name ?? 'John',
+                    'last_name' => $quote->last_name ?? 'Doe',
+                    'email' => $quote->email ?? 'john.doe@example.com',
+                    'mobile_no' => $quote->mobile_no ?? '+971501234567',
+                ];
 
-        // Set up common relationships as mocks
-        $customerMock = (object) [
-            'id' => 1,
-            'emirates_id_number' => '784-'.rand(1000, 9999).'-'.rand(1000000, 9999999).'-'.rand(1, 9),
-            'emirates_id_expiry_date' => now()->addYears(2)->format('Y-m-d'),
-            'dob' => '1990-01-15',
-            'first_name' => $quote->first_name ?? 'John',
-            'last_name' => $quote->last_name ?? 'Doe',
-            'email' => $quote->email ?? 'john.doe@example.com',
-            'mobile_no' => $quote->mobile_no ?? '+971501234567',
-        ];
+                $this->deviceQuote = (object) [
+                    'id' => 1,
+                    'imei' => $quote->imei ?? '123456789012345',
+                    'device_make' => $quote->device_make ?? 'Apple',
+                    'device_model' => $quote->device_model ?? 'iPhone 15 Pro',
+                    'device_type' => $quote->device_type ?? 'smartphone',
+                    'device_value' => $quote->device_value ?? 5000.00,
+                ];
 
-        $deviceQuoteMock = (object) [
-            'id' => 1,
-            'imei' => $quote->imei ?? '123456789012345',
-            'device_make' => $quote->device_make ?? 'Apple',
-            'device_model' => $quote->device_model ?? 'iPhone 15 Pro',
-            'device_type' => $quote->device_type ?? 'smartphone',
-            'device_value' => $quote->device_value ?? 5000.00,
-        ];
+                $this->latestInsured = (object) [
+                    'id' => 1,
+                    'id_type' => 'emiratesId',
+                    'id_number' => '784-1234-12345678-1', // Static data for consistency
+                    'first_name' => $quote->first_name ?? 'John',
+                    'last_name' => $quote->last_name ?? 'Doe',
+                    'email' => $quote->email ?? 'john.doe@example.com',
+                    'mobile_no' => $quote->mobile_no ?? '+971501234567',
+                ];
 
-        $insuredMock = (object) [
-            'id' => 1,
-            'id_type' => 'emiratesId',
-            'id_number' => '784-'.rand(1000, 9999).'-'.rand(1000000, 9999999).'-'.rand(1, 9),
-            'first_name' => $quote->first_name ?? 'John',
-            'last_name' => $quote->last_name ?? 'Doe',
-            'email' => $quote->email ?? 'john.doe@example.com',
-            'mobile_no' => $quote->mobile_no ?? '+971501234567',
-        ];
+                $this->latestPayment = new class {
+                    public $id = 1;
+                    public $code = 'PAY-123456'; // Static code for consistency
+                    public $total_amount = 500.00;
+                    public $payment_status_id = 1;
+                    public $is_main_lead_payment = true;
 
-        // Create payment splits mock
-        $paymentSplitsMock = \Mockery::mock();
-        $paymentSplitsMock->shouldReceive('where->first')->andReturn(null);
+                    public function paymentSplits()
+                    {
+                        // Return a mock query builder that can do where() and first()
+                        return new class {
+                            public function where($column, $value)
+                            {
+                                return new class($value) {
+                                    private $expectedValue;
 
-        // Create payment mock with paymentSplits method
-        $paymentMock = \Mockery::mock();
-        $paymentMock->id = 1;
-        $paymentMock->code = 'PAY-'.uniqid();
-        $paymentMock->total_amount = 500.00;
-        $paymentMock->payment_status_id = 1;
-        $paymentMock->is_main_lead_payment = true;
-        $paymentMock->shouldReceive('paymentSplits')->andReturn($paymentSplitsMock);
+                                    public function __construct($expectedValue)
+                                    {
+                                        $this->expectedValue = $expectedValue;
+                                    }
 
-        // Create payments relationship mock
-        $paymentsRelationMock = \Mockery::mock();
-        $paymentsRelationMock->shouldReceive('mainLeadPayment->first')->andReturn($paymentMock);
+                                    public function first()
+                                    {
+                                        // Return null for credit card payment splits in tests
+                                        // (simulating no credit card split exists)
+                                        return null;
+                                    }
+                                };
+                            }
+                        };
+                    }
+                };
 
-        // Setup relationship accessors
-        $mock->shouldReceive('getAttribute')->with('customer')->andReturn($customerMock);
-        $mock->shouldReceive('getAttribute')->with('deviceQuote')->andReturn($deviceQuoteMock);
-        $mock->shouldReceive('getAttribute')->with('latestInsured')->andReturn($insuredMock);
-        $mock->shouldReceive('getAttribute')->with('latestPayment')->andReturn($paymentMock);
-        $mock->customer = $customerMock;
-        $mock->deviceQuote = $deviceQuoteMock;
-        $mock->latestInsured = $insuredMock;
-        $mock->latestPayment = $paymentMock;
+                // Set up payments relationship as plain object (not mock)
+                $this->paymentsRelation = (object) [
+                    'mainLeadPayment' => function() {
+                        return (object) ['first' => $this->latestPayment];
+                    }
+                ];
+            }
 
-        // Setup method calls for relationships
-        $mock->shouldReceive('payments')->andReturn($paymentsRelationMock);
-        $mock->shouldReceive('save')->andReturn(true);
-        $mock->shouldReceive('update')->andReturn(true);
+            public function payments()
+            {
+                return new class($this->latestPayment) {
+                    private $payment;
+
+                    public function __construct($payment)
+                    {
+                        $this->payment = $payment;
+                    }
+
+                    public function mainLeadPayment()
+                    {
+                        return $this; // Return self to allow method chaining
+                    }
+
+                    public function first()
+                    {
+                        return $this->payment;
+                    }
+                };
+            }
+
+            public function save()
+            {
+                return true;
+            }
+
+            public function update()
+            {
+                return true;
+            }
+
+            public function getAttribute($attribute)
+            {
+                return $this->{$attribute} ?? null;
+            }
+        };
 
         return $mock;
     }
