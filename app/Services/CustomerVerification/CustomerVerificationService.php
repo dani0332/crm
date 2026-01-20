@@ -636,7 +636,7 @@ class CustomerVerificationService
             }
         } else {
             LoggerService::info('Customer verification not supported for quote type', extra: [
-                'quote_type_id' => $quote->quote_type_id,
+                'quote_type_id' => $this->getQuoteTypeId($quote),
                 'quote_uuid' => $quote->uuid,
                 'quote_class' => get_class($quote),
                 'document_type' => $this->documentTypeCode,
