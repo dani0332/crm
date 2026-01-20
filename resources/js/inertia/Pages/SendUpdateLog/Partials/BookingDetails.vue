@@ -1230,6 +1230,7 @@ const onReversalEdit = () => {
   }
 };
 
+// Reminder: Adjusted discount is no longer be applicable - 86erkena0
 const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
@@ -1315,15 +1316,6 @@ const noDiscountType = computed(() => {
     isCIOrCIR.value
   );
 });
-
-watch(
-  () => bookingDetailsForm.price_with_vat,
-  (newValue, oldValue) => {
-    if (!(noDiscountType.value || ignoreCheckDiscount.value)) {
-      checkDiscount(newValue, oldValue);
-    }
-  },
-);
 
 watch(
   () => props.bookingDetails?.broker_invoice_number,
