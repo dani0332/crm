@@ -1,8 +1,8 @@
 <script setup>
-import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { createReusableTemplate } from '@vueuse/core';
-import { nextTick, onMounted, reactive, watch } from 'vue';
+import { onMounted, reactive } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -99,13 +99,24 @@ const openDuplicate = () => {
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
-// Initialize useSavingsPlans composable for helper functions
+// Initialize useSavingsPlans composable for helper functions and ecom logic
 const {
   getPaymentTermTitle,
   formatNumber,
   calculateTotalAnnualPrice,
+  ecomDetail,
+  planExchangeRate,
+  sharedAvailablePlans,
+  getEcomDisplayPrice,
+  totalAnnualPrice,
+  getTotalAnnualPriceAED,
+  updateEcomDetailFromPlans,
 } = useSavingsPlans({
-  quote: props.quote,
+  quote: computed(() => props.quote),
+  localLookups: computed(() => props.localLookups),
+  lookUpData: computed(() => props.lookUpData),
+  insuranceProviders: computed(() => props.insuranceProviders),
+  notification,
 });
 
 // Alias for compatibility
@@ -291,21 +302,6 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-
-  // Handle initial state: if plan is already selected and is ecommerce,
-  // ensure ecomDetail is updated once plans are loaded
-  // The handlePlansLoaded event handler will update ecomDetail when plans arrive,
-  // but we also check here as a fallback in case plans are already loaded
-  if (props.quote?.plan_id) {
-    // Use nextTick to ensure child components (AvailablePlans) have mounted
-    nextTick(() => {
-      // If plans are already loaded, update immediately
-      // Otherwise, wait for the plans-loaded event
-      if (sharedAvailablePlans.value.length > 0) {
-        updateEcomDetailFromPlans();
-      }
-    });
-  }
 });
 
 const sectionExpanded = computed(() => true);
@@ -334,146 +330,6 @@ const handlePlansLoaded = plans => {
   sharedAvailablePlans.value = plans || [];
   updateEcomDetailFromPlans();
 };
-
-const { copy, copied } = useClipboard();
-const onCopyText = text => {
-  copy(text);
-  if (copied)
-    notification.success({
-      title: 'Link copied to clipboard',
-      position: 'top',
-    });
-};
-
-// Ecom section - track selected plan for ecom display (similar to Life)
-const ecomDetail = ref(null);
-const planExchangeRate = ref(1);
-
-// Shared available plans data from AvailablePlans component
-const sharedAvailablePlans = ref([]);
-
-// Get ecom display price (savings-specific)
-const getEcomDisplayPrice = item => {
-  if (!item) return 0;
-  return parseFloat(item.actualPremium || item.totalPrice || 0);
-};
-
-// Calculate total annual price using composable helper
-const totalAnnualPrice = computed(() => {
-  if (!ecomDetail.value) return 'N/A';
-
-  const displayPrice = getEcomDisplayPrice(ecomDetail.value);
-  const paymentTerm =
-    ecomDetail.value?.paymentTerm ??
-    props.quote?.savings_quote?.payment_term ??
-    1;
-
-  const item = {
-    actualPremium: displayPrice,
-    paymentTerm: paymentTerm,
-  };
-
-  return calculateTotalAnnualPrice(item) || 'N/A';
-});
-
-// Get total annual price in AED
-const getTotalAnnualPriceAED = () => {
-  if (!ecomDetail.value) return 'N/A';
-
-  const displayPrice = getEcomDisplayPrice(ecomDetail.value);
-  const priceInAED =
-    Math.round(displayPrice * planExchangeRate.value * 100) / 100;
-  const paymentTerm =
-    ecomDetail.value?.paymentTerm ??
-    props.quote?.savings_quote?.payment_term ??
-    1;
-
-  const item = {
-    actualPremium: priceInAED,
-    paymentTerm: paymentTerm,
-  };
-
-  return numberFormat(calculateTotalAnnualPrice(item) || 0);
-};
-
-// Update ecomDetail from shared available plans data
-const updateEcomDetailFromPlans = () => {
-  if (!sharedAvailablePlans.value.length) {
-    ecomDetail.value = null;
-    return;
-  }
-
-  // Find the selected plan - check multiple ID fields
-  const selectedPlanId = props.quote?.plan_id;
-  if (!selectedPlanId) {
-    ecomDetail.value = null;
-    return;
-  }
-
-  // Try to find plan by id, planId, or plan_id
-  const foundPlan = sharedAvailablePlans.value.find(
-    plan =>
-      (String(plan.id) === String(selectedPlanId) ||
-        String(plan.planId) === String(selectedPlanId) ||
-        String(plan.plan_id) === String(selectedPlanId)) &&
-      !plan.isDisabled,
-  );
-
-  if (foundPlan) {
-    ecomDetail.value = {
-      ...foundPlan,
-      providerName:
-        foundPlan.providerName ||
-        foundPlan.provider?.text ||
-        foundPlan.providerName,
-      planName: foundPlan.name || foundPlan.planName || foundPlan.text,
-      actualPremium: parseFloat(
-        foundPlan.actualPremium || foundPlan.totalPrice || 0,
-      ),
-      totalPrice: parseFloat(
-        foundPlan.actualPremium || foundPlan.totalPrice || 0,
-      ),
-      currency: foundPlan.currency || foundPlan.currencyName || 'AED',
-      paymentTerm: foundPlan.paymentTerm,
-      isApi: foundPlan.isApi || false,
-      isUnderwritten: foundPlan.isUnderwritten || false,
-    };
-  } else {
-    ecomDetail.value = null;
-  }
-};
-
-// Watch for quote changes
-watch(
-  () => props.quote?.is_ecommerce,
-  isEcom => {
-    if (!isEcom) {
-      ecomDetail.value = null;
-    } else {
-      updateEcomDetailFromPlans();
-    }
-  },
-  { immediate: true },
-);
-
-// Watch for plan_id changes to update ecomDetail
-watch(
-  () => props.quote?.plan_id,
-  () => {
-    updateEcomDetailFromPlans();
-  },
-);
-
-// Watch for shared plans changes to update ecomDetail
-watch(
-  () => sharedAvailablePlans.value,
-  () => {
-    if (props.quote?.is_ecommerce) {
-      updateEcomDetailFromPlans();
-    }
-  },
-  { deep: true },
-);
 </script>
 
 <template>

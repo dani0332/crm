@@ -37,7 +37,6 @@ export function useSavingsPlans(options = {})
   const exchangeRates = ref({});
   const planRates = ref({});
   const ratesLoading = ref(false);
-  const selectedPlan = ref(null);
 
   // =========================================================================
   // 2. LOOKUP OPTIONS (Computed)
@@ -415,7 +414,6 @@ export function useSavingsPlans(options = {})
       }));
 
       availablePlansTable.data = processedPlans;
-      selectedPlan.value = processedPlans.find(plan => plan.id === quote.plan_id);
       return processedPlans;
     } catch (err)
     {
@@ -698,6 +696,105 @@ export function useSavingsPlans(options = {})
   };
 
   // =========================================================================
+  // 9. ECOM DETAILS MANAGEMENT
+  // =========================================================================
+
+  const ecomDetail = ref(null);
+  const planExchangeRate = ref(1);
+  const sharedAvailablePlans = ref([]);
+
+  /**
+   * Get ecom display price from plan item
+   */
+  const getEcomDisplayPrice = (item) =>
+  {
+    if (!item) return 0;
+    return parseFloat(item.actualPremium || item.totalPrice || 0);
+  };
+
+  /**
+   * Update ecomDetail from available plans array
+   */
+  const updateEcomDetailFromPlans = () =>
+  {
+    if (!sharedAvailablePlans.value.length || !quote.value?.plan_id)
+    {
+      ecomDetail.value = null;
+      return;
+    }
+
+    const selectedPlanId = quote.value.plan_id;
+    const foundPlan = sharedAvailablePlans.value.find(
+      plan =>
+        (String(plan.id) === String(selectedPlanId) ||
+          String(plan.planId) === String(selectedPlanId) ||
+          String(plan.plan_id) === String(selectedPlanId)) &&
+        !plan.isDisabled,
+    );
+
+    if (foundPlan)
+    {
+      ecomDetail.value = {
+        ...foundPlan,
+        providerName:
+          foundPlan.providerName ||
+          foundPlan.provider?.text ||
+          foundPlan.providerName,
+        planName: foundPlan.name || foundPlan.planName || foundPlan.text,
+        actualPremium: parseFloat(
+          foundPlan.actualPremium || foundPlan.totalPrice || 0,
+        ),
+        totalPrice: parseFloat(
+          foundPlan.actualPremium || foundPlan.totalPrice || 0,
+        ),
+        currency: foundPlan.currency || foundPlan.currencyName || 'AED',
+        paymentTerm: foundPlan.paymentTerm,
+        isApi: foundPlan.isApi || false,
+        isUnderwritten: foundPlan.isUnderwritten || false,
+      };
+    } else
+    {
+      ecomDetail.value = null;
+    }
+  };
+
+  /**
+   * Calculate total annual price for ecom detail
+   */
+  const totalAnnualPrice = computed(() =>
+  {
+    if (!ecomDetail.value) return 'N/A';
+    const displayPrice = getEcomDisplayPrice(ecomDetail.value);
+    const paymentTerm =
+      ecomDetail.value?.paymentTerm ??
+      quote.value?.savings_quote?.payment_term ??
+      1;
+    return (
+      calculateTotalAnnualPrice({ actualPremium: displayPrice, paymentTerm }) ||
+      'N/A'
+    );
+  });
+
+  /**
+   * Get total annual price in AED
+   */
+  const getTotalAnnualPriceAED = () =>
+  {
+    if (!ecomDetail.value) return 'N/A';
+    const displayPrice = getEcomDisplayPrice(ecomDetail.value);
+    const priceInAED =
+      Math.round(displayPrice * planExchangeRate.value * 100) / 100;
+    const paymentTerm =
+      ecomDetail.value?.paymentTerm ??
+      quote.value?.savings_quote?.payment_term ??
+      1;
+    return formatNumber(
+      calculateTotalAnnualPrice({ actualPremium: priceInAED, paymentTerm }) ||
+      0,
+    );
+  };
+
+  // =========================================================================
   // RETURN ALL EXPORTS
   // =========================================================================
 
@@ -711,7 +808,6 @@ export function useSavingsPlans(options = {})
     exchangeRates,
     planRates,
     ratesLoading,
-    selectedPlan,
 
     // Lookup Options
     currencyOptions,
@@ -758,5 +854,14 @@ export function useSavingsPlans(options = {})
     getExchangeRate,
     setExchangeRate,
     convertToAED,
+
+    // Ecom Details
+    ecomDetail,
+    planExchangeRate,
+    sharedAvailablePlans,
+    getEcomDisplayPrice,
+    totalAnnualPrice,
+    getTotalAnnualPriceAED,
+    updateEcomDetailFromPlans,
   };
 }
