@@ -324,12 +324,6 @@ const handlePlanSelected = plan => {
     only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
   });
 };
-
-// Handle plans loaded event from AvailablePlans component
-const handlePlansLoaded = plans => {
-  sharedAvailablePlans.value = plans || [];
-  updateEcomDetailFromPlans();
-};
 </script>
 
 <template>
@@ -1118,8 +1112,8 @@ const handlePlansLoaded = plans => {
       :lookUpData="lookUpData"
       :localLookups="localLookups"
       @plan-selected="handlePlanSelected"
-      @plans-loaded="handlePlansLoaded"
     />
+    <!-- @plans-loaded="handlePlansLoaded" -->
 
     <MigratePayment
       v-if="!isNewPaymentStructure"

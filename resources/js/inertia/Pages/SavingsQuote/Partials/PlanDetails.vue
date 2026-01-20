@@ -1,5 +1,4 @@
 <script setup>
-import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
 import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { createReusableTemplate } from '@vueuse/core';
 
@@ -17,9 +16,6 @@ const props = defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 
-// Use savings calculator composable for lumpsum payout calculation
-const { calculatePayout } = useSavingsCalculator();
-
 // Initialize useSavingsPlans composable
 const {
   // Lookup Options
@@ -31,6 +27,9 @@ const {
   getFrequencyFromPaymentTerm,
   isLumpsumFrequency: checkIsLumpsumFrequency,
   formatPrice,
+  findCurrencyOption,
+  findInvestmentFrequencyOption,
+  calculatePlanPayout,
   // Riders
   ridersData,
   showRiders,
@@ -38,7 +37,9 @@ const {
   getRiderDetails,
   processRidersForAPI,
   // API
-  buildPlanPayload,
+  updatePlan,
+  togglePlanVisibility,
+  onLoadAvailablePlansData,
   // Form Sync
   syncTenureId,
   syncInvestmentFrequencyId,
@@ -148,33 +149,16 @@ const isLumpsumFrequency = computed(() => {
   return checkIsLumpsumFrequency(freq);
 });
 
-// Calculate functionality - same as CreatePlan
+// Calculate functionality using composable helper
 const calculatePlan = () => {
-  const amount = parseFloat(props.planDetails.actualPremium) || 0;
-  const rate = parseFloat(props.planDetails.expectedRor) || 0;
-  const years = parseInt(props.planDetails.tenure) || 0;
-
-  // Validate required fields
-  if (!amount || !rate || !years) {
-    notification.warning({
-      title: 'Please fill Investment Amount, Rate of Return, and Tenure',
+  const result = calculatePlanPayout(props.planDetails);
+  if (result) {
+    props.planDetails.lumpSumPayout = result.payout;
+    notification.success({
+      title: `Lumpsum Payout: ${result.formattedPayout}`,
       position: 'top',
     });
-    return;
   }
-
-  // Determine frequency based on investment type - same as CreatePlan
-  const frequency = isLumpsumFrequency.value
-    ? 'Single Payment'
-    : getFrequencyFromPaymentTerm(props.planDetails.paymentTerm);
-  // Calculate and set lumpsum payout
-  const payout = calculatePayout({ amount, rate, years, frequency });
-  props.planDetails.lumpSumPayout = payout; // Note: camelCase 'lumpSumPayout'
-
-  notification.success({
-    title: `Lumpsum Payout: ${formatPrice(payout)}`,
-    position: 'top',
-  });
 };
 
 // Create reusable template for manual toggle
@@ -206,26 +190,13 @@ const onToggleHidePlan = async () => {
   const previousValue = !toggleValue;
 
   try {
-    await axios.post(route('manualPlanToggle', { quoteType: 'savings' }), {
-      modelType: 'Savings',
-      planIds: [props.planDetails.id],
-      quote_uuid: props.quote.uuid,
-      toggle: toggleValue, // true = hide, false = show
-    });
-
-    notification.success({
-      title: `Plan has been ${toggleValue ? 'hidden' : 'shown'}`,
-      position: 'top',
-    });
-
-    // Emit update event to refresh plan details in parent
-    emit('update');
+    await togglePlanVisibility(
+      props.planDetails.id,
+      props.quote.uuid,
+      toggleValue,
+    );
   } catch (error) {
     console.error('Error toggling plan visibility:', error);
-    notification.error({
-      title: 'Error updating plan visibility',
-      position: 'top',
-    });
     // Revert the toggle on error
     props.planDetails.isDisabled = previousValue;
   } finally {
@@ -233,80 +204,22 @@ const onToggleHidePlan = async () => {
   }
 };
 
-const onUpdateIndividualPlan = () => {
+const onUpdateIndividualPlan = async () => {
   if (!props.planDetails) return;
 
-  // Use composable helper to process riders
-  const processedRiders = processRidersForAPI(ridersData.value);
-
-  // Get investment frequency label for API
-  const investmentFrequencyOption = investmentFrequencyOptions.value.find(
-    opt => opt.value === props.planDetails.investmentFrequency,
-  );
-
-  // Get currency code from currencyId
-  const currencyOption = currencyOptions.value.find(
-    opt =>
-      opt.value === props.planDetails.currencyId ||
-      opt.id === props.planDetails.currencyId,
-  );
-
-  // Build API payload using composable
-  const apiPayload = buildPlanPayload(
-    {
-      quoteUUID: props.quote.uuid,
-      planId: props.planDetails.id || props.planDetails.planId,
-      isDisabled: props.planDetails.isDisabled || false,
-      isManualUpdate: props.planDetails.isManualUpdate || false,
-      insurerQuoteNo: props.planDetails.insurerQuoteNo || '',
-      investmentAmount: props.planDetails.actualPremium,
-      currency:
-        currencyOption?.value ||
-        currencyOption?.label ||
-        props.planDetails.currency ||
-        'AED',
-      currencyId: props.planDetails.currencyId,
-      paymentTerm: props.planDetails.paymentTerm,
-      tenure: props.planDetails.tenure,
-      tenureId: props.planDetails.tenureId,
-      expectedRor: props.planDetails.expectedRor,
-      investmentFrequencyLabel: investmentFrequencyOption?.label || 'Regular',
-      investmentFrequencyId:
-        investmentFrequencyOption?.id ||
-        props.planDetails.investmentFrequencyId,
-      lumpSumPayout: props.planDetails.lumpSumPayout,
-      riders: processedRiders,
-    },
-    { isUpdate: true },
-  );
-
-  // Submit
-  axios
-    .post(
-      `/quotes/savings/${props.quote.uuid}/savings-plan-manual-process`,
-      apiPayload,
-    )
-    .then(() => {
-      notification.success({
-        title: 'Plan updated successfully',
-        position: 'top',
-      });
-      emit('update');
-    })
-    .catch(error => {
-      notification.error({
-        title: error.response?.data?.message || 'Failed to update plan',
-        position: 'top',
-      });
-      if (error.response?.data?.errors) {
-        Object.keys(error.response.data.errors).forEach(function (key) {
-          notification.error({
-            title: error.response.data.errors[key][0],
-            position: 'top',
-          });
-        });
-      }
+  try {
+    await updatePlan(props.planDetails, props.quote.uuid, {
+      riders: ridersData.value,
     });
+    onLoadAvailablePlansDataAndPlanDetails();
+  } catch (error) {
+    console.error('Error updating plan:', error);
+  }
+};
+
+const onLoadAvailablePlansDataAndPlanDetails = async () => {
+  await onLoadAvailablePlansData(props.quote.uuid);
+  modalVisible.value = false;
 };
 
 // Tooltip mappings for plan details
@@ -406,7 +319,7 @@ watch(
   { deep: true },
 );
 
-// Sync investment frequency ID when investmentFrequency changes (same as CreatePlan)
+// Sync investment frequency ID and payment term when investmentFrequency changes (same as CreatePlan)
 watch(
   () => props.planDetails?.investmentFrequency,
   newFreq => {
@@ -417,6 +330,19 @@ watch(
     );
     if (selectedOption && props.planDetails) {
       props.planDetails.investmentFrequencyId = selectedOption.id || null;
+    }
+
+    // Auto-select payment term based on frequency (similar to CreatePlan)
+    const checkIsLumpsum = checkIsLumpsumFrequency(newFreq);
+    const singlePaymentOption = paymentTermOptions.value.find(opt =>
+      opt.label?.toLowerCase().includes('single'),
+    );
+
+    if (checkIsLumpsum && singlePaymentOption) {
+      props.planDetails.paymentTerm = singlePaymentOption.value;
+    } else if (props.planDetails.paymentTerm === singlePaymentOption?.value) {
+      // Clear single payment if switching to regular
+      props.planDetails.paymentTerm = null;
     }
   },
 );
@@ -618,7 +544,7 @@ watch(
                   <span class="text-sm text-gray-600 w-36">Payment Term</span>
                   <x-select
                     v-model="planDetails.paymentTerm"
-                    :options="paymentTermOptions"
+                    :options="filteredPaymentTermOptions"
                     placeholder="Select Payment Term"
                     size="sm"
                     class="flex-1"

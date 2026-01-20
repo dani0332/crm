@@ -1,5 +1,4 @@
 <script setup>
-import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
 import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { cleanFormattedValueToFloat } from '@/inertia/Composables/utilities';
 import { defineEmits, watchEffect } from 'vue';
@@ -17,9 +16,6 @@ const props = defineProps({
 
 const page = usePage();
 
-// Use savings calculator composable for lumpsum payout calculation
-const { calculatePayout } = useSavingsCalculator();
-
 // Initialize useSavingsPlans composable
 const {
   // Lookup Options
@@ -33,6 +29,7 @@ const {
   getFrequencyFromPaymentTerm,
   isLumpsumFrequency: checkIsLumpsumFrequency,
   formatPrice,
+  calculatePlanPayout,
   // Riders
   ridersData,
   showRiders,
@@ -43,7 +40,7 @@ const {
   providerPlansLoading,
   fetchProviderPlans,
   // API
-  buildPlanPayload,
+  createPlan,
   // Form Sync
   syncCurrencyId,
   syncTenureId,
@@ -242,7 +239,7 @@ watch(
   },
 );
 
-const createQuotePlan = isValid => {
+const createQuotePlan = async isValid => {
   if (
     addPlanForm.insurance_provider_id === '' ||
     addPlanForm.insurance_provider_id === null
@@ -255,87 +252,30 @@ const createQuotePlan = isValid => {
 
   if (!isValid) return;
 
-  // Get investment frequency label for API
-  const investmentFrequencyOption = investmentFrequencyOptions.value.find(
-    opt => opt.value === addPlanForm.investment_frequency,
-  );
-
-  // Build API payload using composable
-  const apiPayload = buildPlanPayload(
-    {
-      quoteUUID: page.props.quote.uuid,
-      planId: addPlanForm.savings_plan_id,
-      planType: addPlanForm.plan_type,
-      isDisabled: addPlanForm.is_disabled,
-      isManualUpdate: addPlanForm.is_manual_update,
-      insurerQuoteNo: addPlanForm.insurer_quote_no || '',
-      investmentAmount: addPlanForm.investment_amount,
-      currency: addPlanForm.currency,
-      currencyId: addPlanForm.currency_id,
-      paymentTerm: addPlanForm.payment_term,
-      tenure: addPlanForm.tenure_of_savings,
-      tenureId: addPlanForm.tenure_id,
-      expectedRor: addPlanForm.expected_rate_of_return,
-      investmentFrequencyLabel: investmentFrequencyOption?.label || 'Regular',
-      investmentFrequencyId: addPlanForm.investment_frequency_id,
-      lumpSumPayout: addPlanForm.lumpsum_payout,
-      riders: processRidersForAPI(ridersData.value),
-    },
-    { isUpdate: false },
-  );
-
-  // Submit using axios with camelCase payload
-  axios
-    .post(
-      `/quotes/savings/${page.props.quote.uuid}/savings-plan-manual-process`,
-      apiPayload,
-    )
-    .then(() => {
-      notification.success({
-        title: 'Savings plan created successfully',
-        position: 'top',
-      });
-      emit('success');
-      addPlanForm.reset();
-      ridersData.value = []; // Reset riders
-    })
-    .catch(error => {
-      notification.error({
-        title: error.response?.data?.message || 'Failed to create plan',
-        position: 'top',
-      });
-      emit('error', error.response?.data?.errors || {});
+  try {
+    await createPlan(addPlanForm, page.props.quote.uuid, {
+      riders: ridersData.value,
     });
+    addPlanForm.reset();
+    ridersData.value = []; // Reset riders
+  } catch (error) {
+    console.error('Plan creation error:', error);
+  }
 };
 
 const calculatePlan = () => {
-  const amount = parseFloat(addPlanForm.investment_amount) || 0;
-  const rate = parseFloat(addPlanForm.expected_rate_of_return) || 0;
-  const years = parseInt(addPlanForm.tenure_of_savings) || 0;
-
-  // Validate required fields
-  if (!amount || !rate || !years) {
-    notification.warning({
-      title: 'Please fill Investment Amount, Rate of Return, and Tenure',
-      position: 'top',
-    });
-    return;
-  }
-
-  // Determine frequency based on investment type using composable helper
-  const frequency = isLumpsumFrequency.value
-    ? 'Single Payment'
-    : getFrequencyFromPaymentTerm(addPlanForm.payment_term);
-
-  // Calculate and set lumpsum payout
-  const payout = calculatePayout({ amount, rate, years, frequency });
-  addPlanForm.lumpsum_payout = payout;
-  lumpsumPayoutDisplay.value = formatPrice(payout); // Update display
-
-  notification.success({
-    title: `Lumpsum Payout: ${formatPrice(payout)}`,
-    position: 'top',
+  const result = calculatePlanPayout({
+    actualPremium: addPlanForm.investment_amount,
+    expectedRor: addPlanForm.expected_rate_of_return,
+    tenure: addPlanForm.tenure_of_savings,
+    paymentTerm: addPlanForm.payment_term,
+    investmentFrequency: addPlanForm.investment_frequency,
   });
+
+  if (result) {
+    addPlanForm.lumpsum_payout = result.payout;
+    lumpsumPayoutDisplay.value = result.formattedPayout; // Update display
+  }
 };
 
 const validateDecimal = event => {

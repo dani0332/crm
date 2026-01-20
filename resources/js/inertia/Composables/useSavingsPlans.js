@@ -1,3 +1,4 @@
+import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
 import { useFormatPrice } from '@/inertia/Composables/utilities';
 import axios from 'axios';
 import { computed, reactive, ref } from 'vue';
@@ -292,6 +293,76 @@ export function useSavingsPlans(options = {})
     return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
   };
 
+  /**
+   * Find currency option by id or value
+   * @param {String|Number} currencyId - Currency ID or value
+   * @returns {Object|null} Currency option or null
+   */
+  const findCurrencyOption = (currencyId) =>
+  {
+    if (!currencyId) return null;
+    return currencyOptions.value.find(
+      opt => opt.value === currencyId || opt.id === currencyId,
+    ) || null;
+  };
+
+  /**
+   * Find investment frequency option by value or id
+   * @param {String|Number} frequency - Frequency value or id
+   * @returns {Object|null} Investment frequency option or null
+   */
+  const findInvestmentFrequencyOption = (frequency) =>
+  {
+    if (!frequency) return null;
+    return investmentFrequencyOptions.value.find(
+      opt => opt.value === frequency || opt.id === frequency,
+    ) || null;
+  };
+
+  /**
+   * Calculate plan payout using savings calculator
+   * @param {Object} planData - Plan data with amount, rate, years, paymentTerm, investmentFrequency
+   * @returns {Object|null} { payout, formattedPayout } or null if validation fails
+   */
+  const calculatePlanPayout = (planData) =>
+  {
+    if (!planData) return null;
+
+    const { calculatePayout } = useSavingsCalculator();
+
+    const amount = parseFloat(planData.actualPremium || planData.investment_amount || 0);
+    const rate = parseFloat(planData.expectedRor || planData.expected_rate_of_return || 0);
+    const years = parseInt(planData.tenure || planData.tenure_of_savings || 0);
+
+    // Validate required fields
+    if (!amount || !rate || !years)
+    {
+      if (notification)
+      {
+        notification.warning({
+          title: 'Please fill Investment Amount, Rate of Return, and Tenure',
+          position: 'top',
+        });
+      }
+      return null;
+    }
+
+    // Determine frequency based on investment type
+    const frequencyValue = planData.investmentFrequency || planData.investment_frequency;
+    const isLumpsum = isLumpsumFrequency(frequencyValue);
+    const frequency = isLumpsum
+      ? 'Single Payment'
+      : getFrequencyFromPaymentTerm(planData.paymentTerm || planData.payment_term);
+
+    // Calculate payout
+    const payout = calculatePayout({ amount, rate, years, frequency });
+
+    return {
+      payout,
+      formattedPayout: formatPrice(payout),
+    };
+  };
+
   // =========================================================================
   // 4. RIDERS MANAGEMENT
   // =========================================================================
@@ -415,6 +486,7 @@ export function useSavingsPlans(options = {})
       }));
 
       availablePlansTable.data = processedPlans;
+      updateEcomDetailFromPlans(processedPlans);
       return processedPlans;
     } catch (err)
     {
@@ -544,6 +616,242 @@ export function useSavingsPlans(options = {})
         riders: planData.riders || [],
       }],
     };
+  };
+
+  /**
+   * Update plan via API - unified function for plan updates
+   * @param {Object} planDetails - Plan details object
+   * @param {String} quoteUuid - Quote UUID
+   * @param {Object} options - Additional options (riders, etc.)
+   * @returns {Promise} API response promise
+   */
+  const updatePlan = async (planDetails, quoteUuid, options = {}) =>
+  {
+    if (!planDetails || !quoteUuid)
+    {
+      throw new Error('Plan details and quote UUID are required');
+    }
+
+    // Use helper functions to find options
+    const investmentFrequencyOption = findInvestmentFrequencyOption(
+      planDetails.investmentFrequency,
+    );
+    const currencyOption = findCurrencyOption(
+      planDetails.currencyId,
+    );
+
+    // Process riders if provided
+    const processedRiders = options.riders
+      ? processRidersForAPI(options.riders)
+      : processRidersForAPI(ridersData.value);
+
+    // Build payload using composable helper
+    const apiPayload = buildPlanPayload(
+      {
+        quoteUUID: quoteUuid,
+        planId: planDetails.id || planDetails.planId,
+        isDisabled: planDetails.isDisabled || false,
+        isManualUpdate: planDetails.isManualUpdate || false,
+        insurerQuoteNo: planDetails.insurerQuoteNo || '',
+        investmentAmount: planDetails.actualPremium,
+        currency:
+          currencyOption?.value ||
+          currencyOption?.label ||
+          planDetails.currency ||
+          'AED',
+        currencyId: planDetails.currencyId,
+        paymentTerm: planDetails.paymentTerm,
+        tenure: planDetails.tenure,
+        tenureId: planDetails.tenureId,
+        expectedRor: planDetails.expectedRor,
+        investmentFrequencyLabel: investmentFrequencyOption?.label || 'Regular',
+        investmentFrequencyId:
+          investmentFrequencyOption?.id || planDetails.investmentFrequencyId,
+        lumpSumPayout: planDetails.lumpSumPayout,
+        riders: processedRiders,
+      },
+      { isUpdate: true },
+    );
+
+    // Make API call
+    try
+    {
+      const response = await axios.post(
+        `/quotes/savings/${quoteUuid}/savings-plan-manual-process`,
+        apiPayload,
+      );
+
+      if (notification)
+      {
+        notification.success({
+          title: 'Plan updated successfully',
+          position: 'top',
+        });
+      }
+
+      return response;
+    } catch (error)
+    {
+      if (notification)
+      {
+        notification.error({
+          title: error.response?.data?.message || 'Failed to update plan',
+          position: 'top',
+        });
+
+        // Show validation errors if present
+        if (error.response?.data?.errors)
+        {
+          Object.keys(error.response.data.errors).forEach(function (key)
+          {
+            notification.error({
+              title: error.response.data.errors[key][0],
+              position: 'top',
+            });
+          });
+        }
+      }
+      throw error;
+    }
+  };
+
+  /**
+   * Create plan via API - unified function for plan creation
+   * @param {Object} formData - Form data object (from Inertia form or plain object)
+   * @param {String} quoteUuid - Quote UUID
+   * @param {Object} options - Additional options (riders, etc.)
+   * @returns {Promise} API response promise
+   */
+  const createPlan = async (formData, quoteUuid, options = {}) =>
+  {
+    if (!formData || !quoteUuid)
+    {
+      throw new Error('Form data and quote UUID are required');
+    }
+
+    // Use helper function to find investment frequency option
+    const investmentFrequencyOption = findInvestmentFrequencyOption(
+      formData.investment_frequency,
+    );
+
+    // Process riders if provided
+    const processedRiders = options.riders
+      ? processRidersForAPI(options.riders)
+      : processRidersForAPI(ridersData.value);
+
+    // Build payload using composable helper
+    const apiPayload = buildPlanPayload(
+      {
+        quoteUUID: quoteUuid,
+        planId: formData.savings_plan_id,
+        planType: formData.plan_type,
+        isDisabled: formData.is_disabled || false,
+        isManualUpdate: formData.is_manual_update !== undefined ? formData.is_manual_update : true,
+        insurerQuoteNo: formData.insurer_quote_no || '',
+        investmentAmount: formData.investment_amount || formData.actual_premium,
+        currency: formData.currency || 'AED',
+        currencyId: formData.currency_id,
+        paymentTerm: formData.payment_term,
+        tenure: formData.tenure_of_savings,
+        tenureId: formData.tenure_id,
+        expectedRor: formData.expected_rate_of_return,
+        investmentFrequencyLabel: investmentFrequencyOption?.label || 'Regular',
+        investmentFrequencyId:
+          investmentFrequencyOption?.id || formData.investment_frequency_id,
+        lumpSumPayout: formData.lumpsum_payout,
+        riders: processedRiders,
+      },
+      { isUpdate: false },
+    );
+
+    // Make API call
+    try
+    {
+      const response = await axios.post(
+        `/quotes/savings/${quoteUuid}/savings-plan-manual-process`,
+        apiPayload,
+      );
+
+      if (notification)
+      {
+        notification.success({
+          title: 'Savings plan created successfully',
+          position: 'top',
+        });
+      }
+
+      return response;
+    } catch (error)
+    {
+      if (notification)
+      {
+        notification.error({
+          title: error.response?.data?.message || 'Failed to create plan',
+          position: 'top',
+        });
+
+        // Show validation errors if present
+        if (error.response?.data?.errors)
+        {
+          Object.keys(error.response.data.errors).forEach(function (key)
+          {
+            notification.error({
+              title: error.response.data.errors[key][0],
+              position: 'top',
+            });
+          });
+        }
+      }
+      throw error;
+    }
+  };
+
+  /**
+   * Toggle plan visibility (hide/show) via API
+   * @param {Number} planId - Plan ID
+   * @param {String} quoteUuid - Quote UUID
+   * @param {Boolean} isDisabled - Whether plan should be disabled (hidden)
+   * @returns {Promise} API response promise
+   */
+  const togglePlanVisibility = async (planId, quoteUuid, isDisabled) =>
+  {
+    if (!planId || !quoteUuid)
+    {
+      throw new Error('Plan ID and quote UUID are required');
+    }
+
+    try
+    {
+      const response = await axios.post(
+        route('manualPlanToggle', { quoteType: 'savings' }),
+        {
+          modelType: 'Savings',
+          planIds: [planId],
+          quote_uuid: quoteUuid,
+          toggle: isDisabled, // true = hide, false = show
+        },
+      );
+
+      if (notification)
+      {
+        notification.success({
+          title: `Plan has been ${isDisabled ? 'hidden' : 'shown'}`,
+          position: 'top',
+        });
+      }
+
+      return response;
+    } catch (error)
+    {
+      if (notification)
+      {
+        notification.error({
+          title: 'Error updating plan visibility',
+          position: 'top',
+        });
+      }
+      throw error;
+    }
   };
 
   // =========================================================================
@@ -716,16 +1024,16 @@ export function useSavingsPlans(options = {})
   /**
    * Update ecomDetail from available plans array
    */
-  const updateEcomDetailFromPlans = () =>
+  const updateEcomDetailFromPlans = (allPlans = []) =>
   {
-    if (!sharedAvailablePlans.value.length || !quote.value?.plan_id)
+    if (!allPlans.length || !quote.value?.plan_id)
     {
       ecomDetail.value = null;
       return;
     }
 
     const selectedPlanId = quote.value.plan_id;
-    const foundPlan = sharedAvailablePlans.value.find(
+    const foundPlan = allPlans.find(
       plan =>
         (String(plan.id) === String(selectedPlanId) ||
           String(plan.planId) === String(selectedPlanId) ||
@@ -828,6 +1136,9 @@ export function useSavingsPlans(options = {})
     getEligibilityValue,
     calculateTotalAnnualPrice,
     toTitleCase,
+    findCurrencyOption,
+    findInvestmentFrequencyOption,
+    calculatePlanPayout,
 
     // Riders
     showRiders,
@@ -843,6 +1154,9 @@ export function useSavingsPlans(options = {})
 
     // API
     buildPlanPayload,
+    updatePlan,
+    createPlan,
+    togglePlanVisibility,
 
     // Form Sync
     syncCurrencyId,

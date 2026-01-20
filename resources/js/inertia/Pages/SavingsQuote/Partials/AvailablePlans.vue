@@ -34,6 +34,7 @@ const {
   // Plans Data
   availablePlansTable,
   onLoadAvailablePlansData,
+  getPlanDetails,
   // Exchange Rates
   fetchExchangeRates,
   getExchangeRate,
@@ -241,47 +242,17 @@ const isEditable = item =>
   item.currency?.toUpperCase() !== 'AED' &&
   String(selectedProviderPlan.value.id) === String(item.id);
 
-const getPlanDetails = id => {
+const fetchPlanDetails = async id => {
   viewButtonLoading.value = true;
   try {
-    const foundPlan = availablePlansTable.data.find(plan => plan.id === id);
-    if (foundPlan) {
-      planDetails.value = foundPlan;
+    planDetails.value = await getPlanDetails(id, props.quote.uuid);
+    if (planDetails.value) {
       modals.planDetails = true;
-      viewButtonLoading.value = false;
-    } else {
-      axios
-        .get(`/savings/${props.quote.uuid}/plan_details/${id}`)
-        .then(res => {
-          planDetails.value = res.data;
-          modals.planDetails = true;
-          viewButtonLoading.value = false;
-        })
-        .catch(err => {
-          notification.error({
-            title: 'Error',
-            message: 'Plan Details Not Found',
-            position: 'top',
-          });
-          console.log(err);
-          viewButtonLoading.value = false;
-        });
     }
   } catch (err) {
-    console.log(err);
-    notification.error({
-      title: 'Error',
-      message: 'Something went wrong',
-      position: 'top',
-    });
+    console.error(err);
+  } finally {
     viewButtonLoading.value = false;
-  }
-};
-
-const onLoadAvailablePlansDataAndPlanDetails = async () => {
-  await onLoadAvailablePlansData();
-  if (modals.planDetails && planDetails.value) {
-    getPlanDetails(planDetails.value.id);
   }
 };
 
@@ -392,9 +363,7 @@ const confirmSendOCAEmail = () => {
 // Create Plan functionality
 const onCreatePlan = async () => {
   modals.createPlan = false;
-  await onLoadAvailablePlansData(props.quote.uuid).then(processedPlans => {
-    emit('plans-loaded', processedPlans);
-  });
+  await onLoadAvailablePlansData(props.quote.uuid);
   router.reload({
     preserveScroll: true,
     only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
@@ -405,19 +374,12 @@ const onPlanError = errors => {
   console.error('Plan creation error:', errors);
 };
 
-// Handle plan details update from PlanDetails component
-const onPlanDetailsUpdate = () => {
-  onLoadAvailablePlansDataAndPlanDetails();
-};
-
 const readOnlyMode = reactive({
   isDisable: true,
 });
 
 onMounted(() => {
-  onLoadAvailablePlansData(props.quote.uuid).then(processedPlans => {
-    emit('plans-loaded', processedPlans);
-  });
+  onLoadAvailablePlansData(props.quote.uuid);
   fetchExchangeRates(); // Fetch rates on mount
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
@@ -784,7 +746,7 @@ onMounted(() => {
                   outlined
                   @click.prevent="
                     selectedPlanType = 'normalPlans';
-                    getPlanDetails(item.id);
+                    fetchPlanDetails(item.id);
                   "
                   :loading="viewButtonLoading"
                   class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
@@ -845,7 +807,6 @@ onMounted(() => {
           :lockLeadSectionsDetails="lockLeadSectionsDetails"
           :lookUpData="lookUpData"
           :localLookups="localLookups"
-          @update="onPlanDetailsUpdate"
         />
 
         <!-- Send OCA Email Confirmation Modal -->
@@ -896,8 +857,6 @@ onMounted(() => {
             :available-plans="availablePlansTable.data"
             :lookUpData="lookUpData"
             :localLookups="localLookups"
-            @success="onCreatePlan"
-            @error="onPlanError"
           />
         </x-modal>
 
