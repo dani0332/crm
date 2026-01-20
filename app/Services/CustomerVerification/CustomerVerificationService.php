@@ -540,6 +540,7 @@ class CustomerVerificationService
 
     private function updateCustomerVerificationStatus(Model $quote): void
     {
+        $quoteType = $this->getQuoteType($quote);
         $requestData = ['quoteUuid' => $quote->uuid,
             'quoteTypeId' => $this->getQuoteTypeId($quote),
             'callSource' => LeadSourceEnum::IMCRM,
@@ -557,12 +558,12 @@ class CustomerVerificationService
 
         LoggerService::info('Customer verification status updated, broadcasting event', extra: [
             'quote_uuid' => $quote->uuid,
-            'quote_type' => $this->getQuoteType($quote),
+            'quote_type' => $quoteType,
             'verification_success' => $verificationSuccess,
             'has_response' => $response !== null,
         ]);
 
-        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, $quoteTypeValue));
+        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, $quoteType));
     }
 
     private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
