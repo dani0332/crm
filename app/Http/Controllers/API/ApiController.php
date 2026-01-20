@@ -52,6 +52,7 @@ use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
@@ -130,6 +131,8 @@ class ApiController extends Controller
 
     public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::PAYMENT_STATUS_UPDATE, $request->quoteId);
+
         return app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
     }
 

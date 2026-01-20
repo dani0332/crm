@@ -29,8 +29,13 @@ class NotificationService extends BaseService
      */
     public function paymentStatusUpdate(string $quoteType, string $quoteId): JsonResponse
     {
+        LoggerService::info('Payment Status Update - Starting', extra: [
+            'quote_type' => $quoteType,
+            'quote_id' => $quoteId,
+        ]);
+
         if (is_numeric($quoteType)) {
-            LoggerService::info('Payment Status Update API - Quote Type Not Valid', extra: [
+            LoggerService::info('Payment Status Update - Quote Type Not Valid', extra: [
                 'quote_type' => $quoteType,
                 'quote_id' => $quoteId,
                 'reason' => 'Quote type must be a string, not numeric',
@@ -45,17 +50,33 @@ class NotificationService extends BaseService
             return $validationError;
         }
 
+        LoggerService::info('Payment Status Update - Quote found and validated', extra: [
+            'quote_type' => $quoteType,
+            'quote_id' => $quoteId,
+            'quote_uuid' => $model->uuid,
+            'advisor_id' => $model->advisor_id,
+        ]);
+
         // Build URL based on quote type
         $url = $this->buildNotificationUrl($quoteType, $model);
 
         // Prepare quote type code for event (first 3 characters, uppercase)
         $quoteTypeCode = $this->getQuoteTypeCode($quoteType);
 
-        info('Payment Notification Event Trigger: '.$model->uuid);
+        LoggerService::info('Payment Status Update - Triggering PaymentNotifications event', extra: [
+            'quote_uuid' => $model->uuid,
+            'url' => $url,
+            'quote_type_code' => $quoteTypeCode,
+        ]);
+
         event(new PaymentNotifications($model, $url, $quoteTypeCode));
 
         // Broadcast authorised payment count update if this is a PersonalQuote with authorised payment
         $this->broadcastAuthorisedPaymentCountIfNeeded($model);
+
+        LoggerService::info('Payment Status Update - Completed successfully', extra: [
+            'quote_uuid' => $model->uuid,
+        ]);
 
         return response()->json(['message' => 'Payment notification successfully sent to advisor']);
     }
@@ -121,13 +142,12 @@ class NotificationService extends BaseService
      */
     private function broadcastAuthorisedPaymentCountIfNeeded($model): void
     {
-        // Only process PersonalQuote (getAuthorisePaymentCount only works with personal_quotes)
-        if (! ($model instanceof PersonalQuote)) {
-            return;
-        }
-
         $advisorId = $model->advisor_id ?? null;
         if (! $advisorId) {
+            LoggerService::info('Authorised Payment Count - Skipping (no advisor_id)', extra: [
+                'quote_uuid' => $model->uuid,
+            ]);
+
             return;
         }
 
@@ -137,13 +157,28 @@ class NotificationService extends BaseService
             ->exists();
 
         if (! $hasAuthorisedPayment) {
+            LoggerService::info('Authorised Payment Count - Skipping (no authorised payment)', extra: [
+                'quote_uuid' => $model->uuid,
+                'advisor_id' => $advisorId,
+            ]);
+
             return;
         }
 
         $advisor = User::find($advisorId);
         if (! $advisor) {
+            LoggerService::info('Authorised Payment Count - Skipping (advisor not found)', extra: [
+                'quote_uuid' => $model->uuid,
+                'advisor_id' => $advisorId,
+            ]);
+
             return;
         }
+
+        LoggerService::info('Authorised Payment Count - Processing', extra: [
+            'quote_uuid' => $model->uuid,
+            'advisor_id' => $advisorId,
+        ]);
 
         // Get all users who should see updated counts: advisor + managers of advisor's teams
         $affectedUserIds = [$advisorId];
@@ -177,10 +212,22 @@ class NotificationService extends BaseService
                 ->toArray();
 
             $affectedUserIds = array_unique(array_merge($affectedUserIds, $managerUserIds));
+
+            LoggerService::info('Authorised Payment Count - Found managers', extra: [
+                'quote_uuid' => $model->uuid,
+                'advisor_id' => $advisorId,
+                'team_ids' => $advisorTeamIds,
+                'manager_count' => count($managerUserIds),
+            ]);
         }
 
         // Calculate and broadcast count for each affected user
         $paymentRepository = app(PaymentRepository::class);
+
+        LoggerService::info('Authorised Payment Count - Broadcasting to users', extra: [
+            'quote_uuid' => $model->uuid,
+            'total_users' => count($affectedUserIds),
+        ]);
 
         foreach ($affectedUserIds as $userId) {
             $user = User::find($userId);
@@ -192,8 +239,10 @@ class NotificationService extends BaseService
             event(new AuthorisedPaymentCountUpdated($userId, $count));
         }
 
-        LoggerService::info('NotificationService - Broadcasted authorised payment count updates for quote: '.$model->uuid, [
+        LoggerService::info('Authorised Payment Count - Completed', extra: [
+            'quote_uuid' => $model->uuid,
             'affected_users' => $affectedUserIds,
+            'total_users' => count($affectedUserIds),
         ]);
     }
 }
