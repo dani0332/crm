@@ -118,9 +118,10 @@ class ClaimsDocumentUploadUtility
                     $providerFolders = File::directories($businessTypeFolder);
 
                         foreach ($providerFolders as $providerFolder) {
-                        $providerId = (int) basename($providerFolder);
+                        $providerFolderName = basename($providerFolder);
+                        $providerId = $this->extractIntegerFromFolderName($providerFolderName);
 
-                        if (! is_numeric(basename($providerFolder))) {
+                        if ($providerId === null) {
                             $error = "Invalid insurance provider ID folder: {$providerFolder}";
                             $stats['errors'][] = $error;
                             LoggerService::warning('Invalid insurance provider ID folder', extra: [
@@ -173,9 +174,10 @@ class ClaimsDocumentUploadUtility
                 $providerFolders = File::directories($lobFolder);
 
                 foreach ($providerFolders as $providerFolder) {
-                    $providerId = (int) basename($providerFolder);
+                    $providerFolderName = basename($providerFolder);
+                    $providerId = $this->extractIntegerFromFolderName($providerFolderName);
 
-                    if (! is_numeric(basename($providerFolder))) {
+                    if ($providerId === null) {
                         $error = "Invalid insurance provider ID folder: {$providerFolder}";
                         $stats['errors'][] = $error;
                         LoggerService::warning('Invalid insurance provider ID folder', extra: [
@@ -513,6 +515,22 @@ class ClaimsDocumentUploadUtility
 
         // Add extension back
         return $sanitized.($extension ? '.'.$extension : '');
+    }
+
+    /**
+     * Extract integer from folder name (e.g., "TOKIO MARINE 5" -> 5)
+     *
+     * @param string $folderName Folder name that may contain text and numbers
+     * @return int|null Extracted integer or null if no integer found
+     */
+    private function extractIntegerFromFolderName(string $folderName): ?int
+    {
+        // Extract all digits from the folder name
+        if (preg_match('/\d+/', $folderName, $matches)) {
+            return (int) $matches[0];
+        }
+
+        return null;
     }
 
     /**
