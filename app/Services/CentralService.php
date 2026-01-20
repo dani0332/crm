@@ -1267,12 +1267,7 @@ class CentralService extends BaseService
             if ($insuranceProviderId) {
                 $payment->insurance_provider_id = $insuranceProviderId;
             }
-
-            if ($isVatManuallyChanged) {
-                app(PaymentService::class)->processMasterPaymentWithoutEvents($payment, $quoteObject, $isCreditCardEnabled);
-            } else {
-                app(PaymentService::class)->processMasterPayment($payment, $quoteObject, $isCreditCardEnabled);
-            }
+            app(PaymentService::class)->processMasterPayment($payment, $quoteObject, $isCreditCardEnabled);
             app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled);
 
             return $this->isLackingPayment($payment);

@@ -23,7 +23,7 @@ class PaymentService extends BaseService
      */
     public function processMasterPayment($payment, $quoteObject, $isCreditCardEnabled = true)
     {
-        LoggerService::info('fn:processMasterPayment - PaymentService');
+        LoggerService::info('fn:processMasterPaymentWithoutEvents - PaymentService');
         $infoMessage = 'Quote Code: '.$payment->code;
         $priceWithVat = round($quoteObject->price_with_vat, 2);
         $capturedAmount = $payment->captured_amount;
@@ -40,6 +40,8 @@ class PaymentService extends BaseService
         $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference);
 
         $payment->total_price = $priceWithVat;
+        $payment->price_vat_applicable = $quoteObject->price_vat_applicable + $quoteObject->price_vat_not_applicable;
+        $payment->price_vat = $quoteObject->vat;
         $this->setTotalAmount(payment: $payment);
 
         if (! $isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
@@ -47,7 +49,9 @@ class PaymentService extends BaseService
         }
 
         if ($payment->isDirty()) {
-            $payment->save();
+            Payment::withoutEvents(function () use ($payment) {
+                $payment->save();
+            });
         }
     }
 
