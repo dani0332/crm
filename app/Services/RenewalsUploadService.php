@@ -3151,6 +3151,7 @@ class RenewalsUploadService
         return [
             quoteTypeCode::Home => QuoteTypeShortCode::HOM,
             quoteTypeCode::Health => QuoteTypeShortCode::HEA,
+            'All other non-motor lines' => OtherNonMotorRenewalsUploadService::QUOTE_TYPE,
         ];
     }
 

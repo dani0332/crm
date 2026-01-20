@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\QuoteTypeShortCode;
 use App\Models\RenewalsUploadLeads;
+use App\Services\OtherNonMotorRenewalsUploadService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RenewalsUploadRequest extends FormRequest
@@ -31,7 +32,7 @@ class RenewalsUploadRequest extends FormRequest
             'lob' => 'nullable',
         ];
 
-        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && ! in_array(request()->lob, [QuoteTypeShortCode::HEA, QuoteTypeShortCode::HOM])) {
+        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && ! in_array(request()->lob, [QuoteTypeShortCode::HEA, QuoteTypeShortCode::HOM, OtherNonMotorRenewalsUploadService::QUOTE_TYPE])) {
             $rules['skip_plans'] = 'required';
             $rules['is_sic'] = 'required';
         }

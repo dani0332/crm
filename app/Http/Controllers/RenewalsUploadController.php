@@ -13,6 +13,7 @@ use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
 use App\Exports\RenewalHealthUpdateFailedValidationExport;
 use App\Exports\RenewalHomeFailedValidationExport;
+use App\Exports\RenewalOtherNonMotorFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
@@ -31,6 +32,7 @@ use App\Models\RenewalsUploadLeads;
 use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\OtherNonMotorRenewalsUploadService;
 use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -476,6 +478,9 @@ class RenewalsUploadController extends Controller
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
+        if ($renewaUploadLead->quote_type == OtherNonMotorRenewalsUploadService::QUOTE_TYPE) {
+            return Excel::download(new RenewalOtherNonMotorFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        }
         if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
             return Excel::download(new RenewalHealthUpdateFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
         }

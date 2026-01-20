@@ -322,6 +322,24 @@ const tableDataHealth = [
     maxSize: 500,
   },
 ];
+
+// table for all other non-motor lines
+const tableDataOther = [
+  {
+    id: 1,
+    name: 'Ref-ID',
+    description: 'Renewal reference ID (Ref-ID)',
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 2,
+    name: 'Advisor Email',
+    description: 'IMCRM advisor email to assign',
+    required: 'Yes',
+    maxSize: 100,
+  },
+];
 function handleFileUpload(event) {
   files = event;
   file = event[0].file;
@@ -382,9 +400,13 @@ const quoteTypesOptions = computed(() => {
 
 // Computed property to determine which table data to display based on selected LoB
 const currentTableData = computed(() => {
-  return uploadForm.lob === page.props.lobs.Health
-    ? tableDataHealth
-    : tableData;
+  if (uploadForm.lob === page.props.lobs.Health) {
+    return tableDataHealth;
+  }
+  if (uploadForm.lob === page.props.lobs['All other non-motor lines']) {
+    return tableDataOther;
+  }
+  return tableData;
 });
 
 // Set default LoB
@@ -516,6 +538,26 @@ uploadForm.lob = page.props.lobs.Home;
         >
           Download Sample XLSX
         </x-button>
+        <x-button
+          v-if="uploadForm.lob === page.props.lobs['All other non-motor lines']"
+          :href="
+            azureStorageUrl +
+            azureStorageContainer +
+            '/renewals/renewals_other_non_motor_upload_update.xlsx'
+          "
+          color="green"
+          icon-right="cells"
+        >
+          Download Sample XLSX
+        </x-button>
+      </div>
+      <div
+        v-if="uploadForm.lob === page.props.lobs['All other non-motor lines']"
+        class="mb-4 text-sm text-slate-700 dark:text-slate-200"
+      >
+        Only two columns are accepted for this upload type: Ref-ID and Advisor
+        Email. Records with non-renewal sources or manually assigned leads will
+        be skipped automatically.
       </div>
       <div class="vue3-easy-data-table tablefixed">
         <div
