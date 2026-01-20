@@ -630,10 +630,10 @@ class CustomerVerificationService
     private function getQuoteTypeId(Model $quote): ?int
     {
         return match (true) {
-            $quote instanceof CarQuote => QuoteTypes::CAR->id(),
-            $quote instanceof PersonalQuote => $quote->quote_type_id ? (int) $quote->quote_type_id : null,
+            $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
+            $quote instanceof PersonalQuote => $quote->quote_type_id,
             // Add other quote types here as needed
-            default => $quote->quote_type_id ? (int) $quote->quote_type_id : null,
+            default => null,
         };
     }
 
