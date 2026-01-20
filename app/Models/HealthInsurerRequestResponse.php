@@ -12,11 +12,11 @@ class HealthInsurerRequestResponse extends Model
 
     public function insuranceProvider()
     {
-        return $this->belongsTo(InsuranceProvider::class, 'provider_id', 'id');
+        return $this->belongsTo(InsuranceProvider::class, 'providerId', 'id');
     }
 
     public function quote()
     {
-        return $this->belongsTo(HealthQuote::class, 'quote_uuid', 'uuid');
+        return $this->belongsTo(HealthQuote::class, 'quoteUid', 'uuid');
     }
 }

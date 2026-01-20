@@ -32,7 +32,7 @@ const notification = useToast();
 const insuranceProviders = computed(() => {
   return page.props.insuranceProviders.map(item => ({
     value: item.value ? item.value : item.id,
-    label: item.label ? item.label : item.text,
+    label: item.label ? item.label : item?.text,
   }));
 });
 
@@ -240,7 +240,7 @@ const onLoadAuditLogData = async () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Provider Name:</dt>
-          <dd>{{ selectedLog.insurance_provider.text }}</dd>
+          <dd>{{ selectedLog.insurance_provider?.text }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Created At:</dt>
