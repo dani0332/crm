@@ -89,7 +89,8 @@ class ClaimsService extends BaseService
                     $query->with('serviceType:id,code,text');
                 },
                 'manager:id,name',
-            ]);
+            ])
+            ->orderBy('created_at', 'desc');
 
         $this->query = ClaimRequest::select([
             'id',
