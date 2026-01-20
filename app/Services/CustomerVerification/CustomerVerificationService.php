@@ -372,8 +372,8 @@ class CustomerVerificationService
     public function processEmiratesIdVerification($quote, QuoteTypes $quoteType, array $ocrData, string $documentType): void
     {
         match ($quoteType) {
-            QuoteTypes::CAR => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
-            QuoteTypes::PERSONAL => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
+            QuoteTypes::CAR => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType, $quoteType->value),
+            QuoteTypes::PERSONAL => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType, $quoteType->value),
             // Add other quote types here as needed
             default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
         };
@@ -388,7 +388,7 @@ class CustomerVerificationService
         };
     }
 
-    private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType): void
+    private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType, string $quoteType): void
     {
         $verificationData = [];
 
@@ -421,7 +421,7 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
+                'quote_type' => $quoteType,
             ]);
 
             return;
@@ -434,62 +434,10 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
+                'quote_type' => $quoteType,
                 'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    private function processPersonalEmiratesIdVerification($quote, array $ocrData, string $documentType): void
-    {
-        $verificationData = [];
-
-            if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
-                $dateOfBirth = $this->extractOcrValue($ocrData, 'dateOfBirth');
-                if (! empty($dateOfBirth)) {
-                    $verificationData['date_of_birth'] = $dateOfBirth;
-                }
-            }
-
-            if ($this->hasOcrKey($ocrData, 'nationality')) {
-                $nationality = $this->extractOcrValue($ocrData, 'nationality');
-                if (! empty($nationality)) {
-                    $nationalityId = $this->getNationalityId($nationality);
-                    if ($nationalityId) {
-                        $verificationData['nationality_id'] = $nationalityId;
-                    }
-                }
-            }
-
-            if ($this->hasOcrKey($ocrData, 'name')) {
-                $name = $this->extractOcrValue($ocrData, 'name');
-                if (! empty($name)) {
-                    $verificationData['name'] = $name;
-                }
-            }
-
-            if (empty($verificationData)) {
-                LoggerService::info('No valid customer verification data to update from Emirates ID OCR', extra: [
-                    'document_type' => $documentType,
-                    'quote_id' => $quote->id,
-                    'quote_code' => $quote->code ?? null,
-                    'quote_type' => QuoteTypes::PERSONAL->value,
-                ]);
-
-                return;
-            }
-
-            try {
-                $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
-            } catch (Exception $e) {
-                LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
-                    'document_type' => $documentType,
-                    'quote_id' => $quote->id,
-                    'quote_code' => $quote->code ?? null,
-                    'quote_type' => QuoteTypes::PERSONAL->value,
-                    'error' => $e->getMessage(),
-                ]);
-            }
     }
 
     private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
