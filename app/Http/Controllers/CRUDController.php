@@ -2193,7 +2193,6 @@ class CRUDController extends Controller
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
         $request = (object) $policyDetailRequest->validated();
-        $isVatManuallyChanged = $request->is_vat_manually_changed ?? false;
         LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_QUOTE_POLICY,$request->quote_code ?? null);
         LoggerService::info('fn: updateQuotePolicy called');
 
@@ -2243,10 +2242,7 @@ class CRUDController extends Controller
         }
 
         $centralService = app(CentralService::class);
-        $centralService->synchronizePaymentInformation(
-            quoteObject: $quoteModel,
-            isVatManuallyChanged: $isVatManuallyChanged,
-        );
+        $centralService->synchronizePaymentInformation( $quoteModel);
         $centralService->updateQuoteInformation($request->modelType, $request->quote_id);
         LoggerService::info('Policy detail updated successfully');
         if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
