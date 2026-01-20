@@ -1,4 +1,5 @@
 <script setup>
+import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { createReusableTemplate } from '@vueuse/core';
 import { nextTick, onMounted, reactive, watch } from 'vue';
@@ -97,6 +98,18 @@ const openDuplicate = () => {
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
+// Initialize useSavingsPlans composable for helper functions
+const {
+  getPaymentTermTitle,
+  formatNumber,
+  calculateTotalAnnualPrice,
+} = useSavingsPlans({
+  quote: props.quote,
+});
+
+// Alias for compatibility
+const numberFormat = formatNumber;
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
@@ -339,28 +352,13 @@ const planExchangeRate = ref(1);
 // Shared available plans data from AvailablePlans component
 const sharedAvailablePlans = ref([]);
 
-// Get payment term label helper
-const getPaymentTermTitle = paymentTerm => {
-  if (!paymentTerm && paymentTerm !== 0) return null;
-  const term = parseInt(paymentTerm);
-  const map = {
-    0: 'Single Payment',
-    1: 'Annual',
-    3: 'Quarterly',
-    6: 'Semi-Annual',
-    12: 'Monthly',
-  };
-  return map[term] || null;
-};
-
-// Get ecom display price (similar to Life)
+// Get ecom display price (savings-specific)
 const getEcomDisplayPrice = item => {
   if (!item) return 0;
-  // For savings, use actualPremium directly
   return parseFloat(item.actualPremium || item.totalPrice || 0);
 };
 
-// Calculate total annual price
+// Calculate total annual price using composable helper
 const totalAnnualPrice = computed(() => {
   if (!ecomDetail.value) return 'N/A';
 
@@ -370,22 +368,12 @@ const totalAnnualPrice = computed(() => {
     props.quote?.savings_quote?.payment_term ??
     1;
 
-  // Calculate multiplier based on payment term
-  const multiplier =
-    paymentTerm === 0
-      ? 1
-      : paymentTerm === 1
-        ? 1
-        : paymentTerm === 3
-          ? 4
-          : paymentTerm === 6
-            ? 2
-            : paymentTerm === 12
-              ? 12
-              : 1;
+  const item = {
+    actualPremium: displayPrice,
+    paymentTerm: paymentTerm,
+  };
 
-  const totalPrice = displayPrice * multiplier;
-  return totalPrice;
+  return calculateTotalAnnualPrice(item) || 'N/A';
 });
 
 // Get total annual price in AED
@@ -400,30 +388,12 @@ const getTotalAnnualPriceAED = () => {
     props.quote?.savings_quote?.payment_term ??
     1;
 
-  // Calculate multiplier based on payment term
-  const multiplier =
-    paymentTerm === 0
-      ? 1
-      : paymentTerm === 1
-        ? 1
-        : paymentTerm === 3
-          ? 4
-          : paymentTerm === 6
-            ? 2
-            : paymentTerm === 12
-              ? 12
-              : 1;
+  const item = {
+    actualPremium: priceInAED,
+    paymentTerm: paymentTerm,
+  };
 
-  return numberFormat(priceInAED * multiplier);
-};
-
-// Number format helper
-const numberFormat = value => {
-  if (value === 'N/A' || value === null || value === undefined) return 'N/A';
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+  return numberFormat(calculateTotalAnnualPrice(item) || 0);
 };
 
 // Update ecomDetail from shared available plans data

@@ -1,6 +1,6 @@
 <script setup>
 import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
-import { useFormatPrice } from '@/inertia/Composables/utilities';
+import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { createReusableTemplate } from '@vueuse/core';
 
 const emit = defineEmits(['update', 'close']);
@@ -20,11 +20,36 @@ const notification = useNotifications('toast');
 // Use savings calculator composable for lumpsum payout calculation
 const { calculatePayout } = useSavingsCalculator();
 
-// Format price with commas and 2 decimals - same as CreatePlan
-const formatPrice = value => {
-  if (!value && value !== 0) return '';
-  return useFormatPrice(value, true);
-};
+// Initialize useSavingsPlans composable
+const {
+  // Lookup Options
+  currencyOptions,
+  investmentFrequencyOptions,
+  paymentTermOptions,
+  tenureOfSavingsOptions,
+  // Helpers
+  getFrequencyFromPaymentTerm,
+  isLumpsumFrequency: checkIsLumpsumFrequency,
+  formatPrice,
+  // Riders
+  ridersData,
+  showRiders,
+  totalRiderPrice,
+  getRiderDetails,
+  processRidersForAPI,
+  // API
+  buildPlanPayload,
+  // Form Sync
+  syncTenureId,
+  syncInvestmentFrequencyId,
+} = useSavingsPlans({
+  quote: props.quote,
+  localLookups: computed(() => props.localLookups),
+  lookUpData: computed(() => props.lookUpData),
+  notification,
+});
+
+const previousTotalRiderPrice = ref(0);
 
 // Define tabs for plan details modal
 const planDetailsTabs = ref([
@@ -43,53 +68,19 @@ const providerPlanData = computed(() => {
   return props.localLookups?.providerPlans?.find(p => p.id === planId) || null;
 });
 
-// Currency Options - from plan's currency_coverages or fallback to localLookups
-const currencyOptions = computed(() => {
-  // Fallback to localLookups currencies
-  return props.localLookups?.currencies?.map(item => ({
-    value: item.id,
-    label: item.text,
-  }));
-});
-
-// Investment Frequency Options - from CMS (NOT dependent on plan) - same as CreatePlan
-const investmentFrequencyOptions = computed(() => {
-  return props.localLookups?.investmentFrequencies?.map(item => ({
-    value: item.code?.toLowerCase() || item.text?.toLowerCase(),
-    label: item.text,
-    id: item.id,
-  }));
-});
-
-// Payment term API values: 0 = Single Payment, 1 = Annual, 3 = Quarterly, 6 = Semi-Annual, 12 = Monthly
-const paymentTermOptions = computed(() => {
-  let paymentTerms = props.localLookups?.paymentTerms?.map(item => ({
-    value: item.value,
-    label: item.text,
-  }));
+// Payment term options filtered by investment frequency
+const filteredPaymentTermOptions = computed(() => {
+  const allTerms = paymentTermOptions.value;
 
   if (isLumpsumFrequency.value) {
-    paymentTerms = paymentTerms.filter(term =>
+    return allTerms.filter(term =>
       term.label?.toLowerCase().includes('single'),
     );
   } else {
-    paymentTerms = paymentTerms.filter(
+    return allTerms.filter(
       term => !term.label?.toLowerCase().includes('single'),
     );
   }
-  return paymentTerms;
-});
-
-// Tenure of Savings Options - from lookUpData or CMS plan policy terms - same as CreatePlan
-const tenureOfSavingsOptions = computed(() => {
-  if (props.lookUpData?.savingsTenure?.length) {
-    return props.lookUpData.savingsTenure.map(item => ({
-      value: parseInt(item.code) || parseInt(item.text) || item.id,
-      label: item.text,
-      id: item.id,
-    }));
-  }
-  return [];
 });
 
 // Format price with commas and 2 decimal places
@@ -151,31 +142,10 @@ const planForm = useForm({
   current_url: '',
 });
 
-const getFrequencyFromPaymentTerm = term => {
-  const termValue = parseInt(term);
-  const map = {
-    12: 'Monthly',
-    3: 'Quarterly',
-    6: 'Half Yearly',
-    1: 'Yearly',
-    0: 'Single Payment',
-  };
-  return map[termValue] || 'Monthly';
-};
-
-// Helper to check if investment frequency is lumpsum type - same as CreatePlan
+// Define isLumpsumFrequency using composable helper
 const isLumpsumFrequency = computed(() => {
   const freq = props.planDetails?.investmentFrequency;
-  if (!freq) return false;
-
-  // Check by string value
-  if (typeof freq === 'string' && freq.toLowerCase() === 'lumpsum') return true;
-
-  // Check by ID if investmentFrequencyOptions are available
-  const lumpsumOption = investmentFrequencyOptions.value?.find(
-    opt => opt.value === 'lumpsum' || opt.label?.toLowerCase() === 'lumpsum',
-  );
-  return lumpsumOption && lumpsumOption.value === freq;
+  return checkIsLumpsumFrequency(freq);
 });
 
 // Calculate functionality - same as CreatePlan
@@ -266,21 +236,10 @@ const onToggleHidePlan = async () => {
 const onUpdateIndividualPlan = () => {
   if (!props.planDetails) return;
 
-  // Process riders data for API payload (handle empty riders)
-  const processedRiders =
-    ridersData.value.length > 0
-      ? ridersData.value.map(rider => ({
-          riderId: rider.riderId,
-          active: rider.active ? true : false,
-          price:
-            Number(
-              parseFloat(rider.coverValue2 || rider.price || 0).toFixed(2),
-            ) || 0,
-          coverValue: Number(parseFloat(rider.coverValue || 0).toFixed(2)) || 0,
-        }))
-      : [];
+  // Use composable helper to process riders
+  const processedRiders = processRidersForAPI(ridersData.value);
 
-  // Get investment frequency label for API (same as CreatePlan)
+  // Get investment frequency label for API
   const investmentFrequencyOption = investmentFrequencyOptions.value.find(
     opt => opt.value === props.planDetails.investmentFrequency,
   );
@@ -292,43 +251,36 @@ const onUpdateIndividualPlan = () => {
       opt.id === props.planDetails.currencyId,
   );
 
-  // Get provider ID from planDetails or providerPlanData
-  const providerId =
-    props.planDetails.providerId || providerPlanData.value?.provider_id || null;
+  // Build API payload using composable
+  const apiPayload = buildPlanPayload(
+    {
+      quoteUUID: props.quote.uuid,
+      planId: props.planDetails.id || props.planDetails.planId,
+      isDisabled: props.planDetails.isDisabled || false,
+      isManualUpdate: props.planDetails.isManualUpdate || false,
+      insurerQuoteNo: props.planDetails.insurerQuoteNo || '',
+      investmentAmount: props.planDetails.actualPremium,
+      currency:
+        currencyOption?.value ||
+        currencyOption?.label ||
+        props.planDetails.currency ||
+        'AED',
+      currencyId: props.planDetails.currencyId,
+      paymentTerm: props.planDetails.paymentTerm,
+      tenure: props.planDetails.tenure,
+      tenureId: props.planDetails.tenureId,
+      expectedRor: props.planDetails.expectedRor,
+      investmentFrequencyLabel: investmentFrequencyOption?.label || 'Regular',
+      investmentFrequencyId:
+        investmentFrequencyOption?.id ||
+        props.planDetails.investmentFrequencyId,
+      lumpSumPayout: props.planDetails.lumpSumPayout,
+      riders: processedRiders,
+    },
+    { isUpdate: true },
+  );
 
-  // Build API payload matching CreatePlan format
-  const apiPayload = {
-    // CamelCase structure for Ken API
-    quoteUID: props.quote.uuid,
-    update: true, // true for update
-    plans: [
-      {
-        planId: props.planDetails.id || props.planDetails.planId,
-        isDisabled: props.planDetails.isDisabled || false,
-        isManualUpdate: props.planDetails.isManualUpdate || false,
-        insurerQuoteNo: props.planDetails.insurerQuoteNo || '',
-        investmentAmount: parseFloat(props.planDetails.actualPremium) || 0,
-        currency:
-          currencyOption?.value ||
-          currencyOption?.label ||
-          props.planDetails.currency ||
-          'AED',
-        currencyId: props.planDetails.currencyId,
-        paymentTerm: parseInt(props.planDetails.paymentTerm) || 0, // Ensure number
-        tenure: props.planDetails.tenure,
-        tenureId: props.planDetails.tenureId,
-        ror: parseFloat(props.planDetails.expectedRor) || 0,
-        investmentFrequency: investmentFrequencyOption?.label || 'Regular',
-        investmentFrequencyId:
-          investmentFrequencyOption?.id ||
-          props.planDetails.investmentFrequencyId,
-        lumpSumPayout: parseFloat(props.planDetails.lumpSumPayout) || 0,
-        riders: processedRiders,
-      },
-    ],
-  };
-
-  // Submit using axios with same API endpoint as CreatePlan
+  // Submit
   axios
     .post(
       `/quotes/savings/${props.quote.uuid}/savings-plan-manual-process`,
@@ -395,27 +347,6 @@ const modalVisible = computed({
   set: val => emit('update:modelValue', val),
 });
 
-// Riders data storage
-const ridersData = ref([]);
-
-// Track previous total rider price to calculate difference
-const previousTotalRiderPrice = ref(0);
-
-// Show riders section if the plan has riders
-const showRiders = computed(() => {
-  return ridersData.value.length > 0;
-});
-
-// Calculate total rider price from active riders
-const totalRiderPrice = computed(() => {
-  return ridersData.value
-    .filter(rider => rider.active)
-    .reduce((total, rider) => {
-      const price = parseFloat(rider.coverValue2 || rider.price || 0);
-      return total + price;
-    }, 0);
-});
-
 // Update actualPremium when rider prices change - only add/subtract the difference
 watch(
   () => totalRiderPrice.value,
@@ -441,34 +372,6 @@ watch(
   },
   { immediate: false },
 );
-
-// Get rider details from API and populate ridersData
-const getRiderDetails = async planId => {
-  if (!planId) return;
-
-  try {
-    const res = await axios.get(`/personal-quotes/savings/riders/${planId}`);
-
-    // Populate ridersData directly from API response
-    ridersData.value = res.data.map(item => ({
-      id: item.id,
-      riderId: item.rider_id,
-      text: item.rider?.text || 'Rider',
-      code: item.rider?.code,
-      active: 0,
-      coverValue: 0,
-      coverValue2: 0,
-      price: 0, // Sync with coverValue2 for API payload
-      inputRequired: item.input_required || false,
-      inputType: item.input_type || null,
-      coverType: item.cover_type || null,
-      maxAge: item.max_age || null,
-    }));
-  } catch (error) {
-    console.error('Error fetching rider details:', error);
-    ridersData.value = [];
-  }
-};
 
 // Watch for modal visibility and planDetails changes to fetch riders
 watch(
@@ -887,12 +790,12 @@ watch(
                       <span class="text-sm text-gray-700">{{
                         rider.text || 'Rider'
                       }}</span>
-                      <span
+                      <!-- <span
                         v-if="rider.inputRequired"
                         class="ml-1 text-xs text-orange-500"
                         title="Input Required"
                         >*</span
-                      >
+                      > -->
                     </div>
                     <!-- Status -->
                     <div class="w-[15%]">

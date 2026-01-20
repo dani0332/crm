@@ -1,6 +1,7 @@
 <script setup>
 import SavingsCalculator from '@/inertia/Components/SavingsCalculator.vue';
 import SelectPlan from '@/inertia/Components/SelectPlan.vue';
+import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import LazyCreatePlan from './CreatePlan.vue';
 import PlanDetails from './PlanDetails.vue';
 
@@ -22,11 +23,37 @@ const notification = useNotifications('toast');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-// Helper function to convert text to title case (e.g., "METLIFE GULF" -> "Metlife Gulf")
-const toTitleCase = str => {
-  if (!str) return '';
-  return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-};
+// Initialize useSavingsPlans composable
+const {
+  // Helpers
+  toTitleCase,
+  formatNumber,
+  getEligibilityValue,
+  getPaymentTermLabel,
+  calculateTotalAnnualPrice,
+  // Plans Data
+  availablePlansTable,
+  onLoadAvailablePlansData,
+  // Exchange Rates
+  fetchExchangeRates,
+  getExchangeRate,
+  setExchangeRate,
+  convertToAED,
+  exchangeRates,
+  planRates,
+} = useSavingsPlans({
+  quote: props.quote,
+  localLookups: computed(() => props.localLookups),
+  lookUpData: computed(() => props.lookUpData),
+  insuranceProviders: computed(() => props.insuranceProviders),
+  notification,
+});
+
+// Alias for templates that use different names
+const fmt = formatNumber;
+const getRate = getExchangeRate;
+const setRate = setExchangeRate;
+const toAED = convertToAED;
 
 const modals = reactive({
   planDetails: false,
@@ -35,76 +62,72 @@ const modals = reactive({
   savingsCalculator: false,
 });
 
-const availablePlansTable = reactive({
-  data: [],
-  isLoading: false,
-  columns: [
-    {
-      text: 'Provider Name',
-      value: 'providerName',
-    },
-    {
-      text: 'Plan',
-      value: 'name',
-    },
-    {
-      text: 'Type of Plan',
-      value: 'planTypeName',
-    },
-    {
-      text: 'Insurer Quote Number',
-      value: 'insurerQuoteNo',
-    },
-    {
-      text: 'Currency',
-      value: 'currency',
-    },
-    {
-      text: 'Price',
-      value: 'actualPremium',
-    },
-    {
-      text: 'Exchange Rate',
-      value: 'exchangeRate',
-    },
-    {
-      text: 'Price (AED)',
-      value: 'priceAed',
-    },
-    {
-      text: 'Investment Frequency',
-      value: 'investmentFrequency',
-    },
-    {
-      text: 'Payment Term',
-      value: 'paymentTerm',
-    },
-    {
-      text: 'Tenure of Savings',
-      value: 'tenure',
-    },
-    {
-      text: 'Expected Rate of Return',
-      value: 'expectedRor',
-    },
-    {
-      text: 'Lumpsum Amount',
-      value: 'lumpSumPayout',
-    },
-    {
-      text: 'Total Annual Price',
-      value: 'totalAnnualPrice',
-    },
-    {
-      text: 'Total Annual Price (AED)',
-      value: 'totalAnnualPriceAed',
-    },
-    {
-      text: 'Action',
-      value: 'action',
-    },
-  ],
-});
+const availablePlansTableColumns = reactive([
+  {
+    text: 'Provider Name',
+    value: 'providerName',
+  },
+  {
+    text: 'Plan',
+    value: 'name',
+  },
+  {
+    text: 'Type of Plan',
+    value: 'planTypeName',
+  },
+  {
+    text: 'Insurer Quote Number',
+    value: 'insurerQuoteNo',
+  },
+  {
+    text: 'Currency',
+    value: 'currency',
+  },
+  {
+    text: 'Price',
+    value: 'actualPremium',
+  },
+  {
+    text: 'Exchange Rate',
+    value: 'exchangeRate',
+  },
+  {
+    text: 'Price (AED)',
+    value: 'priceAed',
+  },
+  {
+    text: 'Investment Frequency',
+    value: 'investmentFrequency',
+  },
+  {
+    text: 'Payment Term',
+    value: 'paymentTerm',
+  },
+  {
+    text: 'Tenure of Savings',
+    value: 'tenure',
+  },
+  {
+    text: 'Expected Rate of Return',
+    value: 'expectedRor',
+  },
+  {
+    text: 'Lumpsum Amount',
+    value: 'lumpSumPayout',
+  },
+  {
+    text: 'Total Annual Price',
+    value: 'totalAnnualPrice',
+  },
+  {
+    text: 'Total Annual Price (AED)',
+    value: 'totalAnnualPriceAed',
+  },
+  {
+    text: 'Action',
+    value: 'action',
+  },
+]);
 
 const selectedPlans = ref([]);
 const selectedPlanType = ref(null);
@@ -145,8 +168,8 @@ const onTogglePlans = toggle => {
 };
 
 // Exchange Rate Logic (Frontend-only, all rates from API)
-const exchangeRates = ref({}); // { currency: rate } from API (USD base)
-const planRates = ref({}); // { planId: rate } - user edited rates
+// const exchangeRates = ref({}); // { currency: rate } from API (USD base)
+// const planRates = ref({}); // { planId: rate } - user edited rates
 const ratesLoading = ref(false);
 
 const selectedProviderPlan = ref({
@@ -157,62 +180,37 @@ const selectedProviderPlan = ref({
 });
 
 // Fetch rates from free public API (no key required)
-const fetchExchangeRates = async () => {
-  if (Object.keys(exchangeRates.value).length > 0) return;
-  ratesLoading.value = true;
-  try {
-    const { data } = await axios.get('https://open.er-api.com/v6/latest/USD');
-    if (data?.rates) exchangeRates.value = data.rates;
-  } catch (e) {
-    console.error('Exchange rate fetch failed:', e);
-  } finally {
-    ratesLoading.value = false;
-  }
-};
+// const fetchExchangeRates = async () => {
+//   if (Object.keys(exchangeRates.value).length > 0) return;
+//   ratesLoading.value = true;
+//   try {
+//     const { data } = await axios.get('https://open.er-api.com/v6/latest/USD');
+//     if (data?.rates) exchangeRates.value = data.rates;
+//   } catch (e) {
+//     console.error('Exchange rate fetch failed:', e);
+//   } finally {
+//     ratesLoading.value = false;
+//   }
+// };
 
 // Get exchange rate: 1 [Currency] = X AED (all from API)
-const getRate = item => {
-  const id = item.id;
-  const cur = (item.currency || 'USD').toUpperCase();
-  const usdToAed = exchangeRates.value['AED'] || null;
+// const getRate = item => {
+//   const id = item.id;
+//   const cur = (item.currency || 'USD').toUpperCase();
+//   const usdToAed = exchangeRates.value['AED'] || null;
 
-  // Use user-edited rate if exists
-  if (planRates.value[id] !== undefined) return planRates.value[id];
+//   // Use user-edited rate if exists
+//   if (planRates.value[id] !== undefined) return planRates.value[id];
 
-  if (!usdToAed) return null; // API not loaded yet
+//   if (!usdToAed) return null; // API not loaded yet
 
-  if (cur === 'AED') return 1;
-  if (cur === 'USD') return Math.round(usdToAed * 10000) / 10000;
+//   if (cur === 'AED') return 1;
+//   if (cur === 'USD') return Math.round(usdToAed * 10000) / 10000;
 
-  // Other currencies: rate = usdToAed / (USD to Currency)
-  const usdToCur = exchangeRates.value[cur];
-  return usdToCur ? Math.round((usdToAed / usdToCur) * 10000) / 10000 : null;
-};
-
-// Editable only for selected plan (non-AED)
-const isEditable = item =>
-  item.currency?.toUpperCase() !== 'AED' &&
-  String(selectedProviderPlan.value.id) === String(item.id);
-
-// Update rate for a plan
-const setRate = (id, val) => {
-  const num = parseFloat(val);
-  if (!isNaN(num) && num > 0) planRates.value[id] = num;
-};
-
-// Calculate AED prices
-const toAED = (amount, item) => {
-  const rate = getRate(item);
-  return rate ? Math.round(amount * rate * 100) / 100 : null;
-};
-
-const fmt = v =>
-  v != null
-    ? new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(v)
-    : 'N/A';
+//   // Other currencies: rate = usdToAed / (USD to Currency)
+//   const usdToCur = exchangeRates.value[cur];
+//   return usdToCur ? Math.round((usdToAed / usdToCur) * 10000) / 10000 : null;
+// };
 
 const handlePlanSelected = plan => {
   if (plan.insurerQuoteNo === '' || plan.insurerQuoteNo === null) {
@@ -233,103 +231,15 @@ const handlePlanSelected = plan => {
     only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
   });
   emit('plan-selected', plan);
-  onLoadAvailablePlansData();
+  onLoadAvailablePlansData(props.quote.uuid).then(processedPlans => {
+    emit('plans-loaded', processedPlans);
+  });
 };
 
-const onLoadAvailablePlansData = async () => {
-  availablePlansTable.isLoading = true;
-  let data = {
-    jsonData: true,
-  };
-  let url = `/quotes/savings/available-plans/${props.quote.uuid}`;
-  axios
-    .post(url, data)
-    .then(res => {
-      console.log(res.data);
-
-      // Process flat array - each item already has investmentFrequency
-      const processedPlans = res.data.map(plan => ({
-        ...plan,
-        currency: plan.currencyName || plan.currency || 'USD',
-        minimumInvestment: getEligibilityValue(plan, 'minimumInvestmentAmount'),
-        policyTerm: getEligibilityValue(plan, 'policyTerm'),
-        isManualUpdate: plan.isManualUpdate || false,
-        isDisabled: plan.isDisabled || false,
-        actualPremium: plan.actualPremium || 0,
-        insuranceProviderId: plan.providerId || plan.insuranceProviderId,
-        providerCode: plan.providerCode,
-      }));
-
-      availablePlansTable.data = processedPlans;
-
-      // Emit plans-loaded event for parent component (Show.vue) to use for ecom section
-      emit('plans-loaded', processedPlans);
-    })
-    .catch(err => {
-      console.log(err);
-      availablePlansTable.data = [];
-      // Emit empty array so parent can update ecomDetail
-      emit('plans-loaded', []);
-    })
-    .finally(() => {
-      availablePlansTable.isLoading = false;
-    });
-};
-
-// Helper function to extract value from eligibility array
-const getEligibilityValue = (plan, code) => {
-  if (plan?.eligibilities && Array.isArray(plan.eligibilities)) {
-    const found = plan.eligibilities.find(item => item.code === code);
-    return found ? found.value : 'N/A';
-  }
-  return 'N/A';
-};
-
-// Get payment term label from numeric value
-// Payment term values: 0 = Lumpsum, 1 = Annual, 12 = Monthly, 3 = Quarterly, 6 = Semi-Annual
-const getPaymentTermLabel = paymentTerm => {
-  const term = parseInt(paymentTerm);
-  switch (term) {
-    case 0:
-      return 'Lumpsum';
-    case 1:
-      return 'Annual';
-    case 3:
-      return 'Quarterly';
-    case 6:
-      return 'Semi-Annual';
-    case 12:
-      return 'Monthly';
-    default:
-      return 'N/A';
-  }
-};
-
-// Calculate total annual price based on payment term
-// Payment term values: 0 = Lumpsum, 1 = Annual, 12 = Monthly, 3 = Quarterly, 6 = Semi-Annual
-const calculateTotalAnnualPrice = item => {
-  const price = parseFloat(item.actualPremium || item.price || 0);
-  if (!price) return null;
-
-  const paymentTerm = parseInt(item.paymentTerm);
-  let multiplier = 1; // Default to annual/lumpsum
-
-  if (paymentTerm === 12) {
-    // Monthly - multiply by 12
-    multiplier = 12;
-  } else if (paymentTerm === 3) {
-    // Quarterly - multiply by 4
-    multiplier = 4;
-  } else if (paymentTerm === 6) {
-    // Semi-Annual - multiply by 2
-    multiplier = 2;
-  } else if (paymentTerm === 1 || paymentTerm === 0) {
-    // Annual or Lumpsum - multiply by 1
-    multiplier = 1;
-  }
-
-  return price * multiplier;
-};
+// Editable only for selected plan (non-AED)
+const isEditable = item =>
+  item.currency?.toUpperCase() !== 'AED' &&
+  String(selectedProviderPlan.value.id) === String(item.id);
 
 const getPlanDetails = id => {
   viewButtonLoading.value = true;
@@ -482,7 +392,9 @@ const confirmSendOCAEmail = () => {
 // Create Plan functionality
 const onCreatePlan = async () => {
   modals.createPlan = false;
-  onLoadAvailablePlansData();
+  await onLoadAvailablePlansData(props.quote.uuid).then(processedPlans => {
+    emit('plans-loaded', processedPlans);
+  });
   router.reload({
     preserveScroll: true,
     only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
@@ -503,7 +415,9 @@ const readOnlyMode = reactive({
 });
 
 onMounted(() => {
-  onLoadAvailablePlansData();
+  onLoadAvailablePlansData(props.quote.uuid).then(processedPlans => {
+    emit('plans-loaded', processedPlans);
+  });
   fetchExchangeRates(); // Fetch rates on mount
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
@@ -638,7 +552,7 @@ onMounted(() => {
             v-else
             table-class-name="tablefixed compact-rows"
             v-model:items-selected="selectedPlans"
-            :headers="availablePlansTable.columns"
+            :headers="availablePlansTableColumns"
             :items="availablePlansTable.data || []"
             border-cell
             hide-rows-per-page

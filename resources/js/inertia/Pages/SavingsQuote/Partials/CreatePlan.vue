@@ -1,9 +1,7 @@
 <script setup>
 import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
-import {
-  cleanFormattedValueToFloat,
-  useFormatPrice,
-} from '@/inertia/Composables/utilities';
+import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
+import { cleanFormattedValueToFloat } from '@/inertia/Composables/utilities';
 import { defineEmits, watchEffect } from 'vue';
 
 const emit = defineEmits(['success', 'error']);
@@ -22,15 +20,46 @@ const page = usePage();
 // Use savings calculator composable for lumpsum payout calculation
 const { calculatePayout } = useSavingsCalculator();
 
+// Initialize useSavingsPlans composable
+const {
+  // Lookup Options
+  currencyOptions,
+  investmentFrequencyOptions,
+  paymentTermOptions,
+  tenureOfSavingsOptions,
+  planTypeOptions,
+  insuranceProviderOptions,
+  // Helpers
+  getFrequencyFromPaymentTerm,
+  isLumpsumFrequency: checkIsLumpsumFrequency,
+  formatPrice,
+  // Riders
+  ridersData,
+  showRiders,
+  getRiderDetails,
+  processRidersForAPI,
+  // Plans
+  providerPlans,
+  providerPlansLoading,
+  fetchProviderPlans,
+  // API
+  buildPlanPayload,
+  // Form Sync
+  syncCurrencyId,
+  syncTenureId,
+  syncInvestmentFrequencyId,
+  syncPaymentTermByFrequency,
+} = useSavingsPlans({
+  quote: props.quote,
+  localLookups: computed(() => props.localLookups),
+  lookUpData: computed(() => props.lookUpData),
+  insuranceProviders: computed(() => props.insuranceProviders),
+  notification,
+});
+
 // Display values for formatted inputs (format on blur only)
 const investmentAmountDisplay = ref('');
 const lumpsumPayoutDisplay = ref('');
-
-// Format price with commas and 2 decimals
-const formatPrice = value => {
-  if (!value && value !== 0) return '';
-  return useFormatPrice(value, true);
-};
 
 // Sync form value while typing (without formatting)
 watch(investmentAmountDisplay, val => {
@@ -60,10 +89,10 @@ const isEmptyField = ref(false);
 
 const { isRequired, maxPrice, minPrice } = useRules();
 
-// Options for dynamically fetched data
+// Options for dynamically fetched data - use composable refs
 const options = reactive({
-  providerPlans: [],
-  loading: false,
+  providerPlans: providerPlans,
+  loading: providerPlansLoading,
 });
 
 const addPlanForm = useForm({
@@ -90,144 +119,16 @@ const addPlanForm = useForm({
   riders: [],
 });
 
-// Plan Type Options - from localLookups
-const planTypeOptions = computed(() => {
-  return (
-    props.localLookups?.planTypes?.map(item => ({
-      value: item.code || item.id,
-      label: item.text,
-    })) || [
-      { value: 'savings', label: 'Savings' },
-      { value: 'whole_of_life', label: 'Whole of Life' },
-    ]
-  );
-});
-
-// Currency Options - from selected plan's currency_coverages or fallback to localLookups
-const currencyOptions = computed(() => {
-  // Fallback to localLookups currencies
-  return props.localLookups?.currencies?.map(item => ({
-    value: item.code || item.id,
-    label: item.text,
-    id: item.id,
-  }));
-});
-
-// Investment Frequency Options - from CMS (NOT dependent on plan)
-const investmentFrequencyOptions = computed(() => {
-  return (
-    props.localLookups?.investmentFrequencies?.map(item => ({
-      value: item.code?.toLowerCase() || item.text?.toLowerCase(),
-      label: item.text,
-      id: item.id,
-    })) || [
-      { value: 'regular', label: 'Regular', id: null },
-      { value: 'lumpsum', label: 'Lumpsum', id: null },
-    ]
-  );
-});
-
-// Payment Term Options - from localLookups (using ID for API)
-// Payment term API values: 0 = Single Payment, 1 = Annual, 3 = Quarterly, 6 = Semi-Annual, 12 = Monthly
-const paymentTermOptions = computed(() => {
-  return props.localLookups?.paymentTerms?.map(item => ({
-    value: item.value,
-    label: item.text,
-  }));
-});
-
-// Tenure of Savings Options - from lookUpData or generate 1-30 years
-const tenureOfSavingsOptions = computed(() => {
-  if (props.lookUpData?.savingsTenure?.length) {
-    return props.lookUpData.savingsTenure.map(item => ({
-      value: parseInt(item.code) || parseInt(item.text) || item.id,
-      label: item.text,
-      id: item.id,
-    }));
-  }
-  // Fallback: generate 1-30 years
-  const options = [];
-  for (let i = 1; i <= 30; i++) {
-    options.push({ value: i, label: `${i} Year${i > 1 ? 's' : ''}`, id: null });
-  }
-  return options;
-});
-
-// Map payment term to frequency for calculator
-// Payment term values: 0 = Lumpsum, 1 = Annual, 3 = Quarterly, 6 = Semi-Annual, 12 = Monthly
-const getFrequencyFromPaymentTerm = term => {
-  const termValue = parseInt(term);
-  const map = {
-    12: 'Monthly',
-    3: 'Quarterly',
-    6: 'Half Yearly',
-    1: 'Yearly',
-    0: 'Single Payment',
-  };
-  return map[termValue] || 'Monthly';
-};
-
-// Level 1: Insurance Provider Options (all providers for now)
-const insuranceProviderOptions = computed(() => {
-  return (
-    props.insuranceProviders?.map(provider => ({
-      value: provider.id,
-      label: provider.text,
-    })) || []
-  );
-});
-
 // Level 2: Plans filtered by Provider - fetched from API
 const insuranceProviderPlanOptions = computed(() => {
   if (!addPlanForm.insurance_provider_id) return [];
 
-  return options.providerPlans.map(plan => ({
+  return providerPlans.value.map(plan => ({
     value: plan.id,
     label: plan.text || plan.code,
     ...plan, // Keep full plan data for auto-population
   }));
 });
-
-// Fetch provider plans from API (like Life)
-const fetchProviderPlans = () => {
-  if (!addPlanForm.insurance_provider_id) {
-    options.providerPlans = [];
-    return;
-  }
-
-  options.loading = true;
-  options.providerPlans = [];
-
-  axios
-    .get(
-      `/personal-quotes/savings/provider-plans/${addPlanForm.insurance_provider_id}`,
-    )
-    .then(res => {
-      if (res.data.plans) {
-        // TODO: Filter out plans that already exist in availablePlans (commented for now)
-        options.providerPlans = res.data.plans.filter(
-          plan =>
-            !props.availablePlans?.some(
-              existingPlan => existingPlan.planId === plan.id,
-            ),
-        );
-        options.providerPlans = res.data.plans;
-      } else {
-        options.providerPlans = [];
-      }
-    })
-    .catch(err => {
-      console.error('Error fetching provider plans:', err);
-      notification.error({
-        title: 'Failed to fetch plans',
-        position: 'top',
-      });
-      options.providerPlans = [];
-    })
-    .finally(() => {
-      options.loading = false;
-    });
-};
 
 // Level 3: Auto-populate fields when plan is selected
 const selectedPlanData = computed(() => {
@@ -237,35 +138,7 @@ const selectedPlanData = computed(() => {
   );
 });
 
-const ridersData = ref([]);
-
-const showRiders = computed(() => {
-  return ridersData.value.length > 0;
-});
-
-const getRiderDetails = async planId => {
-  try {
-    const res = await axios.get(`/personal-quotes/savings/riders/${planId}`);
-
-    // Map riders data like Life
-    ridersData.value = res.data.map(rider => ({
-      riderId: rider.rider_id,
-      active: 0,
-      price: 0,
-      coverValue: 0,
-      text: rider.rider?.text || 'Rider',
-      inputRequired: rider.input_required,
-    }));
-  } catch (error) {
-    console.error('Error fetching rider details:', error);
-    notification.error({
-      title: 'Error fetching rider details',
-      position: 'top',
-    });
-    ridersData.value = [];
-  }
-};
-
+// Watch for plan selection and fetch riders
 watch(
   () => addPlanForm.savings_plan_id,
   newPlanId => {
@@ -273,7 +146,6 @@ watch(
       getRiderDetails(newPlanId);
 
       // Auto-populate fields from selected plan if available
-      // Note: Investment Frequency and Payment Terms are NOT based on plan
       if (selectedPlanData.value) {
         const plan = selectedPlanData.value;
         addPlanForm.currency = plan.currency || 'AED';
@@ -289,17 +161,7 @@ watch(
 
 // Helper to check if investment frequency is lumpsum type
 const isLumpsumFrequency = computed(() => {
-  const freq = addPlanForm.investment_frequency;
-  if (!freq) return false;
-
-  // Check by string value
-  if (typeof freq === 'string' && freq.toLowerCase() === 'lumpsum') return true;
-
-  // Check by ID - find the selected option and check its label
-  const selectedOption = investmentFrequencyOptions.value.find(
-    opt => opt.value === freq || opt.id === freq,
-  );
-  return selectedOption?.label?.toLowerCase() === 'lumpsum';
+  return checkIsLumpsumFrequency(addPlanForm.investment_frequency);
 });
 
 // Payment Terms - filtered by Investment Frequency only (NOT dependent on plan)
@@ -337,9 +199,9 @@ watch(
   newProviderId => {
     addPlanForm.savings_plan_id = null;
     if (newProviderId) {
-      fetchProviderPlans();
+      fetchProviderPlans(newProviderId);
     } else {
-      options.providerPlans = [];
+      providerPlans.value = [];
     }
   },
 );
@@ -348,27 +210,11 @@ watch(
 watch(
   () => addPlanForm.investment_frequency,
   newFreq => {
-    // Sync investment frequency ID first
-    const selectedOption = investmentFrequencyOptions.value.find(
-      opt => opt.value === newFreq || opt.id === newFreq,
-    );
-    addPlanForm.investment_frequency_id = selectedOption?.id || null;
+    // Sync investment frequency ID using composable helper
+    syncInvestmentFrequencyId(addPlanForm, newFreq);
 
-    // Check if lumpsum frequency
-    const isLumpsum =
-      selectedOption?.label?.toLowerCase() === 'lumpsum' ||
-      (typeof newFreq === 'string' && newFreq.toLowerCase() === 'lumpsum');
-
-    // Find Single Payment option by label
-    const singlePaymentOption = paymentTermOptions.value.find(opt =>
-      opt.label?.toLowerCase().includes('single'),
-    );
-    // Auto-select payment term based on frequency
-    if (isLumpsum && singlePaymentOption) {
-      addPlanForm.payment_term = singlePaymentOption.value; // Single Payment ID
-    } else if (addPlanForm.payment_term === singlePaymentOption?.value) {
-      addPlanForm.payment_term = null; // Reset if was single payment
-    }
+    // Auto-select payment term based on frequency using composable helper
+    syncPaymentTermByFrequency(addPlanForm, newFreq);
   },
 );
 
@@ -376,10 +222,7 @@ watch(
 watchEffect(
   () => addPlanForm.currency,
   () => {
-    const selectedOption = currencyOptions.value.find(
-      opt => opt.value === addPlanForm.currency,
-    );
-    addPlanForm.currency_id = selectedOption?.id || null;
+    syncCurrencyId(addPlanForm, addPlanForm.currency);
   },
 );
 
@@ -387,10 +230,7 @@ watchEffect(
 watch(
   () => addPlanForm.tenure_of_savings,
   () => {
-    const selectedOption = tenureOfSavingsOptions.value.find(
-      opt => opt.value === addPlanForm.tenure_of_savings,
-    );
-    addPlanForm.tenure_id = selectedOption?.id || null;
+    syncTenureId(addPlanForm, addPlanForm.tenure_of_savings);
   },
 );
 
@@ -415,45 +255,34 @@ const createQuotePlan = isValid => {
 
   if (!isValid) return;
 
-  // Process riders data for API payload
-  const processedRiders = ridersData.value.map(rider => ({
-    riderId: rider.riderId,
-    active: rider.active ? true : false,
-    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
-    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
-  }));
-
   // Get investment frequency label for API
   const investmentFrequencyOption = investmentFrequencyOptions.value.find(
     opt => opt.value === addPlanForm.investment_frequency,
   );
 
-  // Build API payload in expected format
-  const apiPayload = {
-    // CamelCase structure for Ken API
-    quoteUID: page.props.quote.uuid,
-    update: !addPlanForm.is_create, // false for new plan, true for update
-    plans: [
-      {
-        planId: addPlanForm.savings_plan_id,
-        plan_type: addPlanForm.plan_type,
-        isDisabled: addPlanForm.is_disabled,
-        isManualUpdate: addPlanForm.is_manual_update,
-        insurerQuoteNo: addPlanForm.insurer_quote_no || '',
-        investmentAmount: parseFloat(addPlanForm.investment_amount) || 0,
-        currency: addPlanForm.currency,
-        currencyId: addPlanForm.currency_id,
-        paymentTerm: parseInt(addPlanForm.payment_term) || 0, // Ensure number
-        tenure: addPlanForm.tenure_of_savings,
-        tenureId: addPlanForm.tenure_id,
-        ror: parseFloat(addPlanForm.expected_rate_of_return) || 0,
-        investmentFrequency: investmentFrequencyOption?.label || 'Regular',
-        investmentFrequencyId: addPlanForm.investment_frequency_id,
-        lumpSumPayout: parseFloat(addPlanForm.lumpsum_payout) || 0,
-        riders: processedRiders,
-      },
-    ],
-  };
+  // Build API payload using composable
+  const apiPayload = buildPlanPayload(
+    {
+      quoteUUID: page.props.quote.uuid,
+      planId: addPlanForm.savings_plan_id,
+      planType: addPlanForm.plan_type,
+      isDisabled: addPlanForm.is_disabled,
+      isManualUpdate: addPlanForm.is_manual_update,
+      insurerQuoteNo: addPlanForm.insurer_quote_no || '',
+      investmentAmount: addPlanForm.investment_amount,
+      currency: addPlanForm.currency,
+      currencyId: addPlanForm.currency_id,
+      paymentTerm: addPlanForm.payment_term,
+      tenure: addPlanForm.tenure_of_savings,
+      tenureId: addPlanForm.tenure_id,
+      expectedRor: addPlanForm.expected_rate_of_return,
+      investmentFrequencyLabel: investmentFrequencyOption?.label || 'Regular',
+      investmentFrequencyId: addPlanForm.investment_frequency_id,
+      lumpSumPayout: addPlanForm.lumpsum_payout,
+      riders: processRidersForAPI(ridersData.value),
+    },
+    { isUpdate: false },
+  );
 
   // Submit using axios with camelCase payload
   axios
@@ -493,7 +322,7 @@ const calculatePlan = () => {
     return;
   }
 
-  // Determine frequency based on investment type
+  // Determine frequency based on investment type using composable helper
   const frequency = isLumpsumFrequency.value
     ? 'Single Payment'
     : getFrequencyFromPaymentTerm(addPlanForm.payment_term);
@@ -574,7 +403,7 @@ const validateDecimal = event => {
         </label>
         <div class="flex gap-2">
           <x-select
-            v-model="addPlanForm.currency"
+            v-model="addPlanForm.currency_id"
             :options="currencyOptions"
             placeholder="Currency"
             class="w-24"
