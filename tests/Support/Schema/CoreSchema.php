@@ -302,6 +302,8 @@ class CoreSchema
                 $table->string('source')->nullable();
                 $table->string('device')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->string('assignment_type')->nullable();
+                $table->timestamp('lead_allocation_started_at')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();

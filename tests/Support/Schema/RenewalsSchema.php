@@ -21,13 +21,19 @@ class RenewalsSchema
                 $table->string('quote_type')->nullable();
                 $table->string('status')->nullable();
                 $table->string('renewal_import_type')->nullable();
+                $table->string('renewal_import_code')->nullable();
                 $table->boolean('is_sic')->default(0);
+                $table->integer('total_records')->default(0);
+                $table->integer('good')->default(0);
+                $table->integer('cannot_upload')->default(0);
+                $table->integer('skip_plans')->nullable();
+                $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->timestamps();
             },
             'renewal_quote_processes' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('renewals_upload_lead_id');
-                $table->unsignedBigInteger('quote_id');
+                $table->unsignedBigInteger('quote_id')->nullable();
                 $table->json('data');
                 $table->longText('validation_errors')->nullable();
                 $table->longText('step_errors')->nullable();
