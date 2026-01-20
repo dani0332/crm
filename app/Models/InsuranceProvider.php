@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\UsesTestConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class InsuranceProvider extends BaseModel implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, UsesTestConnection;
 
+    protected $connection = 'mysql';
     protected $table = 'insurance_provider';
     protected $guarded = ['id'];
     public $access = [
