@@ -8,11 +8,20 @@ const notificationData = ref({});
 const channelName = `public.${page.props.appEnv}.activity.user`;
 const eventName = 'payment.notification';
 
+let worker = null;
+
 const listen = () => {
-  const worker = new SharedWorker('/build/workers/pusher.worker.js');
+  worker = new SharedWorker('/build/workers/pusher.worker.js');
 
   worker.port.addEventListener('message', e => {
+    console.log('[PaymentNotification] Broadcast received:', {
+      event: e.data,
+      currentUserId: page.props.auth.user.id,
+      matches: e.data.advisorId === page.props.auth.user.id,
+    });
+
     if (e.data.advisorId === page.props.auth.user.id) {
+      console.log('[PaymentNotification] Processing notification for current user');
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
         title: 'Payment',
@@ -23,6 +32,11 @@ const listen = () => {
         timeout: 30000,
       };
       showNotification.value = true;
+    } else {
+      console.log('[PaymentNotification] Broadcast ignored - not for current user', {
+        broadcastAdvisorId: e.data.advisorId,
+        currentUserId: page.props.auth.user.id,
+      });
     }
   });
 
@@ -32,6 +46,11 @@ const listen = () => {
   };
 
   worker.port.start();
+
+  console.log('[PaymentNotification] Subscribing to channel:', {
+    channel: channelName,
+    event: eventName,
+  });
 
   //Subscribe to channel/event
   worker.port.postMessage({
@@ -53,11 +72,13 @@ onMounted(() => {
 
 onUnmounted(() => {
   //Unsubscribe to channel/event
-  worker.port.postMessage({
-    action: 'unsubscribe',
-    channel: channelName,
-    event: eventName,
-  });
+  if (worker) {
+    worker.port.postMessage({
+      action: 'unsubscribe',
+      channel: channelName,
+      event: eventName,
+    });
+  }
 });
 </script>
 

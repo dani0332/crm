@@ -142,9 +142,24 @@ const listenToAuthorisedPaymentCount = () => {
   paymentCountWorker = new SharedWorker('/build/workers/pusher.worker.js');
 
   paymentCountWorker.port.addEventListener('message', e => {
+    console.log('[AuthorisedPaymentCount] Broadcast received:', {
+      event: e.data,
+      currentUserId: user.value?.id,
+      matches: e.data.userId === user.value?.id,
+    });
+
     // Only update if the event is for the current user
     if (e.data.userId === user.value.id) {
+      console.log('[AuthorisedPaymentCount] Updating count:', {
+        oldCount: authorisePaymentCount.value,
+        newCount: e.data.count,
+      });
       authorisePaymentCount.value = e.data.count;
+    } else {
+      console.log('[AuthorisedPaymentCount] Broadcast ignored - not for current user', {
+        broadcastUserId: e.data.userId,
+        currentUserId: user.value?.id,
+      });
     }
   });
 
@@ -156,6 +171,11 @@ const listenToAuthorisedPaymentCount = () => {
   };
 
   paymentCountWorker.port.start();
+
+  console.log('[AuthorisedPaymentCount] Subscribing to channel:', {
+    channel: channelName,
+    event: eventName,
+  });
 
   // Subscribe to channel/event
   paymentCountWorker.port.postMessage({
