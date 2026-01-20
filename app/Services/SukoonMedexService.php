@@ -782,8 +782,8 @@ class SukoonMedexService
         $quoteType = $quote->quote_type_id ?? null;
         $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote?->emirates ?? null) : ($quote->emirate ?? null);
 
-        if($this->quoteTypeId == QuoteTypeId::Car && 
-        $quote->registration_type == CarRegistrationType::COMPANY && 
+        if($this->quoteTypeId == QuoteTypeId::Car &&
+        $quote->registration_type == CarRegistrationType::COMPANY &&
         $quote->vehicle_use == CarVehicleUse::PRIVATE) {
             $emirateIdNumber = $quote->vehicleDriverDetail?->driver_eid_number ?? null;
             $title = $quote->vehicleDriverDetail?->driver_gender == 'male' ? 'Mr' : 'Ms';
