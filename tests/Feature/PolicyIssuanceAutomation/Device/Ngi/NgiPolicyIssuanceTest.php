@@ -12,10 +12,8 @@ use App\Models\PolicyIssuance;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
 use Illuminate\Support\Facades\Cache;
 use Tests\Helpers\NgiPolicyIssuanceTestDataBuilder;
-use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     enableNgiDeviceAutomation();
 });
 

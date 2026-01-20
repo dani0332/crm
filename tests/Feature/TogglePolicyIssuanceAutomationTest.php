@@ -8,10 +8,8 @@ use App\Models\InsuranceProvider;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Spatie\Permission\Models\Permission;
 use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     $this->user = TestDataSeeder::createAdminUser();
 
     // Grant the required permission to the user

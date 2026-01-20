@@ -8,12 +8,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use Database\Factories\DeviceQuoteFactory;
-use Tests\Helpers\TestSchemaCreator;
-
 beforeEach(function () {
-    // Create minimal schema for tests that may hit database
-    TestSchemaCreator::createMinimalSchema();
-
     // Create real dependencies where appropriate, mock others
     $this->validationService = Mockery::mock(NgiValidationService::class);
     $this->responseHandler = new NgiResponseHandler;

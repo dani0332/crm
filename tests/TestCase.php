@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Tests\Helpers\TestSchemaCreator;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -11,5 +12,8 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Create minimal database schema for each test to ensure tables exist
+        TestSchemaCreator::createMinimalSchema();
     }
 }

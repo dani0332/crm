@@ -5,10 +5,8 @@ use App\Models\PersonalQuote;
 use Tests\Helpers\LifeQuoteMockHelper;
 use Tests\Helpers\LifeQuoteTestDataBuilder;
 use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     $this->lookups = TestDataSeeder::seedLifeQuoteLookups();
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);

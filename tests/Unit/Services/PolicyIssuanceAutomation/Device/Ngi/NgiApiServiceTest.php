@@ -13,12 +13,8 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Database\Factories\DeviceQuoteFactory;
 use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Http\Client\Response;
-use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    // Create minimal schema for tests that may hit database
-    TestSchemaCreator::createMinimalSchema();
-
     // Create mocked dependencies for unit tests
     $this->requestBuilder = Mockery::mock(NgiRequestBuilder::class);
     $this->responseHandler = new NgiResponseHandler;
