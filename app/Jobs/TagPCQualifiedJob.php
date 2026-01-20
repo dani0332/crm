@@ -10,10 +10,11 @@ use App\Traits\PrivateClient;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
-class RemovePcQualifiedJob implements ShouldQueue
+class TagPCQualifiedJob implements ShouldQueue
 {
     use PrivateClient, Queueable;
 
+    public $tries = 1;
     public array $uuids;
 
     public function __construct(array $uuids)
@@ -24,19 +25,23 @@ class RemovePcQualifiedJob implements ShouldQueue
 
     public function handle(): void
     {
+        LoggerService::info(self::class.': PC qualified tagging job has been initiated');
         try {
-            $quoteQuery = PersonalQuote::where('pc_qualified', true)
-                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+            $quotesQuery = PersonalQuote::where(function ($query) {
+                $query->where('pc_qualified', false)
+                    ->orWhereNull('pc_qualified');
+            })
+                ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
                 ->whereNotNull('policy_expiry_date')
                 ->where('policy_expiry_date', '>', now())
                 ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
 
             if (! empty($this->uuids)) {
-                $quoteQuery->whereIn('uuid', $this->uuids);
+                $quotesQuery->whereIn('uuid', $this->uuids);
             }
 
-            $quotes = $quoteQuery->select('id', 'uuid', 'quote_type_id')->get();
-            LoggerService::info(self::class.': PC qualified quotes found', extra: ['uuids' => $this->uuids, 'count' => $quotes->count()]);
+            $quotes = $quotesQuery->select('id', 'uuid', 'quote_type_id')->get();
+            LoggerService::info(self::class.': PC qualified eligible quotes found', extra: ['uuids' => $this->uuids, 'count' => $quotes->count()]);
 
             foreach ($quotes as $quote) {
                 try {
@@ -46,21 +51,18 @@ class RemovePcQualifiedJob implements ShouldQueue
                         'quote_type_id' => $quote->quote_type_id,
                     ];
 
-                    LoggerService::info(self::class.': Removing PC qualified tagging started', extra: $logData);
-                    $this->removePcQualified($quote->uuid, $quote->quote_type_id);
-                    LoggerService::info(self::class.': Removing PC qualified tagging completed', extra: $logData);
+                    LoggerService::info(self::class.': PC qualified tagging activity started', extra: $logData);
+                    $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
+                    LoggerService::info(self::class.': PC qualified tagging activity completed', extra: $logData);
                 } catch (\Exception $e) {
-                    LoggerService::error('Error removing PC qualified tag. Continuing with next quote.', extra: [
+                    LoggerService::error('Error PC qualified tagging. Continuing with next quote.', extra: [
                         'quote_uuid' => $quote->uuid,
                         'quote_type_id' => $quote->quote_type_id,
                     ], exception: $e);
-                    // Do not throw — continue with next quote
                 }
             }
-
-            LoggerService::info(self::class.': PC qualified removal exercise has been completed');
         } catch (\Exception $e) {
-            LoggerService::error(self::class.': PC qualified removal exercise failed', exception: $e);
+            LoggerService::error(self::class.': PC qualified tagging job failed', exception: $e);
             throw $e;
         }
     }
