@@ -183,6 +183,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_with_vat' => $data['price_with_vat'],
                 'price_vat_applicable' => $data['price_vat_applicable'],
                 'price_vat_not_applicable' => $data['price_vat_not_applicable'],
+                'total_vat_amount' => $data['total_vat_amount'] ?? $sendUpdate->total_vat_amount,
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'status' => $status ?? $sendUpdate->status,
