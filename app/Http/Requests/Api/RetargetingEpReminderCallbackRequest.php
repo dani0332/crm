@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Http\Requests\Api;
+
+use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteTypeId;
+use Illuminate\Foundation\Http\FormRequest;
+
+class RetargetingEpReminderCallbackRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car,
+            'quoteId' => 'required|integer|exists:car_quote_request,id',
+            'customerIdentity' => 'required|string',
+            'messageId' => 'required|string',
+            'customerId' => 'required|integer',
+            'subject' => 'required|string',
+            'responseCode' => 'required',
+            'reminderType' => 'required|string|in:'.GenericRequestEnum::EMAIL,
+            'reminderNumber' => 'required|integer|in:1,2',
+        ];
+    }
+
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'quoteTypeId.required' => 'Quote type ID is required',
+            'quoteTypeId.integer' => 'Quote type ID must be an integer',
+            'quoteTypeId.in' => 'Quote type ID must be a valid car quote type',
+            'quoteId.required' => 'Quote ID is required',
+            'quoteId.integer' => 'Quote ID must be an integer',
+            'quoteId.exists' => 'The specified quote ID does not exist',
+            'customerIdentity.required' => 'Customer identity is required',
+            'customerIdentity.string' => 'Customer identity must be a string',
+            'messageId.required' => 'Message ID is required',
+            'messageId.string' => 'Message ID must be a string',
+            'customerId.required' => 'Customer ID is required',
+            'customerId.integer' => 'Customer ID must be an integer',
+            'subject.required' => 'Subject is required',
+            'subject.string' => 'Subject must be a string',
+            'responseCode.required' => 'Response code is required',
+            'reminderType.required' => 'Reminder type is required',
+            'reminderType.string' => 'Reminder type must be a string',
+            'reminderType.in' => 'Reminder type must be email',
+            'reminderNumber.required' => 'Reminder number is required',
+            'reminderNumber.integer' => 'Reminder number must be an integer',
+            'reminderNumber.in' => 'Reminder number must be 1 or 2',
+        ];
+    }
+}

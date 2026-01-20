@@ -3,21 +3,23 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\GetStatusRetargetingEpReminderRequest;
+use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Jobs\AddressReminderJob;
 use App\Jobs\EP\SendEPJob;
 use App\Models\CustomerAddress;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedTransactionRepository;
+use App\Services\EmailStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Validator;
 
 class EmbeddedProductController extends Controller
 {
@@ -46,18 +48,8 @@ class EmbeddedProductController extends Controller
         return apiResponse(null, Response::HTTP_OK, '');
     }
 
-    public function getStatusRetargetingEpReminder(Request $request): JsonResponse
+    public function getStatusRetargetingEpReminder(GetStatusRetargetingEpReminderRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'quoteId' => 'required|integer',
-            'quoteTypeId' => 'required|integer',
-            'embeddedTransactionCode' => 'required|string'
-        ]);
-
-        if ($validator->fails()) {
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, $validator->errors()->first());
-        }
-
         $quoteFields = ['id', 'code', 'quote_status_id', 'policy_booking_date', 'advisor_id'];
         $epTransactionFields = ['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id', 'policy_status'];
         $withAdvisorFields = 'advisor:id,email,name,mobile_no,landline_no,profile_photo_path';
@@ -105,5 +97,22 @@ class EmbeddedProductController extends Controller
             'reminderContent' => $reminderContent,
         ];
         return apiResponse($data, Response::HTTP_OK, 'Retargeting EP Reminder status retrieved');
+    }
+
+    public function retargetingEpReminderCallback(RetargetingEpReminderCallbackRequest $request): JsonResponse
+    {
+        $newEmailStatus = (object) [
+            'quoteTypeId' => $request->quoteTypeId,
+            'quoteId' => $request->quoteId,
+            'customerEmail' => $request->customerIdentity,
+            'templateId' => 123123123123,
+            'customerId' => $request->customerId
+        ];
+
+        $status = $request->responseCode == 202 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
+        $reminderNumberTitle = $request->reminderNumber == 1 ? 'First' : 'Second';
+        $emailStatusId = app(EmailStatusService::class)->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, "{$reminderNumberTitle} Reminder Email Sent");
+
+        return apiResponse(['email_status_id' => $emailStatusId], Response::HTTP_OK, 'Retargeting EP Reminder Email Sent');
     }
 }
