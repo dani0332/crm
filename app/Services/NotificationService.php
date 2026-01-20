@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
+use App\Events\AuthorisedPaymentCountUpdated;
 use App\Events\PaymentNotifications;
+use App\Models\PersonalQuote;
+use App\Models\User;
+use App\Repositories\PaymentRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
@@ -47,6 +53,9 @@ class NotificationService extends BaseService
 
         info('Payment Notification Event Trigger: '.$model->uuid);
         event(new PaymentNotifications($model, $url, $quoteTypeCode));
+
+        // Broadcast authorised payment count update if this is a PersonalQuote with authorised payment
+        $this->broadcastAuthorisedPaymentCountIfNeeded($model);
 
         return response()->json(['message' => 'Payment notification successfully sent to advisor']);
     }
@@ -105,5 +114,86 @@ class NotificationService extends BaseService
         $codeLength = min(3, $length);
 
         return strtoupper(substr($trimmed, 0, $codeLength));
+    }
+
+    /**
+     * Broadcast authorised payment count update if the quote has an authorised payment.
+     */
+    private function broadcastAuthorisedPaymentCountIfNeeded($model): void
+    {
+        // Only process PersonalQuote (getAuthorisePaymentCount only works with personal_quotes)
+        if (! ($model instanceof PersonalQuote)) {
+            return;
+        }
+
+        $advisorId = $model->advisor_id ?? null;
+        if (! $advisorId) {
+            return;
+        }
+
+        // Check if the quote has any payment with AUTHORISED status
+        $hasAuthorisedPayment = $model->payments()
+            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->exists();
+
+        if (! $hasAuthorisedPayment) {
+            return;
+        }
+
+        $advisor = User::find($advisorId);
+        if (! $advisor) {
+            return;
+        }
+
+        // Get all users who should see updated counts: advisor + managers of advisor's teams
+        $affectedUserIds = [$advisorId];
+
+        // Get advisor's team IDs
+        $advisorTeamIds = $advisor->getUserTeamIds();
+
+        if (! empty($advisorTeamIds)) {
+            // Get all managers who manage teams that the advisor belongs to
+            $managerRoles = [
+                RolesEnum::CarManager,
+                RolesEnum::HealthManager,
+                RolesEnum::TravelManager,
+                RolesEnum::LifeManager,
+                RolesEnum::HomeManager,
+                RolesEnum::PetManager,
+                RolesEnum::BikeManager,
+                RolesEnum::CycleManager,
+                RolesEnum::YachtManager,
+                RolesEnum::JetskiManager,
+                RolesEnum::BusinessManager,
+            ];
+
+            $managerUserIds = User::whereHas('roles', function ($query) use ($managerRoles) {
+                $query->whereIn('name', $managerRoles);
+            })
+                ->whereHas('teams', function ($query) use ($advisorTeamIds) {
+                    $query->whereIn('id', $advisorTeamIds);
+                })
+                ->pluck('id')
+                ->toArray();
+
+            $affectedUserIds = array_unique(array_merge($affectedUserIds, $managerUserIds));
+        }
+
+        // Calculate and broadcast count for each affected user
+        $paymentRepository = app(PaymentRepository::class);
+
+        foreach ($affectedUserIds as $userId) {
+            $user = User::find($userId);
+            if (! $user) {
+                continue;
+            }
+
+            $count = $paymentRepository->getAuthorisePaymentCount($user);
+            event(new AuthorisedPaymentCountUpdated($userId, $count));
+        }
+
+        LoggerService::info('NotificationService - Broadcasted authorised payment count updates for quote: '.$model->uuid, [
+            'affected_users' => $affectedUserIds,
+        ]);
     }
 }

@@ -37,7 +37,8 @@ const isActive = link => {
 
 const user = computed(() => page.props.auth.user);
 const pendingActivityCount = computed(() => page.props.pendingActivityCount);
-const authorisePaymentCount = computed(() => page.props.authorisePaymentCount);
+const authorisePaymentCountProp = computed(() => page.props.authorisePaymentCount);
+const authorisePaymentCount = ref(authorisePaymentCountProp.value);
 const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
@@ -125,6 +126,70 @@ const getHTML = (buttonText, data, activityType) => {
 const isReceiveNotificationsEnabled = computed(() => {
   let permission = permissionsEnum.RECEIVE_NOTIFICATIONS;
   return can(permission);
+});
+
+// Real-time authorised payment count updates
+let paymentCountWorker = null;
+
+const listenToAuthorisedPaymentCount = () => {
+  if (!user.value?.id) {
+    return;
+  }
+
+  const channelName = `public.${page.props.appEnv}.authorised-payment-count`;
+  const eventName = 'authorised.payment.count.updated';
+
+  paymentCountWorker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  paymentCountWorker.port.addEventListener('message', e => {
+    // Only update if the event is for the current user
+    if (e.data.userId === user.value.id) {
+      authorisePaymentCount.value = e.data.count;
+    }
+  });
+
+  paymentCountWorker.onerror = function (error) {
+    console.log('Payment count worker error:', error.message);
+    if (paymentCountWorker) {
+      paymentCountWorker.port.close();
+    }
+  };
+
+  paymentCountWorker.port.start();
+
+  // Subscribe to channel/event
+  paymentCountWorker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
+  });
+};
+
+// Watch for prop changes to sync initial value
+watch(
+  () => authorisePaymentCountProp.value,
+  (newValue) => {
+    authorisePaymentCount.value = newValue;
+  },
+);
+
+onMounted(() => {
+  listenToAuthorisedPaymentCount();
+});
+
+onUnmounted(() => {
+  if (paymentCountWorker) {
+    const channelName = `public.${page.props.appEnv}.authorised-payment-count`;
+    const eventName = 'authorised.payment.count.updated';
+    paymentCountWorker.port.postMessage({
+      action: 'unsubscribe',
+      channel: channelName,
+      event: eventName,
+    });
+    paymentCountWorker.port.close();
+  }
 });
 </script>
 
