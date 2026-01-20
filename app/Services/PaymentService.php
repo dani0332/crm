@@ -41,7 +41,7 @@ class PaymentService extends BaseService
 
         $payment->total_price = $priceWithVat;
         $payment->price_vat_applicable = $quoteObject->price_vat_applicable + $quoteObject->price_vat_not_applicable;
-        $payment->price_vat = $quoteObject->vat;
+        $payment->price_vat = $quoteObject->vat ?? $quoteObject->total_vat_amount ?? 0;
         $this->setTotalAmount(payment: $payment);
 
         if (! $isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
