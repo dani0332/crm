@@ -2194,7 +2194,6 @@ class CRUDController extends Controller
     {
         $request = (object) $policyDetailRequest->validated();
         LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_QUOTE_POLICY,$request->quote_code ?? null);
-        LoggerService::info('fn: updateQuotePolicy called');
 
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
