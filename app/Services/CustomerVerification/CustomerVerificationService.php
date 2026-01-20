@@ -372,7 +372,8 @@ class CustomerVerificationService
     public function processEmiratesIdVerification($quote, QuoteTypes $quoteType, array $ocrData, string $documentType): void
     {
         match ($quoteType) {
-            QuoteTypes::CAR => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
+            QuoteTypes::CAR => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType, $quoteType->value),
+            QuoteTypes::PERSONAL => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType, $quoteType->value),
             // Add other quote types here as needed
             default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
         };
@@ -387,7 +388,7 @@ class CustomerVerificationService
         };
     }
 
-    private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType): void
+    private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType, string $quoteType): void
     {
         $verificationData = [];
 
@@ -420,7 +421,7 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
+                'quote_type' => $quoteType,
             ]);
 
             return;
@@ -433,7 +434,7 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
+                'quote_type' => $quoteType,
                 'error' => $e->getMessage(),
             ]);
         }
@@ -495,9 +496,12 @@ class CustomerVerificationService
 
     private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
     {
-        $data = CustomerVerificationDetail::where('quotable_type', QuoteTypes::CAR->modelClass())
+        // Fetch quote type id based o model type since we have few separate quotes model like car, travel.
+        $quoteTypeId = $this->getQuoteTypeId($quote);
+
+        $data = CustomerVerificationDetail::where('quotable_type', get_class($quote))
             ->where('quotable_id', $quote->id)
-            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->where('quote_type_id', $quoteTypeId)
             ->first();
 
         LoggerService::info('Customer verification found:'.json_encode($data));
@@ -509,9 +513,9 @@ class CustomerVerificationService
             $data->update(['customer_verified_data' => json_encode($existingData)]);
         } else {
             CustomerVerificationDetail::create([
-                'quotable_type' => QuoteTypes::CAR->modelClass(),
+                'quotable_type' => get_class($quote),
                 'quotable_id' => $quote->id,
-                'quote_type_id' => QuoteTypes::CAR->id(),
+                'quote_type_id' => $quoteTypeId,
                 'customer_verified_data' => json_encode($verificationData),
             ]);
         }
@@ -520,13 +524,12 @@ class CustomerVerificationService
             'document_type' => $documentType,
             'quote_id' => $quote->id,
             'quote_code' => $quote->code ?? null,
-            'quote_type' => QuoteTypes::CAR->value,
+            'quote_type' => $this->getQuoteType($quote),
             'updated_fields' => array_keys($verificationData),
         ]);
 
         // Update customer verification status
         $this->updateCustomerVerificationStatus($quote);
-
     }
 
     private function saveVehicleChassisDetails(Model $quote, array $data): void
@@ -537,8 +540,9 @@ class CustomerVerificationService
 
     private function updateCustomerVerificationStatus(Model $quote): void
     {
+        $quoteType = $this->getQuoteType($quote);
         $requestData = ['quoteUuid' => $quote->uuid,
-            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::from($this->getQuoteType($quote))),
+            'quoteTypeId' => $this->getQuoteTypeId($quote),
             'callSource' => LeadSourceEnum::IMCRM,
         ];
 
@@ -554,12 +558,12 @@ class CustomerVerificationService
 
         LoggerService::info('Customer verification status updated, broadcasting event', extra: [
             'quote_uuid' => $quote->uuid,
-            'quote_type' => QuoteTypes::CAR->value,
+            'quote_type' => $quoteType,
             'verification_success' => $verificationSuccess,
             'has_response' => $response !== null,
         ]);
 
-        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, QuoteTypes::CAR->value));
+        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, $quoteType));
     }
 
     private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
@@ -580,9 +584,14 @@ class CustomerVerificationService
         };
     }
 
-    private function getQuoteTypeId($quote)
+    private function getQuoteTypeId(Model $quote): ?int
     {
-        return ($quote instanceof CarQuote) ? QuoteTypes::CAR->id() : $quote->quote_type_id;
+        return match (true) {
+            $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
+            $quote instanceof PersonalQuote => $quote->quote_type_id,
+            // Add other quote types here as needed
+            default => null,
+        };
     }
 
     public function isCustomerVerificationEnabled(): bool
@@ -609,6 +618,7 @@ class CustomerVerificationService
 
         $quoteType = match (true) {
             $quote instanceof CarQuote => QuoteTypes::CAR,
+            $quote instanceof PersonalQuote => QuoteTypes::PERSONAL,
             // Add other quote types here as needed
             default => null,
         };
@@ -626,6 +636,7 @@ class CustomerVerificationService
             }
         } else {
             LoggerService::info('Customer verification not supported for quote type', extra: [
+                'quote_type_id' => $this->getQuoteTypeId($quote),
                 'quote_uuid' => $quote->uuid,
                 'quote_class' => get_class($quote),
                 'document_type' => $this->documentTypeCode,
