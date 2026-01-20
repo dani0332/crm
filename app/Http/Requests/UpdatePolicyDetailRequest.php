@@ -44,7 +44,6 @@ class UpdatePolicyDetailRequest extends FormRequest
         } else {
 
             $rules = [
-
                 'quote_policy_number' => 'required|max:75',
                 'quote_policy_issuance_date' => 'required',
                 'quote_policy_start_date' => 'required|date',
@@ -59,7 +58,6 @@ class UpdatePolicyDetailRequest extends FormRequest
                 'modelType' => 'required',
                 'quote_id' => 'required',
                 'quote_code' => 'nullable',
-                'is_vat_manually_changed' => 'nullable',
             ];
 
             if (request()->modelType == strtolower(quoteTypeCode::Life)) {
