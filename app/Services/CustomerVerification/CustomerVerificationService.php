@@ -496,31 +496,10 @@ class CustomerVerificationService
 
     private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
     {
-        $quoteTypeValue = $this->getQuoteType($quote);
-        if (! $quoteTypeValue) {
-            LoggerService::warning('Unable to determine quote type for customer verification save', extra: [
-                'document_type' => $documentType,
-                'quote_id' => $quote->id ?? null,
-                'quote_class' => $quote::class,
-            ]);
-
-            return;
-        }
-
-        $quoteTypeEnum = QuoteTypes::from($quoteTypeValue);
+        // Fetch quote type id based o model type since we have few separate quotes model like car, travel.
         $quoteTypeId = $this->getQuoteTypeId($quote);
-        if (! $quoteTypeId) {
-            LoggerService::warning('Unable to determine quote type ID for customer verification save', extra: [
-                'document_type' => $documentType,
-                'quote_id' => $quote->id ?? null,
-                'quote_type' => $quoteTypeEnum->value,
-                'quote_class' => $quote::class,
-            ]);
 
-            return;
-        }
-
-        $data = CustomerVerificationDetail::where('quotable_type', $quoteTypeEnum->modelClass())
+        $data = CustomerVerificationDetail::where('quotable_type', get_class($quote))
             ->where('quotable_id', $quote->id)
             ->where('quote_type_id', $quoteTypeId)
             ->first();
@@ -534,7 +513,7 @@ class CustomerVerificationService
             $data->update(['customer_verified_data' => json_encode($existingData)]);
         } else {
             CustomerVerificationDetail::create([
-                'quotable_type' => $quoteTypeEnum->modelClass(),
+                'quotable_type' => get_class($quote),
                 'quotable_id' => $quote->id,
                 'quote_type_id' => $quoteTypeId,
                 'customer_verified_data' => json_encode($verificationData),
@@ -545,13 +524,12 @@ class CustomerVerificationService
             'document_type' => $documentType,
             'quote_id' => $quote->id,
             'quote_code' => $quote->code ?? null,
-            'quote_type' => $quoteTypeEnum->value,
+            'quote_type' => $this->getQuoteType($quote),
             'updated_fields' => array_keys($verificationData),
         ]);
 
         // Update customer verification status
         $this->updateCustomerVerificationStatus($quote);
-
     }
 
     private function saveVehicleChassisDetails(Model $quote, array $data): void
@@ -562,30 +540,8 @@ class CustomerVerificationService
 
     private function updateCustomerVerificationStatus(Model $quote): void
     {
-        $quoteTypeValue = $this->getQuoteType($quote);
-        if (! $quoteTypeValue) {
-            LoggerService::warning('Unable to determine quote type for customer verification status update', extra: [
-                'quote_id' => $quote->id ?? null,
-                'quote_class' => $quote::class,
-            ]);
-
-            return;
-        }
-
-        $quoteTypeId = $this->getQuoteTypeId($quote);
-        if (! $quoteTypeId) {
-            LoggerService::warning('Unable to determine quote type ID for customer verification status update', extra: [
-                'quote_id' => $quote->id ?? null,
-                'quote_uuid' => $quote->uuid ?? null,
-                'quote_type' => $quoteTypeValue,
-                'quote_class' => $quote::class,
-            ]);
-
-            return;
-        }
-
         $requestData = ['quoteUuid' => $quote->uuid,
-            'quoteTypeId' => $quoteTypeId,
+            'quoteTypeId' => $this->getQuoteTypeId($quote),
             'callSource' => LeadSourceEnum::IMCRM,
         ];
 
@@ -601,7 +557,7 @@ class CustomerVerificationService
 
         LoggerService::info('Customer verification status updated, broadcasting event', extra: [
             'quote_uuid' => $quote->uuid,
-            'quote_type' => $quoteTypeValue,
+            'quote_type' => $this->getQuoteType($quote),
             'verification_success' => $verificationSuccess,
             'has_response' => $response !== null,
         ]);
