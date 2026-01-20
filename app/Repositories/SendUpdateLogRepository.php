@@ -341,7 +341,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'commission_vat_not_applicable' => $data['commission_vat_not_applicable'] ?? null,
                 'vat_on_commission' => $data['vat_on_commission'] ?? null,
                 'total_commission' => $data['total_commission'] ?? null,
-                'total_vat_amount' => $data['total_vat_amount'] ?? null,
+                'total_vat_amount' => strToFloat($data['total_vat_amount'] ?? null, $isNegative),
                 'price_vat_applicable' => strToFloat($data['price_vat_applicable'] ?? null, $isNegative),
                 'price_vat_not_applicable' => strToFloat($data['price_vat_not_applicable'] ?? null, $isNegative),
                 'commission_vat_applicable' => strToFloat($data['commission_vat_applicable'] ?? null, $isNegative),
