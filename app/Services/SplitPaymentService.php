@@ -634,7 +634,7 @@ class SplitPaymentService
     private function getPaymentLinkURLIdentifier($modelType)
     {
         $urlIdentifier = strtolower(string: $modelType);
-        if ($modelType == QuoteTypes::DEVICE->value) {
+        if ($modelType === QuoteTypes::DEVICE->value) {
             $urlIdentifier = 'smartphone';
         }
         return $urlIdentifier;
