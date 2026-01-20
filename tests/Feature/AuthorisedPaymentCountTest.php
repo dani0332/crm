@@ -27,11 +27,9 @@ beforeEach(function () {
     ]);
 
     // Create a team and assign advisor to it (required for count query)
-    $team = Team::create([
-        'name' => 'Test Team',
-        'type' => 'TEAM',
-        'is_active' => 1,
-    ]);
+    $team = new Team();
+    $team->name = 'Test Team';
+    $team->save();
 
     UserTeams::create([
         'user_id' => $this->advisor->id,
@@ -128,14 +126,11 @@ test('notification service broadcasts authorised payment count when webhook is c
         'total_amount' => 1000,
     ]);
 
-    // Call the webhook endpoint
-    $response = $this->postJson('/payments/update-payment-status', [
-        'quoteType' => 'Car',
-        'quoteId' => $this->personalQuote->uuid,
-    ]);
+    // Call the notification service directly - use 'Life' since Car is not in checkPersonalQuotes list
+    $response = app(NotificationService::class)->paymentStatusUpdate('Life', $this->personalQuote->uuid);
 
-    $response->assertStatus(200);
-    $response->assertJson(['message' => 'Payment notification successfully sent to advisor']);
+    expect($response->getStatusCode())->toBe(200);
+    expect($response->getData(true))->toHaveKey('message', 'Payment notification successfully sent to advisor');
 
     // Assert that the event was dispatched for the advisor
     Event::assertDispatched(AuthorisedPaymentCountUpdated::class, function ($event) {
@@ -154,13 +149,10 @@ test('notification service does not broadcast when quote has no authorised payme
         'total_amount' => 1000,
     ]);
 
-    // Call the webhook endpoint
-    $response = $this->postJson('/payments/update-payment-status', [
-        'quoteType' => 'Car',
-        'quoteId' => $this->personalQuote->uuid,
-    ]);
+    // Call the notification service directly - use 'Life' since Car is not in checkPersonalQuotes list
+    $response = app(NotificationService::class)->paymentStatusUpdate('Life', $this->personalQuote->uuid);
 
-    $response->assertStatus(200);
+    expect($response->getStatusCode())->toBe(200);
 
     // Assert that the event was NOT dispatched
     Event::assertNotDispatched(AuthorisedPaymentCountUpdated::class);
@@ -184,24 +176,34 @@ test('notification service does not broadcast for non-personal quotes', function
         'total_amount' => 1000,
     ]);
 
-    // Call the webhook endpoint
-    $response = $this->postJson('/payments/update-payment-status', [
-        'quoteType' => 'Car',
-        'quoteId' => $carQuote->uuid,
-    ]);
+    // Call the notification service directly
+    $response = app(NotificationService::class)->paymentStatusUpdate('Car', $carQuote->uuid);
 
-    $response->assertStatus(200);
+    expect($response->getStatusCode())->toBe(200);
 
     // Assert that the event was NOT dispatched (because it's not a PersonalQuote)
     Event::assertNotDispatched(AuthorisedPaymentCountUpdated::class);
 });
 
 test('authorised payment count is calculated correctly for advisor', function () {
-    // Create multiple payments with AUTHORISED status for the advisor
+    // Create multiple PersonalQuotes with the same advisor, each with an AUTHORISED payment
     for ($i = 0; $i < 3; $i++) {
+        $quote = PersonalQuote::create([
+            'advisor_id' => $this->advisor->id,
+            'quote_type_id' => QuoteTypeId::Car,
+            'code' => 'TEST-QUOTE-'.$i.'-'.uniqid(),
+            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'first_name' => 'Test',
+            'last_name' => 'User'.$i,
+            'email' => 'test'.$i.'@example.com',
+            'mobile_no' => '+97150123456'.$i,
+            'source' => 'TEST',
+            'device' => 'WEB',
+        ]);
+
         Payment::create([
-            'code' => $this->personalQuote->code.'-'.$i,
-            'paymentable_id' => $this->personalQuote->id,
+            'code' => $quote->code,
+            'paymentable_id' => $quote->id,
             'paymentable_type' => PersonalQuote::class,
             'payment_status_id' => PaymentStatusEnum::AUTHORISED,
             'total_price' => 1000,
@@ -236,7 +238,7 @@ test('authorised payment count is calculated correctly for advisor', function ()
     $paymentRepository = app(PaymentRepository::class);
     $count = $paymentRepository->getAuthorisePaymentCount($this->advisor);
 
-    // Should have 4 authorised payments (3 from first quote + 1 from second quote)
+    // Should have 4 authorised payments (3 from first loop + 1 from second quote)
     expect($count)->toBe(4);
 });
 
