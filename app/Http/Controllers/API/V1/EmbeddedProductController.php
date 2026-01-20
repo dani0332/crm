@@ -105,11 +105,11 @@ class EmbeddedProductController extends Controller
             'quoteTypeId' => $request->quoteTypeId,
             'quoteId' => $request->quoteId,
             'customerEmail' => $request->customerIdentity,
-            'templateId' => 123123123123,
+            'templateId' => 123123123,
             'customerId' => $request->customerId
         ];
 
-        $status = $request->responseCode == 202 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
+        $status = in_array($request->responseCode, [200, 201, 202]) ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
         $reminderNumberTitle = $request->reminderNumber == 1 ? 'First' : 'Second';
         $emailStatusId = app(EmailStatusService::class)->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, "{$reminderNumberTitle} Reminder Email Sent");
 
