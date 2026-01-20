@@ -7,8 +7,6 @@ namespace App\Services\OCR\EmiratesId;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
 use App\Models\CarQuote;
 use App\Models\CustomerInsured;
@@ -16,6 +14,7 @@ use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -56,10 +55,10 @@ class EmiratesIdDataProcessor
             $kycUpdated = $this->updateInsuredKycTable($insured);
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
-           // Trigger OCR success validation
-           $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
-            'quoteId' => $this->quote->id,
-            'quoteableType' => get_class($this->quote),
+            // Trigger OCR success validation
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
             ]);
 
             $isOCRSuccess = $ocrDocumentValidator->validateEIDFields($this->documentTypeCode);
@@ -360,8 +359,8 @@ class EmiratesIdDataProcessor
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $this->quote->id,
             ])
-            ->latest('updated_at')
-            ->first();
+                ->latest('updated_at')
+                ->first();
 
             if (! $existingLink) {
                 CustomerInsured::create([
@@ -385,8 +384,12 @@ class EmiratesIdDataProcessor
 
     private function getQuoteTypeId(): int
     {
-        // Currently only supporting Car quotes for Emirates ID OCR
-        return QuoteTypes::getId(QuoteTypes::CAR) ?? QuoteTypeId::Car;
+        // Using this approach to get quote type id in all lobs
+        $personalQuote = PersonalQuote::where('uuid', $this->quote->uuid)
+            ->select('quote_type_id')
+            ->first();
+
+        return $personalQuote->quote_type_id;
     }
 
     public function getProcessingSummary(): array
