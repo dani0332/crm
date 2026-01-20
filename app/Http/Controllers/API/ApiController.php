@@ -809,11 +809,11 @@ class ApiController extends Controller
             'quoteId' => 'required|integer|exists:car_quote_request,id',
             'customerIdentity' => 'required|string',
             'messageId' => 'required|string',
-            'templateId' => 'required|string',
             'customerId' => 'required|integer',
             'subject' => 'required|string',
             'responseCode' => 'required',
             'reminderType' => 'required|string|in:'.GenericRequestEnum::EMAIL,
+            'reminderNumber' => 'required|integer|in:1,2',
         ]);
 
         if ($validator->fails()) {
@@ -824,12 +824,13 @@ class ApiController extends Controller
             'quoteTypeId' => $request->quoteTypeId,
             'quoteId' => $request->quoteId,
             'customerEmail' => $request->customerIdentity,
-            'templateId' => $request->templateId,
+            'templateId' => 123123123123,
             'customerId' => $request->customerId
         ];
 
-        $status = $request->responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-        $emailStatusId = $this->emailStatusService->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, 'Retargeting EP Reminder Email Sent');
+        $status = $request->responseCode == 202 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
+        $reminderNumberTitle = $request->reminderNumber == 1 ? 'First' : 'Second';
+        $emailStatusId = $this->emailStatusService->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, "{$reminderNumberTitle} Reminder Email Sent");
 
         return apiResponse(['email_status_id' => $emailStatusId], Response::HTTP_OK, 'Retargeting EP Reminder Email Sent');
     }

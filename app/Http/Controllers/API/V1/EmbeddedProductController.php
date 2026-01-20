@@ -60,11 +60,12 @@ class EmbeddedProductController extends Controller
 
         $quoteFields = ['id', 'code', 'quote_status_id', 'policy_booking_date', 'advisor_id'];
         $epTransactionFields = ['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id', 'policy_status'];
-        $customerFields = ['email', 'mobile_no', 'first_name', 'last_name'];
         $withAdvisorFields = 'advisor:id,email,name,mobile_no,landline_no,profile_photo_path';
 
         $model = $this->getModelObject(strtolower(QuoteTypeShortCode::getName($request->quoteTypeId)));
-        $quote = $model ? $model::select(array_merge($quoteFields, $customerFields))->with($withAdvisorFields)->find($request->quoteId) : null;
+        $quote = $model ? $model::select(array_merge($quoteFields, ['customer_id', 'email', 'mobile_no', 'first_name', 'last_name']))
+            ->with($withAdvisorFields)->find($request->quoteId) : null;
+
         if (!$quote) {
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found');
         }
@@ -93,13 +94,14 @@ class EmbeddedProductController extends Controller
             "advisorMobileNumber" => $advisorInfo?->mobile_no,
             "advisorName" => $advisorInfo->name,
             "advisorProfilePhotoPath" => $advisorInfo?->profile_photo_path,
-            "DisplayName" => "InsuranceMarket.ae"
+            "DisplayName" => "InsuranceMarket.ae",
+            "retargetingEpReminderCallbackEndpoint" => route('retargeting-ep-reminder-callback'),
+            "customerId" => $quote->customer_id,
         ];
 
         $data = [
             'quote' => Arr::only($quote->toArray(), $quoteFields),
             'embeddedTransaction' => Arr::only($epTransaction, $epTransactionFields),
-            'retargetingEpReminderCallbackEndpoint' => route('retargeting-ep-reminder-callback'),
             'reminderContent' => $reminderContent,
         ];
         return apiResponse($data, Response::HTTP_OK, 'Retargeting EP Reminder status retrieved');
