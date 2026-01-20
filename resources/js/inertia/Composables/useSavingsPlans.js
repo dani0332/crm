@@ -392,8 +392,9 @@ export function useSavingsPlans(options = {})
    * @param {String} quoteUuid - Quote UUID
    * @returns {Promise<Array>} Available plans
    */
-  const onLoadAvailablePlansData = async (quoteUuid) =>
+  const onLoadAvailablePlansData = async (savingQuoteUuid = null) =>
   {
+    let quoteUuid = savingQuoteUuid || quote.value.uuid;
     availablePlansTable.isLoading = true;
     try
     {
