@@ -23,25 +23,13 @@ class PaymentService extends BaseService
      */
     public function processMasterPayment($payment, $quoteObject, $isCreditCardEnabled = true)
     {
-        LoggerService::info('fn:processMasterPaymentWithoutEvents - PaymentService');
-        $infoMessage = 'Quote Code: '.$payment->code;
         $priceWithVat = round($quoteObject->price_with_vat, 2);
-        $capturedAmount = $payment->captured_amount;
-        $discountValue = $payment->discount_value;
-        $totalPaymentAmount = $capturedAmount + $discountValue;
-        $initialDifference = $priceWithVat - $totalPaymentAmount;
-        $difference = round($initialDifference, 2);
-
-        $infoMessage .= 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
-        $infoMessage .= 'ID: '.$difference.' ';
-
-        LoggerService::info('Message Information', extra: ['infoMessage' => $infoMessage]);
-
-        $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference);
+        $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment);
 
         $payment->total_price = $priceWithVat;
         $payment->price_vat_applicable = $quoteObject->price_vat_applicable + $quoteObject->price_vat_not_applicable;
         $payment->price_vat = $quoteObject->vat ?? $quoteObject->total_vat_amount ?? 0;
+
         $this->setTotalAmount(payment: $payment);
 
         if (! $isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
@@ -55,17 +43,16 @@ class PaymentService extends BaseService
         }
     }
 
-    /**
+       /**
      * This method will set payment status in payment table
      * This method trigger when policy details section update
      */
-    public function setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference): void
+    public function setPaymentStatusBasedOnPrice($priceWithVat, $payment): void
     {
-        LoggerService::info('fn:setPaymentStatusBasedOnPrice - Start - PaymentService');
         if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
             $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
-            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED]) && $payment->total_price < $priceWithVat) {
+            if ($payment->captured_amount < $priceWithVat) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
             } elseif ($priceWithVat <= $captureAndDiscount) {
                 $payment->payment_status_id = PaymentStatusEnum::PAID;
