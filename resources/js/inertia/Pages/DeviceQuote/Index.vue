@@ -414,11 +414,11 @@ const assignmentTypeOptions = computed(() => {
 
 <template>
   <div>
-    <Head title="Device Quotes" />
+    <Head title="Smartphone Quotes" />
 
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Device Quotes List</h2>
+        <h2 class="text-xl font-semibold">Smartphone Quotes List</h2>
       </template>
       <template #default>
         <ColumnSelection

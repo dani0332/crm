@@ -523,10 +523,10 @@ const copyLink = () => {
 
 <template>
   <div>
-    <Head title="Device Quotes" />
+    <Head title="Smartphone Quotes" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Device Detail</h2>
+        <h2 class="text-xl font-semibold">Smartphone Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
@@ -608,7 +608,7 @@ const copyLink = () => {
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div">
-            Device Quotes
+            Smartphone Quotes
           </x-button>
         </Link>
       </template>
