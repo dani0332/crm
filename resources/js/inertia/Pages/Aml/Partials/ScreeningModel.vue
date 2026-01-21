@@ -385,9 +385,6 @@ const individualSearchValidation = computed(() => {
   }
   screeningFormDetails.clearErrors('screening_id_number');
 
-  screeningFormDetails.screening_id_type = genericRequestEnum.TRADE_LICENSE;
-  screeningFormDetails.screening_id_number = screeningFormDetails.trade_license_no;
-
   return true;
 });
 const entitySearchValidation = computed(() => {
@@ -503,6 +500,14 @@ function screeningFormValidate() {
     );
     isValid = false;
   }
+  
+  if (screeningFormDetails.customer_type == customerTypeEnum.Entity) {
+    if (screeningFormDetails.trade_license_no) {
+      screeningFormDetails.screening_id_type = genericRequestEnum.TRADE_LICENSE;
+      screeningFormDetails.screening_id_number = screeningFormDetails.trade_license_no;
+    }
+  }
+  
   // Individual customer validation
   document.getElementById('customer-type-field').scrollIntoView({
     behavior: 'smooth',
