@@ -1164,7 +1164,10 @@ const onConfirmPUAExport = () => {
         >
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.teams = teamOptions.map(item => item.value)"
+              @select-all="
+                ((filters.teams = teamOptions.map(item => item.value)),
+                fetchTeamUsers())
+              "
               @clear="filters.teams = []"
             />
           </template>
