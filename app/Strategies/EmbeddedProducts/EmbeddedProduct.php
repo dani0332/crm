@@ -13,6 +13,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
+use App\Enums\QuoteTypeId;
 
 class EmbeddedProduct
 {
@@ -262,6 +263,32 @@ class EmbeddedProduct
         }
 
         $dataset = $this->postFilterReportProcessing($dataset);
+
+        return $dataset;
+    }
+
+    protected function loadVehicleRelations($dataset)
+    {
+        // Group transactions by quote_type_id
+        $carTransactions = $dataset->where('quote_type_id', QuoteTypeId::Car);
+        $bikeTransactions = $dataset->where('quote_type_id', QuoteTypeId::Bike);
+
+        // Load car-specific relations in a single query for the car group
+        if ($carTransactions->isNotEmpty()) {
+            $carTransactions->loadMissing([
+                'quoteRequest.carMake',
+                'quoteRequest.carModel',
+            ]);
+        }
+
+        // Load bike-specific relations in a single query for the bike group
+        if ($bikeTransactions->isNotEmpty()) {
+            $bikeTransactions->loadMissing([
+                'quoteRequest.bikeQuote',
+                'quoteRequest.bikeQuote.bikeMake',
+                'quoteRequest.bikeQuote.bikeModel',
+            ]);
+        }
 
         return $dataset;
     }

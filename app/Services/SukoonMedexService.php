@@ -977,9 +977,13 @@ class SukoonMedexService
      */
     private function prepareAdditionalData()
     {
-        $planOption = match ($this->quoteTypeId) {
-            QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
-            QuoteTypeId::Bike => "{$this->productSlug}-personal_sports_mc",
+        // Check if this should use the bike/sports MC plan
+        $useBikePlan = $this->quoteTypeId === QuoteTypeId::Bike || 
+                       ($this->quoteTypeId === QuoteTypeId::Car && $this->currentQuote?->vehicle_type_id == 21);
+
+        $planOption = match (true) {
+            $useBikePlan => "{$this->productSlug}-personal_sports_mc",
+            $this->quoteTypeId === QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
             default => null
         };
 
