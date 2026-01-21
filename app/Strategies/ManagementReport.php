@@ -652,4 +652,61 @@ class ManagementReport
 
         return $routeName;
     }
+
+    public function paymentJoin($query, $additionalConditions = null, $alias = 'p', $joinType = 'join')
+    {
+        $query->{$joinType}("payments as {$alias}", function ($join) use ($additionalConditions, $alias) {
+            $join->where(function ($query) use ($alias) {
+                // For Car, Health, Business, Travel quotes - use quote_id
+                $query->where(function ($q) use ($alias) {
+                    $q->whereColumn("{$alias}.paymentable_id", '=', 'personal_quotes.quote_id')
+                        ->whereIn('personal_quotes.quote_type_id', [
+                            QuoteTypeId::Car,
+                            QuoteTypeId::Health,
+                            QuoteTypeId::Business,
+                            QuoteTypeId::Travel,
+                        ])
+                        ->where(function ($subQuery) use ($alias) {
+                            $subQuery->where(function ($q) use ($alias) {
+                                // Car quotes - quote_type_id = 1
+                                $q->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Car)
+                                    ->where("{$alias}.paymentable_type", '=', 'App\Models\CarQuote');
+                            })
+                                ->orWhere(function ($q) use ($alias) {
+                                    // Health quotes - quote_type_id = 3
+                                    $q->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
+                                        ->where("{$alias}.paymentable_type", '=', 'App\Models\HealthQuote');
+                                })
+                                ->orWhere(function ($q) use ($alias) {
+                                    // Business quotes - quote_type_id = 5
+                                    $q->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Business)
+                                        ->where("{$alias}.paymentable_type", '=', 'App\Models\BusinessQuote');
+                                })
+                                ->orWhere(function ($q) use ($alias) {
+                                    // Travel quotes - quote_type_id = 8
+                                    $q->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Travel)
+                                        ->where("{$alias}.paymentable_type", '=', 'App\Models\TravelQuote');
+                                });
+                        });
+                })
+                    // For all other quote types - use personal_quotes.id
+                    ->orWhere(function ($q) use ($alias) {
+                        $q->whereColumn("{$alias}.paymentable_id", '=', 'personal_quotes.id')
+                            ->whereNotIn('personal_quotes.quote_type_id', [
+                                QuoteTypeId::Car,
+                                QuoteTypeId::Health,
+                                QuoteTypeId::Business,
+                                QuoteTypeId::Travel,
+                            ])
+                            ->where("{$alias}.paymentable_type", '=', 'App\Models\PersonalQuote');
+                    });
+            })
+                ->whereNull("{$alias}.send_update_log_id");
+
+            // Apply additional conditions if provided
+            if ($additionalConditions && is_callable($additionalConditions)) {
+                $additionalConditions($join);
+            }
+        });
+    }
 }

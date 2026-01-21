@@ -154,10 +154,9 @@ class EndorsementReportService extends ManagementReport
                 'pq.frequency as payment_frequency',
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
-            )
-            ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
-            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
-            ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
+            )->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id');
+        $this->paymentJoin($query, null, 'pq', 'leftJoin');
+        $query->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
@@ -278,10 +277,9 @@ class EndorsementReportService extends ManagementReport
                 'pq.frequency as payment_frequency',
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
-            )
-            ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
-            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
-            ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
+            )->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id');
+        $this->paymentJoin($reversalQuery, null, 'pq', 'leftJoin');
+        $reversalQuery->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
