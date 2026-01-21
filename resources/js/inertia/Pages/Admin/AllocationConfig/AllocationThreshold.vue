@@ -52,7 +52,7 @@ const validateTeams = () => {
         break;
       }
     }
-    if (i == 2 || i == 4) {
+    if (i > 0 ) {
       var lastMaxValue = parseFloat(
         teams[i - 1].max_price == '' ? 0 : teams[i - 1].max_price,
       );
