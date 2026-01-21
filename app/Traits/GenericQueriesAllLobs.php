@@ -951,7 +951,7 @@ trait GenericQueriesAllLobs
         $return = false;
         if (isset($record->parent_duplicate_quote_id) && $record->parent_duplicate_quote_id) {
             $parentQuoteType = explode('-', $record->parent_duplicate_quote_id)[0];
-            $quoteType = QuoteType::where('short_code', strtoupper($parentQuoteType))->first()?->code ?? null;
+            $quoteType = QuoteType::where('short_code', strtoupper($parentQuoteType))->value('code') ?? null;
             if (! $quoteType) {
                 return $return;
             }
