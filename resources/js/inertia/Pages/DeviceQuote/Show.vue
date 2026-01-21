@@ -1398,7 +1398,7 @@ const copyLink = () => {
           <x-modal
             v-model="modals.planDetails"
             size="xl"
-            :title="`${planDetails?.providerName} - Alfred's Smartphone Insurance`"
+            :title="`${planDetails?.providerName} - ${planDetails?.name}`"
             show-close
             backdrop
           >

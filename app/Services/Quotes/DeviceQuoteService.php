@@ -15,6 +15,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Services\Logger\LoggerService;
 
 class DeviceQuoteService extends BaseQuoteService
 {
@@ -169,7 +170,7 @@ class DeviceQuoteService extends BaseQuoteService
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::DEVICE_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::Device) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
         return [
-            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::DeviceManager),
+            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SmartPhoneManager),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             ...$data,
         ];
@@ -304,11 +305,21 @@ class DeviceQuoteService extends BaseQuoteService
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
-        // Make API request to save the savings quote
-        $response = Capi::request('/api/device/create', 'post', $data);
-
-        if (isset($response->uuid)) {
+        // Make API request to save the device quote
+        $response = Capi::request('/api/v1/device/create', 'post', $data);
+        if (isset($response->code) && !in_array($response->code, [200, 201], true) || isset($response->status) && !in_array($response->status, [200, 201], true)) {
+            return $response->json();
+        }
+        if (isset($response->uuid) && $response->uuid != '') {
+            LoggerService::info(self::class.' - create: Assigning quote to self', extra: [
+                'quote_uuid' => $response->uuid,
+            ]);
             $this->selfAssign(QuoteTypes::DEVICE, $response->uuid, true);
+            $lead = $this->baseQuery()->where('uuid', $response->uuid)->first();
+            if ($lead) {
+                $lead->advisor_id = Auth::id();
+                $lead->save();
+            }
         }
 
         return $response;

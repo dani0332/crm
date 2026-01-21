@@ -300,7 +300,7 @@ onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
 
-  if (hasRole(rolesEnum.deviceManager) || hasRole(rolesEnum.Admin)) {
+  if (hasRole(rolesEnum.SmartPhoneManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
   }
 
@@ -567,7 +567,7 @@ const assignmentTypeOptions = computed(() => {
           class="w-full"
           label="Policy End Date"
         />
-        <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.deviceAdvisor])">
+        <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.SmartPhoneAdvisor])">
           <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
