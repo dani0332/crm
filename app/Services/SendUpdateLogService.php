@@ -1331,7 +1331,7 @@ class SendUpdateLogService
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
@@ -1343,11 +1343,6 @@ class SendUpdateLogService
                 DocumentTypeCode::SEND_UPDATE_RECEIPT,
                 DocumentTypeCode::PAYMENT_RECEIPT,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
-            ])->toArray();
-        } elseif ($quoteTypeId == QuoteTypeId::Device) {
-            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
-                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE,
-                DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE,
             ])->toArray();
         }
 
@@ -1484,7 +1479,6 @@ class SendUpdateLogService
             } elseif ($optionCode == SendUpdateLogStatusEnum::PPE) {
                 $emailData->policyNewExpiry = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
             }
-
             if (! empty($quote->plan->insuranceProvider->code) && ! in_array($categoryCode, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) && $optionCode != SendUpdateLogStatusEnum::MPC) {
                 $roadsideAssistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? $quote?->plan?->insuranceProvider?->roadside_phone_number ?? null;
                 if (! is_null($roadsideAssistanceNumber) && $roadsideAssistanceNumber != 0) {
@@ -1495,17 +1489,23 @@ class SendUpdateLogService
             $emailData->refID = $sendUpdateLog->code;
             $start_date = $quote->policy_start_date ?? '';
             $expiry_date = $quote->policy_expiry_date ?? '';
-
             if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
                 $start_date = $sendUpdateLog->start_date ?? $quote->policy_start_date;
                 $expiry_date = $sendUpdateLog->expiry_date ?? $quote->policy_expiry_date;
             }
             $emailData->policyStartDate = date('d/m/Y', strtotime($start_date)) ?? '';
             $emailData->renewalDueDate = date('d/m/Y', strtotime($expiry_date)) ?? '';
-
             $emailData->planName = ! empty($quote->plan_id) ? $quote?->insuranceProviderPlan?->text : '';
+        } elseif ($quoteTypeId == QuoteTypeId::Device) {
+            $emailData->providerName = $quote?->plan?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? '';
+            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? '-';
+            $emailData->quoteDocuments = collect([]);
+            $emailData->advisorName = $emailData?->advisor?->name ?? '';
+            $emailData->advisorEmail = $emailData?->advisor?->email ?? '';
+            $emailData->advisorMobilePhone = $emailData?->advisor?->mobileNo ?? '';
+            $emailData->advisorLandLine = $emailData?->advisor?->landLine ?? '';
+            $emailData->advisorProfilePhotoPath = $emailData?->advisor?->profilePicture ?? '';
         }
-
         return [$templateId, $emailData, 'send-update', $quoteTypeId];
     }
 

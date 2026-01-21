@@ -31,6 +31,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\WatermarkDocTypesEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
@@ -1556,6 +1557,60 @@ class CentralService extends BaseService
         return $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData);
     }
 
+    /**
+     * Prepare email data specifically for Device update emails to Bird
+     * Combines Bird's standard data structure with update-specific fields
+     *
+     * @param  $quote  - The quote object
+     * @param  $quoteTypeId  - The quote type ID
+     * @param  $sendUpdateEmailData  - Email data from sendUpdateToCustomerEmailData
+     * @return object - Prepared email data for Bird
+     */
+    public function prepareDeviceUpdateBirdData($quote, $quoteTypeId, $sendUpdateEmailData)
+    {
+        LoggerService::info('fn:prepareDeviceUpdateBirdData - Start preparing Device update email data for Bird', extra: [
+            'uuid' => $quote->uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'emailData' => json_encode($sendUpdateEmailData),
+        ]);
+
+        // Start with standard Bird data structure
+        $workflowType = WorkflowTypeEnum::DEVICE_UPDATE_POLICY;
+        $emailData = $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $sendUpdateEmailData);
+
+        if (isset($sendUpdateEmailData->providerName) && !empty($sendUpdateEmailData->providerName) && empty($emailData->providerName)) {
+            $emailData->providerName = $sendUpdateEmailData->providerName;
+        }
+
+        $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
+        $sendUpdateEmailDocs = collect($sendUpdateEmailData?->documents??[]);
+        $documentSUPC = (object) $sendUpdateEmailDocs->filter(function ($document) {
+            return in_array($document['document_type_code'], [WatermarkDocTypesEnum::SUPC]);
+        })->first();
+        $documentSUPS = (object) $sendUpdateEmailDocs->filter(function ($document) {
+            return in_array($document['document_type_code'], [WatermarkDocTypesEnum::SUPS]);
+        })->first();
+
+        $documentSUPCurl = $documentSUPC?->watermarked_doc_url ?? $documentSUPC?->doc_url ?? '';
+        $documentSUPSurl = $documentSUPS?->watermarked_doc_url ?? $documentSUPS?->doc_url ?? '';
+
+        if (!empty($documentSUPCurl)) {
+            $emailData->documentSUPC = $storageUrl.$documentSUPCurl;
+        }
+
+        if (!empty($documentSUPSurl)) {
+            $emailData->documentSUPS = $storageUrl.$documentSUPSurl;
+        }
+
+        LoggerService::info('fn:prepareDeviceUpdateBirdData - Email data preparation completed', extra: [
+            'uuid' => $quote->uuid,
+            'emailData' => json_encode($emailData),
+        ]);
+
+        return $emailData;
+    }
+
     public function preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData)
     {
         $emailData = (object) [
@@ -1874,6 +1929,54 @@ class CentralService extends BaseService
             $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
             LoggerService::info($errorMessage);
             LoggerService::info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
+        }
+    }
+
+    /**
+     * Send Device update email to customer via Bird
+     * Similar to sendInslyEmailToCustomer but specifically for update emails
+     *
+     * @param  $quote  - The quote object
+     * @param  $emailData  - Prepared email data object
+     * @param  $quoteTypeId  - The quote type ID
+     * @param  $emailType  - Type of email (e.g., 'Update Email')
+     * @return int|null - HTTP status code or null
+     */
+    public function sendUpdateToCustomerEmail($quote, $emailData, $quoteTypeId, $emailType = 'Update Email')
+    {
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+
+        try {
+            LoggerService::info("Sending {$quoteType} update email for {$emailType} uuid: ".$quote->uuid.' | Time: '.now());
+
+            $birdUrlKey = ApplicationStorageEnums::BIRD_INSLY_WORKFLOW;
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+
+            if ($birdUrl) {
+                LoggerService::info("Bird workflow URL retrieved: {$birdUrl->value} for uuid: {$quote->uuid}");
+
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl->value, $emailData);
+
+                LoggerService::info("{$quoteType} update email response: ".json_encode($response)." | {$emailType} uuid: {$quote->uuid} | Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($quote, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
+                    LoggerService::info("Quote flow details created for {$emailType} uuid: {$quote->uuid}");
+                }
+            } else {
+                LoggerService::warning("{$birdUrlKey} not found in ApplicationStorage for uuid: {$quote->uuid}");
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending update workflow for {$emailType}: uuid: {$quote->uuid} | Time: ".now();
+            LoggerService::error($errorMessage, extra: [
+                'exception' => $ex->getMessage(),
+                'line' => $ex->getLine(),
+                'trace' => $ex->getTraceAsString(),
+            ]);
+
+            return null;
         }
     }
 

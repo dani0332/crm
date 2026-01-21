@@ -60,13 +60,34 @@ class SendUpdateToCustomerJob implements ShouldQueue
 
             @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $quote);
             if (! empty($templateId)) {
-                LoggerService::info('job:SendUpdateToCustomerJob - Job Email Data', extra: ['emailData' => json_encode($emailData)]);
-                $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
-                LoggerService::info('job: SendUpdateToCustomerJob - Job Response ', extra: ['emailData' => json_encode($response)]);
+                LoggerService::info('job:SendUpdateToCustomerJob - Job Email Data prepared', extra: ['emailData' => json_encode($emailData), 'quoteTypeId' => $quoteTypeId]);
 
-                if ($response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE) {
+                // Route to Bird for Device, Brevo for others
+                if ($quoteTypeId == QuoteTypeId::Device) {
+                    // For Device - Use Bird
+                    LoggerService::info('job:SendUpdateToCustomerJob - Routing Device quote to Bird', extra: ['uuid' => $quote->uuid]);
+
+                    $birdEmailData = app(CentralService::class)->prepareDeviceUpdateBirdData($quote, $quoteTypeId, $emailData);
+
+                    if (! empty($birdEmailData)) {
+                        $response = app(CentralService::class)->sendUpdateToCustomerEmail($quote, $birdEmailData, $quoteTypeId, 'Device Update');
+                        LoggerService::info('job:SendUpdateToCustomerJob - Bird response received', extra: ['response' => json_encode($response), 'uuid' => $quote->uuid]);
+                    } else {
+                        LoggerService::error('job:SendUpdateToCustomerJob - Failed to prepare Bird email data', extra: ['uuid' => $quote->uuid]);
+                        $response = null;
+                    }
+                } else {
+                    // For all other LOBs - Use existing Brevo flow
+                    LoggerService::info('job:SendUpdateToCustomerJob - Routing to Brevo', extra: ['quoteType' => $quoteTypeId, 'uuid' => $quote->uuid]);
+                    $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
+                    LoggerService::info('job:SendUpdateToCustomerJob - Brevo response received', extra: ['response' => json_encode($response), 'uuid' => $quote->uuid]);
+                }
+
+                // Continue with existing response handling (same for both Bird and Brevo)
+                if ($response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE || $response == BirdFlowStatusEnum::BIRD_DEVICE_UPDATE_SUCCESS_STATUS_CODE) {
                     LoggerService::info('job:SendUpdateToCustomerJob - Updating status', extra: [
                         'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                        'status_code' => $response,
                     ]);
                     app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
                     $sendUpdateLog->update([

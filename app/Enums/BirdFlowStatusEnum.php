@@ -23,4 +23,5 @@ final class BirdFlowStatusEnum extends Enum
     const PROFESSIONAL = 'PROFESSIONAL';
     const OTHER_BUSINESS = 'OTHER_BUSINESS';
     const BIRD_SUCCESS_STATUS_CODE = 201;
+    const BIRD_DEVICE_UPDATE_SUCCESS_STATUS_CODE = 200;
 }
