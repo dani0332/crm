@@ -952,6 +952,9 @@ trait GenericQueriesAllLobs
         if (isset($record->parent_duplicate_quote_id) && $record->parent_duplicate_quote_id) {
             $parentQuoteType = explode('-', $record->parent_duplicate_quote_id)[0];
             $quoteType = QuoteType::where('short_code', strtoupper($parentQuoteType))->first()?->code ?? null;
+            if (! $quoteType) {
+                return $return;
+            }
             $quoteDetail = $this->getQuoteObjectBy(strtolower($quoteType), $record->parent_duplicate_quote_id, 'code');
             if ($quoteDetail && $quoteDetail->quote_status_id !== QuoteStatusEnum::PolicyCancelledReissued) {
                 $return = true;
