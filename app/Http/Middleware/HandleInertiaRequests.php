@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -162,6 +163,7 @@ class HandleInertiaRequests extends Middleware
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
             'genericRequestEnum' => GenericRequestEnum::asArray(),
+            'collectionTypeEnum' => CollectionTypeEnum::asArray(),
         ];
     }
 
@@ -367,6 +369,10 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
             $nav = $nav->add('Search', route('search-leads'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT)) {
+            $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
         }
 
         /* personal quotes section */
@@ -682,6 +688,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]),
                         'User Status Logs',
                         route('admin.user-status-logs.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Activity Logs',
+                        route('admin.activity-logs.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

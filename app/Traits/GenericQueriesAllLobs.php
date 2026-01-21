@@ -843,24 +843,24 @@ trait GenericQueriesAllLobs
             $emirate = $record?->emirate_of_your_visa_id ?? null;
         } elseif (
             in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
-            && $record->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+            && $record?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
-            $emirate = $record?->latestInsured?->entity?->emirate_of_registration_id ?? null;
+            $emirate = $record?->latestInsured?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
 
-        if ($record->is_branch_applicable == 0) {
+        if ($record?->is_branch_applicable == 0) {
             return false;
         }
 
-        if (isset($record->lead_branch_id) && $record->lead_branch_id) {
-            return $record->lead_branch_id == BranchEnum::ABU_DHABI->value;
+        if (isset($record?->lead_branch_id) && $record?->lead_branch_id) {
+            return $record?->lead_branch_id == BranchEnum::ABU_DHABI->value;
         }
 
-        $branch = $record->branch ?? app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
+        $branch = $record?->branch ?? app(BranchAssignmentService::class)->getBranch($advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirate);
 
         LoggerService::info('Branch check for Quote', extra: [
-            'ref_id' => $record->code,
+            'ref_id' => $record?->code,
             'branch_id' => $branch?->id,
             'is_abu_dhabi_branch' => $branch?->id == BranchEnum::ABU_DHABI->value,
         ]);

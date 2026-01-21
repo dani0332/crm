@@ -30,6 +30,7 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
+use App\Http\Requests\TogglePolicyIssuanceAutomationRequest;
 use App\Http\Requests\UpdateAdditionalVehicleDriverDetailsRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\ExportCsvAndSendEmailJob;
@@ -63,6 +64,7 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -87,6 +89,7 @@ class AMLController extends Controller
         $this->middleware('permission:'.PermissionsEnum::AMLList.'|'.PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS,
             ['only' => ['index']]);
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
+        $this->middleware('permission:'.PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API, ['only' => ['togglePolicyIssuanceAutomation']]);
     }
 
     /**
@@ -295,6 +298,13 @@ class AMLController extends Controller
             $gigInsurerDefaultEmail = GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
         }
 
+        // Check if policy automation is enabled for the insurer
+        $isPolicyAutomationEnabled = false;
+        if ($quoteType->code === quoteTypeCode::Car && $insuranceProvider) {
+            $policyIssuanceService = app(PolicyIssuanceService::class)->init($quoteType->code, $insuranceProvider->code);
+            $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
+        }
+
         return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -326,6 +336,7 @@ class AMLController extends Controller
             'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
             'insurerName' => InsuranceProvidersEnum::getTextByCode($quoteRequest?->plan?->insuranceProvider?->code),
+            'isPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
         ], $businessPayload ?? [], $rtaConfigurationData));
     }
 
@@ -399,7 +410,7 @@ class AMLController extends Controller
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
 
         LoggerService::startQuoteLogging($updateQuote, LoggerFeatureEnum::AML_SCREENING);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - AML Screening Bridger - Process Started');
+        LoggerService::info('IM AML Screening Process Started');
 
         $systemUser = User::where('name', UserNameEnum::System)->first();
         $isAutomation = $AMLCheckRequest->is_automation ?? false;
@@ -409,7 +420,7 @@ class AMLController extends Controller
             [$status, $message, $getMemberOrUBODetails, $getLastScreening] = app(AMLService::class)->prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote);
 
             if (! $status) {
-                LoggerService::info('AML Screening Bridger - Preparation of Screening Data Failed');
+                LoggerService::info('Failed to prepare screening data');
 
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
@@ -425,7 +436,7 @@ class AMLController extends Controller
                     'quoteRequestId' => $quoteRequestId,
                 ], $updateQuote);
 
-                LoggerService::info('AML Screening Bridger - Returned from processInsuredDataForScreening');
+                LoggerService::info('Completed execution of processInsuredDataForScreening in quoteUpdate transaction');
 
                 return [$shouldApplicableForScreening, $insured, $entityId];
             });
@@ -434,7 +445,6 @@ class AMLController extends Controller
             $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
             if ($shouldApplicableForScreening) {
                 if ($isEntity) {
-                    LoggerService::info('AML Screening Bridger - Entity Screening payload generated');
                     $getEntityDetailsForScreening = [
                         'company_name' => $insured->company_name,
                         'code' => CustomerTypeEnum::EntityShort.'-'.$entityId, // TODO:: code should be updated with insured id (Required FR for this)
@@ -443,7 +453,10 @@ class AMLController extends Controller
                     $bridgerInsightService = new BridgerInsightService;
                     $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
-                    LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched against Entity');
+                    LoggerService::info('Dispatching AML Screening Job against Entity for Screening', extra: [
+                        'payload' => $getEntityDetailsForScreening,
+                        'insuredId' => $insured->id,
+                    ]);
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $getEntityDetailsForScreening, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
 
                     if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
@@ -453,14 +466,16 @@ class AMLController extends Controller
                     }
                 } else {
                     // Handle individual screening
-                    LoggerService::info('AML Screening Bridger - Individual Screening payload generated');
-                    $getMemberOrUBODetails[] = [
+                    $individualDetails = [
                         'first_name' => $insured->first_name,
                         'last_name' => $insured->last_name,
                         'dob' => Carbon::parse($insured->dob)->format(config('constants.DATE_FORMAT_ONLY')),
                         'nationality' => $insured?->nationality->toArray() ?? [],
                         'code' => CustomerTypeEnum::IndividualShort.'-'.$AMLCheckRequest->customer_id, // TODO:: code should be updated with insured id (Required FR for this)
                     ];
+                    $getMemberOrUBODetails[] = $individualDetails;
+
+                    LoggerService::info('Individual Screening payload', extra: $individualDetails);
                 }
             }
 
@@ -470,7 +485,7 @@ class AMLController extends Controller
 
             // Process members (UBO or regular members)
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
-                LoggerService::info('AML Screening Bridger - No Member Found for Screening, AML Screening Cleared');
+                LoggerService::info('No Member Found for Screening, AML Screening status set to Cleared');
 
                 return app(AMLService::class)->handleResponse(true, 'AML Screening Completed', $isAutomation);
             }
@@ -479,13 +494,15 @@ class AMLController extends Controller
             $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
             // Job dispatch for all members including customer
-            LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members');
+            LoggerService::info('Dispatching AML Screening Job for Members including primary insured', extra: [
+                'membersDetails' => $getMemberOrUBODetails->toArray() ?? [],
+            ]);
             $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
             return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
         }
 
-        LoggerService::info('AML Screening Bridger - Something went wrong');
+        LoggerService::info('Something went wrong in AML Screening process');
 
         return app(AMLService::class)->handleResponse(false, 'Something went wrong', $isAutomation);
     }
@@ -909,8 +926,20 @@ class AMLController extends Controller
         $response = ['success' => false];
         $insurerAMLScreeningResponse = [];
 
+        $isPolicyIssuanceAutomationEnabled = true;
+        $isCarQuote = $insuredKycRequest->quote_type_id == QuoteTypeId::Car;
+        if ($isCarQuote) {
+            $isPolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+        }
+
+        LoggerService::info('Check Quote Policy Issuance Enabled condition', extra: [
+            'isCarQuote' => $isCarQuote,
+            'isPolicyIssuanceAutomationEnabled' => $isPolicyIssuanceAutomationEnabled,
+        ]);
+        // Insurer AML Screening is required if policy issuance automation is enabled
         if (
             $insuredKycRequest->customer_type == CustomerTypeEnum::Individual &&
+            $isPolicyIssuanceAutomationEnabled &&
             ! (
                 $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
                 $quote?->registration_type != CarRegistrationType::PERSONAL
@@ -934,6 +963,9 @@ class AMLController extends Controller
         if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared || $insurerAMLScreeningResponse['is_previous_policy_expired']) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
+            if (! $isPolicyIssuanceAutomationEnabled) {
+                $response['message'] = 'Please Capture and Issue Policy Manually.';
+            }
         }
 
         return response()->json($response);
@@ -1112,5 +1144,41 @@ class AMLController extends Controller
         $result = app(AMLService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $request->quoteUID);
 
         return response()->json($result);
+    }
+
+    /**
+     * Toggle policy issuance automation enabled status for a car quote
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function togglePolicyIssuanceAutomation(TogglePolicyIssuanceAutomationRequest $request)
+    {
+        $requestData = $request->safe();
+        LoggerService::startQuoteLogging($requestData->quote_uuid, LoggerFeatureEnum::DISABLE_POLICY_ISSUANCE_AUTOMATION);
+
+        try {
+            $policyIssuanceService = app(PolicyIssuanceService::class);
+            $result = $policyIssuanceService->togglePolicyIssuanceAutomation(
+                $requestData,
+                $requestData->quote_type_id,
+                $requestData->enabled
+            );
+
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'data' => $result['data'] ?? null,
+            ], $result['status_code']);
+        } catch (\Exception $e) {
+            LoggerService::error('Error toggling policy issuance automation for quote', extra: [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to toggle policy issuance automation, Please try again later.',
+            ], 500);
+        }
     }
 }

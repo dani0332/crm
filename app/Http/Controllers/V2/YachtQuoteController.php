@@ -179,7 +179,7 @@ class YachtQuoteController extends Controller
 
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::YACHT->id());
         $personalPlans = PersonalPlanRepository::get();
@@ -406,6 +406,7 @@ class YachtQuoteController extends Controller
 
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Yacht);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Yacht);
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('YachtQuote/Cards', [
             'quotes' => $quotes,
@@ -419,6 +420,7 @@ class YachtQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : YachtQuoteRepository::getData(true, true),
             'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
             'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
+            'renewalBatches' => $renewalBatches,
         ]);
     }
 }

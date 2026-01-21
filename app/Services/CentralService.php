@@ -1671,7 +1671,9 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Cyber) {
-            $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) ? (string) $quote->cyberPlanDetail->coverage : '-';
+            $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
+                ? number_format($quote->cyberPlanDetail->coverage)
+                : '-';
             $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
             $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
             $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '';
@@ -1807,7 +1809,13 @@ class CentralService extends BaseService
                     DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
                     DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
                 ]);
-            })->first()?->doc_url ?? '';
+            })->first() ?? null;
+
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
+                ? $emailData->policySchedule->watermarked_doc_url ?? ''
+                : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
+
+            LoggerService::info('timing to check policy schedule: '.now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
 
             if (empty($emailData->policySchedule)) {
                 LoggerService::info('Policy Schedule not found.');
@@ -1997,9 +2005,18 @@ class CentralService extends BaseService
 
     }
 
-    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode, $quote)
     {
         try {
+            $isQuotePolicyAutomationEnabled = true;
+            $isCarQuote = $quoteTypeId == QuoteTypeId::Car;
+
+            if ($isCarQuote) {
+                $isQuotePolicyAutomationEnabled = $quote?->isQuotePolicyIssuanceAutomationEnabled();
+            }
+            if (! $isQuotePolicyAutomationEnabled) {
+                return ['status' => PaymentCaptureValidationEnum::SUCCESS, 'message' => 'Quote Policy Issuance Automation disabled for this Lead.'];
+            }
             $data = [
                 'quoteUID' => $uuid,
                 'quoteTypeId' => $quoteTypeId,
@@ -2206,7 +2223,7 @@ class CentralService extends BaseService
                 $captureAmount = $payment->premium_authorized;
             }
 
-            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code);
+            $capturePaymentResponse = $this->capturePaymentValidation($quote->uuid, $quoteType->id, $captureAmount, $quote->code, $quote);
             $responsePremiumAmount = isset($capturePaymentResponse['premiumAmount']) ? $capturePaymentResponse['premiumAmount'] : null;
 
             $logExtra = [

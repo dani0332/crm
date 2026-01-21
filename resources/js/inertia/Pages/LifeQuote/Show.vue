@@ -1274,7 +1274,10 @@ const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const isMetLife = item => {
   if (!item) return false;
 
-  return item.providerCode === insuranceProviderCodeEnum?.MTL;
+  return (
+    item.providerCode === insuranceProviderCodeEnum?.MTL &&
+    item.instantPolicy === true
+  ); // only for metlife instant policy
 };
 
 const canSelectMetLifePlan = computed(() => {
@@ -2172,6 +2175,7 @@ const getDisplayPriceInAED = item => {
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail

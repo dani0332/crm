@@ -264,9 +264,9 @@ public function update(CyberQuoteRequest $request, $uuid)
 
 ILA is triggered separately (not automatically during quote creation). When ILA runs:
 
-1. Checks if lead is paid → Assigns to Happiness User
-2. Otherwise → Fetches available advisor based on:
-   - Test mode flag
+1. **Automation Flow**: If AWNI automation completed/failed → Assigns CHS advisor
+2. **Normal Flow**: Fetches available advisor based on:
+   - Advisor emails from CYBER_ADVISORS app storage
    - Advisor leave status
    - Advisor availability (ONLINE → OFFLINE → UNAVAILABLE)
    - SIC advisor requested flag
@@ -276,14 +276,17 @@ ILA is triggered separately (not automatically during quote creation). When ILA 
 ```php
 public function handle(AllocationRequest $request, Closure $next)
 {
-    if ($this->allocationRequest->shouldAssignToHappinessUser()) {
-        $advisor = $this->getHappinessUser();
-        // Assign to happiness user
-    } else {
+    // CHS Advisor assignment for automation-completed/failed leads
+    if ($this->allocationRequest->get('isCHSAdvisor')) {
         $advisor = $this->findAvailableAdvisor(teamId: null);
-        // Find and assign available advisor
+        // findAvailableAdvisor returns CHS advisors when isCHSAdvisor flag is set
+        $this->allocationRequest->setAdvisor($advisor);
+        return $next($request);
     }
 
+    // Normal SIC advisor allocation
+    $advisor = $this->findAvailableAdvisor(teamId: null);
+    // Find and assign available advisor based on test/production mode
     $this->allocationRequest->setAdvisor($advisor);
     return $next($request);
 }

@@ -1471,6 +1471,13 @@ const additionalContactPrimaryConfirmed = () => {
         contactLoader.value = false;
         modals.contactPrimaryConfirm = false;
       },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      },
     },
   );
 };
@@ -1593,7 +1600,8 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.quote.id,
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
-  emirates_id_number: page.props.quote.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.quote.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
@@ -1956,6 +1964,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
     applyEmiratesNumberMasking(emiratesId));
 
 const isLocked = page.props.quote.is_quote_locked ?? false;
+
+const isPrimaryEmailLocked = computed(() => {
+  return [
+    page.props.quoteStatusEnum.POLICY_BOOKING_QUEUED,
+    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED,
+  ].includes(page.props.quote?.quote_status_id);
+});
 </script>
 
 <template>
@@ -3261,15 +3276,29 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
             </template>
 
             <template #item-action="item">
-              <x-button
-                size="xs"
-                color="emerald"
-                outlined
-                @click.prevent="additionalContactPrimary(item)"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Make Primary
-              </x-button>
+              <div class="space-x-4">
+                <x-tooltip
+                  v-if="isPrimaryEmailLocked && item.key === 'email'"
+                  placement="bottom"
+                >
+                  <x-button size="xs" color="red" outlined disabled>
+                    Make Primary
+                  </x-button>
+                  <template #tooltip>
+                    Primary email ID cannot be changed while the policy booking
+                    is in progress.
+                  </template>
+                </x-tooltip>
+                <x-button
+                  v-else-if="readOnlyMode.isDisable === true"
+                  size="xs"
+                  color="emerald"
+                  outlined
+                  @click.prevent="additionalContactPrimary(item)"
+                >
+                  Make Primary
+                </x-button>
+              </div>
             </template>
           </DataTable>
         </template>

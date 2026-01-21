@@ -2,6 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Cyber;
 
+use App\Enums\AwnicEnum;
 use Carbon\Carbon;
 
 class AwnicRequestBuilder
@@ -25,7 +26,7 @@ class AwnicRequestBuilder
 
         return [
             'CustName' => trim(($quote->first_name ?? '').' '.($quote->last_name ?? '')),
-            'CustMobile' => $quote->mobile_no,
+            'CustMobile' => AwnicEnum::AWNIC_MOBILE_NO,
             'CustEmail' => $quote->email,
             'CustEID' => str_replace('-', '', $emiratesIdNumber),
             'CustDOB' => $customer?->dob ? strtoupper(Carbon::parse($customer->dob)->format('d-M-Y')) : null,

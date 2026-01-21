@@ -15,6 +15,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PaymentStatus;
 use App\Models\RenewalBatch;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -29,6 +30,7 @@ use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -41,6 +43,7 @@ use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 abstract class BaseQuoteService extends BaseService
 {
@@ -80,9 +83,13 @@ abstract class BaseQuoteService extends BaseService
 
     public function getQuoteStatuses($ignoreList = [])
     {
-        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId($this->quoteType->id())->get();
+        $cacheKey = $this->getQuoteStatusesCacheKey($ignoreList);
 
-        return collect($quoteStatuses)->filter(fn ($value) => ! in_array($value['id'], $ignoreList))->values();
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($ignoreList) {
+            $quoteStatuses = QuoteStatusRepository::byQuoteTypeId($this->quoteType->id())->get();
+
+            return collect($quoteStatuses)->filter(fn ($value) => ! in_array($value['id'], $ignoreList))->values();
+        });
     }
 
     public function getRenewalBatches()
@@ -92,7 +99,9 @@ abstract class BaseQuoteService extends BaseService
 
     public function getPaymentAuthorizedDays()
     {
-        return ApplicationStorage::where('key_name', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        return Cache::remember('payment_authorized_days', now()->addHours(6), function () {
+            return ApplicationStorage::where('key_name', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        });
     }
 
     public function hasOtherFilters()
@@ -128,7 +137,7 @@ abstract class BaseQuoteService extends BaseService
         $bookPolicyDetails = $this->bookPolicyPayload($quote, $quoteType->value, $quote->payments, $quoteDocuments);
 
         $membersDetails = CustomerMembersRepository::getBy($quote->id, $quoteType->name);
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -225,4 +234,33 @@ abstract class BaseQuoteService extends BaseService
     {
         return $user && method_exists($user, 'can') && $user->can($permission);
     }
+
+    public function getInsurerAMLStatuses(): array
+    {
+        return Cache::remember('insurer_aml_statuses', now()->addHours(6), function () {
+            return AMLService::getInsurerAMLStatuses();
+        });
+    }
+
+    public function getPaymentStatuses()
+    {
+        return Cache::remember('payment_statuses_active', now()->addHours(6), function () {
+            return PaymentStatus::where('is_active', 1)
+                ->orderBy('text')
+                ->get(['id', 'text']);
+        });
+    }
+
+    private function getQuoteStatusesCacheKey(array $ignoreList): string
+    {
+        $sortedIgnoreList = $ignoreList;
+        sort($sortedIgnoreList);
+
+        $ignoreListKey = empty($sortedIgnoreList)
+            ? 'none'
+            : implode('_', array_map('strval', $sortedIgnoreList));
+
+        return "quote_statuses_{$this->quoteType->value}_{$ignoreListKey}";
+    }
+
 }

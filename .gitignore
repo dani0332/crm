@@ -24,3 +24,6 @@ notes.txt
 
 dump.rdb
 app/Services/SendBookPolicyDocumentsJobLocal.php
+boost.json
+mcp.json
+boost-mcp.sh

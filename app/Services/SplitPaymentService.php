@@ -933,6 +933,18 @@ class SplitPaymentService
 
         $masterPayment = $quoteModel->payments->first();
 
+        if (! $masterPayment) {
+            LoggerService::info('Master payment not found during capture payment for quote code: '.$quoteModel->code);
+            $errorMessage = 'Master payment not found for quote code: '.$quoteModel->code;
+
+            if ($isFromJob && $splitPaymentId > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
+                LoggerService::error('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' - Master payment not found');
+            }
+
+            return $errorMessage;
+        }
+
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $masterPaymentStatus = $masterPayment->payment_status_id;
 
@@ -1262,10 +1274,17 @@ class SplitPaymentService
                     'price_vat_not_applicable' => $quoteModel->price_vat_not_applicable,
                 ]);
             }
+
+            if ($send_update_id > 0 && isset($quoteModel->price_with_vat) && $quoteModel->price_with_vat > 0) {
+                $computedPrice = $quoteModel->price_with_vat;
+                LoggerService::info('SplitPaymentService - Using price_with_vat from send update log for payment code: '.$paymentCode, extra: [
+                    'price_with_vat' => $quoteModel->price_with_vat,
+                ]);
+            }
         }
 
         if ($computedPrice > 0) {
-            if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
+            if (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
                 $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
                 LoggerService::info('SplitPaymentService - ecommLob VAT calculation for payment code: '.$paymentCode, extra: [
@@ -1409,6 +1428,12 @@ class SplitPaymentService
         try {
             LoggerService::info("createPolicyIssuanceAutomation called for quote: {$quote->code}");
 
+            if ($payment?->send_update_log_id > 0) {
+                LoggerService::info('Payment is from send update log - skipping policy issuance automation');
+
+                return;
+            }
+
             $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
             if (! $insuranceProvider) {
@@ -1452,7 +1477,8 @@ class SplitPaymentService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         if ($insuranceProvider) {
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-            if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
+            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
                 app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService

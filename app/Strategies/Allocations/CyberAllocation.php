@@ -7,7 +7,6 @@ use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Cyber\AssignLeadPipe;
-use App\Pipes\Allocation\Cyber\EvaluateTeamPipe;
 use App\Pipes\Allocation\Cyber\FetchAvailableAdvisorPipe;
 use App\Pipes\Allocation\Cyber\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -18,8 +17,6 @@ use Illuminate\Support\Facades\Pipeline;
 
 class CyberAllocation implements Allocation
 {
-    public const HAPPINESS_SUPPORT_USER_EMAIL = 'happiness@support.insurancemarket.ae';
-
     public function __construct(
         protected $uuid,
         protected $teamId = false,
@@ -48,16 +45,20 @@ class CyberAllocation implements Allocation
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
                 VerifyAlreadyInProgressAllocationPipe::class,
-                EvaluateTeamPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,
             ])->thenReturn();
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred in Cyber allocation pipeline', extra: [
+            LoggerService::warning(self::class.' - Exception occurred in Cyber allocation pipeline', extra: [
                 'uuid' => $this->uuid,
-            ], exception: $e);
+                'exception' => $e->getMessage(),
+                'exception_class' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class BusinessQuoteRequestDetail extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, SpatieActivityLog;
 
     protected $table = 'business_quote_request_detail';
     protected $guarded = [];

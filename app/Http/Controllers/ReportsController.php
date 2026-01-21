@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
@@ -613,8 +614,8 @@ class ReportsController extends Controller
 
         $productNames = $products->pluck('name')->toArray();
         $mappedProducts = array_map(function ($name) {
-            if ($name === 'Cyber Insurance') {
-                return 'Cyber';
+            if ($name === TeamNameEnum::CYBER) {
+                return QuoteTypes::CYBER->value;
             }
 
             return $name;

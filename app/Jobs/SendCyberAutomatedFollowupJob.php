@@ -23,7 +23,6 @@ class SendCyberAutomatedFollowupJob implements ShouldQueue
 
     public function __construct($quoteUuid)
     {
-
         $this->quoteUuid = $quoteUuid;
         $this->afterCommit();
     }
@@ -34,14 +33,16 @@ class SendCyberAutomatedFollowupJob implements ShouldQueue
     public function handle(): void
     {
         $lead = PersonalQuote::where('uuid', $this->quoteUuid)->first();
-        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_AUTOMATED_FOLLOWUPS);
+
         if (! $lead) {
             LoggerService::info(self::class.' - Cyber Lead not found');
 
             return;
         }
+
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_AUTOMATED_FOLLOWUPS);
         app(CyberEmailService::class)->sendCyberAutomatedFollowups($lead);
         LoggerService::info(self::class.' - Cyber Automated Followups sent');
-
+        LoggerService::endLogging();
     }
 }

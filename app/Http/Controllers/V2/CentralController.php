@@ -121,6 +121,7 @@ class CentralController extends Controller
             QuoteTypes::LIFE->value,
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
+            QuoteTypes::CYBER->value,
         ])) {
             if ($request['exportType'] == 'email') {
                 return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->emailCSV($quoteType.'-List', $request->all());
@@ -492,7 +493,7 @@ class CentralController extends Controller
     // Update payment
     public function updateNewPayment(UpdatePaymentRequest $request)
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_PAYMENT);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_PAYMENT, $request->paymentCode);
         $response = PaymentRepository::updateNewPayment($request);
         if ($response['status'] == 'success') {
             return redirect()->back()->with('success', $response['message']);
@@ -849,7 +850,8 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::CAPTURE_PAYMENT_VALIDATION);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
-        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode);
+        $quote = $this->getQuoteObjectBy($request->modelType, $request->uuid, 'uuid');
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode, $quote);
 
         $logContext = [
             'ref_id' => $request->quoteCode,

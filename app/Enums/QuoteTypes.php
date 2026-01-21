@@ -229,6 +229,7 @@ enum QuoteTypes: string
             self::JETSKI => 'JSK-',
             self::SAVINGS => 'SAV-',
             self::CYBER => 'CYB-',
+            default => null,
         };
     }
 

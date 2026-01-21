@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\LookupsEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Lookup extends Model
 {
@@ -53,5 +55,26 @@ class Lookup extends Model
     public function parent()
     {
         return $this->belongsTo(Lookup::class, 'parent_id', 'id');
+    }
+
+    public static function getCompanyTypes()
+    {
+        return Cache::remember('lookup_company_types', now()->addHour(), function () {
+            return self::where('key', LookupsEnum::COMPANY_TYPE->value)->get();
+        });
+    }
+
+    public static function getMemberRelations()
+    {
+        return Cache::remember('lookup_member_relations', now()->addHour(), function () {
+            return self::where('key', LookupsEnum::MEMBER_RELATION->value)->get();
+        });
+    }
+
+    public static function getUBORelations()
+    {
+        return Cache::remember('lookup_ubo_relations', now()->addHour(), function () {
+            return self::where('key', LookupsEnum::UBO_RELATION->value)->get();
+        });
     }
 }

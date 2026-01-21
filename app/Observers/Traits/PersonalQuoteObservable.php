@@ -2,6 +2,7 @@
 
 namespace App\Observers\Traits;
 
+use App\Enums\BranchEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
@@ -24,6 +25,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\BirdService;
 use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
@@ -42,7 +44,6 @@ trait PersonalQuoteObservable
 
             if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                 $this->handlePolicyBookedOrSentToCustomer($personalQuote);
-                event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             }
 
             // For now PolicyCancelled Handling is only for Bike
@@ -79,6 +80,10 @@ trait PersonalQuoteObservable
             SendAutomatedHomeRenewalFollowup::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
 
             LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Dispatched for Home renewal quote: {$personalQuote->uuid}");
+        }
+
+        if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicyBooked])) {
+            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
         }
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
@@ -118,10 +123,6 @@ trait PersonalQuoteObservable
         if ($personalQuote->isCyber()) {
             SendCyberOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
-        }
-
-        if ($personalQuote->isCyber()) {
-
         }
 
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
@@ -195,9 +196,18 @@ trait PersonalQuoteObservable
             try {
                 app(BranchAssignmentService::class)->saveBranchOverride($personalQuote, $personalQuote->quote_type_id);
                 PersonalQuote::withoutEvents(function () use ($personalQuote) {
-                    $branch = app(BranchAssignmentService::class)->getBranch($personalQuote?->advisor?->primaryBranch?->branch_id, $personalQuote->quote_type_id);
+
+                    $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($personalQuote, QuoteTypes::getName($personalQuote->quote_type_id)->value);
+                    $branch_id = null;
+                    if ($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($personalQuote?->advisor?->primaryBranch?->branch_id, $personalQuote->quote_type_id);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+
                     $personalQuote->update([
-                        'branch_id' => $branch?->id,
+                        'branch_id' => $branch_id,
                     ]);
                 });
             } catch (Exception $e) {

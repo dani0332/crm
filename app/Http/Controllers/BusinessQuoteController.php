@@ -273,7 +273,7 @@ class BusinessQuoteController extends Controller
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $nationalities = Nationality::getActiveNationalities();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
@@ -564,6 +564,7 @@ class BusinessQuoteController extends Controller
 
         $totalLeads = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         foreach ($quotes as $item) {
             $totalLeads += $item['data']['total_leads'];
@@ -571,6 +572,7 @@ class BusinessQuoteController extends Controller
 
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
+            'renewalBatches' => $renewalBatches,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,

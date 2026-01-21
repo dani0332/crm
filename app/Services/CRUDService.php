@@ -40,6 +40,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use PDF;
 
@@ -146,27 +147,27 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
-        if (strtolower($modelType) == 'business') {
-            $modelType = 'Corpline';
-        }
-        $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
-            return $item;
-        });
-        foreach ($allowedLeadTypes as $leadType) {
-            $leadType = strtolower($leadType);
-            if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
-                $leadType = 'Business';
-            }
-            $duplicateRecord = $this->{strtolower($leadType).'QuoteService'}->getDuplicateEntityByCode($leadCode);
-            if ($duplicateRecord) {
-                $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
-                    return $item;
-                });
-            }
-        }
+        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($leadCode) {
+            $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
 
-        return $allowedLeadTypes;
+            $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
+                return $item;
+            });
+            foreach ($allowedLeadTypes as $leadType) {
+                $leadType = strtolower($leadType);
+                if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
+                    $leadType = 'Business';
+                }
+                $duplicateRecord = $this->{strtolower($leadType).'QuoteService'}->getDuplicateEntityByCode($leadCode);
+                if ($duplicateRecord) {
+                    $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
+                        return $item;
+                    });
+                }
+            }
+
+            return $allowedLeadTypes;
+        });
     }
 
     public function createDuplicate(Request $request)
@@ -414,7 +415,8 @@ class CRUDService extends BaseService
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
+            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"))
+            ->activeUser();
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {

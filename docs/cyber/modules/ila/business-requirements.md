@@ -46,16 +46,18 @@ This document outlines the business requirements and functional specifications f
 private const CYBER_ADVISOR_MAX_CAPACITY = 200;
 ```
 
-### Payment-Based Assignment
+### CHS Advisor Assignment (Automation Flow)
 
-**Requirement**: Once payment is made, the lead will always be assigned to the HAPEX team.
+**Requirement**: Leads that have completed or failed AWNI Cyber automation are assigned to CHS advisors.
 
 **Implementation**:
 
-- HAPEX email: `happiness@support.insurancemarket.ae`
-- Trigger: Payment authorized or declined
-- Location: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:22-42`
-- Code Reference: `app/Strategies/Allocations/CyberAllocation.php:21`
+- Trigger: AWNI Cyber automation completed or failed
+- Set via: `isCHSAdvisor` flag in `VerifyLeadPreChecksPipe`
+- Location: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:25-45`
+- Code Reference: `app/Pipes/Allocation/Cyber/VerifyLeadPreChecksPipe.php:87-89`
+
+**Note**: Paid leads in normal allocation flow are handled through SIC advisor assignment, not through Happiness User assignment. Happiness User assignment is only used in automation scenarios (handled separately).
 
 ### SIC Lead Handling
 

@@ -1,9 +1,7 @@
 <?php
 
 use App\Enums\EnvEnum;
-use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Http\Controllers\AccuracyMatrixController;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AdvisorController;
@@ -62,6 +60,7 @@ use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserStatusLogController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\ActivityLogController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
 use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
@@ -95,6 +94,7 @@ use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\PolicyIssuanceController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SageProcessesController;
 use App\Http\Controllers\V2\SavingsQuoteController;
 use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
@@ -102,10 +102,7 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
-use App\Jobs\PolicyIssuanceJob;
 use App\Models\BorLog;
-use App\Models\CcPaymentProcess;
-use App\Models\PolicyIssuance;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
 use Illuminate\Support\Carbon;
@@ -453,7 +450,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
-    Route::post('/lead-allocation/update-hard-stop', [LeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
@@ -517,6 +513,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
         Route::get('user-status-logs', [UserStatusLogController::class, 'index'])->name('admin.user-status-logs.index');
+        Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('admin.activity-logs.index');
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
         Route::resource('sic-health-config', SICConfigurableController::class)->names([
@@ -821,6 +818,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('update-insured-kyc', [AMLController::class, 'insuredKycDetailsUpdate'])->name('update-insured-kyc');
     Route::post('get-quote-details-from-insurer', [AMLController::class, 'getQuoteDetailsFromInsurer'])->name('get-quote-details-from-insurer');
+    Route::post('toggle-policy-issuance-automation', [AMLController::class, 'togglePolicyIssuanceAutomation'])->name('toggle-policy-issuance-automation');
     Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
     Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
@@ -868,6 +866,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['middleware' => ['readonly_db']], function () {
         Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
         Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+
+        // Sage Failed Processes Routes
+        Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.index');
+        Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.export');
     });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
@@ -1012,31 +1014,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return view('pdf.bor-document', $pdfData);
     });
 
-    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('check_route_access');
-
-    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance']);
-
-    // Cyber Quote Policy Automation Routes for testing purposes
-    // this route is only for testing purposes to trigger the policy issuance automation
-    Route::get('/trigger-policy-document-update', function () {
-
-        // without plan id and payments
-        // $policyIssuanceProcess = PolicyIssuance::where('id', 1682)->first();
-        // with plan id and payments
-        $policyIssuanceProcess = PolicyIssuance::where('id', 1886)->first();
-
-        $policyIssuanceProcess->status = PolicyIssuanceEnum::PENDING_STATUS;
-        $policyIssuanceProcess->completed_step = null;
-        $policyIssuanceProcess->save();
-
-        PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation'); // ✅ Pass only the ID
-        echo 'Done';
-    });
-});
-
-Route::get('test', function () {
-    $ccPayment = CcPaymentProcess::find(5088);
-    $ccPayment->update(['status' => PaymentProcessJobEnum::PENDING]);
-
-    echo 'Done';
+    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access');
+    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access')->name('trigger-policy-issuance');
 });

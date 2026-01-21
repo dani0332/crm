@@ -7,9 +7,9 @@ use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserNameEnum;
-use App\Enums\WorkflowTypeEnum;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -107,25 +107,38 @@ class AutomationFailedJob implements ShouldQueue
             $cc['advisoremail'] = $quote?->advisor?->email ?? '';
         }
 
+        $notificationContext = $this->addLobViseDataForMail($quoteType, $quote, $cc);
+
+        $ccEmails = $notificationContext['cc'] ?? [];
+        $this->recipientEmail = $notificationContext['recipientEmail'];
+        $this->recipientName = $notificationContext['recipientName'];
+        $this->processInvolved = $notificationContext['processInvolved'];
+
         if (! $this->recipientEmail || ! $this->recipientName) {
             LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Insurer: '.$this->insurerName);
 
             return;
         }
 
+        $escalationLink = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, '');
+
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
             'recipientEmail' => $this->recipientEmail,
             'recipientName' => $this->recipientName,
             'imcrmReferenceNumber' => $quote->code,
+            'escalationLink' => $escalationLink,
+            'refId' => $quote->code,
+            'imcrmLink' => $quote->getCrmQuoteLink(),
             'insurerApiStatus' => $this->statusAPIFailed,
             'insurerName' => $this->insuranceProvider?->text ?? '',
             'processInvolved' => $this->processInvolved,
             'cc' => $cc,
+            'ccEmails' => $ccEmails,
             'workflowType' => $this->workflowType,
         ];
 
-        $response = app(CentralService::class)->sendAutomationEmail($quote, $emailData, $this->quoteTypeId, WorkflowTypeEnum::CAR_AUTOMATION_FAILED);
+        $response = app(CentralService::class)->sendAutomationEmail($quote, $emailData, $this->quoteTypeId, $this->workflowType);
         LoggerService::info('job:AutomationFailedJob - Job Response ', extra: ['emailData' => json_encode($response)]);
 
         if ($response == 200) {
@@ -149,5 +162,27 @@ class AutomationFailedJob implements ShouldQueue
         LoggerService::info('job:AutomationFailedJob - Middleware setup', extra: ['quoteId' => $this->quoteId]);
 
         return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
+    }
+
+    private function addLobViseDataForMail($quoteType, $quote, $cc)
+    {
+        switch ($quoteType) {
+            case QuoteTypes::CYBER->value:
+                return app(CyberQuoteService::class)
+                    ->applyAutomationFailureNotificationRules(
+                        $quote,
+                        $cc,
+                        $this->processInvolved,
+                        $this->recipientEmail,
+                        $this->recipientName
+                    );
+            default:
+                return [
+                    'recipientEmail' => $this->recipientEmail,
+                    'recipientName' => $this->recipientName,
+                    'processInvolved' => $this->processInvolved,
+                ];
+        }
+
     }
 }

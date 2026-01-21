@@ -10,8 +10,7 @@ The ILA system for Cyber handles:
 
 - **Automatic Advisor Assignment**: Assigns leads to advisors without manual intervention
 - **Leave Management**: Automatically routes leads to backup advisors when primary advisor is on leave
-- **Test Mode Support**: Allows testing with specific advisors before production deployment
-- **Paid Lead Handling**: Routes paid leads to Happiness Support team
+- **CHS Advisor Assignment**: Routes automation-completed/failed leads to CHS advisors
 - **SIC Lead Handling**: Routes SIC (Self-Initiated Customer) leads to appropriate advisors
 
 ## Key Features
@@ -19,10 +18,9 @@ The ILA system for Cyber handles:
 - **Primary/Backup Advisor Logic**: Primary advisor (Smitha) gets all leads unless on leave
 - **Leave Status Detection**: Automatically detects SICK (4) or LEAVE (5) status
 - **Daily Capacity Cap**: 200 leads per day per advisor (manually updateable by admin)
-- **Payment-Based Assignment**: Paid leads always assigned to HAPEX team
+- **CHS Advisor Assignment**: Automation-completed/failed leads assigned to CHS advisors
 - **SIC Lead Handling**: All leads are SIC; allocation triggered when advisor requested
-- **Test Mode**: Separate advisor list for testing purposes
-- **Production Mode**: Smart routing with leave checking
+- **Smart Routing**: Primary/backup logic with leave checking
 - **Multiple Backup Support**: Supports unlimited backup advisors with round-robin distribution
 - **Manual Reassignment**: Available via admin interface (auto-reassignment not required)
 
@@ -71,27 +69,19 @@ MakeResponsePipe → Return response
 
 ### Application Storage Keys
 
-The ILA system uses three app storage keys:
+The ILA system uses one app storage key:
 
-1. **CYBER_ADVISORS**: Production advisor emails (comma-separated)
+1. **CYBER_ADVISORS**: Advisor emails (comma-separated)
 
    - First email = Primary advisor
    - Remaining emails = Backup advisors
    - Example: `smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae`
-
-2. **CYBER_ADVISORS_TEST**: Test advisor emails (comma-separated)
-
-   - Used when test mode is enabled
-   - Example: `fahadhussain2020@gmail.com`
-
-3. **CYBER_ALLOCATION_TEST_MODE**: Test mode flag
-   - `0` = Production mode
-   - `1` = Test mode
+   - Different environments can set different emails in this key (UAT/Stage vs Production)
 
 ### Seeder Location
 
 - **File**: `database/seeders/ApplicationStorageSeeder.php`
-- **Method**: `seedCyberAdvisors()`
+- **Method**: `seedCyberConfigurations()`
 
 ## Related Files
 
@@ -120,7 +110,6 @@ For complete business requirements and functional specifications:
 For detailed information about each component:
 
 - [Allocation Logic](./allocation-logic.md) - How advisors are selected
-- [Test Mode](./test-mode.md) - Test mode configuration and usage
-- [Production Mode](./production-mode.md) - Production allocation rules
+- [Production Mode](./production-mode.md) - Allocation rules and behavior
 - [Daily Capacity](./daily-capacity.md) - Daily capacity cap management (200 leads/day)
 - [App Storage Keys](./app-storage-keys.md) - Storage key documentation

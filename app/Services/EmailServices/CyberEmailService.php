@@ -15,7 +15,7 @@ use App\Services\Logger\LoggerService;
 
 class CyberEmailService extends BaseService
 {
-    public function sendCyberOCBIntroEmail($lead)
+    public function sendCyberOCBIntroEmail($lead, $previousAdvisor = null, bool $triggerSICWorkflow = false, bool $handleZeroPlans = false, bool $forceSicWorkflow = false)
     {
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CYBER_OCB_INTRO_EMAIL)->first();
 
@@ -30,7 +30,27 @@ class CyberEmailService extends BaseService
             LoggerService::info('sendCyberOCBIntroEmail - Advisor not found');
         }
 
-        $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL);
+        if (! $workflowUrl || empty($workflowUrl->value)) {
+            LoggerService::info('sendCyberOCBIntroEmail - Workflow URL not found or empty');
+
+            return;
+        }
+
+        $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_OCB_INTRO_EMAIL, $previousAdvisor);
+
+        // Handle SIC workflow if requested
+        // Note: Cyber doesn't have sic_flow_enabled on PersonalQuote like Travel/Car,
+        // but we accept the parameters for consistency with the interface
+        if ($triggerSICWorkflow || $forceSicWorkflow) {
+            LoggerService::info(self::class." - SIC workflow trigger requested for Cyber lead: {$lead->uuid} (triggerSICWorkflow: {$triggerSICWorkflow}, forceSicWorkflow: {$forceSicWorkflow})");
+            // Cyber uses sic_advisor_requested on cyber_quote relation instead of sic_flow_enabled
+            // If SIC workflow infrastructure is added for Cyber in the future, it should be implemented here
+        }
+
+        // Note: handleZeroPlans parameter is accepted for consistency but Cyber doesn't have plans like Travel
+        if ($handleZeroPlans) {
+            LoggerService::info(self::class." - handleZeroPlans flag set for Cyber lead: {$lead->uuid} (not applicable to Cyber quotes)");
+        }
 
         $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
 
@@ -52,12 +72,13 @@ class CyberEmailService extends BaseService
 
     }
 
-    private function buildEmailData($lead, $advisor, $workflowType)
+    private function buildEmailData($lead, $advisor, $workflowType, $previousAdvisor = null)
     {
         $isFlowExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value);
 
-        return [
+        $emailData = [
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'source' => $lead->source,
             'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'advisorMobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
@@ -72,8 +93,17 @@ class CyberEmailService extends BaseService
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::CYBER, $lead->uuid),
             'isFollowupExecuted' => $isFlowExecuted ? true : false,
             'workflowType' => $workflowType,
-
+            'isReAssignment' => ! empty($previousAdvisor),
         ];
+
+        // Add previous advisor details if available
+        if (! empty($previousAdvisor)) {
+            $emailData['previousAdvisorName'] = ! empty($previousAdvisor->name) ? $previousAdvisor->name : '';
+            $emailData['previousAdvisorEmail'] = ! empty($previousAdvisor->email) ? $previousAdvisor->email : '';
+            $emailData['previousAdvisorMobilePhone'] = ! empty($previousAdvisor->mobile_no) ? $previousAdvisor->mobile_no : '';
+        }
+
+        return $emailData;
     }
 
     public function sendCyberAutomatedFollowups($lead)
@@ -87,7 +117,7 @@ class CyberEmailService extends BaseService
         $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CYBER_AUTOMATED_FOLLOWUPS)->first();
 
         LoggerService::info('| sendCyberAutomatedFollowups - Initiating process');
-
+        $advisor = null;
         if ($workflowUrl && ! empty($workflowUrl->value)) {
             // Fetch the advisor
             $advisor = User::find($lead->advisor_id);
@@ -95,6 +125,12 @@ class CyberEmailService extends BaseService
 
         if (! $advisor) {
             LoggerService::info('sendCyberAutomatedFollowups - Advisor not found');
+        }
+
+        if (! $workflowUrl || empty($workflowUrl->value)) {
+            LoggerService::info('sendCyberAutomatedFollowups - Workflow URL not found or empty');
+
+            return;
         }
 
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::CYBER_AUTOMATED_FOLLOWUPS);

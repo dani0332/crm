@@ -151,7 +151,7 @@ const updatedLobs = computed(() => {
   >
     <template #item-quote_type.code="{ quote_type, source }">
       <span v-if="source == 'REVIVAL'">
-        <x-tag color="primary"> Car Revival Cat A </x-tag>
+        <x-tag color="primary"> Car Cat A</x-tag>
       </span>
       <span v-else>
         <x-tag color="primary">

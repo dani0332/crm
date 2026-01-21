@@ -37,7 +37,7 @@ class AwnicStepExecutor
                 'error' => $policyIssuanceResponse['error'] ?? AwnicEnum::UNKNOWN_ERROR,
                 'message' => $policyIssuanceResponse['message'] ?? null,
             ]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Policy Creation');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY);
 
             return $policyIssuanceResponse;
         }
@@ -72,7 +72,7 @@ class AwnicStepExecutor
                 'message' => $uploadDocumentsResponse['message'] ?? null,
             ]);
 
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Document Upload');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS);
 
             return $uploadDocumentsResponse;
         }
@@ -105,7 +105,7 @@ class AwnicStepExecutor
                 'error' => $uploadPolicyDocumentsToIMCRMResponse['error'] ?? AwnicEnum::UNKNOWN_ERROR,
                 'message' => $uploadPolicyDocumentsToIMCRMResponse['message'] ?? null,
             ]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Retrieve Document');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
 
             return $uploadPolicyDocumentsToIMCRMResponse;
         }
@@ -133,13 +133,14 @@ class AwnicStepExecutor
 
         $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process);
 
-        if (! $triggerBookPolicyResponse['status']) {
+        // this email is used to test the book policy automation failure scenario
+        if (! $triggerBookPolicyResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY) {
             LoggerService::error('Book policy failed', extra: [
                 'step' => AwnicEnum::STEP_BOOK_POLICY,
                 'error' => $triggerBookPolicyResponse['error'] ?? AwnicEnum::UNKNOWN_ERROR,
                 'message' => $triggerBookPolicyResponse['message'] ?? null,
             ]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Send And Book Policy');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::CYBER->value, PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY);
 
             return $triggerBookPolicyResponse;
         }
