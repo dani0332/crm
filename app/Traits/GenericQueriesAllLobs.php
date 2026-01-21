@@ -26,6 +26,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\DocumentTypeRepository;
@@ -950,7 +951,8 @@ trait GenericQueriesAllLobs
         $return = false;
         if (isset($record->parent_duplicate_quote_id) && $record->parent_duplicate_quote_id) {
             $parentQuoteType = explode('-', $record->parent_duplicate_quote_id)[0];
-            $quoteDetail = $this->getQuoteObjectBy(strtolower($parentQuoteType), $record->parent_duplicate_quote_id, 'code');
+            $quoteType = QuoteType::where('short_code', strtoupper($parentQuoteType))->first()?->code ?? null;
+            $quoteDetail = $this->getQuoteObjectBy(strtolower($quoteType), $record->parent_duplicate_quote_id, 'code');
             if ($quoteDetail && $quoteDetail->quote_status_id !== QuoteStatusEnum::PolicyCancelledReissued) {
                 $return = true;
             }

@@ -1967,12 +1967,15 @@ const isDocTypeLoading = docType => {
 
                   <template
                     v-if="
-                      (props.bookPolicyDetails?.bookButton ||
-                        props.bookPolicyDetails?.policyCancelled) &&
+                      (
+                        props.bookPolicyDetails?.bookButton ||
+                        props.bookPolicyDetails?.policyCancelled ||
+                        isParentCancelReissuePen
+                      ) &&
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
-                    <x-tooltip v-if="props.bookPolicyDetails.policyCancelled">
+                    <x-tooltip v-if="props.bookPolicyDetails.policyCancelled || isParentCancelReissuePen">
                       <x-button
                         size="sm"
                         class="mt-4 mr-2"
@@ -1980,7 +1983,8 @@ const isDocTypeLoading = docType => {
                         :disabled="
                           disableBookPolicyButton ||
                           isAMLNotClearedForTravelQuote ||
-                          disableIfPolicyFailedAndNoBookingFailedEditPermission
+                          disableIfPolicyFailedAndNoBookingFailedEditPermission ||
+                          isParentCancelReissuePen
                         "
                         @click.prevent="confirmSendPolicy"
                       >
