@@ -25,7 +25,7 @@ class SetPcpTeamAllocationThresholdDisabledSeeder extends Seeder
                 ->where('allocation_threshold_enabled', false)
                 ->update(['allocation_threshold_enabled' => true]);
             DB::commit();
-            
+
         } catch (Throwable $throwable) {
             DB::rollBack();
             throw $throwable;
