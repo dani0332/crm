@@ -1842,7 +1842,7 @@ class SendUpdateLogService
      * @param $sendUpdateLog - Send Update Log
      * @return string
      */
-    public function disableMainBtn($sendUpdateLog, $payment = [], $brokerCommission = null, $quote): string
+    public function disableMainBtn($sendUpdateLog, $payment, $brokerCommission, $quote): string
     {
         LoggerService::info('fn:disableMainBtn - Start - SendUpdateLogService');
 
