@@ -97,12 +97,11 @@ it('returns all teams including GBP team in the correct order', function () {
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
-        ->has('teams', 5)
+        ->has('teams', 4)
         ->where('teams.0.name', quoteTypeCode::EBP)
         ->where('teams.1.name', quoteTypeCode::RM_SPEED)
         ->where('teams.2.name', quoteTypeCode::RM_NB)
-        ->where('teams.3.name', TeamNameEnum::PCP)
-        ->where('teams.4.name', TeamNameEnum::GBP)
+        ->where('teams.3.name', TeamNameEnum::GBP)
     );
 });
 
@@ -111,8 +110,8 @@ it('includes GBP team in the teams list', function () {
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
-        ->has('teams', 5)
-        ->where('teams.4.name', TeamNameEnum::GBP)
+        ->has('teams', 4)
+        ->where('teams.3.name', TeamNameEnum::GBP)
     );
 });
 
@@ -122,12 +121,11 @@ it('sorts teams according to custom sequence with GBP at the end', function () {
     $response->assertSuccessful();
     $teams = $response->original->getData()['page']['props']['teams'];
 
-    expect($teams)->toHaveCount(5);
+    expect($teams)->toHaveCount(4);
     expect($teams[0]['name'])->toBe(quoteTypeCode::EBP);
     expect($teams[1]['name'])->toBe(quoteTypeCode::RM_SPEED);
     expect($teams[2]['name'])->toBe(quoteTypeCode::RM_NB);
-    expect($teams[3]['name'])->toBe(TeamNameEnum::PCP);
-    expect($teams[4]['name'])->toBe(TeamNameEnum::GBP);
+    expect($teams[3]['name'])->toBe(TeamNameEnum::GBP);
 });
 
 it('excludes teams that are not of type TEAM', function () {
@@ -150,7 +148,6 @@ it('only includes teams with names in the specified list', function () {
         quoteTypeCode::EBP,
         quoteTypeCode::RM_SPEED,
         quoteTypeCode::RM_NB,
-        TeamNameEnum::PCP,
         TeamNameEnum::GBP,
     ];
 
