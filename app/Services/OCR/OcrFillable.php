@@ -195,7 +195,7 @@ trait OcrFillable
             return $success;
 
         } catch (Exception $e) {
-            LoggerService::error(self::class . ' - Exception occurred during Emirates ID data filling - Quote UUID: ' . $quote->uuid, exception: $e);
+            LoggerService::error(self::class . ' - Exception occurred during Driver Emirates ID data filling - Quote UUID: ' . $quote->uuid, exception: $e);
 
             return false;
         }

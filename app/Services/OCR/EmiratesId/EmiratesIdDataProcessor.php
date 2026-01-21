@@ -88,12 +88,14 @@ class EmiratesIdDataProcessor
                 'driver_gender' => $this->extractedData['sex'],
             ]);
 
-            $quote->vehicleDriverDetail()->updateOrCreate(
-                ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
-                $fieldsToUpdate
-            );
+            if (!empty($fieldsToUpdate)) {
+                $quote->vehicleDriverDetail()->updateOrCreate(
+                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
+                    $fieldsToUpdate
+                );
 
-            LoggerService::info('VehicleDriverDetail updated successfully');
+                LoggerService::info('VehicleDriverDetail updated successfully');
+            }
 
             return true;
 
