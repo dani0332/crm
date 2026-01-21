@@ -1,12 +1,11 @@
 <script setup>
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import { usePayment } from '@/inertia/Composables/usePayment.js';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { usePayment } from '@/inertia/Composables/usePayment.js';
 
 const page = usePage();
 defineProps({
@@ -854,6 +853,14 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
+const { sectionRef: planDataTable, isLoaded: plansLoaded } = useLazyLoadSection(
+  onLoadAvailablePlansData,
+  {
+    threshold: 0.1,
+    rootMargin: '100px',
+  },
+);
+
 const selectedPlanType = ref(null);
 
 const updateSelectedPlan = async selectedPlanData => {
@@ -1368,7 +1375,6 @@ const readOnlyMode = reactive({
 });
 
 onMounted(() => {
-  onLoadAvailablePlansData();
   if (page.props.message) {
     notification.success({
       title: page.props.message,
@@ -3117,7 +3123,7 @@ const fullAddress = computed(() => {
 
     <EmailStatus :emailStatuses="emailStatuses" :expanded="sectionExpanded" />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div ref="planDataTable" class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -3220,7 +3226,7 @@ const fullAddress = computed(() => {
           </div>
           <div v-else>
             <div
-              v-if="availablePlansTable.isLoading"
+              v-if="!plansLoaded || availablePlansTable.isLoading"
               class="flex justify-center my-8"
             >
               <x-spinner size="lg" />

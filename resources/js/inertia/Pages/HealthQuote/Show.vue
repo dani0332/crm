@@ -1,11 +1,11 @@
 <script setup>
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: Object,
@@ -734,8 +734,6 @@ const memberDataDocs = membersDetail => {
 };
 
 // plans
-const planDataTable = ref();
-
 const plansTable = reactive({
   isLoading: false,
   data: [],
@@ -825,6 +823,14 @@ const onLoadAvailablePlansData = async () => {
       plansTable.isLoading = false;
     });
 };
+
+const { sectionRef: planDataTable, isLoaded: plansLoaded } = useLazyLoadSection(
+  onLoadAvailablePlansData,
+  {
+    threshold: 0.1,
+    rootMargin: '100px',
+  },
+);
 
 const planClicked = plan => {
   selectedPlan.value = plan;
@@ -1726,7 +1732,6 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
-  onLoadAvailablePlansData();
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
   ) || { id: null };
