@@ -886,8 +886,6 @@ watch(
         label="Policy PEC Flag"
         v-if="
           filters.reportCategory != 'Sales Summary' &&
-          filters.lob &&
-          Array.isArray(filters.lob) &&
           filters.lob.includes('Health')
         "
       >
