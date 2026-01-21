@@ -16,5 +16,8 @@ class SetPcpTeamAllocationThresholdDisabledSeeder extends Seeder
         Team::where('name', TeamNameEnum::PCP)
             ->where('allocation_threshold_enabled', true)
             ->update(['allocation_threshold_enabled' => false]);
+        Team::where('name', TeamNameEnum::GBP)
+            ->where('allocation_threshold_enabled', false)
+            ->update(['allocation_threshold_enabled' => true]);
     }
 }
