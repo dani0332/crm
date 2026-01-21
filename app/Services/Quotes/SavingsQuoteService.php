@@ -130,7 +130,7 @@ class SavingsQuoteService extends BaseQuoteService
             'currencyId' => (int) $data['currency_id'],
             'investmentAmount' => (float) $data['investment_amount'],
             'investmentCriteriaId' => (int) $data['investment_frequency'],
-            'additionalNotes' => $data['notes'],
+            'additionalNotes' => $data['additional_notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
@@ -239,7 +239,7 @@ class SavingsQuoteService extends BaseQuoteService
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
-                'sub_source_id', 'sub_source_options_id', 'notes',
+                'sub_source_id', 'sub_source_options_id', 'additional_notes',
             ]);
             $quoteData['updated_by_id'] = Auth::id();
             LoggerService::info('updateSavingsQuote: ', $quoteData);
