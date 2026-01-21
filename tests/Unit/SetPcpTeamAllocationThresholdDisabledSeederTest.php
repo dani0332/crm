@@ -124,7 +124,7 @@ it('handles multiple PCP teams if they exist', function () {
 it('does not fail if PCP team does not exist', function () {
     // Run the seeder when no PCP team exists
     $seeder = new SetPcpTeamAllocationThresholdDisabledSeeder;
-    
+
     // Should not throw an exception
     expect(fn () => $seeder->run())->not->toThrow(Exception::class);
 });
