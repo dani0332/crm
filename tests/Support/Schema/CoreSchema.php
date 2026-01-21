@@ -356,6 +356,7 @@ class CoreSchema
                 $table->string('vehicle_color')->nullable();
                 $table->date('first_registration_date')->nullable();
                 $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->string('vehicle_plate_code')->nullable();
                 $table->timestamps();
             },
         ]);

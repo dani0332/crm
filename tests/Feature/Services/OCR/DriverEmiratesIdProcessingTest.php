@@ -236,7 +236,7 @@ describe('Driver Emirates ID OCR Processing Flow', function () {
 
         expect($summary)->toBeArray()
             ->and($summary['status'])->toBe('success')
-            ->and($summary['quote_uuid'])->toBe('test-quote-uuid-6')
+            ->and($summary['quote_uuid'])->toBe($quote->uuid)
             ->and($summary['document_type_code'])->toBe(DocumentTypeCode::DRIVER_EMIRATES_ID)
             ->and($summary['car_quote_data'])->toBeArray()
             ->and($summary['car_quote_data']['driver_name'])->toBe('John Doe')
