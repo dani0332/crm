@@ -96,7 +96,7 @@ Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::cla
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
 Route::post('/email-status/update-customer-replied', [ApiController::class, 'updateCustomerRepliedStatus'])->name('updateCustomerRepliedStatus');
 
-Route::get('/get-status-retargeting-ep-reminder', [EmbeddedProductController::class, 'getStatusRetargetingEpReminder'])->name('get.status.retargeting-ep-reminder');
+Route::get('/get-status-retargeting-ep-reminder', [EmbeddedProductController::class, 'getRetargetingEpReminderData'])->name('get.retargeting-ep-reminder');
 Route::post('/retargeting-ep-reminder-callback', [EmbeddedProductController::class, 'retargetingEpReminderCallback'])->name('retargeting-ep-reminder-callback');
 
 Route::prefix('v1')->group(function () {

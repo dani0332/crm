@@ -2,25 +2,20 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
-use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeShortCode;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\GetStatusRetargetingEpReminderRequest;
+use App\Http\Requests\Api\GetRetargetingEpReminderRequest;
 use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Jobs\AddressReminderJob;
 use App\Jobs\EP\SendEPJob;
 use App\Models\CustomerAddress;
 use App\Models\EmbeddedProduct;
-use App\Repositories\EmbeddedTransactionRepository;
-use App\Services\EmailStatusService;
+use App\Services\EmbeddedTransactionService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Arr;
 
 class EmbeddedProductController extends Controller
 {
@@ -49,68 +44,14 @@ class EmbeddedProductController extends Controller
         return apiResponse(null, Response::HTTP_OK, '');
     }
 
-    public function getStatusRetargetingEpReminder(GetStatusRetargetingEpReminderRequest $request): JsonResponse
+    public function getRetargetingEpReminderData(GetRetargetingEpReminderRequest $request): JsonResponse
     {
-        $quoteFields = ['id', 'code', 'quote_status_id', 'policy_booking_date', 'advisor_id'];
-        $epTransactionFields = ['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id', 'policy_status'];
-        $withAdvisorFields = 'advisor:id,email,name,mobile_no,landline_no,profile_photo_path';
-
-        $model = $this->getModelObject(strtolower(QuoteTypeShortCode::getName($request->quoteTypeId)));
-        $quote = $model ? $model::select(array_merge($quoteFields, ['customer_id', 'email', 'mobile_no', 'first_name', 'last_name']))
-            ->with($withAdvisorFields)->find($request->quoteId) : null;
-
-        if (!$quote) {
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found');
-        }
-
-        $epTransaction = EmbeddedTransactionRepository::epTransactions($request->quoteTypeId, $quote->id)
-            ->where('code', $request->embeddedTransactionCode)
-            ->select($epTransactionFields)
-            ->first();
-        if (!$epTransaction) {
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Embedded transaction not found');
-        }
-
-        $advisorInfo = $quote->advisor ?? null;
-        $reminderContent = [
-            "customerEmail" => $quote->email,
-            "customerName" => "{$quote->first_name} {$quote->last_name}",
-            "customerMobileNumber" => formatMobileNo($quote?->mobile_no ?? ''),
-            "advisorEmail" => $advisorInfo?->email,
-            "advisorLandLine" => $advisorInfo?->landline_no,
-            "advisorMobileNoWithoutSpaces" => removeSpaces($advisorInfo?->mobile_no ?? ''),
-            "advisorMobileNumber" => formatMobileNo($advisorInfo?->mobile_no ?? ''),
-            "advisorName" => $advisorInfo?->name,
-            "advisorProfilePhotoPath" => $advisorInfo?->profile_photo_path,
-            "DisplayName" => "InsuranceMarket.ae",
-            "retargetingEpReminderCallbackEndpoint" => route('retargeting-ep-reminder-callback'),
-            "customerId" => $quote->customer_id,
-        ];
-
-        $data = [
-            'quote' => Arr::only($quote->toArray(), $quoteFields),
-            'embeddedTransaction' => Arr::only($epTransaction, $epTransactionFields),
-            'reminderContent' => $reminderContent,
-        ];
-        return apiResponse($data, Response::HTTP_OK, 'Retargeting EP Reminder status retrieved');
+        return app(EmbeddedTransactionService::class)
+            ->getRetargetingEpReminderData($request->quoteId, $request->quoteTypeId, $request->embeddedTransactionCode);
     }
 
     public function retargetingEpReminderCallback(RetargetingEpReminderCallbackRequest $request): JsonResponse
     {
-        $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CAR_EP_RETARGETING_REMINDER_EMAIL_TEMPLATE);
-
-        $newEmailStatus = (object) [
-            'quoteTypeId' => $request->quoteTypeId,
-            'quoteId' => $request->quoteId,
-            'customerEmail' => $request->customerIdentity,
-            'templateId' => $templateId,
-            'customerId' => $request->customerId
-        ];
-
-        $reminderNumberTitle = $request->reminderNumber == 1 ? 'First' : 'Second';
-        $status = in_array($request->responseCode, [200, 201, 202]) ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-        $emailStatusId = app(EmailStatusService::class)->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, "{$reminderNumberTitle} Reminder Email {$status}");
-
-        return apiResponse(['email_status_id' => $emailStatusId], Response::HTTP_OK, 'Retargeting EP Reminder Email Sent');
+        return app(EmbeddedTransactionService::class)->retargetingEpReminderCallback($request);
     }
 }
