@@ -41,7 +41,6 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CommunicationMode;
-use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Insured;
@@ -256,7 +255,6 @@ class AMLController extends Controller
 
         $providerCode = $quoteRequest?->plan?->insuranceProvider?->code ?? '';
         $isLIVA = $providerCode == InsuranceProvidersEnum::RSA;
-        $isGIG = $providerCode == InsuranceProvidersEnum::AXA;
         $lookups = app(AMLService::class)->getAMLLookups();
         $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
         $isAddionalFieldsEnabled = app(AMLService::class)->isAdditionalVehicleAndDriverDetailsEnabled($quoteType?->code, $insuranceProvider?->code, $quoteRequest?->registration_type);
@@ -274,7 +272,6 @@ class AMLController extends Controller
         $payment = Payment::where('code', $quoteRequest->code)
             ->with(['getCustomerPaymentInstrument' => fn ($query) => $query->whereNotNull('card_holder_name')])->first();
         $cardHolderName = $payment->getCustomerPaymentInstrument?->card_holder_name ?? '';
-        // $customerDetails = Customer::with('detail')->where('id', $quoteRequest->customer_id)->first();
 
         $checkScreeningStatus = [AMLStatusCode::AMLScreeningCleared => 2, AMLStatusCode::AMLScreeningFailed => 1];
         $amlStatusName = AMLStatusCode::getName($quoteRequest->aml_status);
@@ -322,7 +319,6 @@ class AMLController extends Controller
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
             'cardHolderName' => $cardHolderName,
-            // 'customerDetails' => $customerDetails,
             'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
@@ -669,7 +665,6 @@ class AMLController extends Controller
     {
         $entity = Insured::where([
             'customer_type' => CustomerTypeEnum::Entity,
-            'trade_license_no' => $request->trade_license,
             'id_type' => GenericRequestEnum::TRADE_LICENSE,
             'id_number' => $request->trade_license,
         ])->first();
@@ -692,10 +687,6 @@ class AMLController extends Controller
 
         // Reminder:: Entity id is Insured ID which we get from 'fetchEntity()' function
         $insured = Insured::where('id', $request->entity_id)->first();
-        app(AMLService::class)->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
-
-        $request->merge(['customer_id' => $quoteObject->customer_id]);
-        app(AMLService::class)->handleCustomerInsuredMappings($request, $request->quote_type_id, $quoteObject, $insured);
 
         // Reminder:: This code should be remove when new structure will be completly mapped
         // Get trade license from id_number where id_type is tradeLicense
@@ -714,6 +705,11 @@ class AMLController extends Controller
                 'message' => 'Entity not found in the old structure. Please ensure the trade license is valid.',
             ], 404);
         }
+
+        app(AMLService::class)->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
+
+        $request->merge(['customer_id' => $quoteObject->customer_id]);
+        app(AMLService::class)->handleCustomerInsuredMappings($request, $request->quote_type_id, $quoteObject, $insured);
 
         $existingEntityMapping = QuoteRequestEntityMapping::where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id])->first();
 
@@ -758,7 +754,7 @@ class AMLController extends Controller
             'customer_type' => $request->customer_type,
             'id_type' => $request->id_type,
             'id_number' => $request->id_number,
-            'trade_license' => $request->id_number ?? null,
+            'trade_license' => $request->trade_license ?? null,
         ]);
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
@@ -771,10 +767,10 @@ class AMLController extends Controller
         $insuredDetails = Insured::with('insuredKyc')
             ->where('customer_type', $customerType)
             ->where('id_type', $idType)
-            ->when($idType == 'emiratesId', function ($query) use ($request) {
+            ->when($idType == GenericRequestEnum::EMIRATES_ID, function ($query) use ($request) {
                 $query->emiratesIdNumber($request->id_number);
             })
-            ->when($idType != 'emiratesId', function ($query) use ($request) {
+            ->when($idType != GenericRequestEnum::EMIRATES_ID, function ($query) use ($request) {
                 $query->where('id_number', $request->id_number);
             })
             ->first();
@@ -892,8 +888,6 @@ class AMLController extends Controller
 
     public function insuredKycDetailsUpdate(InsuredKycRequest $insuredKycRequest)
     {
-        // AML Mapping Reminder:: Not Tested
-        // TODO:: Logs needs to be updated
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
         $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');

@@ -32,7 +32,6 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const insurerName = page.props.insurerName;
 const genericRequestEnum = page.props.genericRequestEnum;
-
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -402,6 +401,10 @@ const entitySearchValidation = computed(() => {
     return false;
   }
   screeningFormDetails.clearErrors('trade_license_no');
+
+  screeningFormDetails.screening_id_type = genericRequestEnum.TRADE_LICENSE;
+  screeningFormDetails.screening_id_number = screeningFormDetails.trade_license_no;
+  
   return true;
 });
 const searchResultData = ref(null);

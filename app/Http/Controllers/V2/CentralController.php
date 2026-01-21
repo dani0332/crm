@@ -232,7 +232,7 @@ class CentralController extends Controller
             $customer->update($emiratesDetails);
 
             $customerProfileRequest->merge([
-                'screening_id_type' => 'emiratesId',
+                'screening_id_type' => GenericRequestEnum::EMIRATES_ID,
                 'screening_id_number' => $customerProfileRequest->emirates_id_number,
                 'dob' => $customer->dob,
                 'nationality_id' => $customer->nationality_id,
@@ -243,6 +243,8 @@ class CentralController extends Controller
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
             $customerProfileRequest->merge([
                 'customer_id' => $quote->customer_id,
+                'screening_id_type' => GenericRequestEnum::TRADE_LICENSE,
+                'screening_id_number' => $customerProfileRequest->trade_license_no,
             ]);
 
             if ($customerProfileRequest->quote_type_id === QuoteTypeId::Car) {
