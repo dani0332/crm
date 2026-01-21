@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
+use App\Enums\VehicleTypeEnum;
 
 class SukoonMedexService
 {
@@ -979,7 +980,7 @@ class SukoonMedexService
     {
         // Check if this should use the bike/sports MC plan
         $useBikePlan = $this->quoteTypeId === QuoteTypeId::Bike || 
-                       ($this->quoteTypeId === QuoteTypeId::Car && $this->currentQuote?->vehicle_type_id == 21);
+                       ($this->quoteTypeId === QuoteTypeId::Car && $this->currentQuote?->vehicle_type_id == VehicleTypeEnum::MOTOR_CYCLE->value);
 
         $planOption = match (true) {
             $useBikePlan => "{$this->productSlug}-personal_sports_mc",
