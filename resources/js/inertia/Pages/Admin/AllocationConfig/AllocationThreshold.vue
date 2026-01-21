@@ -28,7 +28,7 @@ const validateTeams = () => {
         ? 0
         : teams[i + 1]?.max_price,
     );
-    if (i == 2 || i == 4) {
+    if (i == 0) {
       if (teams[i].min_price < 0) {
         notification.error({
           title: {
@@ -52,7 +52,7 @@ const validateTeams = () => {
         break;
       }
     }
-    if (i > 0) {
+    if (i == 2 || i == 4) {
       var lastMaxValue = parseFloat(
         teams[i - 1].max_price == '' ? 0 : teams[i - 1].max_price,
       );
