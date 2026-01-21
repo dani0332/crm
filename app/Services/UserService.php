@@ -6,6 +6,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Jobs\SendManagerDeactivationAttemptEmailJob;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -108,6 +109,29 @@ class UserService extends BaseService
     public function getUserById($userId)
     {
         return User::where('id', $userId)->first();
+    }
+
+    public function getSubordinates(int $userId): Collection
+    {
+        /**
+         * Subordinates are users whose `user_manager.manager_id` points to the manager user.
+         *
+         * Only active users should be considered subordinates for operational flows (e.g. deactivation
+         * notifications). Inactive users should not trigger those alerts.
+         *
+         * This is a self-referencing many-to-many (users <-> users via user_manager). Using
+         * relationship-based whereHas() queries can become fragile because Laravel aliases the
+         * related `users` table in self-joins; that can lead to empty results (seen on sqlite test cases).
+         *
+         * A direct join against the pivot avoids self-join aliasing entirely and is stable across
+         * DB engines.
+         */
+        return User::query()
+            ->join('user_manager', 'user_manager.user_id', '=', 'users.id')
+            ->where('user_manager.manager_id', $userId)
+            ->activeUser()
+            ->select(['users.id', 'users.name', 'users.email'])
+            ->get();
     }
 
     public function isAllowedToShowLeadListReport()
@@ -400,6 +424,19 @@ class UserService extends BaseService
         }
     }
 
+    /**
+     * Get all users for filter dropdown
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    public function getAllUsers(): \Illuminate\Database\Eloquent\Collection
+    {
+        return User::select('id', 'name', 'email')
+            ->activeUser()
+            ->orderBy('name')
+            ->get();
+    }
+
     public function getEmployeeCode($email)
     {
         $employeeData = $this->hrmRequestService->getEmployeeCodes([$email]);
@@ -425,5 +462,46 @@ class UserService extends BaseService
             })
             ->activeUser()
             ->get();
+    }
+
+    /**
+     * Dispatch the manager deactivation attempt email job after the DB transaction commits.
+     *
+     * This should be triggered when a manager user is being deactivated. If the user has
+     * active subordinates, we queue a notification job; otherwise we log and skip dispatch.
+     */
+    public function sendManagerDeactivationEmail(User $managerUser, ?int $attemptedByUserId): void
+    {
+        $subordinates = $this->getSubordinates($managerUser->id);
+
+        $deactivationAttemptEmailPayload = [
+            'manager_user_id' => $managerUser->id,
+            'subordinate_ids' => $subordinates->pluck('id')->all(),
+            'attempted_by_user_id' => (int) $attemptedByUserId,
+            'subordinates_count' => $subordinates->count(),
+        ];
+
+        $logDetails = [
+            'manager_user_id' => $deactivationAttemptEmailPayload['manager_user_id'],
+            'subordinates_count' => $deactivationAttemptEmailPayload['subordinates_count'],
+            'attempted_by_user_id' => $deactivationAttemptEmailPayload['attempted_by_user_id'],
+        ];
+
+        if ($subordinates->isNotEmpty()) {
+            DB::afterCommit(function () use ($deactivationAttemptEmailPayload, $logDetails) {
+                LoggerService::info('Dispatching SendManagerDeactivationAttemptEmailJob', $logDetails);
+
+                SendManagerDeactivationAttemptEmailJob::dispatch(
+                    $deactivationAttemptEmailPayload['manager_user_id'],
+                    $deactivationAttemptEmailPayload['attempted_by_user_id']
+                );
+            });
+
+            return;
+        }
+
+        LoggerService::info('Skipping SendManagerDeactivationAttemptEmailJob dispatch: manager has no subordinates', [
+            'manager_user_id' => $managerUser->id,
+        ]);
     }
 }
