@@ -195,7 +195,7 @@ it('updates GBP team allocation threshold with min 30k and max 10 million', func
 });
 
 it('updates GBP team allocation threshold and verifies it appears in index', function () {
-   
+
     $minPrice = 30000;
     $maxPrice = 10000000;
 
