@@ -128,3 +128,45 @@ it('does not fail if PCP team does not exist', function () {
     // Should not throw an exception
     expect(fn () => $seeder->run())->not->toThrow(Exception::class);
 });
+
+it('only updates PCP teams where allocation_threshold_enabled is true', function () {
+    $db = DB::connection('sqlite');
+
+    // Create PCP team with allocation_threshold_enabled = true
+    $pcpTeamEnabledId = $db->table('teams')->insertGetId([
+        'name' => TeamNameEnum::PCP,
+        'type' => TeamTypeEnum::TEAM,
+        'is_active' => 1,
+        'min_price' => 1000,
+        'max_price' => 2000,
+        'allocation_threshold_enabled' => 1,
+        'parent_team_id' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Create PCP team with allocation_threshold_enabled = false
+    $pcpTeamDisabledId = $db->table('teams')->insertGetId([
+        'name' => TeamNameEnum::PCP,
+        'type' => TeamTypeEnum::TEAM,
+        'is_active' => 1,
+        'min_price' => 2000,
+        'max_price' => 3000,
+        'allocation_threshold_enabled' => 0,
+        'parent_team_id' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Run the seeder
+    $seeder = new SetPcpTeamAllocationThresholdDisabledSeeder;
+    $seeder->run();
+
+    // Verify enabled team is updated to false
+    $pcpTeamEnabled = $db->table('teams')->where('id', $pcpTeamEnabledId)->first();
+    expect((int) $pcpTeamEnabled->allocation_threshold_enabled)->toBe(0);
+
+    // Verify disabled team remains false (not updated)
+    $pcpTeamDisabled = $db->table('teams')->where('id', $pcpTeamDisabledId)->first();
+    expect((int) $pcpTeamDisabled->allocation_threshold_enabled)->toBe(0);
+});
