@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Enums\QuoteTypeId;
 use Illuminate\Foundation\Http\FormRequest;
 
 class GetStatusRetargetingEpReminderRequest extends FormRequest
@@ -22,8 +23,8 @@ class GetStatusRetargetingEpReminderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quoteId' => 'required|integer',
-            'quoteTypeId' => 'required|integer',
+            'quoteId' => 'required|integer|exists:car_quote_request,id',
+            'quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car,
             'embeddedTransactionCode' => 'required|string',
         ];
     }
@@ -38,8 +39,10 @@ class GetStatusRetargetingEpReminderRequest extends FormRequest
         return [
             'quoteId.required' => 'Quote ID is required',
             'quoteId.integer' => 'Quote ID must be an integer',
+            'quoteId.exists' => 'The selected quote ID does not exist',
             'quoteTypeId.required' => 'Quote type ID is required',
             'quoteTypeId.integer' => 'Quote type ID must be an integer',
+            'quoteTypeId.in' => 'Quote type ID must be Car (1)',
             'embeddedTransactionCode.required' => 'Embedded transaction code is required',
             'embeddedTransactionCode.string' => 'Embedded transaction code must be a string',
         ];
