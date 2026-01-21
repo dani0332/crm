@@ -363,6 +363,7 @@ class EmiratesIdDataProcessor
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
+                    'is_active' => 1, // (datatype is tinyint(1))
                     'quote_request_id' => $this->quote->id,
                     'created_at' => now(),
                     'updated_at' => now(),
