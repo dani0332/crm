@@ -1824,20 +1824,21 @@ class AMLService
     {
         $isCustomerInsuredAssociationUpdated = false;
 
-        // Check for orphaned record (without quote mapping) first
-        $orphanedRecord = CustomerInsured::where([
-            'customer_id' => $request->customer_id,
-            'insured_id' => $insured->id,
-        ])->whereNull('quote_type_id')
-            ->whereNull('quote_request_id')
-            ->first();
+        // Handle orphaned record within transaction with proper locking to prevent race conditions
+        DB::transaction(function () use ($request, $quoteTypeId, $quote, $insured, &$isCustomerInsuredAssociationUpdated) {
+            // Lock and find orphaned record within transaction to prevent concurrent updates
+            $orphanedRecord = CustomerInsured::where([
+                'customer_id' => $request->customer_id,
+                'insured_id' => $insured->id,
+            ])->whereNull('quote_type_id')
+                ->whereNull('quote_request_id')
+                ->lockForUpdate()
+                ->first();
 
-        // Create or update the customer-insured mapping
-        if ($orphanedRecord) {
-            // Update the existing orphaned record instead of deleting and creating new
-            $isCustomerInsuredAssociationUpdated = true;
+            if ($orphanedRecord) {
+                // Update the existing orphaned record instead of deleting and creating new
+                $isCustomerInsuredAssociationUpdated = true;
 
-            DB::transaction(function () use ($orphanedRecord, $quoteTypeId, $quote) {
                 // Deactivate existing records for this quote first with row-level locking
                 // This prevents race conditions where concurrent requests could create multiple active records
                 CustomerInsured::forQuote($quoteTypeId, $quote->id)
@@ -1852,16 +1853,19 @@ class AMLService
                     'is_active' => true,
                     'updated_at' => now(),
                 ]);
-            });
 
-            LoggerService::info('Updated orphaned customer_insured record', extra: [
-                'customer_insured_id' => $orphanedRecord->id,
-                'customer_id' => $request->customer_id,
-                'insured_id' => $insured->id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-            ]);
-        } else {
+                LoggerService::info('Updated orphaned customer_insured record', extra: [
+                    'customer_insured_id' => $orphanedRecord->id,
+                    'customer_id' => $request->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                ]);
+            }
+        });
+
+        // If no orphaned record was found, check for existing quote mapping
+        if (! $isCustomerInsuredAssociationUpdated) {
             // Check existing quote mapping
             $existingQuoteMapping = CustomerInsured::active()
                 ->where([
