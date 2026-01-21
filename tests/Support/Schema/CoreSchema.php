@@ -874,6 +874,7 @@ class CoreSchema
                 $table->id();
                 $table->string('emirates_id_number')->nullable();
                 $table->date('emirates_id_expiry_date')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
                 $table->date('dob')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
@@ -1010,7 +1011,7 @@ class CoreSchema
         SchemaUtils::ensureTables([
             'policy_issuance' => function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('insurance_provider_id');
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
                 $table->string('model_type');
                 $table->unsignedBigInteger('model_id');
                 $table->string('quote_type');
@@ -1019,14 +1020,16 @@ class CoreSchema
                 $table->text('message')->nullable();
                 $table->timestamps();
             },
-            'policy_issuance_log' => function (Blueprint $table) {
+            'policy_issuance_logs' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('policy_issuance_id');
+                $table->string('model_type')->nullable();
+                $table->unsignedBigInteger('model_id')->nullable();
                 $table->string('step')->nullable();
                 $table->string('status')->nullable();
-                $table->text('request_payload')->nullable();
-                $table->text('response_payload')->nullable();
-                $table->string('api_url')->nullable();
+                $table->text('payload')->nullable();
+                $table->text('response')->nullable();
+                $table->string('endPoint')->nullable();
                 $table->timestamps();
             },
             'policy_issuance_status' => function (Blueprint $table) {

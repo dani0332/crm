@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Support\Schemas;
+namespace Tests\Support\Schema;
 
 use Illuminate\Database\Schema\Blueprint;
 
@@ -17,74 +17,12 @@ class CyberSchema
     private function ensureTables(): void
     {
         SchemaUtils::ensureTables([
-            'customer' => function (Blueprint $table) {
-                $table->id();
-                $table->string('first_name')->nullable();
-                $table->string('last_name')->nullable();
-                $table->string('email')->nullable();
-                $table->string('mobile_no')->nullable();
-                $table->date('dob')->nullable();
-                $table->unsignedBigInteger('nationality_id')->nullable();
-                $table->timestamps();
-            },
-            'emirates' => function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->boolean('is_active')->default(true);
-                $table->softDeletes();
-                $table->timestamps();
-            },
-            'policy_issuance' => function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('insurance_provider_id')->nullable();
-                $table->string('model_type');
-                $table->unsignedBigInteger('model_id');
-                $table->string('quote_type')->nullable();
-                $table->string('status')->nullable();
-                $table->string('completed_step')->nullable();
-                $table->text('message')->nullable();
-                $table->timestamps();
-            },
-            'policy_issuance_logs' => function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('policy_issuance_id');
-                $table->string('model_type')->nullable();
-                $table->unsignedBigInteger('model_id')->nullable();
-                $table->string('step')->nullable();
-                $table->string('status')->nullable();
-                $table->text('payload')->nullable();
-                $table->text('response')->nullable();
-                $table->string('endPoint')->nullable();
-                $table->timestamps();
-            },
             'cyber_quote_request' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('personal_quote_id');
                 $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
                 $table->unsignedBigInteger('coverage_id')->nullable();
                 $table->timestamps();
-            },
-            'payment_splits' => function (Blueprint $table) {
-                $table->id();
-                $table->string('code')->index();
-                $table->string('payment_method')->nullable();
-                $table->string('reference')->nullable();
-                $table->decimal('price_vat_applicable', 12, 2)->nullable();
-                $table->decimal('price_vat', 12, 2)->nullable();
-                $table->timestamps();
-            },
-            'quote_documents' => function (Blueprint $table) {
-                $table->id();
-                $table->string('quote_documentable_type');
-                $table->unsignedBigInteger('quote_documentable_id');
-                $table->string('document_type_code')->nullable();
-                $table->string('document_type_text')->nullable();
-                $table->string('doc_name')->nullable();
-                $table->string('doc_url')->nullable();
-                $table->string('doc_mime_type')->nullable();
-                $table->string('doc_uuid')->nullable();
-                $table->timestamps();
-                $table->softDeletes();
             },
         ]);
     }

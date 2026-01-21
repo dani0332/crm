@@ -12,7 +12,7 @@ class EmirateFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->unique()->city,
+            'text' => $this->faker->unique()->city,
             'is_active' => true,
         ];
     }

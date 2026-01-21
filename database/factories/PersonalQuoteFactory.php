@@ -80,7 +80,7 @@ class PersonalQuoteFactory extends Factory
             ]);
 
             $emirate = Emirate::factory()->state([
-                'name' => 'Dubai',
+                'text' => 'Dubai',
                 'is_active' => true,
             ])->create();
 

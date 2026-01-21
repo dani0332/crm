@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AwnicEnum;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicRequestBuilder;
 
 it('builds issue policy payload with required fields', function () {
@@ -10,7 +11,7 @@ it('builds issue policy payload with required fields', function () {
     $quote = (object) [
         'first_name' => 'John',
         'last_name' => 'Doe',
-        'mobile_no' => '0500000000',
+        'mobile_no' => AwnicEnum::AWNIC_MOBILE_NO,
         'email' => 'john@example.com',
         'code' => 'Q-1',
         'latestInsured' => ['id_type' => 'emiratesId', 'id_number' => '784-123-1234567-1'],
@@ -33,7 +34,7 @@ it('builds issue policy payload with required fields', function () {
 
     expect($payload)->toMatchArray([
         'CustName' => 'John Doe',
-        'CustMobile' => '0500000000',
+        'CustMobile' => AwnicEnum::AWNIC_MOBILE_NO,
         'CustEmail' => 'john@example.com',
         'CustCountryCode' => 'UAE',
         'PlanName' => 'Gold',

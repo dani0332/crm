@@ -2,7 +2,7 @@
 
 namespace Tests\Helpers;
 
-use Tests\Support\Schemas\CyberSchema;
+use Tests\Support\Schema\CyberSchema;
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\RenewalsSchema;
 
