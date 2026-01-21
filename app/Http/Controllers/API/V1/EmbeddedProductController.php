@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteTypeCode;
@@ -62,11 +63,6 @@ class EmbeddedProductController extends Controller
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found');
         }
 
-        // if ($quote->quote_status_id != QuoteStatusEnum::PolicyBooked) {
-        //     $data = $quote->only('id', 'code', 'quote_status_id', 'policy_booking_date');
-        //     return apiResponse($data, Response::HTTP_BAD_REQUEST, 'Quote policy is not booked');
-        // }
-
         $epTransaction = EmbeddedTransactionRepository::epTransactions($request->quoteTypeId, $quote->id)
             ->where('code', $request->embeddedTransactionCode)
             ->select($epTransactionFields)
@@ -79,12 +75,12 @@ class EmbeddedProductController extends Controller
         $reminderContent = [
             "customerEmail" => $quote->email,
             "customerName" => "{$quote->first_name} {$quote->last_name}",
-            "customerMobileNumber" => $quote?->mobile_no,
+            "customerMobileNumber" => formatMobileNo($quote?->mobile_no ?? ''),
             "advisorEmail" => $advisorInfo?->email,
             "advisorLandLine" => $advisorInfo?->landline_no,
             "advisorMobileNoWithoutSpaces" => removeSpaces($advisorInfo?->mobile_no ?? ''),
-            "advisorMobileNumber" => $advisorInfo?->mobile_no,
-            "advisorName" => $advisorInfo->name,
+            "advisorMobileNumber" => formatMobileNo($advisorInfo?->mobile_no ?? ''),
+            "advisorName" => $advisorInfo?->name,
             "advisorProfilePhotoPath" => $advisorInfo?->profile_photo_path,
             "DisplayName" => "InsuranceMarket.ae",
             "retargetingEpReminderCallbackEndpoint" => route('retargeting-ep-reminder-callback'),
@@ -101,11 +97,13 @@ class EmbeddedProductController extends Controller
 
     public function retargetingEpReminderCallback(RetargetingEpReminderCallbackRequest $request): JsonResponse
     {
+        $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CAR_EP_RETARGETING_REMINDER_EMAIL_TEMPLATE);
+
         $newEmailStatus = (object) [
             'quoteTypeId' => $request->quoteTypeId,
             'quoteId' => $request->quoteId,
             'customerEmail' => $request->customerIdentity,
-            'templateId' => 123123123,
+            'templateId' => $templateId,
             'customerId' => $request->customerId
         ];
 
