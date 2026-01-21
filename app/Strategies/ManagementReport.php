@@ -701,7 +701,7 @@ class ManagementReport
                             ->where("{$alias}.paymentable_type", '=', 'App\Models\PersonalQuote');
                     });
             })
-            ->whereNull("{$alias}.send_update_log_id");
+                ->whereNull("{$alias}.send_update_log_id");
 
             // Apply additional conditions if provided
             if ($additionalConditions && is_callable($additionalConditions)) {
