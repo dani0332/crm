@@ -613,4 +613,10 @@ class HealthQuote extends Model implements AuditableContract
     {
         return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
     }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
 }
