@@ -356,7 +356,9 @@ class EmiratesIdDataProcessor
                 'insured_id' => $insured->id,
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $this->quote->id,
-            ])->first();
+            ])
+            ->latest('updated_at')
+            ->first();
 
             if (! $existingLink) {
                 CustomerInsured::create([
@@ -366,6 +368,7 @@ class EmiratesIdDataProcessor
                     'quote_request_id' => $this->quote->id,
                     'created_at' => now(),
                     'updated_at' => now(),
+                    'is_active' => 1, 
                 ]);
 
                 LoggerService::info('CustomerInsured relationship created');
@@ -382,7 +385,7 @@ class EmiratesIdDataProcessor
         // Currently only supporting Car quotes and Personal quotes for Emirates ID OCR
         return match (get_class($this->quote)) {
             CarQuote::class => QuoteTypeId::Car,
-            PersonalQuote::class => $this->quote?->quote_type_id ?? PersonalQuote::where('uuid', $this->quote->uuid)->select('quote_type_id')->first()->quote_type_id,
+            PersonalQuote::class => $this->quote?->quote_type_id,
             default => QuoteTypeId::Car,
         };
     }
