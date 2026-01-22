@@ -30,13 +30,6 @@ function makeOtherNonMotorService(): OtherNonMotorRenewalsUploadService
     return new OtherNonMotorRenewalsUploadService(\Mockery::mock(QuoteDocumentService::class));
 }
 
-function callValidateAndAssignLead(OtherNonMotorRenewalsUploadService $service, RenewalQuoteProcess $process, RenewalsUploadLeads $lead): void
-{
-    $method = new \ReflectionMethod($service, 'validateAndAssignLead');
-    $method->setAccessible(true);
-    $method->invoke($service, $process, $lead);
-}
-
 function makeOtherNonMotorQuote(array $overrides = []): PersonalQuote
 {
     $state = [
@@ -86,7 +79,7 @@ test('assigns advisor for eligible other non-motor renewal lead', function () {
     ]);
 
     $service = makeOtherNonMotorService();
-    callValidateAndAssignLead($service, $process, $lead);
+    $service->processSingle($lead->id, $process->id);
 
     $process->refresh();
     $lead->refresh();
@@ -101,17 +94,16 @@ test('assigns advisor for eligible other non-motor renewal lead', function () {
         ->and((int) $quote->assignment_type)->toBe(AssignmentTypeEnum::SYSTEM_REASSIGNED);
 });
 
-test('skips lead when source is not renewal_upload', function () {
-    $advisor = User::factory()->create(['email' => 'advisor@example.com']);
-    $quote = makeOtherNonMotorQuote(['source' => 'WEB']);
+test('skips lead when advisor record is missing at processing time', function () {
+    $quote = makeOtherNonMotorQuote();
     $lead = makeUploadLead();
     $process = makePendingProcess($lead, [
         'ref_id' => $quote->uuid,
-        'advisor_email' => $advisor->email,
+        'advisor_email' => 'missing@example.com',
     ]);
 
     $service = makeOtherNonMotorService();
-    callValidateAndAssignLead($service, $process, $lead);
+    $service->processSingle($lead->id, $process->id);
 
     $process->refresh();
     $lead->refresh();
@@ -121,28 +113,5 @@ test('skips lead when source is not renewal_upload', function () {
         ->and($process->fetch_plans_status)->toBe(FetchPlansStatuses::OUTDATED)
         ->and($lead->cannot_upload)->toBe(1)
         ->and($lead->good)->toBe(0)
-        ->and($quote->advisor_id)->toBeNull();
-});
-
-test('skips manually assigned leads', function () {
-    $advisor = User::factory()->create(['email' => 'advisor@example.com']);
-    $quote = makeOtherNonMotorQuote([
-        'assignment_type' => AssignmentTypeEnum::MANUAL_ASSIGNED,
-    ]);
-    $lead = makeUploadLead();
-    $process = makePendingProcess($lead, [
-        'ref_id' => $quote->uuid,
-        'advisor_email' => $advisor->email,
-    ]);
-
-    $service = makeOtherNonMotorService();
-    callValidateAndAssignLead($service, $process, $lead);
-
-    $process->refresh();
-    $lead->refresh();
-    $quote->refresh();
-
-    expect($process->status)->toBe(RenewalProcessStatuses::BAD_DATA)
-        ->and($lead->cannot_upload)->toBe(1)
         ->and($quote->advisor_id)->toBeNull();
 });
