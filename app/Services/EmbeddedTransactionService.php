@@ -87,22 +87,17 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Embedded transaction not found');
         }
 
-        $advisorInfo = $quote->advisor ?? null;        
-        if (empty($advisorInfo)) {
-            return apiResponse(null, Response::HTTP_UNPROCESSABLE_ENTITY, 'Advisor is not assigned');
-        }
-
         $reminderContent = [
             "customerEmail" => $quote->email,
             "customerName" => "{$quote->first_name} {$quote->last_name}",
             "customerMobileNumber" => formatMobileNo($quote?->mobile_no ?? ''),
-            "advisorEmail" => $advisorInfo?->email,
-            "advisorLandLine" => $advisorInfo?->landline_no,
-            "advisorMobileNoWithoutSpaces" => removeSpaces($advisorInfo?->mobile_no ?? ''),
-            "advisorMobileNumber" => formatMobileNo($advisorInfo?->mobile_no ?? ''),
-            "advisorName" => $advisorInfo?->name,
-            "advisorProfilePhotoPath" => $advisorInfo?->profile_photo_path,
-            "DisplayName" => "InsuranceMarket.ae",
+            "advisorEmail" => $quote->advisor?->email,
+            "advisorLandLine" => $quote->advisor?->landline_no,
+            "advisorMobileNoWithoutSpaces" => removeSpaces($quote->advisor?->mobile_no ?? ''),
+            "advisorMobileNumber" => formatMobileNo($quote->advisor?->mobile_no ?? ''),
+            "advisorName" => $quote->advisor?->name,
+            "advisorProfilePhotoPath" => $quote->advisor?->profile_photo_path,
+            "DisplayName" => config('constants.IM_FROM_EMAIL','InsuranceMarket'),
             "retargetingEpReminderCallbackUrl" => route('retargeting-ep-reminder-callback'),
             "customerId" => $quote->customer_id,
         ];
