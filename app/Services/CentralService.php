@@ -1578,29 +1578,46 @@ class CentralService extends BaseService
         $workflowType = WorkflowTypeEnum::DEVICE_UPDATE_POLICY;
         $emailData = $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $sendUpdateEmailData);
 
-        if (isset($sendUpdateEmailData->providerName) && !empty($sendUpdateEmailData->providerName) && empty($emailData->providerName)) {
-            $emailData->providerName = $sendUpdateEmailData->providerName;
-        }
-
         $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         $sendUpdateEmailDocs = collect($sendUpdateEmailData?->documents??[]);
         $documentSUPC = (object) $sendUpdateEmailDocs->filter(function ($document) {
             return in_array($document['document_type_code'], [WatermarkDocTypesEnum::SUPC]);
         })->first();
+
         $documentSUPS = (object) $sendUpdateEmailDocs->filter(function ($document) {
             return in_array($document['document_type_code'], [WatermarkDocTypesEnum::SUPS]);
         })->first();
 
+        $documentTaxInvoice = (object) $sendUpdateEmailDocs->filter(function ($document) {
+            return in_array($document['document_type_code'], [WatermarkDocTypesEnum::SUTAXINV]);
+        })->first();
+
         $documentSUPCurl = $documentSUPC?->watermarked_doc_url ?? $documentSUPC?->doc_url ?? '';
         $documentSUPSurl = $documentSUPS?->watermarked_doc_url ?? $documentSUPS?->doc_url ?? '';
+        $documentTaxInvoiceurl = $documentTaxInvoice?->watermarked_doc_url ?? $documentTaxInvoice?->doc_url ?? '';
+
+        $emailData->documentSUPC = '';
+        $emailData->documentSUPS = '';
+        $emailData->taxInvoice = '';
+
+        $emailData->documentSUPCExt = '';
+        $emailData->documentSUPSExt = '';
+        $emailData->taxInvoiceExt = '';
 
         if (!empty($documentSUPCurl)) {
             $emailData->documentSUPC = $storageUrl.$documentSUPCurl;
+            $emailData->documentSUPCExt = ! empty($emailData->documentSUPC) ? pathinfo($emailData->documentSUPC, PATHINFO_EXTENSION) : '';
         }
 
         if (!empty($documentSUPSurl)) {
             $emailData->documentSUPS = $storageUrl.$documentSUPSurl;
+            $emailData->documentSUPSExt = ! empty($emailData->documentSUPS) ? pathinfo($emailData->documentSUPS, PATHINFO_EXTENSION) : '';
+        }
+
+        if (!empty($documentTaxInvoiceurl)) {
+            $emailData->taxInvoice = $storageUrl.$documentTaxInvoiceurl;
+            $emailData->taxInvoiceExt = ! empty($emailData->taxInvoice) ? pathinfo($emailData->taxInvoice, PATHINFO_EXTENSION) : '';
         }
 
         LoggerService::info('fn:prepareDeviceUpdateBirdData - Email data preparation completed', extra: [

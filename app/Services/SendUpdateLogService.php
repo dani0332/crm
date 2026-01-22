@@ -1330,20 +1330,26 @@ class SendUpdateLogService
 
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
+        $documents = collect([]);
+        $documentTypeCodes = [];
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
-            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
-        } elseif ($quoteTypeId == QuoteTypeId::Business) {
-            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device])) {
+            $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+            DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+        } elseif ($quoteTypeId == QuoteTypeId::Business || $quoteTypeId == QuoteTypeId::Device) {
+            $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+            DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
             // For Savings: SEND_UPDATE_POLICY_SCHEDULE is mandatory and at least one receipt type
-            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
+            $documentTypeCodes = [
                 DocumentTypeCode::SEND_UPDATE_RECEIPT,
                 DocumentTypeCode::PAYMENT_RECEIPT,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
-            ])->toArray();
+            ];
+        }
+
+        if(! empty($documentTypeCodes)) {
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', $documentTypeCodes)->toArray();
         }
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
@@ -1497,14 +1503,7 @@ class SendUpdateLogService
             $emailData->renewalDueDate = date('d/m/Y', strtotime($expiry_date)) ?? '';
             $emailData->planName = ! empty($quote->plan_id) ? $quote?->insuranceProviderPlan?->text : '';
         } elseif ($quoteTypeId == QuoteTypeId::Device) {
-            $emailData->providerName = $quote?->plan?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? '';
-            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? '-';
             $emailData->quoteDocuments = collect([]);
-            $emailData->advisorName = $emailData?->advisor?->name ?? '';
-            $emailData->advisorEmail = $emailData?->advisor?->email ?? '';
-            $emailData->advisorMobilePhone = $emailData?->advisor?->mobileNo ?? '';
-            $emailData->advisorLandLine = $emailData?->advisor?->landLine ?? '';
-            $emailData->advisorProfilePhotoPath = $emailData?->advisor?->profilePicture ?? '';
         }
         return [$templateId, $emailData, 'send-update', $quoteTypeId];
     }
