@@ -452,4 +452,27 @@ class AllocationService extends BaseService
             return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE, UserStatusEnum::MANUAL_OFFLINE];
         }
     }
+
+    public function isUserOnLeave(string $email, bool $addUnavailable = false): bool
+    {
+        $user = User::where('email', $email)->activeUser()->first();
+
+        if (! $user) {
+            LoggerService::error(self::class.' - isUserOnLeave: User not found', extra: [
+                'email' => $email,
+            ]);
+
+            return false;
+        }
+
+        $isOnLeave = ! in_array($user->status, $this->getValidAdvisorStatuses($addUnavailable));
+
+        LoggerService::info(self::class.' - isUserOnLeave: User is on leave', extra: [
+            'email' => $email,
+            'is_on_leave' => $isOnLeave,
+            'status' => $user->status,
+        ]);
+
+        return $isOnLeave;
+    }
 }

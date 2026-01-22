@@ -115,4 +115,8 @@ class AllocationRequest
     {
         return $this->assignToHappinessUser;
     }
+    public function setAssignToHappinessUser(bool $value = true)
+    {
+        $this->assignToHappinessUser = $value;
+    }
 }

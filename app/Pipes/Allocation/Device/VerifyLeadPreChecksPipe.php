@@ -2,57 +2,77 @@
 
 namespace App\Pipes\Allocation\Device;
 
+
+use App\Enums\QuoteTypes;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Closure;
 
 class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 {
     public function handle(AllocationRequest $request, Closure $next)
     {
-        LoggerService::info(self::class.' - Starting pre-checks for Device lead');
+        LoggerService::info(self::class . ' - Starting pre-checks for Device lead');
 
         $this->setRequest($request);
 
-        $lead = $this->findLead();
-       
-        if (! $lead) {
-            LoggerService::info(self::class.' - Device lead does not meet pre-check criteria or not found');
+        $isVerified = $this->verifyPreChecks();
+
+        if (! $isVerified) {
+            LoggerService::info(self::class . ' - Device lead does not meet pre-check criteria');
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
         }
 
-        LoggerService::info(self::class.' - Device lead pre-checks passed', extra: [
-            'leadUuid' => $lead->uuid,
-            'leadId' => $lead->id,
+        LoggerService::info(self::class . ' - Device lead pre-checks passed', extra: [
+            'leadUuid' => $this->lead->uuid,
+            'leadId' => $this->lead->id,
         ]);
-
-        $this->allocationRequest->setLead($lead);
 
         return $next($request);
     }
 
-    private function findLead()
+    private function verifyPreChecks(): bool
     {
-        LoggerService::info(self::class.' - Fetching Device lead');
-
-        $lead = $this->getLeadBaseQuery()
-            ->with('deviceQuote')
-            ->first();
+        $lead = $this->lead;
 
         if (! $lead) {
-            LoggerService::info(self::class.' - Device lead not found');
+            LoggerService::info(self::class . ' - Lead not found, skipping assignment');
 
-            return null;
+            return false;
         }
 
-        LoggerService::info(self::class.' - Device lead found successfully', extra: [
-            'leadUuid' => $lead->uuid,
-            'leadId' => $lead->id,
-            'hasAdvisor' => $lead->advisor_id ? true : false,
-            'hasDeviceQuote' => $lead->deviceQuote ? true : false,
-        ]);
+        // Load deviceQuote relation if not already loaded
+        if (! $lead->relationLoaded('deviceQuote')) {
+            $lead->load('deviceQuote');
+        }
 
-        return $lead;
+        // Check if lead is SIC and advisor is requested
+        $isSIC = $lead->isSIC(QuoteTypes::DEVICE);
+
+        $isAdvisorRequested = $lead->deviceQuote && isset($lead->deviceQuote->sic_advisor_requested) && (bool) $lead->deviceQuote->sic_advisor_requested;
+
+        $continueAssignment = false;
+
+        // Check base conditions first
+        if (! $this->allocationRequest->isOverrideAdvisorRequest() && !empty($lead->advisor_id)) {
+            LoggerService::info(self::class . ' - Lead is already assigned to advisor with ID: ' . $lead->advisor_id . ', skipping assignment');
+        } elseif ($lead->isFakeOrDuplicate()) {
+            LoggerService::info(self::class . ' - Lead is fake or duplicate having quote_status_id ' . $lead->quote_status_id . ', skipping assignment');
+        } elseif ($lead->isPaid()) {
+            LoggerService::info(self::class . ' - Lead is paid, continuing assignment');
+            $continueAssignment = true;
+        } elseif ($isSIC && $isAdvisorRequested) {
+            LoggerService::info(self::class . ' - Lead is SIC and advisor is requested, continuing assignment');
+            $continueAssignment = true;
+        } else {
+            LoggerService::info(self::class . ' - Lead does not meet allocation criteria (SIC and advisor requested), skipping assignment', extra: [
+                'isSIC' => $isSIC,
+                'isAdvisorRequested' => $isAdvisorRequested
+            ]);
+        }
+
+        return $continueAssignment;
     }
 }

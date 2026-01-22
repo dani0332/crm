@@ -8,49 +8,74 @@ use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\DeviceAllocation;
 use Closure;
+use App\Strategies\Allocations\DeviceAllocation;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {
+    private const WARNING_NO_SMART_PHONE_ADVISORS_FOUND = 'No Smart Phone advisors found in app storage';
+    private const WARNING_NO_VALID_ADVISOR_EMAILS = 'No valid Smart Phone advisor emails found in app storage';
+
     public function handle(AllocationRequest $request, Closure $next)
     {
-        LoggerService::info(self::class.' - Starting to fetch available Device advisor');
+        LoggerService::info(self::class.' - Starting to fetch available Smart Phone advisor');
 
         $this->setRequest($request);
-       
-        LoggerService::info(self::class.' - Unpaid Device lead with SIC request - Fetching advisor using hardcoded email list');
+
+        if ($this->allocationRequest->shouldAssignToHappinessUser()) {
+            LoggerService::info(self::class.' - Paid Device lead - Fetching Happiness Support User');
+
+            $advisor = $this->getHappinessUser();
+
+            if (! $advisor) {
+                LoggerService::warning(self::class.' - Happiness Support User not found');
+                $this->allocationRequest->markAsFailed();
+                $this->throw('Happiness Support User not found', self::NOT_FOUND);
+            }
+
+            LoggerService::info(self::class.' - Happiness Support User found successfully', extra: [
+                'advisorId' => $advisor->id,
+                'advisorName' => $advisor->name,
+                'advisorEmail' => $advisor->email,
+            ]);
+            $this->allocationRequest->setAdvisor($advisor);
+
+            return $next($request);
+        }
+
+        // if ($this->allocationRequest->get('isCHSAdvisor')) {
+        //     LoggerService::info(self::class.' - CHS Advisor is required for Smart Phone lead');
+
+        //     $advisor = $this->findAvailableAdvisor(teamId: null);
+
+        //     if (! $advisor) {
+        //         LoggerService::warning(self::class.' - CHS Advisor not found');
+        //         $this->allocationRequest->markAsFailed();
+        //         $this->throw('CHS Advisor not found', self::NOT_FOUND);
+        //     }
+
+        //     LoggerService::info(self::class.' - CHS Advisor found successfully', extra: [
+        //         'advisorId' => $advisor->id,
+        //         'advisorName' => $advisor->name,
+        //         'advisorEmail' => $advisor->email,
+        //     ]);
+
+        //     $this->allocationRequest->setAdvisor($advisor);
+
+        //     return $next($request);
+        // }
+
+        LoggerService::info(self::class.' - Smart Phone lead with SIC request - Fetching advisor using hardcoded email list');
 
         $advisor = $this->findAvailableAdvisor(teamId: null);
 
         if (! $advisor) {
-            if ($this->isTestMode()) {
-                LoggerService::info(self::class.' - No Device advisor available for allocation - Trying backup advisor (TEST MODE)');
-
-                $backupAdvisor = $this->getBackupAdvisor();
-
-                if ($backupAdvisor) {
-                    LoggerService::info(self::class.' - Backup advisor found and assigned', extra: [
-                        'advisorId' => $backupAdvisor->id,
-                        'advisorName' => $backupAdvisor->name,
-                        'advisorEmail' => $backupAdvisor->email,
-                    ]);
-
-                    $this->allocationRequest->setAdvisor($backupAdvisor);
-
-                    return $next($request);
-                }
-
-                LoggerService::info(self::class.' - No Device advisor available for allocation (including backup)');
-            } else {
-                LoggerService::info(self::class.' - No Device advisor available for allocation (PRODUCTION MODE - backup advisor not used)');
-            }
-
+            LoggerService::info(self::class.' - No Smart Phone advisor available for allocation');
             $this->allocationRequest->markAsFailed();
             $this->throw('Advisor not found', self::NOT_FOUND);
         }
 
-        LoggerService::info(self::class.' - Device advisor found successfully', extra: [
+        LoggerService::info(self::class.' - Smart Phone advisor found successfully', extra: [
             'advisorId' => $advisor->id,
             'advisorName' => $advisor->name,
             'advisorEmail' => $advisor->email,
@@ -63,7 +88,20 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     protected function getAdvisorByStatus($onlineStatus, $teamId)
     {
-        LoggerService::info(self::class." - Searching for Device advisor with status: {$onlineStatus}");
+        LoggerService::info(self::class." - Searching for Smart Phone advisor with status: {$onlineStatus}");
+
+        if ($this->allocationRequest->get('isCHSAdvisor')) {
+            LoggerService::info(self::class.' - CHS Advisor is required');
+
+            // return User::select('users.id as user_id')->chs()->first(); // Production CHS advisors
+
+            // remove this when going to production and use the production CHS advisor
+            $happinessUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::SMART_PHONE_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true);
+
+            return User::select('users.id as user_id')
+                ->where('users.email', $happinessUserEmail)
+                ->first();
+        }
 
         return $this->getAdvisorByHardcodedEmails($onlineStatus);
     }
@@ -73,7 +111,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         $emails = $this->getAdvisorEmails();
 
         if (empty($emails)) {
-            LoggerService::info(self::class.' - No hardcoded emails configured for Device allocation');
+            LoggerService::info(self::class.' - No hardcoded emails configured for Smart Phone allocation');
 
             return null;
         }
@@ -81,7 +119,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         $advisorRecord = $this->getAdvisorBaseQuery(
             onlineStatus: $onlineStatus,
             teamId: null,
-            roles: [RolesEnum::DeviceAdvisor],
+            roles: [RolesEnum::SmartPhoneAdvisor],
             isBuyLead: false
         )
             ->whereIn('users.email', $emails)
@@ -89,12 +127,12 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             ->first();
 
         if ($advisorRecord) {
-            LoggerService::info(self::class.' - Found Device advisor from hardcoded email list', extra: [
+            LoggerService::info(self::class.' - Found Smart Phone advisor from hardcoded email list', extra: [
                 'advisorId' => $advisorRecord->user_id,
                 'status' => $onlineStatus,
             ]);
         } else {
-            LoggerService::info(self::class.' - No available Device advisor found', extra: [
+            LoggerService::info(self::class.' - No available Smart Phone advisor found', extra: [
                 'status' => $onlineStatus,
                 'hardcodedEmails' => $emails,
             ]);
@@ -103,62 +141,15 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $advisorRecord;
     }
 
-    private function isTestMode(): bool
-    {
-        $testMode = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_ALLOCATION_TEST_MODE);
-
-        return $testMode == 1;
-    }
-
     private function getAdvisorEmails(): array
     {
-        if ($this->isTestMode()) {
-            return $this->getTestModeAdvisorEmails();
-        }
-
-        return $this->getProductionModeAdvisorEmails();
-    }
-
-    private function getTestModeAdvisorEmails(): array
-    {
-        $emails = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_ADVISORS_TEST, useCache: true);
-        
-        if (empty($emails)) {
-            LoggerService::warning(self::class.' - No test Device advisors found in app storage');
-
-            return [];
-        }
-
-        $emails = explode(',', $emails);
-        $emails = array_map('trim', $emails);
-        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
-        $emails = array_values($emails);
-
-        LoggerService::info(self::class.' - TEST MODE: Device advisors fetched', extra: [
-            'emailCount' => count($emails),
-            'emails' => $emails,
-        ]);
-
-        return $emails;
-    }
-
-    private function getProductionModeAdvisorEmails(): array
-    {
-        $emails = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_ADVISORS, useCache: true);
+        $emails = $this->parseAdvisorEmails(
+            ApplicationStorageEnums::SMART_PHONE_ADVISORS,
+            self::WARNING_NO_SMART_PHONE_ADVISORS_FOUND
+        );
 
         if (empty($emails)) {
-            LoggerService::warning(self::class.' - No production Device advisors found in app storage');
-
-            return [];
-        }
-
-        $emails = explode(',', $emails);
-        $emails = array_map('trim', $emails);
-        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
-        $emails = array_values($emails);
-
-        if (empty($emails)) {
-            LoggerService::warning(self::class.' - No valid Device advisor emails found in app storage');
+            LoggerService::warning(self::class.' - '.self::WARNING_NO_VALID_ADVISOR_EMAILS);
 
             return [];
         }
@@ -169,7 +160,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         $isOnLeave = $this->isUserOnLeave($primaryEmail, addUnavailable: true);
 
         if ($isOnLeave) {
-            LoggerService::info(self::class.' - PRODUCTION: Primary advisor is on SICK or LEAVE, assigning to backups', extra: [
+            LoggerService::info(self::class.' - Primary advisor is on SICK or LEAVE, assigning to backups', extra: [
                 'primaryEmail' => $primaryEmail,
                 'backupCount' => count($backupEmails),
                 'backupEmails' => $backupEmails,
@@ -178,35 +169,47 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             return $backupEmails;
         }
 
-        LoggerService::info(self::class.' - PRODUCTION: Assigning to primary advisor', extra: [
+        LoggerService::info(self::class.' - Assigning to primary advisor', extra: [
             'primaryEmail' => $primaryEmail,
         ]);
 
         return [$primaryEmail];
     }
 
-   
-
-    private function getBackupAdvisor(): ?User
+    private function parseAdvisorEmails($storageKey, string $emptyWarningMessage): array
     {
-        $backupEmail = 'wasit.ali@myalfred.com';
+        $emails = getAppStorageValueByKey($storageKey, useCache: true);
 
-        LoggerService::info(self::class.' - Fetching backup advisor by email', extra: [
-            'email' => $backupEmail,
+        if (empty($emails)) {
+            LoggerService::warning(self::class." - {$emptyWarningMessage}");
+
+            return [];
+        }
+
+        $emails = explode(',', $emails);
+        $emails = array_map('trim', $emails);
+        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
+        $emails = array_values($emails);
+
+        return $emails;
+    }
+    private function getHappinessUser(): ?User
+    {
+        $email = DeviceAllocation::HAPPINESS_SUPPORT_USER_EMAIL;
+
+        LoggerService::info(self::class.' - Fetching Happiness Support User by email', extra: [
+            'email' => $email,
         ]);
 
-        $user = User::where('email', $backupEmail)
-            ->whereHas('roles', function ($query) {
-                $query->where('name', RolesEnum::DeviceAdvisor);
-            })
-            ->first();
+        $user = User::where('email', $email)->first();
 
         if (! $user) {
-            LoggerService::warning(self::class.' - Backup advisor not found in database', extra: [
-                'email' => $backupEmail,
+            LoggerService::warning(self::class.' - Happiness Support User not found in database', extra: [
+                'email' => $email,
             ]);
         }
 
         return $user;
     }
+
 }
