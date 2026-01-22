@@ -3,10 +3,12 @@
 namespace App\Imports;
 
 use App\Enums\FetchPlansStatuses;
+use App\Enums\LeadSourceEnum;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Models\User;
 use App\Services\OtherNonMotorRenewalsUploadService;
 use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
@@ -28,9 +30,11 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
     private $validCount = 0;
     private $failedCount = 0;
     private $renewalsUploadLead;
+    private OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService;
 
-    public function __construct(RenewalsUploadLeads $renewalsUploadLead)
+    public function __construct(OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService, RenewalsUploadLeads $renewalsUploadLead)
     {
+        $this->otherNonMotorRenewalsUploadService = $otherNonMotorRenewalsUploadService;
         $this->renewalsUploadLead = $renewalsUploadLead;
     }
 
@@ -100,8 +104,47 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
     public function getColumns()
     {
         return [
-            'ref_id' => ['index' => 0, 'title' => 'Ref-ID', 'rules' => 'required|max:100'],
-            'advisor_email' => ['index' => 1, 'title' => 'Advisor Email', 'rules' => 'required|email:rfc,dns|max:100'],
+            'ref_id' => [
+                'index' => 0,
+                'title' => 'Ref-ID',
+                'rules' => [
+                    'required',
+                    'max:100',
+                    function ($attribute, $value, $fail) {
+                        $refId = trim((string) $value);
+                        $quote = $this->otherNonMotorRenewalsUploadService->findEligibleQuote($refId);
+
+                        if (! $quote) {
+                            $fail('No eligible renewal lead found for provided Ref-ID');
+
+                            return;
+                        }
+
+                        if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD) {
+                            $fail('Lead source must be renewal_upload');
+                        }
+
+                        if ($this->otherNonMotorRenewalsUploadService->isManuallyAssigned($quote)) {
+                            $fail('Lead is manually assigned and was not updated');
+                        }
+                    },
+                ],
+            ],
+            'advisor_email' => [
+                'index' => 1,
+                'title' => 'Advisor Email',
+                'rules' => [
+                    'required',
+                    'email:rfc,dns',
+                    'max:100',
+                    function ($attribute, $value, $fail) {
+                        $advisor = User::where('email', strtolower(trim((string) $value)))->first();
+                        if (! $advisor) {
+                            $fail($attribute.': Advisor Email must belong to an active IMCRM user: '.$value);
+                        }
+                    },
+                ],
+            ],
         ];
     }
 

@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Jobs\Renewals;
+
+use App\Services\OtherNonMotorRenewalsUploadService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+
+class ProcessOtherNonMotorRenewal implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $tries = 2;
+    public $timeout = 1200;
+    public $backoff = 10;
+
+    public function __construct(private int $renewalsUploadLeadId, private int $renewalQuoteProcessId)
+    {
+        $this->onQueue('renewals');
+    }
+
+    public function handle(OtherNonMotorRenewalsUploadService $service): void
+    {
+        $service->processSingle($this->renewalsUploadLeadId, $this->renewalQuoteProcessId);
+    }
+
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping($this->renewalQuoteProcessId))->dontRelease()];
+    }
+}

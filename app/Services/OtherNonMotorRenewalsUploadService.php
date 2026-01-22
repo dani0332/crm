@@ -4,11 +4,11 @@ namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\FetchPlansStatuses;
-use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Imports\UploadAndUpdateOtherNonMotorImport;
+use App\Jobs\Renewals\ProcessOtherNonMotorRenewal;
 use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
@@ -16,6 +16,7 @@ use App\Models\RenewalsUploadLeads;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 
 class OtherNonMotorRenewalsUploadService
@@ -25,12 +26,13 @@ class OtherNonMotorRenewalsUploadService
     private array $allowedPersonalQuoteTypeIds;
     private array $allowedBusinessQuoteTypeIds;
 
-    public function __construct(private QuoteDocumentService $quoteDocumentService)
+    public function __construct()
     {
         $this->allowedPersonalQuoteTypeIds = [
             QuoteTypes::YACHT->id(),
             QuoteTypes::PET->id(),
             QuoteTypes::CYCLE->id(),
+
         ];
 
         $this->allowedBusinessQuoteTypeIds = [
@@ -57,9 +59,9 @@ class OtherNonMotorRenewalsUploadService
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
             DB::transaction(function () use ($renewalsUploadLead) {
-                $upload = new UploadAndUpdateOtherNonMotorImport($renewalsUploadLead);
-                $leadFile = $this->quoteDocumentService->getDocumentUrl($renewalsUploadLead->file_path);
-                $upload->import($leadFile);
+                $upload = new UploadAndUpdateOtherNonMotorImport($this, $renewalsUploadLead);
+                $leadFile = $renewalsUploadLead->file_path;
+                $upload->import($leadFile, 'azureIM');
             });
 
             $validationFailedCount = RenewalQuoteProcess::where('renewals_upload_lead_id', $renewalsUploadLead->id)
@@ -70,7 +72,7 @@ class OtherNonMotorRenewalsUploadService
                 $renewalsUploadLead->increment('cannot_upload', $validationFailedCount);
             }
 
-            $this->validateAndAssignLeads($renewalsUploadLead);
+            $this->dispatchProcessingJobs($renewalsUploadLead);
 
             $renewalsUploadLead->refresh()->update(['status' => ProcessStatusCode::COMPLETED]);
 
@@ -83,56 +85,70 @@ class OtherNonMotorRenewalsUploadService
         }
     }
 
-    private function validateAndAssignLeads(RenewalsUploadLeads $renewalsUploadLead): void
+    private function dispatchProcessingJobs(RenewalsUploadLeads $renewalsUploadLead): void
     {
+        $jobs = [];
+
         RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)
             ->where('renewals_upload_lead_id', $renewalsUploadLead->id)
-            ->chunkById(100, function ($processes) use ($renewalsUploadLead) {
+            ->chunkById(100, function ($processes) use (&$jobs, $renewalsUploadLead) {
                 foreach ($processes as $process) {
-                    $this->validateAndAssignLead($process, $renewalsUploadLead);
+                    $jobs[] = new ProcessOtherNonMotorRenewal($renewalsUploadLead->id, $process->id);
                 }
             });
+
+        if (empty($jobs)) {
+            LoggerService::info('OTH FN: No validated jobs to dispatch for lead: '.$renewalsUploadLead->id);
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+
+            return;
+        }
+
+        Bus::batch($jobs)
+            ->onQueue('renewals')
+            ->name('Other Non Motor Renewals Batch')
+            ->allowFailures()
+            ->then(function () use ($renewalsUploadLead) {
+                $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            })
+            ->catch(function () use ($renewalsUploadLead) {
+                $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+            })
+            ->dispatch();
     }
 
-    private function validateAndAssignLead(RenewalQuoteProcess $process, RenewalsUploadLeads $renewalsUploadLead): void
+    public function processSingle(int $leadId, int $processId): void
     {
-        $leadValidationErrors = collect();
+        $lead = RenewalsUploadLeads::find($leadId);
+        $process = RenewalQuoteProcess::find($processId);
+
+        if (! $lead || ! $process || $process->status !== RenewalProcessStatuses::NEW) {
+            return;
+        }
+
+        $this->assignLead($process, $lead);
+    }
+
+    private function assignLead(RenewalQuoteProcess $process, RenewalsUploadLeads $renewalsUploadLead): void
+    {
         $data = Arr::wrap($process->data);
         $refId = isset($data['ref_id']) ? trim($data['ref_id']) : null;
         $advisorEmail = isset($data['advisor_email']) ? strtolower(trim($data['advisor_email'])) : null;
 
-        if (empty($refId)) {
-            $leadValidationErrors->push('Ref-ID is required');
-        }
-
         $advisor = null;
-        if (empty($advisorEmail)) {
-            $leadValidationErrors->push('Advisor Email is required');
-        } else {
+        if (! empty($advisorEmail)) {
             $advisor = User::where('email', $advisorEmail)->first();
-            if (! $advisor) {
-                $leadValidationErrors->push('Advisor Email must belong to an active IMCRM user');
-            }
+            LoggerService::info('Advisor Email: '.$advisorEmail);
         }
 
         $quote = null;
         if ($refId) {
             $quote = $this->findEligibleQuote($refId);
-            if (! $quote) {
-                $leadValidationErrors->push('No eligible renewal lead found for provided Ref-ID');
-            }
         }
 
-        if ($quote && $quote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-            $leadValidationErrors->push('Lead source must be renewal_upload');
-        }
-
-        if ($quote && $this->isManuallyAssigned($quote)) {
-            $leadValidationErrors->push('Lead is manually assigned and was not updated');
-        }
-
-        if ($leadValidationErrors->count() > 0) {
-            $process->validation_errors = $leadValidationErrors->values();
+        // Import already enforces business validations (renewal_upload source, not manually assigned).
+        // Here we only guard against missing records.
+        if (! $advisor || ! $quote) {
             $process->status = RenewalProcessStatuses::BAD_DATA;
             $process->fetch_plans_status = FetchPlansStatuses::OUTDATED;
             $process->save();
@@ -141,19 +157,20 @@ class OtherNonMotorRenewalsUploadService
             return;
         }
 
-        $process->quote_type = self::QUOTE_TYPE;
-        $process->quote_id = $quote->id;
-        $process->fetch_plans_status = FetchPlansStatuses::FETCHED;
-        $process->status = RenewalProcessStatuses::PROCESSED;
-        $process->validation_errors = [];
-        $process->save();
+        $process->update([
+            'quote_type' => self::QUOTE_TYPE,
+            'quote_id' => $quote->id,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'validation_errors' => [],
+        ]);
 
         $this->assignAdvisor($quote, $advisor->id);
 
         $renewalsUploadLead->increment('good');
     }
 
-    private function findEligibleQuote(string $refId)
+    public function findEligibleQuote(string $refId)
     {
         $personalQuote = PersonalQuote::whereIn('quote_type_id', $this->allowedPersonalQuoteTypeIds)
             ->where(function ($query) use ($refId) {
@@ -172,18 +189,18 @@ class OtherNonMotorRenewalsUploadService
             })->first();
     }
 
-    private function assignAdvisor($quote, int $advisorId): void
-    {
-        $quote->advisor_id = $advisorId;
-        $quote->assignment_type = AssignmentTypeEnum::SYSTEM_REASSIGNED;
-        $quote->save();
-    }
-
-    private function isManuallyAssigned($quote): bool
+    public function isManuallyAssigned($quote): bool
     {
         return in_array($quote->assignment_type, [
             AssignmentTypeEnum::MANUAL_ASSIGNED,
             AssignmentTypeEnum::MANUAL_REASSIGNED,
         ]);
+    }
+
+    private function assignAdvisor($quote, int $advisorId): void
+    {
+        $quote->advisor_id = $advisorId;
+        $quote->assignment_type = AssignmentTypeEnum::SYSTEM_REASSIGNED;
+        $quote->save();
     }
 }
