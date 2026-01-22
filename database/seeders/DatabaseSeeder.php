@@ -52,6 +52,7 @@ class DatabaseSeeder extends Seeder
             SendUpdateSeederForCyber::class,
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
+            SetPcpTeamAllocationThresholdDisabledSeeder::class,
         ]);
     }
 }
