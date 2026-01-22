@@ -1968,6 +1968,7 @@ class CentralService extends BaseService
 
             $birdUrlKey = ApplicationStorageEnums::BIRD_INSLY_WORKFLOW;
             $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            $response = null;
 
             if ($birdUrl) {
                 LoggerService::info("Bird workflow URL retrieved: {$birdUrl->value} for uuid: {$quote->uuid}");
