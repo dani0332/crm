@@ -138,4 +138,16 @@ class DocumentTypeCode extends Enum
     const COMP_Polic = 'COMP_Polic'; // Holiday Homes Policy Schedule
     const FIDEL_POS = 'FIDEL_POS'; // Goods In Transit Policy Schedule
     const IND_PS = 'IND_PS'; // Group Travel Policy Schedule
+
+    // DEVICE document types
+    const DEVICE_SMARTPHONE_PAYMENT_PROOF = 'DEV_SP_PD';
+    const DEVICE_SMARTPHONE_PAYMENT_RECEIPT = 'DEV_SP_PDR';
+    const DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF = 'DEV_SP_DPDR';
+    const DEVICE_SMARTPHONE_EMIRATES_ID = 'DEV_SP_EID';
+    const DEVICE_SMARTPHONE_OTHER_DOCUMENTS = 'DEV_SP_OTHER_DOCS';
+    const DEVICE_SMARTPHONE_POLICY_CERTIFICATE = 'DEV_SP_PC';
+    const DEVICE_SMARTPHONE_POLICY_SCHEDULE = 'DEV_SP_PS';
+    const DEVICE_SMARTPHONE_TAX_INVOICE = 'DEV_SP_TI';
+    const DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER = 'DEV_SP_TIRBB';
+    const DEVICE_SMARTPHONE_POLICY_HANDBOOK = 'DEV_SP_PHB';
 }

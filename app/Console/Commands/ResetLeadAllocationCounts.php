@@ -67,6 +67,7 @@ class ResetLeadAllocationCounts extends Command
             'auto_assignment_count' => 0,
             'manual_assignment_count' => 0,
             'buy_lead_allocation_count' => 0,
+            'buy_lead_cat_a_allocation_count' => 0,
         ]);
     }
 

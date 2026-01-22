@@ -14,6 +14,8 @@ use App\Services\LookupService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use App\Services\Logger\LoggerService;
 
 class DeviceQuoteService extends BaseQuoteService
 {
@@ -46,6 +48,10 @@ class DeviceQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->filterByAdvisorAssignedDates('quoteDetail', ['advisor_assigned_date_start', 'advisor_assigned_date_end'], verifyQuoteStatus: true)
+            ->filterIn('renewal_batch_id')
+            ->filterBy('assignment_type', ignoreAll: true)
+            ->filterByPrivateClient(request('private_client'))
             ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_tax_number', request('insurer_tax_invoice_number'));
@@ -55,11 +61,41 @@ class DeviceQuoteService extends BaseQuoteService
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
                 });
+            })
+            ->when(request()->filled('payment_authorised_date'), function ($q) {
+                $authorizedAtRange = request('payment_authorised_date');
+                if (is_array($authorizedAtRange) && count($authorizedAtRange) >= 2) {
+                    $startDate = $authorizedAtRange[0];
+                    $endDate = $authorizedAtRange[1];
+                    if ($startDate && $endDate) {
+                        $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when(request()->filled('payment_capture_date'), function ($q) {
+                $capturedAtRange = request('payment_capture_date');
+                if (is_array($capturedAtRange) && count($capturedAtRange) >= 2) {
+                    $startDate = $capturedAtRange[0];
+                    $endDate = $capturedAtRange[1];
+                    if ($startDate && $endDate) {
+                        $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                              Carbon::parse($startDate)->startOfDay(),
+                               Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
             });
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        if (request()->has('debug') && request()->debug == 'true') {
+        if (request()->has('debug') && request()->debug == true) {
             echo $query->toRawSql();
             exit;
         }
@@ -86,8 +122,7 @@ class DeviceQuoteService extends BaseQuoteService
                     'customer',
                     'customer.additionalContactInfo',
                     'insuranceProvider:id,text,code',
-                    'insuranceProviderPlan',
-                    'insuranceProvider',
+                    'insuranceProviderPlan.insuranceProvider',
                     'payments' => function ($q) {
                         $q->with([
                             'paymentStatus',
@@ -135,7 +170,8 @@ class DeviceQuoteService extends BaseQuoteService
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::DEVICE_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::Device) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
         return [
-            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::DeviceManager),
+            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SmartPhoneManager),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             ...$data,
         ];
     }
@@ -269,11 +305,21 @@ class DeviceQuoteService extends BaseQuoteService
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
-        // Make API request to save the savings quote
-        $response = Capi::request('/api/device/create', 'post', $data);
-
-        if (isset($response->quoteUID)) {
-            $this->selfAssign(QuoteTypes::DEVICE, $response->quoteUID, true);
+        // Make API request to save the device quote
+        $response = Capi::request('/api/v1/device/create', 'post', $data);
+        if (isset($response->code) && !in_array($response->code, [200, 201], true) || isset($response->status) && !in_array($response->status, [200, 201], true)) {
+            return $response->json();
+        }
+        if (isset($response->uuid) && $response->uuid != '') {
+            LoggerService::info(self::class.' - create: Assigning quote to self', extra: [
+                'quote_uuid' => $response->uuid,
+            ]);
+            $this->selfAssign(QuoteTypes::DEVICE, $response->uuid, true);
+            $lead = $this->baseQuery()->where('uuid', $response->uuid)->first();
+            if ($lead) {
+                $lead->advisor_id = Auth::id();
+                $lead->save();
+            }
         }
 
         return $response;

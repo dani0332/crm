@@ -29,7 +29,7 @@ enum OCRDocumentTypeEnum: string
             'CEID' => self::ID_CARD,
             'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
             'EID_CAR' => self::ID_CARD,
-
+            DocumentTypeCode::DEVICE_SMARTPHONE_EMIRATES_ID => self::ID_CARD,
             'PS' => self::POLICY_SCHEDULE,
             'GH_PS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Group Health Policy Schedule
             // Send Update document types
@@ -71,6 +71,9 @@ enum OCRDocumentTypeEnum: string
                 self::TAX_INVOICE_RAISED_BY_BUYER,
                 self::POLICY_SCHEDULE,
                 self::MOTOR_INSURANCE_POLICY_SCHEDULE,
+            ],
+            QuoteTypes::DEVICE => [
+                self::ID_CARD,
             ],
             default => [],
         };

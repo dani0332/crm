@@ -25,6 +25,7 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_NEW_POLICY = 'car_new_policy';
     public const COMMERCIAL_CAR_NEW_POLICY = 'commercial_car_new_policy';
     public const BIKE_NEW_POLICY = 'bike_new_policy';
+    public const DEVICE_NEW_POLICY = 'device_new_policy';
     public const LIFE_NEW_POLICY = 'life_new_policy';
     public const TRAVEL_NEW_POLICY = 'travel_new_policy';
     public const CYCLE_NEW_POLICY = 'cycle_new_policy';
@@ -67,6 +68,7 @@ final class WorkflowTypeEnum extends Enum
     public const CAR_CQF_RENEWAL_FOLLOWUPS = 'car_cqf_renewal_followups';
     public const CAR_MISSING_DOC_REMINDER = 'car_missing_doc_reminder';
     public const TRAVEL_AUTOMATED_FOLLOWUPS = 'travel_automated_followups';
+    public const TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS = 'travel_renewal_automated_followups';
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
 
     // Device Workflow Types
@@ -74,4 +76,6 @@ final class WorkflowTypeEnum extends Enum
     public const DEVICE_OCB_INTRO_EMAIL = 'device_ocb_intro_email';
     public const DEVICE_OCB_INTRO_WHATSAPP = 'device_ocb_intro_whatsapp';
     public const DEVICE_ZERO_PLANS_EMAIL = 'device_zero_plans_email';
+    // Misreport Enum
+    public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
 }

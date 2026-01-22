@@ -8,6 +8,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -96,6 +97,7 @@ class CarQuoteExport implements CsvExportableInterface
             'UPDATED BY',
             'ADDITIONAL NOTES',
             'ADVISOR',
+            'BRANCH',
             'POLICY NUMBER',
             'POLICY EXPIRY DATE',
             'IS GCC STANDARD',
@@ -125,6 +127,8 @@ class CarQuoteExport implements CsvExportableInterface
      */
     public function map($quote): array
     {
+        $branchName = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car));
+
         return [
             $quote->code,
             $quote->batch?->name,
@@ -161,6 +165,7 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->updated_by,
             $quote->additional_notes,
             $quote->advisor?->name,
+            $branchName,
             $quote->policy_number,
             $quote->policy_expiry_date ? date(config('constants.datetime_format'), strtotime($quote->policy_expiry_date)) : '',
             $quote->is_gcc_standard ? 'Yes' : 'No',

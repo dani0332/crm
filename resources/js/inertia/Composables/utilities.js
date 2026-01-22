@@ -77,6 +77,7 @@ export const useGetShowPageRoute = (
     9: route('pet-quotes-show', uuid),
     10: route('cycle-quotes-show', uuid),
     18: route('savings-quotes-show', uuid),
+    20: route('device-quotes-show', uuid),
   };
 
   return routesObj[quoteTypeId];
@@ -590,6 +591,7 @@ export const validateField = (form, fieldValue, errorField, validationRule) => {
 };
 
 export const applyEmiratesNumberMasking = emiratesId => {
+  if (!emiratesId) return emiratesId;
   let emiratesIDNumber = emiratesId.replace(/\D/g, '');
   if (emiratesIDNumber?.length > 15) {
     emiratesIDNumber = emiratesIDNumber.substring(0, 15); // Limit to 15 characters

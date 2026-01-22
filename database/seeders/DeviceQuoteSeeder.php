@@ -27,8 +27,8 @@ class DeviceQuoteSeeder extends Seeder
         LoggerService::info(self::class.' - Device Quote type upserted');
         $this->mapQuoteStatuses();
         LoggerService::info(self::class.' - Device Quote statuses mapped');
-        $this->seedRoles([RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager]);
         LoggerService::info(self::class.' - Device Roles seeded');
+        $this->seedRoles([RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager]);
         $this->seedDevicePermissions();
         LoggerService::info(self::class.' - Device Permissions seeded');
         $this->product();
@@ -62,7 +62,7 @@ class DeviceQuoteSeeder extends Seeder
             PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::DEVICE_LEADPOOL,
         ];
-        $this->seedPermissions($permissions, [RolesEnum::Admin, RolesEnum::DeviceAdvisor, RolesEnum::DeviceManager, RolesEnum::Engineering]);
+        $this->seedPermissions($permissions, [RolesEnum::Admin, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager, RolesEnum::Engineering]);
 
     }
 

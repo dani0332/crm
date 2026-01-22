@@ -114,9 +114,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         }
         if ($modelType == quoteTypeCode::Health) {
             $planName = $quote->plan->text;
-        } elseif ($modelType == quoteTypeCode::SAVINGS) {
+        } elseif (in_array($modelType, [quoteTypeCode::SAVINGS, quoteTypeCode::Device])) {
             $planName = $quote?->insuranceProviderPlan?->text ?? '';
-
             // TODO : need to discuss this, because file size is exceed.
             $policyWordingDoc = [
                 'watermarked_doc_url' => $quote->insuranceProviderPlan?->policyWordings?->link,
@@ -182,13 +181,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $emailData->policyWordingHandbook = $policyWordingDoc;
         $emailData->isHealthAUH = $isAUHHealthLead;
         $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Device])) {
+            // For Bird
             $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);
-
             if (! empty($emailData)) {
                 $response = app(CentralService::class)->sendInslyEmailToCustomer($quote, $emailData, $quoteTypeId, 'Main Lead');
             }
         } else {
+            // For Bravo
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
         }
         info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));

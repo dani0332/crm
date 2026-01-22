@@ -22,6 +22,7 @@ class DeviceQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(PersonalQuote::class, 'personal_quote_id');
     }
+
     public function getAuditables()
     {
         return [

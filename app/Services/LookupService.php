@@ -17,6 +17,7 @@ use App\Models\LostReasons;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentMethod;
+use App\Models\PaymentStatus;
 use App\Models\QuoteStatus;
 use App\Models\SalaryBand;
 use App\Models\Tier;
@@ -283,6 +284,12 @@ class LookupService extends BaseService
             return Capi::request('/api/v1-get-all-device-lookups', 'post');
         });
     }
+    public function getPaymentStatuses()
+    {
+        return PaymentStatus::where('is_active', 1)
+            ->orderBy('text')
+            ->get(['id', 'text']);
+    }
     public function getDeviceQuoteLookUpData()
     {
         return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
@@ -298,4 +305,5 @@ class LookupService extends BaseService
             ])->get();
         });
     }
+
 }

@@ -346,6 +346,16 @@ class CentralController extends Controller
 
             $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
+            if (! $response['status']) {
+                return response()->json([
+                    'errors' => [
+                        'message' => [
+                            $response['message'],
+                        ],
+                    ],
+                ], 422);
+            }
+
             return response()->json(['message' => $response['message']], 200);
         }
     }
@@ -392,7 +402,6 @@ class CentralController extends Controller
                 app(EmbeddedProductRepository::class)->syncCarQuoteEpEcb($quote, QuoteTypeId::Car);
             }
         }
-
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
         app(TravelQuoteService::class)->updateCustomerProfileDetails($quoteType, $uuid);
 

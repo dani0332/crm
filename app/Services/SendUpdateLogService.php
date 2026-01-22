@@ -1886,18 +1886,19 @@ class SendUpdateLogService
 
     public function isEndorsementBookingActionDisabled($sendUpdateLog)
     {
-        if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health) {
-            $personalQuote = PersonalQuote::where('id', $sendUpdateLog->personal_quote_id)->first();
-            $quoteDetails = HealthQuote::where('code', $personalQuote->code)->first();
+        $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
+        $quote = $this->getQuoteObjectBy($quoteType, $sendUpdateLog->quote_uuid, 'uuid');
 
-            $emirateOfYourVisaId = $quoteDetails?->emirate_of_your_visa_id;
-            if ($emirateOfYourVisaId == EmirateEnum::ABU_DHABI) {
-                return true;
-            }
+        if (! $quote) {
+            LoggerService::warning('Quote not found for send update log', extra: [
+                'send_update_log_id' => $sendUpdateLog->id,
+                'quote_uuid' => $sendUpdateLog->quote_uuid,
+                'quote_type_id' => $sendUpdateLog->quote_type_id,
+            ]);
 
             return false;
         }
 
-        return false;
+        return $this->isAbuDhabiBranch($quoteType, $quote);
     }
 }

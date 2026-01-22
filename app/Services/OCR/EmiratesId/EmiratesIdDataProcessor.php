@@ -8,7 +8,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
 use App\Models\CarQuote;
 use App\Models\CustomerInsured;
@@ -16,6 +15,7 @@ use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -57,7 +57,12 @@ class EmiratesIdDataProcessor
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
 
             // Trigger OCR success validation
-            $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $ocrDocumentValidator->validateEIDFields($this->documentTypeCode);
             LoggerService::info('EmiratesId data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
 
             DB::commit();
@@ -78,7 +83,6 @@ class EmiratesIdDataProcessor
     private function updateVehicleDriverDetail($quote): bool
     {
         try {
-
             $fieldsToUpdate = $this->getCleanData([
                 'driver_gender' => $this->extractedData['sex'],
             ]);
@@ -377,8 +381,12 @@ class EmiratesIdDataProcessor
 
     private function getQuoteTypeId(): int
     {
-        // Currently only supporting Car quotes for Emirates ID OCR
-        return QuoteTypes::getId(QuoteTypes::CAR) ?? QuoteTypeId::Car;
+        // Currently only supporting Car quotes and Personal quotes for Emirates ID OCR
+        return match (get_class($this->quote)) {
+            CarQuote::class => QuoteTypeId::Car,
+            PersonalQuote::class => $this->quote?->quote_type_id ?? PersonalQuote::where('uuid', $this->quote->uuid)->select('quote_type_id')->first()->quote_type_id,
+            default => QuoteTypeId::Car,
+        };
     }
 
     public function getProcessingSummary(): array

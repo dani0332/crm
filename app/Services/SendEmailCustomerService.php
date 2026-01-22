@@ -24,7 +24,6 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
-use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
 {

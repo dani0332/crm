@@ -29,6 +29,13 @@ final class EmirateEnum extends Enum
             : 'Dubai & Northern Emirates';
     }
 
+    public static function getBranchId(int $emirate): int
+    {
+        return $emirate === self::ABU_DHABI
+            ? BranchEnum::ABU_DHABI->value
+            : BranchEnum::DUBAI->value;
+    }
+
     /**
      * Get emirate mapping with branches for frontend
      */
