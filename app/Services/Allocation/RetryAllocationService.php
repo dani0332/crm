@@ -102,7 +102,9 @@ class RetryAllocationService
         LoggerService::info(self::class.':executeCarAllocation: Found '.count($leads).' leads to process');
 
         foreach ($leads as $lead) {
-            if ($lead->tier_id == TiersIdEnum::TIER_R) {
+            if ($lead->tier_id == TiersIdEnum::TIER_R && ! $lead->hasCarValue()) {
+                LoggerService::info(self::class.': Skipping car quote allocation for tier R and does not have car value');
+
                 continue;
             }
 
@@ -168,8 +170,8 @@ class RetryAllocationService
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
-            if ($lead->tier_id == TiersIdEnum::TIER_R) {
-                LoggerService::info(self::class.': Skipping car revival quote allocation for tier R');
+            if ($lead->tier_id == TiersIdEnum::TIER_R && ! $lead->hasCarValue()) {
+                LoggerService::info(self::class.': Skipping car revival quote allocation for tier R and does not have car value');
 
                 continue;
             }
