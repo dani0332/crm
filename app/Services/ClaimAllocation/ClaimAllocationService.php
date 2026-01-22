@@ -38,20 +38,19 @@ class ClaimAllocationService
             isReassignmentJob: false,
         );
 
-        // try {
-        $result = Pipeline::send($allocationRequest)->through([
-            FetchLeadPipe::class,
-            FetchEligibleManagersPipe::class,
-            FinalizeEligibleManagerPipe::class,
-            AssignLeadPipe::class,
-            MakeResponsePipe::class,
-        ])->thenReturn();
+        try {
+            $result = Pipeline::send($allocationRequest)->through([
+                FetchLeadPipe::class,
+                FetchEligibleManagersPipe::class,
+                FinalizeEligibleManagerPipe::class,
+                AssignLeadPipe::class,
+                MakeResponsePipe::class,
+            ])->thenReturn();
 
-        return $result;
-        // } catch (Exception $e) {
-
-        return $this->resolveAllocationResponse($allocationRequest, $e);
-        // }
+            return $result;
+        } catch (Exception $e) {
+            return $this->resolveAllocationResponse($allocationRequest, $e);
+        }
 
     }
 
@@ -62,10 +61,12 @@ class ClaimAllocationService
             $lead->endAllocation();
         }
 
-        if ($request->isAllocated() || $request->isSameManager()) {
+        if ($request->isAllocated() || $request->isSameManager() || $request->isAlreadyAssigned()) {
             $message = 'Manager assigned successfully!';
 
-            if ($request->isSameManager()) {
+            if ($request->isAlreadyAssigned()) {
+                $message = 'Manager is already assigned';
+            } elseif ($request->isSameManager()) {
                 $message = 'Found same manager as previous manager so further allocation is skipped';
             }
 

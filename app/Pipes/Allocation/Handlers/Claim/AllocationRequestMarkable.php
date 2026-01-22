@@ -33,4 +33,14 @@ trait AllocationRequestMarkable
     {
         return $this->get('same_manager', false);
     }
+
+    public function markAsAlreadyAssigned()
+    {
+        $this->set('already_assigned', true);
+    }
+
+    public function isAlreadyAssigned()
+    {
+        return $this->get('already_assigned', false);
+    }
 }
