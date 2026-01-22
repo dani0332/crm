@@ -58,6 +58,8 @@ class EmiratesIdDataProcessor
                     'insured_customer_type' => $insured->customer_type,
                 ]);
 
+                DB::rollBack();
+
                 return false;
             }
 
