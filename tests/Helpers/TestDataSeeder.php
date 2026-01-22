@@ -3,9 +3,9 @@
 namespace Tests\Helpers;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Models\CarQuote;
 use App\Enums\AuthGuardEnum;
 use App\Enums\PermissionsEnum;
+use App\Models\CarQuote;
 use App\Models\Nationality;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;

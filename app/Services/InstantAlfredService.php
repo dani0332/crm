@@ -439,6 +439,8 @@ class InstantAlfredService extends BaseService
                     // Add segment from SQL data
                     $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
 
+                    // Add lead_created_at from SQL data
+                    $record['lead_created_at'] = $sqlData[$quoteId]->lead_created_at ?? 'N/A';
                     // Add renewal batch information
                     $record['renewal_batch_text'] = $sqlData[$quoteId]->renewal_batch_text ?? 'N/A';
 
@@ -498,6 +500,7 @@ class InstantAlfredService extends BaseService
                 // Add segment
                 $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
 
+                // Add lead_created_at from SQL data
                 $record['lead_created_at'] = $sqlData[$quoteId]->lead_created_at ?? 'N/A';
 
                 // Add renewal batch information
