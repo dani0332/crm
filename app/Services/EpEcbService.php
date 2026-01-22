@@ -1095,10 +1095,17 @@ class EpEcbService extends EpBookingService
             && $latestInsuredData?->customer_type == CustomerTypeEnum::Entity;
 
         $customerIdType = $proceedWithTradeLicense ? GenericRequestEnum::TRADE_LICENSE_SHORT_CODE : GenericRequestEnum::EMIRATES_ID_SHORT_CODE;
+        
+        LoggerService::info('getCustomerTypeInfo - Insured Data', extra: [
+            'customerIdType' => $customerIdType,
+            'latestInsuredIdType' => $latestInsuredData?->id_type,
+            'latestInsuredIdNumber' => $latestInsuredData?->id_number,
+        ]);
+
         if ($customerIdType == GenericRequestEnum::TRADE_LICENSE_SHORT_CODE) {
             $customerIdNo = $latestInsuredData?->id_type === GenericRequestEnum::TRADE_LICENSE
                 ? $latestInsuredData?->id_number
-                : null;
+                : '';
         } else {
             $customerIdNo = $latestInsuredData?->id_type == GenericRequestEnum::EMIRATES_ID
                 ? formatEmiratesIdNumber($latestInsuredData?->id_number ?? '')
