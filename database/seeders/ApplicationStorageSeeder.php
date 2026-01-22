@@ -272,15 +272,6 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/3e7d2c6f-7a52-4af4-b9a4-4b2079a35daf/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_FLOW_URL],
-            [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/08c1d960-bcf7-4f5f-bc9a-eb3e0a9450dd/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
