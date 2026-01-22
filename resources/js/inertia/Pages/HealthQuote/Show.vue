@@ -252,7 +252,7 @@ const subTeamOptions = [
   { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
-  { value: 'PCP', label: 'PCP' },
+  { value: 'GBP', label: 'GBP' },
 ];
 
 const advisorOptions = computed(() => {
