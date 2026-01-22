@@ -104,6 +104,7 @@ class RetryAllocationService
         foreach ($leads as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R && ! $lead->hasCarValue()) {
                 LoggerService::info(self::class.': Skipping car quote allocation for tier R and does not have car value');
+
                 continue;
             }
 
