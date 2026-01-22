@@ -74,6 +74,7 @@ class RetryAllocationService
                 'sic_advisor_requested',
                 'quote_status_id',
                 'tier_id',
+                'car_value',
             ])
             ->where(function ($q) use ($allocationStartDate, $to) {
                 $q->whereBetween('created_at', [$allocationStartDate, $to])
@@ -153,6 +154,7 @@ class RetryAllocationService
                 'quote_status_id',
                 'advisor_id',
                 'tier_id',
+                'car_value',
             ])
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
