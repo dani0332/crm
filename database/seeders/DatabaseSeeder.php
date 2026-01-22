@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             DocRequiredForPolicySendSeeder::class,
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
+            SetPcpTeamAllocationThresholdDisabledSeeder::class,
         ]);
     }
 }
