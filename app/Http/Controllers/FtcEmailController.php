@@ -16,7 +16,7 @@ class FtcEmailController extends Controller
         $quoteTypeEnum = QuoteTypes::tryFrom(ucfirst($quoteType))
             ?? QuoteTypes::getNameShortCode(strtoupper($quoteType))
             ?? QuoteTypes::getName((int) $quoteType);
-       
+
         $allowedQuoteTypes = [
             QuoteTypes::CAR,
             QuoteTypes::HOME,
@@ -35,9 +35,9 @@ class FtcEmailController extends Controller
         if (! $quoteTypeEnum || ! in_array($quoteTypeEnum, $allowedQuoteTypes, true)) {
             abort(404, 'Quote type not found');
         }
-       
+
         SendFTCEmailJob::dispatch($uuid, $quoteTypeEnum);
 
-        return response()->json(['queued' => true,'time'=>now()->format('Y-m-d H:i:s')]);
+        return response()->json(['queued' => true, 'time' => now()->format('Y-m-d H:i:s')]);
     }
 }
