@@ -52,6 +52,15 @@ class EmiratesIdDataProcessor
                 throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');
             }
 
+            if ($insured->customer_type !== CustomerTypeEnum::Individual) {
+                LoggerService::info('Skipping Emirates ID data processing for non-individual insured record', extra: [
+                    'insured_id' => $insured->id,
+                    'insured_customer_type' => $insured->customer_type,
+                ]);
+
+                return false;
+            }
+
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
             $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
