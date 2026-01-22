@@ -138,7 +138,7 @@ class CarQuoteService extends BaseService
             // Lead source fields from CreateLeadModal
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
-            'driverEmiratesIdNumber' => $request->driver_emirates_id_number ?? null,
+            'driverEidNumber' => $request->driver_emirates_id_number ?? null,
             'driverGender' => $request->driver_gender ?? null,
         ];
 
