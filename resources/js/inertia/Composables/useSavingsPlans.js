@@ -811,9 +811,10 @@ export function useSavingsPlans(options = {})
    * @param {Number} planId - Plan ID
    * @param {String} quoteUuid - Quote UUID
    * @param {Boolean} isDisabled - Whether plan should be disabled (hidden)
+   * @param {Number} providerId - Provider ID (optional, will try to get from planDetails if not provided)
    * @returns {Promise} API response promise
    */
-  const togglePlanVisibility = async (planId, quoteUuid, isDisabled) =>
+  const togglePlanVisibility = async (planId, quoteUuid, isDisabled, providerId = null) =>
   {
     if (!planId || !quoteUuid)
     {
@@ -823,12 +824,12 @@ export function useSavingsPlans(options = {})
     try
     {
       const response = await axios.post(
-        route('manualPlanToggle', { quoteType: 'savings' }),
+        route('savings-plan-toggle-visibility'),
         {
-          modelType: 'Savings',
-          planIds: [planId],
-          quote_uuid: quoteUuid,
-          toggle: isDisabled, // true = hide, false = show
+          quoteUID: quoteUuid,
+          providerId: providerId || null, // Will be set by backend if not provided
+          planId: planId,
+          isDisabled: isDisabled, // true = hide, false = show
         },
       );
 
@@ -846,7 +847,7 @@ export function useSavingsPlans(options = {})
       if (notification)
       {
         notification.error({
-          title: 'Error updating plan visibility',
+          title: error.response?.data?.message || 'Error updating plan visibility',
           position: 'top',
         });
       }

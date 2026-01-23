@@ -21,6 +21,7 @@ use App\Models\PersonalQuote;
 use App\Models\SavingsQuote;
 use App\Services\BranchAssignmentService;
 use App\Services\HttpRequestService;
+use App\Services\KenService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use Carbon\Carbon;
@@ -881,5 +882,28 @@ class SavingsQuoteService extends BaseQuoteService
         }
 
         return [];
+    }
+
+    /**
+     * Toggle savings plan visibility (hide/show)
+     *
+     * @param  array  $data
+     * @return mixed
+     */
+    public function toggleSavingsPlanVisibility(array $data)
+    {
+        LoggerService::info('fn: toggleSavingsPlanVisibility', extra: [
+            'data' => $data,
+        ]);
+
+        // If providerId is not provided, try to get it from the quote
+        if (empty($data['providerId']) && ! empty($data['quoteUID'])) {
+            $quote = PersonalQuote::where('uuid', $data['quoteUID'])->first();
+            if ($quote && $quote->insurance_provider_id) {
+                $data['providerId'] = $quote->insurance_provider_id;
+            }
+        }
+
+        return app(KenService::class)->request('/toggle-savings-plan-visibility', 'post', $data);
     }
 }

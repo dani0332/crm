@@ -189,11 +189,19 @@ const onToggleHidePlan = async () => {
   const toggleValue = props.planDetails.isDisabled; // true = hide, false = show
   const previousValue = !toggleValue;
 
+  // Get providerId from planDetails or quote
+  const providerId = props.planDetails.providerId || 
+                      props.planDetails.insuranceProviderId || 
+                      props.planDetails.insurance_provider_id ||
+                      props.quote?.insurance_provider_id ||
+                      null;
+
   try {
     await togglePlanVisibility(
       props.planDetails.id,
       props.quote.uuid,
       toggleValue,
+      providerId,
     );
   } catch (error) {
     console.error('Error toggling plan visibility:', error);

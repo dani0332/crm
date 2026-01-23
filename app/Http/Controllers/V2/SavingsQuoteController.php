@@ -312,4 +312,16 @@ class SavingsQuoteController extends Controller
             return response()->json([]);
         }
     }
+
+    /**
+     * Toggle savings plan visibility (hide/show)
+     */
+    public function toggleSavingsPlanVisibility(Request $request)
+    {
+        LoggerService::startQuoteLogging($request->quoteUID);
+        $this->savingsQuoteService->toggleSavingsPlanVisibility($request->all());
+        LoggerService::info('fn: toggleSavingsPlanVisibility - Savings plan visibility toggled successfully');
+
+        return response()->json(['message' => 'Savings plan visibility toggled successfully']);
+    }
 }
