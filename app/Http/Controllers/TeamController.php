@@ -63,6 +63,7 @@ class TeamController extends Controller
         $validateArray = [
             'name' => 'required',
             'type' => 'required',
+            'category' => 'required',
             'slabs_count' => 'required|numeric',
         ];
         if (isset($request->type) && $request->type != 1 && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
@@ -76,6 +77,7 @@ class TeamController extends Controller
         }
         $team->name = $request->name;
         $team->type = $request->type;
+        $team->category = $request->category;
         $team->is_active = 1;
         $team->slabs_count = $request->get('slabs_count');
         $team->created_at = now();

@@ -92,10 +92,11 @@ const generateTeamsToPost = () => {
     };
   });
 };
-const updateTeams = (category) => {
+const updateTeams = () => {
   let valid = validateTeams();
   if (valid) {
     let teams = generateTeamsToPost();
+    console.log(team);
     /*axios
       .post('/update-team-allocation-threshold', { teams })
       .then(response => {
@@ -167,7 +168,7 @@ const activeTab = ref(0); // Default: first tab
 
     <!-- Update Button for this tab -->
     <div class="flex justify-end gap-3 mt-5">
-      <x-button size="sm" color="#ff5e00" @click="updateTeams(tabs[activeTab])">
+      <x-button size="sm" color="#ff5e00" @click="updateTeams()">
         Update {{ tabs[activeTab] }}
       </x-button>
     </div>
