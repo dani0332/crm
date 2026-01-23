@@ -21,7 +21,9 @@ const listen = () => {
     });
 
     if (e.data.advisorId === page.props.auth.user.id) {
-      console.log('[PaymentNotification] Processing notification for current user');
+      console.log(
+        '[PaymentNotification] Processing notification for current user',
+      );
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
         title: 'Payment',
@@ -33,10 +35,13 @@ const listen = () => {
       };
       showNotification.value = true;
     } else {
-      console.log('[PaymentNotification] Broadcast ignored - not for current user', {
-        broadcastAdvisorId: e.data.advisorId,
-        currentUserId: page.props.auth.user.id,
-      });
+      console.log(
+        '[PaymentNotification] Broadcast ignored - not for current user',
+        {
+          broadcastAdvisorId: e.data.advisorId,
+          currentUserId: page.props.auth.user.id,
+        },
+      );
     }
   });
 

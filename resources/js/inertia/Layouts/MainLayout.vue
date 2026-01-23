@@ -37,7 +37,9 @@ const isActive = link => {
 
 const user = computed(() => page.props.auth.user);
 const pendingActivityCount = computed(() => page.props.pendingActivityCount);
-const authorisePaymentCountProp = computed(() => page.props.authorisePaymentCount);
+const authorisePaymentCountProp = computed(
+  () => page.props.authorisePaymentCount,
+);
 const authorisePaymentCount = ref(authorisePaymentCountProp.value);
 const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
@@ -156,10 +158,13 @@ const listenToAuthorisedPaymentCount = () => {
       });
       authorisePaymentCount.value = e.data.count;
     } else {
-      console.log('[AuthorisedPaymentCount] Broadcast ignored - not for current user', {
-        broadcastUserId: e.data.userId,
-        currentUserId: user.value?.id,
-      });
+      console.log(
+        '[AuthorisedPaymentCount] Broadcast ignored - not for current user',
+        {
+          broadcastUserId: e.data.userId,
+          currentUserId: user.value?.id,
+        },
+      );
     }
   });
 
@@ -190,7 +195,7 @@ const listenToAuthorisedPaymentCount = () => {
 // Watch for prop changes to sync initial value
 watch(
   () => authorisePaymentCountProp.value,
-  (newValue) => {
+  newValue => {
     authorisePaymentCount.value = newValue;
   },
 );
