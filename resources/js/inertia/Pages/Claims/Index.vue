@@ -409,7 +409,9 @@ const isBikeLOB = computed(() => {
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
   let isHealth = quoteTypeIds.Health === filters.quote_type_id;
-  let isGroupMedical = page.props.quoteBusinessTypeIdEnum.GROUP_MEDICAL === filters.business_type_of_insurance_id;
+  let isGroupMedical =
+    page.props.quoteBusinessTypeIdEnum.GROUP_MEDICAL ===
+    filters.business_type_of_insurance_id;
   return isHealth || isGroupMedical;
 });
 
