@@ -172,7 +172,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'roles' => 'required',
             'password' => 'required',
-            'manager' => 'required',
+            'manager' => 'nullable',
             'products' => 'required',
             'teams' => 'required',
             'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
@@ -341,7 +341,7 @@ class UserController extends Controller
             ],
             'roles' => 'required',
             'teams' => 'required',
-            'manager' => 'required',
+            'manager' => 'nullable',
             'permissions' => 'nullable|array',
             'rm_category_id' => ['required', 'integer', 'regex:/^(-1|[1-9]\d*)$/'],
         ]);
