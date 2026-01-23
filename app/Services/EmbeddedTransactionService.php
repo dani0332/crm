@@ -111,7 +111,7 @@ class EmbeddedTransactionService extends BaseService
         return apiResponse($data, Response::HTTP_OK, 'Retargeting EP Reminder data');
     }
 
-    public function retargetingEpReminderCallback(RetargetingEpReminderCallbackRequest $request)
+    public function retargetingCarEpReminderCallback(RetargetingEpReminderCallbackRequest $request)
     {
         $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CAR_EP_RETARGETING_REMINDER_EMAIL_TEMPLATE);
 
