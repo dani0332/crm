@@ -683,13 +683,13 @@ class ManagementReport
         ";
     }
 
-    public function paymentJoin($query, $additionalConditions = null, $alias = 'p', $joinType = 'join')
+    public function paymentJoin($query, $additionalConditions = null, $alias = 'p', $joinType = 'join', $cteJoin = 'join')
     {
         $cte = $this->getPaymentMappingCTE();
         $query->withExpression('personal_quotes_mapped', $cte);
         
-        // Join the CTE to create the mapping
-        $query->join('personal_quotes_mapped as pqm', 'pqm.id', '=', 'personal_quotes.id');
+        // Join the CTE to create the mapping based on the CTE join type
+        $query->{$cteJoin}('personal_quotes_mapped as pqm', 'pqm.id', '=', 'personal_quotes.id');
         
         // Then join payments using the mapped fields
         $query->{$joinType}("payments as {$alias}", function ($join) use ($additionalConditions, $alias) {

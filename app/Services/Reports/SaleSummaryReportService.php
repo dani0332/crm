@@ -210,7 +210,7 @@ class SaleSummaryReportService extends ManagementReport
 
         $query = SendUpdateLog::query()
             ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id');
-        $this->paymentJoin($query, null, 'pq', 'leftJoin');
+        $this->paymentJoin($query, null, 'pq', 'leftJoin', 'leftJoin');
         $query->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
@@ -298,7 +298,7 @@ class SaleSummaryReportService extends ManagementReport
 
         $reversalQuery = SendUpdateLog::query()
             ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id');
-        $this->paymentJoin($reversalQuery, null, 'pq', 'leftJoin');
+        $this->paymentJoin($reversalQuery, null, 'pq', 'leftJoin', 'leftJoin');
         $reversalQuery->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
