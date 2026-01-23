@@ -7,6 +7,9 @@ const props = defineProps({
 });
 
 const notification = useToast();
+const tabs = reactive(["SIC","AUH","Non AUH"]);
+const activeTab = ref(0);
+const loading = ref(false);
 
 const teamsForm = useForm({
   teams: [...Object.values(props.teams)],
@@ -99,6 +102,7 @@ const generateTeamsToPost = () => {
 
 const loadTeams = (index) => {
   activeTab.value = index;
+  loading.value = true;
 
   // Get teams
   axios
@@ -112,7 +116,10 @@ const loadTeams = (index) => {
         message: 'An error occurred while fetching the teams',
         position: 'top',
       });
-    });
+    })
+    .finally(() => {
+      loading.value = false;
+    })
 };
 
 const updateTeams = () => {
@@ -138,9 +145,6 @@ const updateTeams = () => {
   }
 };
 
-const tabs = reactive(["SIC","AUH","Non AUH"]);
-const activeTab = ref(0);
-
 onMounted(() => {
   loadTeams(activeTab.value);
 });
@@ -158,8 +162,10 @@ onMounted(() => {
       v-for="(tab, index) in tabs"
       :key="index"
       @click="loadTeams(index)"
+      :disabled="loading"
       :class="[
         'px-4 py-2 font-semibold',
+        loading ? 'opacity-50 cursor-not-allowed' : '',
         activeTab === index
           ? 'border-b-2 border-primary text-primary'
           : 'text-gray-500 hover:text-gray-700'
@@ -170,7 +176,14 @@ onMounted(() => {
   </div>
 
   <!-- Active Tab Content -->
-  <div>
+  <div class="min-h-[150px]">
+  <!-- Loader -->
+  <div v-if="loading" class="flex justify-center items-center py-10">
+    <span class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></span>
+  </div>
+
+  <!-- Content -->
+  <div v-else>
     <div v-for="team in teamsForm.teams" :key="team.name">
       <h2 class="my-3 font-semibold text-primary">{{ team.name }}:</h2>
       <x-form :auto-focus="false">
@@ -191,11 +204,11 @@ onMounted(() => {
       </x-form>
     </div>
 
-    <!-- Update Button for this tab -->
     <div class="flex justify-end gap-3 mt-5">
       <x-button size="sm" color="#ff5e00" @click="updateTeams()">
         Update {{ tabs[activeTab] }}
       </x-button>
     </div>
   </div>
+</div>
 </template>
