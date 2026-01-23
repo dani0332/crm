@@ -85,17 +85,18 @@ class AMLResultsProcessor
         object $match,
         Collection $manualStatusUpdates
     ): string {
-        // If already marked as true match or false positive
-        if ($match->TrueMatch || $match->FalsePositive) {
-            return AMLDecisionStatusEnum::TRUE_MATCH;
+        // If not false positive and not true match, check manual updates
+        if (! $match->FalsePositive && ! $match->TrueMatch) {
+            // Check for manual status update
+            if ($manualStatusUpdates->has($match->ID)) {
+                return $manualStatusUpdates->get($match->ID);
+            }
+
+            // Default to unknown
+            return AMLDecisionStatusEnum::UNKNOWN;
         }
 
-        // Check for manual status update
-        if ($manualStatusUpdates->has($match->ID)) {
-            return $manualStatusUpdates->get($match->ID);
-        }
-
-        // Default to unknown
-        return AMLDecisionStatusEnum::UNKNOWN;
+        // If marked as true match (or false positive - which shouldn't happen due to filter)
+        return AMLDecisionStatusEnum::TRUE_MATCH;
     }
 }
