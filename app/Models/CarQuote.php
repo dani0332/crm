@@ -657,4 +657,9 @@ class CarQuote extends BaseModel
             ->where('quote_type', QuoteTypeShortCode::CAR)
             ->latest('created_at');
     }
+
+    public function hasCarValue()
+    {
+        return ! empty($this->car_value) && $this->car_value > 0;
+    }
 }

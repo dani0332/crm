@@ -631,6 +631,9 @@ class CoreSchema
                 $table->unsignedTinyInteger('type')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('parent_team_id')->nullable();
+                $table->decimal('min_price', 15, 2)->nullable();
+                $table->decimal('max_price', 15, 2)->nullable();
+                $table->boolean('allocation_threshold_enabled')->default(0);
                 $table->timestamps();
             },
             'user_team' => function (Blueprint $table) {
