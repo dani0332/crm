@@ -23,6 +23,7 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Pipeline;
+use App\Pipes\Allocation\Claim\VerifyLeadPreChecksPipe;
 
 class ClaimAllocationService
 {
@@ -41,6 +42,7 @@ class ClaimAllocationService
         try {
             $result = Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
+                VerifyLeadPreChecksPipe::class,
                 FetchEligibleManagersPipe::class,
                 FinalizeEligibleManagerPipe::class,
                 AssignLeadPipe::class,
