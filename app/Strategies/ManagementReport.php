@@ -655,14 +655,20 @@ class ManagementReport
 
     protected function getPaymentMappingCTE(): string
     {
+        $quoteTypesUsingQuoteId = [
+            QuoteTypeId::Car,
+            QuoteTypeId::Health,
+            QuoteTypeId::Travel,
+            QuoteTypeId::Business,
+        ];
+
+        $quoteIdConditions = implode(',', $quoteTypesUsingQuoteId);
+
         return "
             SELECT
                 pq.id,
                 CASE
-                    WHEN pq.quote_type_id = " . QuoteTypeId::Car . " THEN pq.quote_id
-                    WHEN pq.quote_type_id = " . QuoteTypeId::Health . " THEN pq.quote_id
-                    WHEN pq.quote_type_id = " . QuoteTypeId::Travel . " THEN pq.quote_id
-                    WHEN pq.quote_type_id = " . QuoteTypeId::Business . " THEN pq.quote_id
+                    WHEN pq.quote_type_id IN ({$quoteIdConditions}) THEN pq.quote_id
                     ELSE pq.id
                 END AS payment_join_id,
 
