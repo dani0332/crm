@@ -635,4 +635,9 @@ class CarQuote extends BaseModel
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
     }
+
+    public function hasCarValue()
+    {
+        return ! empty($this->car_value) && $this->car_value > 0;
+    }
 }
