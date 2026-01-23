@@ -1,4 +1,7 @@
 <script setup>
+import axios from 'axios';
+import { onMounted } from 'vue';
+
 const props = defineProps({
   teams: Object,
 });
@@ -15,10 +18,11 @@ const validateTeams = () => {
   let teams = teamsForm.teams.map(x => {
     return {
       ...x,
-      min_price: parseFloat(x.min_price == '' ? 0 : x.min_price),
-      max_price: parseFloat(x.max_price == '' ? 0 : x.max_price),
+      min_price: parseFloat(x.min_price || 0),
+      max_price: parseFloat(x.max_price || 0),
     };
   });
+  console.log(teams);
   for (let i = 0; i < teams.length; i++) {
     const minPriceValue = parseFloat(
       teams[i] && teams[i].min_price == '' ? 0 : teams[i].min_price,
@@ -92,12 +96,31 @@ const generateTeamsToPost = () => {
     };
   });
 };
+
+const loadTeams = (index) => {
+  activeTab.value = index;
+
+  // Get teams
+  axios
+    .get(`/generic/teams-by-category/${tabs[index]}`)
+    .then(response => {
+      teamsForm.teams = response.data.teams;
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error',
+        message: 'An error occurred while fetching the teams',
+        position: 'top',
+      });
+    });
+};
+
 const updateTeams = () => {
   let valid = validateTeams();
   if (valid) {
     let teams = generateTeamsToPost();
-    console.log(team);
-    /*axios
+
+    axios
       .post('/update-team-allocation-threshold', { teams })
       .then(response => {
         notification.success({
@@ -108,17 +131,19 @@ const updateTeams = () => {
       .catch(error => {
         notification.error({
           title: 'Error',
-          message: 'Something went wrong',
+          message: 'An error occurred while updating the allocation threshold',
           position: 'top',
         });
-      });*/
+      });
   }
 };
 
-// Tabs
 const tabs = reactive(["SIC","AUH","Non AUH"]);
+const activeTab = ref(0);
 
-const activeTab = ref(0); // Default: first tab
+onMounted(() => {
+  loadTeams(activeTab.value);
+});
 </script>
 <template>
   <Head title="Allocation Threshold" />
@@ -132,7 +157,7 @@ const activeTab = ref(0); // Default: first tab
     <button
       v-for="(tab, index) in tabs"
       :key="index"
-      @click="activeTab = index"
+      @click="loadTeams(index)"
       :class="[
         'px-4 py-2 font-semibold',
         activeTab === index
