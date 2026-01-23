@@ -125,8 +125,11 @@ const isCarLOB = computed(() => {
 
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
-  let isHealth = page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
-  let isGroupMedical = page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL === page.props.claim.personal_quote?.business_type_of_insurance_id;
+  let isHealth =
+    page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
+  let isGroupMedical =
+    page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL ===
+    page.props.claim.personal_quote?.business_type_of_insurance_id;
   return isHealth || isGroupMedical;
 });
 
