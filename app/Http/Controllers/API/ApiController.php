@@ -5,8 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
@@ -38,10 +36,10 @@ use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
+use App\Jobs\TagPCQualifiedJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
-use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
@@ -392,80 +390,16 @@ class ApiController extends Controller
 
     public function tagPrivateClients(Request $request)
     {
-        LoggerService::info(self::class.': Private client tag exercise has been initiated');
-
         $request->validate([
-            'batch_size' => 'required|integer|min:1',
-            'cursor' => 'nullable|string',
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
         ]);
 
-        try {
+        LoggerService::info(self::class.': Private client tag exercise has been initiated');
 
-            $batchSize = $request->input('batch_size');
-            $cursor = $request->input('cursor');
+        dispatch(new TagPCQualifiedJob($request->input('uuids')));
 
-            $quotes = PersonalQuote::with('customer')->whereNull('pc_qualified')
-                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                ->whereNotNull('policy_expiry_date')
-                ->where('policy_expiry_date', '>', now())
-                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
-
-            if ($cursor) {
-                $quotes->where('id', '>', $cursor);
-            }
-
-            $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
-
-            if ($quotes->isEmpty()) {
-                LoggerService::info(self::class.': No quotes found without PCP tag');
-
-                return apiResponse(
-                    null,
-                    Response::HTTP_OK,
-                    'No quotes found without PCP tag.'
-                );
-            }
-
-            $nextCursor = $quotes->last()->id;
-            $hasMore = $quotes->count() === $batchSize;
-
-            $data = [
-                'data' => [
-                    'next_cursor' => $nextCursor,
-                    'has_more' => $hasMore,
-                ],
-                'message' => 'Private client tagging exercise has been completed.',
-                'status' => 'success',
-            ];
-
-            foreach ($quotes as $quote) {
-
-                $customerData = [
-                    'customer_id' => $quote->customer->id,
-                    'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
-                    'email' => $quote->customer->email,
-                ];
-
-                LoggerService::info(self::class.': Private client tag marking activity started', extra: $customerData);
-
-                LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
-                LoggerService::endLogging();
-
-                LoggerService::info(self::class.': Private client tag marking activity completed', extra: $customerData);
-            }
-
-            return apiResponse($data, Response::HTTP_OK);
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.': Private client tagging exercise failed', exception: $e);
-
-            return apiResponse(
-                $e->getMessage(),
-                Response::HTTP_INTERNAL_SERVER_ERROR,
-                'An error occurred while completing the private client tagging exercise.'
-            );
-        }
-        LoggerService::info(self::class.': Private client tag exercise has been completed');
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging job has been dispatched!');
     }
 
     public function tagPcpCustomers(Request $request)
