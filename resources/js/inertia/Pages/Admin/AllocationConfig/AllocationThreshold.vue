@@ -177,38 +177,38 @@ onMounted(() => {
 
   <!-- Active Tab Content -->
   <div class="min-h-[150px]">
-  <!-- Loader -->
-  <div v-if="loading" class="flex justify-center items-center py-10">
-    <span class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></span>
-  </div>
-
-  <!-- Content -->
-  <div v-else>
-    <div v-for="team in teamsForm.teams" :key="team.name">
-      <h2 class="my-3 font-semibold text-primary">{{ team.name }}:</h2>
-      <x-form :auto-focus="false">
-        <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-          <x-input
-            type="number"
-            class="w-full"
-            v-model="team.min_price"
-            label="Min Price"
-          />
-          <x-input
-            type="number"
-            class="w-full"
-            v-model="team.max_price"
-            label="Max Price"
-          />
-        </div>
-      </x-form>
+    <!-- Loader -->
+    <div v-if="loading" class="flex justify-center items-center py-10">
+      <span class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></span>
     </div>
 
-    <div class="flex justify-end gap-3 mt-5">
-      <x-button size="sm" color="#ff5e00" @click="updateTeams()">
-        Update {{ tabs[activeTab] }}
-      </x-button>
+    <!-- Content -->
+    <div v-else>
+      <div v-for="team in teamsForm.teams" :key="team.name">
+        <h2 class="my-3 font-semibold text-primary">{{ team.name }}:</h2>
+        <x-form :auto-focus="false">
+          <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
+            <x-input
+              type="number"
+              class="w-full"
+              v-model="team.min_price"
+              label="Min Price"
+            />
+            <x-input
+              type="number"
+              class="w-full"
+              v-model="team.max_price"
+              label="Max Price"
+            />
+          </div>
+        </x-form>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-5">
+        <x-button size="sm" color="#ff5e00" @click="updateTeams()">
+          Update {{ tabs[activeTab] }}
+        </x-button>
+      </div>
     </div>
   </div>
-</div>
 </template>
