@@ -3459,6 +3459,7 @@ class RenewalsUploadService
             $status = $isGigPlan ? true : false;
             $carPlan = $isGigPlan ? $isGigPlan : null;
         } else {
+            $currentInsuranceProvider = $currentInsuranceProvider->code == $leadData->insurer ? $currentInsuranceProvider : null;
             if ($currentInsuranceProvider != null) {
                 $carPlan = CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $currentInsuranceProvider->id)->first();
             }
