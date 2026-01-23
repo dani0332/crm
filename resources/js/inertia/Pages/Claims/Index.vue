@@ -90,7 +90,12 @@ const claimTypeOptions = computed(() => {
 });
 
 const claimSubStatusOptions = computed(() => {
-  let quoteType = isHealthLOB.value ? page.props.quoteTypeIds?.Health : filters.quote_type_id;
+  // Explicitly track dependencies to ensure reactivity
+  const quoteTypeId = filters.quote_type_id;
+  const businessTypeId = filters.business_type_of_insurance_id;
+  const isHealth = isHealthLOB.value;
+
+  let quoteType = isHealth ? page.props.quoteTypeIds?.Health : quoteTypeId;
   return (
     props.claimDropdownOptions?.claimSubStatuses
       ?.filter(ct => ct.quote_type_id === quoteType)
