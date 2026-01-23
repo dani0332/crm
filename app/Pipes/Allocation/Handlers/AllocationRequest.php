@@ -110,13 +110,5 @@ class AllocationRequest
         }
     }
 
-
-    public function shouldAssignToHappinessUser()
-    {
-        return $this->assignToHappinessUser;
-    }
-    public function setAssignToHappinessUser(bool $value = true)
-    {
-        $this->assignToHappinessUser = $value;
-    }
+   
 }

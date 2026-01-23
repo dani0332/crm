@@ -51,17 +51,6 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'deviceQuoteExists' => $deviceQuote ? true : false,
             'hasRetryFlag' => $hasRetryFlag,
         ]);
-           // If device lead is paid, assign to Happiness Support User
-        if ($isPaymentAuthorizedOrDeclined) {
-            $this->allocationRequest->setAssignToHappinessUser(true);
-
-            LoggerService::info(self::class.' - Device lead is paid - Will assign to Happiness Support User', extra: [
-                'targetUserEmail' => DeviceAllocation::HAPPINESS_SUPPORT_USER_EMAIL,
-                'reason' => 'Payment authorized or declined',
-            ]);
-
-            return false;
-        }
       
 
         // SIC advisor requested or has retry flag, assign to hardcoded advisors

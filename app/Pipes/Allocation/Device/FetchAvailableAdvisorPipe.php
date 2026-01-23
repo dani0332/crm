@@ -21,50 +21,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         LoggerService::info(self::class.' - Starting to fetch available Smart Phone advisor');
 
         $this->setRequest($request);
-
-        if ($this->allocationRequest->shouldAssignToHappinessUser()) {
-            LoggerService::info(self::class.' - Paid Device lead - Fetching Happiness Support User');
-
-            $advisor = $this->getHappinessUser();
-
-            if (! $advisor) {
-                LoggerService::warning(self::class.' - Happiness Support User not found');
-                $this->allocationRequest->markAsFailed();
-                $this->throw('Happiness Support User not found', self::NOT_FOUND);
-            }
-
-            LoggerService::info(self::class.' - Happiness Support User found successfully', extra: [
-                'advisorId' => $advisor->id,
-                'advisorName' => $advisor->name,
-                'advisorEmail' => $advisor->email,
-            ]);
-            $this->allocationRequest->setAdvisor($advisor);
-
-            return $next($request);
-        }
-
-        // if ($this->allocationRequest->get('isCHSAdvisor')) {
-        //     LoggerService::info(self::class.' - CHS Advisor is required for Smart Phone lead');
-
-        //     $advisor = $this->findAvailableAdvisor(teamId: null);
-
-        //     if (! $advisor) {
-        //         LoggerService::warning(self::class.' - CHS Advisor not found');
-        //         $this->allocationRequest->markAsFailed();
-        //         $this->throw('CHS Advisor not found', self::NOT_FOUND);
-        //     }
-
-        //     LoggerService::info(self::class.' - CHS Advisor found successfully', extra: [
-        //         'advisorId' => $advisor->id,
-        //         'advisorName' => $advisor->name,
-        //         'advisorEmail' => $advisor->email,
-        //     ]);
-
-        //     $this->allocationRequest->setAdvisor($advisor);
-
-        //     return $next($request);
-        // }
-
         LoggerService::info(self::class.' - Smart Phone lead with SIC request - Fetching advisor using hardcoded email list');
 
         $advisor = $this->findAvailableAdvisor(teamId: null);
