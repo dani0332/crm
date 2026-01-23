@@ -125,8 +125,12 @@ const isCarLOB = computed(() => {
 
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
-  return page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
+  let isHealth = page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
+  let isGroupMedical = page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL === page.props.claim.personal_quote?.business_type_of_insurance_id;
+  return isHealth || isGroupMedical;
 });
+
+console.log('isHealthLOB', isHealthLOB.value, page.props.quoteBusinessTypeIdEnum, page.props.claim.personal_quote?.business_type_of_insurance_id);
 
 function formatCurrency(amount) {
   if (!amount) return '-';
@@ -703,16 +707,6 @@ watch(
                 <dt class="font-medium">Complaint Status</dt>
                 <dd>{{ claim.complaint_status?.text || 'N/A' }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Next Follow Up Date</dt>
-                <dd>
-                  {{
-                    claim.next_followup_datetime
-                      ? formattedDateDmyWithTime(claim.next_followup_datetime)
-                      : 'N/A'
-                  }}
-                </dd>
-              </div>
               <template v-if="isHealthLOB">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">BANK NAME</dt>
@@ -733,6 +727,16 @@ watch(
                   <dd>{{ claim.customer_bank_accounts?.swift_code || '-' }}</dd>
                 </div>
               </template>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Next Follow Up Date</dt>
+                <dd>
+                  {{
+                    claim.next_followup_datetime
+                      ? formattedDateDmyWithTime(claim.next_followup_datetime)
+                      : 'N/A'
+                  }}
+                </dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ formattedDateDmyWithTime(claim.created_at) }}</dd>
