@@ -17,13 +17,13 @@ use App\Pipes\Allocation\Claim\FetchEligibleManagersPipe;
 use App\Pipes\Allocation\Claim\FetchLeadPipe;
 use App\Pipes\Allocation\Claim\FinalizeEligibleManagerPipe;
 use App\Pipes\Allocation\Claim\MakeResponsePipe;
+use App\Pipes\Allocation\Claim\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Pipeline;
-use App\Pipes\Allocation\Claim\VerifyLeadPreChecksPipe;
 
 class ClaimAllocationService
 {

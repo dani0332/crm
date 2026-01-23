@@ -2,11 +2,11 @@
 
 namespace App\Pipes\Allocation\Claim;
 
+use App\Enums\LeadSourceEnum;
+use App\Models\User;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
-use App\Enums\LeadSourceEnum;
-use App\Models\User;
 
 class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 {
@@ -31,11 +31,11 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         $isVerified = $this->verifyPreChecks();
 
         if (! $isVerified) {
-           
+
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
+
             return false;
         }
-
 
         return $next($request);
     }
@@ -45,17 +45,16 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         $lead = $this->lead;
 
         $continueAssignment = false;
-        if($lead->source == LeadSourceEnum::IMCRM) {
+        if ($lead->source == LeadSourceEnum::IMCRM) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead source is IMCRM, failing pre-check');
             $continueAssignment = false;
-        }elseif(!empty($lead->manager_id) ) {
+        } elseif (! empty($lead->manager_id)) {
             LoggerService::info(self::class.'::verifyPreChecks - Manager ID is empty, failing pre-check');
             $this->allocationRequest->markAsAlreadyAssigned();
             $manager = User::find($lead->manager_id);
             $this->allocationRequest->setManager($manager);
             $continueAssignment = false;
-        }
-        else{
+        } else {
             $continueAssignment = true;
         }
 
