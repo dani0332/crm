@@ -38,6 +38,31 @@ class AllocationThresholdController extends Controller
         ]);
     }
 
+    public function getTeams(Request $request)
+    {
+        $teams = Team::select('id', 'name', 'min_price', 'max_price')
+            ->where('category', $request->category)
+            ->where('type', TeamTypeEnum::TEAM);
+
+        if ($request->category == 'SIC') {
+            $teams = $teams->whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::PCP])->get();
+
+            // Sort by custom sequence
+            $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::PCP];
+            $sortedTeams = $teams->sortBy(function ($team) use ($customSequence) {
+                $index = array_search($team['name'], $customSequence);
+
+                return $index === false ? PHP_INT_MAX : $index;
+            })->values();
+
+            $teams = $sortedTeams;
+        } else {
+            $teams = $teams->orderBy('name')->get();
+        }
+
+        return response()->json(['teams' => $teams]);
+    }
+
     public function updateAllocation(Request $request)
     {
         $teams = $request->teams;
