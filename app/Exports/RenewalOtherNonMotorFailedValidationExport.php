@@ -31,7 +31,9 @@ class RenewalOtherNonMotorFailedValidationExport implements FromCollection, With
             $exportLeads->push([
                 'ref_id' => $leadData['ref_id'] ?? null,
                 'advisor_email' => $leadData['advisor_email'] ?? null,
-                'errors' => $lead->validation_errors ?? 'No errors',
+                'errors' => empty($lead->validation_errors)
+                    ? 'No errors'
+                    : implode("\n", (array) $lead->validation_errors),
             ]);
         }
 
