@@ -673,10 +673,10 @@ class ManagementReport
                 END AS payment_join_id,
 
                 CASE
-                    WHEN pq.quote_type_id = " . QuoteTypeId::Car . " THEN 'App\\\\Models\\\\CarQuote'
-                    WHEN pq.quote_type_id = " . QuoteTypeId::Health . " THEN 'App\\\\Models\\\\HealthQuote'
-                    WHEN pq.quote_type_id = " . QuoteTypeId::Travel . " THEN 'App\\\\Models\\\\TravelQuote'
-                    WHEN pq.quote_type_id = " . QuoteTypeId::Business . " THEN 'App\\\\Models\\\\BusinessQuote'
+                    WHEN pq.quote_type_id = ".QuoteTypeId::Car." THEN 'App\\\\Models\\\\CarQuote'
+                    WHEN pq.quote_type_id = ".QuoteTypeId::Health." THEN 'App\\\\Models\\\\HealthQuote'
+                    WHEN pq.quote_type_id = ".QuoteTypeId::Travel." THEN 'App\\\\Models\\\\TravelQuote'
+                    WHEN pq.quote_type_id = ".QuoteTypeId::Business." THEN 'App\\\\Models\\\\BusinessQuote'
                     ELSE 'App\\\\Models\\\\PersonalQuote'
                 END AS payment_join_type
             FROM personal_quotes pq
@@ -687,10 +687,10 @@ class ManagementReport
     {
         $cte = $this->getPaymentMappingCTE();
         $query->withExpression('personal_quotes_mapped', $cte);
-        
+
         // Join the CTE to create the mapping based on the CTE join type
         $query->{$cteJoin}('personal_quotes_mapped as pqm', 'pqm.id', '=', 'personal_quotes.id');
-        
+
         // Then join payments using the mapped fields
         $query->{$joinType}("payments as {$alias}", function ($join) use ($additionalConditions, $alias) {
             $join->on("{$alias}.paymentable_id", '=', 'pqm.payment_join_id')
