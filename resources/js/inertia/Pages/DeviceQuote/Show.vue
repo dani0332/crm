@@ -716,20 +716,12 @@ const copyLink = () => {
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-                <dd>
-                  {{ quote.quote_detail?.next_followup_date }}
-                </dd>
-              </div>
+             
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">LOST REASON</dt>
-                <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
-              </div>
+             
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
                 <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
@@ -738,32 +730,7 @@ const copyLink = () => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      PARENT REF-ID
-                    </label>
-                    <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-                </div>
-                <div>
-                  <Link
-                    v-if="quote.parent_duplicate_quote_id"
-                    :href="
-                      getDetailPageRoute(
-                        linkedQuoteDetails.uuid,
-                        linkedQuoteDetails.quote_type_id,
-                      )
-                    "
-                    class="text-primary-500 hover:underline"
-                  >
-                    {{ quote.parent_duplicate_quote_id ?? '' }}
-                  </Link>
-                </div>
-              </div>
+            
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF INSURANCE</dt>
