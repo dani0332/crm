@@ -7,17 +7,14 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteTypeShortCode;
 use App\Enums\WorkflowTypeEnum;
 use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
-use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 
 class EmbeddedTransactionService extends BaseService
 {
@@ -39,7 +36,7 @@ class EmbeddedTransactionService extends BaseService
             $this->triggerBirdWorkflowForRetargetingEpReminder($quote, $quoteTypeId, $epTransaction);
         }
     }
-    
+
     /**
      * This function use to trigger bird workflow
      */
@@ -75,12 +72,15 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found');
         }
 
-        $quoteData = (object) array_map(fn($item) => (object) $item, Arr::undot($quoteData));
+        $quoteData = (object) array_map(fn ($item) => (object) $item, Arr::undot((array) $quoteData));
         $customer = $quoteData->customer;
         $advisor = $quoteData->advisor;
         $plan = $quoteData->plan;
 
-        if (empty($quoteData?->quote?->uuid) || empty($quoteData?->embeddedTransaction?->code) || empty($customer?->id)) {
+        if (empty($quoteData?->quote?->uuid)
+            || empty($quoteData?->embeddedTransaction?->code)
+            || empty($customer?->id) || empty($customer?->email)
+        ) {
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
@@ -94,8 +94,8 @@ class EmbeddedTransactionService extends BaseService
             'reminderContent' => [
                 "customerId" => $customer->id,
                 "customerEmail" => $customer->email,
-                "customerName" => "{$customer->first_name} {$customer->last_name}",
-                "customerMobileNumber" => formatMobileNo($customer->mobile_no ?? ''),
+                "customerName" => trim(($customer?->first_name ?? '').' '.($customer?->last_name ?? '')),
+                "customerMobileNumber" => formatMobileNo($customer?->mobile_no ?? ''),
                 "advisorEmail" => $advisor?->email,
                 "advisorLandLine" => $advisor?->landline_no,
                 "advisorMobileNoWithoutSpaces" => removeSpaces($advisor?->mobile_no ?? ''),
