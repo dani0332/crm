@@ -1216,7 +1216,6 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-
     private function seedCarOcbEmailTemplatesUpdate()
     {
         ApplicationStorage::firstOrCreate(
