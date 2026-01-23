@@ -46,72 +46,72 @@ enum ClaimsEnum: string
     case CLAIM_REQUEST_ACCESS_TYPE_MANUAL_CODE = 'manual';
 
     /* Claim Request Status */
-    case CLAIM_STATUS_OPEN = 'Open';
-    case CLAIM_STATUS_CLOSED = 'Close';
+    case CLAIM_STATUS_OPEN = 'open';
+    case CLAIM_STATUS_CLOSED = 'close';
 
     // Complaint Status Codes
-    case CLAIM_STATUS_OPEN_COMPLAINT = 'Complaint Open';
-    case CLAIM_STATUS_CLOSED_COMPLAINT = 'Complaint Closed';
+    case CLAIM_STATUS_OPEN_COMPLAINT = 'complaint open';
+    case CLAIM_STATUS_CLOSED_COMPLAINT = 'complaint closed';
 
     // General Claim Sub Statuses
-    case CLAIM_SUB_STATUS_NEW_CLAIM = 'New claim';
-    case CLAIM_SUB_STATUS_CLAIM_INITIATED = 'Claim initiated';
-    case CLAIM_SUB_STATUS_CLAIM_REGISTERED = 'Claims registered';
-    case CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION = 'Claim registered and awaiting inspection';
-    case CLAIM_SUB_STATUS_ESTIMATE_UNDER_REVIEW = 'Estimate under review';
-    case CLAIM_SUB_STATUS_SURVEY_IN_PROGRESS = 'Survey in progress';
-    case CLAIM_SUB_STATUS_CLAIM_UNDER_REVIEW = 'Claim under review';
-    case CLAIM_SUB_STATUS_CLAIM_APPROVED = 'Claim approved';
-    case CLAIM_SUB_STATUS_CLAIM_PARTIALLY_APPROVED = 'Claim Partially Approved';
-    case CLAIM_SUB_STATUS_CLAIM_DENIED = 'Claim denied';
-    case CLAIM_SUB_STATUS_CLAIM_WITHDRAWN = 'Claim withdrawn';
-    case CLAIM_SUB_STATUS_CLAIM_CLOSED = 'Claim Closed';
-    case CLAIM_SUB_STATUS_CLAIM_PAID = 'Claim paid';
-    case CLAIM_SUB_STATUS_SETTLEMENT_IN_PROGRESS = 'Settlement in progress';
+    case CLAIM_SUB_STATUS_NEW_CLAIM = 'new claim';
+    case CLAIM_SUB_STATUS_CLAIM_INITIATED = 'claim initiated';
+    case CLAIM_SUB_STATUS_CLAIM_REGISTERED = 'claims registered';
+    case CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION = 'claim registered and awaiting inspection';
+    case CLAIM_SUB_STATUS_ESTIMATE_UNDER_REVIEW = 'estimate under review';
+    case CLAIM_SUB_STATUS_SURVEY_IN_PROGRESS = 'survey in progress';
+    case CLAIM_SUB_STATUS_CLAIM_UNDER_REVIEW = 'claim under review';
+    case CLAIM_SUB_STATUS_CLAIM_APPROVED = 'claim approved';
+    case CLAIM_SUB_STATUS_CLAIM_PARTIALLY_APPROVED = 'claim partially approved';
+    case CLAIM_SUB_STATUS_CLAIM_DENIED = 'claim denied';
+    case CLAIM_SUB_STATUS_CLAIM_WITHDRAWN = 'claim withdrawn';
+    case CLAIM_SUB_STATUS_CLAIM_CLOSED = 'claim closed';
+    case CLAIM_SUB_STATUS_CLAIM_PAID = 'claim paid';
+    case CLAIM_SUB_STATUS_SETTLEMENT_IN_PROGRESS = 'settlement in progress';
 
     // Motor/Car Specific Claim Sub Statuses
-    case CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS = 'Repair approved & work in progress';
-    case CLAIM_SUB_STATUS_PARTS_ORDERED = 'Parts ordered';
-    case CLAIM_SUB_STATUS_PARTS_ON_BACKORDER = 'Parts on backorder';
-    case CLAIM_SUB_STATUS_PARTS_DELAYED = 'Parts delayed';
-    case CLAIM_SUB_STATUS_PARTS_ARRIVED_AND_WORK_IN_PROGRESS = 'Parts arrived & work in progress';
-    case CLAIM_SUB_STATUS_HIRE_CAR_REQUESTED = 'Hire car requested';
-    case CLAIM_SUB_STATUS_HIRE_CAR_APPROVED = 'Hire car approved';
-    case CLAIM_SUB_STATUS_HIRE_CAR_REFUND_IN_PROGRESS = 'Hire car refund in progress';
-    case CLAIM_SUB_STATUS_CAR_READY_FOR_COLLECTION = 'Car ready for collection';
-    case CLAIM_SUB_STATUS_REPAIR_COMPLETED = 'Repair completed';
-    case CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED = 'Repair completed and claim settled';
-    case CLAIM_SUB_STATUS_TOTAL_LOSS_APPROVED = 'Total loss approved';
-    case CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED = 'Total Loss Offer Letter shared';
-    case CLAIM_SUB_STATUS_TOTAL_LOSS_PAYMENT_IN_PROGRESS = 'Total loss payment in progress';
-    case CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED = 'Total loss paid and claim settled';
-    case CLAIM_SUB_STATUS_CASH_LOSS_APPROVED = 'Cash loss approved';
-    case CLAIM_SUB_STATUS_CASH_LOSS_PAYMENT_IN_PROGRESS = 'Cash loss payment inprogress';
-    case CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED = 'Cash loss paid and claim settled';
+    case CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS = 'repair approved & work in progress';
+    case CLAIM_SUB_STATUS_PARTS_ORDERED = 'parts ordered';
+    case CLAIM_SUB_STATUS_PARTS_ON_BACKORDER = 'parts on backorder';
+    case CLAIM_SUB_STATUS_PARTS_DELAYED = 'parts delayed';
+    case CLAIM_SUB_STATUS_PARTS_ARRIVED_AND_WORK_IN_PROGRESS = 'parts arrived & work in progress';
+    case CLAIM_SUB_STATUS_HIRE_CAR_REQUESTED = 'hire car requested';
+    case CLAIM_SUB_STATUS_HIRE_CAR_APPROVED = 'hire car approved';
+    case CLAIM_SUB_STATUS_HIRE_CAR_REFUND_IN_PROGRESS = 'hire car refund in progress';
+    case CLAIM_SUB_STATUS_CAR_READY_FOR_COLLECTION = 'car ready for collection';
+    case CLAIM_SUB_STATUS_REPAIR_COMPLETED = 'repair completed';
+    case CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED = 'repair completed and claim settled';
+    case CLAIM_SUB_STATUS_TOTAL_LOSS_APPROVED = 'total loss approved';
+    case CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED = 'total loss offer letter shared';
+    case CLAIM_SUB_STATUS_TOTAL_LOSS_PAYMENT_IN_PROGRESS = 'total loss payment in progress';
+    case CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED = 'total loss paid and claim settled';
+    case CLAIM_SUB_STATUS_CASH_LOSS_APPROVED = 'cash loss approved';
+    case CLAIM_SUB_STATUS_CASH_LOSS_PAYMENT_IN_PROGRESS = 'cash loss payment inprogress';
+    case CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED = 'cash loss paid and claim settled';
 
     // Document Related Statuses
-    case CLAIM_SUB_STATUS_ADDITIONAL_DOCUMENTS_AWAITED = 'Additional documents awaited';
-    case CLAIM_SUB_STATUS_DOCUMENTS_UPLOADED = 'Documents uploaded';
-    case CLAIM_SUB_STATUS_CLAIM_PENDING_FOR_ADDITIONAL_INFORMATION = 'Claim Pending for Additional Information';
+    case CLAIM_SUB_STATUS_ADDITIONAL_DOCUMENTS_AWAITED = 'additional documents awaited';
+    case CLAIM_SUB_STATUS_DOCUMENTS_UPLOADED = 'documents uploaded';
+    case CLAIM_SUB_STATUS_CLAIM_PENDING_FOR_ADDITIONAL_INFORMATION = 'claim pending for additional information';
 
     // Health Specific Claim Sub Statuses
-    case CLAIM_SUB_STATUS_CLAIM_REPROCESSING = 'Claim Reprocessing';
+    case CLAIM_SUB_STATUS_CLAIM_REPROCESSING = 'claim reprocessing';
 
     // Request Related Statuses (Health - Pending Approvals)
-    case CLAIM_SUB_STATUS_NEW_REQUEST = 'New request';
-    case CLAIM_SUB_STATUS_UNDER_EVALUATION = 'Under Evaluation';
-    case CLAIM_SUB_STATUS_UNDER_RE_EVALUATION = 'Under Re-evaluation';
-    case CLAIM_SUB_STATUS_PARTIALLY_APPROVED = 'Partially Approved';
-    case CLAIM_SUB_STATUS_REQUEST_DENIED = 'Request Denied';
-    case CLAIM_SUB_STATUS_REQUEST_APPROVED = 'Request Approved';
+    case CLAIM_SUB_STATUS_NEW_REQUEST = 'new request';
+    case CLAIM_SUB_STATUS_UNDER_EVALUATION = 'under evaluation';
+    case CLAIM_SUB_STATUS_UNDER_RE_EVALUATION = 'under re-evaluation';
+    case CLAIM_SUB_STATUS_PARTIALLY_APPROVED = 'partially approved';
+    case CLAIM_SUB_STATUS_REQUEST_DENIED = 'request denied';
+    case CLAIM_SUB_STATUS_REQUEST_APPROVED = 'request approved';
 
     // Question Related Statuses (Health - Ask a Question)
-    case CLAIM_SUB_STATUS_UNDER_REVIEW = 'Under Review';
-    case CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED = 'Answered & Closed';
+    case CLAIM_SUB_STATUS_UNDER_REVIEW = 'under review';
+    case CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED = 'answered & closed';
 
     // Legacy Status Constants (for backward compatibility)
-    case CLAIM_SUB_STATUS_PAYMENT_INITIATED = 'Payment initiated';
-    case CLAIM_SUB_STATUS_PAYMENT_COMPLETED = 'Payment completed';
+    case CLAIM_SUB_STATUS_PAYMENT_INITIATED = 'payment initiated';
+    case CLAIM_SUB_STATUS_PAYMENT_COMPLETED = 'payment completed';
 
     /**
      * Get all claim type codes
@@ -328,5 +328,4 @@ enum ClaimsEnum: string
 
         return $result;
     }
-
 }
