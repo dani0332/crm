@@ -23,7 +23,7 @@ class HealthTeamRoutingService
             return $teamName;
         }
 
-        if ($lead->isAUHLead()) {
+        if ($lead->isAUHLead() || $lead->isAUHLead(false)) {
             $teamName = $this->getTeamBasedOnAUHLead($lead);
         } else {
             $teamName = $this->getTeamBasedOnNonAUHLead($lead);
