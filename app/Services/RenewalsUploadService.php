@@ -1784,6 +1784,8 @@ class RenewalsUploadService
 
                         $plan['addons'][] = $planDataAddon;
                         break;
+                    } else {
+                        LoggerService::info($logPrefix.'('.$option['value'].') not found in sheet', ['addonCode' => $addonCode, 'addonOptionValueFromSheet' => $data[$key]]);
                     }
                 }
             } else {
