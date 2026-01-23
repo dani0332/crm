@@ -203,7 +203,7 @@ class ClaimRequestEmailService extends BaseService
             'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
             'workflowType' => $workflowType,
             'message' => $message,
-            'sendWhatsappMessage' => $claimRequest->whatsapp_consent,
+            'isWAConsent' => $claimRequest->whatsapp_consent,
         ];
     }
 
