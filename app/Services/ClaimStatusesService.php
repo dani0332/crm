@@ -152,7 +152,7 @@ class ClaimStatusesService extends BaseService
                 ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
             ];
         }
-        
+
         // convert the subStatusListForClaimClosed to lowercase
         $subStatusListForClaimClosed = array_map('strtolower', $subStatusListForClaimClosed);
 
