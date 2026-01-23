@@ -67,12 +67,13 @@ class EmbeddedTransactionService extends BaseService
 
     public function getRetargetingEpReminderData($quoteId, $quoteTypeId, $embeddedTransactionCode)
     {
-        $quoteFields = ['id', 'code', 'quote_status_id', 'policy_booking_date', 'advisor_id'];
-        $epTransactionFields = ['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id', 'policy_status'];
+        $quoteFields = ['id', 'code', 'quote_status_id', 'policy_booking_date'];
+        $epTransactionFields = ['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id'];
 
         $model = $this->getModelObject(strtolower(QuoteTypeShortCode::getName($quoteTypeId)));
-        $quote = $model ? $model::select('customer_id', 'email', 'mobile_no', 'first_name', 'last_name', ...$quoteFields)
+        $quote = $model ? $model::select('customer_id', 'advisor_id', 'insurance_provider_id', 'plan_id', 'uuid', 'email', 'mobile_no', 'first_name', 'last_name', ...$quoteFields)
             ->with('advisor:id,email,name,mobile_no,landline_no,profile_photo_path')
+            ->with('insuranceProvider:id,code')
             ->find($quoteId) : null;
 
         if (empty($quote)) {
@@ -87,6 +88,8 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Embedded transaction not found');
         }
 
+        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid.'/payment/?providerCode='.$quote->insurance_provider?->code.'&planId='.$quote->plan_id;
+
         $reminderContent = [
             "customerEmail" => $quote->email,
             "customerName" => "{$quote->first_name} {$quote->last_name}",
@@ -100,6 +103,7 @@ class EmbeddedTransactionService extends BaseService
             "DisplayName" => config('constants.IM_FROM_EMAIL','InsuranceMarket'),
             "retargetingEpReminderCallbackUrl" => route('retargeting-ep-reminder-callback'),
             "customerId" => $quote->customer_id,
+            "buyNowLink" => $buyNowLink,
         ];
 
         $data = [
