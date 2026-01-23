@@ -36,7 +36,7 @@ class FtcEmailController extends Controller
             abort(404, 'Quote type not found');
         }
 
-        SendFTCEmailJob::dispatch($uuid, $quoteTypeEnum, false, true);
+        SendFTCEmailJob::dispatch($uuid, $quoteTypeEnum, false, false);
 
         return response()->json(['queued' => true, 'time' => now()->format('Y-m-d H:i:s')]);
     }
