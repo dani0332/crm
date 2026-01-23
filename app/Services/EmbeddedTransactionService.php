@@ -45,22 +45,23 @@ class EmbeddedTransactionService extends BaseService
         $birdWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL);
 
         if (empty($birdWorkflowUrl)) {
-            LoggerService::info("triggerBirdWorkflowForRetargetingEpReminder: Configuration URL not found");
+            LoggerService::info('triggerBirdWorkflowForRetargetingEpReminder: Configuration URL not found');
+
             return;
         }
 
         $getRetargetingEpReminderUrl = route('get.retargeting-ep-reminder', ['quoteId' => $quote->id, 'quoteTypeId' => $quoteTypeId, 'embeddedTransactionCode' => $epTransaction->code]);
 
         $birdEmailData = [
-            "quoteId" => $quote->id,
-            "quoteTypeId" => $quoteTypeId,
-            "refID" => $quote->code,
-            "embeddedTransactionCode" => $epTransaction->code,
-            "workflowType" => WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER,
-            "getRetargetingEpReminderUrl" => $getRetargetingEpReminderUrl
+            'quoteId' => $quote->id,
+            'quoteTypeId' => $quoteTypeId,
+            'refID' => $quote->code,
+            'embeddedTransactionCode' => $epTransaction->code,
+            'workflowType' => WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER,
+            'getRetargetingEpReminderUrl' => $getRetargetingEpReminderUrl,
         ];
 
-        LoggerService::info("triggerBirdWorkflowForRetargetingEpReminder: ", extra: ['data' => $birdEmailData]);
+        LoggerService::info('triggerBirdWorkflowForRetargetingEpReminder: ', extra: ['data' => $birdEmailData]);
         app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
@@ -92,20 +93,20 @@ class EmbeddedTransactionService extends BaseService
             'quote' => $quoteData->quote,
             'embeddedTransaction' => $quoteData->embeddedTransaction,
             'reminderContent' => [
-                "customerId" => $customer->id,
-                "customerEmail" => $customer->email,
-                "customerName" => trim(($customer?->first_name ?? '').' '.($customer?->last_name ?? '')),
-                "customerMobileNumber" => formatMobileNo($customer?->mobile_no ?? ''),
-                "advisorEmail" => $advisor?->email,
-                "advisorLandLine" => $advisor?->landline_no,
-                "advisorMobileNoWithoutSpaces" => removeSpaces($advisor?->mobile_no ?? ''),
-                "advisorMobileNumber" => formatMobileNo($advisor?->mobile_no ?? ''),
-                "advisorName" => $advisor?->name,
-                "advisorProfilePhotoPath" => $advisor?->profile_photo_path,
-                "DisplayName" => config('constants.IM_FROM_EMAIL','InsuranceMarket'),
-                "buyNowLink" => $buyNowLink,
-                "retargetingEpReminderCallbackUrl" => route('retargeting-ep-reminder-callback'),
-            ]
+                'customerId' => $customer->id,
+                'customerEmail' => $customer->email,
+                'customerName' => trim(($customer?->first_name ?? '').' '.($customer?->last_name ?? '')),
+                'customerMobileNumber' => formatMobileNo($customer?->mobile_no ?? ''),
+                'advisorEmail' => $advisor?->email,
+                'advisorLandLine' => $advisor?->landline_no,
+                'advisorMobileNoWithoutSpaces' => removeSpaces($advisor?->mobile_no ?? ''),
+                'advisorMobileNumber' => formatMobileNo($advisor?->mobile_no ?? ''),
+                'advisorName' => $advisor?->name,
+                'advisorProfilePhotoPath' => $advisor?->profile_photo_path,
+                'DisplayName' => config('constants.IM_FROM_EMAIL', 'InsuranceMarket'),
+                'buyNowLink' => $buyNowLink,
+                'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
+            ],
         ];
 
         return apiResponse($data, Response::HTTP_OK, 'Retargeting EP Reminder data');
@@ -120,7 +121,7 @@ class EmbeddedTransactionService extends BaseService
             'quoteId' => $request->quoteId,
             'customerEmail' => $request->customerIdentity,
             'templateId' => $templateId,
-            'customerId' => $request->customerId
+            'customerId' => $request->customerId,
         ];
 
         $successResponseCodes = [Response::HTTP_OK, Response::HTTP_CREATED, Response::HTTP_ACCEPTED];
