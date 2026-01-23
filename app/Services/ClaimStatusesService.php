@@ -153,10 +153,7 @@ class ClaimStatusesService extends BaseService
             ];
         }
 
-        // convert the subStatusListForClaimClosed to lowercase
-        $subStatusListForClaimClosed = array_map('strtolower', $subStatusListForClaimClosed);
-
-        return in_array(strtolower($newClaimStatus?->text), $subStatusListForClaimClosed);
+        return in_array($newClaimStatus?->text, $subStatusListForClaimClosed);
     }
 
     public function markClaimAsOpen(ClaimRequest $claimRequest): void

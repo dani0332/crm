@@ -916,6 +916,7 @@ class ClaimsService extends BaseService
                 ->first()?->id;
         }
 
+        dd($updateClaimData , $targetStatus , $subStatus->toArray());
         $claimRequest->update($updateClaimData);
 
         $claimActivity = ClaimActivity::createForClaim(
