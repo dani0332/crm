@@ -90,9 +90,10 @@ const claimTypeOptions = computed(() => {
 });
 
 const claimSubStatusOptions = computed(() => {
+  let quoteType = isHealthLOB.value ? page.props.quoteTypeIds?.Health : filters.quote_type_id;
   return (
     props.claimDropdownOptions?.claimSubStatuses
-      ?.filter(ct => ct.quote_type_id === filters.quote_type_id)
+      ?.filter(ct => ct.quote_type_id === quoteType)
       ?.map(ct => ({
         value: ct.id,
         label: ct.text,
@@ -402,7 +403,9 @@ const isBikeLOB = computed(() => {
 
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
-  return quoteTypeIds.Health === filters.quote_type_id;
+  let isHealth = quoteTypeIds.Health === filters.quote_type_id;
+  let isGroupMedical = page.props.quoteBusinessTypeIdEnum.GROUP_MEDICAL === filters.business_type_of_insurance_id;
+  return isHealth || isGroupMedical;
 });
 
 // Check if export is available based on date filters

@@ -26,13 +26,22 @@ const claimSubStatusAndCustomerForm = useForm({
   claim_sub_status_id: props.claim?.claim_sub_status_id || '',
 });
 
+
+// Check if the selected line of business is Health
+const isHealthLOB = computed(() => {
+  let isHealth = page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
+  let isGroupMedical = page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL === props.claim.personal_quote?.business_type_of_insurance_id;
+  return isHealth || isGroupMedical;
+});
+
 const subStatusOptions = computed(() => {
+  let quoteType = isHealthLOB.value ? page.props.quoteTypeIds?.Health : page.props.claim.quote_type_id;
   return (
     props.dropdowns.claimSubStatuses
       ?.filter(subStatus => {
         // Always filter by quote_type_id
         const matchesQuoteType =
-          subStatus.quote_type_id === page.props.claim.quote_type_id;
+          subStatus.quote_type_id === quoteType;
 
         // If claim has claim_request_type_id, also filter by it
         if (page.props.claim.claim_request_type_id != null) {

@@ -130,8 +130,6 @@ const isHealthLOB = computed(() => {
   return isHealth || isGroupMedical;
 });
 
-console.log('isHealthLOB', isHealthLOB.value, page.props.quoteBusinessTypeIdEnum, page.props.claim.personal_quote?.business_type_of_insurance_id);
-
 function formatCurrency(amount) {
   if (!amount) return '-';
   return new Intl.NumberFormat('en-US', {
