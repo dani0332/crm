@@ -3,13 +3,13 @@
 namespace Tests\Unit\Services;
 
 use App\Services\Logger\LoggerService;
-use Exception;
 use Error;
-use TypeError;
-use ParseError;
-use Throwable;
+use Exception;
 use Illuminate\Support\Facades\Log;
+use ParseError;
 use Tests\TestCase;
+use Throwable;
+use TypeError;
 
 class LoggerServiceTest extends TestCase
 {
