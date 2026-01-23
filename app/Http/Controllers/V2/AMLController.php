@@ -18,7 +18,6 @@ use App\Enums\TravelQuoteEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\AmlCftReportExport;
-use App\Exports\KycLogsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -42,13 +41,13 @@ use App\Models\User;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AML\AMLDisplayService;
 use App\Services\AML\AMLEntityService;
+use App\Services\AML\AMLExportService;
 use App\Services\AML\AMLInsuredService;
 use App\Services\AML\AMLQueryService;
 use App\Services\AML\AMLQuoteDetailsService;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
@@ -149,19 +148,7 @@ class AMLController extends Controller
 
     public function export(Request $request)
     {
-        $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
-
-        $request->merge([
-            'exportTitle' => 'AML',
-            'created_at_start' => $request->amlCreatedStartDate,
-            'created_at_end' => $request->amlCreatedEndDate,
-        ]);
-
-        if ($request->exportType == 'email') {
-            return app(KycLogsExport::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
-        }
-
-        return app(KycLogsExport::class)->download("AML Logs {$reportDateRange}");
+        return app(AMLExportService::class)->exportAMLLogs($request);
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
