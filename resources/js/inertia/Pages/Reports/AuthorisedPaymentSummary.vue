@@ -321,6 +321,7 @@ const isVehicleUseDisabled = computed(() => {
           filterable
           filterPlaceholder="Filter Advisors...."
           truncate
+          multiple
         >
           <template #content-footer>
             <ui-select-actions

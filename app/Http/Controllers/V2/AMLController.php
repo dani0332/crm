@@ -24,6 +24,7 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
+use App\Http\Requests\TogglePolicyIssuanceAutomationRequest;
 use App\Http\Requests\UpdateAdditionalVehicleDriverDetailsRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\ExportCsvAndSendEmailJob;
@@ -47,6 +48,8 @@ use App\Services\AML\AMLQuoteDetailsService;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -64,6 +67,7 @@ class AMLController extends Controller
     public function __construct()
     {
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
+        $this->middleware('permission:'.PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API, ['only' => ['togglePolicyIssuanceAutomation']]);
     }
 
     public function index(AMLRequest $request, AMLQueryService $amlQueryService)
@@ -589,8 +593,20 @@ class AMLController extends Controller
         $response = ['success' => false];
         $insurerAMLScreeningResponse = [];
 
+        $isPolicyIssuanceAutomationEnabled = true;
+        $isCarQuote = $insuredKycRequest->quote_type_id == QuoteTypeId::Car;
+        if ($isCarQuote) {
+            $isPolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+        }
+
+        LoggerService::info('Check Quote Policy Issuance Enabled condition', extra: [
+            'isCarQuote' => $isCarQuote,
+            'isPolicyIssuanceAutomationEnabled' => $isPolicyIssuanceAutomationEnabled,
+        ]);
+        // Insurer AML Screening is required if policy issuance automation is enabled
         if (
             $insuredKycRequest->customer_type == CustomerTypeEnum::Individual &&
+            $isPolicyIssuanceAutomationEnabled &&
             ! (
                 $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
                 $quote?->registration_type != CarRegistrationType::PERSONAL
@@ -614,6 +630,9 @@ class AMLController extends Controller
         if (empty($insurerAMLScreeningResponse) || $insurerAMLScreeningResponse['status'] == AMLStatusCode::AMLScreeningCleared || $insurerAMLScreeningResponse['is_previous_policy_expired']) {
             $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
             $response['success'] = $preparedFormData;
+            if (! $isPolicyIssuanceAutomationEnabled) {
+                $response['message'] = 'Please Capture and Issue Policy Manually.';
+            }
         }
 
         return response()->json($response);
@@ -792,5 +811,41 @@ class AMLController extends Controller
         $result = app(AMLService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $request->quoteUID);
 
         return response()->json($result);
+    }
+
+    /**
+     * Toggle policy issuance automation enabled status for a car quote
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function togglePolicyIssuanceAutomation(TogglePolicyIssuanceAutomationRequest $request)
+    {
+        $requestData = $request->safe();
+        LoggerService::startQuoteLogging($requestData->quote_uuid, LoggerFeatureEnum::DISABLE_POLICY_ISSUANCE_AUTOMATION);
+
+        try {
+            $policyIssuanceService = app(PolicyIssuanceService::class);
+            $result = $policyIssuanceService->togglePolicyIssuanceAutomation(
+                $requestData,
+                $requestData->quote_type_id,
+                $requestData->enabled
+            );
+
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'data' => $result['data'] ?? null,
+            ], $result['status_code']);
+        } catch (\Exception $e) {
+            LoggerService::error('Error toggling policy issuance automation for quote', extra: [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to toggle policy issuance automation, Please try again later.',
+            ], 500);
+        }
     }
 }

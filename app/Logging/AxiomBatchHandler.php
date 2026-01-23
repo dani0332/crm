@@ -91,11 +91,14 @@ class AxiomBatchHandler extends AbstractProcessingHandler
             $this->singleHandler->handle($fileRecord);
             $this->dailyHandler->handle($fileRecord);
 
-            // Add to Axiom batch with original Axiom format
-            $this->batch[] = $this->formatRecord($record, $extra);
+            // Skip Axiom batch for local and testing environments
+            if (! app()->environment(['local', 'testing'])) {
+                // Add to Axiom batch with original Axiom format
+                $this->batch[] = $this->formatRecord($record, $extra);
 
-            if (count($this->batch) >= $this->batchSize) {
-                $this->sendBatch();
+                if (count($this->batch) >= $this->batchSize) {
+                    $this->sendBatch();
+                }
             }
         } catch (\Exception $e) {
             error_log('Error writing to Axiom batch: '.$e->getMessage());
@@ -123,7 +126,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
     public function sendBatch()
     {
-        if (empty($this->batch) || $this->batchSent || app()->environment('local')) {
+        if (empty($this->batch) || $this->batchSent || app()->environment('local') || app()->environment('testing')) {
             return;
         }
 

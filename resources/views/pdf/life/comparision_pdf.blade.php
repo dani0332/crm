@@ -394,14 +394,11 @@
             height: 125px;
         }
     
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
+            header {
+            height: auto;
+            width: 100%;
+            display: block;
             background: white;
-            z-index: 1;
         }
     
         /* Bottom Header Container */
@@ -681,7 +678,7 @@
 
     {{-- First Page --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/ecom-life/pdf-intro.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/life_first_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -691,7 +688,7 @@
 
     {{-- Second Page --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -701,28 +698,27 @@
 
     {{-- PDF Page Header --}}
     <header>
-        <div class="header">
-            <div class="logo">
-                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo">
+        {{-- Header Image --}}
+        <div style="margin: 0; padding: 0; background: white;">
+            <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        </div>
+        {{-- Quote Details Bar --}}
+        <div style="background: #FFFFFF; color: #333; padding: 8px 15px; display: table; width: 100%; font-size: 11px; border-top: 1px solid rgba(51, 51, 51, 0.2); border-bottom: 1px solid rgba(51, 51, 51, 0.2);">
+            <!-- Left Side Text -->
+            <div style="display: table-cell; text-align: left; vertical-align: middle; width: 70%;">
+                <strong>Life Insurance Comparison Table</strong>
+                <span style="color: #5B5F60; padding: 0 8px;">|</span>
+                Name: <strong>{{ $quote->customer->first_name }} {{ $quote->customer->last_name }}</strong>
             </div>
-            <div class="header-bottom">
-                <!-- Left Side Text -->
-                <div class="header-text">
-                    <strong class="raleway-font" style="font-weight: 600 !important;">Life Insurance Comparison Table</strong>
-                    <span class="separator">|</span>
-                    Name: <span class="header-text-highlight">{{ $quote->customer->first_name }} {{ $quote->customer->last_name }}</span>
-                </div>
-            
-                <!-- Right Side Quote Number -->
-                <div class="quote-number">
-                    Quote Reference Number: <strong>LIFE-{{ $quote->uuid }}</strong>
-                </div>
+            <!-- Right Side Quote Number -->
+            <div style="display: table-cell; text-align: right; vertical-align: middle; width: 30%;">
+                Quote Reference Number: <strong>LIFE-{{ $quote->uuid }}</strong>
             </div>
         </div>
     </header>
  
     {{-- PDF Page Inner Content --}}
-    <main style="margin-top: 100px;">
+    <main style="margin-top: 10px;">
         @if(count($planIds) > 0)
         @php
             // Limit to maximum 5 plans
@@ -730,7 +726,6 @@
         @endphp
         <table class="main-table {{ $tableClass }}">
             <thead>
-                <p style="margin-top:100px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
                         <p class="quote-info raleway-font" style="font-weight:700;">Insurance company
@@ -1006,7 +1001,7 @@
     {{-- Third Page --}}
     <div style="page-break-after: always;"></div>
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -1016,7 +1011,7 @@
     {{-- Fourth Page --}}
     <div style="page-break-after: always;"></div>
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'quoteType' => \App\Enums\quoteTypeCode::Life,'ecomInsuranceLink'=>config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL').$quote->uuid])
       

@@ -252,7 +252,7 @@ const subTeamOptions = [
   { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
-  { value: 'PCP', label: 'PCP' },
+  { value: 'GBP', label: 'GBP' },
 ];
 
 const advisorOptions = computed(() => {
@@ -1471,6 +1471,13 @@ const additionalContactPrimaryConfirmed = () => {
         contactLoader.value = false;
         modals.contactPrimaryConfirm = false;
       },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      },
     },
   );
 };
@@ -1957,6 +1964,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
     applyEmiratesNumberMasking(emiratesId));
 
 const isLocked = page.props.quote.is_quote_locked ?? false;
+
+const isPrimaryEmailLocked = computed(() => {
+  return [
+    page.props.quoteStatusEnum.POLICY_BOOKING_QUEUED,
+    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED,
+  ].includes(page.props.quote?.quote_status_id);
+});
 </script>
 
 <template>
@@ -3262,15 +3276,29 @@ const isLocked = page.props.quote.is_quote_locked ?? false;
             </template>
 
             <template #item-action="item">
-              <x-button
-                size="xs"
-                color="emerald"
-                outlined
-                @click.prevent="additionalContactPrimary(item)"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Make Primary
-              </x-button>
+              <div class="space-x-4">
+                <x-tooltip
+                  v-if="isPrimaryEmailLocked && item.key === 'email'"
+                  placement="bottom"
+                >
+                  <x-button size="xs" color="red" outlined disabled>
+                    Make Primary
+                  </x-button>
+                  <template #tooltip>
+                    Primary email ID cannot be changed while the policy booking
+                    is in progress.
+                  </template>
+                </x-tooltip>
+                <x-button
+                  v-else-if="readOnlyMode.isDisable === true"
+                  size="xs"
+                  color="emerald"
+                  outlined
+                  @click.prevent="additionalContactPrimary(item)"
+                >
+                  Make Primary
+                </x-button>
+              </div>
             </template>
           </DataTable>
         </template>

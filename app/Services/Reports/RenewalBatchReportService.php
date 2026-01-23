@@ -26,6 +26,7 @@ use App\Services\Request;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class RenewalBatchReportService extends BaseService
@@ -1057,6 +1058,9 @@ class RenewalBatchReportService extends BaseService
 
     public function getAllNonMotorBatches()
     {
-        return RenewalBatch::getAllBatches(true);
+        // Since batches are created weekly, cache the result for 1 day (24 hours)
+        return Cache::remember('all_non_motor_batches', now()->addDay(), function () {
+            return RenewalBatch::getAllBatches(true);
+        });
     }
 }
