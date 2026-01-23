@@ -75,6 +75,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedLegacyPolicyKeys();
         $this->seedBranchData();
         $this->seedOcrUtilEnabled();
+        $this->seedHealthTeamRoutingEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -1208,6 +1209,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::OCR_UTIL_ENABLED],
             [
                 'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedHealthTeamRoutingEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED],
+            [
+                'value' => ApplicationStorageEnums::ACTIVE,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
