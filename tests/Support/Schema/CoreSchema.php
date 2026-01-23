@@ -14,6 +14,8 @@ class CoreSchema
         $this->ensureReferenceTables();
         $this->ensureApplicationStorageTable();
         $this->ensureTeamTables();
+        $this->ensureUserManagementTables();
+        $this->ensureQueueTables();
         $this->ensureLookupTables();
         $this->ensureCustomerTables();
         $this->ensureInsuranceProviderTables();
@@ -81,6 +83,17 @@ class CoreSchema
                 $table->tinyInteger('is_active')->default(1);
                 $table->integer('status')->nullable();
                 $table->timestamp('logout_at')->nullable();
+                // User-management columns used in UserController@update and related flows.
+                $table->string('mobile_no')->nullable();
+                $table->string('landline_no')->nullable();
+                $table->string('calendar_link')->nullable();
+                $table->string('phone_calendar_link')->nullable();
+                $table->unsignedBigInteger('department_id')->nullable();
+                $table->unsignedBigInteger('rm_category_id')->nullable();
+                $table->text('additional_team_ids')->nullable();
+                $table->unsignedBigInteger('sub_team_id')->nullable();
+                // Used by CheckLastLoginMiddleware (last_login_check)
+                $table->timestamp('last_login')->nullable();
                 $table->timestamps();
             },
             'roles' => function (Blueprint $table) {
@@ -613,6 +626,13 @@ class CoreSchema
             'teams' => function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
+                // TeamHierarchyTrait::getAllProducts() relies on these columns.
+                $table->unsignedTinyInteger('type')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->unsignedBigInteger('parent_team_id')->nullable();
+                $table->decimal('min_price', 15, 2)->nullable();
+                $table->decimal('max_price', 15, 2)->nullable();
+                $table->boolean('allocation_threshold_enabled')->default(0);
                 $table->timestamps();
             },
             'user_team' => function (Blueprint $table) {
@@ -627,6 +647,71 @@ class CoreSchema
                 $table->unsignedBigInteger('user_id');
                 $table->unsignedBigInteger('product_id');
                 $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureUserManagementTables(): void
+    {
+        SchemaUtils::ensureTables([
+            // Pivot: user_manager (subordinates <-> managers)
+            'user_manager' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('manager_id');
+                $table->timestamps();
+            },
+            // Departments + pivot used by DepartmentService::syncUserDepartments()
+            'departments' => function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'user_departments' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('department_id');
+                $table->timestamps();
+            },
+            // Pivot used by User::businessTypes()->sync()
+            'business_type_of_insurance_user' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('business_type_of_insurance_id');
+                $table->timestamps();
+            },
+            // Used in update() (sync via inserts)
+            'user_products' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('product_id');
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureQueueTables(): void
+    {
+        SchemaUtils::ensureTables([
+            // QUEUE_CONNECTION=database in phpunit.xml expects these to exist.
+            'jobs' => function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->string('queue')->index();
+                $table->longText('payload');
+                $table->unsignedTinyInteger('attempts')->default(0);
+                $table->unsignedInteger('reserved_at')->nullable();
+                $table->unsignedInteger('available_at');
+                $table->unsignedInteger('created_at');
+            },
+            'failed_jobs' => function (Blueprint $table) {
+                $table->id();
+                $table->string('uuid')->unique();
+                $table->text('connection');
+                $table->text('queue');
+                $table->longText('payload');
+                $table->longText('exception');
+                $table->timestamp('failed_at')->useCurrent();
             },
         ]);
     }
@@ -909,6 +994,7 @@ class CoreSchema
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text');
+                $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
         ]);
