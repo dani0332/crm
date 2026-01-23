@@ -11,6 +11,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\Emirate;
@@ -22,6 +23,7 @@ use App\Services\AML\DTOs\AMLPageData;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 /**
  * Service for preparing AML Quote Details page data
@@ -95,6 +97,7 @@ class AMLQuoteDetailsService
         // Get insurer-specific configuration
         $gigInsurerDefaultEmail = $this->getInsurerDefaultEmail($providerCode);
         $isInsurerSyncEnabled = $this->amlService->isInsurerSyncEnabled($quoteType, $quoteRequest);
+        $isPolicyAutomationEnabled = $this->isPolicyAutomationEnabled($quoteType, $insuranceProvider);
 
         // Get additional fields configuration
         $isAddionalFieldsEnabled = $this->amlService->isAdditionalVehicleAndDriverDetailsEnabled(
@@ -134,6 +137,7 @@ class AMLQuoteDetailsService
             'isPrivateCar' => $quoteRequest?->registration_type === CarRegistrationType::PERSONAL,
             'LIVAEnums' => app(LivaInsurancePayloadMapping::class)->rtaTransactionTypeEnum(),
             'insurerName' => InsuranceProvidersEnum::getTextByCode($providerCode),
+            'isPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
             ...$enums,
         ], $businessPayload, $rtaConfigurationData));
     }
@@ -199,6 +203,23 @@ class AMLQuoteDetailsService
         return $isLIVA
             ? GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL
             : GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
+    }
+
+    /**
+     * Check if policy automation is enabled for the insurer
+     */
+    private function isPolicyAutomationEnabled(QuoteType $quoteType, ?object $insuranceProvider): bool
+    {
+        if ($quoteType->code !== quoteTypeCode::Car || ! $insuranceProvider) {
+            return false;
+        }
+
+        $policyIssuanceService = app(PolicyIssuanceService::class)->init(
+            $quoteType->code,
+            $insuranceProvider->code
+        );
+
+        return $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
     }
 
     /**
