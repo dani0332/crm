@@ -74,8 +74,6 @@ class OtherNonMotorRenewalsUploadService
 
             $this->dispatchProcessingJobs($renewalsUploadLead);
 
-            $renewalsUploadLead->refresh()->update(['status' => ProcessStatusCode::COMPLETED]);
-
             return true;
         } catch (\Throwable $exception) {
             LoggerService::error($logPrefix.' uploading updates Process Failed. Error: '.$exception->getMessage());
