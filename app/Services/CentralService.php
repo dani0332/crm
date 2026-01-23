@@ -1558,6 +1558,56 @@ class CentralService extends BaseService
     }
 
     /**
+     * Process document URLs and extensions for email data
+     *
+     * @param  object  $emailData  - The email data object to update
+     * @param  object  $sendUpdateEmailData  - Email data containing documents
+     */
+    private function processDocumentUrlsForEmailData(object &$emailData, object $sendUpdateEmailData): void
+    {
+        // Define document types to process (generates properties like documentSUPC, documentSUPS, documentTAX_INVOICE)
+        $documentTypes = [
+            'SUPC' => WatermarkDocTypesEnum::SUPC,
+            'SUPS' => WatermarkDocTypesEnum::SUPS,
+            'TAX_INVOICE' => WatermarkDocTypesEnum::SUTAXINV,
+        ];
+
+        $sendUpdateEmailDocs = collect($sendUpdateEmailData?->documents ?? []);
+
+        // Initialize all document properties to empty strings to prevent email provider crashes
+        foreach ($documentTypes as $documentCode) {
+            $urlProperty = 'document'.$documentCode;
+            $extProperty = 'document'.$documentCode.'Ext';
+            $emailData->{$urlProperty} = '';
+            $emailData->{$extProperty} = '';
+        }
+
+        // Process each document directly and update properties only for existing documents
+        foreach ($sendUpdateEmailDocs as $document) {
+            $documentTypeCode = $document['document_type_code'];
+
+            // Only process documents that are in our defined types
+            if (! in_array($documentTypeCode, $documentTypes)) {
+                continue;
+            }
+
+            $documentUrl = $document['watermarked_doc_url'] ?? $document['doc_url'] ?? '';
+
+            // Generate property names dynamically using document type code directly
+            $urlProperty = 'document'.$documentTypeCode;
+            $extProperty = 'document'.$documentTypeCode.'Ext';
+
+            if (! empty($documentUrl)) {
+                // Generate presigned URL instead of direct storage URL
+                $emailData->{$urlProperty} = app(QuoteDocumentService::class)->getDocumentUrl($documentUrl, 'azureIM', 60); // 60 minutes expiry
+                $emailData->{$extProperty} = ! empty($emailData->{$urlProperty})
+                    ? pathinfo($emailData->{$urlProperty}, PATHINFO_EXTENSION)
+                    : '';
+            }
+        }
+    }
+
+    /**
      * Prepare email data specifically for Device update emails to Bird
      * Combines Bird's standard data structure with update-specific fields
      *
@@ -1578,47 +1628,8 @@ class CentralService extends BaseService
         $workflowType = WorkflowTypeEnum::DEVICE_UPDATE_POLICY;
         $emailData = $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $sendUpdateEmailData);
 
-        $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
-        $sendUpdateEmailDocs = collect($sendUpdateEmailData?->documents??[]);
-        $documentSUPC = (object) $sendUpdateEmailDocs->filter(function ($document) {
-            return in_array($document['document_type_code'], [WatermarkDocTypesEnum::SUPC]);
-        })->first();
-
-        $documentSUPS = (object) $sendUpdateEmailDocs->filter(function ($document) {
-            return in_array($document['document_type_code'], [WatermarkDocTypesEnum::SUPS]);
-        })->first();
-
-        $documentTaxInvoice = (object) $sendUpdateEmailDocs->filter(function ($document) {
-            return in_array($document['document_type_code'], [WatermarkDocTypesEnum::SUTAXINV]);
-        })->first();
-
-        $documentSUPCurl = $documentSUPC?->watermarked_doc_url ?? $documentSUPC?->doc_url ?? '';
-        $documentSUPSurl = $documentSUPS?->watermarked_doc_url ?? $documentSUPS?->doc_url ?? '';
-        $documentTaxInvoiceurl = $documentTaxInvoice?->watermarked_doc_url ?? $documentTaxInvoice?->doc_url ?? '';
-
-        $emailData->documentSUPC = '';
-        $emailData->documentSUPS = '';
-        $emailData->taxInvoice = '';
-
-        $emailData->documentSUPCExt = '';
-        $emailData->documentSUPSExt = '';
-        $emailData->taxInvoiceExt = '';
-
-        if (!empty($documentSUPCurl)) {
-            $emailData->documentSUPC = $storageUrl.$documentSUPCurl;
-            $emailData->documentSUPCExt = ! empty($emailData->documentSUPC) ? pathinfo($emailData->documentSUPC, PATHINFO_EXTENSION) : '';
-        }
-
-        if (!empty($documentSUPSurl)) {
-            $emailData->documentSUPS = $storageUrl.$documentSUPSurl;
-            $emailData->documentSUPSExt = ! empty($emailData->documentSUPS) ? pathinfo($emailData->documentSUPS, PATHINFO_EXTENSION) : '';
-        }
-
-        if (!empty($documentTaxInvoiceurl)) {
-            $emailData->taxInvoice = $storageUrl.$documentTaxInvoiceurl;
-            $emailData->taxInvoiceExt = ! empty($emailData->taxInvoice) ? pathinfo($emailData->taxInvoice, PATHINFO_EXTENSION) : '';
-        }
+        // Process document URLs and extensions
+        $this->processDocumentUrlsForEmailData($emailData, $sendUpdateEmailData);
 
         LoggerService::info('fn:prepareDeviceUpdateBirdData - Email data preparation completed', extra: [
             'uuid' => $quote->uuid,

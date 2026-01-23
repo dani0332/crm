@@ -26,7 +26,8 @@ class NgiRequestBuilder
             $payment instanceof \App\Models\PaymentSplits => $payment?->paymentCharges?->transaction_id ?? null,
             default => null,
         } ?? '';
-        $payload = [
+
+        return [
             'client_reference_number' => $quote->code ?? null,
             'quote_reference_number' => $quote->insurer_quote_number,
             'payment_reference_number' => $paymentReferenceNumber,
@@ -62,9 +63,6 @@ class NgiRequestBuilder
                     : Carbon::now()->addYear()->format('Y-m-d'),
             ],
         ];
-        // unset($payload['payment_reference_number']); // TODO:: NGI:: Rucha ask to send payload without this field which is not according to the FRD or documentation discussion link is https://chat.google.com/room/AAQAZXb03Dc/a6vYYW81pkM/I_2Yfeqb1xc?cls=10
-        $payload['payment_reference_number'] = ''; // TODO:: NGI:: Rucha ask to make it empty string
-        return $payload;
     }
 
     /**
