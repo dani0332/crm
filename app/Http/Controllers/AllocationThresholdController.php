@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\HealthRoutingLogTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Team;
+use App\Services\HealthTeamRouting\HealthTeamRoutingLogService;
 use Illuminate\Http\Request;
 
 class AllocationThresholdController extends Controller
@@ -70,6 +72,8 @@ class AllocationThresholdController extends Controller
             foreach ($teams as $team) {
                 Team::where('id', $team['id'])->update(['min_price' => $team['min'], 'max_price' => $team['max'], 'allocation_threshold_enabled' => true]);
             }
+
+            HealthTeamRoutingLogService::log(HealthRoutingLogTypeEnum::CONFIGURATION(), ['teams' => $teams], null, null);
         }
 
         return response()->json(['message' => 'Allocation Threshold updated successfully']);
