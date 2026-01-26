@@ -2,10 +2,10 @@
 
 namespace App\Enums;
 
-use BenSampo\Enum\Enum;
-
-class HealthRoutingLogTypeEnum extends Enum
+enum HealthRoutingLogTypeEnum: string
 {
-    const ROUTING = 'ROUTING';
-    const CONFIGURATION = 'CONFIGURATION';
+    use Enumable;
+
+    case ROUTING = 'ROUTING';
+    case CONFIGURATION = 'CONFIGURATION';
 }
