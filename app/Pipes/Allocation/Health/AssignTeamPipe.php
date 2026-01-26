@@ -7,6 +7,7 @@ use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\Team;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\HealthTeamRouting\HealthTeamRoutingService;
 use App\Services\Logger\LoggerService;
 use Closure;
 use Illuminate\Support\Facades\Mail;
@@ -20,7 +21,16 @@ class AssignTeamPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        $this->assignTeamBasedOnPrices();
+        // If the lead is not SIC, assign the team based on the health team routing
+        if(! $this->lead->isSIC($this->allocationRequest->getQuoteType())){
+            $teamName = app(HealthTeamRoutingService::class)->getTeamBasedOnHealthTeamRouting($this->lead);
+            if($teamName){
+                $this->lead->health_team_type = $teamName;
+                $this->lead->save();
+            }
+        } else {
+            $this->assignTeamBasedOnPrices();
+        }
 
         if (! $this->lead->health_team_type) {
             LoggerService::warning('No health team found');
