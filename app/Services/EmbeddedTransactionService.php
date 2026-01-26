@@ -55,7 +55,7 @@ class EmbeddedTransactionService extends BaseService
         $birdEmailData = [
             'quoteId' => $quote->id,
             'quoteTypeId' => $quoteTypeId,
-            'refID' => $quote->code,
+            'refId' => $quote->code,
             'embeddedTransactionCode' => $epTransaction->code,
             'workflowType' => WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER,
             'getRetargetingEpReminderUrl' => $getRetargetingEpReminderUrl,
@@ -88,9 +88,9 @@ class EmbeddedTransactionService extends BaseService
 
         $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quoteData->quote->uuid
             .'/payment/?'.http_build_query([
-                'providerCode' => $plan?->provider_code, 
-                'planId' => $plan?->id,
-                'selectEtCode' => $quoteData?->embeddedTransaction?->code
+                'providerCode' => $plan->provider_code,
+                'planId' => $plan->id,
+                'selectEtCode' => $quoteData->embeddedTransaction->code,
             ]);
 
         $data = [
