@@ -6,6 +6,7 @@ use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
@@ -13,7 +14,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
-use App\Enums\QuoteTypeId;
 
 class EmbeddedProduct
 {
@@ -146,6 +146,41 @@ class EmbeddedProduct
         $carMake = $quoteObject->carMake->text ?? '';
         $carModel = $quoteObject->carModel->text ?? '';
         $item->vehicle = $carMake.' '.$carModel;
+
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+        $item->advisor_name = $quoteObject?->advisor?->name ?? '';
+        $item->dob = isset($quoteObject?->dob) ? Carbon::parse($quoteObject?->dob)->format($dateFormat) : '';
+        $item->nationality = $quoteObject?->customer?->nationality?->text ?? '';
+        $item->policy_issuance_date = $quoteObject?->policy_issuance_date ?? '';
+        $item->age = isset($quoteObject?->dob) ?
+            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())).' Years'
+            : '';
+
+        return $item;
+    }
+
+    /**
+     * Process report record for Car/Bike renewals (RDX/COU) that support both quote types.
+     *
+     * @param  object  $quoteObject
+     * @param  object  $item
+     * @return object
+     */
+    protected function processCarBikeReportRecord($quoteObject, $item)
+    {
+        $item->lob = QuoteTypeId::getOptions()[$item->quote_type_id] ?? '';
+
+        if ($item->quote_type_id == QuoteTypeId::Car) {
+            $carMake = $quoteObject->carMake->text ?? '';
+            $carModel = $quoteObject->carModel->text ?? '';
+            $item->vehicle = $carMake.' '.$carModel;
+        } elseif ($item->quote_type_id == QuoteTypeId::Bike) {
+            $make = $quoteObject->bikeQuote->bikeMake->text ?? '';
+            $model = $quoteObject->bikeQuote->bikeModel->text ?? '';
+            $item->vehicle = $make.' '.$model;
+        } else {
+            $item->vehicle = 'N/A';
+        }
 
         $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
         $item->advisor_name = $quoteObject?->advisor?->name ?? '';
