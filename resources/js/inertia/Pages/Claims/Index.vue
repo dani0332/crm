@@ -61,7 +61,7 @@ const statusOptions = computed(() => {
   return (
     props.claimDropdownOptions?.claimStatuses?.map(cs => ({
       value: cs.id,
-      label: cs.text,
+      label: cs.text.toUpperCase(),
     })) || []
   );
 });
@@ -94,14 +94,15 @@ const claimSubStatusOptions = computed(() => {
   const quoteTypeId = filters.quote_type_id;
   const businessTypeId = filters.business_type_of_insurance_id;
   const isHealth = isHealthLOB.value;
+  let isBike = isBikeLOB.value;
 
-  let quoteType = isHealth ? page.props.quoteTypeIds?.Health : quoteTypeId;
+  let quoteType = isHealth ? page.props.quoteTypeIds?.Health : isBike ? page.props.quoteTypeIds?.Car : quoteTypeId; 
   return (
     props.claimDropdownOptions?.claimSubStatuses
       ?.filter(ct => ct.quote_type_id === quoteType)
       ?.map(ct => ({
         value: ct.id,
-        label: ct.text,
+        label: ct.text.toUpperCase(),
       })) || []
   );
 });
@@ -128,7 +129,7 @@ const complaintStatusOptions = computed(() => {
   return (
     props.claimDropdownOptions?.complaintStatuses?.map(status => ({
       value: status.id,
-      label: status.text,
+      label: status.text.toUpperCase(),
     })) || []
   );
 });

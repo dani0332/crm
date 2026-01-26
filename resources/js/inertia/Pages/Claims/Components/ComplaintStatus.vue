@@ -36,7 +36,7 @@ const complaintStatusOptions = computed(() => {
   return (
     props.complaintStatuses?.map(status => ({
       value: status.id,
-      label: status.text,
+      label: status.text.toUpperCase(),
     })) || []
   );
 });

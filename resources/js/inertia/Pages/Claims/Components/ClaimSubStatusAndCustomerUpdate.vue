@@ -36,10 +36,18 @@ const isHealthLOB = computed(() => {
   return isHealth || isGroupMedical;
 });
 
+// Check if selected line of business is car
+const isBikeLOB = computed(() => {
+  return page.props.quoteTypeIds?.Bike === props.claim.quote_type_id;
+});
+
 const subStatusOptions = computed(() => {
   let quoteType = isHealthLOB.value
     ? page.props.quoteTypeIds?.Health
+    : isBikeLOB.value
+    ? page.props.quoteTypeIds?.Car
     : page.props.claim.quote_type_id;
+  console.log('quoteType', quoteType);  
   return (
     props.dropdowns.claimSubStatuses
       ?.filter(subStatus => {
@@ -60,7 +68,7 @@ const subStatusOptions = computed(() => {
       })
       ?.map(subStatus => ({
         value: subStatus.id,
-        label: subStatus.text,
+        label: subStatus.text.toUpperCase(),
       })) || []
   );
 });
