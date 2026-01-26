@@ -619,6 +619,7 @@ class ApiService
                         ];
                     }
                     $result = app(HealthEmailService::class)->sendSTPAdvisorNotification($lead, $request->apiFailed);
+
                     return $result;
                 default:
                     return [

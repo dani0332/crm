@@ -15,6 +15,7 @@ class PusherNotificationService extends BaseService
             $advisor = User::find($lead->advisor_id);
             if (! $advisor || ! $advisor->id) {
                 LoggerService::error(self::class." - Advisor not found for lead UUID: {$lead->uuid}");
+
                 return false;
             }
             $pusherData = [
