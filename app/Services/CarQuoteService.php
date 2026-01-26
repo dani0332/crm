@@ -1176,7 +1176,7 @@ class CarQuoteService extends BaseService
                 'previous_quote_policy_number',
                 'previous_policy_expiry_date',
             ]
-        )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
+        )->with(['advisor', 'carMake', 'carModel', 'latestUpdateRenewalQuoteProcess', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name', 'pcp_tag')->with(['additionalContacts' => function ($q) {
                 $q->where('key', 'email');
             }]);
@@ -1206,6 +1206,13 @@ class CarQuoteService extends BaseService
             }
         }
 
+        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+            $leadValidationErrors = collect();
+            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
+            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
+            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
+        }
+
         $carQuote->plans = $plans;
 
         return $carQuote;
@@ -1213,9 +1220,11 @@ class CarQuoteService extends BaseService
 
     public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
     {
+        $process = '';
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         if ($useKen2Endpoint) {
             $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
+            $process = 'renewalsUpload';
         } else {
             $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
         }
@@ -1237,6 +1246,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            'callProcess' => $process,
             'callSource' => 'imcrm',
         ];
 
