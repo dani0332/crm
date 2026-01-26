@@ -213,7 +213,7 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
             quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
-            quoteTypeCode::Device => ! Auth::user()->hasRole(RolesEnum::DeviceAdvisor),
+            quoteTypeCode::Device => ! Auth::user()->hasRole(RolesEnum::SmartPhoneAdvisor),
         ];
 
         return [

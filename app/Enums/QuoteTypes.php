@@ -328,7 +328,7 @@ enum QuoteTypes: string
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             self::CAR_REVIVAL => [RolesEnum::CarRevivalAdvisor],
             self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
-            self::DEVICE => [RolesEnum::DeviceAdvisor],
+            self::DEVICE => [RolesEnum::SmartPhoneAdvisor],
             default => [],
         };
     }

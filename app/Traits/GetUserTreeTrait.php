@@ -56,7 +56,7 @@ trait GetUserTreeTrait
             RolesEnum::CorplineManager,
             RolesEnum::GMManager,
             RolesEnum::LeadPool,
-            RolesEnum::DeviceManager,
+            RolesEnum::SmartPhoneManager,
         ];
         if ($user && $user->hasAnyRole($rolesArray) || $user->hasAnyPermission($allowedPermissions)) {
             $userAllTeams = DB::table('teams')

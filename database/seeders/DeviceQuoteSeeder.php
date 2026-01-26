@@ -78,9 +78,9 @@ class DeviceQuoteSeeder extends Seeder
             PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
         ];
 
-        $this->seedPermissions($deviceManagerPermissions, [RolesEnum::DeviceManager]);
+        $this->seedPermissions($deviceManagerPermissions, [RolesEnum::SmartPhoneManager]);
 
-        $this->seedPermissions($deviceAdvisorPermissions, [RolesEnum::DeviceAdvisor]);
+        $this->seedPermissions($deviceAdvisorPermissions, [RolesEnum::SmartPhoneAdvisor]);
 
     }
 
