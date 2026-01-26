@@ -74,6 +74,7 @@ class RetryAllocationService
                 'sic_advisor_requested',
                 'quote_status_id',
                 'tier_id',
+                'car_value',
             ])
             ->where(function ($q) use ($allocationStartDate, $to) {
                 $q->whereBetween('created_at', [$allocationStartDate, $to])
@@ -102,7 +103,9 @@ class RetryAllocationService
         LoggerService::info(self::class.':executeCarAllocation: Found '.count($leads).' leads to process');
 
         foreach ($leads as $lead) {
-            if ($lead->tier_id == TiersIdEnum::TIER_R) {
+            if ($lead->tier_id == TiersIdEnum::TIER_R && ! $lead->hasCarValue()) {
+                LoggerService::info(self::class.': Skipping car quote allocation for tier R and does not have car value');
+
                 continue;
             }
 
@@ -151,6 +154,7 @@ class RetryAllocationService
                 'quote_status_id',
                 'advisor_id',
                 'tier_id',
+                'car_value',
             ])
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -168,8 +172,8 @@ class RetryAllocationService
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
-            if ($lead->tier_id == TiersIdEnum::TIER_R) {
-                LoggerService::info(self::class.': Skipping car revival quote allocation for tier R');
+            if ($lead->tier_id == TiersIdEnum::TIER_R && ! $lead->hasCarValue()) {
+                LoggerService::info(self::class.': Skipping car revival quote allocation for tier R and does not have car value');
 
                 continue;
             }

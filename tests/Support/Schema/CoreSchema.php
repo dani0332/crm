@@ -429,6 +429,7 @@ class CoreSchema
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
                 $table->string('plan_name')->nullable();
+                $table->string('repair_type')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('provider_id')->nullable();
                 $table->timestamps();
