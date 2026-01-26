@@ -2462,7 +2462,11 @@ const handleCancelConfirmationModal = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
-                  <dd>{{ applyEmiratesNumberMasking(record.driver_eid_number) ?? '' }}</dd>
+                  <dd>
+                    {{
+                      applyEmiratesNumberMasking(record.driver_eid_number) ?? ''
+                    }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
