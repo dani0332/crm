@@ -81,13 +81,14 @@ class EmbeddedTransactionService extends BaseService
         if (empty($quoteData?->quote?->uuid)
             || empty($quoteData?->embeddedTransaction?->code)
             || empty($customer?->id) || empty($customer?->email)
+            || empty($plan?->provider_code) || empty($plan?->id)
         ) {
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
         $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quoteData->quote->uuid
-            .'/payment/?providerCode='.$plan?->provider_code
-            .'&planId='.$plan?->id;
+            .'/payment/?providerCode='.$plan->provider_code
+            .'&planId='.$plan->id;
 
         $data = [
             'quote' => $quoteData->quote,
