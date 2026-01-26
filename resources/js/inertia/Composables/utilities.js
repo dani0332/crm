@@ -1,3 +1,62 @@
+import { useIntersectionObserver } from '@vueuse/core';
+import { ref } from 'vue';
+
+/**
+ * Lazy load content when section becomes visible using Intersection Observer
+ * @returns {Object} { sectionRef, isLoaded, isLoading, load, reset, stop }
+ */
+export const useLazyLoadSection = (loadFunction, options = {}) => {
+  const { threshold = 0.1, rootMargin = '100px', loadOnce = true } = options;
+
+  const sectionRef = ref(null);
+  const isLoaded = ref(false);
+  const isLoading = ref(false);
+
+  const load = async () => {
+    if (isLoading.value) return;
+
+    isLoading.value = true;
+    try {
+      await loadFunction();
+      isLoaded.value = true;
+    } catch (error) {
+      console.error('useLazyLoadSection: Error loading section', error);
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const reset = () => {
+    isLoaded.value = false;
+    isLoading.value = false;
+  };
+
+  const { stop } = useIntersectionObserver(
+    sectionRef,
+    ([{ isIntersecting }]) => {
+      if (isIntersecting && !isLoaded.value && !isLoading.value) {
+        load();
+        if (loadOnce) {
+          stop();
+        }
+      }
+    },
+    {
+      threshold,
+      rootMargin,
+    },
+  );
+
+  return {
+    sectionRef,
+    isLoaded,
+    isLoading,
+    load, // Manual trigger if needed
+    reset, // Reset state for re-loading
+    stop, // Stop observing manually
+  };
+};
+
 export const useRoundIt = (num, decimalPlaces = 2) => {
   const p = Math.pow(10, decimalPlaces);
   const n = num * p * (1 + Number.EPSILON);

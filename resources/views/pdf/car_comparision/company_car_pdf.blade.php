@@ -25,12 +25,10 @@
         }
 
         header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 200px;
+            height: auto;
             width: 100%;
             display: block;
+            background: white;
         }
 
         div,
@@ -479,7 +477,7 @@
 
     {{-- First Page --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_first_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/commercial_car_first_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -488,7 +486,7 @@
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -498,26 +496,25 @@
 
     {{-- PDF Page Header --}}
     <header>
-        <div class="header">
-            <div class="logo">
-                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo">
+        {{-- Header Image --}}
+        <div style="margin: 0; padding: 0; background: white;">
+            <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0;"/>
+        </div>
+        {{-- Quote Details Bar --}}
+        <div style="background: #FFFFFF; color: #333; padding: 8px 15px; display: table; width: 100%; font-size: 11px; border-top: 1px solid rgba(51, 51, 51, 0.2); border-bottom: 1px solid rgba(51, 51, 51, 0.2);">
+            <!-- Left Side Text -->
+            <div style="display: table-cell; text-align: left; vertical-align: middle; width: 70%;">
+                <strong>Commercial Car Insurance Comparison Table</strong>
+                <span style="color: #5B5F60; padding: 0 8px;">|</span>
+                Company Name: <strong>{{ $quote->company_name }}</strong>
+                <span style="color: #5B5F60; padding: 0 8px;">|</span>
+                Car Type: <strong>{{ @$quote->vehicleType->text }}</strong>
+                <span style="color: #5B5F60; padding: 0 8px;">|</span>
+                Year: <strong>{{ @$quote->year_of_manufacture }}</strong>
             </div>
-            <div class="header-bottom">
-                <!-- Left Side Text -->
-                <div class="header-text">
-                    <strong class="raleway-font" style="font-weight: 600 !important;">Company Car Insurance comparison Table</strong>
-                    <span class="separator">|</span>
-                    Company name: <span class="header-text-highlight">{{ $quote->company_name }}</span>
-                    <span class="separator">|</span>
-                    Car type: <span class="header-text-highlight">{{ @$quote->vehicleType->text }}</span>
-                    <span class="separator">|</span>
-                    Year: <span class="header-text-highlight">{{ @$quote->year_of_manufacture }}</span>
-                </div>
-
-                <!-- Right Side Quote Number -->
-                <div class="quote-number">
-                    Quote reference number: <strong>CAR-{{ $quote->uuid }}</strong>
-                </div>
+            <!-- Right Side Quote Number -->
+            <div style="display: table-cell; text-align: right; vertical-align: middle; width: 30%;">
+                Quote Reference Number: <strong>CAR-{{ $quote->uuid }}</strong>
             </div>
         </div>
     </header>
@@ -529,7 +526,7 @@
             // Limit to maximum 5 plans
             $displayPlans = array_slice($planIds, 0, 5);
         @endphp
-        <table class="main-table is-full" style="margin-top:200px">
+        <table class="main-table is-full" style="margin-top:10px">
             <thead>
             <tr>
                     <th class="bg-light-blue" rowspan="2">
@@ -791,7 +788,7 @@
     {{-- Third Page --}}
     <div style="page-break-after: always;"></div>
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/second_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
       
@@ -801,7 +798,7 @@
     {{-- Fourth Page --}}
     <div style="page-break-after: always;"></div>
     <div style="margin: 0; padding: 0; position: relative; z-index: 100;">
-        <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
+        <img src="{{ public_path('images/quote_plans_pages/comparison_pdfs_images/last_page.jpg') }}" style="width: 100%; display: block; margin: 0; padding: 0; height: 90%;"/>
     </div>
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid])
       

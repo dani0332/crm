@@ -16,18 +16,12 @@ class RemovePcQualifiedJob implements ShouldQueue
 
     public array $uuids;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(array $uuids)
     {
         $this->uuids = $uuids;
         $this->onQueue('private-client');
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
         try {
@@ -41,11 +35,20 @@ class RemovePcQualifiedJob implements ShouldQueue
                 $quoteQuery->whereIn('uuid', $this->uuids);
             }
 
-            $quotes = $quoteQuery->select('uuid', 'quote_type_id')->get();
+            $quotes = $quoteQuery->select('id', 'uuid', 'quote_type_id')->get();
+            LoggerService::info(self::class.': PC qualified quotes found', extra: ['uuids' => $this->uuids, 'count' => $quotes->count()]);
 
             foreach ($quotes as $quote) {
                 try {
+                    $logData = [
+                        'quote_id' => $quote->id,
+                        'quote_uuid' => $quote->uuid,
+                        'quote_type_id' => $quote->quote_type_id,
+                    ];
+
+                    LoggerService::info(self::class.': Removing PC qualified tagging started', extra: $logData);
                     $this->removePcQualified($quote->uuid, $quote->quote_type_id);
+                    LoggerService::info(self::class.': Removing PC qualified tagging completed', extra: $logData);
                 } catch (\Exception $e) {
                     LoggerService::error('Error removing PC qualified tag. Continuing with next quote.', extra: [
                         'quote_uuid' => $quote->uuid,
