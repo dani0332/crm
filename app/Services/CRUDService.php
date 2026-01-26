@@ -584,11 +584,11 @@ class CRUDService extends BaseService
         $key = '';
         if ($type == quoteTypeCode::Car) {
             if ($quotePlansCount == 1) {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE;
             } elseif ($quotePlansCount > 1) {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE;
             } else {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE;
             }
         } elseif ($type == quoteTypeCode::Bike) {
             $key = 'SIB_BIKE_QUOTE_PLAN_TEMPLATE';

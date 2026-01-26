@@ -3,10 +3,10 @@
 namespace App\Services\Logger;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class LoggerService
 {
@@ -68,7 +68,7 @@ class LoggerService
         }
     }
 
-    private static function getExceptionData(Exception $exception): array
+    private static function getExceptionData(Throwable $exception): array
     {
         return [
             'message' => $exception->getMessage(),
@@ -77,7 +77,7 @@ class LoggerService
         ];
     }
 
-    public static function error(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
+    public static function error(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
@@ -88,7 +88,7 @@ class LoggerService
         Log::error($message, $context);
     }
 
-    public static function warning(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
+    public static function warning(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
@@ -106,7 +106,7 @@ class LoggerService
         Log::info($message, $context);
     }
 
-    public static function debug(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
+    public static function debug(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
@@ -117,7 +117,7 @@ class LoggerService
         Log::debug($message, $context);
     }
 
-    public static function notice(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
+    public static function notice(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
@@ -128,7 +128,7 @@ class LoggerService
         Log::notice($message, $context);
     }
 
-    public static function alert(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
+    public static function alert(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
@@ -139,7 +139,7 @@ class LoggerService
         Log::alert($message, $context);
     }
 
-    public static function critical(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
+    public static function critical(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
@@ -150,7 +150,7 @@ class LoggerService
         Log::critical($message, $context);
     }
 
-    public static function emergency(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
+    public static function emergency(string $message, array|string $extra = [], ?Throwable $exception = null, array $context = [])
     {
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
