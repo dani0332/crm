@@ -696,6 +696,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'generic'], function () {
         Route::resource('allocation-threshold', AllocationThresholdController::class);
+        Route::get('teams-by-category/{category}', [AllocationThresholdController::class, 'getTeams'])->name('getByCategory');
         Route::resource('team', TeamController::class);
         Route::resource('renewal-batches', RenewalBatchController::class)
             ->names(generateRouteNames('renewal-batches'))

@@ -16,6 +16,7 @@ const teamForm = useForm({
   id: props.team?.id ?? null,
   name: props.team?.name ?? null,
   type: props.team?.type ?? 1,
+  category: props.team?.category ?? null,
   slabs_count: props.team?.slabs_count ?? null,
   is_active:
     props.team?.is_active === 'True'
@@ -142,7 +143,20 @@ onMounted(() => setInitialState());
         required
       />
     </div>
-    <div class="grid sm:grid-cols-1 gap-4">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <x-select
+        v-model="teamForm.category"
+        :rules="[isRequired]"
+        class="w-full"
+        :options="[
+          { value: 'SIC', label: 'SIC' },
+          { value: 'AUH', label: 'AUH' },
+          { value: 'Non AUH', label: 'Non AUH' },
+        ]"
+        :error="$page.props.errors.category"
+        label="CATEGORY"
+        required
+      />
       <x-select
         v-model="teamForm.is_active"
         :options="[

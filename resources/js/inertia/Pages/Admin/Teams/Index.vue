@@ -17,6 +17,7 @@ const tableHeader = reactive([
   { text: 'Ref-ID', value: 'id' },
   { text: 'NAME', value: 'name' },
   { text: 'TYPE', value: 'type' },
+  { text: 'CATEGORY', value: 'category' },
   { text: 'PARENT', value: 'parent' },
   { text: 'ACTIVE', value: 'is_active' },
   { text: 'CREATED DATE', value: 'created_at' },

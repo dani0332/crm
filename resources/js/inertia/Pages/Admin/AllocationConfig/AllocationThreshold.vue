@@ -1,9 +1,15 @@
 <script setup>
+import axios from 'axios';
+import { onMounted } from 'vue';
+
 const props = defineProps({
   teams: Object,
 });
 
 const notification = useToast();
+const tabs = reactive(["SIC","AUH","Non AUH"]);
+const activeTab = ref(0);
+const loading = ref(false);
 
 const teamsForm = useForm({
   teams: [...Object.values(props.teams)],
@@ -15,10 +21,11 @@ const validateTeams = () => {
   let teams = teamsForm.teams.map(x => {
     return {
       ...x,
-      min_price: parseFloat(x.min_price == '' ? 0 : x.min_price),
-      max_price: parseFloat(x.max_price == '' ? 0 : x.max_price),
+      min_price: parseFloat(x.min_price || 0),
+      max_price: parseFloat(x.max_price || 0),
     };
   });
+  console.log(teams);
   for (let i = 0; i < teams.length; i++) {
     const minPriceValue = parseFloat(
       teams[i] && teams[i].min_price == '' ? 0 : teams[i].min_price,
@@ -92,10 +99,34 @@ const generateTeamsToPost = () => {
     };
   });
 };
+
+const loadTeams = (index) => {
+  activeTab.value = index;
+  loading.value = true;
+
+  // Get teams
+  axios
+    .get(`/generic/teams-by-category/${tabs[index]}`)
+    .then(response => {
+      teamsForm.teams = response.data.teams;
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error',
+        message: 'An error occurred while fetching the teams',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      loading.value = false;
+    })
+};
+
 const updateTeams = () => {
   let valid = validateTeams();
   if (valid) {
     let teams = generateTeamsToPost();
+
     axios
       .post('/update-team-allocation-threshold', { teams })
       .then(response => {
@@ -107,12 +138,16 @@ const updateTeams = () => {
       .catch(error => {
         notification.error({
           title: 'Error',
-          message: 'Something went wrong',
+          message: 'An error occurred while updating the allocation threshold',
           position: 'top',
         });
       });
   }
 };
+
+onMounted(() => {
+  loadTeams(activeTab.value);
+});
 </script>
 <template>
   <Head title="Allocation Threshold" />
@@ -120,27 +155,60 @@ const updateTeams = () => {
     <h2 class="text-xl font-semibold">Allocation Threshold</h2>
   </div>
   <x-divider class="my-4" />
-  <div v-for="team in teamsForm.teams" :key="team.name">
-    <h2 class="my-3 font-semibold text-primary">{{ team.name }}:</h2>
-    <x-form :auto-focus="false">
-      <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-        <x-input
-          type="number"
-          class="w-full"
-          v-model="team.min_price"
-          :hasError="minErrorTeam == team.name"
-          label="Min Price"
-        />
-        <x-input
-          label="Max Price"
-          type="number"
-          class="w-full"
-          v-model="team.max_price"
-        />
-      </div>
-    </x-form>
+
+  <!-- Tabs -->
+  <div class="flex border-b border-gray-300 mb-4">
+    <button
+      v-for="(tab, index) in tabs"
+      :key="index"
+      @click="loadTeams(index)"
+      :disabled="loading"
+      :class="[
+        'px-4 py-2 font-semibold',
+        loading ? 'opacity-50 cursor-not-allowed' : '',
+        activeTab === index
+          ? 'border-b-2 border-primary text-primary'
+          : 'text-gray-500 hover:text-gray-700'
+      ]"
+    >
+      {{ tab }}
+    </button>
   </div>
-  <div class="flex justify-end gap-3 mt-5">
-    <x-button size="sm" color="#ff5e00" @click="updateTeams">Update</x-button>
+
+  <!-- Active Tab Content -->
+  <div class="min-h-[150px]">
+    <!-- Loader -->
+    <div v-if="loading" class="flex justify-center items-center py-10">
+      <span class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></span>
+    </div>
+
+    <!-- Content -->
+    <div v-else>
+      <div v-for="team in teamsForm.teams" :key="team.name">
+        <h2 class="my-3 font-semibold text-primary">{{ team.name }}:</h2>
+        <x-form :auto-focus="false">
+          <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
+            <x-input
+              type="number"
+              class="w-full"
+              v-model="team.min_price"
+              label="Min Price"
+            />
+            <x-input
+              type="number"
+              class="w-full"
+              v-model="team.max_price"
+              label="Max Price"
+            />
+          </div>
+        </x-form>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-5">
+        <x-button size="sm" color="#ff5e00" @click="updateTeams()">
+          Update {{ tabs[activeTab] }}
+        </x-button>
+      </div>
+    </div>
   </div>
 </template>
