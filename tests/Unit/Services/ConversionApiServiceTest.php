@@ -18,8 +18,8 @@ class ConversionApiServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
-        $this->service = new ConversionApiService();
+
+        $this->service = new ConversionApiService;
     }
 
     protected function tearDown(): void
@@ -104,14 +104,14 @@ class ConversionApiServiceTest extends TestCase
     public function test_trigger_facebook_conversion_logs_request(): void
     {
         Log::spy();
-        
+
         $quoteUID = 'test-uuid-log';
         $quoteTypeId = QuoteTypeId::Car;
-        
+
         $mockCapi = Mockery::mock('alias:'.Capi::class);
         $mockCapi->shouldReceive('request')
             ->andReturn((object) ['success' => true]);
-        
+
         $result = $this->service->triggerFacebookConversion($quoteUID, $quoteTypeId);
 
         Log::shouldHaveReceived('info')
@@ -122,21 +122,21 @@ class ConversionApiServiceTest extends TestCase
                     && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId;
             }))
             ->once();
-        
+
         $this->assertTrue($result);
     }
 
     public function test_trigger_google_conversion_logs_request(): void
     {
         Log::spy();
-        
+
         $quoteUID = 'test-uuid-log-google';
         $quoteTypeId = QuoteTypeId::Travel;
-        
+
         $mockCapi = Mockery::mock('alias:'.Capi::class);
         $mockCapi->shouldReceive('request')
             ->andReturn((object) ['success' => true]);
-        
+
         $result = $this->service->triggerGoogleConversion($quoteUID, $quoteTypeId);
 
         Log::shouldHaveReceived('info')
@@ -147,14 +147,14 @@ class ConversionApiServiceTest extends TestCase
                     && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId;
             }))
             ->once();
-        
+
         $this->assertTrue($result);
     }
 
     public function test_trigger_facebook_conversion_logs_success(): void
     {
         Log::spy();
-        
+
         $mockCapi = Mockery::mock('alias:'.Capi::class);
         $mockCapi->shouldReceive('request')
             ->andReturn((object) ['success' => true]);
@@ -164,14 +164,14 @@ class ConversionApiServiceTest extends TestCase
         Log::shouldHaveReceived('info')
             ->with(\Mockery::pattern('/ConversionApiService - facebook conversion API call successful/'), \Mockery::type('array'))
             ->once();
-        
+
         $this->assertTrue($result);
     }
 
     public function test_trigger_facebook_conversion_logs_error_on_failure(): void
     {
         Log::spy();
-        
+
         $mockCapi = Mockery::mock('alias:'.Capi::class);
         $mockCapi->shouldReceive('request')
             ->andThrow(new \Exception('API Error'));
@@ -186,7 +186,7 @@ class ConversionApiServiceTest extends TestCase
                     && isset($context['exception']['code']);
             }))
             ->once();
-        
+
         $this->assertFalse($result);
     }
 
@@ -207,5 +207,126 @@ class ConversionApiServiceTest extends TestCase
             $result = $this->service->triggerFacebookConversion('test-uuid-'.$quoteTypeId, $quoteTypeId);
             $this->assertTrue($result);
         }
+    }
+
+    public function test_facebook_conversion_sends_only_required_params(): void
+    {
+        $quoteUID = 'NREFC7RS';
+        $quoteTypeId = 19;
+
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->with('/api/v1-trigger-facebook-event-conversion', 'post', Mockery::on(function ($payload) use ($quoteUID, $quoteTypeId) {
+                // Verify payload has exactly 3 keys: quoteUID, quoteTypeId, eventType
+                if (count($payload) !== 3) {
+                    return false;
+                }
+
+                // Verify the keys exist
+                if (! isset($payload['quoteUID']) || ! isset($payload['quoteTypeId']) || ! isset($payload['eventType'])) {
+                    return false;
+                }
+
+                // Verify the values
+                return $payload['quoteUID'] === $quoteUID
+                    && $payload['quoteTypeId'] === $quoteTypeId
+                    && $payload['eventType'] === 'Purchase';
+            }))
+            ->andReturn((object) ['success' => true]);
+
+        $result = $this->service->triggerFacebookConversion($quoteUID, $quoteTypeId);
+
+        $this->assertTrue($result);
+    }
+
+    public function test_google_conversion_sends_only_required_params(): void
+    {
+        $quoteUID = '6UTE2JXU';
+        $quoteTypeId = 1;
+
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->with('/api/v1-trigger-google-event-conversion', 'post', Mockery::on(function ($payload) use ($quoteUID, $quoteTypeId) {
+                // Verify payload has exactly 3 keys: quoteUID, quoteTypeId, eventType
+                if (count($payload) !== 3) {
+                    return false;
+                }
+
+                // Verify the keys exist
+                if (! isset($payload['quoteUID']) || ! isset($payload['quoteTypeId']) || ! isset($payload['eventType'])) {
+                    return false;
+                }
+
+                // Verify the values
+                return $payload['quoteUID'] === $quoteUID
+                    && $payload['quoteTypeId'] === $quoteTypeId
+                    && $payload['eventType'] === 'Purchase';
+            }))
+            ->andReturn((object) ['success' => true]);
+
+        $result = $this->service->triggerGoogleConversion($quoteUID, $quoteTypeId);
+
+        $this->assertTrue($result);
+    }
+
+    public function test_quote_type_id_remains_dynamic(): void
+    {
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+
+        // Test various quote type IDs
+        $testCases = [
+            ['quoteUID' => 'NREFC7RS', 'quoteTypeId' => 19],
+            ['quoteUID' => '6UTE2JXU', 'quoteTypeId' => 1],
+            ['quoteUID' => 'TEST123', 'quoteTypeId' => 5],
+            ['quoteUID' => 'ABCD1234', 'quoteTypeId' => 10],
+            ['quoteUID' => 'XYZ789', 'quoteTypeId' => 25],
+        ];
+
+        foreach ($testCases as $testCase) {
+            $mockCapi->shouldReceive('request')
+                ->once()
+                ->with(Mockery::any(), 'post', Mockery::on(function ($payload) use ($testCase) {
+                    return $payload['quoteUID'] === $testCase['quoteUID']
+                        && $payload['quoteTypeId'] === $testCase['quoteTypeId']
+                        && $payload['eventType'] === 'Purchase';
+                }))
+                ->andReturn((object) ['success' => true]);
+
+            $result = $this->service->triggerFacebookConversion($testCase['quoteUID'], $testCase['quoteTypeId']);
+            $this->assertTrue($result);
+        }
+    }
+
+    public function test_both_apis_accept_same_payload_structure(): void
+    {
+        $quoteUID = 'TEST-UUID-123';
+        $quoteTypeId = 15;
+
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+
+        // Both Facebook and Google should receive identical payload structure
+        $expectedPayload = [
+            'quoteUID' => $quoteUID,
+            'quoteTypeId' => $quoteTypeId,
+            'eventType' => 'Purchase',
+        ];
+
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->with('/api/v1-trigger-facebook-event-conversion', 'post', $expectedPayload)
+            ->andReturn((object) ['success' => true]);
+
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->with('/api/v1-trigger-google-event-conversion', 'post', $expectedPayload)
+            ->andReturn((object) ['success' => true]);
+
+        $facebookResult = $this->service->triggerFacebookConversion($quoteUID, $quoteTypeId);
+        $googleResult = $this->service->triggerGoogleConversion($quoteUID, $quoteTypeId);
+
+        $this->assertTrue($facebookResult);
+        $this->assertTrue($googleResult);
     }
 }

@@ -20,7 +20,7 @@ class TriggerConversionApisTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->mockConversionApiService = Mockery::mock(ConversionApiService::class);
         $this->listener = new TriggerConversionApis($this->mockConversionApiService);
     }
@@ -36,7 +36,7 @@ class TriggerConversionApisTest extends TestCase
         $quoteUID = 'test-quote-uuid-123';
         $quoteTypeId = QuoteTypeId::Car;
         $eventType = 'Purchase';
-        
+
         $event = new QuotePolicyBooked($quoteUID, $quoteTypeId, $eventType);
 
         $this->mockConversionApiService
@@ -59,10 +59,10 @@ class TriggerConversionApisTest extends TestCase
     public function test_handle_logs_processing_start(): void
     {
         Log::spy();
-        
+
         $quoteUID = 'test-quote-uuid-456';
         $quoteTypeId = QuoteTypeId::Travel;
-        
+
         $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
 
         $this->mockConversionApiService
@@ -89,10 +89,10 @@ class TriggerConversionApisTest extends TestCase
     public function test_handle_logs_processing_completion_with_success_status(): void
     {
         Log::spy();
-        
+
         $quoteUID = 'test-quote-uuid-789';
         $quoteTypeId = QuoteTypeId::Health;
-        
+
         $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
 
         $this->mockConversionApiService
@@ -120,10 +120,10 @@ class TriggerConversionApisTest extends TestCase
     public function test_handle_logs_processing_completion_with_failure_status(): void
     {
         Log::spy();
-        
+
         $quoteUID = 'test-quote-uuid-fail';
         $quoteTypeId = QuoteTypeId::Car;
-        
+
         $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
 
         $this->mockConversionApiService
@@ -149,10 +149,10 @@ class TriggerConversionApisTest extends TestCase
     public function test_handle_handles_exceptions_gracefully(): void
     {
         Log::spy();
-        
+
         $quoteUID = 'test-quote-uuid-exception';
         $quoteTypeId = QuoteTypeId::Travel;
-        
+
         $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
 
         $this->mockConversionApiService
@@ -178,7 +178,7 @@ class TriggerConversionApisTest extends TestCase
         $quoteUID = 'test-quote-uuid-custom';
         $quoteTypeId = QuoteTypeId::Business;
         $eventType = 'CustomEvent';
-        
+
         $event = new QuotePolicyBooked($quoteUID, $quoteTypeId, $eventType);
 
         $this->mockConversionApiService
@@ -202,7 +202,7 @@ class TriggerConversionApisTest extends TestCase
     {
         $quoteUID = 'test-quote-uuid-partial';
         $quoteTypeId = QuoteTypeId::Car;
-        
+
         $event = new QuotePolicyBooked($quoteUID, $quoteTypeId);
 
         $this->mockConversionApiService
@@ -218,5 +218,81 @@ class TriggerConversionApisTest extends TestCase
         $this->listener->handle($event);
 
         $this->addToAssertionCount(1);
+    }
+
+    public function test_handle_works_with_dynamic_quote_type_ids(): void
+    {
+        $testCases = [
+            ['quoteUID' => 'NREFC7RS', 'quoteTypeId' => 19],
+            ['quoteUID' => '6UTE2JXU', 'quoteTypeId' => 1],
+            ['quoteUID' => 'TEST123', 'quoteTypeId' => 5],
+            ['quoteUID' => 'XYZ789', 'quoteTypeId' => 25],
+        ];
+
+        foreach ($testCases as $testCase) {
+            $event = new QuotePolicyBooked($testCase['quoteUID'], $testCase['quoteTypeId']);
+
+            $this->mockConversionApiService
+                ->shouldReceive('triggerFacebookConversion')
+                ->once()
+                ->with($testCase['quoteUID'], $testCase['quoteTypeId'], 'Purchase')
+                ->andReturn(true);
+
+            $this->mockConversionApiService
+                ->shouldReceive('triggerGoogleConversion')
+                ->once()
+                ->with($testCase['quoteUID'], $testCase['quoteTypeId'], 'Purchase')
+                ->andReturn(true);
+
+            $this->listener->handle($event);
+        }
+
+        $this->addToAssertionCount(count($testCases) * 2);
+    }
+
+    public function test_handle_passes_exact_parameters_from_event(): void
+    {
+        $quoteUID = 'NREFC7RS';
+        $quoteTypeId = 19;
+        $eventType = 'Purchase';
+
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId, $eventType);
+
+        // Verify exact parameters are passed through
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->once()
+            ->with(
+                Mockery::on(function ($uid) use ($quoteUID) {
+                    return $uid === $quoteUID;
+                }),
+                Mockery::on(function ($typeId) use ($quoteTypeId) {
+                    return $typeId === $quoteTypeId && is_int($typeId);
+                }),
+                Mockery::on(function ($type) use ($eventType) {
+                    return $type === $eventType;
+                })
+            )
+            ->andReturn(true);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerGoogleConversion')
+            ->once()
+            ->with(
+                Mockery::on(function ($uid) use ($quoteUID) {
+                    return $uid === $quoteUID;
+                }),
+                Mockery::on(function ($typeId) use ($quoteTypeId) {
+                    return $typeId === $quoteTypeId && is_int($typeId);
+                }),
+                Mockery::on(function ($type) use ($eventType) {
+                    return $type === $eventType;
+                })
+            )
+            ->andReturn(true);
+
+        $this->listener->handle($event);
+
+        $this->addToAssertionCount(2);
     }
 }
