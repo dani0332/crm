@@ -630,6 +630,7 @@ class SagePayloadFactory
                 $reversePayLoad->Invoices[0]->InvoiceDescription = $reversePayLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
                 $reversePayLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
                 $reversePayLoad->Invoices[0]->DueDate = $invoicePaymentSchedulesDueDate;
                 $reversePayLoad->Invoices[0]->AsOfDate = $invoicePaymentSchedulesDueDate;
 
