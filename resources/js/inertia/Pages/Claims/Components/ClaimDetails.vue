@@ -524,8 +524,10 @@ watch(
                         <x-select
                           v-model="claimForm.car_make"
                           @update:modelValue="getCarModel(true)"
+                          filterable
+                          filterPlaceholder="Filter Make...."
                           :options="carMakeOptions"
-                          placeholder="Select Vehicle Make"
+                          placeholder="Select Make"
                           class="w-full"
                           :error="claimForm.errors.car_make"
                           :rules="[isRequired, validationRules.carMake]"
@@ -545,10 +547,10 @@ watch(
                       <template v-else>
                         <x-select
                           v-model="claimForm.car_model"
-                          placeholder="Select Vehicle Model"
+                          placeholder="Select Model"
                           :options="carModelOptions"
                           filterable
-                          filterPlaceholder="Filter Car Model...."
+                          filterPlaceholder="Filter Model...."
                           :error="claimForm.errors.car_model"
                           :rules="[isRequired, validationRules.carModel]"
                         />
@@ -566,10 +568,10 @@ watch(
                       <template v-else>
                         <x-select
                           v-model="claimForm.model_year"
-                          placeholder="Select Car Model Year"
+                          placeholder="Select Year"
                           :options="carModelYearOptions"
                           filterable
-                          filterPlaceholder="Filter Car Model Year...."
+                          filterPlaceholder="Filter Year...."
                           :error="claimForm.errors.model_year"
                           :rules="[isRequired, validationRules.modelYear]"
                         />
