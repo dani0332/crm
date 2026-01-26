@@ -87,8 +87,11 @@ class EmbeddedTransactionService extends BaseService
         }
 
         $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quoteData->quote->uuid
-            .'/payment/?providerCode='.$plan->provider_code
-            .'&planId='.$plan->id;
+            .'/payment/?'.http_build_query([
+                'providerCode' => $plan?->provider_code, 
+                'planId' => $plan?->id,
+                'selectEtCode' => $quoteData?->embeddedTransaction?->code
+            ]);
 
         $data = [
             'quote' => $quoteData->quote,
