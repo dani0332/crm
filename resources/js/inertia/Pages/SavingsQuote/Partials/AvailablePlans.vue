@@ -5,7 +5,6 @@ import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import LazyCreatePlan from './CreatePlan.vue';
 import PlanDetails from './PlanDetails.vue';
 
-const emit = defineEmits(['plan-selected', 'plans-loaded']);
 
 const props = defineProps({
   quote: Object,
@@ -25,6 +24,8 @@ const permissionsEnum = page.props.permissionsEnum;
 
 // Initialize useSavingsPlans composable
 const {
+  // State
+  modals,
   // Helpers
   toTitleCase,
   formatNumber,
@@ -56,25 +57,25 @@ const getRate = getExchangeRate;
 const setRate = setExchangeRate;
 const toAED = convertToAED;
 
-const modals = reactive({
-  planDetails: false,
-  createPlan: false,
-  sendConfirm: false,
-  savingsCalculator: false,
-});
 
 const availablePlansTableColumns = reactive([
   {
     text: 'Provider Name',
     value: 'providerName',
+    fixed: true,
+    width: 250,
   },
   {
     text: 'Plan',
     value: 'name',
+    fixed: true,
+    width: 200,
   },
   {
     text: 'Type of Plan',
     value: 'planTypeName',
+    fixed: true,
+    width: 100,
   },
   {
     text: 'Insurer Quote Number',
@@ -230,10 +231,6 @@ const handlePlanSelected = plan => {
     preserveState: true,
     preserveScroll: true,
     only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
-  });
-  emit('plan-selected', plan);
-  onLoadAvailablePlansData(props.quote.uuid).then(processedPlans => {
-    emit('plans-loaded', processedPlans);
   });
 };
 

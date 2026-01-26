@@ -13,6 +13,18 @@ import { computed, reactive, ref } from 'vue';
  * @param {Object} options.notification - Notification instance
  * @returns {Object} All reactive state, computed properties, and functions
  */
+
+const modals = reactive({
+  planDetails: false,
+  createPlan: false,
+  sendConfirm: false,
+  savingsCalculator: false,
+});
+
+// Global shared state for ecom details (shared across all component instances)
+const planExchangeRate = ref(1);
+const sharedAvailablePlans = ref([]);
+
 export function useSavingsPlans(options = {})
 {
   const {
@@ -38,6 +50,7 @@ export function useSavingsPlans(options = {})
   const exchangeRates = ref({});
   const planRates = ref({});
   const ratesLoading = ref(false);
+
 
   // =========================================================================
   // 2. LOOKUP OPTIONS (Computed)
@@ -418,7 +431,6 @@ export function useSavingsPlans(options = {})
       }));
     } catch (error)
     {
-      console.error('Error fetching rider details:', error);
       if (notification)
       {
         notification.error({
@@ -465,7 +477,7 @@ export function useSavingsPlans(options = {})
    */
   const onLoadAvailablePlansData = async (savingQuoteUuid = null) =>
   {
-    let quoteUuid = savingQuoteUuid || quote.value.uuid;
+    let quoteUuid = savingQuoteUuid || quote.uuid;
     availablePlansTable.isLoading = true;
     try
     {
@@ -486,11 +498,11 @@ export function useSavingsPlans(options = {})
       }));
 
       availablePlansTable.data = processedPlans;
-      updateEcomDetailFromPlans(processedPlans);
+      // Update global shared plans so ecomDetail computed property can reactively update
+      sharedAvailablePlans.value = processedPlans;
       return processedPlans;
     } catch (err)
     {
-      console.error('Error loading available plans:', err);
       availablePlansTable.data = [];
       return [];
     } finally
@@ -521,7 +533,6 @@ export function useSavingsPlans(options = {})
       return data;
     } catch (error)
     {
-      console.error('Error fetching plan details:', error);
       if (notification)
       {
         notification.error({
@@ -564,7 +575,6 @@ export function useSavingsPlans(options = {})
       return [];
     } catch (err)
     {
-      console.error('Error fetching provider plans:', err);
       if (notification)
       {
         notification.error({
@@ -780,6 +790,12 @@ export function useSavingsPlans(options = {})
         });
       }
 
+      await onLoadAvailablePlansData(quoteUuid);
+      router.reload({
+        preserveScroll: true,
+        only: ['availablePlansTable.data'],
+      });
+
       return response;
     } catch (error)
     {
@@ -948,7 +964,7 @@ export function useSavingsPlans(options = {})
       }
     } catch (e)
     {
-      console.error('Exchange rate fetch failed:', e);
+      // Exchange rate fetch failed silently
     } finally
     {
       ratesLoading.value = false;
@@ -1008,10 +1024,8 @@ export function useSavingsPlans(options = {})
   // =========================================================================
   // 9. ECOM DETAILS MANAGEMENT
   // =========================================================================
-
-  const ecomDetail = ref(null);
-  const planExchangeRate = ref(1);
-  const sharedAvailablePlans = ref([]);
+  // Note: planExchangeRate and sharedAvailablePlans are global shared state
+  // ecomDetail is a computed property that reactively derives from sharedAvailablePlans and quote
 
   /**
    * Get ecom display price from plan item
@@ -1023,28 +1037,33 @@ export function useSavingsPlans(options = {})
   };
 
   /**
-   * Update ecomDetail from available plans array
+   * Computed property: ecomDetail automatically updates when sharedAvailablePlans or quote.plan_id changes
    */
-  const updateEcomDetailFromPlans = (allPlans = []) =>
+  const ecomDetail = computed(() =>
   {
-    if (!allPlans.length || !quote.value?.plan_id)
+    const allPlans = sharedAvailablePlans.value || [];
+    const quoteValue = quote?.value || quote;
+    const selectedPlanId = quoteValue?.plan_id;
+
+    if (!allPlans.length || !selectedPlanId)
     {
-      ecomDetail.value = null;
-      return;
+      return null;
     }
 
-    const selectedPlanId = quote.value.plan_id;
     const foundPlan = allPlans.find(
       plan =>
-        (String(plan.id) === String(selectedPlanId) ||
+      {
+        const matchesId = String(plan.id) === String(selectedPlanId) ||
           String(plan.planId) === String(selectedPlanId) ||
-          String(plan.plan_id) === String(selectedPlanId)) &&
-        !plan.isDisabled,
+          String(plan.plan_id) === String(selectedPlanId);
+        const isNotDisabled = !plan.isDisabled;
+        return matchesId && isNotDisabled;
+      },
     );
 
     if (foundPlan)
     {
-      ecomDetail.value = {
+      return {
         ...foundPlan,
         providerName:
           foundPlan.providerName ||
@@ -1062,10 +1081,18 @@ export function useSavingsPlans(options = {})
         isApi: foundPlan.isApi || false,
         isUnderwritten: foundPlan.isUnderwritten || false,
       };
-    } else
-    {
-      ecomDetail.value = null;
     }
+
+    return null;
+  });
+
+  /**
+   * Update sharedAvailablePlans (for backward compatibility and manual updates)
+   * @param {Array} allPlans - Array of plans to set
+   */
+  const updateEcomDetailFromPlans = (allPlans = []) =>
+  {
+    sharedAvailablePlans.value = allPlans;
   };
 
   /**
@@ -1073,11 +1100,12 @@ export function useSavingsPlans(options = {})
    */
   const totalAnnualPrice = computed(() =>
   {
-    if (!ecomDetail.value) return 'N/A';
-    const displayPrice = getEcomDisplayPrice(ecomDetail.value);
+    const ecom = ecomDetail.value;
+    if (!ecom) return 'N/A';
+    const displayPrice = getEcomDisplayPrice(ecom);
     const paymentTerm =
-      ecomDetail.value?.paymentTerm ??
-      quote.value?.savings_quote?.payment_term ??
+      ecom?.paymentTerm ??
+      (quote?.value || quote)?.savings_quote?.payment_term ??
       1;
     return (
       calculateTotalAnnualPrice({ actualPremium: displayPrice, paymentTerm }) ||
@@ -1090,13 +1118,14 @@ export function useSavingsPlans(options = {})
    */
   const getTotalAnnualPriceAED = () =>
   {
-    if (!ecomDetail.value) return 'N/A';
-    const displayPrice = getEcomDisplayPrice(ecomDetail.value);
+    const ecom = ecomDetail.value;
+    if (!ecom) return 'N/A';
+    const displayPrice = getEcomDisplayPrice(ecom);
     const priceInAED =
       Math.round(displayPrice * planExchangeRate.value * 100) / 100;
     const paymentTerm =
-      ecomDetail.value?.paymentTerm ??
-      quote.value?.savings_quote?.payment_term ??
+      ecom?.paymentTerm ??
+      (quote?.value || quote)?.savings_quote?.payment_term ??
       1;
     return formatNumber(
       calculateTotalAnnualPrice({ actualPremium: priceInAED, paymentTerm }) ||
@@ -1115,10 +1144,10 @@ export function useSavingsPlans(options = {})
     providerPlansLoading,
     availablePlansTable,
     planDetails,
+    modals,
     exchangeRates,
     planRates,
     ratesLoading,
-
     // Lookup Options
     currencyOptions,
     investmentFrequencyOptions,

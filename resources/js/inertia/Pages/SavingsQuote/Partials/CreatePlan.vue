@@ -18,6 +18,8 @@ const page = usePage();
 
 // Initialize useSavingsPlans composable
 const {
+  // State
+  modals,
   // Lookup Options
   currencyOptions,
   investmentFrequencyOptions,
@@ -253,6 +255,7 @@ const createQuotePlan = async isValid => {
   if (!isValid) return;
 
   try {
+    addPlanForm.processing = true;
     await createPlan(addPlanForm, page.props.quote.uuid, {
       riders: ridersData.value,
     });
@@ -260,6 +263,9 @@ const createQuotePlan = async isValid => {
     ridersData.value = []; // Reset riders
   } catch (error) {
     console.error('Plan creation error:', error);
+  } finally {
+    modals.createPlan = false;
+    addPlanForm.processing = false;
   }
 };
 
@@ -439,7 +445,6 @@ const validateDecimal = event => {
           label="Insurer Quote Number"
           v-model="addPlanForm.insurer_quote_no"
           class="w-full"
-          required
           placeholder="Enter Insurer Quote Number"
           maxlength="50"
         />
