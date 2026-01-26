@@ -11,6 +11,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PersonalQuote;
@@ -266,7 +267,7 @@ class ComprehensiveConversionDashboardService extends BaseService
     public function getDefaultFilters()
     {
         $lobs = $this->getLobByPermissions();
-        $organicTeam = strval(Team::where('name', 'Organic')->first()->id);
+        $organicTeam = strval(Team::where('name', TeamNameEnum::ORGANIC)->first()->id);
 
         return [
             'lob' => reset($lobs),
@@ -316,7 +317,7 @@ class ComprehensiveConversionDashboardService extends BaseService
         } else {
 
             if (in_array($lob, [quoteTypeCode::Car])) {
-                $organicTeam = Team::where('name', 'Organic')->first();
+                $organicTeam = Team::where('name', TeamNameEnum::ORGANIC)->first();
                 $query->whereIn('users.id', function ($query) use ($organicTeam) {
                     $query->distinct()
                         ->select('users.id')

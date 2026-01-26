@@ -13,6 +13,17 @@ class Team extends Model implements AuditableContract
 
     protected $table = 'teams';
 
+    protected $fillable = [
+        'name',
+        'code',
+        'type',
+        'is_active',
+        'parent_team_id',
+        'min_price',
+        'max_price',
+        'allocation_threshold_enabled',
+    ];
+
     public function getCreatedAtAttribute($date)
     {
         return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
