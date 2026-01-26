@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 
 class AllocationThresholdController extends Controller
 {
-    public function __construct()
+    public function __construct(protected HealthTeamRoutingLogService $healthTeamRoutingLogService)
     {
         $this->middleware(['permission:'.PermissionsEnum::TeamThresholdView], ['only' => ['index', 'updateAllocation']]);
     }
@@ -73,7 +73,7 @@ class AllocationThresholdController extends Controller
                 Team::where('id', $team['id'])->update(['min_price' => $team['min'], 'max_price' => $team['max'], 'allocation_threshold_enabled' => true]);
             }
 
-            HealthTeamRoutingLogService::log(HealthRoutingLogTypeEnum::CONFIGURATION, ['teams' => $teams], null, null);
+            $this->healthTeamRoutingLogService->log(HealthRoutingLogTypeEnum::CONFIGURATION, ['teams' => $teams], null, null);
         }
 
         return response()->json(['message' => 'Allocation Threshold updated successfully']);

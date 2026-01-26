@@ -15,26 +15,95 @@ class HealthTeamRoutingService
 {
     use HealthTeamRoutable;
 
+    public function __construct(protected HealthTeamRoutingLogService $healthTeamRoutingLogService) {}
+
     public function getTeamBasedOnHealthTeamRouting(HealthQuote $lead): ?string
     {
-
         LoggerService::startQuoteLogging($lead);
 
         $teamName = '';
 
+        // Step 1: Check if health team routing is enabled
         if (! $this->isHealthTeamRoutingEnabled()) {
-            // check if the team routing is enabled
+            $this->logStep(
+                'Health team routing is not enabled',
+                'feature_flag_check',
+                ['routing_enabled' => false],
+                $lead
+            );
             LoggerService::info('Health team routing is not enabled');
+
             return $teamName;
         }
 
-        // check if the lead is AUH
-        if ($lead->isAUHLead() || $lead->isAUHLead(false)) {
-            // get team name based on AUH lead
+        $this->logStep(
+            'Health team routing is enabled',
+            'feature_flag_check',
+            ['routing_enabled' => true],
+            $lead
+        );
+
+        // Step 2: Determine geography (AUH vs Non-AUH)
+        // Validate emirate data
+        if (empty($lead->emirate_of_your_visa_id)) {
+            $this->logStep(
+                'Emirate of visa is missing, cannot determine routing path',
+                'validation_error',
+                ['emirate_of_visa_id' => null],
+                $lead
+            );
+            LoggerService::warning('Emirate of visa missing for lead', ['lead_id' => $lead->id]);
+        }
+
+        $isAUHLead = $lead->isAUHLead() || $lead->isAUHLead(false);
+
+        if ($isAUHLead) {
+            $this->logStep(
+                'AUH lead detected, routing to AUH path',
+                'geography_detection',
+                [
+                    'is_auh_lead' => true,
+                    'emirate_of_visa_id' => $lead->emirate_of_your_visa_id,
+                    'routing_path' => 'AUH',
+                ],
+                $lead
+            );
             $teamName = $this->getTeamBasedOnAUHLead($lead);
         } else {
-            // get team name based on non AUH lead
+            $this->logStep(
+                'Non-AUH lead detected, routing to Non-AUH path',
+                'geography_detection',
+                [
+                    'is_auh_lead' => false,
+                    'emirate_of_visa_id' => $lead->emirate_of_your_visa_id,
+                    'routing_path' => 'NON_AUH',
+                ],
+                $lead
+            );
             $teamName = $this->getTeamBasedOnNonAUHLead($lead);
+        }
+
+        // Step 3: Log final team selection
+        if ($teamName) {
+            $this->logStep(
+                'Team successfully assigned via health team routing',
+                'team_assigned',
+                [
+                    'team_name' => $teamName,
+                    'routing_completed' => true,
+                ],
+                $lead
+            );
+        } else {
+            $this->logStep(
+                'No team found during health team routing',
+                'team_assigned',
+                [
+                    'team_name' => null,
+                    'routing_completed' => false,
+                ],
+                $lead
+            );
         }
 
         return $teamName;
@@ -42,37 +111,260 @@ class HealthTeamRoutingService
 
     private function getTeamBasedOnAUHLead(HealthQuote $lead): ?string
     {
-        return $this->fetchTeamNameBasedOnPrice($lead, TeamCategoryEnum::AUH);
+        $this->logStep(
+            'Starting AUH tier-based team routing',
+            'auh_tier_routing',
+            ['category' => TeamCategoryEnum::AUH->value],
+            $lead
+        );
+
+        // Validate premium data
+        if (empty($lead->price_starting_from)) {
+            $this->logStep(
+                'Premium missing, cannot determine AUH tier',
+                'validation_error',
+                [
+                    'premium' => null,
+                    'category' => TeamCategoryEnum::AUH->value,
+                ],
+                $lead
+            );
+            LoggerService::warning('Premium missing for AUH lead', ['lead_id' => $lead->id]);
+
+            return null;
+        }
+
+        try {
+            $team = $this->fetchTeamNameBasedOnPrice($lead, TeamCategoryEnum::AUH);
+
+            if ($team) {
+                // Get team details for detailed logging
+                $teamDetails = Team::where('allocation_threshold_enabled', true)
+                    ->where('min_price', '<=', $lead->price_starting_from)
+                    ->where('max_price', '>=', $lead->price_starting_from)
+                    ->where('category', TeamCategoryEnum::AUH->value)
+                    ->first();
+
+                $this->logStep(
+                    'AUH tier team matched successfully',
+                    'auh_tier_matched',
+                    [
+                        'team_name' => $team,
+                        'team_id' => $teamDetails?->id,
+                        'premium' => $lead->price_starting_from,
+                        'min_price' => $teamDetails?->min_price,
+                        'max_price' => $teamDetails?->max_price,
+                        'category' => TeamCategoryEnum::AUH->value,
+                    ],
+                    $lead
+                );
+            } else {
+                $this->logStep(
+                    'No AUH tier team found for given premium',
+                    'auh_tier_matched',
+                    [
+                        'team_name' => null,
+                        'premium' => $lead->price_starting_from,
+                        'category' => TeamCategoryEnum::AUH->value,
+                    ],
+                    $lead
+                );
+            }
+
+            return $team;
+        } catch (\Exception $e) {
+            $this->logStep(
+                'Exception occurred during AUH tier routing',
+                'error',
+                [
+                    'error_message' => $e->getMessage(),
+                    'category' => TeamCategoryEnum::AUH->value,
+                ],
+                $lead
+            );
+            LoggerService::error('Error in AUH tier routing', [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function getTeamBasedOnNonAUHLead(HealthQuote $lead): ?string
     {
         $isPECLead = $lead->hasPecTag();
-        $nonAUHTeamCategory = TeamCategoryEnum::NON_AUH;
+
+        // Step 1: Check PEC flag
+        $this->logStep(
+            'Checking PEC flag for Non-AUH lead',
+            'pec_check',
+            [
+                'is_pec_lead' => $isPECLead,
+                'pec_marked_at' => $lead->pec_marked_at?->format('Y-m-d H:i:s'),
+            ],
+            $lead
+        );
+
         if ($isPECLead) {
-            return $this->fetchPecTeamName();
-        } else {
-            return $this->fetchTeamNameBasedOnPrice($lead, $nonAUHTeamCategory);
+            try {
+                $team = $this->fetchPecTeamName($lead);
+
+                $this->logStep(
+                    'PEC lead detected, routing to Non-AUH PEC team',
+                    'pec_team_selected',
+                    [
+                        'team_name' => $team,
+                        'is_pec_lead' => true,
+                        'tier_routing_skipped' => true,
+                    ],
+                    $lead
+                );
+
+                return $team;
+            } catch (\Exception $e) {
+                $this->logStep(
+                    'Exception occurred while fetching PEC team',
+                    'error',
+                    [
+                        'error_message' => $e->getMessage(),
+                        'is_pec_lead' => true,
+                    ],
+                    $lead
+                );
+                LoggerService::error('Error fetching PEC team', [
+                    'lead_id' => $lead->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return null;
+            }
+        }
+
+        // Step 2: Apply tier-based routing for non-PEC leads
+        $this->logStep(
+            'Non-PEC lead, applying tier-based routing',
+            'non_auh_tier_routing',
+            [
+                'is_pec_lead' => false,
+                'category' => TeamCategoryEnum::NON_AUH->value,
+            ],
+            $lead
+        );
+
+        // Validate premium data
+        if (empty($lead->price_starting_from)) {
+            $this->logStep(
+                'Premium missing, cannot determine Non-AUH tier',
+                'validation_error',
+                [
+                    'premium' => null,
+                    'category' => TeamCategoryEnum::NON_AUH->value,
+                ],
+                $lead
+            );
+            LoggerService::warning('Premium missing for Non-AUH lead', ['lead_id' => $lead->id]);
+
+            return null;
+        }
+
+        try {
+            $team = $this->fetchTeamNameBasedOnPrice($lead, TeamCategoryEnum::NON_AUH);
+
+            if ($team) {
+                // Get team details for detailed logging
+                $teamDetails = Team::where('allocation_threshold_enabled', true)
+                    ->where('min_price', '<=', $lead->price_starting_from)
+                    ->where('max_price', '>=', $lead->price_starting_from)
+                    ->where('category', TeamCategoryEnum::NON_AUH->value)
+                    ->first();
+
+                $this->logStep(
+                    'Non-AUH tier team matched successfully',
+                    'non_auh_tier_matched',
+                    [
+                        'team_name' => $team,
+                        'team_id' => $teamDetails?->id,
+                        'premium' => $lead->price_starting_from,
+                        'min_price' => $teamDetails?->min_price,
+                        'max_price' => $teamDetails?->max_price,
+                        'category' => TeamCategoryEnum::NON_AUH->value,
+                    ],
+                    $lead
+                );
+            } else {
+                $this->logStep(
+                    'No Non-AUH tier team found for given premium',
+                    'non_auh_tier_matched',
+                    [
+                        'team_name' => null,
+                        'premium' => $lead->price_starting_from,
+                        'category' => TeamCategoryEnum::NON_AUH->value,
+                    ],
+                    $lead
+                );
+            }
+
+            return $team;
+        } catch (\Exception $e) {
+            $this->logStep(
+                'Exception occurred during Non-AUH tier routing',
+                'error',
+                [
+                    'error_message' => $e->getMessage(),
+                    'category' => TeamCategoryEnum::NON_AUH->value,
+                ],
+                $lead
+            );
+            LoggerService::error('Error in Non-AUH tier routing', [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
         }
     }
 
     private function fetchTeamNameBasedOnPrice(HealthQuote $lead, TeamCategoryEnum $category): ?string
     {
-        // fetch team name based on price and category
-        return Team::where('allocation_threshold_enabled', true)
+        // Note: Detailed threshold matching logs are handled in parent methods
+        // This method focuses on database query only to avoid duplicate logging
+        $team = Team::where('allocation_threshold_enabled', true)
             ->where('min_price', '<=', $lead->price_starting_from)
             ->where('max_price', '>=', $lead->price_starting_from)
             ->where('category', $category->value)
-            ->first()?->name;
+            ->first();
+
+        return $team?->name;
     }
 
-    private function fetchPecTeamName(): ?string
+    private function fetchPecTeamName(HealthQuote $lead): ?string
     {
-        return Team::where('allocation_threshold_enabled', true)
+        $team = Team::where('allocation_threshold_enabled', true)
             ->where('category', TeamCategoryEnum::NON_AUH->value)
             ->where('type', TeamTypeEnum::TEAM)
             ->where('name', TeamNameEnum::NON_AUH_PEC)
-            ->first()?->name;
-    }
+            ->first();
 
+        if ($team) {
+            $this->logStep(
+                'Non-AUH PEC team found',
+                'pec_team_found',
+                [
+                    'team_name' => $team->name,
+                    'team_id' => $team->id,
+                ],
+                $lead
+            );
+        } else {
+            $this->logStep(
+                'Non-AUH PEC team not found',
+                'pec_team_found',
+                ['team_name' => null],
+                $lead
+            );
+        }
+
+        return $team?->name;
+    }
 }

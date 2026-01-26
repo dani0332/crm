@@ -12,4 +12,7 @@ class HealthRoutingLog extends Model
         'type',
         'log_data',
     ];
+    protected $casts = [
+        'log_data' => 'array',
+    ];
 }
