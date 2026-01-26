@@ -126,9 +126,12 @@ const updateTeams = () => {
   let valid = validateTeams();
   if (valid) {
     let teams = generateTeamsToPost();
-
+    
     axios
-      .post('/update-team-allocation-threshold', { teams })
+      .post('/update-team-allocation-threshold', {
+        category: tabs[activeTab.value],
+        teams: teams
+      })
       .then(response => {
         notification.success({
           title: 'Allocation Threshold updated successfully',

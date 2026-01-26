@@ -12,9 +12,9 @@ class HealthTeamRoutingLogService
     public static function log(
         HealthRoutingLogTypeEnum $type,
         array $logData,
-        ?int $quoteRequestId,
-        ?string $uuid,
-        ?TeamCategoryEnum $teamCategory): void
+        ?int $quoteRequestId = null,
+        ?string $uuid = null,
+        ?TeamCategoryEnum $teamCategory = null): void
     {
         try {
             HealthRoutingLog::create([
