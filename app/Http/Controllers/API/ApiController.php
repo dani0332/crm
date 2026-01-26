@@ -673,7 +673,7 @@ class ApiController extends Controller
                 'success' => false,
                 'message' => 'An error occurred while sending STP advisor notification: '.$e->getMessage(),
             ], 500);
-     }
+        }
     }
     public function exportFailedIlaLeads($quoteType)
     {
