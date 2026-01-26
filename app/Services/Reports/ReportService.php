@@ -710,6 +710,7 @@ class ReportService extends BaseService
             }
         }
 
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
         $dataCollection = collect();
         foreach ($allowedLOBs as $details) {
             $premiumColumn = $details['table'].'.premium';
@@ -722,7 +723,9 @@ class ReportService extends BaseService
                     DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
                     DB::raw('SUM('.$premiumColumn.') as total_premium'),
                     DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days")
+                    DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days"),
+                    DB::raw('DATE_FORMAT(MIN('.$details['table'].'.created_at), "%d-%m-%Y") as created_at_start'),
+                    DB::raw('DATE_FORMAT(MAX('.$details['table'].'.created_at), "%d-%m-%Y") as created_at_end')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
                 ->join('users', 'users.id', $details['table'].'.advisor_id')
@@ -730,6 +733,7 @@ class ReportService extends BaseService
                     return $query->where($details['table'].'.quote_type_id', $details['quoteTypeId']);
                 });
             $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED);
+            $query->where('py.authorized_at', '>=', $thirtyDaysAgo);
             $query->where($details['table'].'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             if ($user->isAdvisor()) {
                 $query->where($details['table'].'.advisor_id', $user->id);
@@ -784,6 +788,8 @@ class ReportService extends BaseService
             return [
                 'advisor_id' => $group->first()->advisor_id,
                 'advisor_name' => $group->first()->advisor_name,
+                'created_at_start' => Carbon::parse($group->first()->created_at_start)->format('Y-m-d'),
+                'created_at_end' => Carbon::parse($group->first()->created_at_end)->format('Y-m-d'),
                 'total_premium' => $group->sum('total_premium'),
                 'total_leads' => $group->sum('total_leads'),
             ];

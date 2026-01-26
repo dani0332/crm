@@ -175,7 +175,7 @@ function showCustomDate() {
   filters.expireDate = '';
   filters.thisWeek = [];
 }
-function setUrl(advisor_id, quote_status_id) {
+function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
   let url = '';
 
   if (!filters || !filters.quoteType) {
@@ -199,6 +199,8 @@ function setUrl(advisor_id, quote_status_id) {
     };
 
     const personalQuoteTypes = new Set([
+      'Home Insurance',
+      'Life Insurance',
       'Bike Insurance',
       'Jetski Insurance',
       'Cycle Insurance',
@@ -212,7 +214,7 @@ function setUrl(advisor_id, quote_status_id) {
       .map(id => `quote_status_id[]=${id}`)
       .join('&');
 
-    url = `/${personalQuoteTypes.has(filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4`;
+    url = `/${personalQuoteTypes.has(filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4&created_at_start=${created_at_start}&created_at_end=${created_at_end}`;
     window.location.href = url;
   }
 }
@@ -441,11 +443,11 @@ const isVehicleUseDisabled = computed(() => {
     <template #item-total_premium="{ total_premium }">
       <div class="text-left">AED {{ formatNumber(total_premium) }}</div>
     </template>
-    <template #item-advisor_name="{ advisor_name, advisor_id }">
+    <template #item-advisor_name="{ advisor_name, advisor_id, created_at_start, created_at_end }">
       <div class="text-left">
         <a
           :href="url"
-          @click.prevent="setUrl(advisor_id, filters.statusId)"
+          @click.prevent="setUrl(advisor_id, filters.statusId, created_at_start, created_at_end)"
           class="text-black underline"
           style="cursor: pointer"
         >
