@@ -119,6 +119,7 @@ class ClaimRequestEmailService extends BaseService
         $workflowType = $isHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
 
         return (object) [
+            'claimUID' => $claimRequest->code ?? '',
             'customerName' => $claimRequest->full_name ?? '',
             'customerEmail' => $claimRequest->email ?? '',
             'managerName' => $claimRequest->manager?->name ?? '',
@@ -128,6 +129,7 @@ class ClaimRequestEmailService extends BaseService
             'managerMobilePhone' => $phoneNumber,
             'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
             'workflowType' => $workflowType,
+            'isWAConsent' => $claimRequest->whatsapp_consent,
         ];
     }
 
