@@ -123,6 +123,11 @@ const isCarLOB = computed(() => {
   return page.props.quoteTypeIds?.Car === page.props.claim.quote_type_id;
 });
 
+// Check if the selected line of business is Bike
+const isBikeLOB = computed(() => {
+  return page.props.quoteTypeIds?.Bike === page.props.claim.quote_type_id;
+});
+
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
   let isHealth =
@@ -257,7 +262,7 @@ const validationRules = {
 const validateCarFields = () => {
   const errors = {};
 
-  if (isCarLOB.value) {
+  if (isCarLOB.value || isBikeLOB.value) {
     // For car LOB, all car fields are required
     if (!claimForm.plate_number?.trim()) {
       errors.plate_number = 'Vehicle plate number is required.';
@@ -369,7 +374,7 @@ const validateForm = () => {
   allErrors = { ...allErrors, ...validateCommonFields() };
 
   // Validate LOB-specific fields
-  if (isCarLOB.value) {
+  if (isCarLOB.value || isBikeLOB.value) {
     allErrors = { ...allErrors, ...validateCarFields() };
   }
 
@@ -491,7 +496,7 @@ watch(
                 <dd>{{ claim.quote_type?.text }}</dd>
               </div>
               <template v-if="claim.claim_request_details">
-                <template v-if="isCarLOB">
+                <template v-if="isCarLOB || isBikeLOB">
                   <div class="grid sm:grid-cols-2">
                     <dt class="font-medium">
                       VEHICLE PLATE NUMBER <span class="text-red-500">*</span>

@@ -47,7 +47,6 @@ const subStatusOptions = computed(() => {
     : isBikeLOB.value
     ? page.props.quoteTypeIds?.Car
     : page.props.claim.quote_type_id;
-  console.log('quoteType', quoteType);  
   return (
     props.dropdowns.claimSubStatuses
       ?.filter(subStatus => {
