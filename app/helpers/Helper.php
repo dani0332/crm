@@ -566,6 +566,9 @@ if (! function_exists('getBase64FileInfo')) {
 if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
+        // Normalize NBSP/narrow NBSP to plain spaces so they can be handled like regular whitespace
+        $fileName = str_replace(["\u{00A0}", "\u{202F}"], ' ', $fileName);
+
         // Remove any Unicode control characters, including non-breaking spaces
         $fileName = preg_replace('/[\x{00}-\x{1F}\x{7F}\x{A0}]/u', '', $fileName);
 
@@ -1098,13 +1101,22 @@ if (! function_exists('getAppStorageValueByKey')) {
     function getAppStorageValueByKey($keyName, $default = false, bool $useCache = false, $cacheTime = null)
     {
         $getStorageValue = function () use ($keyName, $default) {
-            $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+            try {
+                $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
-            if (! $query) {
-                return $default;
+                if (! $query) {
+                    return $default;
+                }
+
+                return $query->value;
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Handle missing table gracefully (e.g., during tests)
+                // This can happen when the application_storage table doesn't exist yet
+                if (str_contains($e->getMessage(), 'no such table')) {
+                    return $default;
+                }
+                throw $e;
             }
-
-            return $query->value;
         };
 
         if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {

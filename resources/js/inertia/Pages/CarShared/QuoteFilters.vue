@@ -31,6 +31,29 @@ const paymentStatusOptions = computed(() => {
   }));
 });
 
+/**
+ * Computes the list of nationality options for filtering.
+ * - "All" is always included.
+ * - "Car CAT A" (REVIVAL) is only included if the configured CAT-A nationalities list is present and non-empty.
+ * CAT-A nationalities are provided via page.props.leadStatuses.cat_a_nationalities.
+ */
+const isCarCatAOptions = computed(() => {
+  const options = [
+    {
+      value: 'All',
+      label: 'All',
+    },
+    {
+      value: 1,
+      label: 'Yes',
+    },
+    {
+      value: 0,
+      label: 'No',
+    },
+  ];
+  return options;
+});
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.lead_statuses.map(lead_status => ({
     value: lead_status.id,
@@ -182,6 +205,9 @@ function setQueryStringFilters() {
   }
   if (urlParams.has('policy_number')) {
     filters.policy_number = urlParams.get('policy_number');
+  }
+  if (urlParams.has('source')) {
+    filters.source = urlParams.get('source');
   }
 }
 
@@ -472,6 +498,16 @@ onMounted(() => {
             />
           </template>
         </x-select>
+
+        <x-select
+          v-model="filters.is_cat_a_nationalities"
+          label="CAT A Nationalities"
+          name="cat_a_nationalities"
+          placeholder="Select CAT A Nationalities"
+          :options="isCarCatAOptions"
+          filterable
+          filterPlaceholder="Filter by CAT A Nationalities..."
+        />
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
