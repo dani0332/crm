@@ -13,6 +13,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,7 @@ use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
 {
-    use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
     protected $table = 'car_quote_request';
     protected $casts = [
@@ -642,5 +643,10 @@ class CarQuote extends BaseModel
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+
+    public function hasCarValue()
+    {
+        return ! empty($this->car_value) && $this->car_value > 0;
     }
 }

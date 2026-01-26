@@ -5,8 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
@@ -39,16 +37,17 @@ use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
+use App\Jobs\TagPCQualifiedJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
-use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CQF\CarCQFFileExportService;
+use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -70,6 +69,8 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
+    private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
+
     use GenericQueriesAllLobs, PrivateClient;
 
     private const REQUIRED_STRING = 'required|string';
@@ -387,80 +388,16 @@ class ApiController extends Controller
 
     public function tagPrivateClients(Request $request)
     {
-        LoggerService::info(self::class.': Private client tag exercise has been initiated');
-
         $request->validate([
-            'batch_size' => 'required|integer|min:1',
-            'cursor' => 'nullable|string',
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
         ]);
 
-        try {
+        LoggerService::info(self::class.': Private client tag exercise has been initiated');
 
-            $batchSize = $request->input('batch_size');
-            $cursor = $request->input('cursor');
+        dispatch(new TagPCQualifiedJob($request->input('uuids')));
 
-            $quotes = PersonalQuote::with('customer')->whereNull('pc_qualified')
-                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                ->whereNotNull('policy_expiry_date')
-                ->where('policy_expiry_date', '>', now())
-                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
-
-            if ($cursor) {
-                $quotes->where('id', '>', $cursor);
-            }
-
-            $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
-
-            if ($quotes->isEmpty()) {
-                LoggerService::info(self::class.': No quotes found without PCP tag');
-
-                return apiResponse(
-                    null,
-                    Response::HTTP_OK,
-                    'No quotes found without PCP tag.'
-                );
-            }
-
-            $nextCursor = $quotes->last()->id;
-            $hasMore = $quotes->count() === $batchSize;
-
-            $data = [
-                'data' => [
-                    'next_cursor' => $nextCursor,
-                    'has_more' => $hasMore,
-                ],
-                'message' => 'Private client tagging exercise has been completed.',
-                'status' => 'success',
-            ];
-
-            foreach ($quotes as $quote) {
-
-                $customerData = [
-                    'customer_id' => $quote->customer->id,
-                    'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
-                    'email' => $quote->customer->email,
-                ];
-
-                LoggerService::info(self::class.': Private client tag marking activity started', extra: $customerData);
-
-                LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
-                LoggerService::endLogging();
-
-                LoggerService::info(self::class.': Private client tag marking activity completed', extra: $customerData);
-            }
-
-            return apiResponse($data, Response::HTTP_OK);
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.': Private client tagging exercise failed', exception: $e);
-
-            return apiResponse(
-                $e->getMessage(),
-                Response::HTTP_INTERNAL_SERVER_ERROR,
-                'An error occurred while completing the private client tagging exercise.'
-            );
-        }
-        LoggerService::info(self::class.': Private client tag exercise has been completed');
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging job has been dispatched!');
     }
 
     public function tagPcpCustomers(Request $request)
@@ -736,6 +673,26 @@ class ApiController extends Controller
                 'success' => false,
                 'message' => 'An error occurred while sending STP advisor notification: '.$e->getMessage(),
             ], 500);
+     }
+    }
+    public function exportFailedIlaLeads($quoteType)
+    {
+        try {
+            $response = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
+
+            $fileResponse = $response['file'];
+            // Add custom header for total leads count
+            $fileResponse->headers->set('X-Total-Leads', $response['total_leads'] ?? 0);
+
+            return $fileResponse;
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.': Failed to export failed ILA leads', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export failed ILA leads',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
         }
     }
     public function getLeadOCRComparison(Request $request)
@@ -746,6 +703,7 @@ class ApiController extends Controller
                 'start_date' => 'required_without:uuid|date_format:Y-m-d',
                 'end_date' => 'required_without:uuid|date_format:Y-m-d',
                 'recalculate_comparison' => 'sometimes|boolean',
+                'limit' => 'sometimes|integer|min:1|max:15',
             ],
             [
                 'uuid.required_without_all' => 'UUID is required when start date and end date are not provided',
@@ -754,6 +712,9 @@ class ApiController extends Controller
                 'end_date.required_without' => 'End date is required when UUID is not provided',
                 'end_date.date_format' => 'End date must be in YYYY-MM-DD format',
                 'recalculate_comparison.boolean' => 'Recalculate comparison must be true or false',
+                'limit.integer' => 'Limit must be an integer',
+                'limit.min' => 'Limit must be at least 1',
+                'limit.max' => 'Limit cannot exceed 15',
             ]
         );
 
@@ -766,15 +727,7 @@ class ApiController extends Controller
             : null;
 
         $recalculateComparison = $request->boolean('recalculate_comparison', false);
-
-        LoggerService::info(self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'uuid' => $request->uuid,
-            'recalculate_comparison' => $recalculateComparison,
-            'user_agent' => $request->userAgent(),
-            'ip' => $request->ip(),
-        ]);
+        $limit = $request->integer('limit', 15);
 
         if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
             return apiResponse(null, Response::HTTP_OK, 'OCR util processing is disabled');
@@ -785,7 +738,17 @@ class ApiController extends Controller
             return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job is already running');
         }
 
-        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate, $recalculateComparison)
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'uuid' => $request->uuid,
+            'recalculate_comparison' => $recalculateComparison,
+            'user_agent' => $request->userAgent(),
+            'ip' => $request->ip(),
+            'limit' => $limit,
+        ]);
+
+        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate, $recalculateComparison, $limit)
             ->onConnection('redis')
             ->onQueue('lead_ocr_data_comparison');
 
