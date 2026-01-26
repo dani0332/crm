@@ -785,7 +785,7 @@ class SukoonMedexService
         if ($this->quoteTypeId == QuoteTypeId::Car &&
         $quote->registration_type == CarRegistrationType::COMPANY &&
         $quote->vehicle_use == CarVehicleUse::PRIVATE) {
-            $emirateIdNumber = $quote->vehicleDriverDetail?->driver_eid_number ?? null;
+            $emirateIdNumber = $quote->vehicleDriverDetail?->driver_eid_number ?? '';
             $title = $quote->vehicleDriverDetail?->driver_gender == 'male' ? 'Mr' : 'Ms';
         } else {
             $emirateIdNumber = $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '';
