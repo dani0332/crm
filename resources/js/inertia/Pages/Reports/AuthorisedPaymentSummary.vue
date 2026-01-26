@@ -443,11 +443,25 @@ const isVehicleUseDisabled = computed(() => {
     <template #item-total_premium="{ total_premium }">
       <div class="text-left">AED {{ formatNumber(total_premium) }}</div>
     </template>
-    <template #item-advisor_name="{ advisor_name, advisor_id, created_at_start, created_at_end }">
+    <template
+      #item-advisor_name="{
+        advisor_name,
+        advisor_id,
+        created_at_start,
+        created_at_end,
+      }"
+    >
       <div class="text-left">
         <a
           :href="url"
-          @click.prevent="setUrl(advisor_id, filters.statusId, created_at_start, created_at_end)"
+          @click.prevent="
+            setUrl(
+              advisor_id,
+              filters.statusId,
+              created_at_start,
+              created_at_end,
+            )
+          "
           class="text-black underline"
           style="cursor: pointer"
         >
