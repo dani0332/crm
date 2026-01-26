@@ -12,17 +12,14 @@ class PusherNotificationService extends BaseService
     public function sendSTPAdvisorNotification($lead)
     {
         try {
-            $advisor = User::where('id', $lead->advisor_id)->first();
-
+            $advisor = User::find($lead->advisor_id);
             if (! $advisor || ! $advisor->id) {
                 LoggerService::error(self::class." - Advisor not found for lead UUID: {$lead->uuid}");
-
-                return;
+                return false;
             }
-
             $pusherData = [
                 'title' => 'New STP Advisor Notification',
-                'message' => 'A new STP advisor notification workflow has been triggered for ',
+                'message' => 'New STP advisor notification workflow has been triggered for ',
                 'lead_uuid' => $lead->uuid,
                 'timestamp' => now()->toDateTimeString(),
             ];

@@ -603,15 +603,14 @@ class ApiService
     {
         try {
             $quoteType = QuoteTypes::getName($request->quoteTypeId);
-
-            if (! $quoteType || ! $quoteType->value) {
+            if (! $quoteType) {
                 return [
                     'success' => false,
                     'message' => 'Invalid quote type ID',
                 ];
             }
-            switch ($quoteType->value) {
-                case QuoteTypes::HEALTH->value:
+            switch ($quoteType) {
+                case QuoteTypes::HEALTH:
                     $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
                     if (! $lead) {
                         return [
@@ -619,16 +618,12 @@ class ApiService
                             'message' => 'Lead not found',
                         ];
                     }
-                    app(HealthEmailService::class)->sendSTPAdvisorNotification($lead, $request->apiFailed);
-
-                    return [
-                        'success' => true,
-                        'message' => 'STP Advisor notification sent',
-                    ];
+                    $result = app(HealthEmailService::class)->sendSTPAdvisorNotification($lead, $request->apiFailed);
+                    return $result;
                 default:
                     return [
                         'success' => false,
-                        'message' => 'Invalid quote type',
+                        'message' => 'Invalid quote type!',
                     ];
             }
         } catch (\Exception $e) {
