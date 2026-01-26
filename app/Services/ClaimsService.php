@@ -906,17 +906,17 @@ class ClaimsService extends BaseService
 
     public function sendNotification(ClaimRequest $claimRequest, $request)
     {
-        $updateClaimData['claim_sub_status_id'] = $request->claim_sub_status_id;
+        $claimRequest->claim_sub_status_id = $request->claim_sub_status_id;
         $subStatus = ClaimStatus::find($request->claim_sub_status_id);
         $targetStatus = $this->claimsStatusesService->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
         if ($targetStatus) {
-            $updateClaimData['claim_status_id'] = ClaimStatus::byText($targetStatus)
+            $claimRequest->claim_status_id = ClaimStatus::byText($targetStatus)
                 ->byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
                 ->active()
                 ->first()?->id;
         }
 
-        $claimRequest->update($updateClaimData);
+        $claimRequest->save();
 
         $claimActivity = ClaimActivity::createForClaim(
             $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
