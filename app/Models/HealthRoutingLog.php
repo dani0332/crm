@@ -10,6 +10,7 @@ class HealthRoutingLog extends Model
         'quote_request_id',
         'uuid',
         'type',
+        'team_category',
         'log_data',
     ];
 }
