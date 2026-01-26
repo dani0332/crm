@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\ActivityLogBatchMiddleware;
 use App\Http\Middleware\LogMiddleware;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
@@ -40,11 +41,11 @@ class RouteServiceProvider extends ServiceProvider
 
         $this->routes(function () {
             Route::prefix('api')
-                ->middleware(['api', LogMiddleware::class])
+                ->middleware(['api', LogMiddleware::class, ActivityLogBatchMiddleware::class])
                 ->namespace($this->namespace)
                 ->group(base_path('routes/api.php'));
 
-            Route::middleware(['web', LogMiddleware::class])
+            Route::middleware(['web', LogMiddleware::class, ActivityLogBatchMiddleware::class])
                 ->namespace($this->namespace)
                 ->group(base_path('routes/web.php'));
         });

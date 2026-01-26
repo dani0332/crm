@@ -152,6 +152,12 @@ class HealthQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicyBooked])
+        ) {
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
         }
 
@@ -173,7 +179,6 @@ class HealthQuoteObserver
             SendPolicyIssueWhatsappMessageJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH->id())->onQueue('insly');
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
-            event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
         }
 
         if (isset($dirty['quote_status_id'])) {

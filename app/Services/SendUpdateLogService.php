@@ -96,6 +96,7 @@ class SendUpdateLogService
             'renewal_batch',
             'policy_expiry_date',
             'vat',
+            'is_branch_applicable',
         ];
 
         $requestDetailsSkipColumns = [
@@ -167,7 +168,7 @@ class SendUpdateLogService
                         'customerInsured' => [],
                         'amlLogs' => [],
                     ],
-                    'skipParentColumns' => array_merge($parentSkipColumns, ['health_plan_type_id', 'price_starting_from', 'health_plan_co_payment_id']),
+                    'skipParentColumns' => array_merge($parentSkipColumns, ['health_plan_type_id', 'price_starting_from', 'health_plan_co_payment_id', 'is_quote_locked']),
                     'parentClass' => HealthQuote::class,
                 ];
                 break;

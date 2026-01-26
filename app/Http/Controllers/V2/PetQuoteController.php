@@ -412,6 +412,7 @@ class PetQuoteController extends Controller
 
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Pet);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Pet);
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         // Todo:: Need to send total Counts and Oppurtunity Counts
         return inertia('PetQuote/Cards', [
@@ -426,6 +427,7 @@ class PetQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : PetQuoteRepository::getData(true, true),
             'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
             'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
+            'renewalBatches' => $renewalBatches,
         ]);
     }
 }

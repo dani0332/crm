@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\PrivateClientConfigService;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -152,6 +153,23 @@ trait PrivateClient
         return $conditions;
     }
 
+    private function applyAdditionalConditions($query)
+    {
+        $conditions[] = [
+            'column' => 'quote_status_id',
+            'operator' => '=',
+            'value' => QuoteStatusEnum::PolicyBooked,
+        ];
+
+        LoggerService::info('Additional conditions', ['Additional conditions' => $conditions]);
+
+        foreach ($conditions as $condition) {
+            $query->where($condition['column'], $condition['operator'], $condition['value']);
+        }
+
+        return $query;
+    }
+
     private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass, int $quoteTypeId): bool
     {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
@@ -176,6 +194,9 @@ trait PrivateClient
             ->where($whereClause);
 
         $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
+
+        // Check for additional conditions
+        $query = $this->applyAdditionalConditions($query);
 
         LoggerService::sql('doesLeadMatchPcpCriteria', $query);
 
@@ -327,7 +348,7 @@ trait PrivateClient
     {
         $wasLeadUpdated = false;
 
-        if (is_null($model->pc_qualified)) {
+        if ($model->pc_qualified != true) {
             $updateData = ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
 
             $model->update($updateData);

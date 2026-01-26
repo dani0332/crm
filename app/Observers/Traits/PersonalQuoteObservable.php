@@ -44,7 +44,6 @@ trait PersonalQuoteObservable
 
             if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                 $this->handlePolicyBookedOrSentToCustomer($personalQuote);
-                event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             }
 
             // For now PolicyCancelled Handling is only for Bike
@@ -83,9 +82,12 @@ trait PersonalQuoteObservable
             LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Dispatched for Home renewal quote: {$personalQuote->uuid}");
         }
 
+        if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicyBooked])) {
+            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
+        }
+
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             $this->handlePolicyIssued($personalQuote);
-            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             if ($personalQuote->isHome()) {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$personalQuote->code.' Policy Issued ');
                 SendPolicyIssueWhatsappMessageJob::dispatch($personalQuote->uuid, $personalQuote->quote_type_id)->onQueue('insly');
