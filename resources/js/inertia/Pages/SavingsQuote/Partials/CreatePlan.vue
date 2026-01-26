@@ -438,7 +438,6 @@ const validateDecimal = event => {
         <x-input
           label="Insurer Quote Number"
           v-model="addPlanForm.insurer_quote_no"
-          :rules="[isRequired]"
           class="w-full"
           required
           placeholder="Enter Insurer Quote Number"
