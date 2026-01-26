@@ -68,15 +68,29 @@ class AllocationThresholdController extends Controller
 
     public function updateAllocation(Request $request)
     {
+        $logData = [];
         $teams = $request->teams;
+
         if ($teams) {
             foreach ($teams as $team) {
-                Team::where('id', $team['id'])->update(['min_price' => $team['min'], 'max_price' => $team['max'], 'allocation_threshold_enabled' => true]);
+                Team::where('id', $team['id'])
+                    ->update([
+                        'min_price' => $team['min'],
+                        'max_price' => $team['max'],
+                        'allocation_threshold_enabled' => true,
+                    ]);
+
+                // Log data
+                $team = ['team_id' => $team['id']] + array_diff_key($team, ['id' => true]);
+                $logData[] = array_merge($team, [
+                    'team_name' => Team::find($team['team_id'])->name,
+                ]);
             }
 
+            // Add config logs
             HealthTeamRoutingLogService::log(
                 HealthRoutingLogTypeEnum::CONFIGURATION,
-                ['teams' => $teams],
+                $logData,
                 null,
                 null,
                 TeamCategoryEnum::from($request->category));
