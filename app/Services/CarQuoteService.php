@@ -257,7 +257,7 @@ class CarQuoteService extends BaseService
                     [
                         'driver_eid_number' => $request->driver_emirates_id_number ?? null,
                         'driver_gender' => $request->driver_gender ?? null,
-                        ]
+                    ]
                 );
 
             } else {
@@ -672,7 +672,7 @@ class CarQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'cqr.branch_id')
-            ->leftJoin('vehicle_driver_details as vdd', function($join) {
+            ->leftJoin('vehicle_driver_details as vdd', function ($join) {
                 $join->on('vdd.quoteable_id', '=', 'cqr.id')
                     ->where('vdd.quoteable_type', '=', CarQuote::class);
             })

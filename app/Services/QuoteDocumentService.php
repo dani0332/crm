@@ -71,12 +71,12 @@ class QuoteDocumentService extends BaseService
                     $query->whereNull('registration_type')
                         ->orWhere('registration_type', $registrationType);
                 });
-                
+
                 $query->where(function ($query) use ($vehicleUse) {
                     $query->whereNull('vehicle_use')
                         ->orWhere('vehicle_use', $vehicleUse);
                 });
-                
+
                 return $query;
             })
             ->orderBy('sort_order')

@@ -24,7 +24,7 @@ class DriverEmiratesIdExtractor
             'date_of_birth' => null,
             'nationality' => null,
             'sex' => null,
-            
+
             'ocr_processed_at' => now()->toDateTimeString(),
             'ocr_model' => null,
             'ocr_provider' => null,

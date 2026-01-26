@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
@@ -22,8 +24,6 @@ use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 
 class EmiratesIdDataProcessor
 {
@@ -57,7 +57,7 @@ class EmiratesIdDataProcessor
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
 
-            if (!($this->quote->registration_type == CarRegistrationType::COMPANY && $this->quote->vehicle_use == CarVehicleUse::PRIVATE)) {
+            if (! ($this->quote->registration_type == CarRegistrationType::COMPANY && $this->quote->vehicle_use == CarVehicleUse::PRIVATE)) {
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
             }
 
@@ -88,7 +88,7 @@ class EmiratesIdDataProcessor
                 'driver_gender' => $this->extractedData['sex'],
             ]);
 
-            if (!empty($fieldsToUpdate)) {
+            if (! empty($fieldsToUpdate)) {
                 $quote->vehicleDriverDetail()->updateOrCreate(
                     ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
                     $fieldsToUpdate

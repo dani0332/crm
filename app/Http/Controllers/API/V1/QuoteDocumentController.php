@@ -51,7 +51,7 @@ class QuoteDocumentController extends Controller
         $quoteTypeId = $activitiesService->getQuoteTypeId($quoteType);
         $registrationType = $request->input('registration_type');
         $vehicleUse = $request->input('vehicle_use');
-        
+
         $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse);
 
         return DocumentTypeResource::collection($documentTypes);

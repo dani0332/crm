@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
@@ -28,8 +30,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 
 class SukoonMedexService
 {
@@ -782,7 +782,7 @@ class SukoonMedexService
         $quoteType = $quote->quote_type_id ?? null;
         $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote?->emirates ?? null) : ($quote->emirate ?? null);
 
-        if($this->quoteTypeId == QuoteTypeId::Car &&
+        if ($this->quoteTypeId == QuoteTypeId::Car &&
         $quote->registration_type == CarRegistrationType::COMPANY &&
         $quote->vehicle_use == CarVehicleUse::PRIVATE) {
             $emirateIdNumber = $quote->vehicleDriverDetail?->driver_eid_number ?? null;

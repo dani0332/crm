@@ -3,9 +3,9 @@
 namespace App\Services\OCR;
 
 use App\Enums\DocumentTypeCategory;
-use App\Enums\DocumentTypeCode;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Services\CustomerVerification\CustomerVerificationService;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
@@ -17,7 +17,6 @@ use App\Services\OCR\TaxInvoice\TaxInvoiceDataProcessor;
 use App\Services\OCR\TaxInvoiceRaisedByBuyer\TaxInvoiceRaisedByBuyerDataProcessor;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\CarQuote;
 
 trait OcrFillable
 {
@@ -185,17 +184,17 @@ trait OcrFillable
             if ($success) {
                 $summary = $processor->getProcessingSummary();
 
-                LoggerService::info(self::class . ' - Driver Emirates ID data processing completed successfully - Quote UUID: ' . $quote->uuid, extra: [
+                LoggerService::info(self::class.' - Driver Emirates ID data processing completed successfully - Quote UUID: '.$quote->uuid, extra: [
                     'processing_summary' => $summary,
                 ]);
             } else {
-                LoggerService::warning(self::class . ' - Driver Emirates ID data processing failed - Quote UUID: ' . $quote->uuid);
+                LoggerService::warning(self::class.' - Driver Emirates ID data processing failed - Quote UUID: '.$quote->uuid);
             }
 
             return $success;
 
         } catch (Exception $e) {
-            LoggerService::error(self::class . ' - Exception occurred during Driver Emirates ID data filling - Quote UUID: ' . $quote->uuid, exception: $e);
+            LoggerService::error(self::class.' - Exception occurred during Driver Emirates ID data filling - Quote UUID: '.$quote->uuid, exception: $e);
 
             return false;
         }

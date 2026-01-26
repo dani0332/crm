@@ -9,6 +9,7 @@ use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\DocumentType;
+use App\Models\Nationality;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
@@ -16,7 +17,6 @@ use App\Services\LookupService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Nationality;
 
 trait OcrUtils
 {
@@ -491,7 +491,7 @@ trait OcrUtils
 
     protected function getNationalityId(?string $nationality): ?int
     {
-        LoggerService::info('Getting nationality ID for nationality: ' . $nationality);
+        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
         if (empty($nationality)) {
             return null;
         }

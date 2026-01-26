@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Models\CarQuote;
@@ -12,7 +13,6 @@ use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use App\Enums\CarRegistrationType;
 
 class DriverEmiratesIdDataProcessor
 {

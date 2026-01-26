@@ -2,14 +2,14 @@
 
 namespace App\Services\OCR\Validators;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\QuoteDocument;
 use App\Models\RegistrationCertificate;
 use App\Models\VehicleDriverDetail;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 
 class OCRDocumentValidator
 {
@@ -136,13 +136,13 @@ class OCRDocumentValidator
 
         // Verify driver details in car_quote_request
         $carQuoteFields = ['driver_name', 'dob', 'nationality_id'];
-        
+
         // Check if driver_eid_number exists in vehicle_driver_details
         $result = $vehicleDriverDetails && ! empty($vehicleDriverDetails->driver_eid_number);
 
         // Check if all required fields in car_quote are not empty (filters empty fields, result should be empty array = all filled)
         if ($quote->registration_type == CarRegistrationType::COMPANY && $quote->vehicle_use == CarVehicleUse::PRIVATE) {
-            $result = $result && empty(array_filter($carQuoteFields, fn($field) => empty($quote->$field)));
+            $result = $result && empty(array_filter($carQuoteFields, fn ($field) => empty($quote->$field)));
         }
 
         $this->updateQuoteDocument($quote->id, DocumentTypeCode::DRIVER_EMIRATES_ID, $result);

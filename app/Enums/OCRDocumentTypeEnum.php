@@ -31,7 +31,7 @@ enum OCRDocumentTypeEnum: string
             'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
             'EID_CAR' => self::ID_CARD,
             'DRIVER_EID' => self::DRIVER_EMIRATES_ID,
-            
+
             'PS' => self::POLICY_SCHEDULE,
             'GH_PS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Group Health Policy Schedule
             // Send Update document types

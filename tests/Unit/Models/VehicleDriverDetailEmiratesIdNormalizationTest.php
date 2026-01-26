@@ -9,7 +9,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    
+
     // Temporarily disable mass assignment protection for unit tests
     // since we're testing the model's create() method behavior directly
     Model::unguard();
@@ -308,7 +308,7 @@ describe('VehicleDriverDetail Model - Driver Emirates ID Normalization', functio
     });
 
     test('accessor handles whitespace in stored ID', function () {
-        $vehicleDriverDetail = new VehicleDriverDetail();
+        $vehicleDriverDetail = new VehicleDriverDetail;
         $vehicleDriverDetail->setRawAttributes(['driver_eid_number' => ' 784198512345671 ']);
 
         // Accessor should return the value with spaces as-is since it's not exactly 15 digits after cleaning

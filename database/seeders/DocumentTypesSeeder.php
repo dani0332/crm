@@ -3,13 +3,13 @@
 namespace Database\Seeders;
 
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
 use Illuminate\Database\Seeder;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 
 class DocumentTypesSeeder extends Seeder
 {
@@ -742,25 +742,25 @@ class DocumentTypesSeeder extends Seeder
     private function updateEIDCompanyCarDocument()
     {
         $ownerEIDDocument = [
-                'code' => 'EID_CAR',
-                'text' => 'Owner\'s Emirates ID (both sides)',
-                'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
-                'is_active' => 1,
-                'quote_type_id' => QuoteTypeId::CompanyCar,
-                'folder_path' => 'car',
-                'accepted_files' => '.pdf,.docx,.doc,.jpeg,.jpg,.png,.webp',
-                'max_files' => 10,
-                'max_size' => 25,
-                'is_required' => 1,
-                'send_to_customer' => 0,
-                'sort_order' => 3,
-                'receive_from_customer' => 1,
-                'category' => DocumentTypeCode::QUOTE,
-                'is_required_for_send_policy' => 0,
-                'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null,
-                'registration_type' => CarRegistrationType::COMPANY,
-                'vehicle_use' => CarVehicleUse::PRIVATE,
+            'code' => 'EID_CAR',
+            'text' => 'Owner\'s Emirates ID (both sides)',
+            'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
+            'is_active' => 1,
+            'quote_type_id' => QuoteTypeId::CompanyCar,
+            'folder_path' => 'car',
+            'accepted_files' => '.pdf,.docx,.doc,.jpeg,.jpg,.png,.webp',
+            'max_files' => 10,
+            'max_size' => 25,
+            'is_required' => 1,
+            'send_to_customer' => 0,
+            'sort_order' => 3,
+            'receive_from_customer' => 1,
+            'category' => DocumentTypeCode::QUOTE,
+            'is_required_for_send_policy' => 0,
+            'business_type_of_insurance_id' => null,
+            'business_type_of_customer' => null,
+            'registration_type' => CarRegistrationType::COMPANY,
+            'vehicle_use' => CarVehicleUse::PRIVATE,
         ];
 
         DocumentType::firstOrCreate(
