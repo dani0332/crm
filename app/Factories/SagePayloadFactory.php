@@ -158,6 +158,13 @@ class SagePayloadFactory
                 $reversePayLoad->Invoices[0]->DocumentNumber = $reversePayLoad->Invoices[0]->DocumentNumber.'-REV';
                 $reversePayLoad->Invoices[0]->InvoiceDescription = $reversePayLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
+                $reversePayLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[0]->DueDate = $invoicePaymentSchedulesDueDate;
+                $reversePayLoad->Invoices[0]->AsOfDate = $invoicePaymentSchedulesDueDate;
+
+                $reversePayLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $invoicePaymentSchedulesDueDate;
+
                 $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_REV_INV;
             }
 
@@ -242,6 +249,21 @@ class SagePayloadFactory
                 $reversepayLoad->Invoices[0]->DocumentNumber = $reversepayLoad->Invoices[0]->DocumentNumber.'-REV';
                 $reversepayLoad->Invoices[0]->InvoiceDescription = $reversepayLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $reversepayLoad->Invoices[0]->DocumentType = 'CreditNote';
+                $reversepayLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $reversepayLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
+                $reversepayLoad->Invoices[0]->DueDate = $invoicePaymentSchedulesDueDate;
+                $reversepayLoad->Invoices[0]->AsOfDate = $invoicePaymentSchedulesDueDate;
+
+                // Update InvoicePaymentSchedules DueDate only, keeping amounts the same
+                if (isset($reversepayLoad->Invoices[0]->InvoicePaymentSchedules) && is_array($reversepayLoad->Invoices[0]->InvoicePaymentSchedules)) {
+                    $newPaymentSchedules = self::createPaymentSchedules($paymentSplits, $invoicePaymentSchedulesDueDate);
+                    foreach ($reversepayLoad->Invoices[0]->InvoicePaymentSchedules as $index => $schedule) {
+                        if (isset($newPaymentSchedules[$index])) {
+                            $schedule->DueDate = $newPaymentSchedules[$index]['DueDate'];
+                        }
+                    }
+                }
+
                 $sageRequestType = SageEnum::SRT_CREATE_AP_SPPAY_REV_INV;
             }
 
@@ -322,6 +344,13 @@ class SagePayloadFactory
                 $reversePayLoad->Invoices[0]->DocumentNumber = (string) mb_substr($reversePayLoad->Invoices[0]->DocumentNumber, -18).'-REV';
                 $reversePayLoad->Invoices[0]->InvoiceDescription = $reversePayLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $reversePayLoad->Invoices[0]->DocumentType = 'DebitNote';
+                $reversePayLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[0]->DueDate = $invoicePaymentSchedulesDueDate;
+                $reversePayLoad->Invoices[0]->AsOfDate = $invoicePaymentSchedulesDueDate;
+
+                $reversePayLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $invoicePaymentSchedulesDueDate;
+
                 $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_REV_INV;
             }
 
@@ -446,10 +475,23 @@ class SagePayloadFactory
                 $reversePayLoad->Invoices[0]->DocumentNumber = $reversePayLoad->Invoices[0]->DocumentNumber.'-REV';
                 $reversePayLoad->Invoices[0]->InvoiceDescription = $reversePayLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
+                $reversePayLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[0]->DueDate = $invoicePaymentSchedulesDueDate;
+                $reversePayLoad->Invoices[0]->AsOfDate = $invoicePaymentSchedulesDueDate;
+
+                $reversePayLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $invoicePaymentSchedulesDueDate;
 
                 $reversePayLoad->Invoices[1]->DocumentNumber = $reversePayLoad->Invoices[1]->DocumentNumber.'-REV';
                 $reversePayLoad->Invoices[1]->InvoiceDescription = $reversePayLoad->Invoices[1]->InvoiceDescription.' - REVERSAL';
                 $reversePayLoad->Invoices[1]->DocumentType = 'CreditNote';
+                $reversePayLoad->Invoices[1]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[1]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[1]->DueDate = $invoicePaymentSchedulesDueDate;
+                $reversePayLoad->Invoices[1]->AsOfDate = $invoicePaymentSchedulesDueDate;
+
+                $reversePayLoad->Invoices[1]->InvoicePaymentSchedules[0]->DueDate = $invoicePaymentSchedulesDueDate;
+
                 $sageRequestType = SageEnum::SRT_CREATE_AR_PREM_COMM_REV_INV;
             }
 
@@ -587,10 +629,28 @@ class SagePayloadFactory
                 $reversePayLoad->Invoices[0]->DocumentNumber = $reversePayLoad->Invoices[0]->DocumentNumber.'-REV';
                 $reversePayLoad->Invoices[0]->InvoiceDescription = $reversePayLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
+                $reversePayLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[0]->DueDate = $invoicePaymentSchedulesDueDate;
+                $reversePayLoad->Invoices[0]->AsOfDate = $invoicePaymentSchedulesDueDate;
+
+                // Update InvoicePaymentSchedules DueDate only, keeping amounts the same
+                if (isset($reversePayLoad->Invoices[0]->InvoicePaymentSchedules) && is_array($reversePayLoad->Invoices[0]->InvoicePaymentSchedules)) {
+                    $newPaymentSchedules = self::createPaymentSchedules($splitPayments, $invoicePaymentSchedulesDueDate);
+                    foreach ($reversePayLoad->Invoices[0]->InvoicePaymentSchedules as $index => $schedule) {
+                        if (isset($newPaymentSchedules[$index])) {
+                            $schedule->DueDate = $newPaymentSchedules[$index]['DueDate'];
+                        }
+                    }
+                }
 
                 $reversePayLoad->Invoices[1]->DocumentNumber = $reversePayLoad->Invoices[1]->DocumentNumber.'-REV';
                 $reversePayLoad->Invoices[1]->InvoiceDescription = $reversePayLoad->Invoices[1]->InvoiceDescription.' - REVERSAL';
                 $reversePayLoad->Invoices[1]->DocumentType = 'CreditNote';
+                $reversePayLoad->Invoices[1]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[1]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
+                $reversePayLoad->Invoices[1]->DueDate = $invoicePaymentSchedulesDueDate;
+                $reversePayLoad->Invoices[1]->AsOfDate = $invoicePaymentSchedulesDueDate;
+
                 $sageRequestType = SageEnum::SRT_CREATE_AR_SPPAY_REV_INV;
 
             }
