@@ -57,6 +57,7 @@ class EmiratesIdDataProcessor
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
 
+            $vehicleDriverDetailUpdated = false;
             if (! ($this->quote->registration_type == CarRegistrationType::COMPANY && $this->quote->vehicle_use == CarVehicleUse::PRIVATE)) {
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
             }
