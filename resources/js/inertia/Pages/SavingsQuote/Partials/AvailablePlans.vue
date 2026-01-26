@@ -430,7 +430,7 @@ onMounted(() => {
 
           <div class="flex gap-2">
             <!-- Show/Hide Button Group -->
-            <x-button-group v-if="selectedPlans.length > 0" size="sm">
+            <!-- <x-button-group v-if="selectedPlans.length > 0" size="sm">
               <x-button
                 @click.prevent="onTogglePlans(false)"
                 :loading="toggleLoader"
@@ -443,7 +443,7 @@ onMounted(() => {
               >
                 Hide
               </x-button>
-            </x-button-group>
+            </x-button-group> -->
 
             <!-- Send OCA Email Button -->
             <x-tooltip placement="top" align="left">
