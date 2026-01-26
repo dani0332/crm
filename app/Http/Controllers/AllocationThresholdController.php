@@ -47,11 +47,11 @@ class AllocationThresholdController extends Controller
             ->where('category', $request->category)
             ->where('type', TeamTypeEnum::TEAM);
 
-        if ($request->category == 'SIC') {
-            $teams = $teams->whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::PCP])->get();
+        if ($request->category == TeamCategoryEnum::NON_AUH->value) {
+            $teams = $teams->whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::GBP])->get();
 
             // Sort by custom sequence
-            $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::PCP];
+            $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::GBP];
             $sortedTeams = $teams->sortBy(function ($team) use ($customSequence) {
                 $index = array_search($team['name'], $customSequence);
 

@@ -7,7 +7,7 @@ const props = defineProps({
 });
 
 const notification = useToast();
-const tabs = reactive(["SIC","AUH","Non AUH"]);
+const tabs = reactive(["AUH","Non AUH"]);
 const activeTab = ref(0);
 const loading = ref(false);
 
@@ -126,7 +126,7 @@ const updateTeams = () => {
   let valid = validateTeams();
   if (valid) {
     let teams = generateTeamsToPost();
-    
+
     axios
       .post('/update-team-allocation-threshold', {
         category: tabs[activeTab.value],

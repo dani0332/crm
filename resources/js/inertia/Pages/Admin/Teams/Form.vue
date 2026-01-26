@@ -149,7 +149,6 @@ onMounted(() => setInitialState());
         :rules="[isRequired]"
         class="w-full"
         :options="[
-          { value: 'SIC', label: 'SIC' },
           { value: 'AUH', label: 'AUH' },
           { value: 'Non AUH', label: 'Non AUH' },
         ]"
