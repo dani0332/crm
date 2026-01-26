@@ -1436,8 +1436,8 @@ class SagePayloadFactory
         if (isset($extras['isEPReversal']) && $extras['isEPReversal'] && $extras['sendUpdateLog']) {
             $sageRequest->bookingDate = $extras['sendUpdateLog']?->booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($extras['sendUpdateLog']?->booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
             $sageRequest->policyBookingDate = $extras['sendUpdateLog']?->booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($extras['sendUpdateLog']?->booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-        } 
-        
+        }
+
         $sageRequest->policyExpiryDate = $quote?->policy_expiry_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote->policy_expiry_date)) : '';
         $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
 
