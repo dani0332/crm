@@ -66,14 +66,10 @@ class NgiQuoteUpdaterService
 
         if (isset($policyDocumentsResult->premium_inv_doc_url)) {
             $updateData['insurer_tax_invoice_doc_id'] = $policyDocumentsResult->premium_inv_doc_url;
-        } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
-            $updateData['insurer_tax_invoice_doc_id'] = $policyDocumentsResult?->policy_certificate_url;
         }
 
         if (isset($policyDocumentsResult->commision_inv_doc_url)) {
             $updateData['insurer_debit_note_doc_id'] = $policyDocumentsResult->commision_inv_doc_url;
-        } else { // TODO:: NGI:: test block will remove once response from provider is fixed against issue policy with payment reference number
-            $updateData['insurer_debit_note_doc_id'] = $policyDocumentsResult?->policy_certificate_url;
         }
 
         if (! empty($updateData)) {
