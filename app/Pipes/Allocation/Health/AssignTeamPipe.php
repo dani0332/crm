@@ -4,6 +4,7 @@ namespace App\Pipes\Allocation\Health;
 
 use App\Enums\HealthRoutingLogTypeEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\TeamCategoryEnum;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\Team;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
@@ -27,7 +28,7 @@ class AssignTeamPipe extends BaseAllocationPipe
         $isSIC = $this->lead->isSIC($this->allocationRequest->getQuoteType());
 
         // If the lead is not SIC, assign the team based on the health team routing
-        if(! $isSIC){
+        if (! $isSIC) {
 
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
@@ -42,7 +43,7 @@ class AssignTeamPipe extends BaseAllocationPipe
                 $this->lead->uuid
             );
             $teamName = app(HealthTeamRoutingService::class)->getTeamBasedOnHealthTeamRouting($this->lead);
-            if($teamName){
+            if ($teamName) {
                 $this->lead->health_team_type = $teamName;
                 $this->lead->save();
             }
@@ -89,9 +90,12 @@ class AssignTeamPipe extends BaseAllocationPipe
             return;
         }
 
+        $isAUHLead = $this->lead->isAUHLead() || $this->lead->isAUHLead(false);
+
         $healthTeam = Team::where('allocation_threshold_enabled', true)
             ->where('min_price', '<=', $priceStartingFrom)
             ->where('max_price', '>=', $priceStartingFrom)
+            ->where('category', $isAUHLead ? TeamCategoryEnum::AUH->value : TeamCategoryEnum::NON_AUH->value)
             ->first();
 
         if ($healthTeam) {
