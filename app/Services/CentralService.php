@@ -2029,10 +2029,9 @@ class CentralService extends BaseService
     {
         LoggerService::startQuoteLogging($lead);
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
-
+        $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
         try {
             LoggerService::info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
-            $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
 
             $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
             if ($birdUrl) {
