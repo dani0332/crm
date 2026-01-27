@@ -45,8 +45,10 @@ const validateNumberInput = e => {
   // Allow: backspace, delete, tab, escape, enter, arrows
   if (
     [8, 9, 27, 13, 37, 38, 39, 40, 46].indexOf(charCode) !== -1 ||
-    // Allow numbers
+    // Allow regular number keys (0-9)
     (charCode >= 48 && charCode <= 57) ||
+    // Allow numpad number keys (0-9)
+    (charCode >= 96 && charCode <= 105) ||
     // Allow decimal point (.) but only if not already present
     (charCode === 190 && !e.target.value.includes('.')) ||
     (charCode === 110 && !e.target.value.includes('.'))
