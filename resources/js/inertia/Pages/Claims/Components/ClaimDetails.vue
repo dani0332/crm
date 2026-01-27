@@ -182,12 +182,6 @@ const validationRules = {
     return true;
   },
 
-  // Claim number validation
-  claimNumber: v => {
-    if (!v) return 'Claim number is required.';
-    if (v.length > 100) return 'Claim number cannot exceed 100 characters.';
-    return true;
-  },
 
   // Claim decline reason validation
   claimDeclineReason: v => {
@@ -338,15 +332,6 @@ const validateCommonFields = () => {
     errors.incident_date = incidentValidation;
   }
 
-  // Validate claim number if provided
-  if (claimForm.claim_number) {
-    const claimNumberValidation = validationRules.claimNumber(
-      claimForm.claim_number,
-    );
-    if (claimNumberValidation !== true) {
-      errors.claim_number = claimNumberValidation;
-    }
-  }
 
   // Validate claim decline reason if provided
   if (claimForm.claim_decline_reason) {
@@ -656,7 +641,6 @@ watch(
                     placeholder="Enter Insurer Claim Number"
                     class="w-full"
                     :error="claimForm.errors.claim_number"
-                    :rules="[validationRules.claimNumber]"
                   />
                 </dd>
               </div>
