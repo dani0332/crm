@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 /**
  * Claims Enum
  *
@@ -334,7 +336,7 @@ enum ClaimsEnum: string
      */
     public function label(): string
     {
-        return \Illuminate\Support\Str::title($this->value);
+        return Str::title($this->value);
     }
 
     /**
