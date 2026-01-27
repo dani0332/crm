@@ -95,6 +95,7 @@ class FetchTierUsersPipe extends BaseAllocationPipe
                 'isPUA' => true,
                 'isAuthorized' => true,
                 'paymentStatusId' => $lead->payment_status_id,
+                'tierUserCount' => count($tierUserIds),
             ]);
 
             return $tierUserIds;
@@ -107,14 +108,27 @@ class FetchTierUsersPipe extends BaseAllocationPipe
         ];
 
         if (isset($teamMap[$leadSource])) {
+            $mappedTeam = $teamMap[$leadSource];
+            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - Applying team filter', [
+                'leadSource' => $leadSource,
+                'mappedTeam' => $mappedTeam,
+                'tierUserCountBefore' => count($tierUserIds),
+            ]);
+
             // Retrieve team IDs for the relevant team
-            $teamIds = Team::where('name', $teamMap[$leadSource])->pluck('id')->toArray();
+            $teamIds = Team::where('name', $mappedTeam)->pluck('id')->toArray();
 
             // Retrieve user IDs associated with the relevant team
             $userIds = UserTeams::whereIn('team_id', $teamIds)->pluck('user_id')->toArray();
 
             // Get only the common user IDs
             $tierUserIds = array_intersect($tierUserIds, $userIds);
+
+            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - After array_intersect', [
+                'mappedTeam' => $mappedTeam,
+                'tierUserCountAfter' => count($tierUserIds),
+                'tierUsers' => $tierUserIds,
+            ]);
         }
 
         return $tierUserIds;
