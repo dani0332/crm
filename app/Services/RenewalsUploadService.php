@@ -1861,7 +1861,7 @@ class RenewalsUploadService
                 $leadValidationErrors = collect();
                 $leadData = (object) $renewalQuoteProcess->data ?? [];
                 $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
-                
+
                 $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where([
                     'quote_id' => $carQuote->id,
                     'quote_type' => QuoteTypeShortCode::CAR,
