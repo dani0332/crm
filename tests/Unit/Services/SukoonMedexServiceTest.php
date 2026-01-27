@@ -5,15 +5,17 @@ use App\Enums\VehicleTypeEnum;
 use App\Services\SukoonMedexService;
 use Illuminate\Support\Facades\Config;
 
+use function Pest\Laravel\partialMock;
+
 beforeEach(function () {
     Config::set('constants.SUKOON_API_URL', 'https://test-api.sukoon.com');
     Config::set('constants.SUKOON_API_VERSION', '1');
-    $this->service = new SukoonMedexService;
+    $this->service = partialMock(SukoonMedexService::class);
 });
 
 function setServiceProperties($service, array $properties): ReflectionMethod
 {
-    $reflection = new ReflectionClass($service);
+    $reflection = new ReflectionClass(SukoonMedexService::class);
 
     foreach ($properties as $name => $value) {
         $property = $reflection->getProperty($name);
