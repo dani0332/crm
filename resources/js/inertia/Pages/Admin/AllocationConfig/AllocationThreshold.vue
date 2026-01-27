@@ -218,5 +218,5 @@ onMounted(() => {
   <HealthRoutingLogs
       type="CONFIGURATION"
       :teamCategory="tabs[activeTab]"
-      expanded="true" />
+  />
 </template>

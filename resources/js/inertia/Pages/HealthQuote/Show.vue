@@ -4477,7 +4477,7 @@ const isPrimaryEmailLocked = computed(() => {
     <HealthRoutingLogs
       type="ROUTING"
       :quoteRequestId="$page.props.quote.id"
-      expanded="true" />
+    />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
