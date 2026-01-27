@@ -88,12 +88,13 @@ class FetchTierUsersPipe extends BaseAllocationPipe
     {
         $lead = $this->allocationRequest->getLead();
 
-        // Skip team filter for PUA leads with payment authorized (should go to ORGANIC team)
+        // Skip team filter for PUA leads with payment authorized or declined (should go to ORGANIC team)
         if ($leadSource === LeadSourceEnum::REVIVAL_PAID && $lead->isPUA() && $lead->isPaymentAuthorizedOrDeclined()) {
-            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - Skipping SIC_UNASSISTED filter for PUA with authorized payment', [
+            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - Skipping SIC_UNASSISTED filter for PUA with authorized or declined payment', [
                 'leadSource' => $leadSource,
                 'isPUA' => true,
-                'isAuthorized' => true,
+                'isAuthorizedOrDeclined' => true,
+                'paymentStatusId' => $lead->payment_status_id,
             ]);
 
             return $tierUserIds;
