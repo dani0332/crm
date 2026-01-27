@@ -55,7 +55,7 @@ class AssignLeadPipe extends BaseAllocationPipe
                 ]
             )
                 ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
-                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::PCP])) {
+                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::GBP])) {
                         IntroEmailJob::dispatch(
                             quoteTypeCode::Health,
                             'Capi',

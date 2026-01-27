@@ -23,7 +23,7 @@ trait Carable
 {
     public function getBaseQuery($status, $userIds)
     {
-        $excludedUserIds = $this->allocationRequest->get('excludedUserIds');
+        $excludedUserIds = $this->allocationRequest->get('excludedUserIds') ?? [];
 
         return LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
             $query->where('status', $status)->whereDoesntHave('roles', function ($query) {

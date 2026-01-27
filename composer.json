@@ -40,11 +40,11 @@
     "spatie/laravel-activitylog": "dev-main",
     "spatie/laravel-navigation": "^1.2",
     "spatie/laravel-permission": "^6.4.0",
+    "staudenmeir/laravel-cte": "^1.12",
     "tightenco/ziggy": "^2.0"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9.1",
-    "laravel/boost": "^1.8",
     "laravel/pint": "^1.0",
     "laravel/sail": "^1.6",
     "laravel/ui": "^4.2.2",
