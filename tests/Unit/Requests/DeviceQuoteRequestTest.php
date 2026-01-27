@@ -2,8 +2,7 @@
 
 use App\Http\Requests\DeviceQuoteRequest;
 use Illuminate\Support\Facades\Validator;
-
-uses(Tests\TestCase::class);
+use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
     $this->rules = (new DeviceQuoteRequest)->rules();

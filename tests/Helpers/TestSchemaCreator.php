@@ -4,6 +4,7 @@ namespace Tests\Helpers;
 
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\RenewalsSchema;
+use Illuminate\Support\Facades\Schema;
 
 class TestSchemaCreator
 {
@@ -39,6 +40,7 @@ class TestSchemaCreator
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->string('remember_token')->nullable();
+                $table->datetime('last_login')->nullable();
                 $table->timestamps();
             });
         }
