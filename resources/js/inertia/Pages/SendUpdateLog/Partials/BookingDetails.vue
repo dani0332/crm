@@ -788,10 +788,7 @@ function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.booking_date =
     props.sendUpdateLog.status !== sendUpdateStatusEnum.UPDATE_BOOKED
       ? 'N/A'
-      : dateToDMY(props.realQuote?.policy_booking_date) ||
-        dateToDMY(props.quote?.policy_booking_date) ||
-        dateToDMY(props.sendUpdateLog?.booking_date) ||
-        '';
+      :dateToDMY(props.sendUpdateLog?.booking_date) || '';
   reversalEntry.invoice_date =
     payment.insurer_invoice_date || sendUpdate.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
