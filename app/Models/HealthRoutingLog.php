@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HealthRoutingLog extends Model
 {
@@ -11,9 +12,15 @@ class HealthRoutingLog extends Model
         'uuid',
         'type',
         'team_category',
+        'logged_by',
         'log_data',
     ];
     protected $casts = [
         'log_data' => 'array',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'logged_by');
+    }
 }
