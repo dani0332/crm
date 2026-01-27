@@ -329,4 +329,133 @@ class ConversionApiServiceTest extends TestCase
         $this->assertTrue($facebookResult);
         $this->assertTrue($googleResult);
     }
+
+    public function test_trigger_facebook_conversion_returns_false_when_response_has_errors(): void
+    {
+        Log::spy();
+
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->andReturn((object) [
+                'errors' => ['Error message from API'],
+                'status' => 'failed',
+            ]);
+
+        $result = $this->service->triggerFacebookConversion('test-uuid-error', QuoteTypeId::Car);
+
+        $this->assertFalse($result);
+
+        Log::shouldHaveReceived('error')
+            ->with(\Mockery::pattern('/ConversionApiService - facebook conversion API returned errors/'), \Mockery::on(function ($context) {
+                return isset($context['errors'])
+                    && isset($context['response'])
+                    && isset($context['uuid'])
+                    && isset($context['platform'])
+                    && $context['platform'] === 'facebook';
+            }))
+            ->once();
+    }
+
+    public function test_trigger_google_conversion_returns_false_when_response_has_errors(): void
+    {
+        Log::spy();
+
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->andReturn((object) [
+                'errors' => ['Invalid quoteUID'],
+                'status' => 'failed',
+            ]);
+
+        $result = $this->service->triggerGoogleConversion('test-uuid-error', QuoteTypeId::Travel);
+
+        $this->assertFalse($result);
+
+        Log::shouldHaveReceived('error')
+            ->with(\Mockery::pattern('/ConversionApiService - google conversion API returned errors/'), \Mockery::on(function ($context) {
+                return isset($context['errors'])
+                    && isset($context['platform'])
+                    && $context['platform'] === 'google';
+            }))
+            ->once();
+    }
+
+    public function test_trigger_facebook_conversion_returns_false_when_response_is_null(): void
+    {
+        Log::spy();
+
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->andReturn(null);
+
+        $result = $this->service->triggerFacebookConversion('test-uuid-null', QuoteTypeId::Car);
+
+        $this->assertFalse($result);
+
+        Log::shouldHaveReceived('error')
+            ->with(\Mockery::pattern('/ConversionApiService - facebook conversion API returned empty response/'), \Mockery::on(function ($context) {
+                return isset($context['uuid'])
+                    && isset($context['platform'])
+                    && $context['platform'] === 'facebook';
+            }))
+            ->once();
+    }
+
+    public function test_trigger_google_conversion_returns_false_when_response_is_empty(): void
+    {
+        Log::spy();
+
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->andReturn(null);
+
+        $result = $this->service->triggerGoogleConversion('test-uuid-null', QuoteTypeId::Health);
+
+        $this->assertFalse($result);
+
+        Log::shouldHaveReceived('error')
+            ->with(\Mockery::pattern('/ConversionApiService - google conversion API returned empty response/'), \Mockery::on(function ($context) {
+                return isset($context['uuid'])
+                    && isset($context['platform'])
+                    && $context['platform'] === 'google';
+            }))
+            ->once();
+    }
+
+    public function test_trigger_facebook_conversion_validates_response_before_logging_success(): void
+    {
+        Log::spy();
+
+        $mockCapi = Mockery::mock('alias:'.Capi::class);
+
+        // First call with errors - should not log success
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->andReturn((object) ['errors' => ['API Error']]);
+
+        $result1 = $this->service->triggerFacebookConversion('test-uuid-1', QuoteTypeId::Car);
+        $this->assertFalse($result1);
+
+        // Second call with valid response - should log success
+        $mockCapi->shouldReceive('request')
+            ->once()
+            ->andReturn((object) ['success' => true, 'message' => 'Event sent']);
+
+        $result2 = $this->service->triggerFacebookConversion('test-uuid-2', QuoteTypeId::Car);
+        $this->assertTrue($result2);
+
+        // Verify error was logged for first call
+        Log::shouldHaveReceived('error')
+            ->with(\Mockery::pattern('/ConversionApiService - facebook conversion API returned errors/'), \Mockery::type('array'))
+            ->once();
+
+        // Verify success was logged only for second call
+        Log::shouldHaveReceived('info')
+            ->with(\Mockery::pattern('/ConversionApiService - facebook conversion API call successful/'), \Mockery::type('array'))
+            ->once();
+    }
 }

@@ -8,9 +8,12 @@ use App\Events\QuotePolicyBooked;
 use App\Services\ConversionApiService;
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TriggerConversionApis
+class TriggerConversionApis implements ShouldQueue
 {
+    public $tries = 3;
+
     /**
      * Create the event listener.
      */

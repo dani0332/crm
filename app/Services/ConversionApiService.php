@@ -74,6 +74,34 @@ class ConversionApiService
         try {
             $response = Capi::request($endpoint, 'post', $payload);
 
+            // Validate response - Capi::request does not throw exceptions for API failures
+            if (isset($response->errors)) {
+                LoggerService::error("ConversionApiService - {$platform} conversion API returned errors", [], null, [
+                    'uuid' => $quoteUID,
+                    'eventType' => $eventType,
+                    'platform' => $platform,
+                    'quoteTypeId' => $quoteTypeId,
+                    'endpoint' => $endpoint,
+                    'response' => $response,
+                    'errors' => $response->errors,
+                ]);
+
+                return false;
+            }
+
+            // Validate that response exists and is not empty
+            if (! $response) {
+                LoggerService::error("ConversionApiService - {$platform} conversion API returned empty response", [], null, [
+                    'uuid' => $quoteUID,
+                    'eventType' => $eventType,
+                    'platform' => $platform,
+                    'quoteTypeId' => $quoteTypeId,
+                    'endpoint' => $endpoint,
+                ]);
+
+                return false;
+            }
+
             LoggerService::info("ConversionApiService - {$platform} conversion API call successful", [], [
                 'uuid' => $quoteUID,
                 'eventType' => $eventType,

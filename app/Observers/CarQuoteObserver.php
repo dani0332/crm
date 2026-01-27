@@ -163,7 +163,6 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
-            QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
             LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
             ExtendCustomerSubscriptionViaSQS::dispatch(
@@ -181,6 +180,19 @@ class CarQuoteObserver
                         'uuid' => $lead->uuid,
                     ]);
                 }
+            }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $lead->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
+            } catch (Exception $e) {
+                LoggerService::error('CarQuoteObserver - dispatch QuotePolicyBooked event failed', [
+                    'uuid' => $lead->uuid,
+                ], exception: $e);
             }
         }
 
