@@ -1759,7 +1759,7 @@ const copyLink = () => {
     <ApiLogs
       v-if="can(permissionsEnum.API_LOG_VIEW)"
       :type="modelClassDevice"
-      :id="$page.props.quote.id"
+      :id="$page.props.quote.device_quote.id"
     />
 
     <OcrLogs
