@@ -73,7 +73,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
         LoggerService::info('job:SendUpdateToCustomerJob - Job Email Data prepared', extra: ['emailData' => json_encode($emailData), 'quoteTypeId' => $quoteTypeId]);
 
         $response = $this->sendEmailBasedOnQuoteType($quote, $quoteTypeId, $templateId, $emailData, $tag, $sendEmailCustomerService);
-        $this->handleEmailResponse($response, $sendUpdateLog);
+        $this->handleEmailResponse($response, $sendUpdateLog, $quoteTypeId);
     }
 
     private function getQuoteForEmail($sendUpdateLog)
@@ -122,9 +122,9 @@ class SendUpdateToCustomerJob implements ShouldQueue
         return $response;
     }
 
-    private function handleEmailResponse($response, $sendUpdateLog)
+    private function handleEmailResponse($response, $sendUpdateLog, $quoteTypeId)
     {
-        if ($this->isEmailResponseSuccessful($response)) {
+        if ($this->isEmailResponseSuccessful($quoteTypeId, $response)) {
             $this->updateEmailStatusToSent($sendUpdateLog, $response);
             $this->dispatchEPJobIfNeeded($sendUpdateLog);
         } else {
@@ -132,10 +132,12 @@ class SendUpdateToCustomerJob implements ShouldQueue
         }
     }
 
-    private function isEmailResponseSuccessful($response)
+    private function isEmailResponseSuccessful($quoteTypeId, $response)
     {
-        return $response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE ||
-               $response == BirdFlowStatusEnum::BIRD_DEVICE_UPDATE_SUCCESS_STATUS_CODE;
+        if (QuoteTypeId::Device === $quoteTypeId) {
+            return $response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE || $response == BirdFlowStatusEnum::BIRD_DEVICE_UPDATE_SUCCESS_STATUS_CODE;
+        }
+        return $response == BirdFlowStatusEnum::BIRD_SUCCESS_STATUS_CODE;
     }
 
     private function updateEmailStatusToSent($sendUpdateLog, $response)
