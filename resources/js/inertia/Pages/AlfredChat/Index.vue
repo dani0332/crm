@@ -299,12 +299,21 @@ const exportReport = async (exportType = 'download') => {
       }
     }
 
-    // Check lead_created_at date range
+    // Check lead_created_at date range (extract date only to avoid timezone issues)
     if (filters.lead_created_at && filters.lead_created_at.length === 2) {
-      const leadDays = calculateDaysDifference(
-        filters.lead_created_at[0],
-        filters.lead_created_at[1],
-      );
+      // Extract date part (YYYY-MM-DD) and parse as local date to avoid timezone issues
+      const startDateStr = filters.lead_created_at[0].substring(0, 10);
+      const endDateStr = filters.lead_created_at[1].substring(0, 10);
+
+      // Parse dates using local timezone components to avoid UTC conversion issues
+      const [startYear, startMonth, startDay] = startDateStr
+        .split('-')
+        .map(Number);
+      const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
+
+      const start = new Date(startYear, startMonth - 1, startDay);
+      const end = new Date(endYear, endMonth - 1, endDay);
+      const leadDays = Math.round((end - start) / 86400000) + 1;
 
       if (leadDays > 31) {
         notification.error({

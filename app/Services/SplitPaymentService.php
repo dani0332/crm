@@ -1276,10 +1276,17 @@ class SplitPaymentService
                     'price_vat_not_applicable' => $quoteModel->price_vat_not_applicable,
                 ]);
             }
+
+            if ($send_update_id > 0 && isset($quoteModel->price_with_vat) && $quoteModel->price_with_vat > 0) {
+                $computedPrice = $quoteModel->price_with_vat;
+                LoggerService::info('SplitPaymentService - Using price_with_vat from send update log for payment code: '.$paymentCode, extra: [
+                    'price_with_vat' => $quoteModel->price_with_vat,
+                ]);
+            }
         }
 
         if ($computedPrice > 0) {
-            if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
+            if (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
                 $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
                 LoggerService::info('SplitPaymentService - ecommLob VAT calculation for payment code: '.$paymentCode, extra: [
@@ -1422,6 +1429,12 @@ class SplitPaymentService
     {
         try {
             LoggerService::info("createPolicyIssuanceAutomation called for quote: {$quote->code}");
+
+            if ($payment?->send_update_log_id > 0) {
+                LoggerService::info('Payment is from send update log - skipping policy issuance automation');
+
+                return;
+            }
 
             $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 

@@ -2,12 +2,13 @@
 
 namespace Tests\Helpers;
 
-use Illuminate\Support\Facades\Schema;
+use Tests\Support\Schema\CoreSchema;
+use Tests\Support\Schema\RenewalsSchema;
 
 class TestSchemaCreator
 {
     /**
-     * Create minimal required tables for LifeQuote tests.
+     * Create minimal required tables tests.
      */
     public static function createMinimalSchema(): void
     {
@@ -320,5 +321,14 @@ class TestSchemaCreator
                 $table->timestamps();
             });
         }
+        (new CoreSchema)->register();
     }
+
+    public static function createRenewalsSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new RenewalsSchema)->register();
+    }
+
 }
