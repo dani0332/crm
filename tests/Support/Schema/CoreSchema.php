@@ -627,6 +627,7 @@ class CoreSchema
             'teams' => function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
+                $table->string('code')->nullable();
                 // TeamHierarchyTrait::getAllProducts() relies on these columns.
                 $table->unsignedTinyInteger('type')->nullable();
                 $table->boolean('is_active')->default(1);
