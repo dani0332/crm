@@ -302,8 +302,8 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_REVERSAL) {
                 $reversePayLoad = self::prepareReversalPayload($reversalDetails);
+                $reversePayLoad->Invoices[0]->DocumentNumber = (string) mb_substr($reversePayLoad->Invoices[0]->DocumentNumber, -18);
                 $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 0);
-                $reversePayLoad->Invoices[0]->DocumentNumber = (string) mb_substr($reversePayLoad->Invoices[0]->DocumentNumber, -18).'-REV';
                 $reversePayLoad->Invoices[0]->DocumentType = 'DebitNote';
                 $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_REV_INV;
                 $payLoad = $reversePayLoad;
