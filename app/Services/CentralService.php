@@ -1648,6 +1648,7 @@ class CentralService extends BaseService
             'policyPeriodEnd' => Carbon::parse($quote->policy_expiry_date)->format('d/m/Y'),
             'refID' => $quote->code,
             'code' => $quote->code,
+            'reason' => $existingEmailData->reason ?? '',
         ];
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
