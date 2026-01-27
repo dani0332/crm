@@ -425,7 +425,10 @@ class HealthEmailService extends BaseService
             if (! $workflow) {
                 LoggerService::error(self::class." - Workflow not found for UUID: {$lead->uuid}");
 
-                return;
+                return [
+                    'success' => false,
+                    'message' => 'Workflow not found',
+                ];
             }
 
             $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value);
