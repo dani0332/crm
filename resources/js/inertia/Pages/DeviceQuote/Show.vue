@@ -345,7 +345,8 @@ const planDetailsTabs = ref([
 const selectedProviderPlan = ref({
   id: page.props?.quote?.plan_id,
   planName: page.props?.quote?.insurance_provider_plan?.text,
-  providerName: page.props?.quote?.insurance_provider_plan?.insurance_provider?.text,
+  providerName:
+    page.props?.quote?.insurance_provider_plan?.insurance_provider?.text,
   premium: page.props?.quote?.premium,
 });
 
@@ -818,7 +819,7 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{quote?.payment_status?.text }}</dd>
+                <dd>{{ quote?.payment_status?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
@@ -1591,7 +1592,7 @@ const copyLink = () => {
       :expanded="sectionExpanded"
       :quoteType="'Device'"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="true"
+      :isPlanDetailSectionEnabled="false"
       :paymentGatewayEnum="paymentGatewayEnum"
     />
 
