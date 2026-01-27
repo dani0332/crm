@@ -23,6 +23,7 @@ class HealthTeamRoutingLogService
                 'type' => $type->value,
                 'team_category' => $teamCategory?->value,
                 'log_data' => json_encode($logData),
+                'logged_by' => auth()->user()->id,
             ]);
         } catch (\Exception $e) {
             LoggerService::error('HealthTeamRoutingLogService: log function error', ['error' => $e->getMessage()]);
