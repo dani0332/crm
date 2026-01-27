@@ -16,4 +16,15 @@ class TeamObserver
             $team->code = $team->name;
         }
     }
+
+    /**
+     * Handle the Team "updating" event.
+     * Set the code column to the same value as name when updating a team.
+     */
+    public function updating(Team $team): void
+    {
+        if (empty($team->code)) {
+            $team->code = $team->name;
+        }
+    }
 }
