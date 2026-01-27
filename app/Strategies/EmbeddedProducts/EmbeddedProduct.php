@@ -171,12 +171,12 @@ class EmbeddedProduct
         $item->lob = QuoteTypeId::getOptions()[$item->quote_type_id] ?? '';
 
         if ($item->quote_type_id == QuoteTypeId::Car) {
-            $carMake = $quoteObject->carMake->text ?? '';
-            $carModel = $quoteObject->carModel->text ?? '';
+            $carMake = $quoteObject?->carMake?->text ?? '';
+            $carModel = $quoteObject?->carModel?->text ?? '';
             $item->vehicle = $carMake.' '.$carModel;
         } elseif ($item->quote_type_id == QuoteTypeId::Bike) {
-            $make = $quoteObject->bikeQuote->bikeMake->text ?? '';
-            $model = $quoteObject->bikeQuote->bikeModel->text ?? '';
+            $make = $quoteObject?->bikeQuote?->bikeMake?->text ?? '';
+            $model = $quoteObject?->bikeQuote?->bikeModel?->text ?? '';
             $item->vehicle = $make.' '.$model;
         } else {
             $item->vehicle = 'N/A';

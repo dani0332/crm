@@ -2,7 +2,6 @@
 
 use App\Enums\QuoteTypeId;
 use App\Strategies\EmbeddedProducts\RDX;
-use Illuminate\Support\Collection;
 
 beforeEach(function () {
     $this->rdx = new RDX;
