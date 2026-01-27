@@ -53,7 +53,7 @@ class NgiApiService
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
             $quote,
             $payload,
-            $createPolicyResponse,
+            $httpResponse,
             Ngi::getBaseUrl().$endPoint,
             NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
             $createPolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,

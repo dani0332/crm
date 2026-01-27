@@ -25,6 +25,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Http\Client\Response as HttpClientResponse;
 
 class PolicyIssuanceService
 {
@@ -328,6 +329,16 @@ class PolicyIssuanceService
 
     public function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status, $policyIssuance): void
     {
+        $responsePayload = $response;
+
+        if ($response instanceof HttpClientResponse) {
+            $responsePayload = $response->json();
+
+            if ($responsePayload === null) {
+                $responsePayload = $response->body();
+            }
+        }
+
         $log = PolicyIssuanceLog::create([
             'policy_issuance_id' => $policyIssuance->id,
             'model_type' => $quote->getMorphClass(),
@@ -335,15 +346,16 @@ class PolicyIssuanceService
             'step' => $step,
             'endPoint' => $endPoint,
             'payload' => json_encode($payload),
-            'response' => json_encode($response),
+            'response' => json_encode($responsePayload),
             'status' => $status,
         ]);
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' PID : '.$policyIssuance?->id.' Policy Issuance Log ID : '.$log->id);
     }
 
-    public function shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider): bool {
-        if (!$insuranceProvider) {
+    public function shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider): bool
+    {
+        if (! $insuranceProvider) {
             return false;
         }
 
