@@ -182,7 +182,6 @@ const validationRules = {
     return true;
   },
 
-
   // Claim decline reason validation
   claimDeclineReason: v => {
     if (!v) return true;
@@ -331,7 +330,6 @@ const validateCommonFields = () => {
   if (incidentValidation !== true) {
     errors.incident_date = incidentValidation;
   }
-
 
   // Validate claim decline reason if provided
   if (claimForm.claim_decline_reason) {
