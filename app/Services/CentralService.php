@@ -1601,7 +1601,7 @@ class CentralService extends BaseService
                 // Generate presigned URL instead of direct storage URL
                 $emailData->{$urlProperty} = app(QuoteDocumentService::class)->getDocumentUrl($documentUrl, 'azureIM', 60); // 60 minutes expiry
                 $emailData->{$extProperty} = ! empty($emailData->{$urlProperty})
-                    ? pathinfo($emailData->{$urlProperty}, PATHINFO_EXTENSION)
+                    ? app(QuoteDocumentService::class)->getDocumentExtension($emailData->{$urlProperty})
                     : '';
             }
         }
