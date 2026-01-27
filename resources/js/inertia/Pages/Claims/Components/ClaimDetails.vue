@@ -695,7 +695,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Complaint Status</dt>
-                <dd>{{ claim.complaint_status?.text || 'N/A' }}</dd>
+                <dd>{{ claim.complaint_status?.text?.label || 'N/A' }}</dd>
               </div>
               <template v-if="isHealthLOB">
                 <div class="grid sm:grid-cols-2">
