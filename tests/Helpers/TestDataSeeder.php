@@ -402,4 +402,90 @@ class TestDataSeeder
 
         return compact('productTeamId', 'teamId');
     }
+       /**
+     * Seed device-quotes permissions and assign to Admin role (for DeviceQuote tests).
+     */
+    public static function seedDeviceQuotePermissions(): void
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $guard = 'web';
+        $names = [
+            \App\Enums\PermissionsEnum::DEVICE_QUOTES_LIST,
+            \App\Enums\PermissionsEnum::DEVICE_QUOTES_CREATE,
+            \App\Enums\PermissionsEnum::DEVICE_QUOTES_EDIT,
+            \App\Enums\PermissionsEnum::DEVICE_QUOTES_SHOW,
+        ];
+        $roleId = $db->table('roles')->where('name', \App\Enums\RolesEnum::Admin)->value('id');
+        if (! $roleId) {
+            return;
+        }
+        foreach ($names as $name) {
+            $permId = $db->table('permissions')->where('name', $name)->where('guard_name', $guard)->value('id');
+            if (! $permId) {
+                $permId = $db->table('permissions')->insertGetId([
+                    'name' => $name,
+                    'guard_name' => $guard,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            $exists = $db->table('role_has_permissions')
+                ->where('permission_id', $permId)
+                ->where('role_id', $roleId)
+                ->exists();
+            if (! $exists) {
+                $db->table('role_has_permissions')->insert([
+                    'permission_id' => $permId,
+                    'role_id' => $roleId,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Seed required lookup data for DeviceQuote tests (make/model).
+     *
+     * @return array{make_id: int, model_id: int}
+     */
+    public static function seedDeviceQuoteLookups(): array
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        // Device quote type (id=20) required for PersonalQuote->quoteType and redirects
+        $db->table('quote_type')->insertOrIgnore([
+            'id' => 20,
+            'code' => 'Device',
+            'short_code' => 'DEV',
+            'text' => 'Device Insurance',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $makeId = $db->table('device_make')->where('text', 'Test Make')->value('id');
+        if (! $makeId) {
+            $makeId = $db->table('device_make')->insertGetId([
+                'text' => 'Test Make',
+                'name' => 'Test Make',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $modelId = $db->table('device_model')->where('make_id', $makeId)->where('text', 'Test Model')->value('id');
+        if (! $modelId) {
+            $modelId = $db->table('device_model')->insertGetId([
+                'make_id' => $makeId,
+                'text' => 'Test Model',
+                'name' => 'Test Model',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'make_id' => $makeId,
+            'model_id' => $modelId,
+        ];
+    }
 }
