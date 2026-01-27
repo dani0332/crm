@@ -398,17 +398,21 @@ const computeddeviceCoverages = computed(() => {
 });
 
 const renewalBatchOptions = computed(() => {
-  return page.props.renewalBatches?.map(item => ({
-    value: item.id,
-    label: item.name,
-  })) || [];
+  return (
+    page.props.renewalBatches?.map(item => ({
+      value: item.id,
+      label: item.name,
+    })) || []
+  );
 });
 
 const assignmentTypeOptions = computed(() => {
-  return page.props.assignmentTypes?.map(item => ({
-    value: item.value,
-    label: item.label,
-  })) || [];
+  return (
+    page.props.assignmentTypes?.map(item => ({
+      value: item.value,
+      label: item.label,
+    })) || []
+  );
 });
 </script>
 
@@ -567,7 +571,10 @@ const assignmentTypeOptions = computed(() => {
           class="w-full"
           label="Policy End Date"
         />
-        <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.SmartPhoneAdvisor])">
+        <x-field
+          label="Advisor"
+          v-if="!hasAnyRole([rolesEnum.SmartPhoneAdvisor])"
+        >
           <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
