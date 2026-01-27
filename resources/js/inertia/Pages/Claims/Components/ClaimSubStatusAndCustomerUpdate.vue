@@ -17,6 +17,7 @@ const page = usePage();
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
+const claimsEnum = page.props.claimsEnum;
 const notification = useToast();
 const processing = ref(false);
 
@@ -73,6 +74,15 @@ const subStatusOptions = computed(() => {
 });
 
 const updateClaimSubStatusAndCustomer = async isValid => {
+  // Check if required field is filled before submitting
+  if (!isRequiredFieldFilled.value && requiredFieldName.value) {
+    notification.error({
+      title: `Please fill ${requiredFieldName.value} before updating`,
+      position: 'top',
+    });
+    return;
+  }
+
   try {
     NProgress.start();
     claimSubStatusAndCustomerForm.processing = true;
@@ -140,13 +150,106 @@ const enableOptimizeButton = computed(() => {
   );
 });
 
+// Get the selected claim sub status text value
+const selectedSubStatusText = computed(() => {
+  if (!claimSubStatusAndCustomerForm.claim_sub_status_id) {
+    return null;
+  }
+  const selectedStatus = props.dropdowns.claimSubStatuses?.find(
+    status => status.id === claimSubStatusAndCustomerForm.claim_sub_status_id
+  );
+  return selectedStatus?.text?.value || null;
+});
+
+// Helper function to check if a value is filled
+const isFieldFilled = value => {
+  if (value === null || value === undefined) {
+    return false;
+  }
+  if (typeof value === 'string') {
+    return value.trim() !== '';
+  }
+  if (typeof value === 'number') {
+    return value > 0;
+  }
+  return Boolean(value);
+};
+
+// Status field requirements configuration
+const statusFieldRequirements = computed(() => {
+  if (!claimsEnum) {
+    return {};
+  }
+
+  return {
+    [claimsEnum.CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS?.toLowerCase()]: {
+      fieldName: 'approved_repair_amount',
+      label: 'Approved repair amount',
+    },
+    [claimsEnum.CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED?.toLowerCase()]: {
+      fieldName: 'approved_total_loss_amount',
+      label: 'Total Loss Offered amount',
+    },
+    [claimsEnum.CLAIM_SUB_STATUS_CASH_LOSS_APPROVED?.toLowerCase()]: {
+      fieldName: 'approved_cash_loss_amount',
+      label: 'Cash loss offered amount',
+    },
+    [claimsEnum.CLAIM_SUB_STATUS_CLAIM_DENIED?.toLowerCase()]: {
+      fieldName: 'claim_decline_reason',
+      label: 'Claim denial reason',
+    },
+  };
+});
+
+// Get the field requirement for the selected status
+const getStatusFieldRequirement = computed(() => {
+  const statusText = selectedSubStatusText.value;
+  if (!statusText) {
+    return null;
+  }
+
+  const normalizedStatus = statusText.toLowerCase().trim();
+  return statusFieldRequirements.value[normalizedStatus] || null;
+});
+
+// Get the required field name based on selected status
+const requiredFieldName = computed(() => {
+  return getStatusFieldRequirement.value?.label || null;
+});
+
+// Check if required field is filled based on selected status
+const isRequiredFieldFilled = computed(() => {
+  const requirement = getStatusFieldRequirement.value;
+  if (!requirement) {
+    return true; // No field requirement for this status
+  }
+
+  const fieldValue = props.claim?.[requirement.fieldName];
+  return isFieldFilled(fieldValue);
+});
+
 const enableSendMessageButton = computed(() => {
   return (
     claimSubStatusAndCustomerForm.claim_sub_status_id &&
     claimSubStatusAndCustomerForm.customer_message &&
-    claimSubStatusAndCustomerForm.ai_optimized_message
+    claimSubStatusAndCustomerForm.ai_optimized_message &&
+    isRequiredFieldFilled.value
   );
 });
+
+// Watch for sub-status changes and show alert if required field is not filled
+watch(
+  () => claimSubStatusAndCustomerForm.claim_sub_status_id,
+  (newStatusId, oldStatusId) => {
+    // Only show alert if status actually changed and we have a requirement
+    if (newStatusId && newStatusId !== oldStatusId && requiredFieldName.value && !isRequiredFieldFilled.value) {
+      notification.error({
+        title: `Please fill ${requiredFieldName.value} before updating`,
+        position: 'top',
+      });
+    }
+  }
+);
 
 const optimizeMessage = async () => {
   if (
