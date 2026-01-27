@@ -392,7 +392,7 @@ class SageApiService
                     'epBookingLogCount' => count($epTransSageLogArray),
                     'suCustomerNumber' => $sageRequestPayload->customerId,
                 ]);
-                if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && $ePTransaction->payments && count($epTransSageLogArray) > 0) {
+                if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && $ePTransaction->payments->isNotEmpty() && count($epTransSageLogArray) > 0) {
 
                     $epPayment = $ePTransaction->payments->first();
                     $epPaymentDate = Carbon::parse($epPayment->getAttributes()['captured_at']);
