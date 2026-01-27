@@ -146,6 +146,18 @@ class TestSchemaCreator
             });
         }
 
+        // Create quote_type table if it doesn't exist (required for PersonalQuote->quoteType relation)
+        if (! Schema::connection('sqlite')->hasTable('quote_type')) {
+            Schema::connection('sqlite')->create('quote_type', function ($table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('short_code')->nullable();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            });
+        }
+
         // Create personal_quotes table if it doesn't exist
         if (! Schema::connection('sqlite')->hasTable('personal_quotes')) {
             Schema::connection('sqlite')->create('personal_quotes', function ($table) {
@@ -206,9 +218,31 @@ class TestSchemaCreator
                 $table->string('mobile_no')->nullable();
                 $table->string('month_of_purchase')->nullable();
                 $table->string('year_of_purchase')->nullable();
+                $table->date('purchase_date')->nullable();
                 $table->unsignedBigInteger('make_id')->nullable();
                 $table->unsignedBigInteger('model_id')->nullable();
                 $table->string('imei')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create device_make table if it doesn't exist (for DeviceQuote form options)
+        if (! Schema::connection('sqlite')->hasTable('device_make')) {
+            Schema::connection('sqlite')->create('device_make', function ($table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->string('text')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        // Create device_model table if it doesn't exist
+        if (! Schema::connection('sqlite')->hasTable('device_model')) {
+            Schema::connection('sqlite')->create('device_model', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('make_id');
+                $table->string('name')->nullable();
+                $table->string('text')->nullable();
                 $table->timestamps();
             });
         }
