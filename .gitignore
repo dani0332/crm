@@ -23,6 +23,5 @@ notes.txt
 .eslintcache
 
 dump.rdb
-app/Services/SendBookPolicyDocumentsJobLocal.php
 boost.json
 mcp.json

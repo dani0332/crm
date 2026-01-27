@@ -18,7 +18,7 @@ trait InstantChatDetailedChunkedExportable
     {
         $totalRecords = 0;
         $chunkSize = 250; // Smaller chunks for detailed reports due to more complex MongoDB processing
-        $flushInterval = 1000;
+        $flushInterval = 500; // Reduced from 1000 for better responsiveness
 
         DB::setDefaultConnection('mysql_read');
 
@@ -26,12 +26,14 @@ trait InstantChatDetailedChunkedExportable
 
         try {
             $instantAlfredService = app(InstantAlfredService::class);
+            $isFirstChunk = true;
 
             $query->chunk($chunkSize, function ($sqlRecords) use (
                 $instantAlfredService,
                 $requestParams,
                 $stream,
                 &$totalRecords,
+                &$isFirstChunk,
                 $flushInterval
             ) {
                 // Process this chunk through InstantAlfredService for detailed MongoDB integration
@@ -47,11 +49,23 @@ trait InstantChatDetailedChunkedExportable
                     $totalRecords++;
                 }
 
-                // Flush to disk and manage memory periodically
+                // Flush after every chunk to ensure continuous output and prevent timeouts
+                fflush($stream);
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+
+                // Additional flush and memory management at intervals
                 if ($totalRecords % $flushInterval === 0) {
-                    fflush($stream);
                     gc_collect_cycles();
                     LoggerService::info("Instant chat detailed export progress: {$totalRecords} records processed");
+                }
+
+                // Immediate flush after first chunk to send data to browser quickly
+                if ($isFirstChunk) {
+                    $isFirstChunk = false;
+                    LoggerService::info("First chunk processed: {$totalRecords} records sent to browser");
                 }
             });
 
@@ -66,8 +80,12 @@ trait InstantChatDetailedChunkedExportable
             DB::setDefaultConnection('mysql');
         }
 
-        // Final flush
+        // Final flush - ensure all data is sent to browser
         fflush($stream);
+        if (ob_get_level() > 0) {
+            ob_flush();
+        }
+        flush();
         LoggerService::info("Chunked instant chat detailed export completed: {$totalRecords} total records");
 
         return $totalRecords;

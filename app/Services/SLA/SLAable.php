@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\SLA;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\EnvEnum;
+use App\Enums\Kyc;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SLAStatusEnum;
@@ -33,12 +35,24 @@ trait SLAable
             QuoteStatusEnum::MissingDocumentsRequested,
             QuoteStatusEnum::PolicyDocumentsPending,
             QuoteStatusEnum::SentForTransactionApproval,
-            QuoteStatusEnum::KYCCleared,
-            QuoteStatusEnum::AMLScreeningCleared,
-            QuoteStatusEnum::AMLScreeningFailed,
             QuoteStatusEnum::Lost,
             QuoteStatusEnum::Fake,
             QuoteStatusEnum::ApplicationPending,
+        ];
+    }
+
+    private static function getMeetableAMLStatuses(): array
+    {
+        return [
+            AMLStatusCode::AMLScreeningCleared,
+            AMLStatusCode::AMLScreeningFailed,
+        ];
+    }
+
+    private static function getMeetableKYCDecisionStatuses(): array
+    {
+        return [
+            Kyc::COMPLETE,
         ];
     }
 

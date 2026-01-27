@@ -1219,7 +1219,7 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedCarOcbEmailTemplatesUpdate()
     {
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE],
             [
                 'value' => 778,
@@ -1229,7 +1229,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE],
             [
                 'value' => 778,
@@ -1239,7 +1239,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
+        ApplicationStorage::updateOrCreate(
             ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE],
             [
                 'value' => 778,
