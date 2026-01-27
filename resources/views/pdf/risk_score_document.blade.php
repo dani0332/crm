@@ -178,7 +178,7 @@
 
 <body>
 <div id="header">
-    <img src="{{'data:image/jpeg;base64,'.base64_encode(file_get_contents(public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg')))}}" alt="Insurance Market Logo" width="300">
+    <img src="{{'data:image/jpeg;base64,'.base64_encode(file_get_contents(public_path('images/quote_plans_pages/comparison_pdfs_images/header.jpg')))}}" alt="Insurance Market Logo" width="800" style="width: 100%; max-width: 800px;">
 </div>
 <hr>
 
