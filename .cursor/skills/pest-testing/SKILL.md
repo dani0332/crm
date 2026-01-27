@@ -12,6 +12,7 @@ description: >-
 ## When to Apply
 
 Activate this skill when:
+
 - Creating new tests (unit or feature)
 - Modifying existing tests
 - Debugging test failures
@@ -39,7 +40,7 @@ All tests must be written using Pest. Use `php artisan make:test --pest {name}`.
 <code-snippet name="Basic Pest Test Example" lang="php">
 
 it('is true', function () {
-    expect(true)->toBeTrue();
+expect(true)->toBeTrue();
 });
 
 </code-snippet>
@@ -57,16 +58,16 @@ Use specific assertions (`assertSuccessful()`, `assertNotFound()`) instead of `a
 <code-snippet name="Pest Response Assertion" lang="php">
 
 it('returns all', function () {
-    $this->postJson('/api/docs', [])->assertSuccessful();
+$this->postJson('/api/docs', [])->assertSuccessful();
 });
 
 </code-snippet>
 
-| Use | Instead of |
-|-----|------------|
+| Use                  | Instead of          |
+| -------------------- | ------------------- |
 | `assertSuccessful()` | `assertStatus(200)` |
-| `assertNotFound()` | `assertStatus(404)` |
-| `assertForbidden()` | `assertStatus(403)` |
+| `assertNotFound()`   | `assertStatus(404)` |
+| `assertForbidden()`  | `assertStatus(403)` |
 
 ## Mocking
 
@@ -81,8 +82,8 @@ Use datasets for repetitive tests (validation rules, etc.):
 it('has emails', function (string $email) {
     expect($email)->not->toBeEmpty();
 })->with([
-    'james' => 'james@laravel.com',
-    'taylor' => 'taylor@laravel.com',
+'james' => 'james@laravel.com',
+'taylor' => 'taylor@laravel.com',
 ]);
 
 </code-snippet>
@@ -96,17 +97,17 @@ Pest 3 includes architecture testing to enforce code conventions:
 <code-snippet name="Architecture Test Example" lang="php">
 
 arch('controllers')
-    ->expect('App\Http\Controllers')
-    ->toExtendNothing()
-    ->toHaveSuffix('Controller');
+->expect('App\Http\Controllers')
+->toExtendNothing()
+->toHaveSuffix('Controller');
 
 arch('models')
-    ->expect('App\Models')
-    ->toExtend('Illuminate\Database\Eloquent\Model');
+->expect('App\Models')
+->toExtend('Illuminate\Database\Eloquent\Model');
 
 arch('no debugging')
-    ->expect(['dd', 'dump', 'ray'])
-    ->not->toBeUsed();
+->expect(['dd', 'dump', 'ray'])
+->not->toBeUsed();
 
 </code-snippet>
 
