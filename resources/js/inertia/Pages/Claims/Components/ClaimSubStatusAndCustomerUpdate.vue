@@ -67,7 +67,7 @@ const subStatusOptions = computed(() => {
       })
       ?.map(subStatus => ({
         value: subStatus.id,
-        label: subStatus.text.toUpperCase(),
+        label: subStatus.text.label,
       })) || []
   );
 });

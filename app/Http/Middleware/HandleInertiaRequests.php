@@ -153,7 +153,7 @@ class HandleInertiaRequests extends Middleware
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
-            'claimsEnum' => ClaimsEnum::asArray(),
+            'claimsEnum' => ClaimsEnum::cases(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),

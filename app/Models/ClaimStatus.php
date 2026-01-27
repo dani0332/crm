@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Casts\Lowercase;
+use App\Casts\ClaimStatusText;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +25,7 @@ class ClaimStatus extends Model implements AuditableContract
     public function casts(): array
     {
         return [
-            'text' => Lowercase::class,
+            'text' => ClaimStatusText::class,
         ];
     }
     /**

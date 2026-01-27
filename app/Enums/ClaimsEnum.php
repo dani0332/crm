@@ -51,12 +51,12 @@ enum ClaimsEnum: string
 
     // Complaint Status Codes
     case CLAIM_STATUS_OPEN_COMPLAINT = 'complaint open';
-    case CLAIM_STATUS_CLOSED_COMPLAINT = 'complaint closed';
+    case CLAIM_STATUS_CLOSED_COMPLAINT = 'complaint close';
 
     // General Claim Sub Statuses
     case CLAIM_SUB_STATUS_NEW_CLAIM = 'new claim';
     case CLAIM_SUB_STATUS_CLAIM_INITIATED = 'claim initiated';
-    case CLAIM_SUB_STATUS_CLAIM_REGISTERED = 'claims registered';
+    case CLAIM_SUB_STATUS_CLAIM_REGISTERED = 'claim registered';
     case CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION = 'claim registered and awaiting inspection';
     case CLAIM_SUB_STATUS_ESTIMATE_UNDER_REVIEW = 'estimate under review';
     case CLAIM_SUB_STATUS_SURVEY_IN_PROGRESS = 'survey in progress';
@@ -327,5 +327,31 @@ enum ClaimsEnum: string
         }
 
         return $result;
+    }
+
+    /**
+     * Override the label method to provide proper labels based on enum value.
+     */
+    public function label(): string
+    {
+        return \Illuminate\Support\Str::title($this->value);
+    }
+
+    /**
+     * Get the enum with both value and label.
+     */
+    public function withLabel(): array
+    {
+        return [
+            'value' => $this->value,
+            'label' => $this->label(),
+        ];
+    }
+
+    public static function withLabels(): array
+    {
+        return collect(self::cases())->map(function ($case) {
+            return $case->withLabel();
+        })->toArray();
     }
 }

@@ -27,7 +27,7 @@ const statusOptions = computed(() => {
   return (
     props.dropdowns.claimStatuses?.map(status => ({
       value: status.id,
-      label: status.text.toUpperCase(),
+      label: status.text.label,
     })) || []
   );
 });

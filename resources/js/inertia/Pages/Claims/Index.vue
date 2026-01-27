@@ -61,7 +61,7 @@ const statusOptions = computed(() => {
   return (
     props.claimDropdownOptions?.claimStatuses?.map(cs => ({
       value: cs.id,
-      label: cs.text.toUpperCase(),
+      label: cs.text?.label,
     })) || []
   );
 });
@@ -106,7 +106,7 @@ const claimSubStatusOptions = computed(() => {
       ?.filter(ct => ct.quote_type_id === quoteType)
       ?.map(ct => ({
         value: ct.id,
-        label: ct.text.toUpperCase(),
+        label: ct.text?.label,
       })) || []
   );
 });
@@ -131,9 +131,9 @@ const managersOptions = computed(() => {
 
 const complaintStatusOptions = computed(() => {
   return (
-    props.claimDropdownOptions?.complaintStatuses?.map(status => ({
-      value: status.id,
-      label: status.text.toUpperCase(),
+    props.claimDropdownOptions?.complaintStatuses?.map(cs => ({
+      value: cs.id,
+      label: cs.text?.label || cs.text?.value || '',
     })) || []
   );
 });
