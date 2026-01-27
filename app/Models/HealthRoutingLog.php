@@ -15,12 +15,20 @@ class HealthRoutingLog extends Model
         'logged_by',
         'log_data',
     ];
-    protected $casts = [
-        'log_data' => 'array',
-    ];
+    protected $appends = ['logged_by_name'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'logged_by');
+    }
+
+    public function getCreatedAtAttribute($value): string
+    {
+        return \Carbon\Carbon::parse($value)->format('m/d/Y H:i:s');
+    }
+
+    public function getLoggedByNameAttribute($value): string
+    {
+        return $this->user?->name ?? 'N/A';
     }
 }
