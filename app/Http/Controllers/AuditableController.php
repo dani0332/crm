@@ -238,6 +238,9 @@ class AuditableController extends Controller
     {
         try {
             $logs = HealthRoutingLog::where('type', $request->type)
+                ->when($request->team_category, function ($query) use ($request) {
+                    $query->where('team_category', $request->team_category);
+                })
                 ->when($request->quote_request_id, function ($query) use ($request) {
                     $query->where('quote_request_id', $request->quote_request_id);
                 })
