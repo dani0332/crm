@@ -69,7 +69,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
                 'exists:lookups,id',
             ],
             'claim_number' => [
-                'required',
+                'nullable',
                 'string',
                 'max:100',
             ],
