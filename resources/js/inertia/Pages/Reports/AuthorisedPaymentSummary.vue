@@ -215,7 +215,10 @@ function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
       .map(id => `quote_status_id[]=${id}`)
       .join('&');
 
-    const paymentStatusIds = [paymentStatusEnum.AUTHORISED, paymentStatusEnum.NEW];
+    const paymentStatusIds = [
+      paymentStatusEnum.AUTHORISED,
+      paymentStatusEnum.NEW,
+    ];
     const paymentStatusParams = paymentStatusIds
       .map(id => `payment_status_id[]=${id}`)
       .join('&');
