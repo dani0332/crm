@@ -156,7 +156,7 @@ const selectedSubStatusText = computed(() => {
     return null;
   }
   const selectedStatus = props.dropdowns.claimSubStatuses?.find(
-    status => status.id === claimSubStatusAndCustomerForm.claim_sub_status_id
+    status => status.id === claimSubStatusAndCustomerForm.claim_sub_status_id,
   );
   return selectedStatus?.text?.value || null;
 });
@@ -182,14 +182,16 @@ const statusFieldRequirements = computed(() => {
   }
 
   return {
-    [claimsEnum.CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS?.toLowerCase()]: {
-      fieldName: 'approved_repair_amount',
-      label: 'Approved repair amount',
-    },
-    [claimsEnum.CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED?.toLowerCase()]: {
-      fieldName: 'approved_total_loss_amount',
-      label: 'Total Loss Offered amount',
-    },
+    [claimsEnum.CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS?.toLowerCase()]:
+      {
+        fieldName: 'approved_repair_amount',
+        label: 'Approved repair amount',
+      },
+    [claimsEnum.CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED?.toLowerCase()]:
+      {
+        fieldName: 'approved_total_loss_amount',
+        label: 'Total Loss Offered amount',
+      },
     [claimsEnum.CLAIM_SUB_STATUS_CASH_LOSS_APPROVED?.toLowerCase()]: {
       fieldName: 'approved_cash_loss_amount',
       label: 'Cash loss offered amount',
@@ -242,13 +244,18 @@ watch(
   () => claimSubStatusAndCustomerForm.claim_sub_status_id,
   (newStatusId, oldStatusId) => {
     // Only show alert if status actually changed and we have a requirement
-    if (newStatusId && newStatusId !== oldStatusId && requiredFieldName.value && !isRequiredFieldFilled.value) {
+    if (
+      newStatusId &&
+      newStatusId !== oldStatusId &&
+      requiredFieldName.value &&
+      !isRequiredFieldFilled.value
+    ) {
       notification.error({
         title: `Please fill ${requiredFieldName.value} before updating`,
         position: 'top',
       });
     }
-  }
+  },
 );
 
 const optimizeMessage = async () => {
