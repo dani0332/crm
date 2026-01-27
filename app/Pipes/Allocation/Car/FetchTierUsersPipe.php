@@ -88,14 +88,16 @@ class FetchTierUsersPipe extends BaseAllocationPipe
     {
         $lead = $this->allocationRequest->getLead();
 
-        // Skip team filter for PUA leads (EvaluateTeamPipe already assigned them to ORGANIC team)
-        if ($leadSource === LeadSourceEnum::REVIVAL_PAID && $lead->isPUA()) {
-            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - Skipping SIC_UNASSISTED filter for PUA lead', [
+        // Skip team filter for PUA leads with REVIVAL_PAID source if ORGANIC team is already assigned
+        // This handles normal allocation flow where EvaluateTeamPipe sets teamId = ORGANIC
+        if ($leadSource === LeadSourceEnum::REVIVAL_PAID && $lead->isPUA() && $teamId) {
+            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - Skipping SIC_UNASSISTED filter for PUA lead with ORGANIC team', [
                 'leadSource' => $leadSource,
                 'isPUA' => true,
+                'teamId' => $teamId,
                 'paymentStatusId' => $lead->payment_status_id,
                 'tierUserCount' => count($tierUserIds),
-                'reason' => 'PUA leads are assigned to ORGANIC team by EvaluateTeamPipe',
+                'reason' => 'EvaluateTeamPipe already assigned ORGANIC team',
             ]);
 
             return $tierUserIds;
