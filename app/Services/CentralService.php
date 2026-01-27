@@ -1631,6 +1631,15 @@ class CentralService extends BaseService
         // Process document URLs and extensions
         $this->processDocumentUrlsForEmailData($emailData, $sendUpdateEmailData);
 
+        // Preserve the reason/notes the user provided so Bird emails explain the update
+        if (is_array($sendUpdateEmailData)) {
+            $emailData->reason = $sendUpdateEmailData['reason'] ?? '';
+        } elseif (is_object($sendUpdateEmailData)) {
+            $emailData->reason = $sendUpdateEmailData->reason ?? '';
+        } else {
+            $emailData->reason = '';
+        }
+
         LoggerService::info('fn:prepareDeviceUpdateBirdData - Email data preparation completed', extra: [
             'uuid' => $quote->uuid,
             'emailData' => json_encode($emailData),
