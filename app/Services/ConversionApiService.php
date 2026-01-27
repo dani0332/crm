@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Facades\Capi;
 use App\Services\Logger\LoggerService;
 use Exception;
