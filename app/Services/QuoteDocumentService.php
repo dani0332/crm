@@ -918,6 +918,27 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
+     * Get document file extension from file path
+     *
+     * @param string $filePath
+     * @return string
+     */
+    public function getDocumentExtension($filePath)
+    {
+        if (empty($filePath)) {
+            return '';
+        }
+
+        // Clean the URL by removing query parameters
+        $cleanPath = strtok($filePath, '?');
+
+        // Remove trailing whitespace
+        $cleanPath = preg_replace('/\s+$/m', '', $cleanPath);
+
+        return pathinfo($cleanPath, PATHINFO_EXTENSION);
+    }
+
+    /**
      * Generate a temporary URL for a document stored in a specified storage disk.
      *
      * @param  string  $fileName  The name of the file for which to generate the temporary URL.
