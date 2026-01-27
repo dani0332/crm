@@ -42,6 +42,7 @@ class HealthTeamRoutingService
             ['routing_enabled' => true],
             $lead
         );
+        LoggerService::info('Health team routing is enabled');
 
         // Step 2: Determine geography (AUH vs Non-AUH)
         // Validate emirate data
@@ -68,6 +69,7 @@ class HealthTeamRoutingService
                 ],
                 $lead
             );
+            LoggerService::info('AUH lead detected, routing to AUH path', ['emirate_of_visa_id' => $lead->emirate_of_your_visa_id]);
             $teamName = $this->getTeamBasedOnAUHLead($lead);
         } else {
             $this->logStep(
@@ -80,6 +82,7 @@ class HealthTeamRoutingService
                 ],
                 $lead
             );
+            LoggerService::info('Non-AUH lead detected, routing to Non-AUH path', ['emirate_of_visa_id' => $lead->emirate_of_your_visa_id]);
             $teamName = $this->getTeamBasedOnNonAUHLead($lead);
         }
 
@@ -94,6 +97,7 @@ class HealthTeamRoutingService
                 ],
                 $lead
             );
+            LoggerService::info('Team successfully assigned via health team routing', ['team_name' => $teamName]);
         } else {
             $this->logStep(
                 'No team found during health team routing',
@@ -104,6 +108,7 @@ class HealthTeamRoutingService
                 ],
                 $lead
             );
+            LoggerService::warning('No team found during health team routing');
         }
 
         return $teamName;
@@ -117,6 +122,7 @@ class HealthTeamRoutingService
             ['category' => TeamCategoryEnum::AUH->value],
             $lead
         );
+        LoggerService::info('Starting AUH tier-based team routing', ['premium' => $lead->price_starting_from]);
 
         // Validate premium data
         if (empty($lead->price_starting_from)) {
@@ -158,6 +164,11 @@ class HealthTeamRoutingService
                     ],
                     $lead
                 );
+                LoggerService::info('AUH tier team matched successfully', [
+                    'team_name' => $team,
+                    'team_id' => $teamDetails?->id,
+                    'premium' => $lead->price_starting_from,
+                ]);
             } else {
                 $this->logStep(
                     'No AUH tier team found for given premium',
@@ -169,6 +180,7 @@ class HealthTeamRoutingService
                     ],
                     $lead
                 );
+                LoggerService::warning('No AUH tier team found for given premium', ['premium' => $lead->price_starting_from]);
             }
 
             return $team;
@@ -182,9 +194,10 @@ class HealthTeamRoutingService
                 ],
                 $lead
             );
-            LoggerService::error('Error in AUH tier routing', [
+            LoggerService::warning('Exception occurred during AUH tier routing', [
                 'lead_id' => $lead->id,
-                'error' => $e->getMessage(),
+                'error_message' => $e->getMessage(),
+                'category' => TeamCategoryEnum::AUH->value,
             ]);
 
             return null;
@@ -193,7 +206,7 @@ class HealthTeamRoutingService
 
     private function getTeamBasedOnNonAUHLead(HealthQuote $lead): ?string
     {
-        $isPECLead = $lead->hasPecTag();
+        $isPECLead = $lead->has_pec_tag;
 
         // Step 1: Check PEC flag
         $this->logStep(
@@ -205,6 +218,7 @@ class HealthTeamRoutingService
             ],
             $lead
         );
+        LoggerService::info('Checking PEC flag for Non-AUH lead', ['is_pec_lead' => $isPECLead]);
 
         if ($isPECLead) {
             try {
@@ -220,6 +234,7 @@ class HealthTeamRoutingService
                     ],
                     $lead
                 );
+                LoggerService::info('PEC lead detected, routing to Non-AUH PEC team', ['team_name' => $team]);
 
                 return $team;
             } catch (\Exception $e) {
@@ -232,9 +247,10 @@ class HealthTeamRoutingService
                     ],
                     $lead
                 );
-                LoggerService::error('Error fetching PEC team', [
+                LoggerService::warning('Exception occurred while fetching PEC team', [
                     'lead_id' => $lead->id,
-                    'error' => $e->getMessage(),
+                    'error_message' => $e->getMessage(),
+                    'is_pec_lead' => true,
                 ]);
 
                 return null;
@@ -251,6 +267,7 @@ class HealthTeamRoutingService
             ],
             $lead
         );
+        LoggerService::info('Non-PEC lead, applying tier-based routing', ['premium' => $lead->price_starting_from]);
 
         // Validate premium data
         if (empty($lead->price_starting_from)) {
@@ -292,6 +309,11 @@ class HealthTeamRoutingService
                     ],
                     $lead
                 );
+                LoggerService::info('Non-AUH tier team matched successfully', [
+                    'team_name' => $team,
+                    'team_id' => $teamDetails?->id,
+                    'premium' => $lead->price_starting_from,
+                ]);
             } else {
                 $this->logStep(
                     'No Non-AUH tier team found for given premium',
@@ -303,6 +325,7 @@ class HealthTeamRoutingService
                     ],
                     $lead
                 );
+                LoggerService::warning('No Non-AUH tier team found for given premium', ['premium' => $lead->price_starting_from]);
             }
 
             return $team;
@@ -316,9 +339,10 @@ class HealthTeamRoutingService
                 ],
                 $lead
             );
-            LoggerService::error('Error in Non-AUH tier routing', [
+            LoggerService::warning('Exception occurred during Non-AUH tier routing', [
                 'lead_id' => $lead->id,
-                'error' => $e->getMessage(),
+                'error_message' => $e->getMessage(),
+                'category' => TeamCategoryEnum::NON_AUH->value,
             ]);
 
             return null;
@@ -356,6 +380,7 @@ class HealthTeamRoutingService
                 ],
                 $lead
             );
+            LoggerService::info('Non-AUH PEC team found', ['team_name' => $team->name, 'team_id' => $team->id]);
         } else {
             $this->logStep(
                 'Non-AUH PEC team not found',
@@ -363,6 +388,7 @@ class HealthTeamRoutingService
                 ['team_name' => null],
                 $lead
             );
+            LoggerService::warning('Non-AUH PEC team not found');
         }
 
         return $team?->name;

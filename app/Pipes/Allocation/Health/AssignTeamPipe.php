@@ -30,6 +30,7 @@ class AssignTeamPipe extends BaseAllocationPipe
         // If the lead is not SIC, assign the team based on the health team routing
         if (! $isSIC) {
 
+            LoggerService::info('Non-SIC lead detected, health team routing is applicable');
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
