@@ -403,9 +403,9 @@ class RenewalsUploadService
      *
      * @return mixed|string|null
      */
-    public function getPlans($id)
+    public function getPlans($id, $isRenewalHistorical = false)
     {
-        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, false, true);
+        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, false, true, $isRenewalHistorical);
 
         if (isset($quotePlans->quotes)) {
             return true;
@@ -506,6 +506,9 @@ class RenewalsUploadService
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
+        $leadValidationErrors = collect();
+        $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
             if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
                 $message = 'can not proceed with quote as payment is already in process. ';
@@ -517,7 +520,7 @@ class RenewalsUploadService
             }
 
             if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-                $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
+                $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isGenesisLead);
 
                 if (is_int($planResponse) && $planResponse == 200) {
                     LoggerService::info($logPrefix.' plan created successfully', extra: [
@@ -540,7 +543,14 @@ class RenewalsUploadService
                 }
             }
 
-            $plansResponse = $this->getPlans($quote->uuid);
+            $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where('quote_id', $quote->id)->where([
+                'status' => RenewalProcessStatuses::PLANS_FETCHED,
+                'type' => RenewalsUploadType::UPDATE_LEADS,
+                'email_sent' => true,
+                'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+            ])->exists() && $isGenesisLead['status'];
+
+            $plansResponse = $this->getPlans($quote->uuid, $isRenewalHistorical);
             if ($plansResponse === true) {
                 LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra: [
                     'UUID' => $quote->uuid,
@@ -1674,14 +1684,10 @@ class RenewalsUploadService
      *
      * @return void
      */
-    public function createPlan($data, $quote, $createdById)
+    public function createPlan($data, $quote, $createdById, $isGenesisLead)
     {
         $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
         LoggerService::info($logPrefix.' Create Plan Started');
-
-        $leadValidationErrors = collect();
-        $leadData = (object) $data;
-        $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
 
         // If the lead is a Genesis lead, then use the GIG(AXA) insurance provider
         $provider = $isGenesisLead['insuranceProvider'];
@@ -1852,7 +1858,20 @@ class RenewalsUploadService
                 ]);
                 LoggerService::info($logPrefix.' renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
 
-                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, true) : [];
+                $leadValidationErrors = collect();
+                $leadData = (object) $renewalQuoteProcess->data ?? [];
+                $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+                
+                $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where([
+                    'quote_id' => $carQuote->id,
+                    'quote_type' => QuoteTypeShortCode::CAR,
+                    'status' => RenewalProcessStatuses::PLANS_FETCHED,
+                    'type' => RenewalsUploadType::UPDATE_LEADS,
+                    'email_sent' => true,
+                    'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+                ])->exists() && $checkGenesisLead['status'];
+
+                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, true, $isRenewalHistorical) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
                 if ($this->isCommercialRenewalQuote($carQuote)) {
