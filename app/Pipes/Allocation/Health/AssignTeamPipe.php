@@ -2,11 +2,13 @@
 
 namespace App\Pipes\Allocation\Health;
 
+use App\Enums\HealthRoutingLogTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\Team;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\HealthTeamRouting\HealthTeamRoutingLogService;
 use App\Services\HealthTeamRouting\HealthTeamRoutingService;
 use App\Services\Logger\LoggerService;
 use Closure;
@@ -21,14 +23,42 @@ class AssignTeamPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        $logService = app(HealthTeamRoutingLogService::class);
+        $isSIC = $this->lead->isSIC($this->allocationRequest->getQuoteType());
+
         // If the lead is not SIC, assign the team based on the health team routing
-        if(! $this->lead->isSIC($this->allocationRequest->getQuoteType())){
+        if(! $isSIC){
+
+            $logService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'Non-SIC lead detected, health team routing is applicable',
+                    'step' => 'sic_check',
+                    'is_sic' => false,
+                    'routing_applicable' => true,
+                    'quote_type' => $this->allocationRequest->getQuoteType(),
+                ],
+                $this->lead->id,
+                $this->lead->uuid
+            );
             $teamName = app(HealthTeamRoutingService::class)->getTeamBasedOnHealthTeamRouting($this->lead);
             if($teamName){
                 $this->lead->health_team_type = $teamName;
                 $this->lead->save();
             }
         } else {
+            $logService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'SIC lead detected, health team routing is not applicable',
+                    'step' => 'sic_check',
+                    'is_sic' => true,
+                    'routing_applicable' => false,
+                    'quote_type' => $this->allocationRequest->getQuoteType(),
+                ],
+                $this->lead->id,
+                $this->lead->uuid
+            );
             $this->assignTeamBasedOnPrices();
         }
 

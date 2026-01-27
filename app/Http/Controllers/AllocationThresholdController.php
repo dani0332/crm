@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 
 class AllocationThresholdController extends Controller
 {
-    public function __construct()
+    public function __construct(protected HealthTeamRoutingLogService $healthTeamRoutingLogService)
     {
         $this->middleware(['permission:'.PermissionsEnum::TeamThresholdView], ['only' => ['index', 'updateAllocation']]);
     }
@@ -45,7 +45,8 @@ class AllocationThresholdController extends Controller
     {
         $teams = Team::select('id', 'name', 'min_price', 'max_price')
             ->where('category', $request->category)
-            ->where('type', TeamTypeEnum::TEAM);
+            ->where('type', TeamTypeEnum::TEAM)
+            ->where('is_active', 1);
 
         if ($request->category == TeamCategoryEnum::NON_AUH->value) {
             $teams = $teams->whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::GBP])->get();

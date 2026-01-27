@@ -56,7 +56,7 @@ const permissionsEnum = page.props.permissionsEnum;
           <dd>{{ team.slabs_count ?? 'N/A' }}</dd>
         </div>
 
-        <div class="grid sm:grid-cols-2">
+        <div class="grid sm:grid-cols-2" v-if="team.type == 'Team'">
           <dt class="font-medium">Category</dt>
           <dd>{{ team.category ?? 'N/A' }}</dd>
         </div>
