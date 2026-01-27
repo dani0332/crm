@@ -59,11 +59,7 @@ class ConversionApiService
             'eventType' => $eventType,
         ];
 
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::CONVERSION_API);
-        LoggerService::startQuoteLogging($quoteUID, LoggerFeatureEnum::CONVERSION_API);
-
         LoggerService::info("ConversionApiService - Calling {$platform} conversion API", [], [
-            'uuid' => $quoteUID,
             'eventType' => $eventType,
             'platform' => $platform,
             'quoteTypeId' => $quoteTypeId,
@@ -74,36 +70,11 @@ class ConversionApiService
         try {
             $response = Capi::request($endpoint, 'post', $payload);
 
-            // Validate response - Capi::request does not throw exceptions for API failures
-            if (isset($response->errors)) {
-                LoggerService::error("ConversionApiService - {$platform} conversion API returned errors", [], null, [
-                    'uuid' => $quoteUID,
-                    'eventType' => $eventType,
-                    'platform' => $platform,
-                    'quoteTypeId' => $quoteTypeId,
-                    'endpoint' => $endpoint,
-                    'response' => $response,
-                    'errors' => $response->errors,
-                ]);
-
-                return false;
-            }
-
-            // Validate that response exists and is not empty
-            if (! $response) {
-                LoggerService::error("ConversionApiService - {$platform} conversion API returned empty response", [], null, [
-                    'uuid' => $quoteUID,
-                    'eventType' => $eventType,
-                    'platform' => $platform,
-                    'quoteTypeId' => $quoteTypeId,
-                    'endpoint' => $endpoint,
-                ]);
-
+            if (! $this->isValidResponse($response, $quoteTypeId, $eventType, $platform, $endpoint)) {
                 return false;
             }
 
             LoggerService::info("ConversionApiService - {$platform} conversion API call successful", [], [
-                'uuid' => $quoteUID,
                 'eventType' => $eventType,
                 'platform' => $platform,
                 'quoteTypeId' => $quoteTypeId,
@@ -114,7 +85,6 @@ class ConversionApiService
             return true;
         } catch (Exception $e) {
             LoggerService::error("ConversionApiService - {$platform} conversion API call exception", [], $e, [
-                'uuid' => $quoteUID,
                 'eventType' => $eventType,
                 'platform' => $platform,
                 'quoteTypeId' => $quoteTypeId,
@@ -126,5 +96,47 @@ class ConversionApiService
         } finally {
             LoggerService::endLogging();
         }
+    }
+
+    /**
+     * Validate conversion API response
+     *
+     * @param  mixed  $response  API response
+     * @param  string  $quoteUID  Quote UUID
+     * @param  int  $quoteTypeId  Quote Type ID
+     * @param  string  $eventType  Event type
+     * @param  string  $platform  Platform name
+     * @param  string  $endpoint  API endpoint
+     * @return bool True if valid, false otherwise
+     */
+    private function isValidResponse($response, int $quoteTypeId, string $eventType, string $platform, string $endpoint): bool
+    {
+        // Validate response - Capi::request does not throw exceptions for API failures
+        if (isset($response->errors)) {
+            LoggerService::error("ConversionApiService - {$platform} conversion API returned errors", [], null, [
+                'eventType' => $eventType,
+                'platform' => $platform,
+                'quoteTypeId' => $quoteTypeId,
+                'endpoint' => $endpoint,
+                'response' => $response,
+                'errors' => $response->errors,
+            ]);
+
+            return false;
+        }
+
+        // Validate that response exists and is not empty
+        if (! $response) {
+            LoggerService::error("ConversionApiService - {$platform} conversion API returned empty response", [], null, [
+                'eventType' => $eventType,
+                'platform' => $platform,
+                'quoteTypeId' => $quoteTypeId,
+                'endpoint' => $endpoint,
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 }

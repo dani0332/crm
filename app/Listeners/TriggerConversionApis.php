@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Events\QuotePolicyBooked;
 use App\Services\ConversionApiService;
 use App\Services\Logger\LoggerService;
@@ -27,8 +28,8 @@ class TriggerConversionApis implements ShouldQueue
     public function handle(QuotePolicyBooked $event): void
     {
         try {
+            LoggerService::startQuoteLogging($event->quoteUID, LoggerFeatureEnum::CONVERSION_API);
             LoggerService::info('TriggerConversionApis - Processing conversion APIs for PolicyBooked quote', [], [
-                'quoteUID' => $event->quoteUID,
                 'quoteTypeId' => $event->quoteTypeId,
                 'eventType' => $event->eventType,
             ]);
@@ -48,7 +49,6 @@ class TriggerConversionApis implements ShouldQueue
             );
 
             LoggerService::info('TriggerConversionApis - Conversion APIs processing completed', [], [
-                'quoteUID' => $event->quoteUID,
                 'quoteTypeId' => $event->quoteTypeId,
                 'eventType' => $event->eventType,
                 'facebookSuccess' => $facebookSuccess,
@@ -56,7 +56,6 @@ class TriggerConversionApis implements ShouldQueue
             ]);
         } catch (Exception $e) {
             LoggerService::error('TriggerConversionApis - Exception occurred while processing conversion APIs', [], $e, [
-                'quoteUID' => $event->quoteUID,
                 'quoteTypeId' => $event->quoteTypeId,
                 'eventType' => $event->eventType,
                 'error' => $e->getMessage(),
