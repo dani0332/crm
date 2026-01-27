@@ -12,6 +12,7 @@ description: >-
 ## When to Apply
 
 Activate this skill when:
+
 - Adding styles to components or pages
 - Working with responsive design
 - Implementing dark mode
