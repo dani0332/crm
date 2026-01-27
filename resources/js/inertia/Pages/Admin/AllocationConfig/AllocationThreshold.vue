@@ -179,7 +179,7 @@ onMounted(() => {
   </div>
 
   <!-- Active Tab Content -->
-  <div class="min-h-[150px]">
+  <div class="min-h-[150px] mb-4">
     <!-- Loader -->
     <div v-if="loading" class="flex justify-center items-center py-10">
       <span class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></span>
@@ -216,5 +216,7 @@ onMounted(() => {
   </div>
 
   <HealthRoutingLogs
-      :expanded="sectionExpanded" />
+      type="CONFIGURATION"
+      :teamCategory="tabs[activeTab]"
+      expanded="true" />
 </template>
