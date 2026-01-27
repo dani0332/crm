@@ -836,55 +836,6 @@ class SavingsQuoteService extends BaseQuoteService
     }
 
     /**
-     * Get savings plans by insurance provider (KEN API)
-     */
-    public function getSavingsPlansByProvider($insuranceProviderId, $quoteUuId = null)
-    {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-savings-plans-by-provider';
-        $apiToken = config('constants.KEN_API_TOKEN');
-        $apiTimeout = config('constants.KEN_API_TIMEOUT');
-        $apiUserName = config('constants.KEN_API_USER');
-        $apiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($apiUserName.':'.$apiPassword);
-
-        $requestData = [
-            'insuranceProviderId' => (int) $insuranceProviderId,
-            'quoteUID' => $quoteUuId,
-            'lang' => 'en',
-        ];
-
-        $client = new \GuzzleHttp\Client;
-
-        try {
-            $response = $client->post(
-                $apiEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'x-api-token' => $apiToken,
-                        'Authorization' => 'Basic '.$authBasic,
-                    ],
-                    'body' => json_encode($requestData),
-                    'timeout' => $apiTimeout,
-                ]
-            );
-
-            if ($response->getStatusCode() == 200) {
-                $contents = json_decode($response->getBody(), true);
-
-                return $contents['plans'] ?? [];
-            }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            LoggerService::error('SavingsQuoteService - getSavingsPlansByProvider failed', exception: $e);
-
-            return [];
-        }
-
-        return [];
-    }
-
-    /**
      * Toggle savings plan visibility (hide/show)
      *
      * @param  array  $data

@@ -349,7 +349,6 @@ const confirmSendOCAEmail = () => {
         title: 'OCA email sending failed, please try again.',
         position: 'top',
       });
-      console.error(error);
     })
     .finally(() => {
       modals.sendConfirm = false;

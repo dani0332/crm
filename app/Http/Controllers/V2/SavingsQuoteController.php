@@ -291,29 +291,6 @@ class SavingsQuoteController extends Controller
     }
 
     /**
-     * Get savings plans by insurance provider (KEN API)
-     */
-    public function savingsPlansByInsuranceProvider(Request $request)
-    {
-        $insuranceProviderId = $request->get('insuranceProviderId');
-        $quoteUuId = $request->get('quoteUuId');
-
-        if (! $insuranceProviderId) {
-            return response()->json([]);
-        }
-
-        try {
-            $plans = $this->savingsQuoteService->getSavingsPlansByProvider($insuranceProviderId, $quoteUuId);
-
-            return response()->json($plans);
-        } catch (\Exception $e) {
-            LoggerService::error('SavingsQuoteController - savingsPlansByInsuranceProvider failed', exception: $e);
-
-            return response()->json([]);
-        }
-    }
-
-    /**
      * Toggle savings plan visibility (hide/show)
      */
     public function toggleSavingsPlanVisibility(Request $request)

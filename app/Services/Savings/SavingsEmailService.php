@@ -64,32 +64,6 @@ class SavingsEmailService
             if ($response && $response->status_code == 200) {
                 if ($lead->quote_status_id == QuoteStatusEnum::NewLead) {
 
-                    $checkPlans = $this->checkPlans($lead->uuid);
-
-                    if (isset($checkPlans['hasError']) && $checkPlans['hasError']) {
-                        LoggerService::warning("sendOCAEmail - Error checking plans: {$checkPlans['errorMessage']}, keeping lead status as NewLead");
-
-                        return $response;
-                    }
-
-                    if ($checkPlans['totalNumberOfPlans'] == 0) {
-                        LoggerService::info('sendOCAEmail - total number of plans is 0, so lead status will remain NewLead');
-
-                        return $response;
-                    }
-
-                    if ($checkPlans['totalNumberOfHiddenPlans'] == $checkPlans['totalNumberOfPlans']) {
-                        LoggerService::info('sendOCAEmail - total number of hidden plans is equal to total number of plans, so lead status will remain NewLead');
-
-                        return $response;
-                    }
-
-                    LoggerService::info('sendOCAEmail - changing lead status to Quoted', [
-                        'totalPlans' => $checkPlans['totalNumberOfPlans'],
-                        'hiddenPlans' => $checkPlans['totalNumberOfHiddenPlans'],
-                        'visiblePlans' => $checkPlans['totalNumberOfPlans'] - $checkPlans['totalNumberOfHiddenPlans'],
-                    ]);
-
                     $lead->quote_status_id = QuoteStatusEnum::Quoted;
                     PersonalQuote::where('uuid', $lead->uuid)
                         ->where('quote_type_id', QuoteTypeId::Savings)
@@ -176,96 +150,6 @@ class SavingsEmailService
             'uuid' => $quoteUID,
             'quote_type_id' => QuoteTypeId::Savings,
         ])->with('advisor')->first();
-    }
-
-    /**
-     * Check plans availability for the quote
-     */
-    private function checkPlans(string $quoteUID): array
-    {
-        try {
-            $plansData = app(SavingsQuoteService::class)->getAvailablePlans($quoteUID);
-
-            if (is_string($plansData)) {
-                LoggerService::warning('checkPlans - API returned error', extra: [
-                    'error' => $plansData,
-                ]);
-
-                return [
-                    'totalNumberOfHiddenPlans' => 0,
-                    'totalNumberOfPlans' => 0,
-                    'hasError' => true,
-                    'errorMessage' => $plansData,
-                ];
-            }
-
-            if (! $plansData) {
-                LoggerService::warning('checkPlans - Invalid or empty plans data structure');
-
-                return [
-                    'totalNumberOfHiddenPlans' => 0,
-                    'totalNumberOfPlans' => 0,
-                    'hasError' => true,
-                    'errorMessage' => 'Invalid plans data structure',
-                ];
-            }
-
-            // Handle different plan structures (regular/lumpsum or flat array)
-            $plans = $this->extractPlans($plansData);
-
-            $totalNumberOfPlans = count($plans);
-            $totalNumberOfHiddenPlans = 0;
-
-            foreach ($plans as $plan) {
-                if (isset($plan->isDisabled) && $plan->isDisabled) {
-                    $totalNumberOfHiddenPlans++;
-                }
-            }
-
-            LoggerService::info('checkPlans - Successfully processed plans', extra: [
-                'totalPlans' => $totalNumberOfPlans,
-                'hiddenPlans' => $totalNumberOfHiddenPlans,
-            ]);
-
-            return [
-                'totalNumberOfHiddenPlans' => $totalNumberOfHiddenPlans,
-                'totalNumberOfPlans' => $totalNumberOfPlans,
-                'hasError' => false,
-            ];
-
-        } catch (\Exception $e) {
-            LoggerService::error('checkPlans - Exception occurred', exception: $e);
-
-            return [
-                'totalNumberOfHiddenPlans' => 0,
-                'totalNumberOfPlans' => 0,
-                'hasError' => true,
-                'errorMessage' => $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * Extract plans from the response data handling different structures
-     */
-    private function extractPlans($plansData): array
-    {
-        $plans = [];
-
-        if (is_object($plansData)) {
-            if (isset($plansData->regular) && is_array($plansData->regular)) {
-                $plans = array_merge($plans, $plansData->regular);
-            }
-            if (isset($plansData->lumpsum) && is_array($plansData->lumpsum)) {
-                $plans = array_merge($plans, $plansData->lumpsum);
-            }
-        }
-
-        if (is_array($plansData)) {
-            $plans = $plansData;
-        }
-
-        return $plans;
     }
 }
 
