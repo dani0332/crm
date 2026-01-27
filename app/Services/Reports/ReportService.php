@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -732,8 +733,17 @@ class ReportService extends BaseService
                 ->when($details['quoteTypeId'] !== null, function ($query) use ($details) {
                     return $query->where($details['table'].'.quote_type_id', $details['quoteTypeId']);
                 });
-            $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED);
-            $query->where('py.authorized_at', '>=', $thirtyDaysAgo);
+            $query->where(function ($query) use ($thirtyDaysAgo) {
+                $query->where(function ($q) use ($thirtyDaysAgo) {
+                    $q->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                        ->where('py.authorized_at', '>=', $thirtyDaysAgo);
+                })
+                    ->orWhere(function ($q) use ($thirtyDaysAgo) {
+                        $q->where('py.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
+                            ->where('py.payment_status_id', PaymentStatusEnum::NEW)
+                            ->where('py.collection_date', '>=', $thirtyDaysAgo);
+                    });
+            });
             $query->where($details['table'].'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             if ($user->isAdvisor()) {
                 $query->where($details['table'].'.advisor_id', $user->id);

@@ -991,6 +991,7 @@ const onConfirmPUAExport = () => {
           placeholder="Please select payment status"
           class="w-full"
           filterable
+          multiple
         />
         <x-select
           v-model="filters.is_ecommerce"

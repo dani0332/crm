@@ -1152,20 +1152,40 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        $personalCount = DB::table('payments')
+        $isManager = $user->hasAnyRole([
+            RolesEnum::CarManager,
+            RolesEnum::HealthManager,
+            RolesEnum::TravelManager,
+            RolesEnum::LifeManager,
+            RolesEnum::HomeManager,
+            RolesEnum::PetManager,
+            RolesEnum::BikeManager,
+            RolesEnum::CycleManager,
+            RolesEnum::YachtManager,
+            RolesEnum::JetskiManager,
+            RolesEnum::BusinessManager,
+        ]);
+
+        return DB::table('payments')
+            ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
+            ->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
+            ->where(function ($query) use ($thirtyDaysAgo) {
+                $query->where(function ($q) use ($thirtyDaysAgo) {
+                    $q->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                        ->where('payments.authorized_at', '>=', $thirtyDaysAgo);
+                })->orWhere(function ($q) use ($thirtyDaysAgo) {
+                    $q->where('payments.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
+                        ->where('payments.payment_status_id', PaymentStatusEnum::NEW)
+                        ->where('payments.collection_date', '>=', $thirtyDaysAgo);
+                });
+            })
+            ->when($isManager, function ($query) use ($userTeamIds) {
+                $query->whereIn('user_team.team_id', $userTeamIds);
+            }, function ($query) use ($user) {
+                $query->where('pq.advisor_id', $user->id);
+            })
             ->distinct()
-            ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('user_team', 'user_team.user_id', 'pq.advisor_id')
-            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('payments.authorized_at', '>=', $thirtyDaysAgo);
-
-        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
-            $personalCount = $personalCount->whereIn('user_team.team_id', $userTeamIds);
-        } else {
-            $personalCount = $personalCount->where('pq.advisor_id', $user->id);
-        }
-
-        return $personalCount->count('payments.id');
+            ->count('payments.id');
     }
 
     public function fetchMainQuotePayment($quote)
