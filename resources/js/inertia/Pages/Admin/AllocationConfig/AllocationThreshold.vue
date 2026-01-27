@@ -214,4 +214,7 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <HealthRoutingLogs
+      :expanded="sectionExpanded" />
 </template>
