@@ -153,7 +153,7 @@ class ClaimStatusesService extends BaseService
             ];
         }
 
-        return in_array($newClaimStatus?->text, $subStatusListForClaimClosed);
+        return in_array($newClaimStatus?->text['value'], $subStatusListForClaimClosed);
     }
 
     public function markClaimAsOpen(ClaimRequest $claimRequest): void
@@ -258,7 +258,7 @@ class ClaimStatusesService extends BaseService
         $closedStatus = ClaimStatus::active()
             ->find($statusId);
 
-        return $closedStatus?->text === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
+        return $closedStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
     }
 
     /**
@@ -286,7 +286,7 @@ class ClaimStatusesService extends BaseService
                     return [
                         'ModifiedAt' => $activity->created_at,
                         'ModifiedBy' => $activity->createdBy->name ?? null,
-                        'NewSubStatus' => $activity->claimStatus->text ?? null,
+                        'NewSubStatus' => $activity->claimStatus?->text['label'] ?? null,
                         'Notes' => $activity->comment,
                         'created_at' => $activity->created_at, // Include for frontend sorting
                     ];
@@ -317,7 +317,7 @@ class ClaimStatusesService extends BaseService
             // Check if complaint status has changed to open complaint status
             $newComplaintStatus = ClaimStatus::active()->find($complaintStatusId);
 
-            $isNewStatusComplaintOpen = $newComplaintStatus?->text === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
+            $isNewStatusComplaintOpen = $newComplaintStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 
             if ($isNewStatusComplaintOpen) {
                 $this->markClaimAsOpen($claim);

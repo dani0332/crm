@@ -954,7 +954,7 @@ class ClaimsService extends BaseService
                         'ModifiedAt' => $activity->created_at,
                         'Notes' => $activity->comment,
                         'ModifiedBy' => $activity->createdBy->name ?? null,
-                        'NewStatus' => $activity->claimStatus->text ?? null,
+                        'NewStatus' => $activity->claimStatus?->text['label'] ?? null,
                         'created_at' => $activity->created_at, // Include for frontend sorting
                     ];
                 });
