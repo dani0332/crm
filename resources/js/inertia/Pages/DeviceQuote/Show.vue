@@ -712,7 +712,7 @@ const copyLink = () => {
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
-
+              
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
@@ -798,19 +798,22 @@ const copyLink = () => {
                   }}
                 </dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="quote?.device_quote?.make">
+
+             
+              <div class="grid sm:grid-cols-2" v-if="quote?.device_quote?.device_make">
                 <dt class="font-medium">DEVICE MAKE</dt>
                 <dd>
-                  {{ quote.device_quote.make.name ?? 'N/A' }}
+                  {{ quote.device_quote.device_make.text ?? 'N/A' }}
                 </dd>
               </div>
+            
               <div
                 class="grid sm:grid-cols-2"
-                v-if="quote?.device_quote?.model"
+                v-if="quote?.device_quote?.device_model"
               >
                 <dt class="font-medium">DEVICE MODEL</dt>
                 <dd>
-                  {{ quote.device_quote.model.name ?? 'N/A' }}
+                  {{ quote.device_quote.device_model.text ?? 'N/A' }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2" v-if="quote?.device_quote">
@@ -819,9 +822,24 @@ const copyLink = () => {
                   {{ quote.device_quote.imei ?? 'N/A' }}
                 </dd>
               </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.device_quote"
+              >
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.device_quote.insurer_api_status ?? 'N/A' }}</dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.device_quote"
+              >
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.device_quote.api_issuance_status ?? 'N/A' }}</dd>
+              </div>
               <!-- End new fields -->
             </dl>
           </div>
+         
 
           <div class="mt-6" v-if="quote?.device_quote">
             <h3 class="font-semibold text-primary-800">Quote Details</h3>

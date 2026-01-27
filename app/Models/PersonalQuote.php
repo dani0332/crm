@@ -596,7 +596,7 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function deviceQuote()
     {
-        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id');
+        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id')->with('deviceMake', 'deviceModel');
     }
     public function subSource()
     {
