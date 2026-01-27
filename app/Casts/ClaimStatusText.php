@@ -15,7 +15,7 @@ class ClaimStatusText implements CastsAttributes
     {
         if (empty($value)) {
             return null;
-        } 
+        }
         $lowercased = strtolower(trim((string) $value));
         $enum = ClaimsEnum::tryFrom($lowercased);
 
@@ -30,7 +30,7 @@ class ClaimStatusText implements CastsAttributes
         return $enum->withLabel();
     }
 
-     /**
+    /**
      * Transform the attribute to its underlying model values.
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): string
