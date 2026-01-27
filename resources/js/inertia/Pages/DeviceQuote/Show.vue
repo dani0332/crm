@@ -346,7 +346,8 @@ const planDetailsTabs = ref([
 const selectedProviderPlan = ref({
   id: page.props?.quote?.plan_id,
   planName: page.props?.quote?.insurance_provider_plan?.text,
-  providerName: page.props?.quote?.insurance_provider_plan?.insurance_provider?.text,
+  providerName:
+    page.props?.quote?.insurance_provider_plan?.insurance_provider?.text,
   premium: page.props?.quote?.premium,
 });
 
@@ -379,12 +380,13 @@ const onLoadAvailablePlansData = async () => {
         Array.isArray(res.data.quotes.plans)
       ) {
         availablePlansTable.data = res.data.quotes.plans.map(plan => {
-          const priceWithoutVat = plan.discountPremium ?? plan.actualPremium ?? '0';
+          const priceWithoutVat =
+            plan.discountPremium ?? plan.actualPremium ?? '0';
           const vat = plan.vat ?? '0';
           const priceWithVat = (
             parseFloat(priceWithoutVat) + parseFloat(vat)
           ).toFixed(2);
-          
+
           return {
             ...plan,
             isManualUpdate: plan.isManualUpdate ?? false,
@@ -403,12 +405,13 @@ const onLoadAvailablePlansData = async () => {
         });
       } else if (Array.isArray(res.data) && res.data.length > 0) {
         availablePlansTable.data = res.data.map(plan => {
-          const priceWithoutVat = plan.discountPremium ?? plan.actualPremium ?? '0';
+          const priceWithoutVat =
+            plan.discountPremium ?? plan.actualPremium ?? '0';
           const vat = plan.vat ?? '0';
           const priceWithVat = (
             parseFloat(priceWithoutVat) + parseFloat(vat)
           ).toFixed(2);
-          
+
           return {
             ...plan,
             isManualUpdate: plan.isManualUpdate ?? false,
@@ -439,7 +442,7 @@ const onLoadAvailablePlansData = async () => {
 
 const getPlanDetails = id => {
   viewButtonLoading.value = true;
- 
+
   try {
     const foundPlan = availablePlansTable.data.find(plan => plan.id === id);
     if (foundPlan) {
@@ -450,12 +453,13 @@ const getPlanDetails = id => {
       axios
         .get(`/device/${page.props.quote.uuid}/plan_details/${id}`)
         .then(res => {
-          const priceWithoutVat = res.data.discountPremium ?? res.data.actualPremium ?? '0';
+          const priceWithoutVat =
+            res.data.discountPremium ?? res.data.actualPremium ?? '0';
           const vat = res.data.vat ?? '0';
           const priceWithVat = (
             parseFloat(priceWithoutVat) + parseFloat(vat)
           ).toFixed(2);
-          
+
           planDetails.value = {
             ...res.data,
             providerName: res.data.providerName ?? '',
@@ -851,7 +855,7 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{quote?.payment_status?.text }}</dd>
+                <dd>{{ quote?.payment_status?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
@@ -1461,19 +1465,21 @@ const copyLink = () => {
                           <dd class="text-gray-900">
                             {{
                               planDetails.quote_premium
-                                ? parseFloat(planDetails.quote_premium).toFixed(2)
+                                ? parseFloat(planDetails.quote_premium).toFixed(
+                                    2,
+                                  )
                                 : '0.00'
                             }}
                           </dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700">
-                            VAT
-                          </dt>
+                          <dt class="text-sm font-medium text-gray-700">VAT</dt>
                           <dd class="text-gray-900">
                             {{
                               planDetails.quote_VATamount
-                                ? parseFloat(planDetails.quote_VATamount).toFixed(2)
+                                ? parseFloat(
+                                    planDetails.quote_VATamount,
+                                  ).toFixed(2)
                                 : '0.00'
                             }}
                           </dd>
@@ -1485,7 +1491,9 @@ const copyLink = () => {
                           <dd class="text-gray-900">
                             {{
                               planDetails.quote_premium_withVAT
-                                ? parseFloat(planDetails.quote_premium_withVAT).toFixed(2)
+                                ? parseFloat(
+                                    planDetails.quote_premium_withVAT,
+                                  ).toFixed(2)
                                 : '0.00'
                             }}
                           </dd>
@@ -1505,7 +1513,6 @@ const copyLink = () => {
 
                   <TabPanel>
                     <div class="p-6">
-                    
                       <div
                         v-if="
                           planDetails.benefits &&
