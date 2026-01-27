@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
 use App\Http\Requests\OcrLogsRequest;
+use App\Models\HealthRoutingLog;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -228,6 +229,31 @@ class AuditableController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load OCR logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadHealthRoutingLogs(Request $request)
+    {
+        try {
+            $logs = HealthRoutingLog::where('type', $request->type)
+                ->when($request->quote_request_id, function ($query) use ($request) {
+                    $query->where('quote_request_id', $request->quote_request_id);
+                })
+                ->orderByDesc('id')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load Health Routing Logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load Health Routing Logs',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
