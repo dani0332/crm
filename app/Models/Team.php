@@ -15,7 +15,6 @@ class Team extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'teams';
-
     protected $fillable = [
         'name',
         'code',
