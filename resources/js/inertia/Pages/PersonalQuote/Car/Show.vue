@@ -6,7 +6,11 @@ import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdate
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import { usePayment } from '@/inertia/Composables/usePayment';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import
+  {
+    applyEmiratesNumberMasking,
+    useLazyLoadSection,
+  } from '@/inertia/Composables/utilities.js';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
@@ -169,6 +173,7 @@ const prepareDate = date => {
     date.split(' ')[0].split('-').reverse().join('-') + 'T' + date.split(' ')[1]
   );
 };
+
 const leadStatusForm = useForm({
   modelType: 'Car',
   leadId: page.props.record.id,
@@ -436,6 +441,13 @@ const onLoadAvailablePlansData = async () => {
       isLoadingAvailablePlans.value = false;
     });
 };
+
+// Lazy load Available Plans using Intersection Observer (generic composable)
+const { sectionRef: plansSectionRef, isLoaded: plansLoaded } =
+  useLazyLoadSection(onLoadAvailablePlansData, {
+    threshold: 0.1,
+    rootMargin: '100px',
+  });
 
 const loadEmbeddedProducts = async () => {
   let url = `/embedded/get-by-quote?quote_id=${page.props.record.id}&quote_type_id=${page.props.quoteTypeId}`;
@@ -1354,7 +1366,6 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
-  onLoadAvailablePlansData();
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
@@ -3512,7 +3523,7 @@ const handleCancelConfirmationModal = () => {
       :vatPrice="vatPercentage"
     />
 
-    <div v-else class="p-4 rounded shadow mb-6 bg-white">
+    <div v-else ref="plansSectionRef" class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -3524,7 +3535,10 @@ const handleCancelConfirmationModal = () => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div v-if="isLoadingAvailablePlans" class="flex justify-center my-8">
+          <div
+            v-if="!plansLoaded || isLoadingAvailablePlans"
+            class="flex justify-center my-8"
+          >
             <x-spinner size="lg" />
           </div>
           <template v-else>
@@ -4618,6 +4632,7 @@ const handleCancelConfirmationModal = () => {
       :canDelete="false"
       :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

@@ -466,6 +466,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update');
         Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses'])->name('batch-plans-processes');
+        Route::get('batches/{id}/plans-processes-status', [RenewalsUploadController::class, 'plansProcessesStatus'])->name('batch-plans-processes-status');
 
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');

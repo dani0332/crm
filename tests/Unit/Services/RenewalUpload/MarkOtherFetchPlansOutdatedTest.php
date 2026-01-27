@@ -23,26 +23,28 @@ afterEach(function () {
     Mockery::close();
 });
 
-/**
- * Create RenewalsUploadService instance using reflection to bypass constructor.
- * This prevents CapiRequestService and other dependencies from being autoloaded.
- *
- * Performance note: ReflectionClass has minimal overhead (~0.01-0.05ms per call).
- * We cache the ReflectionClass instance to avoid recreating it for each test.
- */
-function createRenewalsUploadServiceWithMocks(): RenewalsUploadService
-{
-    static $reflection = null;
+if (! function_exists('createRenewalsUploadServiceWithMocks')) {
+    /**
+     * Create RenewalsUploadService instance using reflection to bypass constructor.
+     * This prevents CapiRequestService and other dependencies from being autoloaded.
+     *
+     * Performance note: ReflectionClass has minimal overhead (~0.01-0.05ms per call).
+     * We cache the ReflectionClass instance to avoid recreating it for each test.
+     */
+    function createRenewalsUploadServiceWithMocks(): RenewalsUploadService
+    {
+        static $reflection = null;
 
-    // Cache ReflectionClass instance to avoid recreating it for each test call
-    if ($reflection === null) {
-        $reflection = new \ReflectionClass(RenewalsUploadService::class);
+        // Cache ReflectionClass instance to avoid recreating it for each test call
+        if ($reflection === null) {
+            $reflection = new \ReflectionClass(RenewalsUploadService::class);
+        }
+
+        // Create instance without calling constructor (fast operation)
+        $service = $reflection->newInstanceWithoutConstructor();
+
+        return $service;
     }
-
-    // Create instance without calling constructor (fast operation)
-    $service = $reflection->newInstanceWithoutConstructor();
-
-    return $service;
 }
 
 test('marks other pending fetch plans as outdated successfully', function () {
