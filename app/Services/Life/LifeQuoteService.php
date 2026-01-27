@@ -91,14 +91,14 @@ class LifeQuoteService extends BaseService
         });
     }
 
-    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false,$requestParams = [])
+    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false, $requestParams = [])
     {
-        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest,$requestParams);
+        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest, $requestParams);
 
         return ($isExportRequest) ? $query : $query->simplePaginate(15)->withQueryString();
     }
 
-    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false,$requestParams = [])
+    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false, $requestParams = [])
     {
 
         if (! Auth::check()) {
