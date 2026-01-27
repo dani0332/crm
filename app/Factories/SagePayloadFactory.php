@@ -422,7 +422,7 @@ class SagePayloadFactory
                 $reversePayLoad = self::prepareReversalPayload($reversalDetails);
                 $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 0);
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
-                
+
                 $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 1);
                 $reversePayLoad->Invoices[1]->DocumentType = 'CreditNote';
 
@@ -551,7 +551,7 @@ class SagePayloadFactory
                 $reversePayLoad = self::prepareReversalPayload($reversalDetails);
                 $reversePayLoad = self::applyReversalTransformationsWithSplitPayments($reversePayLoad, $request, $splitPayments, 0);
                 $reversePayLoad->Invoices[0]->DocumentType = 'CreditNote';
-                
+
                 $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 1);
                 $reversePayLoad->Invoices[1]->DocumentType = 'CreditNote';
 
@@ -1865,11 +1865,10 @@ class SagePayloadFactory
         return $reversePayLoad;
     }
 
-
     private static function applyCorrectionTransformations($payLoad, $invoiceIndex = 0, $updateDistributionDescription = false)
     {
         $payLoad['Invoices'][$invoiceIndex]['InvoiceDescription'] = $payLoad['Invoices'][$invoiceIndex]['InvoiceDescription'].' - NEW';
-        
+
         if ($updateDistributionDescription && isset($payLoad['Invoices'][$invoiceIndex]['InvoiceDetails'][0]['Description'])) {
             $payLoad['Invoices'][$invoiceIndex]['InvoiceDetails'][0]['Description'] = $payLoad['Invoices'][$invoiceIndex]['InvoiceDescription'];
         }
