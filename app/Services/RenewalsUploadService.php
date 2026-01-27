@@ -1686,31 +1686,33 @@ class RenewalsUploadService
      */
     public function createPlan($data, $quote, $createdById, $isGenesisLead)
     {
-        $logPrefix = 'CreatePlan FN: createPlan UUID: ' . $quote->uuid;
-        LoggerService::info($logPrefix . ' Create Plan Started');
+        $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
+        LoggerService::info($logPrefix.' Create Plan Started');
 
         // If the lead is a Genesis lead, then use the GIG(AXA) insurance provider
         $provider = $isGenesisLead['insuranceProvider'];
-        if (!$provider) {
-            LoggerService::warning($logPrefix . ' Provider not found due to change of plan name or repair type after the batch upload', [
+        if (! $provider) {
+            LoggerService::warning($logPrefix.' Provider not found due to change of plan name or repair type after the batch upload', [
                 'provider' => $data['provider_name'] ?? null,
                 'quote_uuid' => $quote->uuid,
             ]);
-            return 'Provider not found: ' . ($data['provider_name'] ?? 'N/A');
+
+            return 'Provider not found: '.($data['provider_name'] ?? 'N/A');
         }
 
         $carPlan = $this->findCarPlan($data, $provider);
-        if (!$carPlan) {
-            LoggerService::warning($logPrefix . ' Plan not found', [
-                'provider'    => $data['provider_name'] ?? null,
-                'plan'        => $data['plan_name'] ?? null,
-                'plan_type'   => $data['plan_type'] ?? null,
+        if (! $carPlan) {
+            LoggerService::warning($logPrefix.' Plan not found', [
+                'provider' => $data['provider_name'] ?? null,
+                'plan' => $data['plan_name'] ?? null,
+                'plan_type' => $data['plan_type'] ?? null,
                 'provider_id' => $provider->id,
-                'quote_uuid'  => $quote->uuid,
+                'quote_uuid' => $quote->uuid,
             ]);
-            return 'Car plan not found for provider: ' . ($data['provider_name'] ?? 'N/A') .
-                ', plan: ' . ($data['plan_name'] ?? 'N/A') .
-                ', type: ' . ($data['plan_type'] ?? 'N/A');
+
+            return 'Car plan not found for provider: '.($data['provider_name'] ?? 'N/A').
+                ', plan: '.($data['plan_name'] ?? 'N/A').
+                ', type: '.($data['plan_type'] ?? 'N/A');
         }
 
         $planData = $this->preparePlanData($quote, $createdById);
@@ -1720,14 +1722,15 @@ class RenewalsUploadService
 
         $planData['plans'][] = $plan;
 
-        LoggerService::info($logPrefix . ' PlanData: ' . json_encode($planData));
+        LoggerService::info($logPrefix.' PlanData: '.json_encode($planData));
+
         return $this->carQuoteService->renewalCreatePlan($planData);
     }
 
     private function findCarPlan($data, $provider)
     {
         return CarPlan::where([
-            'text'        => $data['plan_name'],
+            'text' => $data['plan_name'],
             'repair_type' => $data['plan_type'],
             'provider_id' => $provider->id,
         ])->with(['carAddons' => function ($q) {
@@ -1744,39 +1747,40 @@ class RenewalsUploadService
     private function preparePlanData($quote, $createdById)
     {
         return [
-            'quoteUID'  => $quote->uuid,
-            'update'    => false,
-            'url'       => strval(request()->current_url),
+            'quoteUID' => $quote->uuid,
+            'update' => false,
+            'url' => strval(request()->current_url),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
-            'userId'    => strval($createdById),
+            'userId' => strval($createdById),
         ];
     }
 
     private function preparePlan($data, $carPlan, $isGenesisLead, $provider, $quote)
     {
         $plan = [
-            'planId'         => $carPlan->id,
-            'isDisabled'     => false,
-            'isManualUpdate' => !empty($isGenesisLead['status']),
-            'actualPremium'  => $data['premium'] ?? 0,
-            'discountPremium'=> $data['premium'] ?? 0,
-            'ancillaryExcess'=> $data['ancillary_excess'] ?? 0,
-            'carValue'       => $data['car_value'] ?? 0,
+            'planId' => $carPlan->id,
+            'isDisabled' => false,
+            'isManualUpdate' => ! empty($isGenesisLead['status']),
+            'actualPremium' => $data['premium'] ?? 0,
+            'discountPremium' => $data['premium'] ?? 0,
+            'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
+            'carValue' => $data['car_value'] ?? 0,
         ];
 
-        if (!empty($data['insurer_quote_no'])) {
+        if (! empty($data['insurer_quote_no'])) {
             $plan['insurerQuoteNo'] = strval($data['insurer_quote_no']);
         }
         if ($this->shouldSetExcess($data)) {
             $plan['excess'] = $data['excess'];
         }
-        if (!empty($data['trim'])) {
+        if (! empty($data['trim'])) {
             $trimId = $this->findInsurerTrimId($quote->id, $provider->id, $data['trim']);
             if ($trimId) {
                 $plan['insurerTrimId'] = $trimId;
             }
         }
+
         return $plan;
     }
 
@@ -1790,10 +1794,12 @@ class RenewalsUploadService
         $valuation = CarQuoteValuation::where('quote_request_id', $quoteId)
             ->where('provider_id', $providerId)
             ->first();
-        if ($valuation && !empty($valuation->insurer_available_trims)) {
+        if ($valuation && ! empty($valuation->insurer_available_trims)) {
             $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
-            return !empty($trims[$trim]['admeId']) ? $trims[$trim]['admeId'] : null;
+
+            return ! empty($trims[$trim]['admeId']) ? $trims[$trim]['admeId'] : null;
         }
+
         return null;
     }
 
@@ -1801,16 +1807,17 @@ class RenewalsUploadService
     {
         $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
         $addons = [
-            'driver_cover'         => CarPlanAddonsCode::DRIVER_COVER,
-            'passenger_cover'      => CarPlanAddonsCode::PASSENGER_COVER,
-            'car_hire'             => CarPlanAddonsCode::CAR_HIRE,
-            'oman_cover'           => CarPlanAddonsCode::OMAN_COVER,
+            'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
+            'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
+            'car_hire' => CarPlanAddonsCode::CAR_HIRE,
+            'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
             'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
         ];
         $selectedAddons = [];
         foreach ($addons as $key => $addonCode) {
-            if (!isset($planAddons[$addonCode]) || empty($data[$key])) {
-                LoggerService::info($logPrefix . '(' . $addonCode . ') not found');
+            if (! isset($planAddons[$addonCode]) || empty($data[$key])) {
+                LoggerService::info($logPrefix.'('.$addonCode.') not found');
+
                 continue;
             }
             $addon = $planAddons[$addonCode];
@@ -1819,6 +1826,7 @@ class RenewalsUploadService
                 $selectedAddons[] = $selected;
             }
         }
+
         return $selectedAddons;
     }
 
@@ -1826,20 +1834,22 @@ class RenewalsUploadService
     {
         foreach ($options as $option) {
             if (strtolower(trim($option['value'])) == strtolower(trim($data[$key]))) {
-                $price = $data[$key . '_amount'];
+                $price = $data[$key.'_amount'];
+
                 return [
-                    'addonId'       => $option['addon_id'],
+                    'addonId' => $option['addon_id'],
                     'addonOptionId' => $option['id'],
-                    'price'         => $price,
-                    'isSelected'    => ($price == 0),
+                    'price' => $price,
+                    'isSelected' => ($price == 0),
                 ];
             } else {
-                LoggerService::info($logPrefix . '(' . $option['value'] . ') not found in sheet', [
+                LoggerService::info($logPrefix.'('.$option['value'].') not found in sheet', [
                     'addonCode' => $addonCode,
-                    'addonOptionValueFromSheet' => $data[$key]
+                    'addonOptionValueFromSheet' => $data[$key],
                 ]);
             }
         }
+
         return null;
     }
 
