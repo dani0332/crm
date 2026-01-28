@@ -46,11 +46,10 @@ trait HealthTeamRoutable
             ->first();
     }
 
-    private function getGbpTeamMinPrice(TeamCategoryEnum $category): ?float
+    private function getGbpTeamMinPrice(): ?float
     {
         $gbpTeam = Team::where('allocation_threshold_enabled', true)
             ->where('name', TeamNameEnum::GBP)
-            ->where('category', $category->value)
             ->active()
             ->first();
 
