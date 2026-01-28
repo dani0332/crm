@@ -348,27 +348,17 @@ class PolicyIssuanceService
 
     private function resolvePolicyIssuanceLogResponse(mixed $response): mixed
     {
-        $resolvedResponse = $response;
-
         if ($response instanceof HttpClientResponse) {
             $responsePayload = $response->json();
 
             $resolvedResponse = $responsePayload === null
                 ? $response->body()
                 : $responsePayload;
-        } elseif (is_array($response)) {
-            $resolvedResponse = $response;
-        } elseif (is_object($response)) {
-            if (method_exists($response, 'toArray')) {
-                $resolvedResponse = $response->toArray();
-            } elseif ($response instanceof JsonSerializable) {
-                $resolvedResponse = $response->jsonSerialize();
-            } else {
-                $resolvedResponse = $this->convertObjectToArray($response);
-            }
+
+            return $this->normalizeLogResponseValue($resolvedResponse);
         }
 
-        return $resolvedResponse;
+        return $this->normalizeLogResponseValue($response);
     }
 
     private function convertObjectToArray(object $object): array
