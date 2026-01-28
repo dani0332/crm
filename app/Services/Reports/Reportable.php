@@ -30,7 +30,7 @@ trait Reportable
                 : now()->subDays((int) $maxDays)->startOfDay()->format($dateFormat);
         }
 
-        $endDate = isset($filters->{$dateAttribute})
+        $endDate = (isset($filters->{$dateAttribute}) && isset($filters->{$dateAttribute}[1]))
             ? Carbon::parse($filters->{$dateAttribute}[1])->endOfDay()->format($dateFormat)
             : now()->endOfDay()->format($dateFormat);
 
