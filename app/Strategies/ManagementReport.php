@@ -3,7 +3,9 @@
 namespace App\Strategies;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BranchEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
@@ -13,6 +15,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\Branch;
 use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\Lookup;
@@ -24,9 +27,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Models\Branch;
-use App\Enums\EmirateEnum;
-use App\Enums\BranchEnum;
 
 class ManagementReport
 {
@@ -270,17 +270,17 @@ class ManagementReport
         $query->when(! empty($request['branch']), function ($q) use ($request) {
             // Normalize branch to array to handle both scalar and array inputs
             $branches = is_array($request['branch']) ? $request['branch'] : [$request['branch']];
-            
+
             if (in_array('not_applicable', $branches)) {
                 $q->where('personal_quotes.is_branch_applicable', 0);
-            } else if (in_array('not_assigned', $branches)) {
+            } elseif (in_array('not_assigned', $branches)) {
                 $q->where('personal_quotes.is_branch_applicable', 1)
                     ->whereNull('b.id');
             } else {
                 $q->where('personal_quotes.is_branch_applicable', 1)
                     ->whereIn('b.id', $branches);
             }
-            
+
         });
 
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
@@ -733,7 +733,7 @@ class ManagementReport
 
     protected function branchJoin($query)
     {
-        // only join for policies with no branch assigned 
+        // only join for policies with no branch assigned
         $query->leftJoin('user_branches as ub', function ($join) {
             $join->on('ub.user_id', '=', 'personal_quotes.advisor_id')
                 ->whereNull('personal_quotes.branch_id')
@@ -787,52 +787,52 @@ class ManagementReport
                 $join->on('b.id', '=', 'personal_quotes.branch_id')
 
                 // branch override join
-                ->orOn(function ($query) {
-                    $query->whereNull('personal_quotes.branch_id')
-                        ->whereColumn('b.id', 'oc.target_branch_id');
-                })
+                    ->orOn(function ($query) {
+                        $query->whereNull('personal_quotes.branch_id')
+                            ->whereColumn('b.id', 'oc.target_branch_id');
+                    })
 
                 // health branch join (emirate_of_your_visa_id = 7)
-                ->orOn(function ($query) {
-                    $query->whereNull('personal_quotes.branch_id')
-                        ->whereNull('oc.target_branch_id')
-                        ->whereNotNull('personal_quotes.advisor_id')
-                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
-                        ->where('hqr.emirate_of_your_visa_id', '=', EmirateEnum::ABU_DHABI)
-                        ->where('b.id', '=', BranchEnum::ABU_DHABI->value);
-                })
+                    ->orOn(function ($query) {
+                        $query->whereNull('personal_quotes.branch_id')
+                            ->whereNull('oc.target_branch_id')
+                            ->whereNotNull('personal_quotes.advisor_id')
+                            ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
+                            ->where('hqr.emirate_of_your_visa_id', '=', EmirateEnum::ABU_DHABI)
+                            ->where('b.id', '=', BranchEnum::ABU_DHABI->value);
+                    })
 
                 // group medical branch join (emirate_of_registration_id = 7)
-                ->orOn(function ($query) {
-                    $query->whereNull('personal_quotes.branch_id')
-                        ->whereNull('oc.target_branch_id')
-                        ->whereNotNull('personal_quotes.advisor_id')
-                        ->where('personal_quotes.business_type_of_insurance_id', '=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
-                        ->where('i.emirate_of_registration_id', '=', EmirateEnum::ABU_DHABI)
-                        ->where('b.id', '=', BranchEnum::ABU_DHABI->value);
-                })
+                    ->orOn(function ($query) {
+                        $query->whereNull('personal_quotes.branch_id')
+                            ->whereNull('oc.target_branch_id')
+                            ->whereNotNull('personal_quotes.advisor_id')
+                            ->where('personal_quotes.business_type_of_insurance_id', '=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
+                            ->where('i.emirate_of_registration_id', '=', EmirateEnum::ABU_DHABI)
+                            ->where('b.id', '=', BranchEnum::ABU_DHABI->value);
+                    })
 
                 // advisor branch join (fallback for non-Abu Dhabi health/group medical and other cases)
-                ->orOn(function ($query) {
-                    $query->whereNull('personal_quotes.branch_id')
-                        ->whereNull('oc.target_branch_id')
-                        ->whereColumn('b.id', 'ub.branch_id')
-                        // Exclude Health quotes with Abu Dhabi emirate (already handled above)
-                        ->where(function ($subQuery) {
-                            $subQuery->where(function ($q) {
-                                $q->where('personal_quotes.quote_type_id', '!=', QuoteTypeId::Health)
-                                    ->orWhere('hqr.emirate_of_your_visa_id', '!=', EmirateEnum::ABU_DHABI)
-                                    ->orWhereNull('hqr.emirate_of_your_visa_id');
-                            })
-                            // Exclude Group Medical quotes with Abu Dhabi emirate (already handled above)
-                            ->where(function ($q) {
-                                $q->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
-                                    ->orWhereNull('personal_quotes.business_type_of_insurance_id')
-                                    ->orWhere('i.emirate_of_registration_id', '!=', EmirateEnum::ABU_DHABI)
-                                    ->orWhereNull('i.emirate_of_registration_id');
+                    ->orOn(function ($query) {
+                        $query->whereNull('personal_quotes.branch_id')
+                            ->whereNull('oc.target_branch_id')
+                            ->whereColumn('b.id', 'ub.branch_id')
+                            // Exclude Health quotes with Abu Dhabi emirate (already handled above)
+                            ->where(function ($subQuery) {
+                                $subQuery->where(function ($q) {
+                                    $q->where('personal_quotes.quote_type_id', '!=', QuoteTypeId::Health)
+                                        ->orWhere('hqr.emirate_of_your_visa_id', '!=', EmirateEnum::ABU_DHABI)
+                                        ->orWhereNull('hqr.emirate_of_your_visa_id');
+                                })
+                                // Exclude Group Medical quotes with Abu Dhabi emirate (already handled above)
+                                    ->where(function ($q) {
+                                        $q->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
+                                            ->orWhereNull('personal_quotes.business_type_of_insurance_id')
+                                            ->orWhere('i.emirate_of_registration_id', '!=', EmirateEnum::ABU_DHABI)
+                                            ->orWhereNull('i.emirate_of_registration_id');
+                                    });
                             });
-                        });
-                });
+                    });
             });
     }
 }

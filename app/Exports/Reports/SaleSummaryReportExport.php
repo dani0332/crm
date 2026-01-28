@@ -109,7 +109,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
             $headings[] = 'Department';
         }
 
-        $headings =  [
+        $headings = [
             ...$headings,
             'Total Policies',
             'Total Endorsements',
@@ -182,7 +182,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
         $totalsRow[0] = 'Totals';
         // Adjust offset for: groupBy column (1) + optional department column (1) + branch column (1)
         $offset = 1;
-        if(in_array($this->groupByColumn, ['advisor', 'support_user'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'support_user'])) {
             $offset = 2;
         }
 
