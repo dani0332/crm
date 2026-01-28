@@ -123,7 +123,7 @@ class EmbeddedTransactionService extends BaseService
         $newEmailStatus = (object) [
             'quoteTypeId' => $request->quoteTypeId,
             'quoteId' => $request->quoteId,
-            'customerEmail' => $request->customerIdentity,
+            'customerEmail' => $request->customerEmail,
             'templateId' => $templateId,
             'customerId' => $request->customerId,
         ];
