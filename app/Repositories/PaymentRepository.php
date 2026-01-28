@@ -1149,7 +1149,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         $userTeamIds = $teamIds ?: $user->getUserTeamIds();
 
-        $isManager = checkAuthUserRole();
+        $isManager = $user->hasAnyRole(getManagerRoles());
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
