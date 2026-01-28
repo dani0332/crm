@@ -57,11 +57,6 @@ trait OcrValidator
 
     public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
     {
-        // Check if no provider required for this quote type
-        if (in_array($quoteType, self::QUOTE_TYPE_PROVIDER_SKIP_OCR)) {
-            return true;
-        }
-
         return in_array($quoteType, self::PROVIDER_QUOTE_TYPE_MAPPING[$provider] ?? [], true);
     }
 
@@ -94,6 +89,11 @@ trait OcrValidator
 
     public function isProviderEligibleForOcr(QuoteTypes $quoteType, Model $quote): bool
     {
+        // Check if no provider required for this quote type
+        if (in_array($quoteType, self::QUOTE_TYPE_PROVIDER_SKIP_OCR)) {
+            return true;
+        }
+
         $providerCode = $this->extractProviderCode($quote);
 
         if (! $providerCode) {
