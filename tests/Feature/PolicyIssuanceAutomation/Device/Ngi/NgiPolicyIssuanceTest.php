@@ -9,7 +9,11 @@ use App\Enums\QuoteTypes;
 use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Models\PolicyIssuance;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiBookPolicyService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiStepExecutor;
+use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use Illuminate\Support\Facades\Cache;
 use Tests\Helpers\NgiPolicyIssuanceTestDataBuilder;
 
@@ -59,13 +63,96 @@ describe('NgiInsuranceService Policy Issuance', function () {
     });
 
     test('validates required data before policy issuance execution', function () {
-        $quote = createDeviceQuoteWithDependencies();
-        $process = createDevicePolicyIssuanceProcess($quote);
+        $quote = new PersonalQuote;
+        $quote->id = 1;
+        $quote->plan_id = 1001;
+        $quote->code = 'DEV-VALID-0001';
+        $quote->insurer_quote_number = 'NGI-Q-1234';
+        $quote->customer = (object) [
+            'id' => 1,
+            'emirates_id_number' => '784-1234-12345678-1',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
+            'email' => 'jane.doe@example.com',
+            'mobile_no' => '+971501000000',
+        ];
+        $quote->deviceQuote = (object) [
+            'imei' => '123456789012345',
+        ];
+        $quote->latestInsured = (object) [
+            'id_type' => 'emiratesId',
+            'id_number' => '784-1234-12345678-1',
+        ];
 
-        $ngiService = app(NgiInsuranceService::class);
+        $process = new class ($quote) {
+            public int $id = 1;
+            public string $status = PolicyIssuanceEnum::PENDING_STATUS;
+            public ?string $completed_step = null;
+            public object $model;
+
+            public function __construct(object $quote)
+            {
+                $this->model = $quote;
+            }
+
+            public function update(array $attributes): bool
+            {
+                foreach ($attributes as $key => $value) {
+                    $this->{$key} = $value;
+                }
+
+                return true;
+            }
+
+            public function refresh(): void
+            {
+            }
+        };
+
+        $validationService = Mockery::mock(NgiValidationService::class);
+        $validationService->shouldReceive('validateRequiredData')
+            ->once()
+            ->with($quote, $quote->customer, $quote->deviceQuote, $quote->latestInsured)
+            ->andReturn(['status' => true]);
+
+        $stepExecutor = Mockery::mock(NgiStepExecutor::class);
+        $stepExecutor->shouldReceive('executeCreatePolicyFromQuoteStep')
+            ->once()
+            ->with($quote, $process)
+            ->andReturn([
+                'status' => true,
+                'completed_step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
+            ]);
+        $stepExecutor->shouldReceive('executeGetPolicyDocumentsAndUploadToIMCRMStep')
+            ->once()
+            ->with($quote, $process)
+            ->andReturn([
+                'status' => true,
+                'completed_step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
+            ]);
+        $stepExecutor->shouldReceive('executeBookPolicyStep')
+            ->once()
+            ->with($quote, $process)
+            ->andReturn([
+                'status' => true,
+                'completed_step' => NgiEnum::STEP_BOOK_POLICY,
+            ]);
+
+        $bookPolicyService = Mockery::mock(NgiBookPolicyService::class);
+        $bookPolicyService->shouldIgnoreMissing();
+
+        $responseHandler = Mockery::mock(NgiResponseHandler::class);
+        $responseHandler->shouldIgnoreMissing();
+
+        $ngiService = new NgiInsuranceService(
+            $stepExecutor,
+            $validationService,
+            $bookPolicyService,
+            $responseHandler
+        );
+
         $response = $ngiService->executeSteps($process);
 
-        // Should have status key in response
         expect($response)->toHaveKey('status');
     });
 
