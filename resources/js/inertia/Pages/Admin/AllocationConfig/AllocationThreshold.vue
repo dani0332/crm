@@ -7,7 +7,15 @@ const props = defineProps({
 });
 
 const notification = useToast();
-const tabs = reactive(["AUH","Non AUH"]);
+const tabs = reactive([{
+    label: "AUH",
+    postfix: "(Branch)",
+  },
+  {
+    label: "Non AUH",
+    postfix: "(HQ)",
+  },
+]);
 const activeTab = ref(0);
 const loading = ref(false);
 
@@ -25,7 +33,7 @@ const validateTeams = () => {
       max_price: parseFloat(x.max_price || 0),
     };
   });
-  console.log(teams);
+
   for (let i = 0; i < teams.length; i++) {
     const minPriceValue = parseFloat(
       teams[i] && teams[i].min_price == '' ? 0 : teams[i].min_price,
@@ -106,7 +114,7 @@ const loadTeams = (index) => {
 
   // Get teams
   axios
-    .get(`/generic/teams-by-category/${tabs[index]}`)
+    .get(`/generic/teams-by-category/${tabs[index].label}`)
     .then(response => {
       teamsForm.teams = response.data.teams;
     })
@@ -129,7 +137,7 @@ const updateTeams = () => {
 
     axios
       .post('/update-team-allocation-threshold', {
-        category: tabs[activeTab.value],
+        category: tabs[activeTab.value].label,
         teams: teams
       })
       .then(response => {
@@ -174,7 +182,7 @@ onMounted(() => {
           : 'text-gray-500 hover:text-gray-700'
       ]"
     >
-      {{ tab }}
+      {{ tab.label }} {{ tab.postfix }}
     </button>
   </div>
 
@@ -209,7 +217,7 @@ onMounted(() => {
 
       <div class="flex justify-end gap-3 mt-5">
         <x-button size="sm" color="#ff5e00" @click="updateTeams()">
-          Update {{ tabs[activeTab] }}
+          Update {{ tabs[activeTab].label }}
         </x-button>
       </div>
     </div>
@@ -217,6 +225,6 @@ onMounted(() => {
 
   <HealthRoutingLogs
       type="CONFIGURATION"
-      :teamCategory="tabs[activeTab]"
+      :teamCategory="tabs[activeTab].label"
   />
 </template>
