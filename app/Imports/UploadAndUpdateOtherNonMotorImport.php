@@ -31,6 +31,7 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
     private $failedCount = 0;
     private $renewalsUploadLead;
     private OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService;
+    private array $seenRefIds = [];
 
     public function __construct(OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService, RenewalsUploadLeads $renewalsUploadLead)
     {
@@ -111,7 +112,16 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                     'required',
                     'max:100',
                     function ($attribute, $value, $fail) {
-                        $refId = trim((string) $value);
+                        $refId = strtoupper(trim((string) $value));
+
+                        // Prevent duplicate Ref-IDs within the same file to avoid race conditions later
+                        if (isset($this->seenRefIds[$refId])) {
+                            $fail('Duplicate Ref-ID found in file');
+
+                            return;
+                        }
+                        $this->seenRefIds[$refId] = true;
+
                         $quote = $this->otherNonMotorRenewalsUploadService->findEligibleQuote($refId);
 
                         if (! $quote) {
