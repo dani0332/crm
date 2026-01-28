@@ -15,6 +15,7 @@ class AllocationRequest
 
     public function __construct(
         protected QuoteTypes $quoteType,
+        protected QuoteTypes $quoteTypeLabel,
         protected $claimUUID,
         protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED,
         protected $isReassignmentJob = false,
@@ -27,7 +28,10 @@ class AllocationRequest
     {
         return $this->quoteType;
     }
-
+    public function getQuoteTypeLabel()
+    {
+        return $this->quoteTypeLabel;
+    }
     public function getClaimUUID()
     {
         return $this->claimUUID;

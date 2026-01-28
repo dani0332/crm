@@ -43,4 +43,12 @@ trait AllocationRequestMarkable
     {
         return $this->get('already_assigned', false);
     }
+    public function markAsQuoteTypeMismatch()
+    {
+        $this->set('quote_type_mismatch', true);
+    }
+    public function isQuoteTypeMismatch()
+    {
+        return $this->get('quote_type_mismatch', false);
+    }
 }

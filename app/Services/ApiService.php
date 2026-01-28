@@ -520,9 +520,10 @@ class ApiService
         // Extract request parameters
         $quoteTypeId = $request->input('quoteTypeId');
         $claimUuid = $request->input('claimUUID');
+        $quoteTypeLabel = $request->input('quoteTypeLabel');
 
         try {
-            $result = app(ClaimAllocationService::class)->execute($claimUuid, $quoteTypeId);
+            $result = app(ClaimAllocationService::class)->execute($claimUuid, $quoteTypeId, $quoteTypeLabel);
 
             return apiResponse($result, Response::HTTP_OK, 'Claim assignment processed successfully.');
         } catch (\Exception $e) {

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Pipes\Allocation\Handlers\Claim\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
+use App\Enums\QuoteTypes;
 
 class FetchEligibleManagersPipe extends BaseAllocationPipe
 {
@@ -59,17 +60,46 @@ class FetchEligibleManagersPipe extends BaseAllocationPipe
 
         return [];
     }
+    private function getManagerRole()
+    {
+        switch ($this->allocationRequest->getQuoteTypeLabel()) {
+            case QuoteTypes::CAR:
+            case QuoteTypes::BIKE:
+                return RolesEnum::CarClaimManager;
+        case QuoteTypes::HEALTH:
+            return RolesEnum::HealthClaimManager;
+        case QuoteTypes::GROUP_MEDICAL:
+            return RolesEnum::GmClaimManager;
+        case QuoteTypes::LIFE:
+            return RolesEnum::LifeClaimManager;
+        case QuoteTypes::TRAVEL:
+            return RolesEnum::TravelClaimManager;
+        case QuoteTypes::HOME:
+            return RolesEnum::HomeClaimManager;
+        case QuoteTypes::PET:
+            return RolesEnum::PetClaimManager;
+        case QuoteTypes::YACHT:
+            return RolesEnum::YachtClaimManager;
+        case QuoteTypes::CYCLE:
+            return RolesEnum::CycleClaimManager;
+        case QuoteTypes::JETSKI:
+            return RolesEnum::JetskiClaimManager;
+        case QuoteTypes::CORPLINE:
+            return RolesEnum::CorplineClaimManager;
+        default:
+            return "";
+    }
+    }
 
     protected function getManagersByStatus(int $onlineStatus)
     {
         // Use subquery to calculate allocation_count < max_capacity in the join condition for better
-        $roles = [RolesEnum::ClaimsManager];
         $users = User::select('users.id as user_id')
             ->join('claims_lead_allocation_config as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->where('users.status', $onlineStatus)
-            ->whereIn('r.name', $roles)
+            ->where('r.name', $this->getManagerRole())
             ->where('la.quote_type_id', $this->allocationRequest->getQuoteType()->id())
             ->activeUser()
             ->whereColumn('la.allocation_count', '<', 'la.max_capacity')
@@ -77,7 +107,6 @@ class FetchEligibleManagersPipe extends BaseAllocationPipe
             ->logRawSql()
             ->distinct('users.id')
             ->get();
-
         return $users;
     }
 

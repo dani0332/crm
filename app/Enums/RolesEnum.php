@@ -105,4 +105,16 @@ final class RolesEnum extends Enum
     public const CLIENTSUPPORT = 'OE_AE_CLIENT_SUPPORT';
     public const CLIENTSUPPORTLEAD = 'OE_AE_CLIENT_SUPPORT_LEAD';
     public const ClaimsManager = 'CLAIMS_MANAGER';
+    public const CarClaimManager = 'CAR_CLAIM_MANAGER';
+    public const HealthClaimManager = 'HEALTH_CLAIM_MANAGER';
+    public const GmClaimManager = 'GM_CLAIM_MANAGER';
+    public const LifeClaimManager = 'LIFE_CLAIM_MANAGER';
+    public const TravelClaimManager = 'TRAVEL_CLAIM_MANAGER';
+    public const HomeClaimManager = 'HOME_CLAIM_MANAGER';
+    public const PetClaimManager = 'PET_CLAIM_MANAGER';
+    public const YachtClaimManager = 'YACHT_CLAIM_MANAGER';
+    public const CycleClaimManager = 'CYCLE_CLAIM_MANAGER';
+    public const JetskiClaimManager = 'JETSKI_CLAIM_MANAGER';
+    public const CorplineClaimManager = 'CORPLINE_CLAIM_MANAGER';
+    
 }

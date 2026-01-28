@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\QuoteTypeId;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Models\QuoteType;
 
 class ClaimAssignmentRequest extends FormRequest
 {
@@ -26,6 +27,7 @@ class ClaimAssignmentRequest extends FormRequest
         return [
             'claimUUID' => ['required'],
             'quoteTypeId' => ['required', Rule::in(QuoteTypeId::asArray())],
+            'quoteTypeLabel' => ['required'],
             'triggerOCB' => ['sometimes', 'boolean'],
         ];
     }

@@ -27,13 +27,13 @@ use Illuminate\Support\Facades\Pipeline;
 
 class ClaimAllocationService
 {
-    public function execute(string $claimUuid, int $quoteTypeId, bool $isReassignmentJob = false)
+    public function execute(string $claimUuid, int $quoteTypeId, string $quoteTypeLabel, bool $isReassignmentJob = false)
     {
         LoggerService::startQuoteLogging($claimUuid, LoggerFeatureEnum::CLAIM_ALLOCATION);
-        $quoteType = QuoteTypes::getName($quoteTypeId);
-
+    
         $allocationRequest = new AllocationRequest(
-            quoteType: $quoteType,
+            quoteType: QuoteTypes::getName($quoteTypeId),
+            quoteTypeLabel: QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteTypeLabel)),
             claimUUID: $claimUuid,
             assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED,
             isReassignmentJob: false,

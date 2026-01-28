@@ -54,7 +54,12 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             $manager = User::find($lead->manager_id);
             $this->allocationRequest->setManager($manager);
             $continueAssignment = false;
-        } else {
+        }elseif($lead->quote_type_id != $this->allocationRequest->getQuoteType()->id()){
+            LoggerService::info(self::class."::verifyPreChecks - Quote type mismatch, failing pre-check {$lead->quote_type_id} != {$this->allocationRequest->getQuoteType()->id()}}");
+            $this->allocationRequest->markAsQuoteTypeMismatch();
+            $continueAssignment = false;
+        }
+         else {
             $continueAssignment = true;
         }
 
