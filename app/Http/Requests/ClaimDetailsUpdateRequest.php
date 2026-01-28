@@ -86,7 +86,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
                 'required',
                 'date',
                 'date_format:Y-m-d',
-                'before:today',
+                'before_or_equal:today',
             ],
         ];
     }
@@ -115,8 +115,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
             'incident_date.required' => 'Incident date is required.',
             'incident_date.date' => 'Incident date must be a valid date.',
             'incident_date.date_format' => 'Incident date must be in the format YYYY-MM-DD.',
-            'incident_date.before' => 'Incident date must be before today.',
-            'incident_date.before_or_equal' => 'Incident date must be before or equal to today.',
+            'incident_date.before_or_equal' => 'Incident date must be today or before.',
         ];
     }
 

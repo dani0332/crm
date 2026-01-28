@@ -243,8 +243,8 @@ const validationRules = {
     const normalizedToday = normalizeDate(new Date());
 
     // Compare normalized dates - must be before today (yesterday or earlier)
-    if (normalizedDate >= normalizedToday) {
-      return 'Incident date must be before today.';
+    if (normalizedDate > normalizedToday) {
+      return 'Incident date must be today or before.';
     }
 
     return true;
