@@ -429,6 +429,7 @@ class CoreSchema
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
                 $table->string('plan_name')->nullable();
+                $table->string('repair_type')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('provider_id')->nullable();
                 $table->timestamps();
@@ -626,10 +627,14 @@ class CoreSchema
             'teams' => function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
+                $table->string('code')->nullable();
                 // TeamHierarchyTrait::getAllProducts() relies on these columns.
                 $table->unsignedTinyInteger('type')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('parent_team_id')->nullable();
+                $table->decimal('min_price', 15, 2)->nullable();
+                $table->decimal('max_price', 15, 2)->nullable();
+                $table->boolean('allocation_threshold_enabled')->default(0);
                 $table->timestamps();
             },
             'user_team' => function (Blueprint $table) {

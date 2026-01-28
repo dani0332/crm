@@ -33,7 +33,6 @@ defineProps({
   advisors: Array,
   quoteDocuments: Array,
   documentTypes: Object,
-  cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
@@ -70,7 +69,6 @@ defineProps({
   websiteURL: String,
   docUploadURL: String,
   planURL: String,
-  storageUrl: String,
   insuranceProviders: Array,
   insuranceProvidersByQuoteType: Object,
   advisor: Object,
@@ -1900,6 +1898,8 @@ const handleCancelConfirmationModal = () => {
   modals.showConfirmationModal = false;
   modals.isConfirmed = false; // Reset confirmation flag when user cancels
 };
+
+const { openTempUrl } = useDocumentTempUrl();
 </script>
 
 <template>
@@ -3275,9 +3275,8 @@ const handleCancelConfirmationModal = () => {
               <template v-for="doc in item.documents" :key="doc">
                 <p class="my-2">
                   <a
-                    class="underline"
-                    target="_blank"
-                    :href="leadDocsStoragePath + doc.path"
+                    class="text-primary-600 cursor-pointer"
+                    @click.prevent="openTempUrl(doc.path)"
                     >Document</a
                   >
                 </p>
@@ -4125,7 +4124,6 @@ const handleCancelConfirmationModal = () => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -4247,7 +4245,6 @@ const handleCancelConfirmationModal = () => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
       @copyUploadURL="copyUploadURL"
