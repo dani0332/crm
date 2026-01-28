@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
-use App\Enums\RolesEnum;
 use App\Events\AuthorisedPaymentCountUpdated;
 use App\Events\PaymentNotifications;
 use App\Models\PersonalQuote;
@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 
 class NotificationService extends BaseService
@@ -151,9 +152,22 @@ class NotificationService extends BaseService
             return;
         }
 
-        // Check if the quote has any payment with AUTHORISED status
+        // Check if the quote has any payment that matches the criteria used in getAuthorisePaymentCount:
+        // 1. AUTHORISED payments within the last 30 days (based on authorized_at)
+        // 2. InsurerPayment (IP) with NEW status within the last 30 days (based on collection_date)
+        // This ensures the broadcast trigger logic matches PaymentRepository::getAuthorisePaymentCount
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
         $hasAuthorisedPayment = $model->payments()
-            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where(function ($query) use ($thirtyDaysAgo) {
+                $query->where(function ($q) use ($thirtyDaysAgo) {
+                    $q->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+                        ->where('authorized_at', '>=', $thirtyDaysAgo);
+                })->orWhere(function ($q) use ($thirtyDaysAgo) {
+                    $q->where('payment_methods_code', PaymentMethodsEnum::InsurerPayment)
+                        ->where('payment_status_id', PaymentStatusEnum::NEW)
+                        ->where('collection_date', '>=', $thirtyDaysAgo);
+                });
+            })
             ->exists();
 
         if (! $hasAuthorisedPayment) {
@@ -188,19 +202,7 @@ class NotificationService extends BaseService
 
         if (! empty($advisorTeamIds)) {
             // Get all managers who manage teams that the advisor belongs to
-            $managerRoles = [
-                RolesEnum::CarManager,
-                RolesEnum::HealthManager,
-                RolesEnum::TravelManager,
-                RolesEnum::LifeManager,
-                RolesEnum::HomeManager,
-                RolesEnum::PetManager,
-                RolesEnum::BikeManager,
-                RolesEnum::CycleManager,
-                RolesEnum::YachtManager,
-                RolesEnum::JetskiManager,
-                RolesEnum::BusinessManager,
-            ];
+            $managerRoles = getManagerRoles();
 
             $managerUserIds = User::whereHas('roles', function ($query) use ($managerRoles) {
                 $query->whereIn('name', $managerRoles);

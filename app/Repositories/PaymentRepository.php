@@ -13,7 +13,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\SendFTCEmailJob;
@@ -1150,21 +1149,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         $userTeamIds = $teamIds ?: $user->getUserTeamIds();
 
-        $thirtyDaysAgo = Carbon::now()->subDays(30);
+        $isManager = checkAuthUserRole();
 
-        $isManager = $user->hasAnyRole([
-            RolesEnum::CarManager,
-            RolesEnum::HealthManager,
-            RolesEnum::TravelManager,
-            RolesEnum::LifeManager,
-            RolesEnum::HomeManager,
-            RolesEnum::PetManager,
-            RolesEnum::BikeManager,
-            RolesEnum::CycleManager,
-            RolesEnum::YachtManager,
-            RolesEnum::JetskiManager,
-            RolesEnum::BusinessManager,
-        ]);
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
 
         return DB::table('payments')
             ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
