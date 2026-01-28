@@ -801,7 +801,7 @@ if (! function_exists('checkAuthUserRole')) {
             return false;
         }
 
-        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::BusinessManager, RolesEnum::HomeManager, RolesEnum::LifeManager, RolesEnum::PetManager, RolesEnum::YachtManager, RolesEnum::TravelManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::JetskiManager])) {
+        if (Auth::user()->hasAnyRole(getManagerRoles())) {
             return true;
         } else {
             return false;
@@ -1823,5 +1823,24 @@ if (! function_exists('ensureWriteDefaultConnection')) {
         ]);
 
         DB::setDefaultConnection(DatabaseConnectionEnum::MYSQL->value);
+    }
+}
+
+if (! function_exists('getManagerRoles')) {
+    function getManagerRoles(): array
+    {
+        return [
+            RolesEnum::CarManager,
+            RolesEnum::HealthManager,
+            RolesEnum::TravelManager,
+            RolesEnum::LifeManager,
+            RolesEnum::HomeManager,
+            RolesEnum::PetManager,
+            RolesEnum::BikeManager,
+            RolesEnum::CycleManager,
+            RolesEnum::YachtManager,
+            RolesEnum::JetskiManager,
+            RolesEnum::BusinessManager,
+        ];
     }
 }

@@ -9,6 +9,7 @@ use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\Team;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\HealthTeamRouting\HealthTeamRoutable;
 use App\Services\HealthTeamRouting\HealthTeamRoutingLogService;
 use App\Services\HealthTeamRouting\HealthTeamRoutingService;
 use App\Services\Logger\LoggerService;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Mail;
 
 class AssignTeamPipe extends BaseAllocationPipe
 {
+    use HealthTeamRoutable;
     /**
      * Handle the incoming request.
      */
@@ -92,12 +94,27 @@ class AssignTeamPipe extends BaseAllocationPipe
         }
 
         $isAUHLead = $this->lead->isAUHLead() || $this->lead->isAUHLead(false);
+        $category = $isAUHLead ? TeamCategoryEnum::AUH : TeamCategoryEnum::NON_AUH;
 
-        $healthTeam = Team::where('allocation_threshold_enabled', true)
-            ->where('min_price', '<=', $priceStartingFrom)
-            ->where('max_price', '>=', $priceStartingFrom)
-            ->where('category', $isAUHLead ? TeamCategoryEnum::AUH->value : TeamCategoryEnum::NON_AUH->value)
-            ->first();
+        // Check if priceStartingFrom is greater than GBP team's min price (only for AUH leads)
+        if ($isAUHLead) {
+            LoggerService::info('AUH lead detected, checking GBP team min price');
+            $gbpMinPrice = $this->getGbpTeamMinPrice($category);
+            if ($gbpMinPrice !== null && $priceStartingFrom > $gbpMinPrice) {
+                LoggerService::info("Price starting from ({$priceStartingFrom}) is greater than GBP min price ({$gbpMinPrice}), assigning to GBP team");
+                $this->lead->health_team_type = HealthTeamType::GBP;
+                $this->lead->save();
+
+                return;
+            }
+            if ($gbpMinPrice === null) {
+                LoggerService::info('GBP team not found for AUH category, proceeding with regular price-based routing');
+            } elseif ($priceStartingFrom <= $gbpMinPrice) {
+                LoggerService::info("Price starting from ({$priceStartingFrom}) is not greater than GBP min price ({$gbpMinPrice}), proceeding with regular price-based routing");
+            }
+        }
+
+        $healthTeam = $this->fetchTeamByPriceAndCategory($priceStartingFrom, $category);
 
         if ($healthTeam) {
             LoggerService::info("Filtered team is: {$healthTeam->name}");

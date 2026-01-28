@@ -14,6 +14,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\MetLife\MetLifeApiService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\Request;
 
 class QuoteDocumentController extends Controller
 {
@@ -45,10 +46,13 @@ class QuoteDocumentController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function getQuoteDocumentsToReceive($quoteType, ActivitiesService $activitiesService)
+    public function getQuoteDocumentsToReceive(Request $request, $quoteType, ActivitiesService $activitiesService)
     {
         $quoteTypeId = $activitiesService->getQuoteTypeId($quoteType);
-        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId);
+        $registrationType = $request->input('registration_type');
+        $vehicleUse = $request->input('vehicle_use');
+
+        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse);
 
         return DocumentTypeResource::collection($documentTypes);
     }

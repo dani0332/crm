@@ -393,7 +393,10 @@ class SageApiService
                     'suCustomerNumber' => $sageRequestPayload->customerId,
                 ]);
                 if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && count($epTransSageLogArray) > 0) {
-                    $quoteSageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->quoteType, $preparedData['payment'], $quote, $preparedData['splitPayments']);
+                    $quoteSageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->quoteType, $preparedData['payment'], $quote, $preparedData['splitPayments'], [
+                        'isEPReversal' => true,
+                        'sendUpdateLog' => $preparedData['sendUpdateLog'],
+                    ]);
                     $quoteSageRequest->quoteTypeId = $quoteTypeId;
                     $quoteSageRequest->userId = $sageRequestPayload->userId;
                     LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : Start Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################');

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
@@ -54,7 +56,11 @@ class EmiratesIdDataProcessor
 
             $insuredUpdated = $this->updateInsuredTable($insured);
             $kycUpdated = $this->updateInsuredKycTable($insured);
-            $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
+
+            $vehicleDriverDetailUpdated = false;
+            if (! ($this->quote->registration_type == CarRegistrationType::COMPANY && $this->quote->vehicle_use == CarVehicleUse::PRIVATE)) {
+                $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
+            }
 
             // Trigger OCR success validation
             $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);

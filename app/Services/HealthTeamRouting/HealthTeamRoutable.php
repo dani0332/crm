@@ -6,7 +6,10 @@ namespace App\Services\HealthTeamRouting;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthRoutingLogTypeEnum;
+use App\Enums\TeamCategoryEnum;
+use App\Enums\TeamNameEnum;
 use App\Models\HealthQuote;
+use App\Models\Team;
 
 trait HealthTeamRoutable
 {
@@ -26,5 +29,28 @@ trait HealthTeamRoutable
             $lead->id,
             $lead->uuid
         );
+    }
+
+    private function fetchTeamByPriceAndCategory($price, TeamCategoryEnum $category): ?Team
+    {
+        if ($price === null) {
+            return null;
+        }
+
+        return Team::where('allocation_threshold_enabled', true)
+            ->where('min_price', '<=', $price)
+            ->where('max_price', '>=', $price)
+            ->where('category', $category->value)
+            ->first();
+    }
+
+    private function getGbpTeamMinPrice(TeamCategoryEnum $category): ?float
+    {
+        $gbpTeam = Team::where('allocation_threshold_enabled', true)
+            ->where('name', TeamNameEnum::GBP)
+            ->where('category', $category->value)
+            ->first();
+
+        return $gbpTeam?->min_price;
     }
 }

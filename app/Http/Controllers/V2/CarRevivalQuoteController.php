@@ -65,6 +65,7 @@ class CarRevivalQuoteController extends Controller
         );
     }
 
+    // We are not using this function anymore
     public function show($id, Request $request)
     {
         $quoteType = quoteTypeCode::Car;
