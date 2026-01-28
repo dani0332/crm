@@ -52,6 +52,11 @@ watch(
     if (teamForm.type == 1) {
       teamForm.parent_team_id = null;
     }
+
+    // Make category null if type is not team
+    if (teamForm.type != 2) {
+      teamForm.category = null;
+    }
   },
 );
 
@@ -145,19 +150,6 @@ onMounted(() => setInitialState());
     </div>
     <div class="grid sm:grid-cols-2 gap-4">
       <x-select
-        v-model="teamForm.category"
-        :rules="[isRequired]"
-        class="w-full"
-        :options="[
-          { value: 'SIC', label: 'SIC' },
-          { value: 'AUH', label: 'AUH' },
-          { value: 'Non AUH', label: 'Non AUH' },
-        ]"
-        :error="$page.props.errors.category"
-        label="CATEGORY"
-        required
-      />
-      <x-select
         v-model="teamForm.is_active"
         :options="[
           {
@@ -172,6 +164,19 @@ onMounted(() => setInitialState());
         label="ACTIVE"
         class="w-full"
       ></x-select>
+      <x-select
+        v-if="teamForm.type == 2"
+        v-model="teamForm.category"
+        :rules="teamForm.type == 2 ? [isRequired] : []"
+        class="w-full"
+        :options="[
+          { value: 'AUH', label: 'AUH' },
+          { value: 'Non AUH', label: 'Non AUH' },
+        ]"
+        :error="$page.props.errors.category"
+        label="CATEGORY"
+        required
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

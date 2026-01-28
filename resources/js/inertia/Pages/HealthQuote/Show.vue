@@ -4470,6 +4470,11 @@ const isPrimaryEmailLocked = computed(() => {
       :id="props.quote?.insured_kyc_id"
     />
 
+    <HealthRoutingLogs
+      type="ROUTING"
+      :quoteRequestId="$page.props.quote.id"
+    />
+
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"

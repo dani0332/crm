@@ -7,7 +7,15 @@ const props = defineProps({
 });
 
 const notification = useToast();
-const tabs = reactive(["SIC","AUH","Non AUH"]);
+const tabs = reactive([{
+    label: "AUH",
+    postfix: "(Branch)",
+  },
+  {
+    label: "Non AUH",
+    postfix: "(HQ)",
+  },
+]);
 const activeTab = ref(0);
 const loading = ref(false);
 
@@ -25,7 +33,7 @@ const validateTeams = () => {
       max_price: parseFloat(x.max_price || 0),
     };
   });
-  console.log(teams);
+
   for (let i = 0; i < teams.length; i++) {
     const minPriceValue = parseFloat(
       teams[i] && teams[i].min_price == '' ? 0 : teams[i].min_price,
@@ -106,7 +114,7 @@ const loadTeams = (index) => {
 
   // Get teams
   axios
-    .get(`/generic/teams-by-category/${tabs[index]}`)
+    .get(`/generic/teams-by-category/${tabs[index].label}`)
     .then(response => {
       teamsForm.teams = response.data.teams;
     })
@@ -125,10 +133,14 @@ const loadTeams = (index) => {
 const updateTeams = () => {
   let valid = validateTeams();
   if (valid) {
+    loading.value = true;
     let teams = generateTeamsToPost();
 
     axios
-      .post('/update-team-allocation-threshold', { teams })
+      .post('/update-team-allocation-threshold', {
+        category: tabs[activeTab.value].label,
+        teams: teams
+      })
       .then(response => {
         notification.success({
           title: 'Allocation Threshold updated successfully',
@@ -141,6 +153,9 @@ const updateTeams = () => {
           message: 'An error occurred while updating the allocation threshold',
           position: 'top',
         });
+      })
+      .finally(() => {
+        loading.value = false;
       });
   }
 };
@@ -171,12 +186,12 @@ onMounted(() => {
           : 'text-gray-500 hover:text-gray-700'
       ]"
     >
-      {{ tab }}
+      {{ tab.label }} {{ tab.postfix }}
     </button>
   </div>
 
   <!-- Active Tab Content -->
-  <div class="min-h-[150px]">
+  <div class="min-h-[150px] mb-4">
     <!-- Loader -->
     <div v-if="loading" class="flex justify-center items-center py-10">
       <span class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></span>
@@ -206,9 +221,14 @@ onMounted(() => {
 
       <div class="flex justify-end gap-3 mt-5">
         <x-button size="sm" color="#ff5e00" @click="updateTeams()">
-          Update {{ tabs[activeTab] }}
+          Update {{ tabs[activeTab].label }}
         </x-button>
       </div>
     </div>
   </div>
+
+  <HealthRoutingLogs
+      type="CONFIGURATION"
+      :teamCategory="tabs[activeTab].label"
+  />
 </template>

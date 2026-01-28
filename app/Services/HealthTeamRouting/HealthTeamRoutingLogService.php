@@ -3,19 +3,27 @@
 namespace App\Services\HealthTeamRouting;
 
 use App\Enums\HealthRoutingLogTypeEnum;
+use App\Enums\TeamCategoryEnum;
 use App\Models\HealthRoutingLog;
 use App\Services\Logger\LoggerService;
 
 class HealthTeamRoutingLogService
 {
-    public function log(HealthRoutingLogTypeEnum $type, array $logData, ?int $quoteRequestId, ?string $uuid): void
+    public static function log(
+        HealthRoutingLogTypeEnum $type,
+        array $logData,
+        ?int $quoteRequestId = null,
+        ?string $uuid = null,
+        ?TeamCategoryEnum $teamCategory = null): void
     {
         try {
             HealthRoutingLog::create([
                 'quote_request_id' => $quoteRequestId,
                 'uuid' => $uuid,
                 'type' => $type->value,
-                'log_data' => $logData, // Model casts to array automatically
+                'team_category' => $teamCategory?->value,
+                'log_data' => json_encode($logData),
+                'logged_by' => auth()->user()->id,
             ]);
         } catch (\Exception $e) {
             LoggerService::error('HealthTeamRoutingLogService: log function error', ['error' => $e->getMessage()]);

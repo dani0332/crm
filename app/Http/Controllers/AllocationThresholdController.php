@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\HealthRoutingLogTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\TeamCategoryEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Team;
@@ -44,13 +45,14 @@ class AllocationThresholdController extends Controller
     {
         $teams = Team::select('id', 'name', 'min_price', 'max_price')
             ->where('category', $request->category)
-            ->where('type', TeamTypeEnum::TEAM);
+            ->where('type', TeamTypeEnum::TEAM)
+            ->where('is_active', 1);
 
-        if ($request->category == 'SIC') {
-            $teams = $teams->whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::PCP])->get();
+        if ($request->category == TeamCategoryEnum::NON_AUH->value) {
+            $teams = $teams->whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::GBP])->get();
 
             // Sort by custom sequence
-            $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::PCP];
+            $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::GBP];
             $sortedTeams = $teams->sortBy(function ($team) use ($customSequence) {
                 $index = array_search($team['name'], $customSequence);
 
@@ -59,7 +61,7 @@ class AllocationThresholdController extends Controller
 
             $teams = $sortedTeams;
         } else {
-            $teams = $teams->orderBy('name')->get();
+            $teams = $teams->orderBy('id')->get();
         }
 
         return response()->json(['teams' => $teams]);
@@ -67,13 +69,32 @@ class AllocationThresholdController extends Controller
 
     public function updateAllocation(Request $request)
     {
+        $logData = [];
         $teams = $request->teams;
+
         if ($teams) {
             foreach ($teams as $team) {
-                Team::where('id', $team['id'])->update(['min_price' => $team['min'], 'max_price' => $team['max'], 'allocation_threshold_enabled' => true]);
+                Team::where('id', $team['id'])
+                    ->update([
+                        'min_price' => $team['min'],
+                        'max_price' => $team['max'],
+                        'allocation_threshold_enabled' => true,
+                    ]);
+
+                // Log data
+                $team = ['team_id' => $team['id']] + array_diff_key($team, ['id' => true]);
+                $logData[] = array_merge($team, [
+                    'team_name' => Team::find($team['team_id'])->name,
+                ]);
             }
 
-            $this->healthTeamRoutingLogService->log(HealthRoutingLogTypeEnum::CONFIGURATION, ['teams' => $teams], null, null);
+            // Add config logs
+            HealthTeamRoutingLogService::log(
+                HealthRoutingLogTypeEnum::CONFIGURATION,
+                $logData,
+                null,
+                null,
+                TeamCategoryEnum::from($request->category));
         }
 
         return response()->json(['message' => 'Allocation Threshold updated successfully']);
