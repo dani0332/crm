@@ -90,7 +90,7 @@ class EmbeddedTransactionService extends BaseService
         }
         if($embeddedTransaction?->payment_status_id != PaymentStatusEnum::DRAFT) {
             LoggerService::info('getRetargetingCarEpReminderData: Embedded transaction payment status is not draft', extra: ['et_payment_status_id' => $embeddedTransaction?->payment_status_id]);
-            return apiResponse(null, Response::HTTP_NO_CONTENT, 'Embedded transaction payment status is not draft');
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Embedded transaction payment status is not draft');
         }
 
         if (empty($quote?->uuid)
