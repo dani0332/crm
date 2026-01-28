@@ -99,6 +99,10 @@ class LoggerService
 
     public static function warning(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
     {
+        if (self::shouldSkipLogging()) {
+            return;
+        }
+
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
         }

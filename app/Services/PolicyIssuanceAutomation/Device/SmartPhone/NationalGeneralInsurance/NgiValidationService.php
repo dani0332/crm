@@ -95,14 +95,14 @@ class NgiValidationService
             }
         }
 
-        if (! $quote->insurer_quote_number) {
+        if (! $hasInsurerQuoteNumber) {
             $missing[] = 'insurer quote number';
         }
 
-        if ($customer === null) {
+        if (! $hasCustomer) {
             $missing[] = 'customer';
         } else {
-            if (empty($emiratesIdNumber)) {
+            if (! $hasEmiratesIdNumber) {
                 $missing[] = 'emirates id number';
             }
         }
