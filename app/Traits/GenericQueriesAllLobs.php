@@ -346,14 +346,14 @@ trait GenericQueriesAllLobs
             }
         }
 
-        $bookPolicyDetails['isParentPolicyCancellationReissuedPending'] = $this->isParentPolicyCancellationReissuedPending($record);
-
         // If quote status id is policy sent to customer then we set text book policy
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
         // Check if this is an Abu Dhabi quote lead
         $bookPolicyDetails['isAbuDhabiBranch'] = $isAbuDhabiBranch;
+
+        $bookPolicyDetails['isParentPolicyCancellationReissuedPending'] = $this->isParentPolicyCancellationReissuedPending($record, $bookPolicyDetails['text']);
 
         return $bookPolicyDetails;
     }
@@ -946,10 +946,14 @@ trait GenericQueriesAllLobs
         return $nationalityRecord?->text;
     }
 
-    public function isParentPolicyCancellationReissuedPending($record)
+    public function isParentPolicyCancellationReissuedPending($record, $text)
     {
         $return = false;
-        if (isset($record->parent_duplicate_quote_id) && $record->parent_duplicate_quote_id) {
+        if (
+            isset($record->parent_duplicate_quote_id) &&
+            $record->parent_duplicate_quote_id &&
+            $text != SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT
+        ) {
             $parentQuoteType = explode('-', $record->parent_duplicate_quote_id)[0];
             $quoteType = QuoteType::where('short_code', strtoupper($parentQuoteType))->value('code') ?? null;
             if (! $quoteType) {
