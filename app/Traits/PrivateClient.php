@@ -193,7 +193,9 @@ trait PrivateClient
         $query = (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause);
 
-        $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
+        // Disabled it since there is no quote type specific conditions for now
+        // Hoever keep it to enable later for any quote type when needed
+        // $this->applyQuoteTypeSpecificConditions($query, $quoteTypeId);
 
         // Check for additional conditions
         $query = $this->applyAdditionalConditions($query);

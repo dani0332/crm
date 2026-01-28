@@ -317,7 +317,7 @@ class SukoonMedexService
     {
         try {
             // For local storage
-            if (Storage::disk('azureIM')->exists($path)) {
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
                 return true;
             }
 
@@ -1348,7 +1348,7 @@ class SukoonMedexService
         try {
             $fileNameAzure = uniqid()."_{$this->currentQuote->uuid}_{$docName}";
             $docUrl = "{$dir}/{$fileNameAzure}";
-            $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
+            $filePathAzure = Storage::disk('azureIMPrivate')->put($docUrl, $content);
 
             if (! $filePathAzure) {
                 throw new EpEcbException('failed to upload document, doc_name: '.$docName.' doc_url: '.$docUrl);
