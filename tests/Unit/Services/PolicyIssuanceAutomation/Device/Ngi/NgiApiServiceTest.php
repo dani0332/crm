@@ -300,7 +300,7 @@ describe('createPolicyFromQuote', function () {
             ->with(
                 $quote,
                 Mockery::type('array'),
-                Mockery::type('array'),
+                $httpResponse,
                 Mockery::type('string'),
                 NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
                 \App\Enums\PolicyIssuanceEnum::SUCCESS_STATUS,
