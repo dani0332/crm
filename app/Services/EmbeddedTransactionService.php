@@ -85,7 +85,6 @@ class EmbeddedTransactionService extends BaseService
             || empty($quoteData?->embeddedTransaction?->ep_short_code)
             || empty($customer?->id) || empty($customer?->email)
             || empty($vehicle?->make) || empty($vehicle?->model)
-            || empty($plan?->provider_code) || empty($plan?->id) || empty($plan?->provider_code)
         ) {
             LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quoteData]);
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
@@ -109,10 +108,15 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Template / Email Workflow URL not found');
         }
 
+        $buyNowUrlQueryParams = [];
+        if (! empty($plan?->id))
+            $buyNowUrlQueryParams['planId'] = $plan->id;
+        if (! empty($plan?->provider_code))
+            $buyNowUrlQueryParams['providerCode'] = $plan->provider_code;
+
         $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quoteData->quote->uuid
             .'/payment/?'.http_build_query([
-                'providerCode' => $plan->provider_code,
-                'planId' => $plan->id,
+                ...$buyNowUrlQueryParams,
                 'selectEtCode' => $quoteData->embeddedTransaction->code,
             ]);
 
