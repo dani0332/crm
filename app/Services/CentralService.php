@@ -1715,6 +1715,10 @@ class CentralService extends BaseService
                 }
             }
 
+            // Will be remove, once Sukoon automation deployed on STAGE.
+            // Need to bypass Bird workflow for Sukoon automation.
+            $emailData->isSukoon = (int) false;
+
             // Signed Medical Application form
             if ($quoteTypeId == QuoteTypeId::Health) {
                 $emailData->signedMedicalApplicationForm = $quoteDocuments->filter(function ($document) {
