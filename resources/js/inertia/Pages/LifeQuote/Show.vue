@@ -43,7 +43,6 @@ const props = defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
-  storageUrl: String,
   vatPercentage: Number,
   payments: Array,
   paymentTooltipEnum: Object,
@@ -1435,7 +1434,6 @@ const getDisplayPriceInAED = item => {
             :notes="quoteNotes"
             :modelType="modelType"
             :quote="quote"
-            :cdn="cdnPath"
           />
 
           <Link
@@ -2951,7 +2949,6 @@ const getDisplayPriceInAED = item => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -2992,7 +2989,6 @@ const getDisplayPriceInAED = item => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote?.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"

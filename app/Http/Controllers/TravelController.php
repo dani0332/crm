@@ -241,7 +241,6 @@ class TravelController extends Controller
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
         if (isset($fields['advisor_id']) && ! empty($fields['advisor_id']) && isset($fields['advisor_id']['value']) && $fields['advisor_id']['value'] === 'Customer Happiness Centre') {
             $fields['advisor_id']['value'] = 'Auto Issued';
@@ -309,7 +308,6 @@ class TravelController extends Controller
             'quoteDocuments' => $quoteDocuments->toArray(),
             'documentTypes' => $documentTypes,
             'documentType' => $documentType,
-            'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
             'activities' => $activities,
@@ -326,7 +324,6 @@ class TravelController extends Controller
             'message' => session('message'),
             'quoteType' => QuoteTypes::TRAVEL,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'storageUrl' => storageUrl(),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,

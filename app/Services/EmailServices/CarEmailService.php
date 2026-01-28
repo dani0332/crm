@@ -28,6 +28,7 @@ use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
@@ -734,19 +735,27 @@ class CarEmailService extends BaseService
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';
-            Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
+            Storage::disk('azureIMPrivate')->put($tempFilePath, $pdfContent);
 
-            // Generate a public URL
-            $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+            // Generate a public URL using generic method
+            $url = app(QuoteDocumentService::class)->getDocumentUrl(
                 $tempFilePath,
-                now()->addMinutes(10)
+                'azureIMPrivate',
+                10
             );
+
+            if (! $url) {
+                LoggerService::error(self::class.' - attachCarOCBPDF - Failed to generate temporary URL: File does not exist for Ref-ID: '.$quoteUID);
+
+                return '';
+            }
+
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            LoggerService::info(self::class.' - attachCarOCBPDF - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$publicUrl);
+            LoggerService::info(self::class.' - attachCarOCBPDF - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$url);
 
-            return $publicUrl;
+            return $url;
         } catch (\Exception $e) {
             // Log the error details
             LoggerService::error(self::class." - Error: attachCarOCBPDF - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
