@@ -3,14 +3,12 @@
 declare(strict_types=1);
 
 use App\Enums\DatabaseConnectionEnum;
-use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 beforeEach(function (): void {
     $GLOBALS['__originalDefaultDbConnection'] = DB::getDefaultConnection();
     Log::spy();
-    LoggerService::forceLogging(true);
 });
 
 afterEach(function (): void {
@@ -18,7 +16,6 @@ afterEach(function (): void {
         DB::setDefaultConnection($GLOBALS['__originalDefaultDbConnection']);
         unset($GLOBALS['__originalDefaultDbConnection']);
     }
-    LoggerService::forceLogging(false);
 });
 
 it('does not throw when default is mysql_read', function (): void {

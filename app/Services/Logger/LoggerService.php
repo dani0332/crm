@@ -68,11 +68,6 @@ class LoggerService
         }
     }
 
-    private static function shouldSkipLogging(): bool
-    {
-        return app()->runningUnitTests();
-    }
-
     private static function getExceptionData(Exception $exception): array
     {
         return [
@@ -84,9 +79,6 @@ class LoggerService
 
     public static function error(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
     {
-        if (self::shouldSkipLogging()) {
-            return;
-        }
 
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
@@ -99,9 +91,6 @@ class LoggerService
 
     public static function warning(string $message, array|string $extra = [], ?Exception $exception = null, array $context = [])
     {
-        if (self::shouldSkipLogging()) {
-            return;
-        }
 
         if ($exception) {
             $context['exception'] = self::getExceptionData($exception);
@@ -114,9 +103,6 @@ class LoggerService
 
     public static function info(string $message, array|string $extra = [], array $context = [])
     {
-        if (self::shouldSkipLogging()) {
-            return;
-        }
 
         self::addExtra($extra);
 
