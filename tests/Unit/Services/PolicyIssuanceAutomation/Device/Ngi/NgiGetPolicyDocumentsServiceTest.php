@@ -193,7 +193,8 @@ describe('Document Handler Integration', function () {
 
         $result = $this->documentHandler->downloadAndStorePolicyDocuments(
             Mockery::mock(\App\Models\PersonalQuote::class),
-            Mockery::mock(\App\Models\PolicyIssuance::class)
+            Mockery::mock(\App\Models\PolicyIssuance::class),
+            ['data' => (object) []]
         );
 
         expect($result['status'])->toBeTrue()
@@ -211,7 +212,8 @@ describe('Document Handler Integration', function () {
 
         $result = $this->documentHandler->downloadAndStorePolicyDocuments(
             Mockery::mock(\App\Models\PersonalQuote::class),
-            Mockery::mock(\App\Models\PolicyIssuance::class)
+            Mockery::mock(\App\Models\PolicyIssuance::class),
+            ['data' => (object) []]
         );
 
         expect($result['status'])->toBeFalse()

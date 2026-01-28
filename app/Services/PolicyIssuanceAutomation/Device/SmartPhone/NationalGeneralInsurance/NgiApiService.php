@@ -60,7 +60,7 @@ class NgiApiService
             $process
         );
 
-        if (! $createPolicyResponse['status']) {
+        if (! $createPolicyResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE) {
             LoggerService::error('CreatePolicyFromQuote API call failed', extra: [
                 'endpoint' => $endPoint,
                 'error' => $createPolicyResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
@@ -122,14 +122,14 @@ class NgiApiService
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
             $quote,
             $queryParams,
-            $policyDocumentsResponse,
+            $httpResponse,
             Ngi::getBaseUrl().$endPoint.'?'.http_build_query($queryParams),
             NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
             $policyDocumentsResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
             $process
         );
 
-        if (! $policyDocumentsResponse['status']) {
+        if (! $policyDocumentsResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD) {
             LoggerService::error('GetPolicyDocuments API call failed', extra: [
                 'endpoint' => $endPoint,
                 'policy_number' => $quote->policy_number,

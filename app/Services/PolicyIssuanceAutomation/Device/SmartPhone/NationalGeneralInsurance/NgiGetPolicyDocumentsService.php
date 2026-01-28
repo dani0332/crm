@@ -59,10 +59,20 @@ class NgiGetPolicyDocumentsService
         $this->validatePolicyNumber($quote, $processId);
 
         // Step 2: Call GetPolicyDocuments API
-        $this->callGetPolicyDocumentsApi($quote, $process, $processId);
+        $providerDocumentsApiResponse = $this->apiService->getPolicyDocuments($quote, $process);
 
         // Step 3: Download documents from provider URLs and store in DB
-        $downloadResult = $this->downloadDocuments($quote, $process, $processId);
+        $downloadResult = $this->downloadDocuments($quote, $process, $processId, $providerDocumentsApiResponse);
+
+        if (! $downloadResult['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_UPLOAD) {
+            $defaultErrorMsg = 'Document download from provider or upload to IMCRM failed';
+            $errorMessage = $downloadResult['error'] ?? $defaultErrorMsg;
+            throw new NgiException(
+                "{$this->logPrefix} {$errorMessage}",
+                NgiException::DOCUMENT_DOWNLOAD_FAILED,
+                ['process_id' => $processId, 'error' => $errorMessage]
+            );
+        }
 
         // Step 4: Update process status for next step
         $this->updateProcessForNextStep($process, $processId, $downloadResult);
@@ -130,57 +140,31 @@ class NgiGetPolicyDocumentsService
     }
 
     /**
-     * Call the GetPolicyDocuments API.
-     *
-     * @throws NgiException When API call fails
-     */
-    private function callGetPolicyDocumentsApi(PersonalQuote $quote, PolicyIssuance $process, int $processId): void
-    {
-        $getPolicyDocsResponse = $this->apiService->getPolicyDocuments($quote, $process);
-
-        if (! $getPolicyDocsResponse['status']) {
-            $errorMessage = $getPolicyDocsResponse['error'] ?? 'GetPolicyDocuments API failed';
-            LoggerService::warning("{$this->logPrefix} API call failed", [
-                'process_id' => $processId,
-                'quote_code' => $quote->code,
-                'error' => $errorMessage,
-            ]);
-            throw new NgiException(
-                "{$this->logPrefix} API call failed ".$errorMessage,
-                NgiException::API_CALL_FAILED,
-                ['process_id' => $processId, 'error' => $errorMessage]
-            );
-        }
-
-        LoggerService::info("{$this->logPrefix} API call successful, downloading documents", [
-            'process_id' => $processId,
-            'quote_code' => $quote->code,
-        ]);
-    }
-
-    /**
      * Download documents from provider URLs and store in DB.
      *
      * @return array{status: bool, documents_count?: int, error?: string}
      *
      * @throws NgiException When document download fails
      */
-    private function downloadDocuments(PersonalQuote $quote, PolicyIssuance $process, int $processId): array
+    private function downloadDocuments(PersonalQuote $quote, PolicyIssuance $process, int $processId, array $documentsApiResponse): array
     {
-        $downloadResult = $this->documentHandler->downloadAndStorePolicyDocuments($quote, $process);
+
+        if (! $documentsApiResponse['status']) {
+            return $documentsApiResponse;
+        }
+
+        $downloadResult = $this->documentHandler->downloadAndStorePolicyDocuments($quote, $process, $documentsApiResponse);
 
         if (! $downloadResult['status']) {
             $errorMessage = $downloadResult['error'] ?? 'Document download failed';
-            LoggerService::warning("{$this->logPrefix} Document download failed", [
+            LoggerService::error("{$this->logPrefix} Document download failed", [
                 'process_id' => $processId,
                 'quote_code' => $quote->code,
                 'error' => $errorMessage,
             ]);
-            throw new NgiException(
-                "{$this->logPrefix} Document download failed ".$errorMessage,
-                NgiException::DOCUMENT_DOWNLOAD_FAILED,
-                ['process_id' => $processId, 'error' => $errorMessage]
-            );
+            $downloadResult['error'] = $errorMessage;
+
+            return $downloadResult;
         }
 
         LoggerService::info("{$this->logPrefix} All documents downloaded successfully", [
@@ -236,7 +220,7 @@ class NgiGetPolicyDocumentsService
         $process->update([
             'status' => PolicyIssuanceEnum::FAILED_STATUS,
             'message' => json_encode([
-                'error' => "GetPolicyDocuments failed after {$maxTries} attempts: {$exceptionMessage}",
+                'error' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM." failed after {$maxTries} attempts: {$exceptionMessage}",
                 'step' => NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM,
                 'final_attempt' => $totalAttempts,
             ]),

@@ -33,7 +33,7 @@ class NgiStepExecutor
 
         $createPolicyResponse = $this->apiService->createPolicyFromQuote($quote, $process);
 
-        if (! $createPolicyResponse['status']) {
+        if (! $createPolicyResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE) {
             LoggerService::error('Policy creation failed', extra: [
                 'step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
                 'error' => $createPolicyResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
@@ -44,14 +44,14 @@ class NgiStepExecutor
                 QuoteTypes::DEVICE->value,
                 PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
-                NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE
+                PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY
             );
 
             return $createPolicyResponse;
         }
 
         LoggerService::info('Policy created successfully', extra: [
-            'step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
+            'step' => PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
             'policy_number' => $createPolicyResponse['data']?->policy_no ?? null,
         ]);
 
@@ -116,7 +116,7 @@ class NgiStepExecutor
 
         $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process);
 
-        if (! $triggerBookPolicyResponse['status']) {
+        if (! $triggerBookPolicyResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY) {
             LoggerService::error('Book policy failed', extra: [
                 'step' => NgiEnum::STEP_BOOK_POLICY,
                 'error' => $triggerBookPolicyResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,

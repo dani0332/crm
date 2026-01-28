@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\NgiEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Facades\Ngi;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiApiService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiQuoteUpdaterService;
@@ -109,7 +110,8 @@ function initializeResponseObjects(&$successPolicyResponse, &$errorPolicyRespons
  */
 function buildQuotePrototype(): object
 {
-    return new class {
+    return new class
+    {
         public int $id;
         public string $code;
         public string $uuid;
@@ -174,13 +176,16 @@ function buildQuotePrototype(): object
                 'mobile_no' => $this->mobile_no,
             ];
 
-            $this->latestPayment = new class {
+            $this->latestPayment = new class
+            {
                 public function paymentSplits()
                 {
-                    return new class {
+                    return new class
+                    {
                         public function where($column, $value)
                         {
-                            return new class {
+                            return new class
+                            {
                                 public function first()
                                 {
                                     return null;
@@ -194,7 +199,8 @@ function buildQuotePrototype(): object
 
         public function payments()
         {
-            return new class($this->latestPayment) {
+            return new class($this->latestPayment)
+            {
                 private object $payment;
 
                 public function __construct(object $payment)
@@ -292,13 +298,13 @@ function getSharedProcess(array $overrides = []): object
     return $process;
 }
 
-
 /**
  * Create a custom policy response with given data
  */
 function createPolicyResponse(object $data): Response
 {
     $psr7Response = new Psr7Response(200, [], json_encode($data));
+
     return new Response($psr7Response);
 }
 
@@ -308,6 +314,7 @@ function createPolicyResponse(object $data): Response
 function createDocumentsResponse(object $data): Response
 {
     $psr7Response = new Psr7Response(200, [], json_encode($data));
+
     return new Response($psr7Response);
 }
 
@@ -536,6 +543,35 @@ describe('createPolicyFromQuote', function () {
             ->and($result['data']->policy_no)->toBe('NGI-POL-123');
     });
 
+    test('returns failure when the quote email is marked as fake policy issuance', function () {
+        $quote = getSharedQuote(['email' => PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE]);
+        $process = getSharedProcess();
+        global $successPolicyResponse;
+
+        $this->requestBuilder->shouldReceive('buildCreatePolicyFromQuotePayload')
+            ->once()
+            ->andReturn(['quote_reference_number' => 'NGI-Q-123']);
+        $this->requestBuilder->shouldReceive('buildCreatePolicyHeaders')
+            ->once()
+            ->andReturn(['Accept' => 'application/json']);
+
+        $httpResponse = $successPolicyResponse;
+
+        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
+        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+
+        $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
+        $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
+        app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
+
+        $this->quoteUpdater->shouldNotReceive('updateQuoteFromCreatePolicyResponse');
+
+        $result = $this->apiService->createPolicyFromQuote($quote, $process);
+
+        expect($result['status'])->toBeFalse()
+            ->and($result['message'])->toBe('Policy created successfully');
+    });
+
     test('returns failure when API returns error code', function () {
         $quote = getSharedQuote();
         $process = getSharedProcess();
@@ -601,6 +637,43 @@ describe('getPolicyDocuments', function () {
 
         expect($result['status'])->toBeTrue()
             ->and($result['completed_step'])->toBe(NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM);
+    });
+
+    test('returns failure when the quote email is marked as fake document download', function () {
+        $quote = getSharedQuote([
+            'policy_number' => 'NGI-POL-123',
+            'email' => PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD,
+        ]);
+        $process = getSharedProcess();
+
+        $this->validationService->shouldReceive('validatePolicyNumberExists')
+            ->once()
+            ->with($quote)
+            ->andReturn(['status' => true]);
+
+        $responseData = (object) [
+            'isSuccess' => true,
+            'statusMessage' => 'Documents retrieved',
+            'policy_no' => 'NGI-POL-123',
+            'policy_certificate_url' => 'https://example.com/policy.pdf',
+        ];
+        $psr7Response = new Psr7Response(200, [], json_encode($responseData));
+        $httpResponse = new Response($psr7Response);
+
+        \App\Facades\Ngi::shouldReceive('get')->once()->andReturn($httpResponse);
+        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+
+        $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
+        $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
+        app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
+
+        $this->quoteUpdater->shouldNotReceive('updateQuoteFromPolicyDocumentsResponse');
+        $this->quoteUpdater->shouldNotReceive('updatePaymentFromPolicyDocumentsResponse');
+
+        $result = $this->apiService->getPolicyDocuments($quote, $process);
+
+        expect($result['status'])->toBeFalse()
+            ->and($result['message'])->toBe('Documents retrieved');
     });
 
     test('returns failure when policy number validation fails', function () {

@@ -58,20 +58,6 @@ class NgiQuoteUpdaterService
             $updateData['price_with_vat'] = $policyDocumentsResult->policy_premium_with_tax;
         }
 
-        // Store document URLs/references for later retrieval
-        // These will be used to download and attach documents to IMCRM
-        if (isset($policyDocumentsResult->policy_certificate_url)) {
-            $updateData['insurer_policy_doc_id'] = $policyDocumentsResult->policy_certificate_url;
-        }
-
-        if (isset($policyDocumentsResult->premium_inv_doc_url)) {
-            $updateData['insurer_tax_invoice_doc_id'] = $policyDocumentsResult->premium_inv_doc_url;
-        }
-
-        if (isset($policyDocumentsResult->commision_inv_doc_url)) {
-            $updateData['insurer_debit_note_doc_id'] = $policyDocumentsResult->commision_inv_doc_url;
-        }
-
         if (! empty($updateData)) {
             $quote->update($updateData);
         }

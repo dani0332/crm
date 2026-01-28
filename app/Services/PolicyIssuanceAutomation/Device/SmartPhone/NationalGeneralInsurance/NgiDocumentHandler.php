@@ -226,16 +226,18 @@ class NgiDocumentHandler
     /**
      * Download all policy documents from provider URLs and store in database
      */
-    public function downloadAndStorePolicyDocuments(PersonalQuote $quote, PolicyIssuance $process): array
+    public function downloadAndStorePolicyDocuments(PersonalQuote $quote, PolicyIssuance $process, array $documentsApiResponse): array
     {
         // Refresh quote to get latest document URLs from GetPolicyDocuments response
         $quote->refresh();
 
+        $documentsApiResponseData = $documentsApiResponse['data'] ?? null;
+
         // Document URLs stored by NgiQuoteUpdaterService during GetPolicyDocuments API call
         $documentUrls = [
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $quote->insurer_policy_doc_id,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $quote->insurer_debit_note_doc_id,
+            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $documentsApiResponseData?->policy_certificate_url,
+            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $documentsApiResponseData?->premium_inv_doc_url,
+            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $documentsApiResponseData?->commision_inv_doc_url,
         ];
 
         // Validate document URLs exist
@@ -251,7 +253,7 @@ class NgiDocumentHandler
         foreach ($documentUrls as $docCode => $documentUrl) {
             if (empty($documentUrl)) {
                 $failedDocuments[] = $docCode;
-                LoggerService::warning('NgiDocumentHandler: Empty document URL', [
+                LoggerService::error('NgiDocumentHandler: Empty document URL', [
                     'document_code' => $docCode,
                 ]);
 
@@ -283,7 +285,7 @@ class NgiDocumentHandler
             $mimeType = $this->detectMimeType($documentContentResponse['content']);
             if ($mimeType === null) {
                 $failedDocuments[] = $docCode;
-                LoggerService::warning('NgiDocumentHandler: Failed to detect MIME type', [
+                LoggerService::error('NgiDocumentHandler: Failed to detect MIME type', [
                     'document_code' => $docCode,
                 ]);
 

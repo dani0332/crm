@@ -26,6 +26,7 @@ function makeDeviceQuoteStub(array $overrides = []): object
             'insurer_quote_number' => 'NGI-Q-123',
             'policy_number' => null,
             'quote_type_id' => \App\Enums\QuoteTypes::DEVICE->value,
+            'email' => 'john.doe@example.com',
         ];
     }
 
@@ -159,7 +160,7 @@ describe('executeCreatePolicyFromQuoteStep', function () {
                 \App\Enums\QuoteTypes::DEVICE->value,
                 PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
-                NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE
+                PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY
             );
         app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
 

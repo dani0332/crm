@@ -109,6 +109,12 @@ final class PolicyIssuanceEnum extends Enum
     const PROCESS_INVOLVED_QUOTE_FINALIZATION = 'Quote Finalization';
     const PROCESS_INVOLVED_PAYMENT_CAPTURE = 'Payment Capture';
 
+    // fake emails for policy issuance automation failure scenarios
+    const FAKE_EMAIL_IMCRM_POLICY_ISSUANCE = 'imcrm-policy-issue-fake@yopmail.com';
+    const FAKE_EMAIL_IMCRM_DOC_DOWNLOAD = 'imcrm-doc-download-fake@yopmail.com';
+    const FAKE_EMAIL_IMCRM_DOC_UPLOAD = 'imcrm-doc-upload-fake@yopmail.com';
+    const FAKE_EMAIL_IMCRM_BOOK_POLICY = 'imcrm-book-policy-fake@yopmail.com';
+
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
     {
         return match (ucfirst($quoteType)) {
