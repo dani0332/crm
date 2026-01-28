@@ -23,11 +23,11 @@ RUN bash /tmp/nodesource_setup.sh
 #RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
 #echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
-RUN apt-get update && apt-get install -y curl gnupg && \
-    mkdir -p /etc/apt/keyrings && \
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn.gpg >/dev/null && \
-    echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian stable main" \
-      | tee /etc/apt/sources.list.d/yarn.list
+# RUN apt-get update && apt-get install -y curl gnupg && \
+#     mkdir -p /etc/apt/keyrings && \
+#     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn.gpg >/dev/null && \
+#     echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian stable main" \
+#       | tee /etc/apt/sources.list.d/yarn.list
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -49,9 +49,10 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     supervisor \
     nodejs \
-    yarn \
     libwebp-dev \
     qpdf
+RUN corepack enable && corepack prepare yarn@stable --activate
+    
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
 RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
