@@ -9,7 +9,6 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Validator;
 
 class NgiValidationService
@@ -70,13 +69,13 @@ class NgiValidationService
      *
      * @param  mixed  $quote
      */
-    public function validateRequiredData($quote, $customer = null, $deviceQuote = null, $latestInsured = null, ?Collection $payments = null): array
+    public function validateRequiredData($quote, $customer = null, $deviceQuote = null, $latestInsured = null): array
     {
         $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
 
         $missing = [];
 
-        $hasPayments = $this->paymentsExist($quote, $payments);
+        $hasPayments = $this->paymentsExist($quote);
         $hasDeviceQuote = (bool) $deviceQuote;
         $hasImei = (bool) ($deviceQuote?->imei);
         $hasInsurerQuoteNumber = (bool) $quote->insurer_quote_number;
@@ -132,12 +131,8 @@ class NgiValidationService
     /**
      * Determine whether payments exist for the quote without loading the entire collection.
      */
-    private function paymentsExist($quote, ?Collection $payments): bool
+    private function paymentsExist($quote): bool
     {
-        if ($payments !== null) {
-            return $payments->isNotEmpty();
-        }
-
         if ($quote->relationLoaded('payments')) {
             return $quote->payments->isNotEmpty();
         }

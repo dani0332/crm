@@ -361,10 +361,7 @@ afterEach(function () {
         $sharedNgiFacadeMock->shouldReceive('post')->andReturnNull();
         $sharedNgiFacadeMock->shouldReceive('get')->andReturnNull();
     }
-
-    if (! app()->runningUnitTests()) {
-        gc_collect_cycles();
-    }
+    gc_collect_cycles();
 });
 
 describe('createPolicyFromQuote', function () {
