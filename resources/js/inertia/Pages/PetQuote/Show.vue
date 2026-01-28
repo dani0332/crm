@@ -18,7 +18,6 @@ const props = defineProps({
   insuranceProviders: Object,
   personalPlans: Object,
   isBetaUser: Boolean,
-  storageUrl: String,
   quoteType: String,
   quoteTypeId: Number,
   can: Object,
@@ -37,7 +36,6 @@ const props = defineProps({
   canAddBatchNumber: Boolean,
   quoteRequest: Object,
   quoteDocuments: Object,
-  cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   permissions: Object,
@@ -324,7 +322,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
           :notes="quoteDocuments"
           :modelType="quoteType"
           :quote="quote"
-          :cdn="cdnPath"
         />
         <Link
           v-if="quote.quote_detail?.insly_id"
@@ -1112,7 +1109,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -1153,7 +1149,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
