@@ -347,33 +347,29 @@ class PolicyIssuanceService
 
     private function resolvePolicyIssuanceLogResponse(mixed $response): mixed
     {
+        $resolvedResponse = $response;
+
         if ($response instanceof HttpClientResponse) {
             $responsePayload = $response->json();
 
-            if ($responsePayload === null) {
-                return $response->body();
-            }
-
-            return $responsePayload;
-        }
-
-        if (is_array($response)) {
-            return $response;
-        }
-
-        if (is_object($response)) {
+            $resolvedResponse = $responsePayload === null
+                ? $response->body()
+                : $responsePayload;
+        } elseif (is_array($response)) {
+            $resolvedResponse = $response;
+        } elseif (is_object($response)) {
             $encodedResponse = json_encode($response);
 
             if ($encodedResponse !== false) {
                 $decodedResponse = json_decode($encodedResponse, true);
 
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    return $decodedResponse;
+                    $resolvedResponse = $decodedResponse;
                 }
             }
         }
 
-        return $response;
+        return $resolvedResponse;
     }
 
     public function shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider): bool
