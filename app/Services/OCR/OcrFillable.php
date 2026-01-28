@@ -2,7 +2,6 @@
 
 namespace App\Services\OCR;
 
-use App\Enums\DocumentTypeCategory;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Services\CustomerVerification\CustomerVerificationService;
@@ -276,12 +275,6 @@ trait OcrFillable
     ) {
         $this->providerCode = $this->getProvider($quote);
         $this->isSendUpdateEligibleForOCR = $isSendUpdateEligibleForOCR;
-
-        if (! $this->isSupportedProvider($quoteType, $this->providerCode) && $documentCategory != DocumentTypeCategory::QUOTE) {
-            LoggerService::info(self::class.' - Not a Valid Provider');
-
-            return false;
-        }
 
         LoggerService::startQuoteLogging($quote);
 
