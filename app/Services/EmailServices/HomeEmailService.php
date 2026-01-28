@@ -20,6 +20,7 @@ use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -274,19 +275,27 @@ class HomeEmailService extends BaseService
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';
-            Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
+            Storage::disk('azureIMPrivate')->put($tempFilePath, $pdfContent);
 
-            // Generate a public URL
-            $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+            // Generate a public URL using generic method
+            $url = app(QuoteDocumentService::class)->getDocumentUrl(
                 $tempFilePath,
-                now()->addMinutes($pdfExpiry)
+                'azureIMPrivate',
+                $pdfExpiry
             );
+
+            if (! $url) {
+                LoggerService::error(self::class.' - attachHomeOCBPDFToEmail - Failed to generate temporary URL: File does not exist');
+
+                return '';
+            }
+
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
             LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Public URL generated');
 
-            return $publicUrl;
+            return $url;
         } catch (\Exception $e) {
             // Log the error details
             LoggerService::info(self::class." - Error: attachHomeOCBPDFToEmail - Error attaching PDF | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}");

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
@@ -315,7 +317,7 @@ class SukoonMedexService
     {
         try {
             // For local storage
-            if (Storage::disk('azureIM')->exists($path)) {
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
                 return true;
             }
 
@@ -778,9 +780,19 @@ class SukoonMedexService
         }
 
         $quoteType = $quote->quote_type_id ?? null;
-        $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
-        $emirateIdNumber = str_replace('-', '', $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '');
+        $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote?->emirates ?? null) : ($quote->emirate ?? null);
 
+        if ($this->quoteTypeId == QuoteTypeId::Car &&
+        $quote->registration_type == CarRegistrationType::COMPANY &&
+        $quote->vehicle_use == CarVehicleUse::PRIVATE) {
+            $emirateIdNumber = $quote->vehicleDriverDetail?->driver_eid_number ?? '';
+            $title = $quote->vehicleDriverDetail?->driver_gender == 'male' ? 'Mr' : 'Ms';
+        } else {
+            $emirateIdNumber = $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '';
+            $title = $latestInsuredData?->gender == 'Male' ? 'Mr' : 'Ms';
+        }
+
+        $emirateIdNumber = str_replace('-', '', $emirateIdNumber);
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
             $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
                 .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
@@ -788,7 +800,7 @@ class SukoonMedexService
 
         return [
             'form_name' => 'personal_details',
-            'title' => $latestInsuredData->gender == 'Male' ? 'Mr' : 'Ms',
+            'title' => $title,
             'first_name' => $firstName,
             'last_name' => $lastName,
             'mobile' => '+9710502732524',
@@ -1336,7 +1348,7 @@ class SukoonMedexService
         try {
             $fileNameAzure = uniqid()."_{$this->currentQuote->uuid}_{$docName}";
             $docUrl = "{$dir}/{$fileNameAzure}";
-            $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
+            $filePathAzure = Storage::disk('azureIMPrivate')->put($docUrl, $content);
 
             if (! $filePathAzure) {
                 throw new EpEcbException('failed to upload document, doc_name: '.$docName.' doc_url: '.$docUrl);

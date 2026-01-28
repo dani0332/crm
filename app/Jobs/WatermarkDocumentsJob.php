@@ -124,7 +124,7 @@ class WatermarkDocumentsJob implements ShouldQueue
     {
         try {
             // For local storage
-            if (Storage::disk('azureIM')->exists($path)) {
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
                 return true;
             }
 

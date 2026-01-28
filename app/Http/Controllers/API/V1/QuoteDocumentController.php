@@ -46,11 +46,13 @@ class QuoteDocumentController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function getQuoteDocumentsToReceive($quoteType, ActivitiesService $activitiesService, Request $request)
+    public function getQuoteDocumentsToReceive(Request $request, $quoteType, ActivitiesService $activitiesService, Request $request)
     {
-        $documentTypeCategory = $request->category;
         $quoteTypeId = $activitiesService->getQuoteTypeId($quoteType);
-        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $documentTypeCategory);
+        $registrationType = $request->input('registration_type');
+        $vehicleUse = $request->input('vehicle_use');
+
+        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse);
 
         return DocumentTypeResource::collection($documentTypes);
     }

@@ -43,6 +43,7 @@ class RateCoverageUploadController extends Controller
      */
     public function coveragesUploadCreate(UploadRateCoverageRequest $request)
     {
+        // Not Contains private data so no need to check for private storage
         $this->rateCoverageUploadService->coveragesUploadCreate($request->validated());
 
         return response()->json(['message' => 'Coverages upload is being processed.']);
