@@ -127,7 +127,7 @@ it('handles single date with custom date attribute name', function () {
     ];
 
     [$freshLoad, $startDate, $endDate] = $reportable->getStartAndEndDate($filters, 'createdAtFilter');
-    dump("startDate: $startDate, endDate: $endDate");
+
     expect($freshLoad)->toBeTrue()
         ->and($startDate)->toBe('2026-01-15 00:00:00')
         ->and($endDate)->toBe(now()->endOfDay()->format('Y-m-d H:i:s'));
