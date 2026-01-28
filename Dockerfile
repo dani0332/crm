@@ -100,7 +100,7 @@ EXPOSE 443
 
 # Check yarn packages
 COPY --chown=www:www-data package*.json yarn.lock /var/www/
-RUN yarn install --pure-lockfile
+RUN yarn install --immutable
 
 #Check composer packages
 #COPY --chown=www:www-data composer*.json composer.lock /var/www/
