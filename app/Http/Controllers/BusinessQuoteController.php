@@ -298,8 +298,6 @@ class BusinessQuoteController extends Controller
             $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
         });
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
         $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
         $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
@@ -334,7 +332,6 @@ class BusinessQuoteController extends Controller
             'lostReasons' => $this->lookupService->getLostReasons(),
             'quoteDocuments' => $quoteDocuments,
             'documentTypes' => $documentTypes,
-            'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'activities' => $activities,
             'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -564,6 +561,7 @@ class BusinessQuoteController extends Controller
 
         $totalLeads = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         foreach ($quotes as $item) {
             $totalLeads += $item['data']['total_leads'];
@@ -571,6 +569,7 @@ class BusinessQuoteController extends Controller
 
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
+            'renewalBatches' => $renewalBatches,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,

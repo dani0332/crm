@@ -32,11 +32,12 @@ class EndingPoliciesReportService extends ManagementReport
                 (isset($request['policyExpiredDate'][1]) && isValidDate($request['policyExpiredDate'][1]) ? Carbon::parse($request['policyExpiredDate'][1])->toDateString() : today()->toDateString());
         }
 
-        $query = PersonalQuote::query()
-            ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
+        $query = PersonalQuote::query();
+        $this->paymentJoin($query, null, 'p', 'leftJoin');
+        $query->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->join('quote_type as qt', 'qt.id', '=', 'quote_type_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'insurance_provider_id')
-            ->leftJoin('payments as p', 'personal_quotes.code', '=', 'p.code')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'personal_quotes.insurance_provider_id')
+            ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'p.plan_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
             ->leftJoin('customer as c', 'c.id', '=', 'customer_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
@@ -94,6 +95,10 @@ class EndingPoliciesReportService extends ManagementReport
                 'cli.text as travel_currently_located_in_id_text',
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
+                'ip.text as insurance_provider_name',
+                'p.frequency as payment_frequency',
+                'personal_quotes.created_at as quote_created_at',
+                'ipp.text as plan_name',
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             );
 
@@ -181,6 +186,15 @@ class EndingPoliciesReportService extends ManagementReport
             } else {
                 $item->travel_coverage = 'N/A';
                 $item->traveling_where = 'N/A';
+            }
+
+            if ($item->quote_type_id != QuoteTypeId::Life) {
+                $item->insurance_provider_name = 'N/A';
+                $item->payment_frequency = 'N/A';
+                $item->plan_name = 'N/A';
+                $item->quote_created_at = 'N/A';
+            } else {
+                $item->quote_created_at = ! empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
             }
         });
     }

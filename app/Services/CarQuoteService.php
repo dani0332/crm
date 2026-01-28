@@ -1176,7 +1176,7 @@ class CarQuoteService extends BaseService
                 'previous_quote_policy_number',
                 'previous_policy_expiry_date',
             ]
-        )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
+        )->with(['advisor', 'carMake', 'carModel', 'latestUpdateRenewalQuoteProcess', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name', 'pcp_tag')->with(['additionalContacts' => function ($q) {
                 $q->where('key', 'email');
             }]);
@@ -1206,6 +1206,13 @@ class CarQuoteService extends BaseService
             }
         }
 
+        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+            $leadValidationErrors = collect();
+            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
+            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
+            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
+        }
+
         $carQuote->plans = $plans;
 
         return $carQuote;
@@ -1213,9 +1220,11 @@ class CarQuoteService extends BaseService
 
     public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
     {
+        $process = '';
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         if ($useKen2Endpoint) {
             $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
+            $process = 'renewalsUpload';
         } else {
             $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
         }
@@ -1237,6 +1246,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            'callProcess' => $process,
             'callSource' => 'imcrm',
         ];
 
@@ -2062,7 +2072,8 @@ class CarQuoteService extends BaseService
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
-                'u.email as assignedadvisoremail'
+                'u.email as assignedadvisoremail',
+                'd.name as departmentname'
             )
             ->leftJoin('payments as p', function ($join) {
                 $join->on('p.paymentable_id', '=', 'q.id')
@@ -2071,6 +2082,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as d', 'u.department_id', '=', 'd.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
@@ -2203,7 +2215,8 @@ class CarQuoteService extends BaseService
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
-                'u.email as assignedadvisoremail'
+                'u.email as assignedadvisoremail',
+                'd.name as departmentname'
             )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('payments as p', function ($join) {
@@ -2215,6 +2228,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as d', 'u.department_id', '=', 'd.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')

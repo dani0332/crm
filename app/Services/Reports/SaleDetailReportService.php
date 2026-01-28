@@ -96,14 +96,19 @@ class SaleDetailReportService extends ManagementReport
                 'cli.text as travel_currently_located_in_id_text',
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
+                'ip.text as insurance_provider_name',
+                'p.frequency as payment_frequency',
+                'personal_quotes.created_at as quote_created_at',
+                'ipp.text as plan_name',
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
-            )
-            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
+            );
+        $this->paymentJoin($query);
+        $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->join('quote_status as qs', 'qs.id', '=', 'personal_quotes.quote_status_id')
+            ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'p.plan_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
@@ -217,6 +222,15 @@ class SaleDetailReportService extends ManagementReport
             } else {
                 $item->travel_coverage = 'N/A';
                 $item->traveling_where = 'N/A';
+            }
+
+            if ($item->quote_type_id != QuoteTypeId::Life) {
+                $item->insurance_provider_name = 'N/A';
+                $item->payment_frequency = 'N/A';
+                $item->plan_name = 'N/A';
+                $item->quote_created_at = 'N/A';
+            } else {
+                $item->quote_created_at = ! empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
             }
         });
     }

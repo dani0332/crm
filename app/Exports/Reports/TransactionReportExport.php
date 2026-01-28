@@ -75,6 +75,10 @@ class TransactionReportExport implements CsvExportableInterface
             'Traveling Where',
             'IMCRM SUB-SOURCE',
             'SUB SOURCE OPTIONS',
+            'Insurance Provider',
+            'Plan Name',
+            'Payment Frequency',
+            'Lead Created Date',
             'Branch',
         ];
     }
@@ -148,6 +152,10 @@ class TransactionReportExport implements CsvExportableInterface
             $quote->traveling_where ?? 'N/A',
             $quote->sub_source ?? 'N/A',
             $quote->sub_source_option ?? 'N/A',
+            $quote->insurance_provider_name ?? 'N/A',
+            $quote->plan_name ?? 'N/A',
+            $quote->payment_frequency ?? 'N/A',
+            $quote->quote_created_at ?? 'N/A',
             $quote->branch_name ?? 'N/A',
         ]);
 

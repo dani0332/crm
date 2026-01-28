@@ -61,14 +61,14 @@ class SaleSummaryReportService extends ManagementReport
         $distinctPaymentSplits = DB::table('payment_splits as dps')
             ->selectRaw('DISTINCT(code), due_date');
 
-        $query = PersonalQuote::query()
-            ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+        $query = PersonalQuote::query();
+        $this->paymentJoin($query);
+        $query->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('departments as support_dp', 'support_dp.id', '=', 'support_user.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->leftJoin('health_quote_request as hqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'hqr.id')
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
@@ -216,9 +216,9 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         $query = SendUpdateLog::query()
-            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
-            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
-            ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
+            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id');
+        $this->paymentJoin($query, null, 'pq', 'leftJoin', 'leftJoin');
+        $query->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
@@ -310,9 +310,9 @@ class SaleSummaryReportService extends ManagementReport
         $query = $this->applyFilters($query, $request, true, true);
 
         $reversalQuery = SendUpdateLog::query()
-            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
-            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
-            ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
+            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id');
+        $this->paymentJoin($reversalQuery, null, 'pq', 'leftJoin', 'leftJoin');
+        $reversalQuery->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')

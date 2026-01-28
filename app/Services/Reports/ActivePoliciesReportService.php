@@ -30,17 +30,17 @@ class ActivePoliciesReportService extends ManagementReport
             $this->reportDateRange = today()->toDateString();
         }
 
-        $query = PersonalQuote::query()
-            ->select(
-                DB::raw('COUNT(personal_quotes.id) as active_policy_count'),
-                DB::raw('FORMAT(SUM(personal_quotes.price_vat_applicable), 2) as price_with_vat'),
-                DB::raw('FORMAT(SUM(personal_quotes.price_vat_not_applicable), 2) as price_without_vat'),
-                'ip.text as insurer',
-                'quote_type.code as line_of_business',
-                DB::raw('SUM(CASE WHEN hqr.pec_marked_at IS NOT NULL THEN 1 ELSE 0 END) as pec_count'),
-                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
-            )
-            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
+        $query = PersonalQuote::query();
+        $this->paymentJoin($query);
+        $query->select(
+            DB::raw('COUNT(personal_quotes.id) as active_policy_count'),
+            DB::raw('FORMAT(SUM(personal_quotes.price_vat_applicable), 2) as price_with_vat'),
+            DB::raw('FORMAT(SUM(personal_quotes.price_vat_not_applicable), 2) as price_without_vat'),
+            'ip.text as insurer',
+            'quote_type.code as line_of_business',
+            DB::raw('SUM(CASE WHEN hqr.pec_marked_at IS NOT NULL THEN 1 ELSE 0 END) as pec_count'),
+            DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
+        )
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')

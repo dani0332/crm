@@ -122,7 +122,6 @@ class HandleInertiaRequests extends Middleware
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'pusherCluster' => config('constants.VITE_PUSHER_APP_CLUSTER'),
@@ -362,6 +361,10 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
             $nav = $nav->add('Search', route('search-leads'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT)) {
+            $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
         }
 
         /* personal quotes section */
@@ -676,6 +679,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]),
                         'User Status Logs',
                         route('admin.user-status-logs.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Activity Logs',
+                        route('admin.activity-logs.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
