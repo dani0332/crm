@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\QuoteTypeId;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\QuoteType;
 
 class ClaimAssignmentRequest extends FormRequest
 {

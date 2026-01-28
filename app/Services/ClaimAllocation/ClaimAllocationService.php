@@ -30,7 +30,7 @@ class ClaimAllocationService
     public function execute(string $claimUuid, int $quoteTypeId, string $quoteTypeLabel, bool $isReassignmentJob = false)
     {
         LoggerService::startQuoteLogging($claimUuid, LoggerFeatureEnum::CLAIM_ALLOCATION);
-    
+
         $allocationRequest = new AllocationRequest(
             quoteType: QuoteTypes::getName($quoteTypeId),
             quoteTypeLabel: QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteTypeLabel)),
