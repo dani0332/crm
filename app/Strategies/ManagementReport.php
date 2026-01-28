@@ -731,11 +731,29 @@ class ManagementReport
         });
     }
 
+    protected function getLatestCustomerInsuredCTE(): string
+    {
+        $businessQuoteType = QuoteTypeId::Business;
+
+        return "
+            SELECT
+                ci.quote_request_id,
+                ci.quote_type_id,
+                ci.customer_id,
+                ci.insured_id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY ci.quote_request_id, ci.quote_type_id, ci.customer_id
+                    ORDER BY ci.updated_at DESC
+                ) AS rn
+            FROM customer_insured ci
+            WHERE ci.quote_type_id = {$businessQuoteType}
+        ";
+    }
+
     protected function getBranchMappingCTE(): string
     {
         $now = now()->format('Y-m-d H:i:s');
         $healthQuoteType = QuoteTypeId::Health;
-        $businessQuoteType = QuoteTypeId::Business;
         $groupMedicalId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
         $abuDhabiEmirate = EmirateEnum::ABU_DHABI;
         $abuDhabiBranch = BranchEnum::ABU_DHABI->value;
@@ -743,91 +761,50 @@ class ManagementReport
         return "
             SELECT
                 pq.id,
-                CASE
-                    -- Priority 1: Direct branch assignment
-                    WHEN pq.branch_id IS NOT NULL THEN pq.branch_id
-
-                    -- Priority 2: Branch override config
-                    WHEN oc.target_branch_id IS NOT NULL THEN oc.target_branch_id
-
-                    -- Priority 3: Health Abu Dhabi branch
-                    WHEN pq.branch_id IS NULL
-                        AND pq.advisor_id IS NOT NULL
-                        AND pq.quote_type_id = {$healthQuoteType}
-                        AND hqr.emirate_of_your_visa_id = {$abuDhabiEmirate}
-                        THEN {$abuDhabiBranch}
-
-                    -- Priority 4: Group Medical Abu Dhabi branch
-                    WHEN pq.branch_id IS NULL
-                        AND pq.advisor_id IS NOT NULL
-                        AND pq.business_type_of_insurance_id = {$groupMedicalId}
-                        AND i.emirate_of_registration_id = {$abuDhabiEmirate}
-                        THEN {$abuDhabiBranch}
-
-                    -- Priority 5: Advisor's primary branch (fallback)
-                    WHEN pq.branch_id IS NULL
-                        AND ub.branch_id IS NOT NULL
-                        AND (pq.quote_type_id != {$healthQuoteType} OR hqr.emirate_of_your_visa_id != {$abuDhabiEmirate} OR hqr.emirate_of_your_visa_id IS NULL)
-                        AND (pq.business_type_of_insurance_id != {$groupMedicalId} OR pq.business_type_of_insurance_id IS NULL OR i.emirate_of_registration_id != {$abuDhabiEmirate} OR i.emirate_of_registration_id IS NULL)
-                        THEN ub.branch_id
-
-                    ELSE NULL
-                END AS resolved_branch_id
+                COALESCE(
+                    pq.branch_id,
+                    oc.target_branch_id,
+                    CASE
+                        WHEN pq.advisor_id IS NOT NULL AND pq.quote_type_id = {$healthQuoteType} AND hqr.emirate_of_your_visa_id = {$abuDhabiEmirate}
+                            THEN {$abuDhabiBranch}
+                        WHEN pq.advisor_id IS NOT NULL AND pq.business_type_of_insurance_id = {$groupMedicalId} AND i.emirate_of_registration_id = {$abuDhabiEmirate}
+                            THEN {$abuDhabiBranch}
+                        ELSE ub.branch_id
+                    END
+                ) AS resolved_branch_id
             FROM personal_quotes pq
-
-            -- User branches for primary branch lookup
-            LEFT JOIN user_branches AS ub
-                ON ub.user_id = pq.advisor_id
-                AND pq.branch_id IS NULL
+            LEFT JOIN user_branches ub ON ub.user_id = pq.advisor_id
                 AND ub.is_primary = 1
                 AND ub.status = 1
-
-            -- Branch override config
-            LEFT JOIN branch_override_config AS oc
-                ON ub.branch_id = oc.source_branch_id
                 AND pq.branch_id IS NULL
+            LEFT JOIN branch_override_config oc ON oc.source_branch_id = ub.branch_id
                 AND oc.quote_type_id = pq.quote_type_id
-                AND (pq.business_type_of_insurance_id IS NULL
-                    OR (pq.quote_type_id = {$businessQuoteType} AND pq.business_type_of_insurance_id != {$groupMedicalId}))
                 AND oc.start_date < '{$now}'
                 AND (oc.end_date IS NULL OR oc.end_date > '{$now}')
-
-            -- Health quote request for emirate check
-            LEFT JOIN health_quote_request AS hqr
-                ON pq.quote_id = hqr.id
-                AND pq.quote_type_id = {$healthQuoteType}
-
-            -- Customer insured for group medical
-            LEFT JOIN customer_insured AS ci
-                ON ci.quote_request_id = pq.quote_id
-                AND ci.quote_type_id = pq.quote_type_id
-                AND ci.customer_id = pq.customer_id
                 AND pq.branch_id IS NULL
-                AND pq.quote_type_id = {$businessQuoteType}
+                AND (pq.business_type_of_insurance_id IS NULL OR pq.business_type_of_insurance_id != {$groupMedicalId})
+            LEFT JOIN health_quote_request hqr ON hqr.id = pq.quote_id
+                AND pq.quote_type_id = {$healthQuoteType}
+                AND pq.branch_id IS NULL
+            LEFT JOIN latest_customer_insured lci ON lci.quote_request_id = pq.quote_id
+                AND lci.quote_type_id = pq.quote_type_id
+                AND lci.customer_id = pq.customer_id
+                AND lci.rn = 1
+                AND pq.branch_id IS NULL
                 AND pq.business_type_of_insurance_id = {$groupMedicalId}
-                AND ci.updated_at = (
-                    SELECT MAX(ci2.updated_at)
-                    FROM customer_insured AS ci2
-                    WHERE ci2.quote_request_id = pq.quote_id
-                        AND ci2.quote_type_id = pq.quote_type_id
-                        AND ci2.customer_id = pq.customer_id
-                )
-
-            -- Insured for emirate of registration
-            LEFT JOIN insured AS i
-                ON i.id = ci.insured_id
+            LEFT JOIN insured i ON i.id = lci.insured_id
         ";
     }
 
-    protected function branchJoin($query)
+    protected function branchJoin($query): void
     {
-        $cte = $this->getBranchMappingCTE();
-        $query->withExpression('branch_mapped', $cte);
+        $latestCustomerInsuredCte = $this->getLatestCustomerInsuredCTE();
+        $query->withExpression('latest_customer_insured', $latestCustomerInsuredCte);
 
-        // Join the CTE to get the resolved branch ID
-        $query->leftJoin('branch_mapped as bm', 'bm.id', '=', 'personal_quotes.id');
+        $branchMappingCte = $this->getBranchMappingCTE();
+        $query->withExpression('branch_mapped', $branchMappingCte);
 
-        // Simple branch join using resolved branch ID
-        $query->leftJoin('branches as b', 'b.id', '=', 'bm.resolved_branch_id');
+        $query->leftJoin('branch_mapped as bm', 'bm.id', '=', 'personal_quotes.id')
+            ->leftJoin('branches as b', 'b.id', '=', 'bm.resolved_branch_id');
     }
 }
