@@ -45,7 +45,6 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     libwebp-dev \
     nodejs \
-    npm \
     yarn \
     qpdf
 
