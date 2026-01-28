@@ -249,7 +249,6 @@ class SendUpdateLogController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
-            'storageUrl' => storageUrl(),
             'documentTypes' => $documentTypes,
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'membersDetail' => CustomerMembersRepository::getBy($quote->id, strtoupper($quoteType)),

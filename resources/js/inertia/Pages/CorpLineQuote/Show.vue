@@ -188,10 +188,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  storageUrl: {
-    type: String,
-    required: true,
-  },
   amlStatusName: {
     type: String,
     required: true,
@@ -746,7 +742,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           :notes="quoteNotes"
           modelType="Business"
           :quote="quote"
-          :cdn="cdnPath"
         />
         <Link
           v-if="quote?.insly_id"
@@ -1596,7 +1591,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :quoteSubType="quoteTypeCodeEnum.CORPLINE"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
@@ -1626,7 +1620,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
