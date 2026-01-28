@@ -380,7 +380,13 @@ class SageApiService
             $quote = $this->getQuoteObjectBy($request->quoteType, $preparedData['sendUpdateLog']->quote_uuid, 'uuid');
             $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
             $isTapPaymentGateway = $preparedData['payment']->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
-            $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? [];
+            $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? collect([]);
+            if ($ePTransactions->isNotEmpty()) {
+                $ePTransactions->load([
+                    'payments',
+                    'sageApiLogs',
+                ]);
+            }
 
             foreach ($ePTransactions as $ePTransaction) {
 
@@ -392,15 +398,32 @@ class SageApiService
                     'epBookingLogCount' => count($epTransSageLogArray),
                     'suCustomerNumber' => $sageRequestPayload->customerId,
                 ]);
-                if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && count($epTransSageLogArray) > 0) {
-                    $quoteSageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->quoteType, $preparedData['payment'], $quote, $preparedData['splitPayments']);
-                    $quoteSageRequest->quoteTypeId = $quoteTypeId;
-                    $quoteSageRequest->userId = $sageRequestPayload->userId;
-                    LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : Start Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################');
-                    $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookReversalOfEmbeddedProductOnSage([$quote, $preparedData['sendUpdateLog'], $quoteSageRequest, $ePTransaction], $ePTransaction?->product?->embeddedProduct?->short_code);
-                    LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : End Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################', extra : $embeddedProductSageBookingResponse);
-                    if (! $embeddedProductSageBookingResponse['status']) {
-                        return $embeddedProductSageBookingResponse;
+                if ($isLobAllowedForEmbeddedProductBooking && $ePTransaction && $ePTransaction->payments->isNotEmpty() && count($epTransSageLogArray) > 0) {
+
+                    $epPayment = $ePTransaction->payments->first();
+                    $epPaymentDate = Carbon::parse($epPayment->getAttributes()['captured_at']);
+                    if ($epPaymentDate->diffInDays(Carbon::now()) <= 30) {
+
+                        $quoteSageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->quoteType, $preparedData['payment'], $quote, $preparedData['splitPayments']);
+                        $quoteSageRequest->quoteTypeId = $quoteTypeId;
+                        $quoteSageRequest->userId = $sageRequestPayload->userId;
+                        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : Start Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################');
+                        $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookReversalOfEmbeddedProductOnSage([$quote, $preparedData['sendUpdateLog'], $quoteSageRequest, $ePTransaction], $ePTransaction?->product?->embeddedProduct?->short_code);
+                        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : End Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################', extra: $embeddedProductSageBookingResponse);
+                        if (! $embeddedProductSageBookingResponse['status']) {
+                            return $embeddedProductSageBookingResponse;
+                        }
+
+                    } else {
+                        LoggerService::info(
+                            self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : not eligible : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################',
+                            extra: [
+                                'code' => $ePTransaction->code,
+                                'captured_at' => $epPaymentDate,
+                                'reversal_trigger_date' => Carbon::now(),
+                                'diff_in_days' => $epPaymentDate->diffInDays(Carbon::now()),
+                            ]
+                        );
                     }
 
                 }
