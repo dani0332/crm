@@ -46,7 +46,7 @@ trait HealthTeamRoutable
             ->first();
     }
 
-    private function getGbpTeamMinPrice(): ?float
+    private function getGbpTeamMinPrice()
     {
         $gbpTeam = Team::where('allocation_threshold_enabled', true)
             ->where('name', TeamNameEnum::GBP)
@@ -56,7 +56,7 @@ trait HealthTeamRoutable
         return $gbpTeam?->min_price;
     }
 
-    private function logGbpCheckResult(?float $gbpMinPrice, $priceStartingFrom, string $routingType = 'routing'): void
+    private function logGbpCheckResult($gbpMinPrice, $priceStartingFrom, string $routingType = 'routing'): void
     {
         if ($gbpMinPrice === null) {
             LoggerService::info("GBP team not found for AUH category, proceeding with regular {$routingType} routing");
