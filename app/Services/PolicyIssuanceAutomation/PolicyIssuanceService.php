@@ -26,6 +26,7 @@ use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Client\Response as HttpClientResponse;
+use JsonSerializable;
 
 class PolicyIssuanceService
 {
@@ -358,14 +359,12 @@ class PolicyIssuanceService
         } elseif (is_array($response)) {
             $resolvedResponse = $response;
         } elseif (is_object($response)) {
-            $encodedResponse = json_encode($response);
-
-            if ($encodedResponse !== false) {
-                $decodedResponse = json_decode($encodedResponse, true);
-
-                if (json_last_error() === JSON_ERROR_NONE) {
-                    $resolvedResponse = $decodedResponse;
-                }
+            if (method_exists($response, 'toArray')) {
+                $resolvedResponse = $response->toArray();
+            } elseif ($response instanceof JsonSerializable) {
+                $resolvedResponse = $response->jsonSerialize();
+            } else {
+                $resolvedResponse = (array) $response;
             }
         }
 

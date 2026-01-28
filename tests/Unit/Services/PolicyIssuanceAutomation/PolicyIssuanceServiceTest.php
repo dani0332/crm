@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Http\Client\Response;
+use JsonSerializable;
 
 beforeEach(function () {
     $this->service = new PolicyIssuanceService;
@@ -30,6 +31,24 @@ dataset('policyIssuanceLogResponses', function () {
                 'details' => (object) ['code' => 'OK', 'value' => 100],
             ],
             ['status' => true, 'details' => ['code' => 'OK', 'value' => 100]],
+        ],
+        'object with toArray' => [
+            new class {
+                public function toArray(): array
+                {
+                    return ['foo' => 'bar'];
+                }
+            },
+            ['foo' => 'bar'],
+        ],
+        'json serializable object' => [
+            new class implements JsonSerializable {
+                public function jsonSerialize(): array
+                {
+                    return ['baz' => 'qux'];
+                }
+            },
+            ['baz' => 'qux'],
         ],
     ];
 });
