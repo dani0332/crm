@@ -145,7 +145,7 @@ class EmbeddedTransactionService extends BaseService
                 'displayName' => config('constants.IM_FROM_EMAIL', 'InsuranceMarket'),
                 'buyNowUrl' => $buyNowUrl,
                 'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
-                'birdCarEpReminderEmailCallbackUrl' => route('retargeting-ep-reminder-callback'),
+                'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
                 "epShortCode" => $embeddedTransaction->ep_short_code,
                 "vehicleMake" => $vehicle->make,
                 "vehicleModel" => $vehicle->model,
