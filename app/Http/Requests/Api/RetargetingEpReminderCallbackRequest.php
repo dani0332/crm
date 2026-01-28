@@ -25,10 +25,10 @@ class RetargetingEpReminderCallbackRequest extends FormRequest
         return [
             'quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car,
             'quoteId' => 'required|integer|exists:car_quote_request,id',
-            'templateId' => 'required|integer',
-            'customerEmail' => 'required|string',
+            'templateId' => 'required|string',
             'messageId' => 'required|string',
             'customerId' => 'required|integer',
+            'customerEmail' => 'required|string',
             'subject' => 'required|string',
             'responseCode' => 'required',
             'reminderNumber' => 'required|integer|in:1,2',
