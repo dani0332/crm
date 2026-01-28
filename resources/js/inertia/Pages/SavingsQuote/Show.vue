@@ -8,6 +8,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import AvailablePlans from './Partials/AvailablePlans.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -144,7 +145,7 @@ const customerProfileForm = useForm({
 
   insured_first_name: page.props.quote?.customer?.insured?.first_name,
   insured_last_name: page.props.quote?.customer?.insured?.last_name,
-  emirates_id_number: page.props.quote?.customer?.insured?.id_number,
+  emirates_id_number: page.props.quote?.customer?.insured?.id_number && applyEmiratesNumberMasking(page.props.quote.customer.insured.id_number),
   emirates_id_expiry_date:
     page.props.quote?.customer?.insured?.insured_kyc?.id_expiry_date,
 
@@ -720,6 +721,7 @@ const onCopyText = text => {
                       placeholder="EMIRATES ID NUMBER"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
+                      @input="applyEmiratesNumberMasking(customerProfileForm.emirates_id_number)"
                     />
                   </dd>
                 </div>
