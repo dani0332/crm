@@ -329,15 +329,7 @@ class PolicyIssuanceService
 
     public function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status, $policyIssuance): void
     {
-        $responsePayload = $response;
-
-        if ($response instanceof HttpClientResponse) {
-            $responsePayload = $response->json();
-
-            if ($responsePayload === null) {
-                $responsePayload = $response->body();
-            }
-        }
+        $responsePayload = $this->resolvePolicyIssuanceLogResponse($response);
 
         $log = PolicyIssuanceLog::create([
             'policy_issuance_id' => $policyIssuance->id,
@@ -351,6 +343,37 @@ class PolicyIssuanceService
         ]);
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' PID : '.$policyIssuance?->id.' Policy Issuance Log ID : '.$log->id);
+    }
+
+    private function resolvePolicyIssuanceLogResponse(mixed $response): mixed
+    {
+        if ($response instanceof HttpClientResponse) {
+            $responsePayload = $response->json();
+
+            if ($responsePayload === null) {
+                return $response->body();
+            }
+
+            return $responsePayload;
+        }
+
+        if (is_array($response)) {
+            return $response;
+        }
+
+        if (is_object($response)) {
+            $encodedResponse = json_encode($response);
+
+            if ($encodedResponse !== false) {
+                $decodedResponse = json_decode($encodedResponse, true);
+
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return $decodedResponse;
+                }
+            }
+        }
+
+        return $response;
     }
 
     public function shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider): bool
