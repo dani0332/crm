@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\HealthTeamRouting;
 
+use App\Enums\HealthTeamType;
 use App\Enums\TeamCategoryEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
@@ -138,6 +139,29 @@ class HealthTeamRoutingService
             LoggerService::warning('Premium missing for AUH lead', ['lead_id' => $lead->id]);
 
             return null;
+        }
+
+        // Check if priceStartingFrom is greater than GBP team's min price
+        $gbpMinPrice = $this->getGbpTeamMinPrice(TeamCategoryEnum::AUH);
+        if ($gbpMinPrice !== null && $lead->price_starting_from > $gbpMinPrice) {
+            $this->logStep(
+                'Price starting from is greater than GBP min price, assigning to GBP team',
+                'gbp_assignment',
+                [
+                    'price_starting_from' => $lead->price_starting_from,
+                    'gbp_min_price' => $gbpMinPrice,
+                    'category' => TeamCategoryEnum::AUH->value,
+                ],
+                $lead
+            );
+            LoggerService::info("Price starting from ({$lead->price_starting_from}) is greater than GBP min price ({$gbpMinPrice}), assigning to GBP team");
+
+            return HealthTeamType::GBP;
+        }
+        if ($gbpMinPrice === null) {
+            LoggerService::info('GBP team not found for AUH category, proceeding with regular tier-based routing');
+        } elseif ($lead->price_starting_from <= $gbpMinPrice) {
+            LoggerService::info("Price starting from ({$lead->price_starting_from}) is not greater than GBP min price ({$gbpMinPrice}), proceeding with regular tier-based routing");
         }
 
         try {
