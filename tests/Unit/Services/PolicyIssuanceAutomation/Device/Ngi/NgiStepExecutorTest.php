@@ -9,8 +9,60 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiStepExecutor;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use Database\Factories\DeviceQuoteFactory;
 use Illuminate\Support\Facades\Queue;
+
+/**
+ * Create a lightweight device quote stub optimized for quick unit tests.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function makeDeviceQuoteStub(array $overrides = []): object
+{
+    static $prototype = null;
+
+    if (! $prototype) {
+        $prototype = (object) [
+            'id' => 1,
+            'insurer_quote_number' => 'NGI-Q-123',
+            'policy_number' => null,
+            'quote_type_id' => \App\Enums\QuoteTypes::DEVICE->value,
+        ];
+    }
+
+    $quote = clone $prototype;
+
+    foreach ($overrides as $key => $value) {
+        $quote->{$key} = $value;
+    }
+
+    return $quote;
+}
+
+/**
+ * Create a lightweight process stub optimized for quick unit tests.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function makeProcessStub(array $overrides = []): object
+{
+    static $prototype = null;
+
+    if (! $prototype) {
+        $prototype = (object) [
+            'id' => 1,
+            'status' => PolicyIssuanceEnum::PROCESSING_STATUS,
+            'completed_step' => null,
+        ];
+    }
+
+    $process = clone $prototype;
+
+    foreach ($overrides as $key => $value) {
+        $process->{$key} = $value;
+    }
+
+    return $process;
+}
 
 beforeEach(function () {
     // Create mocked dependencies for unit tests
@@ -43,8 +95,8 @@ afterEach(function () {
 
 describe('executeCreatePolicyFromQuoteStep', function () {
     test('returns success response when API call succeeds', function () {
-        $quote = DeviceQuoteFactory::makeMock();
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = makeDeviceQuoteStub();
+        $process = makeProcessStub();
 
         $this->apiService->shouldReceive('createPolicyFromQuote')
             ->once()
@@ -64,8 +116,8 @@ describe('executeCreatePolicyFromQuoteStep', function () {
     });
 
     test('returns failure response when API call fails', function () {
-        $quote = DeviceQuoteFactory::makeMock();
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = makeDeviceQuoteStub();
+        $process = makeProcessStub();
 
         $this->apiService->shouldReceive('createPolicyFromQuote')
             ->once()
@@ -89,8 +141,8 @@ describe('executeCreatePolicyFromQuoteStep', function () {
     });
 
     test('updates insurer API status when API call fails', function () {
-        $quote = DeviceQuoteFactory::makeMock();
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = makeDeviceQuoteStub();
+        $process = makeProcessStub();
 
         $this->apiService->shouldReceive('createPolicyFromQuote')
             ->once()
@@ -121,8 +173,8 @@ describe('executeGetPolicyDocumentsAndUploadToIMCRMStep', function () {
     test('dispatches job with delay and returns documents_pending response', function () {
         Queue::fake();
 
-        $quote = DeviceQuoteFactory::makeMock(['policy_number' => 'NGI-POL-123']);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = makeDeviceQuoteStub(['policy_number' => 'NGI-POL-123']);
+        $process = makeProcessStub();
 
         $result = $this->stepExecutor->executeGetPolicyDocumentsAndUploadToIMCRMStep($quote, $process);
 
@@ -137,8 +189,8 @@ describe('executeGetPolicyDocumentsAndUploadToIMCRMStep', function () {
     test('includes delay minutes in response message', function () {
         Queue::fake();
 
-        $quote = DeviceQuoteFactory::makeMock(['policy_number' => 'NGI-POL-123']);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = makeDeviceQuoteStub(['policy_number' => 'NGI-POL-123']);
+        $process = makeProcessStub();
 
         $result = $this->stepExecutor->executeGetPolicyDocumentsAndUploadToIMCRMStep($quote, $process);
 
@@ -149,8 +201,8 @@ describe('executeGetPolicyDocumentsAndUploadToIMCRMStep', function () {
 
 describe('executeBookPolicyStep', function () {
     test('returns success response when book policy succeeds', function () {
-        $quote = DeviceQuoteFactory::makeMock(['policy_number' => 'NGI-POL-123']);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = makeDeviceQuoteStub(['policy_number' => 'NGI-POL-123']);
+        $process = makeProcessStub();
 
         $this->bookPolicyService->shouldReceive('bookPolicy')
             ->once()
@@ -168,8 +220,8 @@ describe('executeBookPolicyStep', function () {
     });
 
     test('returns failure response when book policy fails', function () {
-        $quote = DeviceQuoteFactory::makeMock(['policy_number' => 'NGI-POL-123']);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = makeDeviceQuoteStub(['policy_number' => 'NGI-POL-123']);
+        $process = makeProcessStub();
 
         $this->bookPolicyService->shouldReceive('bookPolicy')
             ->once()
@@ -192,8 +244,8 @@ describe('executeBookPolicyStep', function () {
     });
 
     test('updates insurer API status when book policy fails', function () {
-        $quote = DeviceQuoteFactory::makeMock(['policy_number' => 'NGI-POL-123']);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = makeDeviceQuoteStub(['policy_number' => 'NGI-POL-123']);
+        $process = makeProcessStub();
 
         $this->bookPolicyService->shouldReceive('bookPolicy')
             ->once()

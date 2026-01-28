@@ -9,6 +9,7 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Validator;
 
 class NgiValidationService
@@ -69,20 +70,27 @@ class NgiValidationService
      *
      * @param  mixed  $quote
      */
-    public function validateRequiredData($quote, $customer = null, $deviceQuote = null, $latestInsured = null): array
+    public function validateRequiredData($quote, $customer = null, $deviceQuote = null, $latestInsured = null, ?Collection $payments = null): array
     {
         $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
 
         $missing = [];
 
-        if (! $quote->payments || $quote->payments->isEmpty()) {
+        $hasPayments = $this->paymentsExist($quote, $payments);
+        $hasDeviceQuote = (bool) $deviceQuote;
+        $hasImei = (bool) ($deviceQuote?->imei);
+        $hasInsurerQuoteNumber = (bool) $quote->insurer_quote_number;
+        $hasCustomer = (bool) $customer;
+        $hasEmiratesIdNumber = (bool) $emiratesIdNumber;
+
+        if (! $hasPayments) {
             $missing[] = 'payments';
         }
 
-        if (! $deviceQuote) {
+        if (! $hasDeviceQuote) {
             $missing[] = 'device quote details';
         } else {
-            if (empty($deviceQuote->imei)) {
+            if (! $hasImei) {
                 $missing[] = 'IMEI number';
             }
         }
@@ -101,12 +109,12 @@ class NgiValidationService
 
         if (! empty($missing)) {
             LoggerService::error('Missing required data', extra: [
-                'has_payments' => (bool) ($quote->payments && ! $quote->payments->isEmpty()),
-                'has_device_quote' => (bool) $deviceQuote,
-                'has_imei' => (bool) ($deviceQuote?->imei),
-                'has_insurer_quote_number' => (bool) $quote->insurer_quote_number,
-                'has_customer' => (bool) $customer,
-                'has_emirates_id' => (bool) ($emiratesIdNumber),
+                'has_payments' => $hasPayments,
+                'has_device_quote' => $hasDeviceQuote,
+                'has_imei' => $hasImei,
+                'has_insurer_quote_number' => $hasInsurerQuoteNumber,
+                'has_customer' => $hasCustomer,
+                'has_emirates_id' => $hasEmiratesIdNumber,
             ]);
 
             $missingDesc = implode(', ', $missing);
@@ -119,6 +127,22 @@ class NgiValidationService
         }
 
         return ['status' => true];
+    }
+
+    /**
+     * Determine whether payments exist for the quote without loading the entire collection.
+     */
+    private function paymentsExist($quote, ?Collection $payments): bool
+    {
+        if ($payments !== null) {
+            return $payments->isNotEmpty();
+        }
+
+        if ($quote->relationLoaded('payments')) {
+            return $quote->payments->isNotEmpty();
+        }
+
+        return $quote->payments()->exists();
     }
 
     /**

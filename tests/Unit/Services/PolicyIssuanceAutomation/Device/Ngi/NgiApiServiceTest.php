@@ -10,7 +10,6 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use Database\Factories\DeviceQuoteFactory;
 use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Http\Client\Response;
 
@@ -19,11 +18,14 @@ $sharedResponseHandler = null;
 $sharedNgiFacadeMock = null;
 $successPolicyResponse = null;
 $errorPolicyResponse = null;
+$expiredPolicyResponse = null;
 $successDocumentsResponse = null;
 $errorDocumentsResponse = null;
+$sharedQuotePrototype = null;
+$sharedProcessPrototype = null;
 
 beforeAll(function () {
-    global $sharedResponseHandler, $sharedNgiFacadeMock, $successPolicyResponse, $errorPolicyResponse, $successDocumentsResponse, $errorDocumentsResponse;
+    global $sharedResponseHandler, $sharedNgiFacadeMock, $successPolicyResponse, $errorPolicyResponse, $expiredPolicyResponse, $successDocumentsResponse, $errorDocumentsResponse;
 
     // Create shared stateless service instances once per test class
     $sharedResponseHandler = new NgiResponseHandler;
@@ -35,7 +37,11 @@ beforeAll(function () {
     $sharedNgiFacadeMock->shouldReceive('get')->andReturnNull(); // Default behavior, can be overridden
 
     // Create reusable response objects
-    initializeResponseObjects($successPolicyResponse, $errorPolicyResponse, $successDocumentsResponse, $errorDocumentsResponse);
+    initializeResponseObjects($successPolicyResponse, $errorPolicyResponse, $expiredPolicyResponse, $successDocumentsResponse, $errorDocumentsResponse);
+
+    // Pre-build shared prototypes to keep tests snappy
+    getSharedQuote();
+    getSharedProcess();
 
     // Swap the facade with our shared mock
     \App\Facades\Ngi::swap($sharedNgiFacadeMock);
@@ -44,7 +50,7 @@ beforeAll(function () {
 /**
  * Initialize reusable response objects to reduce memory allocation overhead
  */
-function initializeResponseObjects(&$successPolicyResponse, &$errorPolicyResponse, &$successDocumentsResponse, &$errorDocumentsResponse): void
+function initializeResponseObjects(&$successPolicyResponse, &$errorPolicyResponse, &$expiredPolicyResponse, &$successDocumentsResponse, &$errorDocumentsResponse): void
 {
     // Success policy creation response
     $successPolicyData = (object) [
@@ -66,6 +72,14 @@ function initializeResponseObjects(&$successPolicyResponse, &$errorPolicyRespons
     $psr7Response = new Psr7Response(200, [], json_encode($errorPolicyData));
     $errorPolicyResponse = new Response($psr7Response);
 
+    $expiredPolicyData = (object) [
+        'isSuccess' => false,
+        'statusMessage' => 'Quote has expired',
+        'errorCode' => 'ERR_QUOTE_EXPIRED',
+    ];
+    $psr7Response = new Psr7Response(200, [], json_encode($expiredPolicyData));
+    $expiredPolicyResponse = new Response($psr7Response);
+
     // Success documents response
     $successDocumentsData = (object) [
         'isSuccess' => true,
@@ -86,6 +100,196 @@ function initializeResponseObjects(&$successPolicyResponse, &$errorPolicyRespons
     ];
     $psr7Response = new Psr7Response(200, [], json_encode($errorDocumentsData));
     $errorDocumentsResponse = new Response($psr7Response);
+}
+
+/**
+ * Get a cloned quote prototype to avoid repeated Faker generation.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function buildQuotePrototype(): object
+{
+    return new class {
+        public int $id;
+        public string $code;
+        public string $uuid;
+        public string $policy_start_date;
+        public string $policy_expiry_date;
+        public ?string $policy_number;
+        public string $first_name;
+        public string $last_name;
+        public string $email;
+        public string $mobile_no;
+        public object $customer;
+        public object $deviceQuote;
+        public object $latestInsured;
+        public object $latestPayment;
+
+        public function __construct()
+        {
+            $defaults = [
+                'id' => 1,
+                'code' => 'DEV-00001',
+                'uuid' => '00000000-0000-0000-0000-000000000001',
+                'policy_start_date' => '2024-01-15',
+                'policy_expiry_date' => '2025-01-15',
+                'policy_number' => null,
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'email' => 'john.doe@example.com',
+                'mobile_no' => '+971501234567',
+            ];
+
+            foreach ($defaults as $key => $value) {
+                $this->{$key} = $value;
+            }
+
+            $this->customer = (object) [
+                'id' => 1,
+                'emirates_id_number' => '784-1234-12345678-1',
+                'emirates_id_expiry_date' => '2026-01-15',
+                'dob' => '1990-01-15',
+                'first_name' => $this->first_name,
+                'last_name' => $this->last_name,
+                'email' => $this->email,
+                'mobile_no' => $this->mobile_no,
+            ];
+
+            $this->deviceQuote = (object) [
+                'id' => 1,
+                'imei' => '123456789012345',
+                'device_make' => 'Apple',
+                'device_model' => 'iPhone 15 Pro',
+                'device_type' => 'smartphone',
+                'device_value' => 5000.00,
+            ];
+
+            $this->latestInsured = (object) [
+                'id' => 1,
+                'id_type' => 'emiratesId',
+                'id_number' => '784-1234-12345678-1',
+                'first_name' => $this->first_name,
+                'last_name' => $this->last_name,
+                'email' => $this->email,
+                'mobile_no' => $this->mobile_no,
+            ];
+
+            $this->latestPayment = new class {
+                public function paymentSplits()
+                {
+                    return new class {
+                        public function where($column, $value)
+                        {
+                            return new class {
+                                public function first()
+                                {
+                                    return null;
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+
+        public function payments()
+        {
+            return new class($this->latestPayment) {
+                private object $payment;
+
+                public function __construct(object $payment)
+                {
+                    $this->payment = $payment;
+                }
+
+                public function mainLeadPayment()
+                {
+                    return $this;
+                }
+
+                public function first()
+                {
+                    return $this->payment;
+                }
+            };
+        }
+
+        public function save()
+        {
+            return true;
+        }
+
+        public function update()
+        {
+            return true;
+        }
+
+        public function getAttribute($attribute)
+        {
+            return $this->{$attribute} ?? null;
+        }
+    };
+}
+
+/**
+ * Clone the quote prototype with optional overrides.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function getSharedQuote(array $overrides = []): object
+{
+    global $sharedQuotePrototype;
+
+    if (! $sharedQuotePrototype) {
+        $sharedQuotePrototype = buildQuotePrototype();
+    }
+
+    if (empty($overrides)) {
+        return $sharedQuotePrototype;
+    }
+
+    $quote = clone $sharedQuotePrototype;
+
+    foreach ($overrides as $key => $value) {
+        $quote->{$key} = $value;
+    }
+
+    return $quote;
+}
+
+function buildProcessPrototype(): object
+{
+    return (object) [
+        'id' => 1,
+        'status' => \App\Enums\PolicyIssuanceEnum::PROCESSING_STATUS,
+        'completed_step' => null,
+    ];
+}
+
+/**
+ * Get a cloned process prototype to keep tests lightweight.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function getSharedProcess(array $overrides = []): object
+{
+    global $sharedProcessPrototype;
+
+    if (! $sharedProcessPrototype) {
+        $sharedProcessPrototype = buildProcessPrototype();
+    }
+
+    if (empty($overrides)) {
+        return $sharedProcessPrototype;
+    }
+
+    $process = clone $sharedProcessPrototype;
+
+    foreach ($overrides as $key => $value) {
+        $process->{$key} = $value;
+    }
+
+    return $process;
 }
 
 
@@ -120,6 +324,8 @@ afterAll(function () {
 
 beforeEach(function () {
     global $sharedResponseHandler;
+
+    config()->set('logging.default', 'null');
 
     // Create mocked dependencies for unit tests
     $this->requestBuilder = Mockery::mock(NgiRequestBuilder::class);
@@ -156,55 +362,15 @@ afterEach(function () {
         $sharedNgiFacadeMock->shouldReceive('get')->andReturnNull();
     }
 
-    // Force garbage collection
-    gc_collect_cycles();
+    if (! app()->runningUnitTests()) {
+        gc_collect_cycles();
+    }
 });
 
 describe('createPolicyFromQuote', function () {
-    test('returns success when API call succeeds', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations();
-        $process = DeviceQuoteFactory::makeMockProcess();
-
-        $this->requestBuilder->shouldReceive('buildCreatePolicyFromQuotePayload')
-            ->once()
-            ->andReturn(['quote_reference_number' => 'NGI-Q-123']);
-        $this->requestBuilder->shouldReceive('buildCreatePolicyHeaders')
-            ->once()
-            ->andReturn(['Accept' => 'application/json']);
-
-        // Create success response for this test
-        $responseData = (object) [
-            'isSuccess' => true,
-            'statusMessage' => 'Policy created successfully',
-            'policy_no' => 'NGI-POL-123',
-            'policy_start_dt' => '2024-01-15',
-            'policy_end_dt' => '2025-01-15',
-        ];
-        $psr7Response = new Psr7Response(200, [], json_encode($responseData));
-        $httpResponse = new Response($psr7Response);
-
-        // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
-
-        // Mock PolicyIssuanceService
-        $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
-        $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
-        app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
-
-        // Mock quote updater
-        $this->quoteUpdater->shouldReceive('updateQuoteFromCreatePolicyResponse')->once();
-
-        $result = $this->apiService->createPolicyFromQuote($quote, $process);
-
-        expect($result['status'])->toBeTrue()
-            ->and($result['completed_step'])->toBe(NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE)
-            ->and($result['data']->policy_no)->toBe('NGI-POL-123');
-    });
-
     test('returns failure when API returns isSuccess false', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations();
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = getSharedQuote();
+        $process = getSharedProcess();
 
         $this->requestBuilder->shouldReceive('buildCreatePolicyFromQuotePayload')
             ->once()
@@ -213,17 +379,37 @@ describe('createPolicyFromQuote', function () {
             ->once()
             ->andReturn(['Accept' => 'application/json']);
 
-        // Create error response for this test
-        $responseData = (object) [
-            'isSuccess' => false,
-            'statusMessage' => 'Invalid quote reference',
-            'errorCode' => 'ERR_INVALID_QUOTE',
-        ];
-        $psr7Response = new Psr7Response(200, [], json_encode($responseData));
-        $httpResponse = new Response($psr7Response);
+        global $errorPolicyResponse;
+
+        $responseHandlerMock = Mockery::mock(NgiResponseHandler::class);
+        $responseHandlerMock->shouldReceive('buildStepResponse')
+            ->once()
+            ->andReturn([
+                'status' => false,
+                'completed_step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
+                'message' => null,
+                'error' => null,
+                'data' => null,
+            ]);
+        $responseHandlerMock->shouldReceive('parseHttpResponse')
+            ->once()
+            ->andReturn([
+                'status' => false,
+                'error' => 'ERR_INVALID_QUOTE',
+                'message' => 'Invalid quote reference',
+                'data' => null,
+                'completed_step' => null,
+            ]);
+
+        $this->apiService = new NgiApiService(
+            $this->requestBuilder,
+            $responseHandlerMock,
+            $this->quoteUpdater,
+            $this->validationService
+        );
 
         // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
+        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($errorPolicyResponse);
         \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
 
         $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
@@ -236,41 +422,9 @@ describe('createPolicyFromQuote', function () {
             ->and($result['error'])->toBe('ERR_INVALID_QUOTE');
     });
 
-    test('returns failure when API returns error code', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations();
-        $process = DeviceQuoteFactory::makeMockProcess();
-
-        $this->requestBuilder->shouldReceive('buildCreatePolicyFromQuotePayload')
-            ->once()
-            ->andReturn(['quote_reference_number' => 'NGI-Q-123']);
-        $this->requestBuilder->shouldReceive('buildCreatePolicyHeaders')
-            ->once()
-            ->andReturn(['Accept' => 'application/json']);
-
-        $customResponseData = (object) [
-            'errorCode' => 'ERR_QUOTE_EXPIRED',
-            'message' => 'Quote has expired',
-        ];
-        $psr7Response = new Psr7Response(200, [], json_encode($customResponseData));
-        $httpResponse = new Response($psr7Response);
-
-        // Mock the facade for this specific call
-        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
-        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
-
-        $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
-        $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
-        app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
-
-        $result = $this->apiService->createPolicyFromQuote($quote, $process);
-
-        expect($result['status'])->toBeFalse()
-            ->and($result['error'])->toBe('ERR_QUOTE_EXPIRED');
-    });
-
     test('stores policy issuance log on success', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations();
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = getSharedQuote();
+        $process = getSharedProcess();
 
         $this->requestBuilder->shouldReceive('buildCreatePolicyFromQuotePayload')
             ->once()
@@ -314,8 +468,8 @@ describe('createPolicyFromQuote', function () {
     });
 
     test('updates quote from API response on success', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations();
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = getSharedQuote();
+        $process = getSharedProcess();
 
         $this->requestBuilder->shouldReceive('buildCreatePolicyFromQuotePayload')
             ->once()
@@ -351,12 +505,72 @@ describe('createPolicyFromQuote', function () {
 
         $this->apiService->createPolicyFromQuote($quote, $process);
     });
+
+    test('returns success when API call succeeds', function () {
+        $quote = getSharedQuote();
+        $process = getSharedProcess();
+        global $successPolicyResponse;
+
+        $this->requestBuilder->shouldReceive('buildCreatePolicyFromQuotePayload')
+            ->once()
+            ->andReturn(['quote_reference_number' => 'NGI-Q-123']);
+        $this->requestBuilder->shouldReceive('buildCreatePolicyHeaders')
+            ->once()
+            ->andReturn(['Accept' => 'application/json']);
+
+        $httpResponse = $successPolicyResponse;
+
+        // Mock the facade for this specific call
+        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($httpResponse);
+        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+
+        // Mock PolicyIssuanceService
+        $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
+        $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
+        app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
+
+        // Mock quote updater
+        $this->quoteUpdater->shouldReceive('updateQuoteFromCreatePolicyResponse')->once();
+
+        $result = $this->apiService->createPolicyFromQuote($quote, $process);
+
+        expect($result['status'])->toBeTrue()
+            ->and($result['completed_step'])->toBe(NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE)
+            ->and($result['data']->policy_no)->toBe('NGI-POL-123');
+    });
+
+    test('returns failure when API returns error code', function () {
+        $quote = getSharedQuote();
+        $process = getSharedProcess();
+
+        $this->requestBuilder->shouldReceive('buildCreatePolicyFromQuotePayload')
+            ->once()
+            ->andReturn(['quote_reference_number' => 'NGI-Q-123']);
+        $this->requestBuilder->shouldReceive('buildCreatePolicyHeaders')
+            ->once()
+            ->andReturn(['Accept' => 'application/json']);
+
+        global $expiredPolicyResponse;
+
+        // Mock the facade for this specific call
+        \App\Facades\Ngi::shouldReceive('post')->once()->andReturn($expiredPolicyResponse);
+        \App\Facades\Ngi::shouldReceive('getBaseUrl')->andReturn('https://api.ngi.example.com');
+
+        $policyIssuanceServiceMock = Mockery::mock(PolicyIssuanceService::class);
+        $policyIssuanceServiceMock->shouldReceive('storePolicyIssuanceLog')->once();
+        app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
+
+        $result = $this->apiService->createPolicyFromQuote($quote, $process);
+
+        expect($result['status'])->toBeFalse()
+            ->and($result['error'])->toBe('ERR_QUOTE_EXPIRED');
+    });
 });
 
 describe('getPolicyDocuments', function () {
     test('returns success when API call succeeds', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations(['policy_number' => 'NGI-POL-123']);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = getSharedQuote(['policy_number' => 'NGI-POL-123']);
+        $process = getSharedProcess();
 
         $this->validationService->shouldReceive('validatePolicyNumberExists')
             ->once()
@@ -393,8 +607,8 @@ describe('getPolicyDocuments', function () {
     });
 
     test('returns failure when policy number validation fails', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations(['policy_number' => null]);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = getSharedQuote(['policy_number' => null]);
+        $process = getSharedProcess();
 
         $this->validationService->shouldReceive('validatePolicyNumberExists')
             ->once()
@@ -412,8 +626,8 @@ describe('getPolicyDocuments', function () {
     });
 
     test('returns failure when API call fails', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations(['policy_number' => 'NGI-POL-123']);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = getSharedQuote(['policy_number' => 'NGI-POL-123']);
+        $process = getSharedProcess();
 
         $this->validationService->shouldReceive('validatePolicyNumberExists')
             ->once()
@@ -443,8 +657,8 @@ describe('getPolicyDocuments', function () {
     });
 
     test('updates quote and payment from API response on success', function () {
-        $quote = DeviceQuoteFactory::makeMockWithRelations(['policy_number' => 'NGI-POL-123', 'code' => 'DEV-123']);
-        $process = DeviceQuoteFactory::makeMockProcess();
+        $quote = getSharedQuote(['policy_number' => 'NGI-POL-123', 'code' => 'DEV-123']);
+        $process = getSharedProcess();
 
         $this->validationService->shouldReceive('validatePolicyNumberExists')
             ->once()
