@@ -1817,7 +1817,7 @@ const isDocTypeLoading = docType => {
                   </x-tooltip>
                 </template>
                 <template
-                  v-if="
+                  v-else-if="
                     isParentCancelReissuePen &&
                     can(permissionsEnum.BOOK_POLICY_BUTTON)
                   "
