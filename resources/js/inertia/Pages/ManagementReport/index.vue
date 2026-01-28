@@ -151,10 +151,11 @@ const lobs = computed(() => {
 });
 
 const branchOptions = computed(() => {
-  const branchList = props.filterOptions?.branches?.map(item => ({
-    value: item.id,
-    label: item.name,
-  })) ?? [];
+  const branchList =
+    props.filterOptions?.branches?.map(item => ({
+      value: item.id,
+      label: item.name,
+    })) ?? [];
   return [
     { value: 'not_applicable', label: 'Not Applicable' },
     { value: 'not_assigned', label: 'Not Assigned' },
@@ -510,7 +511,15 @@ watch(
         >
           <template #content-footer>
             <ui-select-actions
-              @select-all="filters.branch = branchOptions.filter(item => item.value !== 'not_applicable' && item.value !== 'not_assigned').map(item => item.value)"
+              @select-all="
+                filters.branch = branchOptions
+                  .filter(
+                    item =>
+                      item.value !== 'not_applicable' &&
+                      item.value !== 'not_assigned',
+                  )
+                  .map(item => item.value)
+              "
               @clear="filters.branch = []"
             />
           </template>
@@ -958,7 +967,6 @@ watch(
           deselect-all
         />
       </x-field>
-      
     </div>
 
     <div class="flex gap-3 justify-end">

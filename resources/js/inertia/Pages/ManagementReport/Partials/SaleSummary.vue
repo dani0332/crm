@@ -143,7 +143,7 @@ watchEffect(() => {
     insurer: ['insurer'],
     line_of_business: ['line_of_business'],
     department: ['department'],
-    branch_name: ['branch_name']
+    branch_name: ['branch_name'],
   };
 
   // Remove all columns in tableHeader that match any key in the columns object
@@ -154,7 +154,8 @@ watchEffect(() => {
     }
   });
 
-  const headerText = props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
+  const headerText =
+    props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
   let columnsToAdd = [];
   for (const column of headerText) {
     if (!tableHeader.some(item => item.value === column)) {
@@ -163,7 +164,7 @@ watchEffect(() => {
   }
   tableHeader.unshift(...columnsToAdd);
 
-  if (props.groupBy != 'branch_name') { 
+  if (props.groupBy != 'branch_name') {
     tableHeader.push(columns['branch_name']);
   }
 });
