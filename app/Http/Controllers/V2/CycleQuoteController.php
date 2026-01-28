@@ -210,7 +210,6 @@ class CycleQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Cycle);
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::CYCLE->value);
@@ -243,7 +242,6 @@ class CycleQuoteController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
-            'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
             'modelType' => QuoteTypes::CYCLE,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CycleManager),
@@ -269,7 +267,6 @@ class CycleQuoteController extends Controller
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'noteDocumentType' => $noteDocumentType,
             'quoteDocuments' => $quoteNotes,
-            'cdnPath' => $cdnPath,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
