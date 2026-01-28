@@ -56,11 +56,14 @@ class EmbeddedTransactionRepository extends BaseRepository
                 'cqr.code as quote.code',
                 'cqr.quote_status_id as quote.quote_status_id',
                 'cqr.policy_booking_date as quote.policy_booking_date',
+                'ep.short_code as embeddedTransaction.ep_short_code',
                 'et.code as embeddedTransaction.code',
                 'et.is_selected as embeddedTransaction.is_selected',
                 'et.payment_status_id as embeddedTransaction.payment_status_id',
                 'et.product_id as embeddedTransaction.product_id',
                 'et.policy_status as embeddedTransaction.policy_status',
+                'c_make.text as vehicle.make',
+                'c_model.text as vehicle.model',
                 'cqr.customer_id as customer.id',
                 'cqr.email as customer.email',
                 'cqr.mobile_no as customer.mobile_no',
@@ -80,6 +83,10 @@ class EmbeddedTransactionRepository extends BaseRepository
                     ->where('et.quote_request_type', '=', CarQuote::class)
                     ->where('et.code', '=', $embeddedTransactionCode);
             })
+            ->leftJoin('embedded_product_options as epo', 'et.product_id', '=', 'epo.id')
+            ->leftJoin('embedded_products as ep', 'epo.embedded_product_id', '=', 'ep.id')
+            ->leftJoin('car_make as c_make', 'cqr.car_make_id', '=', 'c_make.id')
+            ->leftJoin('car_model as c_model', 'cqr.car_model_id', '=', 'c_model.id')
             ->leftJoin('users as adv', 'cqr.advisor_id', '=', 'adv.id')
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')

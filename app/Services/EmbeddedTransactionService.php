@@ -39,11 +39,15 @@ class EmbeddedTransactionService extends BaseService
      */
     private function triggerBirdWorkflowForRetargetingEpReminder($quote, int $quoteTypeId, EmbeddedTransaction $epTransaction)
     {
+        if (! (bool) getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER)) {
+            LoggerService::info('triggerBirdWorkflowForRetargetingEpReminder: Retargeting EP Reminder is not enabled');
+            return;
+        }
+
         $birdWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL);
 
         if (empty($birdWorkflowUrl)) {
             LoggerService::info('triggerBirdWorkflowForRetargetingEpReminder: Configuration URL not found');
-
             return;
         }
 
@@ -74,16 +78,38 @@ class EmbeddedTransactionService extends BaseService
         $customer = $quoteData->customer;
         $advisor = $quoteData->advisor;
         $plan = $quoteData->plan;
+        $vehicle = $quoteData->vehicle;
 
         if (empty($quoteData?->quote?->uuid)
             || empty($quoteData?->embeddedTransaction?->code)
+            || empty($quoteData?->embeddedTransaction?->ep_short_code)
             || empty($customer?->id) || empty($customer?->email)
-            || empty($plan?->provider_code) || empty($plan?->id)
+            || empty($vehicle?->make) || empty($vehicle?->model)
+            || empty($plan?->provider_code) || empty($plan?->id) || empty($plan?->provider_code)
         ) {
+            LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quoteData]);
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
-        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quoteData->quote->uuid
+        if (! in_array($quoteData->embeddedTransaction->ep_short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB])) {
+            LoggerService::info('getRetargetingCarEpReminderData: Invalid EP short code', extra: ['data' => $quoteData]);
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid EP short code');
+        }
+
+        $templateKey = match($quoteData->embeddedTransaction->ep_short_code) {
+            EmbeddedProductEnum::MDX => ApplicationStorageEnums::CAR_EP_REMINDER_MDX_EMAIL_TEMPLATE,
+            EmbeddedProductEnum::ECB => ApplicationStorageEnums::CAR_EP_REMINDER_ECB_EMAIL_TEMPLATE,
+            default => null,
+        };
+
+        $templateId = getAppStorageValueByKey($templateKey);
+        $birdCarEpReminderEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL);
+        if (empty($templateKey) || empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
+            LoggerService::info('getRetargetingCarEpReminderData: Template / Email Workflow URL not found', extra: ['templateKey' => $templateKey, 'templateId' => $templateId, 'birdReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl]);
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Template / Email Workflow URL not found');
+        }
+
+        $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quoteData->quote->uuid
             .'/payment/?'.http_build_query([
                 'providerCode' => $plan->provider_code,
                 'planId' => $plan->id,
@@ -93,20 +119,25 @@ class EmbeddedTransactionService extends BaseService
         $data = [
             'quote' => $quoteData->quote,
             'embeddedTransaction' => $quoteData->embeddedTransaction,
-            'reminderContent' => [
+            'emailWorkflowData' => [
+                'templateId' => $templateId,
                 'customerId' => $customer->id,
                 'customerEmail' => $customer->email,
                 'customerName' => trim(($customer?->first_name ?? '').' '.($customer?->last_name ?? '')),
-                'customerMobileNumber' => formatMobileNo($customer?->mobile_no ?? ''),
                 'advisorEmail' => $advisor?->email,
-                'advisorLandLine' => $advisor?->landline_no,
-                'advisorMobileNoWithoutSpaces' => removeSpaces($advisor?->mobile_no ?? ''),
-                'advisorMobileNumber' => formatMobileNo($advisor?->mobile_no ?? ''),
-                'advisorName' => $advisor?->name,
-                'advisorProfilePhotoPath' => $advisor?->profile_photo_path,
-                'DisplayName' => config('constants.IM_FROM_EMAIL', 'InsuranceMarket'),
-                'buyNowLink' => $buyNowLink,
-                'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
+                'displayName' => config('constants.IM_FROM_EMAIL', 'InsuranceMarket'),
+                'buyNowUrl' => $buyNowUrl,
+                'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
+                'birdCarEpReminderEmailCallbackUrl' => route('retargeting-ep-reminder-callback'),
+                "epShortCode" => $quoteData->embeddedTransaction->ep_short_code,
+                "vehicleMake" => $vehicle->make,
+                "vehicleModel" => $vehicle->model,
+                // 'advisorName' => $advisor?->name,
+                // 'customerMobileNumber' => formatMobileNo($customer?->mobile_no ?? ''),
+                // 'advisorLandLine' => $advisor?->landline_no,
+                // 'advisorMobileNoWithoutSpaces' => removeSpaces($advisor?->mobile_no ?? ''),
+                // 'advisorMobileNumber' => formatMobileNo($advisor?->mobile_no ?? ''),
+                // 'advisorProfilePhotoPath' => $advisor?->profile_photo_path,
             ],
         ];
 
@@ -115,13 +146,11 @@ class EmbeddedTransactionService extends BaseService
 
     public function retargetingCarEpReminderCallback(RetargetingEpReminderCallbackRequest $request)
     {
-        $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CAR_EP_RETARGETING_REMINDER_EMAIL_TEMPLATE);
-
         $newEmailStatus = (object) [
             'quoteTypeId' => $request->quoteTypeId,
             'quoteId' => $request->quoteId,
             'customerEmail' => $request->customerEmail,
-            'templateId' => $templateId,
+            'templateId' => $request->templateId,
             'customerId' => $request->customerId,
         ];
 

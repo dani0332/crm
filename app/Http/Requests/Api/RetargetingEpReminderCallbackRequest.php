@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -26,6 +25,7 @@ class RetargetingEpReminderCallbackRequest extends FormRequest
         return [
             'quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car,
             'quoteId' => 'required|integer|exists:car_quote_request,id',
+            'templateId' => 'required|integer',
             'customerEmail' => 'required|string',
             'messageId' => 'required|string',
             'customerId' => 'required|integer',
