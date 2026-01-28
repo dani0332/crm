@@ -1124,6 +1124,7 @@ class RenewalsUploadService
             $newAdvisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $advisorId = $quote->advisor_id == null ? $newAdvisorId : $quote->advisor_id;
             $carModel = null;
+            $previousAdvisor = null;
             if ($isQuoteTypeCar) {
                 $carMake = $this->renewalsAddonService->getCarMake($data['make']);
                 $carModel = $this->renewalsAddonService->getCarModel($data['model'], $carMake);
