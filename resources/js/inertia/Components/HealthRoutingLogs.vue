@@ -21,7 +21,7 @@ const props = defineProps({
   },
 });
 
-const ocrLogs = reactive({
+const routingLogs = reactive({
   loading: false,
   data: null,
   table: [
@@ -54,7 +54,7 @@ const selectLog = item => {
 };
 
 const onLoadLogData = async () => {
-  ocrLogs.loading = true;
+  routingLogs.loading = true;
   try {
     const response = await axios.post('/health-routing-logs', {
       type: props.type,
@@ -63,14 +63,14 @@ const onLoadLogData = async () => {
     });
 
     if (response.data.success) {
-      ocrLogs.data = response.data.data;
+      routingLogs.data = response.data.data;
     } else {
       console.error('Failed to load OCR logs:', response.data.message);
     }
   } catch (error) {
     console.error('Error loading OCR logs:', error);
   } finally {
-    ocrLogs.loading = false;
+    routingLogs.loading = false;
   }
 };
 
@@ -124,14 +124,14 @@ watch(
           <h3 class="font-semibold text-primary-800 text-lg">Health Routing Logs</h3>
           <!-- Refresh Icon - Only visible after logs are loaded -->
           <button
-            v-if="ocrLogs.data !== null"
+            v-if="routingLogs.data !== null"
             @click.prevent.stop="onLoadLogData"
-            :disabled="ocrLogs.loading"
+            :disabled="routingLogs.loading"
             class="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Refresh OCR Logs"
           >
             <svg
-              :class="{ 'animate-spin': ocrLogs.loading }"
+              :class="{ 'animate-spin': routingLogs.loading }"
               class="w-4 h-4"
               fill="none"
               stroke="currentColor"
@@ -150,13 +150,13 @@ watch(
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <div class="text-center py-3" v-if="ocrLogs.data === null">
+        <div class="text-center py-3" v-if="routingLogs.data === null">
           <x-button
             size="sm"
             color="primary"
             outlined
             @click.prevent="onLoadLogData"
-            :loading="ocrLogs.loading"
+            :loading="routingLogs.loading"
           >
             Load Health Routing Logs
           </x-button>
@@ -164,7 +164,7 @@ watch(
         <div v-else class="relative">
           <!-- Loading Overlay -->
           <div
-            v-if="ocrLogs.loading"
+            v-if="routingLogs.loading"
             class="absolute inset-0 bg-white/75 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg"
           >
             <div class="flex flex-col items-center gap-3">
@@ -195,25 +195,28 @@ watch(
 
           <DataTable
             table-class-name="compact tablefixed"
-            :headers="ocrLogs.table"
-            :items="ocrLogs.data || []"
+            :headers="routingLogs.table"
+            :items="routingLogs.data || []"
             border-cell
             hide-rows-per-page
             :rows-per-page="15"
-            :hide-footer="ocrLogs.data?.length < 15"
+            :hide-footer="routingLogs.data?.length < 15"
           >
             <template #item-created_at="{ created_at }">
               {{ new Date(created_at).toLocaleString() }}
             </template>
             <template #item-action="item">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="selectLog(item)"
-              >
-                View
-              </x-button>
+              <div style="width: 60px;">
+                <x-button
+                  size="xs"
+                  color="primary"
+                  outlined
+                  class="w-full"
+                  @click.prevent="selectLog(item)"
+                >
+                  View
+                </x-button>
+              </div>
             </template>
           </DataTable>
         </div>
