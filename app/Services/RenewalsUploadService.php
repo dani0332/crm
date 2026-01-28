@@ -606,6 +606,7 @@ class RenewalsUploadService
                 }
                 $renewalsUploadLeadFile = app(QuoteDocumentService::class)->getDocumentUrl($renewalsUploadLead->file_path);
                 $renewalsUpload->import($renewalsUploadLeadFile);
+
                 return $renewalsUploadLead;
             });
 
