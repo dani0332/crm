@@ -6,7 +6,9 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
 use App\Models\EmbeddedTransaction;
@@ -75,14 +77,25 @@ class EmbeddedTransactionService extends BaseService
         }
 
         $quoteData = (object) array_map(fn ($item) => (object) $item, Arr::undot((array) $quoteData));
+        $quote = $quoteData->quote;
+        $embeddedTransaction = $quoteData->embeddedTransaction;
         $customer = $quoteData->customer;
         $advisor = $quoteData->advisor;
         $plan = $quoteData->plan;
         $vehicle = $quoteData->vehicle;
 
-        if (empty($quoteData?->quote?->uuid)
-            || empty($quoteData?->embeddedTransaction?->code)
-            || empty($quoteData?->embeddedTransaction?->ep_short_code)
+        if($quote?->quote_status_id != QuoteStatusEnum::PolicyBooked) {
+            LoggerService::info('getRetargetingCarEpReminderData: Quote is not booked', extra: ['quote_status_id' => $quote?->quote_status_id]);
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Quote is not booked');
+        }
+        if($embeddedTransaction?->payment_status_id != PaymentStatusEnum::DRAFT) {
+            LoggerService::info('getRetargetingCarEpReminderData: Embedded transaction payment status is not draft', extra: ['et_payment_status_id' => $embeddedTransaction?->payment_status_id]);
+            return apiResponse(null, Response::HTTP_NO_CONTENT, 'Embedded transaction payment status is not draft');
+        }
+
+        if (empty($quote?->uuid)
+            || empty($embeddedTransaction?->code)
+            || empty($embeddedTransaction?->ep_short_code)
             || empty($customer?->id) || empty($customer?->email)
             || empty($vehicle?->make) || empty($vehicle?->model)
         ) {
@@ -90,12 +103,12 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
-        if (! in_array($quoteData->embeddedTransaction->ep_short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB])) {
+        if (! in_array($embeddedTransaction->ep_short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB])) {
             LoggerService::info('getRetargetingCarEpReminderData: Invalid EP short code', extra: ['data' => $quoteData]);
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid EP short code');
         }
 
-        $templateKey = match($quoteData->embeddedTransaction->ep_short_code) {
+        $templateKey = match($embeddedTransaction->ep_short_code) {
             EmbeddedProductEnum::MDX => ApplicationStorageEnums::CAR_EP_REMINDER_MDX_EMAIL_TEMPLATE,
             EmbeddedProductEnum::ECB => ApplicationStorageEnums::CAR_EP_REMINDER_ECB_EMAIL_TEMPLATE,
             default => null,
@@ -114,15 +127,15 @@ class EmbeddedTransactionService extends BaseService
         if (! empty($plan?->provider_code))
             $buyNowUrlQueryParams['providerCode'] = $plan->provider_code;
 
-        $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quoteData->quote->uuid
+        $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid
             .'/payment/?'.http_build_query([
                 ...$buyNowUrlQueryParams,
-                'selectEtCode' => $quoteData->embeddedTransaction->code,
+                'selectEtCode' => $embeddedTransaction->code,
             ]);
 
         $data = [
-            'quote' => $quoteData->quote,
-            'embeddedTransaction' => $quoteData->embeddedTransaction,
+            'quote' => $quote,
+            'embeddedTransaction' => $embeddedTransaction,
             'emailWorkflowData' => [
                 'templateId' => $templateId,
                 'customerId' => $customer->id,
@@ -133,7 +146,7 @@ class EmbeddedTransactionService extends BaseService
                 'buyNowUrl' => $buyNowUrl,
                 'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
                 'birdCarEpReminderEmailCallbackUrl' => route('retargeting-ep-reminder-callback'),
-                "epShortCode" => $quoteData->embeddedTransaction->ep_short_code,
+                "epShortCode" => $embeddedTransaction->ep_short_code,
                 "vehicleMake" => $vehicle->make,
                 "vehicleModel" => $vehicle->model,
                 // 'advisorName' => $advisor?->name,
