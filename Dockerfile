@@ -30,6 +30,7 @@ RUN bash /tmp/nodesource_setup.sh
 #       | tee /etc/apt/sources.list.d/yarn.list
 
 RUN curl -o- -L https://yarnpkg.com/install.sh | bash
+ENV PATH="/root/.yarn/bin:/root/.config/yarn/global/node_modules/.bin:${PATH}"
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
