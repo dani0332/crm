@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\HealthTeamRouting;
 
+use App\Enums\HealthTeamType;
 use App\Enums\TeamCategoryEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
@@ -139,6 +140,25 @@ class HealthTeamRoutingService
 
             return null;
         }
+
+        // Check if priceStartingFrom is greater than GBP team's min price
+        $gbpMinPrice = $this->getGbpTeamMinPrice(TeamCategoryEnum::AUH);
+        if ($gbpMinPrice !== null && $lead->price_starting_from > $gbpMinPrice) {
+            $this->logStep(
+                'Price starting from is greater than GBP min price, assigning to GBP team',
+                'gbp_assignment',
+                [
+                    'price_starting_from' => $lead->price_starting_from,
+                    'gbp_min_price' => $gbpMinPrice,
+                    'category' => TeamCategoryEnum::AUH->value,
+                ],
+                $lead
+            );
+            LoggerService::info("Price starting from ({$lead->price_starting_from}) is greater than GBP min price ({$gbpMinPrice}), assigning to GBP team");
+
+            return HealthTeamType::GBP;
+        }
+        $this->logGbpCheckResult($gbpMinPrice, $lead->price_starting_from, 'tier-based');
 
         try {
             $team = $this->fetchTeamByPriceAndCategory($lead->price_starting_from, TeamCategoryEnum::AUH);

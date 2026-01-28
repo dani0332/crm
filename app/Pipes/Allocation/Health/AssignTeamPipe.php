@@ -107,11 +107,7 @@ class AssignTeamPipe extends BaseAllocationPipe
 
                 return;
             }
-            if ($gbpMinPrice === null) {
-                LoggerService::info('GBP team not found for AUH category, proceeding with regular price-based routing');
-            } elseif ($priceStartingFrom <= $gbpMinPrice) {
-                LoggerService::info("Price starting from ({$priceStartingFrom}) is not greater than GBP min price ({$gbpMinPrice}), proceeding with regular price-based routing");
-            }
+            $this->logGbpCheckResult($gbpMinPrice, $priceStartingFrom, 'price-based');
         }
 
         $healthTeam = $this->fetchTeamByPriceAndCategory($priceStartingFrom, $category);
