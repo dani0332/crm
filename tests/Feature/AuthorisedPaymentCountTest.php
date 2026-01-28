@@ -59,8 +59,10 @@ test('notification service broadcasts authorised payment count when webhook is c
         'paymentable_id' => $this->personalQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
+        'authorized_at' => now(),
     ]);
 
     // Call the notification service directly - use 'Life' since Car is not in checkPersonalQuotes list
@@ -143,8 +145,10 @@ test('authorised payment count is calculated correctly for advisor', function ()
             'paymentable_id' => $quote->id,
             'paymentable_type' => PersonalQuote::class,
             'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+            'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
             'total_price' => 1000,
             'total_amount' => 1000,
+            'authorized_at' => now(),
         ]);
     }
 
@@ -167,8 +171,10 @@ test('authorised payment count is calculated correctly for advisor', function ()
         'paymentable_id' => $anotherQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
+        'authorized_at' => now(),
     ]);
 
     // Calculate count
@@ -186,8 +192,10 @@ test('authorised payment count excludes non-authorized payments', function () {
         'paymentable_id' => $this->personalQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::AUTHORISED,
+        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
+        'authorized_at' => now(),
     ]);
 
     Payment::create([
@@ -195,6 +203,7 @@ test('authorised payment count excludes non-authorized payments', function () {
         'paymentable_id' => $this->personalQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::PENDING,
+        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
     ]);
@@ -204,6 +213,7 @@ test('authorised payment count excludes non-authorized payments', function () {
         'paymentable_id' => $this->personalQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::PAID,
+        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
     ]);
