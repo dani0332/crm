@@ -96,12 +96,12 @@ class AssignTeamPipe extends BaseAllocationPipe
         $isAUHLead = $this->lead->isAUHLead() || $this->lead->isAUHLead(false);
         $category = $isAUHLead ? TeamCategoryEnum::AUH : TeamCategoryEnum::NON_AUH;
 
-        // Check if priceStartingFrom is greater than GBP team's min price (only for AUH leads)
+        // Check if priceStartingFrom is greater than or equal to GBP team's min price (only for AUH leads)
         if ($isAUHLead) {
             LoggerService::info('AUH lead detected, checking GBP team min price');
             $gbpMinPrice = $this->getGbpTeamMinPrice($category);
-            if ($gbpMinPrice !== null && $priceStartingFrom > $gbpMinPrice) {
-                LoggerService::info("Price starting from ({$priceStartingFrom}) is greater than GBP min price ({$gbpMinPrice}), assigning to GBP team");
+            if ($gbpMinPrice !== null && $priceStartingFrom >= $gbpMinPrice) {
+                LoggerService::info("Price starting from ({$priceStartingFrom}) is greater than or equal to GBP min price ({$gbpMinPrice}), assigning to GBP team");
                 $this->lead->health_team_type = HealthTeamType::GBP;
                 $this->lead->save();
 

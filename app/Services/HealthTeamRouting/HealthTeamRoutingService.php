@@ -141,11 +141,11 @@ class HealthTeamRoutingService
             return null;
         }
 
-        // Check if priceStartingFrom is greater than GBP team's min price
+        // Check if priceStartingFrom is greater than or equal to GBP team's min price
         $gbpMinPrice = $this->getGbpTeamMinPrice(TeamCategoryEnum::AUH);
-        if ($gbpMinPrice !== null && $lead->price_starting_from > $gbpMinPrice) {
+        if ($gbpMinPrice !== null && $lead->price_starting_from >= $gbpMinPrice) {
             $this->logStep(
-                'Price starting from is greater than GBP min price, assigning to GBP team',
+                'Price starting from is greater than or equal to GBP min price, assigning to GBP team',
                 'gbp_assignment',
                 [
                     'price_starting_from' => $lead->price_starting_from,
@@ -154,7 +154,7 @@ class HealthTeamRoutingService
                 ],
                 $lead
             );
-            LoggerService::info("Price starting from ({$lead->price_starting_from}) is greater than GBP min price ({$gbpMinPrice}), assigning to GBP team");
+            LoggerService::info("Price starting from ({$lead->price_starting_from}) is greater than or equal to GBP min price ({$gbpMinPrice}), assigning to GBP team");
 
             return HealthTeamType::GBP;
         }
