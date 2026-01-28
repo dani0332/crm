@@ -364,11 +364,43 @@ class PolicyIssuanceService
             } elseif ($response instanceof JsonSerializable) {
                 $resolvedResponse = $response->jsonSerialize();
             } else {
-                $resolvedResponse = (array) $response;
+                $resolvedResponse = $this->convertObjectToArray($response);
             }
         }
 
         return $resolvedResponse;
+    }
+
+    private function convertObjectToArray(object $object): array
+    {
+        $array = [];
+
+        foreach ((array) $object as $key => $value) {
+            $array[$key] = $this->normalizeLogResponseValue($value);
+        }
+
+        return $array;
+    }
+
+    private function normalizeLogResponseValue(mixed $value): mixed
+    {
+        if (is_object($value)) {
+            if (method_exists($value, 'toArray')) {
+                return $value->toArray();
+            }
+
+            if ($value instanceof JsonSerializable) {
+                return $value->jsonSerialize();
+            }
+
+            return $this->convertObjectToArray($value);
+        }
+
+        if (is_array($value)) {
+            return array_map([$this, 'normalizeLogResponseValue'], $value);
+        }
+
+        return $value;
     }
 
     public function shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider): bool
