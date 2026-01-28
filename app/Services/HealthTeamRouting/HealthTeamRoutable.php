@@ -61,8 +61,8 @@ trait HealthTeamRoutable
     {
         if ($gbpMinPrice === null) {
             LoggerService::info("GBP team not found for AUH category, proceeding with regular {$routingType} routing");
-        } elseif ($priceStartingFrom <= $gbpMinPrice) {
-            LoggerService::info("Price starting from ({$priceStartingFrom}) is not greater than GBP min price ({$gbpMinPrice}), proceeding with regular {$routingType} routing");
+        } elseif ($priceStartingFrom < $gbpMinPrice) {
+            LoggerService::info("Price starting from ({$priceStartingFrom}) is less than GBP min price ({$gbpMinPrice}), proceeding with regular {$routingType} routing");
         }
     }
 }
