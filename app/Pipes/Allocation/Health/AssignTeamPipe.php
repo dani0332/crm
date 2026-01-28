@@ -113,12 +113,22 @@ class AssignTeamPipe extends BaseAllocationPipe
         $healthTeam = $this->fetchTeamByPriceAndCategory($priceStartingFrom, $category);
 
         if ($healthTeam) {
-            LoggerService::info("Filtered team is: {$healthTeam->name}");
+            LoggerService::info("Filtered team is: {$healthTeam->name}", [
+                'team_id' => $healthTeam->id,
+                'team_name' => $healthTeam->name,
+                'category' => $category->value,
+                'price_starting_from' => $priceStartingFrom,
+            ]);
+
+            // Special handling: If GBP team and more than 2 members, assign to RM_NB instead
             $this->lead->health_team_type = ($healthTeam->name === HealthTeamType::GBP && $this->lead->members->count() > 2)
                 ? HealthTeamType::RM_NB
                 : $healthTeam->name;
         } else {
-            LoggerService::warning('No team found for the given price range');
+            LoggerService::warning('No team found for the given price range', [
+                'price_starting_from' => $priceStartingFrom,
+                'category' => $category->value,
+            ]);
             $this->lead->is_error_email_sent = true;
             Mail::send(new HealthAssignmentIssueEmail($this->lead->code, $priceStartingFrom));
         }
