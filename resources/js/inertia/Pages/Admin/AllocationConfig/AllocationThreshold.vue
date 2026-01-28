@@ -133,6 +133,7 @@ const loadTeams = (index) => {
 const updateTeams = () => {
   let valid = validateTeams();
   if (valid) {
+    loading.value = true;
     let teams = generateTeamsToPost();
 
     axios
@@ -152,6 +153,9 @@ const updateTeams = () => {
           message: 'An error occurred while updating the allocation threshold',
           position: 'top',
         });
+      })
+      .finally(() => {
+        loading.value = false;
       });
   }
 };
