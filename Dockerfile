@@ -29,6 +29,12 @@ RUN bash /tmp/nodesource_setup.sh
 #     echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian stable main" \
 #       | tee /etc/apt/sources.list.d/yarn.list
 
+RUN apt-get update && apt-get install -y curl gnupg && \
+    mkdir -p /etc/apt/keyrings && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn.gpg >/dev/null && \
+    echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian stable main" \
+      | tee /etc/apt/sources.list.d/yarn.list
+
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     build-essential libssl-dev pkg-config \
@@ -49,9 +55,10 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     supervisor \
     nodejs \
+    yarn \
     libwebp-dev \
     qpdf
-RUN corepack enable && corepack prepare yarn@stable --activate
+#RUN corepack enable && corepack prepare yarn@stable --activate
     
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
@@ -100,7 +107,7 @@ EXPOSE 443
 
 # Check yarn packages
 COPY --chown=www:www-data package*.json yarn.lock /var/www/
-RUN yarn install --immutable
+RUN yarn install --pure-lockfile
 
 #Check composer packages
 #COPY --chown=www:www-data composer*.json composer.lock /var/www/
