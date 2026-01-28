@@ -117,7 +117,7 @@ class ClaimRequestEmailService extends BaseService
         $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
 
         $isHealthClaim = $claimRequest->quote_type_id == QuoteTypeId::Health;
-        $isGroupHealthClaim = $claimRequest->personalQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+        $isGroupHealthClaim = $claimRequest->personalQuote?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
         $workflowType = $isHealthClaim || $isGroupHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
 
         return (object) [
