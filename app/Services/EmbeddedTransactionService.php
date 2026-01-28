@@ -12,14 +12,11 @@ use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
-use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 
 class EmbeddedTransactionService extends BaseService
 {
-    use GenericQueriesAllLobs;
-
     /**
      * Create a new class instance.
      */
