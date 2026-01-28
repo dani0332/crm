@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportPlansPdfLinkRequest;
@@ -145,21 +146,45 @@ class GenericLobController extends Controller
 
     public function sendMyAlfredWelcomeEmail(MaWelcomEmailRequest $request)
     {
-        LoggerService::info('MyAlfred Welcome Email - Request received', [
-            'customer_email' => $request->email,
-            'code' => $request->code,
-            'source' => $request->source,
-            'tag' => $request->tag,
-        ]);
+        try {
+            LoggerService::startFeatureLogging(feature: LoggerFeatureEnum::SEND_MA_WELCOME_EMAIL);
 
-        $customer = Customer::where('email', $request->email)->first();
+            LoggerService::info('MyAlfred Welcome Email - Request received', [
+                'customer_email' => $request->email,
+                'code' => $request->code,
+                'source' => $request->source,
+                'tag' => $request->tag,
+            ]);
 
-        LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
-            'customer_email' => $customer->email,
-        ]);
+            $customer = Customer::where('email', $request->email)->first();
 
-        MAWelcomeJob::dispatch($customer, $request->source, $request->tag);
+            if (! $customer) {
+                LoggerService::warning('MyAlfred Welcome Email - Customer not found', [
+                    'customer_email' => $request->email,
+                ]);
 
-        return response()->json(['message' => 'Welcome email sent successfully']);
+                return response()->json([
+                    'message' => 'Customer not found',
+                    'error' => 'CUSTOMER_NOT_FOUND',
+                ], 404);
+            }
+
+            LoggerService::info('MyAlfred Welcome Email - Dispatching job', [
+                'customer_email' => $customer->email,
+            ]);
+
+            MAWelcomeJob::dispatch($customer, $request->source, $request->tag);
+
+            return response()->json(['message' => 'Welcome email job dispatched successfully'], 200);
+        } catch (\Exception $e) {
+            LoggerService::error('MyAlfred Welcome Email - Exception occurred', [], exception: $e, context: [
+                'customer_email' => $request->email ?? null,
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to process welcome email request',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

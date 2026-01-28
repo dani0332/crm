@@ -6,7 +6,7 @@ Staging Pipeline Status = [![Build Status](https://dev.azure.com/insurancemarket
 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes
 
-IMCRM is developed on Laravel using PHP 8.2 or above, and MySQL
+IMCRM is developed on Laravel using PHP 8.4 or above, and MySQL
 
 URLs:
 
@@ -20,7 +20,7 @@ URLs:
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
 
-## Other stack & libraries
+## Other Stack & libraries
 
 - [Vue](https://vuejs.org/)
 - [InertiaJS](https://inertiajs.com/)
@@ -31,7 +31,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 ## Setting up Laravel
 
 - Clone the repo in a new folder and use the develop branch for initial setup.
-- Make sure you're using PHP 8.2 or above, MySQL server on your local machine.
+- Make sure you're using PHP 8.4 or above, MySQL server on your local machine.
 - Install and configure Doppler CLI, we use [Doppler](https://doppler.com/) to handle the `ENV` variables and do not use .env file. Ask the team mate to setup your doppler profile in your name with credentials.
 - Ask for a dump of stage DB which you will need to import.
 - Run `composer install` to install the laravel required files..

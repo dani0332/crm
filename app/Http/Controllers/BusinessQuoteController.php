@@ -561,6 +561,7 @@ class BusinessQuoteController extends Controller
 
         $totalLeads = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         foreach ($quotes as $item) {
             $totalLeads += $item['data']['total_leads'];
@@ -568,6 +569,7 @@ class BusinessQuoteController extends Controller
 
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
+            'renewalBatches' => $renewalBatches,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,
