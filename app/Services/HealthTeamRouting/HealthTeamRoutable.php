@@ -41,6 +41,7 @@ trait HealthTeamRoutable
             ->where('min_price', '<=', $price)
             ->where('max_price', '>=', $price)
             ->where('category', $category->value)
+            ->active()
             ->first();
     }
 
@@ -49,6 +50,7 @@ trait HealthTeamRoutable
         $gbpTeam = Team::where('allocation_threshold_enabled', true)
             ->where('name', TeamNameEnum::GBP)
             ->where('category', $category->value)
+            ->active()
             ->first();
 
         return $gbpTeam?->min_price;
