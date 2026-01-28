@@ -174,6 +174,7 @@ class ClaimsManagersSeeder extends Seeder
             $quoteTypeId = $quoteType->id();
             if (! $quoteTypeId) {
                 $this->command->warn("Quote type {$quoteType->value} does not have an ID, skipping...");
+
                 continue;
             }
 
@@ -181,6 +182,7 @@ class ClaimsManagersSeeder extends Seeder
             $quoteTypeExists = QuoteType::where('id', $quoteTypeId)->exists();
             if (! $quoteTypeExists) {
                 $this->command->warn("Quote type ID {$quoteTypeId} ({$quoteType->value}) does not exist in quote_type table, skipping...");
+
                 continue;
             }
 

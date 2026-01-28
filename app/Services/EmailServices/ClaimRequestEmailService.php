@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteTypeId;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SendClaimGoogleReviewEmailJob;
 use App\Models\ApplicationStorage;
