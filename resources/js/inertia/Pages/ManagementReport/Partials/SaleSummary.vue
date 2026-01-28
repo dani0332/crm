@@ -99,7 +99,7 @@ const tableHeader = reactive([
 // v-if="props.groupBy == 'advisor'"
 
 watchEffect(() => {
-  const headerMap = {
+  const columns = {
     advisor: {
       text: 'Advisor',
       tooltip: 'The advisor assigned to the policy.',
@@ -128,32 +128,45 @@ watchEffect(() => {
       text: 'Department',
       tooltip: 'The department of the advisor assigned to this lead',
     },
+    branch_name: {
+      text: 'Branch',
+      tooltip: 'The branch of the lead',
+      value: 'branch_name',
+    },
   };
+
+  const headerMap = {
+    advisor: ['advisor', 'department'],
+    support_user: ['support_user', 'department'],
+    policy_issuer: ['policy_issuer'],
+    customer_group: ['customer_group'],
+    insurer: ['insurer'],
+    line_of_business: ['line_of_business'],
+    department: ['department'],
+    branch_name: ['branch_name'],
+  };
+
+  // Remove all columns in tableHeader that match any key in the columns object
+  Object.keys(columns).forEach(colKey => {
+    const idx = tableHeader.findIndex(item => item.value === colKey);
+    if (idx !== -1) {
+      tableHeader.splice(idx, 1);
+    }
+  });
 
   const headerText =
     props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
-
-  const index = tableHeader.findIndex(item => item.value === 'department');
-  if (index !== -1) {
-    tableHeader.splice(index, 1);
-  }
-
-  const newItem = { ...headerText, value: props.groupBy };
-  headerText && tableHeader[0].text === 'T. Policies'
-    ? tableHeader.unshift(newItem)
-    : tableHeader.splice(0, 1, newItem);
-
-  if (props.groupBy === 'advisor' || props.groupBy === 'support_user') {
-    if (!tableHeader.some(item => item.value === 'department')) {
-      tableHeader.unshift({ ...headerMap.department, value: 'department' });
+  let columnsToAdd = [];
+  for (const column of headerText) {
+    if (!tableHeader.some(item => item.value === column)) {
+      columnsToAdd.push({ ...columns[column], value: column });
     }
   }
+  tableHeader.unshift(...columnsToAdd);
 
-  tableHeader.sort((a, b) => {
-    if (a.value === props.groupBy) return -1;
-    if (b.value === props.groupBy) return 1;
-    return 0;
-  });
+  if (props.groupBy != 'branch_name') {
+    tableHeader.push(columns['branch_name']);
+  }
 });
 
 const calculateTotalSum = useCalculateTotalSum;

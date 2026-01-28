@@ -5,6 +5,7 @@ namespace App\Services\Bor;
 use App\Models\BorLog;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +29,7 @@ class BorPdfService
             if ($borLog->date_uploaded && $borLog->date_uploaded != null) {
                 $document = $borLog->document;
 
-                return Storage::disk('azureIM')->temporaryUrl($document->doc_url, now()->addMinutes(2));
+                return app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url, 'azureIMPrivate', 2);
             }
             // Prepare data for PDF template
             $includeSignature = $borLog->date_signed ? true : false;
@@ -45,7 +46,7 @@ class BorPdfService
             // Save PDF to storage
             $pdfContent = $pdf->output();
             $pdfPath = 'bor-documents/'.$filename;
-            Storage::disk('azureIM')->put($pdfPath, $pdfContent);
+            Storage::disk('azureIMPrivate')->put($pdfPath, $pdfContent);
 
             Log::info('BOR PDF generated successfully', [
                 'bor_log_id' => $borLog->id,
@@ -53,7 +54,7 @@ class BorPdfService
                 'filename' => $filename,
             ]);
 
-            return Storage::disk('azureIM')->temporaryUrl($pdfPath, now()->addMinutes(2));
+            return app(QuoteDocumentService::class)->getDocumentUrl($pdfPath, 'azureIMPrivate', 2);
 
         } catch (\Exception $e) {
             Log::error('BOR PDF generation failed', [
@@ -110,21 +111,17 @@ class BorPdfService
 
         if ($includeSignature && $document) {
             try {
-                $filename = urlencode($document->doc_url);
-                $disk = Storage::disk('azureIM');
-                if (method_exists($disk, 'temporaryUrl')) {
-                    $temporaryUrl = $disk->temporaryUrl($filename, now()->addMinutes(2));
+                $temporaryUrl = app(QuoteDocumentService::class)->getDocumentUrl($document->doc_url, 'azureIMPrivate', 2);
 
-                    // For PDF generation, we need to convert the image to base64 data URI
-                    // since DomPDF cannot access external URLs directly
-                    if ($temporaryUrl) {
-                        $signatureBase64 = $this->getSignatureImageFromUrl($temporaryUrl);
-                        if ($signatureBase64) {
-                            $temporaryUrl = $signatureBase64; // Replace URL with base64 data URI
-                        } else {
-                            $temporaryUrl = null;
-                            $includeSignature = false;
-                        }
+                // For PDF generation, we need to convert the image to base64 data URI
+                // since DomPDF cannot access external URLs directly
+                if ($temporaryUrl) {
+                    $signatureBase64 = $this->getSignatureImageFromUrl($temporaryUrl);
+                    if ($signatureBase64) {
+                        $temporaryUrl = $signatureBase64; // Replace URL with base64 data URI
+                    } else {
+                        $temporaryUrl = null;
+                        $includeSignature = false;
                     }
                 }
             } catch (\Exception $e) {
