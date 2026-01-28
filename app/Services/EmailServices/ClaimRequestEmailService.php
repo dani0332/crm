@@ -6,6 +6,7 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SendClaimGoogleReviewEmailJob;
 use App\Models\ApplicationStorage;
@@ -116,7 +117,8 @@ class ClaimRequestEmailService extends BaseService
         $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
 
         $isHealthClaim = $claimRequest->quote_type_id == QuoteTypeId::Health;
-        $workflowType = $isHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
+        $isGroupHealthClaim = $claimRequest->personalQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+        $workflowType = $isHealthClaim || $isGroupHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
 
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
