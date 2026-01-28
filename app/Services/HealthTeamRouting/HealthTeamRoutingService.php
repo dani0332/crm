@@ -141,32 +141,25 @@ class HealthTeamRoutingService
         }
 
         try {
-            $team = $this->fetchTeamNameBasedOnPrice($lead, TeamCategoryEnum::AUH);
+            $team = $this->fetchTeamByPriceAndCategory($lead->price_starting_from, TeamCategoryEnum::AUH);
 
             if ($team) {
-                // Get team details for detailed logging
-                $teamDetails = Team::where('allocation_threshold_enabled', true)
-                    ->where('min_price', '<=', $lead->price_starting_from)
-                    ->where('max_price', '>=', $lead->price_starting_from)
-                    ->where('category', TeamCategoryEnum::AUH->value)
-                    ->first();
-
                 $this->logStep(
                     'AUH tier team matched successfully',
                     'auh_tier_matched',
                     [
-                        'team_name' => $team,
-                        'team_id' => $teamDetails?->id,
+                        'team_name' => $team->name,
+                        'team_id' => $team->id,
                         'premium' => $lead->price_starting_from,
-                        'min_price' => $teamDetails?->min_price,
-                        'max_price' => $teamDetails?->max_price,
+                        'min_price' => $team->min_price,
+                        'max_price' => $team->max_price,
                         'category' => TeamCategoryEnum::AUH->value,
                     ],
                     $lead
                 );
                 LoggerService::info('AUH tier team matched successfully', [
-                    'team_name' => $team,
-                    'team_id' => $teamDetails?->id,
+                    'team_name' => $team->name,
+                    'team_id' => $team->id,
                     'premium' => $lead->price_starting_from,
                 ]);
             } else {
@@ -183,7 +176,7 @@ class HealthTeamRoutingService
                 LoggerService::warning('No AUH tier team found for given premium', ['premium' => $lead->price_starting_from]);
             }
 
-            return $team;
+            return $team?->name;
         } catch (\Exception $e) {
             $this->logStep(
                 'Exception occurred during AUH tier routing',
@@ -286,32 +279,25 @@ class HealthTeamRoutingService
         }
 
         try {
-            $team = $this->fetchTeamNameBasedOnPrice($lead, TeamCategoryEnum::NON_AUH);
+            $team = $this->fetchTeamByPriceAndCategory($lead->price_starting_from, TeamCategoryEnum::NON_AUH);
 
             if ($team) {
-                // Get team details for detailed logging
-                $teamDetails = Team::where('allocation_threshold_enabled', true)
-                    ->where('min_price', '<=', $lead->price_starting_from)
-                    ->where('max_price', '>=', $lead->price_starting_from)
-                    ->where('category', TeamCategoryEnum::NON_AUH->value)
-                    ->first();
-
                 $this->logStep(
                     'Non-AUH tier team matched successfully',
                     'non_auh_tier_matched',
                     [
-                        'team_name' => $team,
-                        'team_id' => $teamDetails?->id,
+                        'team_name' => $team->name,
+                        'team_id' => $team->id,
                         'premium' => $lead->price_starting_from,
-                        'min_price' => $teamDetails?->min_price,
-                        'max_price' => $teamDetails?->max_price,
+                        'min_price' => $team->min_price,
+                        'max_price' => $team->max_price,
                         'category' => TeamCategoryEnum::NON_AUH->value,
                     ],
                     $lead
                 );
                 LoggerService::info('Non-AUH tier team matched successfully', [
-                    'team_name' => $team,
-                    'team_id' => $teamDetails?->id,
+                    'team_name' => $team->name,
+                    'team_id' => $team->id,
                     'premium' => $lead->price_starting_from,
                 ]);
             } else {
@@ -328,7 +314,7 @@ class HealthTeamRoutingService
                 LoggerService::warning('No Non-AUH tier team found for given premium', ['premium' => $lead->price_starting_from]);
             }
 
-            return $team;
+            return $team?->name;
         } catch (\Exception $e) {
             $this->logStep(
                 'Exception occurred during Non-AUH tier routing',
@@ -347,19 +333,6 @@ class HealthTeamRoutingService
 
             return null;
         }
-    }
-
-    private function fetchTeamNameBasedOnPrice(HealthQuote $lead, TeamCategoryEnum $category): ?string
-    {
-        // Note: Detailed threshold matching logs are handled in parent methods
-        // This method focuses on database query only to avoid duplicate logging
-        $team = Team::where('allocation_threshold_enabled', true)
-            ->where('min_price', '<=', $lead->price_starting_from)
-            ->where('max_price', '>=', $lead->price_starting_from)
-            ->where('category', $category->value)
-            ->first();
-
-        return $team?->name;
     }
 
     private function fetchPecTeamName(HealthQuote $lead): ?string
