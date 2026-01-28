@@ -22,7 +22,7 @@ trait Reportable
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $freshLoad = ! isset($filters->page);
 
-        if (isset($filters->{$dateAttribute}) && isset($filters->{$dateAttribute}[0])) {
+        if (isset($filters->{$dateAttribute})) {
             $startDate = Carbon::parse($filters->{$dateAttribute}[0])->startOfDay()->format($dateFormat);
         } else {
             $startDate = $freshLoad
