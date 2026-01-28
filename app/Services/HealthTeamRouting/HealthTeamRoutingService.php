@@ -158,11 +158,7 @@ class HealthTeamRoutingService
 
             return HealthTeamType::GBP;
         }
-        if ($gbpMinPrice === null) {
-            LoggerService::info('GBP team not found for AUH category, proceeding with regular tier-based routing');
-        } elseif ($lead->price_starting_from <= $gbpMinPrice) {
-            LoggerService::info("Price starting from ({$lead->price_starting_from}) is not greater than GBP min price ({$gbpMinPrice}), proceeding with regular tier-based routing");
-        }
+        $this->logGbpCheckResult($gbpMinPrice, $lead->price_starting_from, 'tier-based');
 
         try {
             $team = $this->fetchTeamByPriceAndCategory($lead->price_starting_from, TeamCategoryEnum::AUH);

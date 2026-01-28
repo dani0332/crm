@@ -10,6 +10,7 @@ use App\Enums\TeamCategoryEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\HealthQuote;
 use App\Models\Team;
+use App\Services\Logger\LoggerService;
 
 trait HealthTeamRoutable
 {
@@ -54,5 +55,14 @@ trait HealthTeamRoutable
             ->first();
 
         return $gbpTeam?->min_price;
+    }
+
+    private function logGbpCheckResult(?float $gbpMinPrice, $priceStartingFrom, string $routingType = 'routing'): void
+    {
+        if ($gbpMinPrice === null) {
+            LoggerService::info("GBP team not found for AUH category, proceeding with regular {$routingType} routing");
+        } elseif ($priceStartingFrom <= $gbpMinPrice) {
+            LoggerService::info("Price starting from ({$priceStartingFrom}) is not greater than GBP min price ({$gbpMinPrice}), proceeding with regular {$routingType} routing");
+        }
     }
 }
