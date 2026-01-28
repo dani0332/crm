@@ -227,7 +227,7 @@ watch(
     <x-modal
       v-model="modals.log"
       size="lg"
-      title='Health Routing Log Details'
+      :title="`Health Routing Log Details${ selectedLog.type == 'ROUTING' ? ': ' + selectedLog.uuid : '' }`"
       show-close
       backdrop
     >
