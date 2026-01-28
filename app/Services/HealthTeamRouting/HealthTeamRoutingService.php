@@ -338,9 +338,9 @@ class HealthTeamRoutingService
     private function fetchPecTeamName(HealthQuote $lead): ?string
     {
         $team = Team::where('allocation_threshold_enabled', true)
-            ->where('category', TeamCategoryEnum::NON_AUH->value)
             ->where('type', TeamTypeEnum::TEAM)
-            ->where('name', TeamNameEnum::NON_AUH_PEC)
+            ->where('name', TeamNameEnum::PEC)
+            ->active()
             ->first();
 
         if ($team) {
