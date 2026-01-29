@@ -19,7 +19,6 @@ use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\ClaimRequest;
 use App\Services\ClaimDocumentService;
-use App\Services\ClaimsDocumentUploadUtility;
 use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
 use App\Services\CustomerService;
@@ -479,53 +478,6 @@ class ClaimsController extends Controller
             ]);
 
             return redirect()->route('claims.show', $claim->uuid)->with('error', 'Failed to update primary contact.');
-        }
-    }
-
-    /**
-     * Upload documents from claims folder to Azure Storage
-     * One-time utility endpoint
-     *
-     * @return JsonResponse
-     */
-    public function uploadDocuments(): JsonResponse
-    {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::CLAIM_DOCUMENT_UPLOAD_UTILITY);
-
-        try {
-            LoggerService::info('Starting document upload process');
-
-            $utility = new ClaimsDocumentUploadUtility();
-            $stats = $utility->processAllDocuments();
-
-            LoggerService::info('Document upload process completed', extra: [
-                'processed' => $stats['processed'],
-                'uploaded' => $stats['uploaded'],
-                'failed' => $stats['failed'],
-                'errors_count' => count($stats['errors']),
-            ]);
-
-            LoggerService::endLogging();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Document upload process completed',
-                'stats' => [
-                    'processed' => $stats['processed'],
-                    'uploaded' => $stats['uploaded'],
-                    'failed' => $stats['failed'],
-                    'errors' => $stats['errors'],
-                ],
-            ]);
-        } catch (Exception $e) {
-            LoggerService::error('Exception during upload process', exception: $e);
-            LoggerService::endLogging();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to process document upload',
-                'error' => $e->getMessage(),
-            ], 500);
         }
     }
 
