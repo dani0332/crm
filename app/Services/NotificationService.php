@@ -164,7 +164,7 @@ class NotificationService extends BaseService
                         ->where('authorized_at', '>=', $thirtyDaysAgo);
                 })->orWhere(function ($q) use ($thirtyDaysAgo) {
                     $q->where('payment_methods_code', PaymentMethodsEnum::InsurerPayment)
-                        ->where('payment_status_id', PaymentStatusEnum::NEW)
+                        ->whereIn('payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
                         ->where('collection_date', '>=', $thirtyDaysAgo);
                 });
             })
