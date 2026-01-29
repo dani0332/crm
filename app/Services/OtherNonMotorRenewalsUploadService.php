@@ -99,13 +99,18 @@ class OtherNonMotorRenewalsUploadService
         Bus::batch($jobs)
             ->onQueue('renewals')
             ->name('Other Non Motor Renewals Batch')
-            ->allowFailures()
             ->then(function () use ($renewalsUploadLead) {
+                LoggerService::info('OTH FN: All jobs completed successfully');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             })
             ->catch(function () use ($renewalsUploadLead) {
+                LoggerService::info('OTH FN: One or more jobs failed');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
             })
+            ->finally(function () use ($logPrefix) {
+                LoggerService::info('OTH FN: Everything done');
+            })
+            ->allowFailures()
             ->dispatch();
     }
 
