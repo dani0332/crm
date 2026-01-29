@@ -241,7 +241,7 @@ trait OcrFillable
             // Create a single instance of the processor to reuse
             $processor = new PassportDataProcessor($quote, $data, $documentTypeCode, $memberDetailId);
 
-            $success = $processor->processPassportData();
+            return $processor->processPassportData();
 
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred during passport data filling - Quote UUID: '.$quote->uuid, exception: $e);
@@ -255,7 +255,7 @@ trait OcrFillable
         try {
             $processor = new VisaDataProcessor($quote, $data, $documentTypeCode, $memberDetailId);
 
-            $success = $processor->processVisaData();
+            return $processor->processVisaData();
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred during Visa data filling - Quote UUID: '.$quote->uuid, exception: $e);
 
