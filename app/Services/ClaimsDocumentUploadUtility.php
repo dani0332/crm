@@ -97,22 +97,24 @@ class ClaimsDocumentUploadUtility
                 $businessTypeFolders = File::directories($lobFolder);
 
                 foreach ($businessTypeFolders as $businessTypeFolder) {
-                    $businessTypeId = (int) basename($businessTypeFolder);
+                    $businessTypeFolderName = trim(basename($businessTypeFolder));
+                    
+                    // Extract integer from folder name (handles cases like "33", "4", "26", "0")
+                    // Use the same method as extractIntegerFromFolderName for consistency
+                    $businessTypeId = $this->extractIntegerFromFolderName($businessTypeFolderName);
 
-                    if (! is_numeric(basename($businessTypeFolder))) {
-                        $error = "Invalid business type of insurance ID folder: {$businessTypeFolder}";
-                        $stats['errors'][] = $error;
-                        LoggerService::warning('Invalid business type of insurance ID folder', extra: [
-                            'business_type_folder' => $businessTypeFolder,
-                            'lob_name' => $lobName,
-                        ]);
-                        continue;
-                    }
-
-                    // If folder name is 0, set to null
-                    if ($businessTypeId === 0) {
+                    // If folder name is 0 or couldn't extract integer, set to null
+                    // Note: extractIntegerFromFolderName returns null if no integer found
+                    if ($businessTypeId === null || $businessTypeId === 0) {
                         $businessTypeId = null;
                     }
+
+                    LoggerService::debug('Processing business type folder', extra: [
+                        'lob' => $lobName,
+                        'business_type_folder' => $businessTypeFolder,
+                        'business_type_folder_name' => $businessTypeFolderName,
+                        'extracted_business_type_id' => $businessTypeId,
+                    ]);
 
                     // Get all insurance provider folders inside business type folder
                     $providerFolders = File::directories($businessTypeFolder);
