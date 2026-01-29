@@ -712,7 +712,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function readyToPostInvoiceAr($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
+    public static function readyToPostInvoiceAr($batchNumber, $type = SageEnum::SCT_STRAIGHT, $extras = [])
     {
         $sageRequestType = null;
         $payLoad = [
@@ -723,8 +723,6 @@ class SagePayloadFactory
         $sageRequestTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_RTP_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_RTP_AR_SPPAY_INV,
-            SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_RTP_AR_DISC_INV,
-
         ];
 
         if (isset($extras['sage_request_type']) && ! in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
@@ -732,13 +730,8 @@ class SagePayloadFactory
         }
 
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
-
             $entryType = $type;
             $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_RTP_AR_PREM_COMM_REV_INV : SageEnum::SRT_RTP_AR_PREM_COMM_CORR_INV;
-
-            if ($useFor == SageEnum::SCT_DISCOUNT) {
-                $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_RTP_AR_DISC_REV_INV : SageEnum::SRT_RTP_AR_DISC_CORR_INV;
-            }
         }
 
         // Additional commission and Tax invoice booking Case
@@ -811,7 +804,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function aRPostInvoices($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
+    public static function aRPostInvoices($batchNumber, $type = SageEnum::SCT_STRAIGHT, $extras = [])
     {
         $sageRequestType = null;
         $payLoad = [
@@ -829,7 +822,6 @@ class SagePayloadFactory
         $sageRequestTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_POST_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_POST_AR_SPPAY_INV,
-            SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_POST_AR_DISC_INV,
         ];
 
         if (isset($extras['sage_request_type']) && ! in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
@@ -839,10 +831,6 @@ class SagePayloadFactory
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
             $entryType = $type;
             $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_POST_AR_PREM_COMM_REV_INV : SageEnum::SRT_POST_AR_PREM_COMM_CORR_INV;
-
-            if ($useFor == SageEnum::SCT_DISCOUNT) {
-                $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_POST_AR_DISC_REV_INV : SageEnum::SRT_POST_AR_DISC_CORR_INV;
-            }
         }
 
         // Additional commission and Tax invoice booking Case

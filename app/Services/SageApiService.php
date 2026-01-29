@@ -246,8 +246,6 @@ class SageApiService
                     SageEnum::SRT_CREATE_AP_SPPAY_INV,
                     SageEnum::SRT_CREATE_AP_PREM_CORR_INV,
                     SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV,
-                    SageEnum::SRT_CREATE_AR_DISC_INV,
-                    SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
                 ]) && $sageApiLog['status'] == SageEnum::STATUS_SUCCESS;
             })->values()->toArray();
 
@@ -506,13 +504,29 @@ class SageApiService
 
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Getting Invoice from Sage process start - SendUpdateCode: '.$sendUpdateLog?->code);
         $isPaymentUpfront = $extraDetails['paymentFrequency'] == PaymentFrequency::UPFRONT;
+        
+        // Legacy discount invoice types - these should be skipped before reaching this function,
+        // but we include them here for defensive programming
+        $legacyDiscountInvoiceTypes = [
+            SageEnum::SRT_CREATE_AR_DISC_INV,
+            SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
+            SageEnum::SRT_CREATE_AR_DISC_REV_INV,
+        ];
+
+        // Check if this is a legacy discount invoice that should have been skipped
+        if (in_array($getRequestType, $legacyDiscountInvoiceTypes)) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Legacy discount invoice type detected and skipped - SendUpdateCode: '.$sendUpdateLog?->code, extra: [
+                'sage_request_type' => $getRequestType,
+            ]);
+
+            return ['status' => true, 'message' => 'Legacy discount invoice skipped', 'response' => []];
+        }
+
         $arEntryTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => ['step' => 2],
             SageEnum::SRT_CREATE_AR_SPPAY_INV => ['step' => 2],
             SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV => ['step' => 2],
             SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV => ['step' => 2],
-            SageEnum::SRT_CREATE_AR_DISC_INV => ['step' => $isPaymentUpfront ? 16 : 18],
-            SageEnum::SRT_CREATE_AR_DISC_CORR_INV => ['step' => $isPaymentUpfront ? 16 : 18],
         ];
 
         $apEntryType = [
@@ -526,18 +540,14 @@ class SageApiService
             (in_array($getRequestType, array_keys($arEntryTypes)) ? SageEnum::SRT_GET_AR_INVOICE : (in_array($getRequestType, array_keys($apEntryType)) ? SageEnum::SRT_GET_AP_INVOICE : null));
 
         if (is_null($sageRequestType)) {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Invalid Invoice Type - SendUpdateCode: '.$sendUpdateLog?->code);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Invalid Invoice Type - SendUpdateCode: '.$sendUpdateLog?->code, extra: [
+                'sage_request_type' => $getRequestType,
+            ]);
 
             return ['status' => false, 'message' => 'Error while getting Invoice from Sage'];
         }
 
         $step = ($sageRequestType == SageEnum::SRT_GET_AR_INVOICE ? $arEntryTypes[$getRequestType]['step'] ?? null : $apEntryType[$getRequestType]['step'] ?? null);
-
-        $sageInvResponse = SageApiLogRepository::getInvoiceResponse([
-            'quoteTypeObject' => $reversalInvoiceDetails['sectionType'],
-            'quoteTypeId' => $reversalInvoiceDetails['sectionId'],
-            'invoiceType' => $reversalInvoiceDetails['sageRequestType'],
-        ]);
 
         $reverseInvoiceBatchNumber = json_decode($reversalInvoiceDetails['reversalInvoice']['response'])->BatchNumber;
         $payLoadOptions = SagePayloadFactory::getInvoiceDetails($reversalInvoiceDetails['invoiceType'], $reverseInvoiceBatchNumber);
