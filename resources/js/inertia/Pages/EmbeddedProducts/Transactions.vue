@@ -36,6 +36,8 @@ const filters = reactive({
   ep_payment_status: [],
   ep_api_status: [],
   ep_sage_status: [],
+  tax_invoice_no: '',
+  tax_invoice_buyer_no: '',
 });
 
 const getLink = (quote_uuid, quote_type_id, ref_id) =>
@@ -65,6 +67,8 @@ const tableHeader = [
   { text: 'EP Sage Status', value: 'ep_sage_status' },
 
   { text: 'Certificate Number', value: 'certificate_number' },
+  { text: 'Tax Invoice Number', value: 'tax_invoice_no' },
+  { text: 'Tax Invoice Raised by Buyer Number', value: 'tax_invoice_buyer_no' },
   { text: 'Model Year', value: 'model_year' },
   { text: 'Make', value: 'make' },
   { text: 'Model', value: 'model' },
@@ -222,6 +226,18 @@ const filteredHeaders = computed(() => {
         page.props.embeddedProduct.detail.short_code ===
         page.props.ep_enums.COURIER
       );
+    }
+
+    // Show Tax Invoice columns only for MDX, RDX, and ECB
+    if (
+      header.value === 'tax_invoice_no' ||
+      header.value === 'tax_invoice_buyer_no'
+    ) {
+      return [
+        page.props.ep_enums.ECB,
+        page.props.ep_enums.RDX,
+        page.props.ep_enums.MDX,
+      ].includes(page.props.embeddedProduct.detail.short_code);
     }
 
     if (
@@ -510,6 +526,56 @@ const showEpSageStatusFilter = (function () {
             filterable
             filterPlaceholder="Filter EP Sage Status...."
             label="EP Sage Status"
+          />
+        </div>
+
+        <div
+          v-if="
+            [ep_enums.ECB, ep_enums.RDX, ep_enums.MDX].includes(
+              embeddedProduct.detail.short_code,
+            )
+          "
+        >
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Tax Invoice Number
+            </label>
+            <template #tooltip> Tax Invoice Number </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.tax_invoice_no"
+            type="search"
+            name="tax_invoice_no"
+            class="w-full"
+            placeholder="Search by Tax Invoice Number"
+          />
+        </div>
+
+        <div
+          v-if="
+            [ep_enums.ECB, ep_enums.RDX, ep_enums.MDX].includes(
+              embeddedProduct.detail.short_code,
+            )
+          "
+        >
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Tax Invoice Raised by Buyer Number
+            </label>
+            <template #tooltip>
+              Tax Invoice Raised by Buyer Number
+            </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.tax_invoice_buyer_no"
+            type="search"
+            name="tax_invoice_buyer_no"
+            class="w-full"
+            placeholder="Search by Tax Invoice Raised by Buyer Number"
           />
         </div>
       </div>
