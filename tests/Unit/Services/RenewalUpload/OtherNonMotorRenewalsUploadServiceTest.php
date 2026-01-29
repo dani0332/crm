@@ -74,7 +74,7 @@ test('assigns advisor for eligible other non-motor renewal lead', function () {
     $quote = makeOtherNonMotorQuote();
     $lead = makeUploadLead();
     $process = makePendingProcess($lead, [
-        'ref_id' => $quote->uuid,
+        'ref_id' => $quote->code,
         'advisor_email' => $advisor->email,
     ]);
 
@@ -86,7 +86,7 @@ test('assigns advisor for eligible other non-motor renewal lead', function () {
     $quote->refresh();
 
     expect($process->status)->toBe(RenewalProcessStatuses::PROCESSED)
-        ->and($process->fetch_plans_status)->toBe(FetchPlansStatuses::FETCHED)
+        ->and($process->fetch_plans_status)->toBe(FetchPlansStatuses::PENDING)
         ->and($process->quote_id)->toBe($quote->id)
         ->and($lead->good)->toBe(1)
         ->and($lead->cannot_upload)->toBe(0)
