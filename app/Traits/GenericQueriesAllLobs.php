@@ -90,7 +90,11 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        if (strtolower($quoteType) === GenericRequestEnum::SEND_UPDATE_AS_QUOTE_TYPE) {
+            $model = $nameSpace.GenericRequestEnum::SEND_UPDATE_LOG;
+        } else {
+            $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        }
 
         if (! class_exists($model)) {
             return false;
@@ -108,7 +112,11 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        if (strtolower($quoteType) === GenericRequestEnum::SEND_UPDATE_AS_QUOTE_TYPE) {
+            $model = $nameSpace.GenericRequestEnum::SEND_UPDATE_LOG;
+        } else {
+            $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        }
 
         if (! class_exists($model)) {
             return false;
@@ -121,13 +129,17 @@ trait GenericQueriesAllLobs
 
     /**
      * @return false|mixed
-     *                     TODO :
+     * 
      */
     public function getSelectedQuoteObjectBy($quoteType, $id, $column = 'id')
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        if (strtolower($quoteType) === GenericRequestEnum::SEND_UPDATE_AS_QUOTE_TYPE) {
+            $model = $nameSpace.GenericRequestEnum::SEND_UPDATE_LOG;
+        } else {
+            $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        }
 
         if (! class_exists($model)) {
             return false;
