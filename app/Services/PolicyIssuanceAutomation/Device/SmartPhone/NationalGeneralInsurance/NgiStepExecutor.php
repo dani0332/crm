@@ -47,10 +47,6 @@ class NgiStepExecutor
                 PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY
             );
             $createPolicyResponse['status'] = false;
-            if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE) {
-                $createPolicyResponse['error'] = $createPolicyResponse['error'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE;
-                $createPolicyResponse['message'] = $createPolicyResponse['message'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE;
-            }
             return $createPolicyResponse;
         }
 
@@ -134,10 +130,6 @@ class NgiStepExecutor
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY
             );
             $triggerBookPolicyResponse['status'] = false;
-            if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY) {
-                $triggerBookPolicyResponse['error'] = $triggerBookPolicyResponse['error'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY;
-                $triggerBookPolicyResponse['message'] = $triggerBookPolicyResponse['message'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY;
-            }
             return $triggerBookPolicyResponse;
         }
 

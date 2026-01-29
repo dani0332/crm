@@ -129,7 +129,7 @@ class NgiApiService
             $process
         );
 
-        if (! $policyDocumentsResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD) {
+        if (! $policyDocumentsResponse['status'] || $quote->email === PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD) {
             LoggerService::error('GetPolicyDocuments API call failed', extra: [
                 'endpoint' => $endPoint,
                 'policy_number' => $quote->policy_number,
@@ -140,11 +140,6 @@ class NgiApiService
             $response['error'] = $policyDocumentsResponse['error'];
             $response['message'] = $policyDocumentsResponse['message'];
             $response['status'] = false;
-
-            if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD) {
-                $response['error'] = $response['error'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD;
-                $response['message'] = $response['message'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD;
-            }
 
             return $response;
         }
