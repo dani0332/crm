@@ -508,7 +508,7 @@ class RenewalsUploadController extends Controller
             $export = new RenewalFailedValidationExport($renewaUploadLead);
         }
 
-        return Excel::download($export, 'failed_' . $renewaUploadLead->file_name);
+        return Excel::download($export, 'failed_'.$renewaUploadLead->file_name);
     }
 
     public function validationPassed($id)
@@ -562,6 +562,7 @@ class RenewalsUploadController extends Controller
                 if (! $otherNonMotorQuote) {
                     return abort(404);
                 }
+
                 return redirect($otherNonMotorQuote->bringEcomUrl());
                 break;
             default:

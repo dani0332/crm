@@ -9,7 +9,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Imports\UploadAndUpdateOtherNonMotorImport;
 use App\Jobs\Renewals\ProcessOtherNonMotorRenewal;
-use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;

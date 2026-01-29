@@ -44,6 +44,6 @@ class ProcessOtherNonMotorRenewal implements ShouldQueue
     {
         $renewalsUploadLead = RenewalsUploadLeads::find($this->renewalsUploadLeadId);
         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-        info('CL: ' . get_class() . ' FN: failed. Job Failed. Error: ' . $exception->getMessage());
+        info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
     }
 }
