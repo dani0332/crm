@@ -1691,6 +1691,11 @@ class CentralService extends BaseService
                     if (! empty($policyHandBook)) {
                         $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($policyHandBook, 'azureIMPrivate') ?? '';
                     }
+                } else {
+                    $emailData->handBookDocuments = '';
+                    if (! empty($policyHandBook)) {
+                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($policyHandBook, 'azureIMPrivate') ?? '';
+                    }
                 }
             }
             $emailData->handBookExt = ! empty($emailData->handBookDocuments) ? pathinfo(parse_url($emailData->handBookDocuments, PHP_URL_PATH), PATHINFO_EXTENSION) : '';

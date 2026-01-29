@@ -740,7 +740,7 @@ class ReportService extends BaseService
                 })
                     ->orWhere(function ($q) use ($thirtyDaysAgo) {
                         $q->where('py.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
-                            ->where('py.payment_status_id', PaymentStatusEnum::NEW)
+                            ->whereIn('py.payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
                             ->where('py.collection_date', '>=', $thirtyDaysAgo);
                     });
             });
