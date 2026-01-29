@@ -350,22 +350,6 @@ class SageApiService
             }
         }
 
-        // Create AR Discount Invoice
-        $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
-        if ($sageRequestPayload->discount > 0 && ! in_array(($preparedData['sendUpdateLog']?->option?->code ?? ''), [
-            SendUpdateLogStatusEnum::ATIB,
-            SendUpdateLogStatusEnum::ACB,
-            SendUpdateLogStatusEnum::ATCRNB,
-            SendUpdateLogStatusEnum::ATCRNB_RBB,
-        ])) {
-            $extraDetails['paymentFrequency'] = $preparedData['payment']->frequency;
-            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
-            if (! $createARInvoiceDis['status']) {
-                return $createARInvoiceDis;
-            }
-            unset($extraDetails['paymentFrequency']);
-        }
-
         $categoryCode = $preparedData['sendUpdateLog']?->category?->code;
         $optionCode = $preparedData['sendUpdateLog']?->option?->code;
         $isSendUpdateTypeCancelled = $categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC);
@@ -420,8 +404,6 @@ class SageApiService
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Reversal and Correction Endorsement Booking Start on Sage - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Payment frequency: '.$preparedData['payment']->frequency);
 
-        $isOnlyDiscountReversal = false;
-        $isOnlyDiscount = false;
         $reverseSageRequestTypes = collect($reversalInvoiceLogs)->pluck('sage_request_type')->toArray();
 
         if (empty($reverseSageRequestTypes)) {
@@ -429,17 +411,6 @@ class SageApiService
         }
 
         $invoiceTypeForCPD = [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION];
-        $arInvoiceTypesWithDiscount = [
-            SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-            SageEnum::SRT_CREATE_AR_SPPAY_INV,
-            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
-            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
-            SageEnum::SRT_CREATE_AR_DISC_INV,
-            SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
-        ];
-
-        $arDiscountInvoiceTypes = [SageEnum::SRT_CREATE_AR_DISC_INV, SageEnum::SRT_CREATE_AR_DISC_CORR_INV];
-
         $arInvoiceTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV,
@@ -461,16 +432,8 @@ class SageApiService
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
         }
 
-        if (! empty(array_intersect($arDiscountInvoiceTypes, $reverseSageRequestTypes))) {
-            $isOnlyDiscountReversal = $sendUpdateLog && (int) $sendUpdateLog->discount == 0;
-        } else {
-            if ($sendUpdateLog->discount > 0) {
-                $isOnlyDiscount = true;
-            }
-        }
-
         foreach ($reverseSageRequestTypes as $reverseSageRequestTypeKey => $reverseSageRequestType) {
-            $invoiceType = in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $arInvoiceTypesWithDiscount) ?
+            $invoiceType = in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $arInvoiceTypes) ?
                 SageEnum::SRT_GET_AR_INVOICE : (in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $apInvoiceTypes) ? SageEnum::SRT_GET_AP_INVOICE : null);
 
             if (is_null($invoiceType)) {
@@ -516,37 +479,6 @@ class SageApiService
                         return $createAPInvoicePrem;
                     }
                 }
-
-                if (in_array($reverseSageRequestType, $arDiscountInvoiceTypes)) {
-                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL) {
-                        // Create AR Discount Invoice (Reversal)
-                        $extraDetails['is_reversal_discount'] = true;
-                        $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
-                        if (! $createARInvoiceDis['status']) {
-                            return $createARInvoiceDis;
-                        }
-                    }
-
-                    if ($cpdInvoiceType == SageEnum::SCT_CORRECTION && ! $isOnlyDiscountReversal) {
-                        // Create AR Discount Invoice (Correction)
-                        $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
-                        if (! $createARInvoiceDis['status']) {
-                            return $createARInvoiceDis;
-                        }
-                    }
-                }
-            }
-        }
-
-        if ($isOnlyDiscount) {
-            // Create AR Discount Invoice
-            $extraDetails['sage_entry_type'] = SageEnum::SCT_STRAIGHT;
-            $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
-            $extraDetails['is_only_correction'] = true;
-            unset($extraDetails['sageReversalInvoice']);
-            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
-            if (! $createARInvoiceDis['status']) {
-                return $createARInvoiceDis;
             }
         }
 
@@ -970,13 +902,6 @@ class SageApiService
             $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
             if (! $createAPInvoicePrem['status']) {
                 return $createAPInvoicePrem;
-            }
-
-            // Create AR Discount Invoice
-            $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
-            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequest, $quote, $sageLogArray, $extraDetails]);
-            if (! $createARInvoiceDis['status']) {
-                return $createARInvoiceDis;
             }
 
             // Apply Prepayments for AR Invoice
@@ -2612,232 +2537,6 @@ class SageApiService
         LoggerService::info('Completed Non-Upfront AP Invoice Premium creation successfully');
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'AP Premium invoice created on sage';
-
-        return $returnMessage;
-    }
-
-    public function createARInvoiceDis($sageRequestDataArray)
-    {
-        $sageRequestDataArray = array_pad($sageRequestDataArray, 4, []);
-        [$sageRequest, $quote, $sageLogArray, $extraDetails] = $sageRequestDataArray;
-        $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        $isReversalDiscount = isset($extraDetails['is_reversal_discount']) ?? false;
-        $isOnlyCorrection = isset($extraDetails['is_only_correction']) ?? false;
-        $userId = $extraDetails['userId'] ?? null;
-        $isDiscountApplied = $sageRequest->discount > 0;
-
-        $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
-        $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
-        $isPaymentFrequencyUpfront = $extraDetails['paymentFrequency'] ?? true;
-
-        $totalSteps = 15;
-        $stepsMapping = ['step_1' => 10, 'step_2' => 11, 'step_3' => 12];
-        $isAlreadyPosted = false;
-
-        LoggerService::info('Starting AR Invoice Discount creation', extra: [
-            'entry_type' => $sageEntryType,
-            'is_reversal_discount' => $isReversalDiscount,
-            'discount_applied' => $isDiscountApplied,
-        ]);
-
-        switch ($sageEntryType) {
-            case SageEnum::SCT_REVERSAL:
-                $totalSteps = 22;
-                $stepsMapping = [
-                    'step_1' => $isPaymentFrequencyUpfront ? 17 : 19,
-                    'step_2' => $isPaymentFrequencyUpfront ? 18 : 20,
-                    'step_3' => $isPaymentFrequencyUpfront ? 19 : 21,
-                ];
-                break;
-            case SageEnum::SCT_CORRECTION:
-                $totalSteps = 22;
-                $stepsMapping = [
-                    'step_1' => $isPaymentFrequencyUpfront ? 20 : 22,
-                    'step_2' => $isPaymentFrequencyUpfront ? 21 : 23,
-                    'step_3' => $isPaymentFrequencyUpfront ? 22 : 24,
-                ];
-                break;
-        }
-
-        if ($isOnlyCorrection) {
-            $totalSteps = 22;
-            $stepsMapping = [
-                'step_1' => $isPaymentFrequencyUpfront ? 17 : 19,
-                'step_2' => $isPaymentFrequencyUpfront ? 18 : 20,
-                'step_3' => $isPaymentFrequencyUpfront ? 19 : 21,
-            ];
-        }
-
-        /* createARInvoiceDis */
-        if ($isDiscountApplied || $isReversalDiscount) {
-            $isLiveApiCallStep10 = true;
-            $createARInvoiceDis = SagePayloadFactory::createARInvoiceDis(request: $sageRequest, type: $sageEntryType, reversalDetails: $reverseInvoiceDetails, extras: $extraDetails);
-            if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
-                LoggerService::info('AR Invoice Discount already sent');
-                $isLiveApiCallStep10 = false;
-                $postedResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
-            } else {
-                LoggerService::info('Sending AR Invoice Discount to Sage');
-                $resp = $this->postToSage300($createARInvoiceDis['endPoint'], $createARInvoiceDis['payload']);
-                $postedResponse = json_decode($resp, true);
-            }
-
-            if (! empty($postedResponse['BatchNumber'])) {
-                LoggerService::info('AR Invoice Discount batch number - '.$postedResponse['BatchNumber']);
-                if ($isLiveApiCallStep10) {
-                    $this->logSageApiCall($createARInvoiceDis, $postedResponse, $quote, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
-                }
-
-                $isLiveApiCallStep11 = true;
-                $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr(batchNumber: $postedResponse['BatchNumber'], type: $sageEntryType, extras: $extraDetails);
-
-                if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
-                    $isLiveApiCallStep11 = false;
-                    $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
-                    LoggerService::info('AR Invoice Discount ready to post already sent', extra: [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                    ]);
-                } else {
-                    LoggerService::info('Sending AR Invoice Discount ready to post to Sage', extra: [
-                        'BatchNumber' => $postedResponse['BatchNumber'],
-                    ]);
-                    $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
-                }
-
-                if ($readyToPostResponse !== '') {
-                    $errorMessage = 'Error while making Ar discount invoice ready to post to sage';
-                    $readyToPostArray = json_decode($readyToPostResponse, true);
-
-                    if (isset($readyToPostArray['error']['message']['value'])) {
-                        LoggerService::info('Failed to post AR Invoice Discount Ready To Post batch', extra: [
-                            'BatchNumber' => $postedResponse['BatchNumber'],
-                            'Error' => $readyToPostArray['error']['message']['value'],
-                        ]);
-
-                        $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
-                        $arInvoiceBatch = json_decode($arInvoiceBatch, true);
-
-                        LoggerService::info('Checking status of AR Invoice Discount batch', extra: [
-                            'BatchNumber' => $postedResponse['BatchNumber'],
-                            'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
-                        ]);
-
-                        if (isset($arInvoiceBatch['BatchStatus']) && $arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                            LoggerService::info('AR Invoice Discount batch already posted', extra: [
-                                'BatchNumber' => $postedResponse['BatchNumber'],
-                            ]);
-                            $this->logSageApiCall($readyToPostInvoiceAr, '', $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
-
-                            $isAlreadyPosted = true;
-                        } elseif (! isset($arInvoiceBatch['BatchStatus'])) {
-                            LoggerService::info('Failed to get AR Invoice Discount batch status', extra: [
-                                'BatchNumber' => $postedResponse['BatchNumber'],
-                            ]);
-                            $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId);
-                            $message = 'Failed to get status of AR Invoice Discount batch - '.$postedResponse['BatchNumber'].' failed';
-
-                            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
-                        } else {
-                            LoggerService::info('Error while making AR Invoice Discount ready to post to sage', extra: [
-                                'BatchNumber' => $postedResponse['BatchNumber'],
-                            ]);
-                            $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId);
-                            $message = 'Failed to post AR Invoice Discount Ready To Post batch - '.$postedResponse['BatchNumber'].' failed';
-
-                            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
-                        }
-                    } else {
-                        if ($isLiveApiCallStep11) {
-                            LoggerService::info('Logging AR Invoice Discount Ready To Post batch successfully', extra: [
-                                'BatchNumber' => $postedResponse['BatchNumber'],
-                            ]);
-                            $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
-                        }
-                    }
-                } else {
-                    if ($isLiveApiCallStep11) {
-                        LoggerService::info('Logging AR Invoice Discount Ready To Post batch successfully with empty response', extra: [
-                            'BatchNumber' => $postedResponse['BatchNumber'],
-                        ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
-                    }
-                }
-
-                $arDiscountInvoiceBatchNumber = $postedResponse['BatchNumber'];
-                $isLiveApiCallStep12 = true;
-                $aRPostInvoices = SagePayloadFactory::aRPostInvoices(batchNumber: $arDiscountInvoiceBatchNumber, type: $sageEntryType, extras: $extraDetails);
-                if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
-                    LoggerService::info('AR Invoice Discount AR Post already posted');
-                    $isLiveApiCallStep12 = false;
-                    $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
-                } else {
-                    if (($isAlreadyPosted && isset($aRPostInvoices)) || (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL)) {
-                        if ($isAlreadyPosted) {
-                            LoggerService::info('AR Invoice Discount batch already posted', extra : [
-                                'BatchNumber' => $arDiscountInvoiceBatchNumber,
-                            ]);
-                            $postedResponse = $aRPostInvoices['payload'];
-                        } else {
-                            LoggerService::info('Checking status of AR Invoice Discount batch', extra : [
-                                'BatchNumber' => $arDiscountInvoiceBatchNumber,
-                            ]);
-                            $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$arDiscountInvoiceBatchNumber.')', [], 'GET');
-                            $arInvoiceBatch = json_decode($arInvoiceBatch, true);
-
-                            LoggerService::info('Status of AR Invoice Discount batch', extra: [
-                                'BatchNumber' => $arDiscountInvoiceBatchNumber,
-                                'BatchStatus' => $arInvoiceBatch['BatchStatus'] ?? 'Not found',
-                            ]);
-
-                            if (! isset($arInvoiceBatch['BatchStatus'])) {
-                                $message = 'AR Discount Invoice, Unable to get Batch Status from Sage.';
-                                $returnMessage['message'] = $message;
-                                $returnMessage['error'] = $message;
-
-                                return $returnMessage;
-                            }
-
-                            if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                                LoggerService::info('AR Invoice Discount AR Post already posted', extra : [
-                                    'BatchNumber' => $arDiscountInvoiceBatchNumber,
-                                ]);
-                                $postedResponse = $aRPostInvoices['payload'];
-                                $isAlreadyPosted = true;
-                            }
-                        }
-                    }
-
-                    if (! $isAlreadyPosted) {
-                        LoggerService::info('Sending AR Invoice Discount AR Post to Sage');
-                        $resp = $this->postToSage300($aRPostInvoices['endPoint'], $aRPostInvoices['payload']);
-                        $postedResponse = json_decode($resp, true);
-                    }
-                }
-
-                if (isset($postedResponse['error'])) {
-                    $errorMessage = 'Error while making Ar discount invoice Posted to sage';
-                    $message = ' aRPostInvoices failed';
-
-                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
-                } else {
-                    LoggerService::info('AR Invoice Discount AR Post completed successfully', extra : [
-                        'BatchNumber' => $arDiscountInvoiceBatchNumber,
-                    ]);
-                    if ($isLiveApiCallStep12) {
-                        $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
-                    }
-                }
-            } else {
-                $errorMessage = 'Ar discount invoice failed from sage';
-                $message = ' createARInvoiceDis failed';
-
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createARInvoiceDis, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
-            }
-        }
-
-        LoggerService::info('Completed AR Invoice Discount creation successfully');
-        $returnMessage['status'] = true;
-        $returnMessage['message'] = 'AR Discount invoice created on sage';
 
         return $returnMessage;
     }
