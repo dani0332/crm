@@ -48,8 +48,21 @@ class DeviceQuoteSeeder extends Seeder
             PermissionsEnum::DEVICE_QUOTES_CREATE,
             PermissionsEnum::DEVICE_QUOTES_EDIT,
             PermissionsEnum::DEVICE_QUOTES_SHOW,
+            PermissionsEnum::DEVICE_LEADPOOL,
         ];
-        $this->seedPermissions($permissions, [RolesEnum::Admin, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager, RolesEnum::Engineering]);
+        // The DEVICE_LEADPOOL permission should NOT be assigned to the SmartPhoneAdvisor role.
+        $permissionRoleMap = [
+            PermissionsEnum::DEVICE_LEADPOOL => [RolesEnum::Admin, RolesEnum::SmartPhoneManager, RolesEnum::Engineering],
+            PermissionsEnum::DEVICE_QUOTES_LIST => [RolesEnum::Admin, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager, RolesEnum::Engineering],
+            PermissionsEnum::DEVICE_QUOTES_CREATE => [RolesEnum::Admin, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager, RolesEnum::Engineering],
+            PermissionsEnum::DEVICE_QUOTES_EDIT => [RolesEnum::Admin, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager, RolesEnum::Engineering],
+            PermissionsEnum::DEVICE_QUOTES_SHOW => [RolesEnum::Admin, RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager, RolesEnum::Engineering],
+        ];
+
+        foreach ($permissionRoleMap as $permission => $roles) {
+            $this->seedPermissions([$permission], $roles);
+            LoggerService::info('DeviceQuoteSeeder: ' . $permission . ' permissions seeded for roles: ' . implode(', ', $roles));
+        }
 
     }
 
