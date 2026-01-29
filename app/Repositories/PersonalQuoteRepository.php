@@ -192,7 +192,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $isSendUpdateEligibleForOCR = $this->isSendUpdateEligibleForOCR($quote, $isSendUpdate);
 
                 LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
-                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR);
+                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR, $data['member_detail_id'] ?? 0);
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
                     LoggerService::info(self::class.' - Dispatching WatermarkDocumentsJob - Quote UUID: '.$data['quote_uuid']);
