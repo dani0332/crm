@@ -288,12 +288,12 @@ class AutomationFailedService
             'processInvolved' => $request->processInvolved,
             'cc' => $request->cc,
             'workflowType' => $request->workflowType,
-            'imcrmLink' => $this->generateImcrmLink($quote, $quoteType),
+            'imcrmLink' => $quote->getCrmQuoteLink(),
         ];
 
         // Device/NGI-specific fields per FRD
         if ($request->isDeviceNgi) {
-            $emailData['escalationLink'] = $this->getEscalationLink();
+            $emailData['escalationLink'] = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK);
             $emailData['triggerPoint'] = $this->getDeviceFailureTriggerPoint($request->processInvolved);
             $emailData['replyTo'] = $this->getDeviceFailureEmailReplyTo();
         }
@@ -319,13 +319,4 @@ class AutomationFailedService
         };
     }
 
-    /**
-     * Get escalation link for Device/NGI from ApplicationStorage.
-     */
-    public function getEscalationLink(): string
-    {
-        $link = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK);
-
-        return ! empty($link) ? $link : 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T';
-    }
 }

@@ -6,6 +6,7 @@ use App\DTO\AutomationFailedEmailDataRequest;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Services\PolicyIssuanceAutomation\AutomationFailedService;
@@ -20,6 +21,32 @@ function setApplicationStorageValue(string $key, string $value): void
 
     $record->value = $value;
     $record->save();
+}
+
+function createDeviceQuoteStub(string $uuid = 'device-uuid', string $code = 'REF-123'): object
+{
+    return new class ($uuid, $code) {
+        public string $uuid;
+        public string $code;
+        public int $quote_type_id;
+        public object $advisor;
+
+        public function __construct(string $uuid, string $code)
+        {
+            $this->uuid = $uuid;
+            $this->code = $code;
+            $this->quote_type_id = QuoteTypeId::Device;
+            $this->advisor = (object) [
+                'email' => 'advisor@myalfred.com',
+                'name' => 'Device Advisor',
+            ];
+        }
+
+        public function getCrmQuoteLink(): string
+        {
+            return config('app.url') . "/personal-quotes/Device/{$this->uuid}";
+        }
+    };
 }
 it('normalizes device cc emails and includes advisor when booking fails', function () {
     config(['constants.APP_ENV' => EnvEnum::PRODUCTION]);
@@ -38,12 +65,7 @@ it('normalizes device cc emails and includes advisor when booking fails', functi
 
     $service = new AutomationFailedService();
 
-    $quote = (object) [
-        'advisor' => (object) [
-            'email' => 'advisor@myalfred.com',
-            'name' => 'Device Advisor',
-        ],
-    ];
+    $quote = createDeviceQuoteStub();
 
     $cc = $service->buildCcEmails($quote, true, PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY);
 
@@ -85,14 +107,7 @@ it('builds device email payload with trigger point and reply to', function () {
 
     $service = new AutomationFailedService();
 
-    $quote = (object) [
-        'uuid' => 'device-uuid',
-        'code' => 'REF-123',
-        'advisor' => (object) [
-            'email' => 'advisor@myalfred.com',
-            'name' => 'Device Advisor',
-        ],
-    ];
+    $quote = createDeviceQuoteStub();
 
     $cc = $service->buildCcEmails($quote, true, PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY);
 
