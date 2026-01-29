@@ -219,7 +219,7 @@ class PersonalQuoteRepository extends BaseRepository
         }
     }
 
-    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR)
+    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR, $memberDetailId = 0)
     {
         $isOcrSendUpdateLogFlagEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_SENDUPDATE_OCR, useCache: true) == '1';
         // For SendUpdateLog, get the quote type from the quote_type_id
@@ -245,6 +245,7 @@ class PersonalQuoteRepository extends BaseRepository
             $quote,
             $filePathAzure,
             $fileMimeType,
+            $memberDetailId,
             $quoteTypeParam, // Pass the determined quote type for send update log flow
             $isSendUpdateEligibleForOCR
         );
