@@ -1973,16 +1973,20 @@ const isPrimaryEmailLocked = computed(() => {
 });
 
 const validateEmirateOfVisa = () => {
-  if (! props.quote.emirate_of_your_visa_id && props.quote.source == leadSource.RENEWAL_UPLOAD) {
+  if (
+    !props.quote.emirate_of_your_visa_id &&
+    props.quote.source == leadSource.RENEWAL_UPLOAD
+  ) {
     notification.error({
-      title: 'Emirate of Visa is required to proceed. Please update the Customer Profile with the Emirate of Visa and other required details before adding a plan.',
+      title:
+        'Emirate of Visa is required to proceed. Please update the Customer Profile with the Emirate of Visa and other required details before adding a plan.',
       position: 'top',
     });
 
     return false;
   }
   modals.createPlan = true;
-}
+};
 </script>
 
 <template>
