@@ -111,7 +111,7 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                 'rules' => [
                     'required',
                     'max:100',
-                    function ($attribute, $value, $fail) {
+                    function ($_, $value, $fail) {
                         $refId = strtoupper(trim((string) $value));
 
                         // Prevent duplicate Ref-IDs within the same file to avoid race conditions later
