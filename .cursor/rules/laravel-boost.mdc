@@ -130,12 +130,8 @@ protected function isAccessible(User $user, ?string $path = null): bool
 </code-snippet>
 
 ## Enums
-<<<<<<< HEAD
-- That being said, keys in an Enum should follow existing application Enum conventions.
-=======
 
 - Typically, keys in an Enum should be TitleCase. For example: `FavoritePerson`, `BestLake`, `Monthly`.
->>>>>>> 41d7b73c0281bd146bb8d1ddc8f791fb8658349e
 
 ## Comments
 
@@ -219,12 +215,7 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
 - When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
 
-<<<<<<< HEAD
-### Vite Error
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
-=======
 ## Vite Error
->>>>>>> 41d7b73c0281bd146bb8d1ddc8f791fb8658349e
 
 - If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `yarn run build` or ask the user to run `yarn run dev` or `composer run dev`.
 
