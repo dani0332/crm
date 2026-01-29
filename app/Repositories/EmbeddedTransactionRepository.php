@@ -2,11 +2,13 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -55,28 +57,21 @@ class EmbeddedTransactionRepository extends BaseRepository
                 'cqr.uuid as quote.uuid',
                 'cqr.quote_status_id as quote.quote_status_id',
                 'cqr.policy_booking_date as quote.policy_booking_date',
-                'ep.short_code as embeddedTransaction.ep_short_code',
+                'cqr.customer_id as quote.customer_id',
+                'cqr.email as quote.email',
+                'cqr.first_name as quote.first_name',
+                'cqr.last_name as quote.last_name',
+                'ep.short_code as embeddedProduct.short_code',
                 'et.code as embeddedTransaction.code',
                 'et.is_selected as embeddedTransaction.is_selected',
                 'et.payment_status_id as embeddedTransaction.payment_status_id',
                 'et.product_id as embeddedTransaction.product_id',
                 'c_make.text as vehicle.make',
                 'c_model.text as vehicle.model',
-                'cqr.customer_id as customer.id',
-                'cqr.email as customer.email',
-                'cqr.first_name as customer.first_name',
-                'cqr.last_name as customer.last_name',
                 'cqr.advisor_id as advisor.id',
                 'adv.email as advisor.email',
                 'cqr.plan_id as plan.id',
-                'ip.code as plan.provider_code',
-                // 'cqr.code as quote.code',
-                // 'et.policy_status as embeddedTransaction.policy_status',
-                // 'cqr.mobile_no as customer.mobile_no',
-                // 'adv.name as advisor.name',
-                // 'adv.mobile_no as advisor.mobile_no',
-                // 'adv.landline_no as advisor.landline_no',
-                // 'adv.profile_photo_path as advisor.profile_photo_path',
+                'ip.code as plan.provider_code'
             )
             ->leftJoin('embedded_transactions as et', function ($join) use ($embeddedTransactionCode) {
                 $join->on('et.quote_request_id', '=', 'cqr.id')
@@ -92,5 +87,32 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->where('cqr.id', $carQuoteRequestId)
             ->first();
+    }
+
+    public function getEpRetargetingReminderEmailTemplateId(string $epShortCode)
+    {
+        if (! in_array($epShortCode, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)) {
+            LoggerService::info("getEpRetargetingReminderEmailTemplateId: EP Reminder is not allowed for epShortCode: {$epShortCode}");
+            return false;
+        }
+
+        $templateKey = match($epShortCode) {
+            EmbeddedProductEnum::MDX => ApplicationStorageEnums::CAR_EP_REMINDER_MDX_EMAIL_TEMPLATE,
+            EmbeddedProductEnum::ECB => ApplicationStorageEnums::CAR_EP_REMINDER_ECB_EMAIL_TEMPLATE,
+            default => null,
+        };
+
+        if (empty($templateKey)) {
+            LoggerService::info("getEpRetargetingReminderEmailTemplateId: Template key not defined for epShortCode: {$epShortCode}");
+            return false;
+        }
+
+        $templateId = getAppStorageValueByKey($templateKey);
+        if (empty($templateId)) {
+            LoggerService::info("getEpRetargetingReminderEmailTemplateId: Template Id not found for epShortCode: {$epShortCode}");
+            return false;
+        }
+
+        return $templateId;
     }
 }

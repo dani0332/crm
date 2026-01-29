@@ -30,7 +30,7 @@ class EmbeddedTransactionService extends BaseService
 
     public function retargetEpReminder($quote, int $quoteTypeId): void
     {
-        $epTransactions = $this->embeddedTransactionRepo->getDraftEpTransactions($quote->id, $quoteTypeId, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB]);
+        $epTransactions = $this->embeddedTransactionRepo->getDraftEpTransactions($quote->id, $quoteTypeId, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS);
         foreach ($epTransactions as $epTransaction) {
             $this->triggerBirdWorkflowForRetargetingEpReminder($quote, $quoteTypeId, $epTransaction);
         }
@@ -77,12 +77,11 @@ class EmbeddedTransactionService extends BaseService
         }
 
         $quoteData = (object) array_map(fn ($item) => (object) $item, Arr::undot((array) $quoteData));
-        $quote = $quoteData->quote;
-        $embeddedTransaction = $quoteData->embeddedTransaction;
-        $customer = $quoteData->customer;
-        $advisor = $quoteData->advisor;
-        $plan = $quoteData->plan;
-        $vehicle = $quoteData->vehicle;
+        $quote = $quoteData->quote ?? null;
+        $embeddedTransaction = $quoteData->embeddedTransaction ?? null;
+        $advisor = $quoteData->advisor ?? null;
+        $vehicle = $quoteData->vehicle ?? null;
+        $plan = $quoteData->plan ?? null;
 
         if($quote?->quote_status_id != QuoteStatusEnum::PolicyBooked) {
             LoggerService::info('getRetargetingCarEpReminderData: Quote is not booked', extra: ['quote_status_id' => $quote?->quote_status_id]);
@@ -93,31 +92,22 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Embedded transaction payment status is not draft');
         }
 
-        if (empty($quote?->uuid)
-            || empty($embeddedTransaction?->code)
-            || empty($embeddedTransaction?->ep_short_code)
-            || empty($customer?->id) || empty($customer?->email)
-            || empty($vehicle?->make) || empty($vehicle?->model)
+        $customerFullName = trim(($quote->first_name ?? '').' '.($quote->last_name ?? ''));
+        if (empty($quote->uuid) || empty($quoteData->embeddedProduct->short_code)
+            || empty($quote->customer_id) || empty($quote->email)
+            || empty($customerFullName)
+            || empty($embeddedTransaction->code)
+            || empty($vehicle->make) || empty($vehicle->model)
         ) {
             LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quoteData]);
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
-        if (! in_array($embeddedTransaction->ep_short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB])) {
-            LoggerService::info('getRetargetingCarEpReminderData: Invalid EP short code', extra: ['data' => $quoteData]);
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid EP short code');
-        }
-
-        $templateKey = match($embeddedTransaction->ep_short_code) {
-            EmbeddedProductEnum::MDX => ApplicationStorageEnums::CAR_EP_REMINDER_MDX_EMAIL_TEMPLATE,
-            EmbeddedProductEnum::ECB => ApplicationStorageEnums::CAR_EP_REMINDER_ECB_EMAIL_TEMPLATE,
-            default => null,
-        };
-
-        $templateId = getAppStorageValueByKey($templateKey);
+        $templateId = $this->embeddedTransactionRepo->getEpRetargetingReminderEmailTemplateId($quoteData->embeddedProduct->short_code);
         $birdCarEpReminderEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL);
-        if (empty($templateKey) || empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
-            LoggerService::info('getRetargetingCarEpReminderData: Template / Email Workflow URL not found', extra: ['templateKey' => $templateKey, 'templateId' => $templateId, 'birdReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl]);
+
+        if (empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
+            LoggerService::info('getRetargetingCarEpReminderData: Template / Email Workflow URL not found', extra: ['templateId' => $templateId, 'birdReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl]);
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Template / Email Workflow URL not found');
         }
 
@@ -134,27 +124,21 @@ class EmbeddedTransactionService extends BaseService
             ]);
 
         $data = [
-            'quote' => $quote,
+            'quote' => Arr::only((array) $quote, ['id', 'uuid', 'quote_status_id', 'policy_booking_date']),
             'embeddedTransaction' => $embeddedTransaction,
             'emailWorkflowData' => [
                 'templateId' => $templateId,
-                'customerId' => $customer->id,
-                'customerEmail' => $customer->email,
-                'customerName' => trim(($customer?->first_name ?? '').' '.($customer?->last_name ?? '')),
-                'advisorEmail' => $advisor?->email,
-                'displayName' => config('constants.IM_FROM_EMAIL', 'InsuranceMarket'),
+                'customerId' => $quote->customer_id,
+                'customerEmail' => $quote->email,
+                'customerName' => $customerFullName,
+                'advisorEmail' => $advisor->email ?? null,
+                'displayName' => config('constants.IM_FROM_EMAIL'),
                 'buyNowUrl' => $buyNowUrl,
                 'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
                 'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
-                "epShortCode" => $embeddedTransaction->ep_short_code,
+                "epShortCode" => $quoteData->embeddedProduct->short_code,
                 "vehicleMake" => $vehicle->make,
-                "vehicleModel" => $vehicle->model,
-                // 'advisorName' => $advisor?->name,
-                // 'customerMobileNumber' => formatMobileNo($customer?->mobile_no ?? ''),
-                // 'advisorLandLine' => $advisor?->landline_no,
-                // 'advisorMobileNoWithoutSpaces' => removeSpaces($advisor?->mobile_no ?? ''),
-                // 'advisorMobileNumber' => formatMobileNo($advisor?->mobile_no ?? ''),
-                // 'advisorProfilePhotoPath' => $advisor?->profile_photo_path,
+                "vehicleModel" => $vehicle->model
             ],
         ];
 
