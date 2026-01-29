@@ -4,8 +4,11 @@ namespace App\Services\HealthTeamRouting;
 
 use App\Enums\HealthRoutingLogTypeEnum;
 use App\Enums\TeamCategoryEnum;
+use App\Enums\UserNameEnum;
 use App\Models\HealthRoutingLog;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\Auth;
 
 class HealthTeamRoutingLogService
 {
@@ -17,13 +20,15 @@ class HealthTeamRoutingLogService
         ?TeamCategoryEnum $teamCategory = null): void
     {
         try {
+            $loggedBy = Auth::check() ? Auth::id() : User::where('name', UserNameEnum::System)->value('id');
+
             HealthRoutingLog::create([
                 'quote_request_id' => $quoteRequestId,
                 'uuid' => $uuid,
                 'type' => $type->value,
                 'team_category' => $teamCategory?->value,
                 'log_data' => json_encode($logData),
-                'logged_by' => auth()->user()->id,
+                'logged_by' => $loggedBy,
             ]);
         } catch (\Exception $e) {
             LoggerService::error('HealthTeamRoutingLogService: log function error', ['error' => $e->getMessage()]);
