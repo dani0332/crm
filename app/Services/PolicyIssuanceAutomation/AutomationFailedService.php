@@ -198,7 +198,7 @@ class AutomationFailedService
      * - Uses DEVICE_FAILURE_EMAIL_CC from ApplicationStorage
      * - Includes advisor in CC for booking failures (when TO is Production Approval Team)
      *
-     * @return array{approvalemail: string|null, prodemail: string|null, advisoremail: string|null}
+     * @return array{approvalemail: string|null, prodemail: string|null, advisoremail: string|null, ccEmails?: array}
      */
     public function buildCcEmails($quote, bool $isDeviceNgi, string $processInvolved): array
     {
@@ -213,15 +213,7 @@ class AutomationFailedService
         }
 
         if ($isDeviceNgi) {
-            // Device/NGI-specific CC per FRD
-            $cc['approvalemail'] = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC);
-            $cc['prodemail'] = getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL);
-
-            // FRD: Include advisor in CC for booking failures (when email goes to PA Team)
-            $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
-            if ($isBookingFailure && $quote?->advisor) {
-                $cc['advisoremail'] = $quote->advisor->email;
-            }
+            return $this->buildDeviceCcPayload($quote, $processInvolved);
         } else {
             // Original logic for other LOBs
             $cc['approvalemail'] = getAppStorageValueByKey(ApplicationStorageEnums::APPROVAL_PRODUCTION_EMAIL);
@@ -230,6 +222,47 @@ class AutomationFailedService
         }
 
         return $cc;
+    }
+
+    /**
+     * Assemble Device/NGI CC payload with normalized email list.
+     *
+     * @return array{approvalemail: string|null, prodemail: string|null, advisoremail: string|null, ccEmails: array}
+     */
+    private function buildDeviceCcPayload($quote, string $processInvolved): array
+    {
+        $ccEmails = $this->parseCommaSeparatedEmails(
+            getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC)
+        );
+
+        $payload = [
+            'approvalemail' => ! empty($ccEmails) ? implode(',', $ccEmails) : null,
+            'prodemail' => getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL) ?: null,
+            'advisoremail' => null,
+            'ccEmails' => $ccEmails,
+        ];
+
+        if ($processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY && $quote?->advisor?->email) {
+            $payload['advisoremail'] = $quote->advisor->email;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Split and clean comma separated emails.
+     *
+     * @return string[]
+     */
+    private function parseCommaSeparatedEmails(?string $value): array
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        $rawEmails = preg_split('/[,\s]+/', trim($value));
+
+        return array_values(array_filter($rawEmails, static fn ($email) => ! empty($email)));
     }
 
     /**
@@ -261,9 +294,29 @@ class AutomationFailedService
         if ($request->isDeviceNgi) {
             $emailData['imcrmLink'] = $this->generateImcrmLink($quote, $quoteType);
             $emailData['escalationLink'] = $this->getEscalationLink();
+            $emailData['triggerPoint'] = $this->getDeviceFailureTriggerPoint($request->processInvolved);
+            $emailData['replyTo'] = $this->getDeviceFailureEmailReplyTo();
         }
 
         return (object) $emailData;
+    }
+
+    private function getDeviceFailureEmailReplyTo(): string
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_REPLY_TO)
+            ?: 'production.approval.team@insurancemarket.ae';
+    }
+
+    private function getDeviceFailureTriggerPoint(string $processInvolved): string
+    {
+        return match ($processInvolved) {
+            PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY => PolicyIssuanceEnum::BOOKING_DETAILS_API_ACTION_MESSAGE,
+            PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE => PolicyIssuanceEnum::AUTO_CAPTURE_ACTION_MESSAGE,
+            PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY => PolicyIssuanceEnum::POLICY_DETAIL_API_ACTION_MESSAGE,
+            PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_DOCUMENTS,
+            PolicyIssuanceEnum::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM => PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE,
+            default => $processInvolved,
+        };
     }
 
     /**
