@@ -144,11 +144,12 @@ trait OcrFillable
         return true;
     }
 
+ 
     private function fillEmiratesId(Model $quote, object $data, string $documentTypeCode, int $memberDetailId)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new EmiratesIdDataProcessor($quote, $data, $this->documentTypeCode);
+            $processor = new EmiratesIdDataProcessor($quote, $data, $documentTypeCode, $memberDetailId);
 
             $success = $processor->processEmiratesIdData();
 
