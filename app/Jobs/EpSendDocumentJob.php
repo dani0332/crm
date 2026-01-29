@@ -14,6 +14,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\User;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -212,10 +213,17 @@ class EpSendDocumentJob implements ShouldQueue
         $attachments = $this->fetchPolicyWordings($embeddedProduct);
 
         foreach ($watermarkedDocuments as $document) {
-            $attachments[] = [
-                'fileUrl' => $this->storageBaseUrl.$document->watermarked_doc_url,
-                'fileName' => $document->original_name,
-            ];
+            $documentUrl = app(QuoteDocumentService::class)->getDocumentUrl(
+                $document->watermarked_doc_url,
+                'azureIMPrivate',
+            );
+
+            if ($documentUrl) {
+                $attachments[] = [
+                    'fileUrl' => $documentUrl,
+                    'fileName' => $document->original_name,
+                ];
+            }
         }
 
         return $attachments;

@@ -8,6 +8,7 @@ use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Traits\FileDownloaderTrait;
 use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
@@ -24,7 +25,7 @@ use Maatwebsite\Excel\Events\AfterImport;
 
 class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
-    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
+    use FileDownloaderTrait, Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 
     private $validCount = 0;
     private $failedCount = 0;
@@ -179,5 +180,10 @@ class UploadAndUpdateHomeImport implements SkipsEmptyRows, SkipsOnFailure, ToMod
                 }
             },
         ];
+    }
+
+    public function import($url)
+    {
+        $this->fetchFileFromUrl($url, $this->renewalsUploadLead, $this);
     }
 }
