@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -69,6 +70,11 @@ class QuoteDocument extends Model implements AuditableContract
     public function documentType()
     {
         return $this->belongsTo(DocumentType::class, 'document_type_code', 'code');
+    }
+
+    public function memberDetail(): BelongsTo
+    {
+        return $this->belongsTo(CustomerMembers::class, 'member_detail_id', 'id');
     }
 
     public function documentUrl(): Attribute
