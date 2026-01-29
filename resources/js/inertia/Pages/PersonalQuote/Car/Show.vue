@@ -33,7 +33,6 @@ defineProps({
   advisors: Array,
   quoteDocuments: Array,
   documentTypes: Object,
-  cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
@@ -70,7 +69,6 @@ defineProps({
   websiteURL: String,
   docUploadURL: String,
   planURL: String,
-  storageUrl: String,
   insuranceProviders: Array,
   insuranceProvidersByQuoteType: Object,
   advisor: Object,
@@ -1900,6 +1898,8 @@ const handleCancelConfirmationModal = () => {
   modals.showConfirmationModal = false;
   modals.isConfirmed = false; // Reset confirmation flag when user cancels
 };
+
+const { openTempUrl } = useDocumentTempUrl();
 </script>
 
 <template>
@@ -2459,6 +2459,18 @@ const handleCancelConfirmationModal = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                   <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    {{
+                      applyEmiratesNumberMasking(record.driver_eid_number) ?? ''
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ record.driver_gender ?? '' }}</dd>
                 </div>
               </dl>
             </div>
@@ -3275,9 +3287,8 @@ const handleCancelConfirmationModal = () => {
               <template v-for="doc in item.documents" :key="doc">
                 <p class="my-2">
                   <a
-                    class="underline"
-                    target="_blank"
-                    :href="leadDocsStoragePath + doc.path"
+                    class="text-primary-600 cursor-pointer"
+                    @click.prevent="openTempUrl(doc.path)"
                     >Document</a
                   >
                 </p>
@@ -4125,7 +4136,6 @@ const handleCancelConfirmationModal = () => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -4247,7 +4257,6 @@ const handleCancelConfirmationModal = () => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
       @copyUploadURL="copyUploadURL"

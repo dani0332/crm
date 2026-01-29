@@ -9,6 +9,8 @@ enum SLAActionTypeEnum: string
     use Enumable;
 
     case STATUS_UPDATED = 'status_updated';
+    case AML_STATUS_UPDATED = 'aml_status_updated';
+    case KYC_STATUS_UPDATED = 'kyc_status_updated';
     case PEC_TAG_REMOVED = 'pec_tag_removed';
     case CUSTOMER_PROFILE_EDIT = 'customer_profile_edit';
     case LEAD_EDIT = 'lead_edit';
@@ -25,6 +27,8 @@ enum SLAActionTypeEnum: string
     {
         return match ($this) {
             self::STATUS_UPDATED => 'Status Updated',
+            self::AML_STATUS_UPDATED => 'AML Status Updated',
+            self::KYC_STATUS_UPDATED => 'KYC Status Updated',
             self::PEC_TAG_REMOVED => 'PEC Tag Removed (Customer Re-contacted)',
             self::CUSTOMER_PROFILE_EDIT => 'Customer Profile Updated',
             self::LEAD_EDIT => 'Lead Updated',
