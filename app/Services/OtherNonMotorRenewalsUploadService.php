@@ -30,7 +30,10 @@ class OtherNonMotorRenewalsUploadService
         $this->allowedPersonalQuoteTypeIds = [
             QuoteTypes::YACHT->id(),
             QuoteTypes::PET->id(),
+            QuoteTypes::BIKE->id(),
             QuoteTypes::CYCLE->id(),
+            QuoteTypes::LIFE->id(),
+            QuoteTypes::JETSKI->id(),
             QuoteTypes::BUSINESS->id(),
         ];
     }
