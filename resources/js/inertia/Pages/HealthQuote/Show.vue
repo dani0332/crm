@@ -1969,6 +1969,22 @@ const isPrimaryEmailLocked = computed(() => {
     page.props.quoteStatusEnum.POLICY_BOOKING_FAILED,
   ].includes(page.props.quote?.quote_status_id);
 });
+
+const validateEmirateOfVisa = () => {
+  if (
+    !props.quote.emirate_of_your_visa_id &&
+    props.quote.source == leadSource.RENEWAL_UPLOAD
+  ) {
+    notification.error({
+      title:
+        'Emirate of Visa is required to proceed. Please update the Customer Profile with the Emirate of Visa and other required details before adding a plan.',
+      position: 'top',
+    });
+
+    return false;
+  }
+  modals.createPlan = true;
+};
 </script>
 
 <template>
@@ -3688,7 +3704,7 @@ const isPrimaryEmailLocked = computed(() => {
                   v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
                   size="sm"
                   color="emerald"
-                  @click.prevent="modals.createPlan = true"
+                  @click.prevent="validateEmirateOfVisa"
                   :disabled="isDisabled || isLocked"
                 >
                   Add Plan
