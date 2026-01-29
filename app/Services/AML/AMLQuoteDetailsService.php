@@ -34,7 +34,9 @@ class AMLQuoteDetailsService
     public function __construct(
         private readonly AMLService $amlService,
         private readonly AMLBusinessPayloadService $businessPayloadService,
-        private readonly AMLLookupsService $lookupsService
+        private readonly AMLLookupsService $lookupsService,
+        private readonly AMLInsuredService $insuredService,
+        private readonly AMLEntityService $entityService
     ) {}
 
     /**
@@ -45,8 +47,8 @@ class AMLQuoteDetailsService
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 
-        LoggerService::startQuoteLogging($quoteRequest, LoggerFeatureEnum::AML_SCREENING);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+        LoggerService::startQuoteLogging($quoteRequest);
+        LoggerService::info('AML Details Page - Prepare Quote Details Data');
 
         // Add quote link to quote request
         $this->addQuoteLinkToRequest($quoteRequest, $quoteType);
@@ -67,12 +69,12 @@ class AMLQuoteDetailsService
         );
 
         // Get insured and entity details
-        $insuredDetails = $this->amlService->getInsuredDetails(
+        $insuredDetails = $this->insuredService->getInsuredDetailsByQuote(
             $quoteRequest->customer_id,
             $quoteTypeId,
             $quoteRequestId
         );
-        $entityDetails = $this->amlService->getEntityDetails($quoteTypeId, $quoteRequestId);
+        $entityDetails = $this->entityService->getEntityDetailsByQuote($quoteTypeId, $quoteRequestId);
 
         // Get reference data
         $nationalities = NationalityRepository::withActive()->get();
@@ -183,14 +185,18 @@ class AMLQuoteDetailsService
     /**
      * Get quote AML status
      */
-    private function getQuoteAmlStatus(?int $amlStatus): ?int
+    private function getQuoteAmlStatus(?string $amlStatusCode): ?int
     {
+        if ($amlStatusCode === null) {
+            return null;
+        }
+
         $checkScreeningStatus = [
-            AMLStatusCode::AMLScreeningCleared => 2,
-            AMLStatusCode::AMLScreeningFailed => 1,
+            AMLStatusCode::AMLScreeningCleared => AMLStatusCode::AMLScreeningClearedInt,
+            AMLStatusCode::AMLScreeningFailed => AMLStatusCode::AMLScreeningFailedInt,
         ];
 
-        return $checkScreeningStatus[$amlStatus] ?? null;
+        return $checkScreeningStatus[$amlStatusCode] ?? null;
     }
 
     /**

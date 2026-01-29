@@ -1380,40 +1380,6 @@ class AMLService
             ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item]);
     }
 
-    public function getInsuredDetails($customerId, $quoteTypeId, $quoteRequestId)
-    {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
-
-        $customerInsured = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId,
-            'customer_id' => $customerId,
-        ])
-            ->with(['customer', 'insured', 'insured.insuredKyc'])
-            ->latest('updated_at')
-            ->first();
-
-        if (! $customerInsured) {
-            LoggerService::info('No CustomerInsured record found', [
-                'customer_id' => $customerId,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-            ]);
-        }
-
-        return $customerInsured;
-    }
-
-    // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data
-    public function getEntityDetails($quoteTypeId, $quoteRequestId)
-    {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
-
-        return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
-            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
-            ->first() ?? [];
-    }
-
     public function prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType): bool
     {
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AML_SCREENING);

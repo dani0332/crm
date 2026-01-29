@@ -194,4 +194,18 @@ class AMLEntityService
             'company_address' => $entity->company_address,
         ]);
     }
+
+    /**
+     * Get entity details by quote type ID and quote request ID
+     * Used in AML quote details page to retrieve entity mapping
+     * TODO: This will be removed when customer members mapping is updated with insured id
+     */
+    public function getEntityDetailsByQuote(int $quoteTypeId, int $quoteRequestId)
+    {
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+
+        return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
+            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
+            ->first() ?? [];
+    }
 }

@@ -25,11 +25,8 @@ class AMLDisplayService
     /**
      * Prepare AML data for display
      */
-    public function prepareShowData(
-        AML $aml,
-        ?int $insuredId = null,
-        ?int $customerId = null
-    ): AMLPageData {
+    public function prepareShowData(AML $aml, ?int $insuredId = null, ?int $customerId = null): AMLPageData 
+    {
         // Eager load relationships to avoid N+1
         $aml->load('quotetype');
 

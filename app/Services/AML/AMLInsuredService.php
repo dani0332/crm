@@ -4,6 +4,7 @@ namespace App\Services\AML;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Services\AML\DTOs\AMLOperationResult;
 use App\Services\Logger\LoggerService;
@@ -123,5 +124,33 @@ class AMLInsuredService
         $messageType = $found ? 'found' : 'not_found';
 
         return $messages[$customerType][$messageType];
+    }
+
+    /**
+     * Get insured details by customer ID, quote type ID, and quote request ID
+     * Used in AML quote details page to retrieve customer-insured mapping
+     */
+    public function getInsuredDetailsByQuote(int $customerId, int $quoteTypeId, int $quoteRequestId): ?CustomerInsured
+    {
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+
+        $customerInsured = CustomerInsured::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+            'customer_id' => $customerId,
+        ])
+            ->with(['customer', 'insured', 'insured.insuredKyc'])
+            ->latest('updated_at')
+            ->first();
+
+        if (! $customerInsured) {
+            LoggerService::info('No CustomerInsured record found', [
+                'customer_id' => $customerId,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+            ]);
+        }
+
+        return $customerInsured;
     }
 }
