@@ -30,9 +30,7 @@ class RetargetingEpReminderCallbackRequest extends FormRequest
             'message_id' => 'required|string',
             'customerId' => 'required|integer',
             'customer_email' => 'required|string|email',
-            'subject' => 'required|string',
-            'responseCode' => 'required',
-            'reminderNumber' => 'required|integer|in:1,2',
+            'subject' => 'required|string'
         ];
     }
 
