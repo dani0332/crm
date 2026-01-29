@@ -123,7 +123,7 @@ it('builds device email payload with trigger point and reply to', function () {
         workflowType: 'DEVICE_AUTOMATION_FAILED'
     );
 
-    $emailData = $service->buildEmailData($quote, QuoteTypes::DEVICE->value, $request);
+    $emailData = $service->buildEmailData($quote, $request);
 
     expect($emailData->imcrmLink)->toBe('https://app.test/personal-quotes/Device/device-uuid');
     expect($emailData->escalationLink)->toBe('https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T');
