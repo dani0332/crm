@@ -66,10 +66,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td><span class="permission-value">view-process-tracker</span></td>
-                    <td>Allows users to view the integration process tracker.</td>
-                </tr>
+              
                 <tr>
                     <td><span class="permission-value">transapp-create</span></td>
                     <td>Allows users to create new transaction applications for external systems.</td>
