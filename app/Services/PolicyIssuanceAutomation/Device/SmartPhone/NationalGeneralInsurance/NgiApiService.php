@@ -71,6 +71,11 @@ class NgiApiService
             $response['message'] = $createPolicyResponse['message'];
             $response['status'] = false;
 
+            if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE) {
+                $response['error'] = $createPolicyResponse['error'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE;
+                $response['message'] = $createPolicyResponse['message'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE;
+            }
+
             return $response;
         }
 
@@ -140,6 +145,11 @@ class NgiApiService
             $response['error'] = $policyDocumentsResponse['error'];
             $response['message'] = $policyDocumentsResponse['message'];
             $response['status'] = false;
+
+            if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD) {
+                $response['error'] = $response['error'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE;
+                $response['message'] = $response['message'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE;
+            }
 
             return $response;
         }

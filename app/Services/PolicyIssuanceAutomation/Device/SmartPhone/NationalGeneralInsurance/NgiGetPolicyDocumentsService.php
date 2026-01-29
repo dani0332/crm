@@ -67,6 +67,9 @@ class NgiGetPolicyDocumentsService
         if (! $downloadResult['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_UPLOAD) {
             $defaultErrorMsg = 'Document download from provider or upload to IMCRM failed';
             $errorMessage = $downloadResult['error'] ?? $defaultErrorMsg;
+            if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_UPLOAD) {
+                $errorMessage .= NgiEnum::FROM_FAKE_EMAIL_SUFFIX . $quote->email;
+            }
             throw new NgiException(
                 "{$this->logPrefix} {$errorMessage}",
                 NgiException::DOCUMENT_DOWNLOAD_FAILED,

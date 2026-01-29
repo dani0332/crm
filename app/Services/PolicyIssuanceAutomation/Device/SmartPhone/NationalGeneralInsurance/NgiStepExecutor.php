@@ -35,7 +35,7 @@ class NgiStepExecutor
 
         if (! $createPolicyResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE) {
             LoggerService::error('Policy creation failed', extra: [
-                'step' => NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE,
+                'step' => PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
                 'error' => $createPolicyResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
                 'message' => $createPolicyResponse['message'] ?? null,
             ]);
@@ -46,7 +46,11 @@ class NgiStepExecutor
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY
             );
-
+            $createPolicyResponse['status'] = false;
+            if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE) {
+                $createPolicyResponse['error'] = $createPolicyResponse['error'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE;
+                $createPolicyResponse['message'] = $createPolicyResponse['message'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE;
+            }
             return $createPolicyResponse;
         }
 
@@ -129,7 +133,11 @@ class NgiStepExecutor
                 PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY
             );
-
+            $triggerBookPolicyResponse['status'] = false;
+            if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY) {
+                $triggerBookPolicyResponse['error'] = $triggerBookPolicyResponse['error'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY;
+                $triggerBookPolicyResponse['message'] = $triggerBookPolicyResponse['message'] . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_BOOK_POLICY;
+            }
             return $triggerBookPolicyResponse;
         }
 

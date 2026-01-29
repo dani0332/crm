@@ -228,8 +228,7 @@ class NgiDocumentHandler
      */
     public function downloadAndStorePolicyDocuments(PersonalQuote $quote, PolicyIssuance $process, array $documentsApiResponse): array
     {
-        // Refresh quote to get latest document URLs from GetPolicyDocuments response
-        $quote->refresh();
+        $quote->refresh(); // Refresh quote to get latest quote object
 
         $documentsApiResponseData = $documentsApiResponse['data'] ?? null;
 

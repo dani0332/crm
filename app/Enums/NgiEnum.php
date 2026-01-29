@@ -24,4 +24,5 @@ class NgiEnum
     public const MAX_RETRY_ATTEMPTS = 3;
     public const RETRY_DELAY_MINUTES = 5;
     public const DOCUMENT_FETCH_DELAY_MINUTES = 3;
+    public const FROM_FAKE_EMAIL_SUFFIX = ' - from fake email ';
 }
