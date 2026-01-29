@@ -291,12 +291,6 @@ class SageApiService
                 }
             }
 
-            // create AP Prepayment Premium Receipt
-            /*$createPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
-            if (! $createPremiumPrepayment['status']) {
-                return $createPremiumPrepayment;
-            }*/
-
             if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
                 if (empty($reversalInvoiceLogs)) {
                     return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
@@ -425,6 +419,13 @@ class SageApiService
             SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV,
         ];
 
+        // Legacy discount invoice types - we no longer create these, but need to recognize them for historical reversals
+        $arDiscountInvoiceTypes = [
+            SageEnum::SRT_CREATE_AR_DISC_INV,
+            SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
+            SageEnum::SRT_CREATE_AR_DISC_REV_INV,
+        ];
+
         $extraDetails = ['sage_request_type' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV];
         $extraDetails['userId'] = $sageRequestPayload->userId ?? null;
 
@@ -433,11 +434,21 @@ class SageApiService
         }
 
         foreach ($reverseSageRequestTypes as $reverseSageRequestTypeKey => $reverseSageRequestType) {
+            // Skip legacy discount invoices - we no longer process these
+            if (in_array($reverseSageRequestType, $arDiscountInvoiceTypes)) {
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Skipping legacy discount invoice type - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code, extra: [
+                    'sage_request_type' => $reverseSageRequestType,
+                ]);
+                continue;
+            }
+
             $invoiceType = in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $arInvoiceTypes) ?
                 SageEnum::SRT_GET_AR_INVOICE : (in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $apInvoiceTypes) ? SageEnum::SRT_GET_AP_INVOICE : null);
 
             if (is_null($invoiceType)) {
-                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Invalid Invoice Type - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Invalid Invoice Type - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code, extra: [
+                    'sage_request_type' => $reverseSageRequestType,
+                ]);
 
                 return ['status' => false, 'message' => 'Error while getting Invoice from Sage'];
             }

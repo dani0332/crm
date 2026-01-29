@@ -1093,7 +1093,7 @@ class SagePayloadFactory
             'DocumentNumber' => $documentNumber,
             'PaymentNumber' => $paymentNumber,
             'ReceiptTransactionType' => 'Receipt',
-            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
+            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount)),
         ];
 
         $prePaymentData = [
@@ -1105,17 +1105,8 @@ class SagePayloadFactory
             'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
         ];
 
+        // Note: Discount invoices are no longer created, so we don't apply receipts to them
         $discountData = null;
-        if ($payment->discount_value > 0 && $item->sr_no == 1) {
-            $discountData = [
-                'BatchType' => 'CA',
-                'CustomerNumber' => $sage_customer_number,
-                'DocumentNumber' => $documentNumber.'-DIS',
-                'PaymentNumber' => 1,
-                'ReceiptTransactionType' => 'Receipt',
-                'CustomerReceiptAmount' => -roundNumber($payment->discount_value),
-            ];
-        }
 
         return [$receiptData, $prePaymentData, $discountData];
     }
