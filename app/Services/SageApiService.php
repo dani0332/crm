@@ -38,7 +38,6 @@ use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
-use App\Repositories\SageApiLogRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
@@ -505,7 +504,7 @@ class SageApiService
 
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Getting Invoice from Sage process start - SendUpdateCode: '.$sendUpdateLog?->code);
         $isPaymentUpfront = $extraDetails['paymentFrequency'] == PaymentFrequency::UPFRONT;
-        
+
         // Legacy discount invoice types - these should be skipped before reaching this function,
         // but we include them here for defensive programming
         $legacyDiscountInvoiceTypes = [
