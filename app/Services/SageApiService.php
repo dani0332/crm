@@ -439,6 +439,7 @@ class SageApiService
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Skipping legacy discount invoice type - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code, extra: [
                     'sage_request_type' => $reverseSageRequestType,
                 ]);
+
                 continue;
             }
 
