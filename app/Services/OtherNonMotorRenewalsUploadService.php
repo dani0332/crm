@@ -24,7 +24,6 @@ class OtherNonMotorRenewalsUploadService
     public const QUOTE_TYPE = 'OTH_NON_MOTOR';
 
     private array $allowedPersonalQuoteTypeIds;
-    private array $allowedBusinessQuoteTypeIds;
 
     public function __construct()
     {
@@ -32,12 +31,7 @@ class OtherNonMotorRenewalsUploadService
             QuoteTypes::YACHT->id(),
             QuoteTypes::PET->id(),
             QuoteTypes::CYCLE->id(),
-
-        ];
-
-        $this->allowedBusinessQuoteTypeIds = [
-            QuoteTypes::CORPLINE->id(),
-            QuoteTypes::GROUP_MEDICAL->id(),
+            QuoteTypes::BUSINESS->id(),
         ];
     }
 
@@ -171,20 +165,10 @@ class OtherNonMotorRenewalsUploadService
 
     public function findEligibleQuote(string $refId)
     {
-        $personalQuote = PersonalQuote::whereIn('quote_type_id', $this->allowedPersonalQuoteTypeIds)
+        return PersonalQuote::whereIn('quote_type_id', $this->allowedPersonalQuoteTypeIds)
             ->where(function ($query) use ($refId) {
-                $query->where('uuid', $refId)
-                    ->orWhere('code', $refId);
-            })->first();
-
-        if ($personalQuote) {
-            return $personalQuote;
-        }
-
-        return BusinessQuote::whereIn('quote_type_id', $this->allowedBusinessQuoteTypeIds)
-            ->where(function ($query) use ($refId) {
-                $query->where('uuid', $refId)
-                    ->orWhere('code', $refId);
+                $query->where('code', $refId)
+                    ->orWhere('uuid', $refId);
             })->first();
     }
 
