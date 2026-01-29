@@ -141,6 +141,7 @@ class OtherNonMotorRenewalsUploadService
 
         $quote = null;
         if ($refId) {
+            $refId = strtoupper(trim((string) $refId));
             $quote = $this->findEligibleQuote($refId);
         }
 
