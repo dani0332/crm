@@ -177,6 +177,16 @@ class PopulateDocumentData implements ShouldQueue
         ];
     }
 
+    private function isOCRCustomerJourneyQuoteTypeEnabled()
+    {
+        switch ($this->quoteType) {
+            case QuoteTypes::HEALTH:
+                return getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED, useCache: true) == '1';
+            default:
+                return true;
+        }
+    }
+
     public function failed(\Throwable $exception)
     {
         LoggerService::info(self::class.' - OCR job failed permanently', extra: [
