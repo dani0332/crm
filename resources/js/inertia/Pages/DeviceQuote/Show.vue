@@ -782,6 +782,14 @@ const copyLink = () => {
                   {{ quote.device_quote.imei ?? 'N/A' }}
                 </dd>
               </div>
+              <div class="grid sm:grid-cols-2" v-if="quote?.device_quote">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.insurer_api_status ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2" v-if="quote?.device_quote">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status ?? 'N/A' }}</dd>
+              </div>
               <!-- End new fields -->
             </dl>
           </div>
