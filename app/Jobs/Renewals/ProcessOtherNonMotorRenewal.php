@@ -2,6 +2,8 @@
 
 namespace App\Jobs\Renewals;
 
+use App\Enums\ProcessStatusCode;
+use App\Models\RenewalsUploadLeads;
 use App\Services\OtherNonMotorRenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class ProcessOtherNonMotorRenewal implements ShouldQueue
 {
@@ -31,5 +34,15 @@ class ProcessOtherNonMotorRenewal implements ShouldQueue
     public function middleware(): array
     {
         return [(new WithoutOverlapping($this->renewalQuoteProcessId))->dontRelease()];
+    }
+
+    /**
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        $renewalsUploadLead = RenewalsUploadLeads::find($this->renewalsUploadLeadId);
+        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+        info('CL: ' . get_class() . ' FN: failed. Job Failed. Error: ' . $exception->getMessage());
     }
 }

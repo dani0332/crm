@@ -608,4 +608,14 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
     }
+
+    /**
+     * Get the ECOM URL for the quote for all the lobs like car-insurance, home-insurance, etc.
+     *
+     * @return string
+     */
+    public function bringEcomUrl(): string
+    {
+        return config('constants.AFIA_WEBSITE_DOMAIN') . '/' . strtolower(QuoteTypes::getName($this->quote_type_id)->value) . '-insurance/quote/' . $this->uuid;
+    }
 }
