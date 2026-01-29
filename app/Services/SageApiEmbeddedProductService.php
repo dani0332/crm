@@ -1873,13 +1873,25 @@ class SageApiEmbeddedProductService
         ];
 
         if ($isReversal) {
+
+            $createdOnDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
+
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
 
+            $payLoad['Invoices'][0]['DocumentDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['AsOfDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
+
             $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][1]['DocumentNumber'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][1]['ApplytoDocument'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber;
+            $payLoad['Invoices'][1]['DocumentDate'] = $createdOnDate;
+            $payLoad['Invoices'][1]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][1]['AsOfDate'] = $createdOnDate;
+            $payLoad['Invoices'][1]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
 
             $sageRequestType = SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV_REV;
             $entryType = SageEnum::SCT_REVERSAL;
@@ -2089,6 +2101,14 @@ class SageApiEmbeddedProductService
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
+
+            $createdOnDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
+
+            $payLoad['Invoices'][0]['DocumentDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['AsOfDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
+
             $sageRequestType = SageEnum::EP_SRT_CREATE_AP_PREM_INV_REV;
             $entryType = SageEnum::SCT_REVERSAL;
         }

@@ -189,7 +189,7 @@ class RenewalsUploadController extends Controller
             $fileNameAzure = get_guid().'_'.$fileNameOriginal;
 
             // Uploading file to Azure
-            $filePathAzure = $request->file('file_name')->storeAs('renewals', $fileNameAzure, 'azureIM');
+            $filePathAzure = $request->file('file_name')->storeAs('renewals', $fileNameAzure, 'azureIMPrivate');
 
             // creating upload record in database before upload start
             $this->createRenewalUploadLeadRecord($fileNameOriginal, $filePathAzure);
@@ -390,6 +390,23 @@ class RenewalsUploadController extends Controller
 
         return inertia('Renewals/PlanProcesses', [
             'process' => $process,
+            'batch' => $batch,
+        ]);
+    }
+
+    public function plansProcessesStatus($batch)
+    {
+        $query = RenewalQuoteProcess::where([
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
+        ])->whereNotNull('step_errors')->with(['renewalUploadLead', 'carQuote']);
+        $process = $query->simplePaginate();
+
+        return inertia('Renewals/PlanProcessesStatus', [
+            'renewalLeads' => $process,
             'batch' => $batch,
         ]);
     }

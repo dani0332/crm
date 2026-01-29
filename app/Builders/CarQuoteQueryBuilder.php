@@ -150,7 +150,15 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->matchBy('last_name', requestParams: $requestParams)
             ->filterBy('email', requestParams: $requestParams)
             ->filterBy('mobile_no', requestParams: $requestParams)
-            ->filterBy('payment_status_id', requestParams: $requestParams)
+            ->when($hasFilterValue('payment_status_id'), function ($query) use ($getFilterValue) {
+                $paymentStatusIds = $getFilterValue('payment_status_id');
+                if (! empty($paymentStatusIds)) {
+                    $paymentStatusIds = is_array($paymentStatusIds) ? $paymentStatusIds : [$paymentStatusIds];
+                    $query->whereHas('payments', function ($paymentQuery) use ($paymentStatusIds) {
+                        $paymentQuery->whereIn('payment_status_id', $paymentStatusIds);
+                    });
+                }
+            })
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('quote_status_id', requestParams: $requestParams)
             ->filterIn('insurer_aml_status', requestParams: $requestParams)

@@ -58,6 +58,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
             'PEC Policy Count',
             'Price (VAT applicable)',
             'Price (VAT not applicable)',
+            'Branch',
         ];
     }
 
@@ -70,6 +71,7 @@ class ActivePoliciesReportExport implements CsvExportableInterface
             $this->resolveNumberFormat($quote->pec_count ?? 0),
             $this->resolveNumberFormat($quote->price_with_vat ?? 0),
             $this->resolveNumberFormat($quote->price_without_vat ?? 0),
+            $quote->branch_name ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {

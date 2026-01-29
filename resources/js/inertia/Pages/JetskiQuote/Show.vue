@@ -16,7 +16,6 @@ defineProps({
   insuranceProviders: Object,
   personalPlans: Object,
   isBetaUser: Boolean,
-  storageUrl: String,
   quoteType: String,
   can: Object,
   activities: Object,
@@ -416,7 +415,6 @@ const record = computed(() => page.props.quote);
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
       quoteType="Jetski"
