@@ -24,6 +24,7 @@ use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
@@ -535,6 +536,14 @@ class RenewalsUploadController extends Controller
                 }
 
                 return redirect(config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$homeQuote->uuid);
+                break;
+
+            case OtherNonMotorRenewalsUploadService::QUOTE_TYPE:
+                $otherNonMotorQuote = PersonalQuote::where('id', $renewalLead->quote_id)->orderBy('created_at', 'DESC')->first();
+                if (! $otherNonMotorQuote) {
+                    return abort(404);
+                }
+                return redirect($otherNonMotorQuote->bringEcomUrl());
                 break;
             default:
                 return abort(404);
