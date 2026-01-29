@@ -1231,6 +1231,42 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IMCRM_POLICY_ISSUANCE_FAILURE_EMAIL],
+            [
+                'key_name' => ApplicationStorageEnums::IMCRM_POLICY_ISSUANCE_FAILURE_EMAIL,
+                'value' => 'imcrm-policy-issue-fake@yopmail.com,ngi-policy-issue-fake@yopmail.com',
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL],
+            [
+                'key_name' => ApplicationStorageEnums::IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL,
+                'value' => 'imcrm-doc-download-fake@yopmail.com,ngi-doc-download-fake@yopmail.com',
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IMCRM_DOC_UPLOAD_FAILURE_EMAIL],
+            [
+                'key_name' => ApplicationStorageEnums::IMCRM_DOC_UPLOAD_FAILURE_EMAIL,
+                'value' => 'imcrm-doc-upload-fake@yopmail.com,ngi-doc-upload-fake@yopmail.com',
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IMCRM_BOOK_POLICY_FAILURE_EMAIL],
+            [
+                'key_name' => ApplicationStorageEnums::IMCRM_BOOK_POLICY_FAILURE_EMAIL,
+                'value' => 'imcrm-book-policy-fake@yopmail.com,ngi-book-policy-fake@yopmail.com',
+                'is_active' => 1,
+            ],
+        );
+
     }
 
     private function seedLegacyPolicyKeys()

@@ -11,6 +11,7 @@ use App\Models\PersonalQuote;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PolicyIssuanceFailureEmailService;
 
 /**
  * Service to handle policy document retrieval from NGI provider.
@@ -29,7 +30,8 @@ class NgiGetPolicyDocumentsService
         private readonly NgiValidationService $validationService,
         private readonly NgiApiService $apiService,
         private readonly NgiDocumentHandler $documentHandler,
-        private readonly PolicyIssuanceService $policyIssuanceService
+        private readonly PolicyIssuanceService $policyIssuanceService,
+        private readonly PolicyIssuanceFailureEmailService $failureEmailService,
     ) {}
 
     /**
@@ -64,7 +66,10 @@ class NgiGetPolicyDocumentsService
         // Step 3: Download documents from provider URLs and store in DB
         $downloadResult = $this->downloadDocuments($quote, $process, $processId, $providerDocumentsApiResponse);
 
-        if (! $downloadResult['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_UPLOAD) {
+        if (! $downloadResult['status']
+            || $this->failureEmailService->isDocumentDownloadFailureEmail($quote->email)
+            || $this->failureEmailService->isDocumentUploadFailureEmail($quote->email)
+        ) {
             $defaultErrorMsg = 'Document download from provider or upload to IMCRM failed';
             $errorMessage = $downloadResult['error'] ?? $defaultErrorMsg;
             throw new NgiException(

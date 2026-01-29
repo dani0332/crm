@@ -14,6 +14,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiStepExecutor;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
+use App\Services\PolicyIssuanceFailureEmailService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
 
@@ -45,7 +46,8 @@ class NgiServiceProvider extends ServiceProvider
                 $app->make(NgiRequestBuilder::class),
                 $app->make(NgiResponseHandler::class),
                 $app->make(NgiQuoteUpdaterService::class),
-                $app->make(NgiValidationService::class)
+                $app->make(NgiValidationService::class),
+                $app->make(PolicyIssuanceFailureEmailService::class),
             );
         });
 
@@ -59,7 +61,8 @@ class NgiServiceProvider extends ServiceProvider
         App::bind(NgiStepExecutor::class, function ($app) {
             return new NgiStepExecutor(
                 $app->make(NgiApiService::class),
-                $app->make(NgiBookPolicyService::class)
+                $app->make(NgiBookPolicyService::class),
+                $app->make(PolicyIssuanceFailureEmailService::class),
             );
         });
     }

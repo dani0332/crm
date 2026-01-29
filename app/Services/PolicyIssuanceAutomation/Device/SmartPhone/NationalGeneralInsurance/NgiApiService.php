@@ -10,6 +10,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Facades\Ngi;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PolicyIssuanceFailureEmailService;
 
 class NgiApiService
 {
@@ -18,6 +19,7 @@ class NgiApiService
         private NgiResponseHandler $responseHandler,
         private NgiQuoteUpdaterService $quoteUpdater,
         private NgiValidationService $validationService,
+        private PolicyIssuanceFailureEmailService $failureEmailService,
     ) {}
 
     /**
@@ -60,7 +62,7 @@ class NgiApiService
             $process
         );
 
-        if (! $createPolicyResponse['status'] || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE) {
+        if (! $createPolicyResponse['status'] || $this->failureEmailService->isPolicyIssuanceFailureEmail($quote->email)) {
             LoggerService::error('CreatePolicyFromQuote API call failed', extra: [
                 'endpoint' => $endPoint,
                 'error' => $createPolicyResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
@@ -129,7 +131,7 @@ class NgiApiService
             $process
         );
 
-        if (! $policyDocumentsResponse['status'] || $quote->email === PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD) {
+        if (! $policyDocumentsResponse['status'] || $this->failureEmailService->isDocumentDownloadFailureEmail($quote->email)) {
             LoggerService::error('GetPolicyDocuments API call failed', extra: [
                 'endpoint' => $endPoint,
                 'policy_number' => $quote->policy_number,

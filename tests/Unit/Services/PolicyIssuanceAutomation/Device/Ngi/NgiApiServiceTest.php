@@ -10,6 +10,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiRequestBuilder;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
+use App\Services\PolicyIssuanceFailureEmailService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Http\Client\Response;
@@ -339,12 +340,19 @@ beforeEach(function () {
     $this->responseHandler = $sharedResponseHandler; // Reuse shared instance
     $this->quoteUpdater = Mockery::mock(NgiQuoteUpdaterService::class);
     $this->validationService = Mockery::mock(NgiValidationService::class);
+    $this->failureEmailService = Mockery::mock(PolicyIssuanceFailureEmailService::class);
+    $this->failureEmailService->shouldIgnoreMissing();
+    $this->failureEmailService->shouldReceive('isPolicyIssuanceFailureEmail')->andReturnFalse()->byDefault();
+    $this->failureEmailService->shouldReceive('isBookPolicyFailureEmail')->andReturnFalse()->byDefault();
+    $this->failureEmailService->shouldReceive('isDocumentDownloadFailureEmail')->andReturnFalse()->byDefault();
+    $this->failureEmailService->shouldReceive('isDocumentUploadFailureEmail')->andReturnFalse()->byDefault();
 
     $this->apiService = new NgiApiService(
         $this->requestBuilder,
         $this->responseHandler,
         $this->quoteUpdater,
-        $this->validationService
+        $this->validationService,
+        $this->failureEmailService,
     );
 });
 
@@ -354,7 +362,7 @@ afterEach(function () {
     Mockery::getContainer()->mockery_close();
 
     // Explicitly unset test properties to free memory (keep shared instances)
-    unset($this->apiService, $this->requestBuilder, $this->quoteUpdater, $this->validationService);
+    unset($this->apiService, $this->requestBuilder, $this->quoteUpdater, $this->validationService, $this->failureEmailService);
     // Note: $this->responseHandler is a shared static instance, don't unset it
 
     // Clear service container bindings
@@ -409,7 +417,8 @@ describe('createPolicyFromQuote', function () {
             $this->requestBuilder,
             $responseHandlerMock,
             $this->quoteUpdater,
-            $this->validationService
+            $this->validationService,
+            $this->failureEmailService,
         );
 
         // Mock the facade for this specific call
@@ -544,7 +553,7 @@ describe('createPolicyFromQuote', function () {
     });
 
     test('returns failure when the quote email is marked as fake policy issuance', function () {
-        $quote = getSharedQuote(['email' => PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE]);
+        $quote = getSharedQuote(['email' => 'ngi-policy-issuance-failure@myalfred.fake']);
         $process = getSharedProcess();
         global $successPolicyResponse;
 
@@ -565,6 +574,12 @@ describe('createPolicyFromQuote', function () {
         app()->instance(PolicyIssuanceService::class, $policyIssuanceServiceMock);
 
         $this->quoteUpdater->shouldNotReceive('updateQuoteFromCreatePolicyResponse');
+
+        $this->failureEmailService
+            ->shouldReceive('isPolicyIssuanceFailureEmail')
+            ->once()
+            ->with($quote->email)
+            ->andReturnTrue();
 
         $result = $this->apiService->createPolicyFromQuote($quote, $process);
 
@@ -642,7 +657,7 @@ describe('getPolicyDocuments', function () {
     test('returns failure when the quote email is marked as fake document download', function () {
         $quote = getSharedQuote([
             'policy_number' => 'NGI-POL-123',
-            'email' => PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD,
+            'email' => 'ngi-doc-download-failure@myalfred.fake',
         ]);
         $process = getSharedProcess();
 
@@ -669,6 +684,12 @@ describe('getPolicyDocuments', function () {
 
         $this->quoteUpdater->shouldNotReceive('updateQuoteFromPolicyDocumentsResponse');
         $this->quoteUpdater->shouldNotReceive('updatePaymentFromPolicyDocumentsResponse');
+
+        $this->failureEmailService
+            ->shouldReceive('isDocumentDownloadFailureEmail')
+            ->once()
+            ->with($quote->email)
+            ->andReturnTrue();
 
         $result = $this->apiService->getPolicyDocuments($quote, $process);
 

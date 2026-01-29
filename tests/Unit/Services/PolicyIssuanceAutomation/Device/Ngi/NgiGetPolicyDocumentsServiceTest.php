@@ -9,6 +9,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiValidationService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PolicyIssuanceFailureEmailService;
 
 beforeEach(function () {
     // Create mocked dependencies for unit tests
@@ -16,12 +17,17 @@ beforeEach(function () {
     $this->apiService = Mockery::mock(NgiApiService::class);
     $this->documentHandler = Mockery::mock(NgiDocumentHandler::class);
     $this->policyIssuanceService = Mockery::mock(PolicyIssuanceService::class);
+    $this->failureEmailService = Mockery::mock(PolicyIssuanceFailureEmailService::class);
+    $this->failureEmailService->shouldIgnoreMissing();
+    $this->failureEmailService->shouldReceive('isDocumentDownloadFailureEmail')->andReturnFalse()->byDefault();
+    $this->failureEmailService->shouldReceive('isDocumentUploadFailureEmail')->andReturnFalse()->byDefault();
 
     $this->service = new NgiGetPolicyDocumentsService(
         $this->validationService,
         $this->apiService,
         $this->documentHandler,
-        $this->policyIssuanceService
+        $this->policyIssuanceService,
+        $this->failureEmailService,
     );
 });
 
@@ -31,7 +37,7 @@ afterEach(function () {
     Mockery::getContainer()->mockery_close();
 
     // Explicitly unset test properties to free memory
-    unset($this->validationService, $this->apiService, $this->documentHandler, $this->policyIssuanceService, $this->service);
+    unset($this->validationService, $this->apiService, $this->documentHandler, $this->policyIssuanceService, $this->failureEmailService, $this->service);
 
     // Clear service container bindings
     app()->forgetInstance(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class);

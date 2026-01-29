@@ -9,6 +9,7 @@ use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsur
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiStepExecutor;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PolicyIssuanceFailureEmailService;
 use Illuminate\Support\Facades\Queue;
 
 /**
@@ -69,10 +70,15 @@ beforeEach(function () {
     // Create mocked dependencies for unit tests
     $this->apiService = Mockery::mock(NgiApiService::class);
     $this->bookPolicyService = Mockery::mock(NgiBookPolicyService::class);
+    $this->failureEmailService = Mockery::mock(PolicyIssuanceFailureEmailService::class);
+    $this->failureEmailService->shouldIgnoreMissing();
+    $this->failureEmailService->shouldReceive('isPolicyIssuanceFailureEmail')->andReturnFalse()->byDefault();
+    $this->failureEmailService->shouldReceive('isBookPolicyFailureEmail')->andReturnFalse()->byDefault();
 
     $this->stepExecutor = new NgiStepExecutor(
         $this->apiService,
-        $this->bookPolicyService
+        $this->bookPolicyService,
+        $this->failureEmailService,
     );
 });
 
@@ -82,7 +88,7 @@ afterEach(function () {
     Mockery::getContainer()->mockery_close();
 
     // Explicitly unset test properties to free memory
-    unset($this->apiService, $this->bookPolicyService, $this->stepExecutor);
+    unset($this->apiService, $this->bookPolicyService, $this->stepExecutor, $this->failureEmailService);
 
     // Clear service container bindings
     app()->forgetInstance(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class);
