@@ -12,10 +12,10 @@ use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
 use App\Services\OCR\EmiratesId\DriverEmiratesIdDataProcessor;
 use App\Services\OCR\EmiratesId\EmiratesIdDataProcessor;
 use App\Services\OCR\Mulkiya\MulkiyaDataProcessor;
+use App\Services\OCR\Passport\PassportDataProcessor;
 use App\Services\OCR\PolicySchedule\PolicyScheduleDataProcessor;
 use App\Services\OCR\TaxInvoice\TaxInvoiceDataProcessor;
 use App\Services\OCR\TaxInvoiceRaisedByBuyer\TaxInvoiceRaisedByBuyerDataProcessor;
-use App\Services\OCR\Passport\PassportDataProcessor;
 use App\Services\OCR\Visa\VisaDataProcessor;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -146,7 +146,6 @@ trait OcrFillable
         return true;
     }
 
- 
     private function fillEmiratesId(Model $quote, object $data, string $documentTypeCode, int $memberDetailId)
     {
         try {

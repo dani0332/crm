@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
