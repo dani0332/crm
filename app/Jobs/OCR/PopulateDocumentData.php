@@ -142,6 +142,7 @@ class PopulateDocumentData implements ShouldQueue
 
         $isCustomerJourneyDoc = in_array($docType, [
             OCRDocumentTypeEnum::ID_CARD,
+            OCRDocumentTypeEnum::DRIVER_EMIRATES_ID,
             OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE,
             OCRDocumentTypeEnum::DRIVING_LICENSE,
         ]);

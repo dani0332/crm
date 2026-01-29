@@ -9,6 +9,7 @@ use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\LifeController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\FtcEmailController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,9 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
     Route::post('/imcrm/trigger-sic-whatsapp', [ApiController::class, 'triggerSICWhatsapp'])->name('triggerSICWhatsapp');
     Route::post('/imcrm/run-cqf-jobs', [ApiController::class, 'runCQFJobs']);
+
+    // FTC email
+    Route::post('ftc-email/{quoteType}/{uuid}/dispatch', [FtcEmailController::class, 'send'])->name('api.ftc-email.dispatch');
 
     // FTC email tracking routes
     Route::post('ftc/{quoteType}/{uuid}', [FtcEmailLogController::class, 'store']);
@@ -79,6 +83,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
         ->name('pc-customer-assignment');
     Route::post('/remove-pc-qualified', [ApiController::class, 'removePcQualified'])->name('remove-pc-qualified');
+    Route::post('/tag-pc-qualified', [ApiController::class, 'tagPrivateClients']);
 
     Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
 });

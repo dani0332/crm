@@ -32,7 +32,9 @@ use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
 {
-    use GenericQueriesAllLobs, OcrUtils;
+    use GenericQueriesAllLobs, OcrUtils {
+        GenericQueriesAllLobs::getNationalityId insteadof OcrUtils;
+    }
 
     public function model()
     {
@@ -134,7 +136,7 @@ class PersonalQuoteRepository extends BaseRepository
             $fileMimeType = $file->getClientMimeType();
             // upload file to azure
             $fileNameAzure = uniqid().'_'.$quote->uuid.'_original_'.$docName;
-            $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+            $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
 
             // generate unique uuid
             $docUuid = uniqid();
