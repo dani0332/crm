@@ -141,15 +141,17 @@ class PopulateDocumentData implements ShouldQueue
 
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
         $isOCRCustomerJourneyEnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED, useCache: true) == '1';
+        $isOCRCustomerJourneyQuoteTypeEnabled = $this->isOCRCustomerJourneyQuoteTypeEnabled();
 
         $isCustomerJourneyDoc = in_array($docType, [
             OCRDocumentTypeEnum::ID_CARD,
             OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE,
             OCRDocumentTypeEnum::DRIVING_LICENSE,
+            OCRDocumentTypeEnum::PASSPORT,
         ]);
 
         $isOCRDocEnabled = OCRDocumentTypeEnum::isOCREnabled($this->documentType, $this->quoteType);
-        $willRun = $isOCREnabled && $isOCRDocEnabled && (! $isCustomerJourneyDoc || $isOCRCustomerJourneyEnabled);
+        $willRun = $isOCREnabled && $isOCRDocEnabled && $isOCRCustomerJourneyQuoteTypeEnabled && (! $isCustomerJourneyDoc || $isOCRCustomerJourneyEnabled);
 
         LoggerService::info(self::class.'::middleware - OCR Job Middleware Check', [
             'quote_type' => $this->quoteType->value,
@@ -159,6 +161,7 @@ class PopulateDocumentData implements ShouldQueue
             'is_ocr_doc_enabled' => $isOCRDocEnabled,
             'is_customer_journey_doc' => $isCustomerJourneyDoc,
             'is_customer_journey_enabled' => $isOCRCustomerJourneyEnabled,
+            'is_ocr_customer_journey_quotetype_enabled' => $isOCRCustomerJourneyQuoteTypeEnabled,
             'will_run' => $willRun,
             'decision' => $willRun ? 'Job will execute' : 'Job will be skipped',
         ]);
