@@ -90,12 +90,17 @@ class OCRService
 
         $refId = $this->getRefId($quote);
 
+        $docTypeCode = $docType->value;
+        if ($docType === OCRDocumentTypeEnum::DRIVER_EMIRATES_ID) {
+            $docTypeCode = OCRDocumentTypeEnum::ID_CARD->value;
+        }
+
         $requestData = [
             'ref_id' => $refId,
             'uuid' => $quote->uuid,
             'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,
-            'doc_type' => $docType->value,
+            'doc_type' => $docTypeCode,
             'provider_code' => $providerCode,
             'image' => false,
         ];
@@ -518,7 +523,7 @@ class OCRService
         // early return if Customer OCR Journey is not supported on prod
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
         $isOCRCustomerJourneyEnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED, useCache: true) == '1';
-        if (! $isOCRCustomerJourneyEnabled && in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
+        if (! $isOCRCustomerJourneyEnabled && in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE, OCRDocumentTypeEnum::DRIVER_EMIRATES_ID])) {
             LoggerService::info(self::class.' - OCR Customer Journey is not supported for now', [
                 'docType' => $docType,
                 'isOCRCustomerJourneyEnabled' => $isOCRCustomerJourneyEnabled,

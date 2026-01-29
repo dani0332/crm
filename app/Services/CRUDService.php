@@ -326,7 +326,7 @@ class CRUDService extends BaseService
 
                         $azureFileName = get_guid().'_'.$fileName;
                         $azureFilePath = $request->file('mo_proof_document')
-                            ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+                            ->storeAs('car_proof_docs', $azureFileName, 'azureIMPrivate');
 
                         $carLostQuoteLog->documents()->create([
                             'name' => $fileName,
@@ -352,7 +352,7 @@ class CRUDService extends BaseService
 
                     $azureFileName = get_guid().'_'.$fileName;
                     $azureFilePath = $request->file('proof_document')
-                        ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+                        ->storeAs('car_proof_docs', $azureFileName, 'azureIMPrivate');
 
                     $carLostQuoteLog->documents()->create([
                         'name' => $fileName,

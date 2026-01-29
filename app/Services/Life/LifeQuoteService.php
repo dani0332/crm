@@ -53,6 +53,7 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use PDF;
 
 class LifeQuoteService extends BaseService
@@ -90,15 +91,23 @@ class LifeQuoteService extends BaseService
         });
     }
 
-    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
+    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false, $requestParams = [])
     {
-        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest);
+        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest, $requestParams);
 
-        return ($isExportRequest) ? $query->get() : $query->simplePaginate(15)->withQueryString();
+        return ($isExportRequest) ? $query : $query->simplePaginate(15)->withQueryString();
     }
 
-    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false)
+    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false, $requestParams = [])
     {
+
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)->with([
             'advisor',
