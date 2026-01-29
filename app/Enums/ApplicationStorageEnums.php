@@ -265,6 +265,7 @@ final class ApplicationStorageEnums extends Enum
     public const NEW_LEAD_POOL_BCC = 'NEW_LEAD_POOL_BCC';
     public const OCR_ENABLED = 'OCR_ENABLED';
     public const CAR_INTRO_EMAIL = 'CAR_INTRO_EMAIL';
+    public const OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED = 'OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED';
     public const CAR_CQF_RENEWALS_DAYS_THRESHOLD = 'CAR_CQF_RENEWALS_DAYS_THRESHOLD';
     public const CAR_CQF_RENEWALS_SWITCH = 'CAR_CQF_RENEWALS_SWITCH';
 
