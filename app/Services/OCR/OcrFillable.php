@@ -144,7 +144,7 @@ trait OcrFillable
         return true;
     }
 
-    private function fillEmiratesId(Model $quote, object $data)
+    private function fillEmiratesId(Model $quote, object $data, string $documentTypeCode, int $memberDetailId)
     {
         try {
             // Create a single instance of the processor to reuse
@@ -301,7 +301,9 @@ trait OcrFillable
         object $data,
         $documentCategory,
         bool $isSendUpdateEligibleForOCR,
-        QuoteTypes $quoteType
+        QuoteTypes $quoteType,
+        string $documentTypeCode,
+        int $memberDetailId
     ) {
         $this->providerCode = $this->getProvider($quote);
         $this->isSendUpdateEligibleForOCR = $isSendUpdateEligibleForOCR;
@@ -322,7 +324,7 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE => $this->fillTaxInvoice($quote, $data),
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
-                OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data),
+                OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data, $documentTypeCode, $memberDetailId),
                 OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
                 OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL], true)
