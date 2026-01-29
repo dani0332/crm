@@ -107,8 +107,8 @@ class OtherNonMotorRenewalsUploadService
                 LoggerService::info('OTH FN: One or more jobs failed');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
             })
-            ->finally(function () use ($logPrefix) {
-                LoggerService::info('OTH FN: Everything done');
+            ->finally(function () use ($renewalsUploadLead) {
+                LoggerService::info('OTH FN: Everything done for lead: '.$renewalsUploadLead->id);
             })
             ->allowFailures()
             ->dispatch();
