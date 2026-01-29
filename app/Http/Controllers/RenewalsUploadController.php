@@ -479,17 +479,19 @@ class RenewalsUploadController extends Controller
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
+        $export = null;
+
         if ($renewaUploadLead->quote_type == OtherNonMotorRenewalsUploadService::QUOTE_TYPE) {
-            return Excel::download(new RenewalOtherNonMotorFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
-        }
-        if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
-            return Excel::download(new RenewalHealthUpdateFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
-        }
-        if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
-            return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+            $export = new RenewalOtherNonMotorFailedValidationExport($renewaUploadLead);
+        } elseif ($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            $export = new RenewalHealthUpdateFailedValidationExport($renewaUploadLead);
+        } elseif ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+            $export = new RenewalHomeFailedValidationExport($renewaUploadLead);
+        } else {
+            $export = new RenewalFailedValidationExport($renewaUploadLead);
         }
 
-        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        return Excel::download($export, 'failed_' . $renewaUploadLead->file_name);
     }
 
     public function validationPassed($id)

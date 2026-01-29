@@ -467,4 +467,14 @@ trait QuoteModelTrait
 
         return in_array($this->quote_status_id, $excludedQuoteStatuses);
     }
+
+    /**
+     * Get the ECOM URL for the quote for all the lobs like car-insurance, home-insurance, etc.
+     *
+     * @return string
+     */
+    public function bringEcomUrl(): string
+    {
+        return config('constants.AFIA_WEBSITE_DOMAIN') . '/' . strtolower(QuoteTypes::getName($this->quote_type_id)->value) . '-insurance/quote/' . $this->uuid;
+    }
 }
