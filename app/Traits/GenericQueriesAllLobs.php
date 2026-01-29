@@ -946,12 +946,22 @@ trait GenericQueriesAllLobs
         return $nationalityRecord?->text;
     }
 
+    /**
+     * Check if the parent policy is created from Cancellation from Inception and Reissuance.
+     * if the policy created via duplicate quote functionality then we don't need to disable CTA.
+     *
+     * @param  object  $record
+     * @param  string  $text
+     * @return bool
+     */
     public function isParentPolicyCancellationReissuedPending($record, $text)
     {
+        
         $return = false;
         if (
             isset($record->parent_duplicate_quote_id) &&
             $record->parent_duplicate_quote_id &&
+            str_starts_with($record->code, $record->parent_duplicate_quote_id) && // if pass it means the record is from CIR.
             $text != SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT
         ) {
             $parentQuoteType = explode('-', $record->parent_duplicate_quote_id)[0];
