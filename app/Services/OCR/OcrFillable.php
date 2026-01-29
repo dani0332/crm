@@ -13,6 +13,8 @@ use App\Services\OCR\Mulkiya\MulkiyaDataProcessor;
 use App\Services\OCR\PolicySchedule\PolicyScheduleDataProcessor;
 use App\Services\OCR\TaxInvoice\TaxInvoiceDataProcessor;
 use App\Services\OCR\TaxInvoiceRaisedByBuyer\TaxInvoiceRaisedByBuyerDataProcessor;
+use App\Services\OCR\Passport\PassportDataProcessor;
+use App\Services\OCR\Visa\VisaDataProcessor;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
@@ -232,6 +234,34 @@ trait OcrFillable
         }
     }
 
+    private function fillPassport(Model $quote, object $data, string $documentTypeCode, int $memberDetailId)
+    {
+        try {
+            // Create a single instance of the processor to reuse
+            $processor = new PassportDataProcessor($quote, $data, $documentTypeCode, $memberDetailId);
+
+            $success = $processor->processPassportData();
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during passport data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
+    private function fillVisa(Model $quote, object $data, string $documentTypeCode, int $memberDetailId)
+    {
+        try {
+            $processor = new VisaDataProcessor($quote, $data, $documentTypeCode, $memberDetailId);
+
+            $success = $processor->processVisaData();
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Visa data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
     private function fillPolicySchedule(Model $quote, object $data)
     {
         try {
@@ -299,6 +329,8 @@ trait OcrFillable
                     ? $this->fillPolicySchedule($quote, $data)
                     : $this->fillMotorInsurancePolicySchedule($quote, $data),
                 OCRDocumentTypeEnum::POLICY_SCHEDULE => $this->fillPolicySchedule($quote, $data), // for home and group medical policy schedule
+                OCRDocumentTypeEnum::PASSPORT => $this->fillPassport($quote, $data, $documentTypeCode, $memberDetailId),
+                OCRDocumentTypeEnum::VISA => $this->fillVisa($quote, $data, $documentTypeCode, $memberDetailId),
                 default => false,
             };
         } catch (Exception $e) {
