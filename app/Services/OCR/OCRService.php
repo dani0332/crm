@@ -600,7 +600,8 @@ class OCRService
                 $fileMimeType,
                 $userId ?? 0,
                 $isEcom,
-                $isSendUpdateEligibleForOCR
+                $isSendUpdateEligibleForOCR,
+                $memberDetailId
             );
         } else {
             LoggerService::warning('OCR Dispatch - Missing required parameters - Quote UUID: '.$quote->uuid);
