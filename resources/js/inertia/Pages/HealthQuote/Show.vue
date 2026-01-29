@@ -22,7 +22,6 @@ const props = defineProps({
   teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
-  cdnPath: String,
   documentType: Object,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
@@ -41,7 +40,6 @@ const props = defineProps({
   quoteRequest: Object,
   can: Object,
   paymentMethods: Object,
-  storageUrl: String,
   sendPolicy: Boolean,
   insuranceProviders: Array,
   planTypes: Array,
@@ -252,7 +250,7 @@ const subTeamOptions = [
   { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
-  { value: 'PCP', label: 'PCP' },
+  { value: 'GBP', label: 'GBP' },
 ];
 
 const advisorOptions = computed(() => {
@@ -4103,7 +4101,6 @@ const isPrimaryEmailLocked = computed(() => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :eCommercePriceWithLP="
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
@@ -4163,7 +4160,6 @@ const isPrimaryEmailLocked = computed(() => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
