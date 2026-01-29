@@ -59,13 +59,26 @@ class QuoteDocumentService extends BaseService
      *
      * @return mixed
      */
-    public function getQuoteDocumentsToReceive($quoteTypeId)
+    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null)
     {
         return DocumentType::where([
             'is_active' => 1,
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
+            ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($registrationType, $vehicleUse) {
+                $query->where(function ($query) use ($registrationType) {
+                    $query->whereNull('registration_type')
+                        ->orWhere('registration_type', $registrationType);
+                });
+
+                $query->where(function ($query) use ($vehicleUse) {
+                    $query->whereNull('vehicle_use')
+                        ->orWhere('vehicle_use', $vehicleUse);
+                });
+
+                return $query;
+            })
             ->orderBy('sort_order')
             ->get();
     }
@@ -402,7 +415,7 @@ class QuoteDocumentService extends BaseService
      *
      * @return array
      */
-    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
+    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null, $quote = null)
     {
         $borPermission = PermissionsEnum::BOR_DOCUMENT_UPLOAD;
         $havePermission = Auth::user()->hasPermissionTo($borPermission);
@@ -422,6 +435,21 @@ class QuoteDocumentService extends BaseService
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
 
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
+            })
+            ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($quote) {
+                $registrationType = $quote?->registration_type ?? null;
+                $vehicleUse = $quote?->vehicle_use ?? null;
+                $query->where(function ($query) use ($registrationType) {
+                    $query->whereNull('registration_type')
+                        ->orWhere('registration_type', $registrationType);
+                });
+
+                $query->where(function ($query) use ($vehicleUse) {
+                    $query->whereNull('vehicle_use')
+                        ->orWhere('vehicle_use', $vehicleUse);
+                });
+
+                return $query;
             })
             ->sortDocumentType()->get();
         // Handle documents for quote types like CORPLINE and GroupMedical.

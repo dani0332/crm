@@ -2460,6 +2460,18 @@ const { openTempUrl } = useDocumentTempUrl();
                   <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                   <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    {{
+                      applyEmiratesNumberMasking(record.driver_eid_number) ?? ''
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ record.driver_gender ?? '' }}</dd>
+                </div>
               </dl>
             </div>
           </div>
