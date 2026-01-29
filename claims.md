@@ -42,3 +42,36 @@
     ]
   }
 }
+
+
+
+Health
+{
+  "success": true,
+  "message": "Document upload process completed",
+  "stats": {
+    "processed": 26,
+    "uploaded": 26,
+    "failed": 0,
+    "errors": [
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\AAFIYA",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\AETNA NEURON",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\AXA_",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\ECARE INTERNATIONAL",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\ENET",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\FMC",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\LIFELINE",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\MEDNET",
+      "Insurance provider ID 70 does not exist in database",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\MORGAN",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\NAS",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\NEURON",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\NEXTCARE",
+      "Insurance provider ID 98 does not exist in database",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\OMAN_",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\PENTACARE",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\SEHTEQ",
+      "Invalid insurance provider ID folder: D:\\Projects\\Office\\blanka\\claims\\HEALTH\\VIDAL"
+    ]
+  }
+}
