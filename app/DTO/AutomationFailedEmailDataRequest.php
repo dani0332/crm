@@ -12,6 +12,7 @@ class AutomationFailedEmailDataRequest
 {
     public function __construct(
         public readonly array $cc,
+        public readonly array $ccEmails,
         public readonly bool $isDeviceNgi,
         public readonly string $actionRequired,
         public readonly string $recipientEmail,

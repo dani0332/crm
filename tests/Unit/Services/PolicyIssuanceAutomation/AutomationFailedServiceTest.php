@@ -98,6 +98,7 @@ it('builds device email payload with trigger point and reply to', function () {
 
     $request = new AutomationFailedEmailDataRequest(
         cc: $cc,
+        ccEmails: is_array($cc) ? ($cc['ccEmails'] ?? $cc) : [],
         isDeviceNgi: true,
         actionRequired: 'Action text',
         recipientEmail: 'recipient@example.com',

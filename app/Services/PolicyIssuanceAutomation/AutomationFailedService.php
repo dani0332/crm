@@ -288,11 +288,11 @@ class AutomationFailedService
             'processInvolved' => $request->processInvolved,
             'cc' => $request->cc,
             'workflowType' => $request->workflowType,
+            'imcrmLink' => $this->generateImcrmLink($quote, $quoteType),
         ];
 
         // Device/NGI-specific fields per FRD
         if ($request->isDeviceNgi) {
-            $emailData['imcrmLink'] = $this->generateImcrmLink($quote, $quoteType);
             $emailData['escalationLink'] = $this->getEscalationLink();
             $emailData['triggerPoint'] = $this->getDeviceFailureTriggerPoint($request->processInvolved);
             $emailData['replyTo'] = $this->getDeviceFailureEmailReplyTo();

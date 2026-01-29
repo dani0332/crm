@@ -95,6 +95,7 @@ class AutomationFailedJob implements ShouldQueue
         // Build email data request DTO
         $emailDataRequest = new AutomationFailedEmailDataRequest(
             cc: $cc,
+            ccEmails: is_array($cc) ? ($cc['ccEmails'] ?? $cc) : [],
             isDeviceNgi: $isDeviceNgi,
             actionRequired: $this->actionRequired,
             recipientEmail: $recipientEmail,
