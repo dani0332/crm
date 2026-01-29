@@ -156,6 +156,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentTypeText,
                 'doc_uuid' => $docUuid,
+                'member_detail_id' => $data['member_detail_id'] ?? null,
                 'created_by_id' => Auth::id(),
             ];
             // info('Document array prepared for creation', $document);
