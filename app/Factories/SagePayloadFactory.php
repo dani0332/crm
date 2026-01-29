@@ -1093,10 +1093,7 @@ class SagePayloadFactory
             'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
         ];
 
-        // Note: Discount invoices are no longer created, so we don't apply receipts to them
-        $discountData = null;
-
-        return [$receiptData, $prePaymentData, $discountData];
+        return [$receiptData, $prePaymentData];
     }
 
     public static function createAppliedReceiptsAdjustmentsForAR($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
@@ -1295,7 +1292,8 @@ class SagePayloadFactory
 
         if (count($paymentSplits) == 1) {
             $sageRequest->sage_reciept_id = $firstChildPayment->sage_reciept_id;
-            $sageRequest->collection_amount = $firstChildPayment->collection_amount + $sageRequest->discount;
+            // Note: Discount invoices are no longer created, so we don't include discount in collection amount
+            $sageRequest->collection_amount = $firstChildPayment->collection_amount;
         } else {
             $sageRequest->invoicePaymentStatus = $firstChildPayment->payment_status_id;
         }
@@ -1638,12 +1636,9 @@ class SagePayloadFactory
         $receiptsAndAdjustmentsData = [];
         foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
             if (self::isPaymentProcessed($splitPaymentRecord->payment_status_id)) {
-                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptDataForAR($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptDataForAR($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
                 $receiptsAndAdjustmentsData[] = $singleReceiptData;
                 $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
-                if ($discountData) {
-                    $receiptsAndAdjustmentsData[] = $discountData;
-                }
             }
 
         }
@@ -1654,12 +1649,9 @@ class SagePayloadFactory
     {
         $receiptsAndAdjustmentsData = [];
         if (self::isPaymentProcessed($firstSplitPaymentRecord->payment_status_id)) {
-            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptDataForAR($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            [$singleReceiptData, $singlePrePaymentData] = self::createReceiptDataForAR($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
             $receiptsAndAdjustmentsData[] = $singleReceiptData;
             $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
-            if ($discountData) {
-                $receiptsAndAdjustmentsData[] = $discountData;
-            }
         }
 
         return $receiptsAndAdjustmentsData;
@@ -1701,7 +1693,8 @@ class SagePayloadFactory
             'DocumentNumber' => $documentNumber,
             'PaymentNumber' => $paymentNumber,
             'TransactionType' => 'PaymentPosted',
-            'PaymentAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
+            // Note: Discount invoices are no longer created, so we don't include discount in payment amount
+            'PaymentAmount' => roundNumber(floatval($item->payment_amount)),
         ];
 
         $prePaymentData = [

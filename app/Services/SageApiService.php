@@ -902,13 +902,6 @@ class SageApiService
                 return $createARPremiumPrepayment;
             }
 
-            // create AP Prepayment Premium Receipt
-            // TODO:: Need to update the logs and post in progress issue for AP Prepayment Premium Receipt
-            /*$createAPPremiumPrepayment = $this->createAPPrepaymentPremiumReceipts([$sageRequest, $quote, $payment, $paymentSplits]);
-            if (! $createAPPremiumPrepayment['status']) {
-                return $createAPPremiumPrepayment;
-            }*/
-
             $payment = $payment->refresh();
             $paymentSplits = $payment->paymentSplits;
 
@@ -932,12 +925,6 @@ class SageApiService
             if (! $applyPaymentARInvoices['status']) {
                 return $applyPaymentARInvoices;
             }
-
-            // Apply Prepayments for AP Invoice
-            /*$applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
-            if (! $applyPaymentAPInvoices['status']) {
-                return $applyPaymentAPInvoices;
-            }*/
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,
