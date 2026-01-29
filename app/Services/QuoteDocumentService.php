@@ -312,7 +312,7 @@ class QuoteDocumentService extends BaseService
             }
 
             LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType,  $data['member_detail_id'] ?? 0);
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
                 WatermarkDocumentsJob::dispatch(
