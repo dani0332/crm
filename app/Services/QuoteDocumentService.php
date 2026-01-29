@@ -1137,7 +1137,7 @@ class QuoteDocumentService extends BaseService
         }
     }
 
-    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
+    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $memberDetailId)
     {
         LoggerService::info('Dispatching OCR job from API');
 
@@ -1146,7 +1146,7 @@ class QuoteDocumentService extends BaseService
             $quote,
             $filePathAzure,
             $fileMimeType,
+            $memberDetailId,
         );
     }
-
 }
