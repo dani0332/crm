@@ -23,6 +23,7 @@ use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Models\HealthQuote;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -609,6 +610,7 @@ class CustomerVerificationService
 
         $quoteType = match (true) {
             $quote instanceof CarQuote => QuoteTypes::CAR,
+            $quote instanceof HealthQuote => QuoteTypes::HEALTH,
             // Add other quote types here as needed
             default => null,
         };
