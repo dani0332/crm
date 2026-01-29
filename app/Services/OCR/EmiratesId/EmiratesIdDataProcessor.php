@@ -417,7 +417,7 @@ class EmiratesIdDataProcessor
             ->select('quote_type_id')
             ->first();
 
-        return $personalQuote->quote_type_id;
+        return $personalQuote?->quote_type_id;
     }
 
     public function getProcessingSummary(): array

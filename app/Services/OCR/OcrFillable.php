@@ -306,7 +306,6 @@ trait OcrFillable
         string $documentTypeCode,
         int $memberDetailId
     ) {
-        LoggerService::info("Customer memebr id----------------: {$memberDetailId}");
         $this->providerCode = $this->getProvider($quote);
         $this->isSendUpdateEligibleForOCR = $isSendUpdateEligibleForOCR;
 
