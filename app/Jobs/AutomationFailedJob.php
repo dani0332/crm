@@ -106,7 +106,7 @@ class AutomationFailedJob implements ShouldQueue
         );
 
         // Build email data with LOB-specific fields
-        $emailData = $service->buildEmailData($quote, $quoteType, $emailDataRequest);
+        $emailData = $service->buildEmailData($quote, $emailDataRequest);
 
         $response = app(CentralService::class)->sendAutomationEmail($quote, $emailData, $this->quoteTypeId, $this->workflowType);
         LoggerService::info('job:AutomationFailedJob - Job Response ', extra: ['emailData' => json_encode($response)]);

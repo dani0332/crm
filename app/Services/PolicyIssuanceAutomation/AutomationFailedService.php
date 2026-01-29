@@ -274,7 +274,6 @@ class AutomationFailedService
      */
     public function buildEmailData(
         $quote,
-        string $quoteType,
         AutomationFailedEmailDataRequest $request
     ): object {
         // Base email data common to all LOBs
