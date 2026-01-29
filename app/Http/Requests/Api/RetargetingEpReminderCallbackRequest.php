@@ -23,10 +23,11 @@ class RetargetingEpReminderCallbackRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'uuid' => 'required|string',
             'quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car,
             'quoteId' => 'required|integer|exists:car_quote_request,id',
             'templateId' => 'required|string',
-            'messageId' => 'required|string',
+            'message_id' => 'required|string',
             'customerId' => 'required|integer',
             'customerEmail' => 'required|string',
             'subject' => 'required|string',

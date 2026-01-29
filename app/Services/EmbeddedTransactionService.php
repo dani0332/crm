@@ -163,20 +163,11 @@ class EmbeddedTransactionService extends BaseService
 
     public function retargetingCarEpReminderCallback(RetargetingEpReminderCallbackRequest $request)
     {
-        $newEmailStatus = (object) [
-            'quoteTypeId' => $request->quoteTypeId,
-            'quoteId' => $request->quoteId,
-            'customerEmail' => $request->customerEmail,
-            'templateId' => $request->templateId,
-            'customerId' => $request->customerId,
-        ];
+        $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
+        if ($response->status) {
+            return apiResponse(null, Response::HTTP_OK, $response->message);
+        }
 
-        $successResponseCodes = [Response::HTTP_OK, Response::HTTP_CREATED, Response::HTTP_ACCEPTED];
-        $status = in_array($request->responseCode, $successResponseCodes) ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
-
-        $reminderNumberTitle = $request->reminderNumber == 1 ? 'First' : 'Second';
-        $emailStatusId = app(EmailStatusService::class)->addEmailStatus($newEmailStatus, $request->messageId, $request->subject, $status, "{$reminderNumberTitle} Reminder Email {$status}");
-
-        return apiResponse(['email_status_id' => $emailStatusId], Response::HTTP_OK, "{$reminderNumberTitle} Reminder Email {$status}");
+        return apiResponse(null, Response::HTTP_NOT_FOUND, $response->message);
     }
 }
