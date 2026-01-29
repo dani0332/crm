@@ -40,14 +40,14 @@ beforeEach(function () {
         'guard_name' => 'web'
     ]);
 
-    $this->user = TestDataSeeder::createAdminUser();
+    $this->user = TestDataSeeder::createUser();
     $this->actingAs($this->user);
 
     // Create common customers (used by all tests)
     $this->customerA = Customer::factory()
         ->withEmail(EMAIL_CUSTOMER_A)
         ->create();
-    
+
     $this->customerB = Customer::factory()
         ->withEmail(EMAIL_CUSTOMER_B)
         ->create();
@@ -217,7 +217,7 @@ test('delete additional contact with permission deletes all matching records', f
 
 test('delete additional contact without permission returns error and does not delete record', function () {
     // Setup: User does NOT have DELETE_ADDITIONAL_CONTACT permission (default state)
-
+    
     // Action: Make HTTP POST request to delete additional contact (without permission)
     $response = $this->post("/customer-additional-contact/{$this->additionalContactB->id}/delete", [
         'isInertia' => true,
