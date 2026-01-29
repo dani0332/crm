@@ -97,6 +97,7 @@ class SendUpdateLogService
             'renewal_batch',
             'policy_expiry_date',
             'vat',
+            'is_branch_applicable',
         ];
 
         $requestDetailsSkipColumns = [

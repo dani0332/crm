@@ -1440,6 +1440,12 @@ class SplitPaymentService
         try {
             LoggerService::info("createPolicyIssuanceAutomation called for quote: {$quote->code}");
 
+            if ($payment?->send_update_log_id > 0) {
+                LoggerService::info('Payment is from send update log - skipping policy issuance automation');
+
+                return;
+            }
+
             $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
             if (! $insuranceProvider) {
