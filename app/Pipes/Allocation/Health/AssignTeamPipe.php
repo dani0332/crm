@@ -120,10 +120,7 @@ class AssignTeamPipe extends BaseAllocationPipe
                 'price_starting_from' => $priceStartingFrom,
             ]);
 
-            // Special handling: If GBP team and more than 2 members, assign to RM_NB instead
-            $this->lead->health_team_type = ($healthTeam->name === HealthTeamType::GBP && $this->lead->members->count() > 2)
-                ? HealthTeamType::RM_NB
-                : $healthTeam->name;
+            $this->lead->health_team_type = $healthTeam->name;
         } else {
             LoggerService::warning('No team found for the given price range', [
                 'price_starting_from' => $priceStartingFrom,
