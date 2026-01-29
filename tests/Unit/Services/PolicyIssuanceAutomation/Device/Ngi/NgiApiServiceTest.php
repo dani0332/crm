@@ -569,7 +569,7 @@ describe('createPolicyFromQuote', function () {
         $result = $this->apiService->createPolicyFromQuote($quote, $process);
 
         expect($result['status'])->toBeFalse()
-            ->and($result['message'])->toBe('Policy created successfully');
+            ->and($result['message'])->toBe('Policy created successfully' . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE);
     });
 
     test('returns failure when API returns error code', function () {
@@ -673,7 +673,7 @@ describe('getPolicyDocuments', function () {
         $result = $this->apiService->getPolicyDocuments($quote, $process);
 
         expect($result['status'])->toBeFalse()
-            ->and($result['message'])->toBe('Documents retrieved');
+            ->and($result['message'])->toBe('Documents retrieved' . NgiEnum::FROM_FAKE_EMAIL_SUFFIX . PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_POLICY_ISSUANCE);
     });
 
     test('returns failure when policy number validation fails', function () {
