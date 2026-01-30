@@ -1691,6 +1691,11 @@ class CentralService extends BaseService
                     if (! empty($policyHandBook)) {
                         $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($policyHandBook, 'azureIMPrivate') ?? '';
                     }
+                } else {
+                    $emailData->handBookDocuments = '';
+                    if (! empty($policyHandBook)) {
+                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($policyHandBook, 'azureIMPrivate') ?? '';
+                    }
                 }
             }
             $emailData->handBookExt = ! empty($emailData->handBookDocuments) ? pathinfo(parse_url($emailData->handBookDocuments, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
@@ -1714,6 +1719,10 @@ class CentralService extends BaseService
                     $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo(parse_url($emailData->policyCertificate, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
+
+            // Will be remove, once Sukoon automation deployed on STAGE.
+            // Need to bypass Bird workflow for Sukoon automation.
+            $emailData->isSukoon = (int) false;
 
             // Signed Medical Application form
             if ($quoteTypeId == QuoteTypeId::Health) {

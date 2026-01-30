@@ -731,108 +731,80 @@ class ManagementReport
         });
     }
 
-    protected function branchJoin($query)
+    protected function getLatestCustomerInsuredCTE(): string
     {
-        // only join for policies with no branch assigned
-        $query->leftJoin('user_branches as ub', function ($join) {
-            $join->on('ub.user_id', '=', 'personal_quotes.advisor_id')
-                ->whereNull('personal_quotes.branch_id')
-                ->where('ub.is_primary', 1)
-                ->where('ub.status', 1);
-        })
+        $businessQuoteType = QuoteTypeId::Business;
 
-            // only join for policies with no branch assigned
-            ->leftJoin('branch_override_config as oc', function ($join) {
-                $join->on('ub.branch_id', '=', 'oc.source_branch_id')
-                    ->whereNull('personal_quotes.branch_id')
-                    ->whereColumn('oc.quote_type_id', '=', 'personal_quotes.quote_type_id')
-                    ->where(function ($query) {
-                        $query->whereNull('personal_quotes.business_type_of_insurance_id')
-                            ->orWhere(function ($subQuery) {
-                                $subQuery->where('personal_quotes.quote_type_id', QuoteTypeId::Business)
-                                    ->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
-                            });
-                    })
-                    ->where('oc.start_date', '<', now())
-                    ->where(function ($query) {
-                        $query->whereNull('oc.end_date')
-                            ->orWhere('oc.end_date', '>', now());
-                    });
-            })
+        return "
+            SELECT
+                ci.quote_request_id,
+                ci.quote_type_id,
+                ci.customer_id,
+                ci.insured_id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY ci.quote_request_id, ci.quote_type_id, ci.customer_id
+                    ORDER BY ci.updated_at DESC
+                ) AS rn
+            FROM customer_insured ci
+            WHERE ci.quote_type_id = {$businessQuoteType}
+        ";
+    }
 
-            // only join for policies with no branch assigned and quote type is group medical
-            // Join only the last updated customer_insured (ci) record
-            ->leftJoin('customer_insured as ci', function ($join) {
-                $join->on('ci.quote_request_id', '=', 'personal_quotes.quote_id')
-                    ->on('ci.quote_type_id', '=', 'personal_quotes.quote_type_id')
-                    ->on('ci.customer_id', '=', 'personal_quotes.customer_id')
-                    ->whereNull('personal_quotes.branch_id')
-                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Business)
-                    ->where('personal_quotes.business_type_of_insurance_id', '=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
-                    // Join only the most recently updated ci record for the quote/customer/type tuple
-                    ->whereRaw('ci.updated_at = (
-                    SELECT MAX(ci2.updated_at)
-                    FROM customer_insured as ci2
-                    WHERE ci2.quote_request_id = personal_quotes.quote_id
-                        AND ci2.quote_type_id = personal_quotes.quote_type_id
-                        AND ci2.customer_id = personal_quotes.customer_id
-                )');
-            })
-            ->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id')
+    protected function getBranchMappingCTE(): string
+    {
+        $now = now()->format('Y-m-d H:i:s');
+        $healthQuoteType = QuoteTypeId::Health;
+        $groupMedicalId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+        $abuDhabiEmirate = EmirateEnum::ABU_DHABI;
+        $abuDhabiBranch = BranchEnum::ABU_DHABI->value;
 
-            // branch join
-            ->leftJoin('branches as b', function ($join) {
+        return "
+            SELECT
+                pq.id,
+                COALESCE(
+                    pq.branch_id,
+                    oc.target_branch_id,
+                    CASE
+                        WHEN pq.advisor_id IS NOT NULL AND pq.quote_type_id = {$healthQuoteType} AND hqr.emirate_of_your_visa_id = {$abuDhabiEmirate}
+                            THEN {$abuDhabiBranch}
+                        WHEN pq.advisor_id IS NOT NULL AND pq.business_type_of_insurance_id = {$groupMedicalId} AND i.emirate_of_registration_id = {$abuDhabiEmirate}
+                            THEN {$abuDhabiBranch}
+                        ELSE ub.branch_id
+                    END
+                ) AS resolved_branch_id
+            FROM personal_quotes pq
+            LEFT JOIN user_branches ub ON ub.user_id = pq.advisor_id
+                AND ub.is_primary = 1
+                AND ub.status = 1
+                AND pq.branch_id IS NULL
+            LEFT JOIN branch_override_config oc ON oc.source_branch_id = ub.branch_id
+                AND oc.quote_type_id = pq.quote_type_id
+                AND oc.start_date < '{$now}'
+                AND (oc.end_date IS NULL OR oc.end_date > '{$now}')
+                AND pq.branch_id IS NULL
+                AND (pq.business_type_of_insurance_id IS NULL OR pq.business_type_of_insurance_id != {$groupMedicalId})
+            LEFT JOIN health_quote_request hqr ON hqr.id = pq.quote_id
+                AND pq.quote_type_id = {$healthQuoteType}
+                AND pq.branch_id IS NULL
+            LEFT JOIN latest_customer_insured lci ON lci.quote_request_id = pq.quote_id
+                AND lci.quote_type_id = pq.quote_type_id
+                AND lci.customer_id = pq.customer_id
+                AND lci.rn = 1
+                AND pq.branch_id IS NULL
+                AND pq.business_type_of_insurance_id = {$groupMedicalId}
+            LEFT JOIN insured i ON i.id = lci.insured_id
+        ";
+    }
 
-                // lead branch join
-                $join->on('b.id', '=', 'personal_quotes.branch_id')
+    protected function branchJoin($query): void
+    {
+        $latestCustomerInsuredCte = $this->getLatestCustomerInsuredCTE();
+        $query->withExpression('latest_customer_insured', $latestCustomerInsuredCte);
 
-                // branch override join
-                    ->orOn(function ($query) {
-                        $query->whereNull('personal_quotes.branch_id')
-                            ->whereColumn('b.id', 'oc.target_branch_id');
-                    })
+        $branchMappingCte = $this->getBranchMappingCTE();
+        $query->withExpression('branch_mapped', $branchMappingCte);
 
-                // health branch join (emirate_of_your_visa_id = 7)
-                    ->orOn(function ($query) {
-                        $query->whereNull('personal_quotes.branch_id')
-                            ->whereNull('oc.target_branch_id')
-                            ->whereNotNull('personal_quotes.advisor_id')
-                            ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health)
-                            ->where('hqr.emirate_of_your_visa_id', '=', EmirateEnum::ABU_DHABI)
-                            ->where('b.id', '=', BranchEnum::ABU_DHABI->value);
-                    })
-
-                // group medical branch join (emirate_of_registration_id = 7)
-                    ->orOn(function ($query) {
-                        $query->whereNull('personal_quotes.branch_id')
-                            ->whereNull('oc.target_branch_id')
-                            ->whereNotNull('personal_quotes.advisor_id')
-                            ->where('personal_quotes.business_type_of_insurance_id', '=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
-                            ->where('i.emirate_of_registration_id', '=', EmirateEnum::ABU_DHABI)
-                            ->where('b.id', '=', BranchEnum::ABU_DHABI->value);
-                    })
-
-                // advisor branch join (fallback for non-Abu Dhabi health/group medical and other cases)
-                    ->orOn(function ($query) {
-                        $query->whereNull('personal_quotes.branch_id')
-                            ->whereNull('oc.target_branch_id')
-                            ->whereColumn('b.id', 'ub.branch_id')
-                            // Exclude Health quotes with Abu Dhabi emirate (already handled above)
-                            ->where(function ($subQuery) {
-                                $subQuery->where(function ($q) {
-                                    $q->where('personal_quotes.quote_type_id', '!=', QuoteTypeId::Health)
-                                        ->orWhere('hqr.emirate_of_your_visa_id', '!=', EmirateEnum::ABU_DHABI)
-                                        ->orWhereNull('hqr.emirate_of_your_visa_id');
-                                })
-                                // Exclude Group Medical quotes with Abu Dhabi emirate (already handled above)
-                                    ->where(function ($q) {
-                                        $q->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
-                                            ->orWhereNull('personal_quotes.business_type_of_insurance_id')
-                                            ->orWhere('i.emirate_of_registration_id', '!=', EmirateEnum::ABU_DHABI)
-                                            ->orWhereNull('i.emirate_of_registration_id');
-                                    });
-                            });
-                    });
-            });
+        $query->leftJoin('branch_mapped as bm', 'bm.id', '=', 'personal_quotes.id')
+            ->leftJoin('branches as b', 'b.id', '=', 'bm.resolved_branch_id');
     }
 }

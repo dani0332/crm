@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\EmailStatusExport;
@@ -129,6 +130,8 @@ class ApiController extends Controller
 
     public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::PAYMENT_STATUS_UPDATE, $request->quoteId);
+
         return app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
     }
 

@@ -54,6 +54,7 @@ enum LoggerFeatureEnum: string
     case WATERMARK_DOCUMENT = 'watermark-document';
 
     case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
+    case PAYMENT_STATUS_UPDATE = 'payment-status-update';
 
     /* Claims Module */
     case CLAIM_CREATION = 'claim-creation';
