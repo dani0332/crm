@@ -738,12 +738,7 @@ class SukoonMedexService
     public function validateCustomerDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
-        $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
-
-        if ($customerType != CustomerTypeEnum::Individual) {
-            throw new EpEcbException('Insured record should be individual customer-type');
-        }
 
         if (empty($insuredKyc)) {
             throw new EpEcbException('KYC is not found');
