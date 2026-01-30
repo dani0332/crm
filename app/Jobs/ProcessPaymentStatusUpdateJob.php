@@ -8,13 +8,14 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
 use App\Services\NotificationService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
-class ProcessPaymentStatusUpdateJob implements ShouldQueue
+class ProcessPaymentStatusUpdateJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
