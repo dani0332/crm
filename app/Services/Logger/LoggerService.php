@@ -13,9 +13,9 @@ class LoggerService
     public static function startFeatureLogging(LoggerFeatureEnum $feature, $code = null)
     {
         Log::withContext(['feature' => $feature->value]);
-        
-         // Add feature to context for activity log
-         Context::add('feature', $feature->value);
+
+        // Add feature to context for activity log
+        Context::add('feature', $feature->value);
 
         if ($code) {
             Context::add('code', $code);
