@@ -351,7 +351,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/export', [ClaimsController::class, 'export'])->name('export');
 
         // Claim Actions
+        Route::post('/bulk-assign', [ClaimsController::class, 'bulkAssignClaims'])->name('bulk-assign');
         Route::post('/{claim:uuid}/update-details', [ClaimsController::class, 'updateClaimDetails'])->name('update.details');
+        Route::post('/{claim:uuid}/assign', [ClaimsController::class, 'assignClaim'])->name('assign');
         Route::post('/{claim:uuid}/update-status', [ClaimsController::class, 'updateClaimStatus'])->name('update.status');
         Route::post('/{claim:uuid}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('update.complaint-status');
         Route::post('/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('update.next-follow-up');
