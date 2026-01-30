@@ -861,7 +861,7 @@ class CRUDController extends Controller
                 } else {
                     $documentQuoteTypeId = QuoteTypeId::Car;
                 }
-                @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId);
+                @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId, null, null, null, $quote);
                 $quoteDocuments = array_values($quoteDocuments->toArray());
                 $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
                 $storageUrl = storageUrl();
@@ -1061,7 +1061,6 @@ class CRUDController extends Controller
             if ($this->genericModel->modelType == quoteTypeCode::Home) {
                 $nationalities = Nationality::getActiveNationalities();
                 $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-                $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
                 $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
                 $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
@@ -1125,7 +1124,6 @@ class CRUDController extends Controller
                     'allowedDuplicateLOB' => $allowedDuplicateLOB,
                     'leadStatuses' => array_values($leadStatuses->toArray()),
                     'advisors' => $advisors,
-                    'cdnPath' => $cdnPath,
                     'domainPath' => $domainPath,
                     'activities' => $activities,
                     'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -1200,8 +1198,6 @@ class CRUDController extends Controller
 
                     return $quoteDocument;
                 });
-
-                $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
 
                 $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
@@ -1287,7 +1283,6 @@ class CRUDController extends Controller
                     'teams' => $teams,
                     'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
                     'documentTypes' => $documentTypes,
-                    'cdnPath' => $cdnPath,
                     'domainPath' => $domainPath,
                     'activities' => $activities,
                     'customerAdditionalContacts' => $customerAdditionalContacts,

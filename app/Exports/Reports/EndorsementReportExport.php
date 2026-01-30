@@ -103,6 +103,7 @@ class EndorsementReportExport implements CsvExportableInterface
             'Plan Name',
             'Payment Frequency',
             'Lead Created Date',
+            'Branch',
         ];
     }
 
@@ -169,6 +170,7 @@ class EndorsementReportExport implements CsvExportableInterface
             $quote->plan_name ?? 'N/A',
             $quote->payment_frequency ?? 'N/A',
             $quote->quote_created_at ?? 'N/A',
+            $quote->branch_name ?? 'N/A',
         ]);
         foreach ($this->columnTotals as $index => $field) {
 

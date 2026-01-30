@@ -366,6 +366,8 @@ class CoreSchema
                 $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
                 $table->string('insurer_quote_number')->nullable();
                 $table->string('registration_type')->nullable();
+                $table->string('vehicle_use')->nullable();
+                $table->string('driver_name')->nullable();
                 $table->integer('insurer_api_status_id')->nullable();
                 $table->integer('api_issuance_status_id')->nullable();
                 $table->boolean('policy_issuance_automation_enabled')->default(false);
@@ -606,6 +608,27 @@ class CoreSchema
                 $table->integer('max_capacity')->default(0);
                 $table->timestamps();
             },
+            'vehicle_driver_details' => function (Blueprint $table) {
+                $table->id();
+                $table->morphs('quoteable'); // Creates quoteable_id and quoteable_type
+                $table->string('driver_eid_number')->nullable();
+                $table->string('driver_first_name')->nullable();
+                $table->string('driver_last_name')->nullable();
+                $table->date('driver_dob')->nullable();
+                $table->string('driver_gender')->nullable();
+                $table->string('driver_license_number')->nullable();
+                $table->string('driver_license_issue_place')->nullable();
+                $table->date('driver_license_issue_date')->nullable();
+                $table->date('driver_license_expiry_date')->nullable();
+                $table->string('vehicle_plate_number')->nullable();
+                $table->string('traffic_code_number')->nullable();
+                $table->string('vehicle_engine_number')->nullable();
+                $table->string('vehicle_color')->nullable();
+                $table->date('first_registration_date')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->string('vehicle_plate_code')->nullable();
+                $table->timestamps();
+            },
         ]);
     }
 
@@ -627,6 +650,7 @@ class CoreSchema
             'teams' => function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
+                $table->string('code')->nullable();
                 // TeamHierarchyTrait::getAllProducts() relies on these columns.
                 $table->unsignedTinyInteger('type')->nullable();
                 $table->boolean('is_active')->default(1);
@@ -942,9 +966,24 @@ class CoreSchema
                 $table->string('watermarked_doc_url')->nullable();
                 $table->string('document_category')->nullable();
                 $table->string('insurer_document_link')->nullable();
+                $table->boolean('is_ocr_processed')->default(false);
+                $table->unsignedBigInteger('quote_id')->nullable();
                 $table->morphs('quote_documentable'); // Creates quote_documentable_id and quote_documentable_type
                 $table->timestamps();
                 $table->softDeletes();
+            },
+            'document_types' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->unique();
+                $table->string('text');
+                $table->text('description')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->boolean('receive_from_customer')->default(0);
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->string('registration_type')->nullable();
+                $table->string('vehicle_use')->nullable();
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
             },
             'generic_document_types' => function (Blueprint $table) {
                 $table->id();

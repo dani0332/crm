@@ -239,7 +239,7 @@ class SukoonDemocranceService
                 $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', QuoteTypeId::Car)->first();
                 $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
                 $docUrl = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
+                $filePathAzure = Storage::disk('azureIMPrivate')->put($docUrl, $content);
                 $docUuid = $this->generateUniqueUuid();
 
                 $document = $embeddedTransaction->documents()->where('document_type_code', $documentType->code)->first();

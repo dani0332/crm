@@ -509,7 +509,6 @@ class AmtController extends Controller
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
-            'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
             'legalStructure' => $legalStructure,
             'idDocumentType' => $idDocumentType,

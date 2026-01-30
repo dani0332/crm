@@ -48,6 +48,7 @@ use App\Models\RenewalBatch;
 use App\Models\SageProcess;
 use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
@@ -191,7 +192,7 @@ class EmbeddedProductRepository extends BaseRepository
         $fileMimeType = $file->getClientMimeType();
 
         $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
-        $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIM');
+        $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIMPrivate');
 
         // generate unique uuid
         $docUuid = uniqid();
@@ -683,23 +684,25 @@ class EmbeddedProductRepository extends BaseRepository
             ];
 
         } else {
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $quoteDocumentService = app(QuoteDocumentService::class);
             $documents = json_decode($ep->company_documents);
             if (! empty($documents)) {
                 foreach ($documents as $item) {
                     $path = $item->path;
-                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
-                    if (! empty($path) && ! $isAlfredProtect) {
-                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-                        $file = file_get_contents($pwDoc);
-                        $mimeType = $fileInfo->buffer($file);
-                        $attachments[] = [
-                            'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => $ep->display_name.' - Policy Wordings.pdf',
-                            'ContentType' => $mimeType,
-                        ];
-                    } else {
-                        $attachmentsUrls[] = $pwDoc;
+                    if (! empty($path)) {
+                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIMPrivate');
+                        if ($pwDoc && ! $isAlfredProtect) {
+                            $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+                            $file = file_get_contents($pwDoc);
+                            $mimeType = $fileInfo->buffer($file);
+                            $attachments[] = [
+                                'Content' => base64_encode($file),
+                                'Name' => $ep->display_name.' - Policy Wordings.pdf',
+                                'ContentType' => $mimeType,
+                            ];
+                        } elseif ($pwDoc) {
+                            $attachmentsUrls[] = $pwDoc;
+                        }
                     }
                 }
             }
@@ -830,14 +833,16 @@ class EmbeddedProductRepository extends BaseRepository
         if ($isSalama) {
             $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType);
             if ($pdf) {
-                $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-                $url = $websiteURL.$pdf->doc_url;
-                $file = file_get_contents($url);
-                $attachments[] = [
-                    'Content' => base64_encode($file),
-                    'Name' => 'Salama_Certificate.pdf',
-                    'ContentType' => 'application/pdf',
-                ];
+                $quoteDocumentService = app(QuoteDocumentService::class);
+                $url = $quoteDocumentService->getDocumentUrl($pdf->doc_url, 'azureIMPrivate');
+                if ($url) {
+                    $file = file_get_contents($url);
+                    $attachments[] = [
+                        'Content' => base64_encode($file),
+                        'Name' => 'Salama_Certificate.pdf',
+                        'ContentType' => 'application/pdf',
+                    ];
+                }
             }
 
         } else {
@@ -853,15 +858,17 @@ class EmbeddedProductRepository extends BaseRepository
                 return ['success' => false, 'message' => 'Required watermarked document is not found'];
             }
 
+            $quoteDocumentService = app(QuoteDocumentService::class);
             foreach ($watermarkedDocuments as $document) {
-                $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-                $url = $websiteURL.$document->watermarked_doc_url;
-                $file = file_get_contents($url);
-                $attachments[] = [
-                    'Content' => base64_encode($file),
-                    'Name' => $document->original_name,
-                    'ContentType' => 'application/pdf',
-                ];
+                $url = $quoteDocumentService->getDocumentUrl($document->watermarked_doc_url, 'azureIMPrivate');
+                if ($url) {
+                    $file = file_get_contents($url);
+                    $attachments[] = [
+                        'Content' => base64_encode($file),
+                        'Name' => $document->original_name,
+                        'ContentType' => 'application/pdf',
+                    ];
+                }
             }
         }
 
@@ -968,8 +975,8 @@ class EmbeddedProductRepository extends BaseRepository
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', $quoteTypeId)->first();
             $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$title;
-            Storage::disk('azureIM')->put($filePathAzure, $pdfContent);
-            if (! Storage::disk('azureIM')->exists($filePathAzure)) {
+            Storage::disk('azureIMPrivate')->put($filePathAzure, $pdfContent);
+            if (! Storage::disk('azureIMPrivate')->exists($filePathAzure)) {
                 throw new Exception('Error uploading document');
             }
 
@@ -1342,7 +1349,7 @@ class EmbeddedProductRepository extends BaseRepository
         $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
         $fileNameAzure = $quoteObject->uuid.'_'.$docName;
         $docUuid = uniqid();
-        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
         if ($filePathAzure == false) {
             throw new Exception('Error uploading document');
         }
