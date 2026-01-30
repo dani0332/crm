@@ -95,7 +95,7 @@ class AutomationFailedJob implements ShouldQueue
         // Build email data request DTO
         $emailDataRequest = new AutomationFailedEmailDataRequest(
             cc: $cc,
-            ccEmails: is_array($cc) ? ($cc['ccEmails'] ?? $cc) : [],
+            ccEmails: $this->extractCcEmails($cc),
             isDeviceNgi: $isDeviceNgi,
             actionRequired: $this->actionRequired,
             recipientEmail: $recipientEmail,
@@ -132,5 +132,30 @@ class AutomationFailedJob implements ShouldQueue
         LoggerService::info('job:AutomationFailedJob - Middleware setup', extra: ['quoteId' => $this->quoteId]);
 
         return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
+    }
+
+    private function extractCcEmails(mixed $cc): array
+    {
+        if (! is_array($cc)) {
+            return [];
+        }
+
+        $ccEmailSources = [
+            $cc['ccEmails'] ?? null,
+            $cc['cc'] ?? null,
+            $cc['notificationContext']['cc'] ?? null,
+        ];
+
+        foreach ($ccEmailSources as $source) {
+            if (is_array($source)) {
+                return $source;
+            }
+
+            if (is_string($source) && trim($source) !== '') {
+                return array_map('trim', explode(',', $source));
+            }
+        }
+
+        return [];
     }
 }
