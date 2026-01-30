@@ -212,18 +212,6 @@ class NgiDocumentHandler
     }
 
     /**
-     * Map document types to IMCRM document type codes for Device/Smartphone
-     */
-    public function getDocTypeCodeForIMCRM(PersonalQuote $quote): array
-    {
-        return [
-            DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_SCHEDULE => $quote->insurer_policy_doc_id,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::DEVICE_SMARTPHONE_TAX_INVOICE_RAISED_BY_BUYER => $quote->insurer_debit_note_doc_id,
-        ];
-    }
-
-    /**
      * Download all policy documents from provider URLs and store in database
      */
     public function downloadAndStorePolicyDocuments(PersonalQuote $quote, PolicyIssuance $process, array $documentsApiResponse): array
