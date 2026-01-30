@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\CyberQuote;
+use App\Models\Emirate;
 use App\Models\PersonalQuote;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,16 +13,14 @@ class CyberQuoteFactory extends Factory
 
     public function definition(): array
     {
-        // Use lazy factory relationship - let Laravel handle create() or make() based on context
         return [
             'personal_quote_id' => PersonalQuote::factory([
                 'uuid' => 'cyber-quote-'.uniqid(),
                 'code' => 'CYB-'.uniqid(),
                 'quote_type_id' => 19, // Cyber quote type ID (QuoteTypeId::Cyber)
             ]),
-            'emirate_of_registration_id' => 1,
-            'nationality_id' => 1,
-            'coverage_id' => null,
+            'emirate_of_registration_id' => Emirate::factory(),
+            'coverage_id' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ];
