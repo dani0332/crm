@@ -9,14 +9,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Services\EmailServices\ClaimEmailService;
 
 class ClaimIntroEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 120;
-    public $backoff = 60;
+    public $tries = 2;
+    public $timeout = 60;
+    public $backoff = 30;
     private string $claimUuid;
     /**
      * Create a new job instance.
@@ -39,6 +40,8 @@ class ClaimIntroEmail implements ShouldQueue
 
             return;
         }
+        app(ClaimEmailService::class)->sendIntroEmail($claim);
+        LoggerService::info(self::class.' - Claim intro email sent for claim');
 
     }
 }

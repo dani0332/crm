@@ -3,9 +3,10 @@
 namespace App\Observers;
 
 use App\Models\ClaimRequest;
-use App\Services\EmailServices\ClaimEmailService;
 use App\Services\Logger\LoggerService;
 use Exception;
+use App\Jobs\Claim\ClaimIntroEmail;
+use App\Enums\LeadSourceEnum;
 
 class ClaimRequestObserver
 {
@@ -16,8 +17,14 @@ class ClaimRequestObserver
     {
         $dirty = $claimRequest->getDirty();
         if (isset($dirty['manager_id'])) {
+            if($claimRequest->source == LeadSourceEnum::IMCRM) {
+                LoggerService::info("ClaimRequestObserver - handle claim  update manager - source is not IMCRM - skipping intro email");
+                return;
+            }
             try {
-                app(ClaimEmailService::class)->sendIntroEmail($claimRequest);
+                ClaimIntroEmail::dispatch($claimRequest->uuid)->delay(now()->addSeconds(10));
+                LoggerService::info("ClaimIntroEmail dispatched for claim: ".$claimRequest->uuid);
+                
             } catch (Exception $e) {
                 LoggerService::warning('ClaimRequestObserver - handle claim  update manager failed', [
                     'error' => $e->getMessage(),
