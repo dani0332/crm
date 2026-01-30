@@ -44,7 +44,7 @@ function createDeviceQuoteStub(string $uuid = 'device-uuid', string $code = 'REF
 
         public function getCrmQuoteLink(): string
         {
-            return config('app.url') . "/personal-quotes/Device/{$this->uuid}";
+            return config('app.url') . "/personal-quotes/smartphone/{$this->uuid}";
         }
     };
 }
@@ -125,7 +125,7 @@ it('builds device email payload with trigger point and reply to', function () {
 
     $emailData = $service->buildEmailData($quote, $request);
 
-    expect($emailData->imcrmLink)->toBe('https://app.test/personal-quotes/Device/device-uuid');
+    expect($emailData->imcrmLink)->toBe('https://app.test/personal-quotes/smartphone/device-uuid');
     expect($emailData->escalationLink)->toBe('https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T');
     expect($emailData->triggerPoint)->toBe('Retrieval of Required Booking Details via API');
     expect($emailData->replyTo)->toBe('production.approval.team@insurancemarket.ae');

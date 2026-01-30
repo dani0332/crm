@@ -51,15 +51,6 @@ class AutomationFailedService
     }
 
     /**
-     * Generate IMCRM link for the quote.
-     */
-    public function generateImcrmLink($quote, string $quoteType): string
-    {
-        $baseUrl = config('app.url', env('APP_URL'));
-        return "{$baseUrl}/personal-quotes/" . ucfirst($quoteType) . "/{$quote->uuid}";
-    }
-
-    /**
      * Check if this is a Device LOB with NGI provider.
      */
     public function isDeviceNgiQuote(int $quoteTypeId, string $quoteType): bool
