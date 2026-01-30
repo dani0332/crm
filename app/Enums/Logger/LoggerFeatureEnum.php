@@ -38,6 +38,7 @@ enum LoggerFeatureEnum: string
     case SAGE_EP_BOOKING_REVERSAL = 'sage-ep-booking-reversal';
     case SEND_FAILED_PAYMENT_EMAIL = 'send-failed-payment-email';
     case CAR_CQF_RENEWALS = 'car-cqf-renewals';
+    case NON_MOTOR_CQF_RENEWALS = 'non-motor-cqf-renewals';
     case SUPPORT_USER_ASSIGNMENT = 'support-user-assignment';
     case EP_PROCESS_PURCHASE_FLOW = 'ep-process-purchase-flow';
     case EP_PROCESS_SYNC_DOCUMENT = 'ep-process-sync-document';

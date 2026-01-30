@@ -872,6 +872,7 @@ class CoreSchema
             'lookups' => function (Blueprint $table) {
                 $table->id();
                 $table->string('key')->nullable();
+                $table->string('code')->nullable();
                 $table->string('text')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
