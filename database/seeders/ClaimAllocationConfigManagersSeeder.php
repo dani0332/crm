@@ -15,6 +15,16 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
     /**
      * Run the database seeds.
      */
+    private array $genericManagersEmails = [
+        'ashli.fernandez@insurancemarket.ae',
+        'shaista.khan@insurancemarket.ae',
+        'waseem.suduri@insurancemarket.ae',
+        'vanshika.choudhary@insurancemarket.ae',
+        'ali.farzan@insurancemarket.ae',
+        'mini.narayanan@insurancemarket.ae',
+        'rabishankar.roy@insurancemarket.ae',
+        'fehmida.shaikh@insurancemarket.ae',
+    ];
     public function run(): void
     {
         $roles = $this->createClaimRoles();
@@ -72,7 +82,9 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'ashli.fernandez@insurancemarket.ae',
             'sarvjeet.singh@insurancemarket.ae',
             'ali.farzan@insurancemarket.ae',
+            
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::CAR->id(), RolesEnum::CarClaimManager);
     }
     private function claimAllocationConfigManagersForHealth()
@@ -83,6 +95,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'nifraz.nizar@insurancemarket.ae',
             'poorva.soota@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::HEALTH->id(), RolesEnum::HealthClaimManager);
     }
     private function claimAllocationConfigManagersForGM()
@@ -94,6 +107,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             // Life Claims Manager:
             'komal.rajput@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::BUSINESS->id(), RolesEnum::GmClaimManager);
     }
     private function claimAllocationConfigManagersForLife()
@@ -102,6 +116,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'waseem.suduri@insurancemarket.ae',
             'gloria.hurboda@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::LIFE->id(), RolesEnum::LifeClaimManager);
     }
     private function claimAllocationConfigManagersForTravel()
@@ -110,6 +125,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'waseem.suduri@insurancemarket.ae',
             'gloria.hurboda@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::TRAVEL->id(), RolesEnum::TravelClaimManager);
     }
     private function claimAllocationConfigManagersForHome()
@@ -118,6 +134,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'waseem.suduri@insurancemarket.ae',
             'gloria.hurboda@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::HOME->id(), RolesEnum::HomeClaimManager);
     }
     private function claimAllocationConfigManagersForPet()
@@ -126,6 +143,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'waseem.suduri@insurancemarket.ae',
             'gloria.hurboda@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::PET->id(), RolesEnum::PetClaimManager);
     }
     private function claimAllocationConfigManagersForYacht()
@@ -134,6 +152,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'waseem.suduri@insurancemarket.ae',
             'gloria.hurboda@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::YACHT->id(), RolesEnum::YachtClaimManager);
     }
     private function claimAllocationConfigManagersForCycle()
@@ -142,6 +161,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'waseem.suduri@insurancemarket.ae',
             'gloria.hurboda@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::CYCLE->id(), RolesEnum::CycleClaimManager);
     }
     private function claimAllocationConfigManagersForJetski()
@@ -150,6 +170,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'waseem.suduri@insurancemarket.ae',
             'gloria.hurboda@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::JETSKI->id(), RolesEnum::JetskiClaimManager);
     }
     private function claimAllocationConfigManagersForCorpline()
@@ -158,6 +179,7 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
             'waseem.suduri@insurancemarket.ae',
             'gloria.hurboda@insurancemarket.ae',
         ];
+        $managersEmails = array_merge($managersEmails, $this->genericManagersEmails);
         $this->seedClaimAllocationConfigManagers($managersEmails, QuoteTypes::BUSINESS->id(), RolesEnum::CorplineClaimManager);
     }
     private function seedClaimAllocationConfigManagers($managersEmails = [], $quoteTypeId = null, $role = null): void
