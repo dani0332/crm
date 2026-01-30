@@ -478,6 +478,7 @@ const { openTempUrl } = useDocumentTempUrl();
             </div>
           </div>
 
+          <!-- Showing documents -->
           <div
             v-for="documentType in docType"
             :key="documentType.id"
@@ -558,6 +559,14 @@ const { openTempUrl } = useDocumentTempUrl();
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+                <!-- Show quote document medical signed document here -->
+                <a
+                  v-if="documentType.text == 'Signed medical application form'"
+                  href="javascript:void(0)"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  Show medical signed doc here
                 </a>
               </template>
             </div>
