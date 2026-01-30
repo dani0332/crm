@@ -22,7 +22,7 @@ class RewatermarkQuoteDocumentsRequest extends FormRequest
         \App\Models\HomeQuote::class,
         \App\Models\HealthQuote::class,
         \App\Models\CarQuote::class,
-        \App\Models\BusinessQuote::class,        
+        \App\Models\BusinessQuote::class,
         \App\Models\CycleQuote::class,
         \App\Models\BikeQuote::class,
         \App\Models\PetQuote::class,
@@ -30,7 +30,6 @@ class RewatermarkQuoteDocumentsRequest extends FormRequest
 
         \App\Models\SendUpdateLog::class,
         \App\Models\EmbeddedTransaction::class,
-        \App\Models\EmbeddedProduct::class,
     ];
 
     public function authorize(): bool

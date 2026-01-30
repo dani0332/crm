@@ -10,6 +10,7 @@ use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Str;
 
 class RewatermarkQuoteDocumentsService
 {
@@ -108,7 +109,8 @@ class RewatermarkQuoteDocumentsService
                 continue;
             }
 
-            WatermarkDocumentsJob::dispatch($document->id, $quote->uuid, $documentType->id)->afterCommit();
+            $watermarkRefId = $this->resolveWatermarkRefId($quote);
+            WatermarkDocumentsJob::dispatch($document->id, $watermarkRefId, $documentType->id)->afterCommit();
             // Keep `afterCommit()` for safety and consistency: it matches `QuoteDocumentService::uploadQuoteDocument()` and ensures the job won't run before a surrounding DB transaction commits (it behaves like a normal dispatch when no transaction exists).
             $dispatched++;
         }
@@ -146,6 +148,25 @@ class RewatermarkQuoteDocumentsService
         }
 
         return ! in_array($insuranceProviderId, $skipWatermarkProviderIds, true);
+    }
+
+    /**
+     * Watermark job "uuid" argument is used for logging, lock keys, and file naming.
+     * For documentable models without a uuid attribute (e.g. SendUpdateLog / Embedded*),
+     * we generate a stable prefixed reference like "send-update-log:123".
+     */
+    protected function resolveWatermarkRefId(object $quoteDocumentable): string
+    {
+        $uuid = data_get($quoteDocumentable, 'uuid');
+        if (is_string($uuid) && $uuid !== '') {
+            return $uuid;
+        }
+
+        $id = method_exists($quoteDocumentable, 'getKey')
+            ? $quoteDocumentable->getKey()
+            : data_get($quoteDocumentable, 'id');
+
+        return Str::kebab(class_basename($quoteDocumentable)).':'.(string) $id;
     }
 
     /**
