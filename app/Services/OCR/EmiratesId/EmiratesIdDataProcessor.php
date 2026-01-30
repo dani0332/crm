@@ -10,7 +10,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
 use App\Exceptions\OCR\OcrProcessingException;
-use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
@@ -95,7 +94,7 @@ class EmiratesIdDataProcessor
 
             if (! empty($fieldsToUpdate)) {
                 $quote->vehicleDriverDetail()->updateOrCreate(
-                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
+                    ['quoteable_type' => get_class($quote), 'quoteable_id' => $quote->id],
                     $fieldsToUpdate
                 );
 
