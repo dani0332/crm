@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\DocumentTypeCode;
-use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class RewatermarkQuoteDocumentsService
@@ -56,10 +53,28 @@ class RewatermarkQuoteDocumentsService
         /** @var array<int, int> $docIds */
         $docIds = $data['doc_ids'] ?? [];
 
+        $quoteRelationsToLoad = [];
+        if (method_exists($quoteModelClass, 'plan')) {
+            $quoteRelationsToLoad[] = 'plan';
+        }
+
         $documents = QuoteDocument::query()
             ->where('quote_documentable_type', $quoteModelClass)
             ->whereIn('id', $docIds)
-            ->with(['documentType', 'quoteDocumentable'])
+            ->whereNull('watermarked_doc_url')
+            ->whereNotNull('doc_url')
+            ->with([
+                'documentType',
+                'quoteDocumentable' => function (MorphTo $morphTo) use ($quoteModelClass, $quoteRelationsToLoad): void {
+                    if ($quoteRelationsToLoad === []) {
+                        return;
+                    }
+
+                    $morphTo->morphWith([
+                        $quoteModelClass => $quoteRelationsToLoad,
+                    ]);
+                },
+            ])
             ->latest('id')
             ->get();
 
@@ -84,8 +99,8 @@ class RewatermarkQuoteDocumentsService
             }
 
             $insuranceProviderId = $quote->insurance_provider_id ?? null;
-            if ($insuranceProviderId === null && isset($quote->plan)) {
-                $insuranceProviderId = $quote->plan->provider_id ?? null;
+            if ($insuranceProviderId === null && method_exists($quote, 'plan')) {
+                $insuranceProviderId = $quote->plan?->provider_id ?? null;
             }
 
             if (! $this->isWatermarkAllowedForProvider($insuranceProviderId ? (int) $insuranceProviderId : null, $skipWatermarkProviderIds)) {
