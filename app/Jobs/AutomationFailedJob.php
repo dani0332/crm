@@ -146,16 +146,20 @@ class AutomationFailedJob implements ShouldQueue
             $cc['notificationContext']['cc'] ?? null,
         ];
 
+        $normalizedEmails = [];
+
         foreach ($ccEmailSources as $source) {
             if (is_array($source)) {
-                return $source;
+                $normalizedEmails = $source;
+                break;
             }
 
             if (is_string($source) && trim($source) !== '') {
-                return array_map('trim', explode(',', $source));
+                $normalizedEmails = array_map('trim', explode(',', $source));
+                break;
             }
         }
 
-        return [];
+        return $normalizedEmails;
     }
 }
