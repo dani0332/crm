@@ -283,7 +283,8 @@ class AutomationFailedService
 
         // Device/NGI-specific fields per FRD
         if ($request->isDeviceNgi) {
-            $emailData['escalationLink'] = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK);
+            $emailData['escalationLink'] = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK)
+            ?: 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T';
             $emailData['triggerPoint'] = $this->getDeviceFailureTriggerPoint($request->processInvolved);
             $emailData['replyTo'] = $this->getDeviceFailureEmailReplyTo();
         }
