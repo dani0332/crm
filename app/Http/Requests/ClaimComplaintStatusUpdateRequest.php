@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ClaimComplaintStatusUpdateRequest extends FormRequest
@@ -30,7 +31,13 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
             'complaint_datetime' => [
                 'required',
                 'date',
-                'before_or_equal:now',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $inputDate = Carbon::parse($value);
+                    // Allow current datetime: allow up to 1 minute in future for client-server clock skew
+                    if ($inputDate->isAfter(now()->addMinute())) {
+                        $fail('The complaint date cannot be in the future.');
+                    }
+                },
             ],
             'notes' => [
                 'nullable',

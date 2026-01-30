@@ -68,9 +68,18 @@ const validateForm = (showRequiredErrors = true) => {
     if (isNaN(selectedDate.getTime())) {
       errors.complaint_datetime = 'The complaint date must be a valid date.';
     }
-    // Validate that date is not in the future
-    else if (selectedDate > now) {
-      errors.complaint_datetime = 'The complaint date cannot be in the future.';
+    // Validate that date is not in the future (allow today's date and time)
+    else {
+      const selectedDay = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+      );
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (selectedDay > today) {
+        errors.complaint_datetime =
+          'The complaint date cannot be in the future.';
+      }
     }
   }
 
