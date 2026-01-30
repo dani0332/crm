@@ -18,7 +18,6 @@ use App\Models\Payment;
 use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\NationalityRepository;
-use App\Services\AML\DTOs\AMLPageData;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
@@ -41,7 +40,7 @@ class AMLQuoteDetailsService
     /**
      * Prepare AML quote details data for display
      */
-    public function prepareQuoteDetailsData(int $quoteTypeId, int $quoteRequestId): AMLPageData
+    public function prepareQuoteDetailsData(int $quoteTypeId, int $quoteRequestId): array
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
@@ -116,7 +115,7 @@ class AMLQuoteDetailsService
         // Prepare enums
         $enums = $this->prepareEnums();
 
-        return new AMLPageData(array_merge([
+        return array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
@@ -140,7 +139,7 @@ class AMLQuoteDetailsService
             'insurerName' => InsuranceProvidersEnum::getTextByCode($providerCode),
             'isPolicyAutomationEnabled' => $isPolicyAutomationEnabled,
             ...$enums,
-        ], $businessPayload, $rtaConfigurationData));
+        ], $businessPayload, $rtaConfigurationData);
     }
 
     /**

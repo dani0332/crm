@@ -92,7 +92,7 @@ class AMLController extends Controller
             $quoteRequestId
         );
 
-        return inertia('Aml/DetailPage', $data->toArray());
+        return inertia('Aml/DetailPage', $data);
     }
 
     // Note: Tested
@@ -104,7 +104,7 @@ class AMLController extends Controller
             $customerId
         );
 
-        return inertia('Aml/Show', $data->toArray());
+        return inertia('Aml/Show', $data);
     }
     
     // Note: Tested
