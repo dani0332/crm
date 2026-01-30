@@ -87,8 +87,7 @@ const loadPolicyIssuanceLogs = async () => {
             title: 'No API logs found',
             position: 'top',
           });
-        }
-        else {
+        } else {
           notification.success({
             title: 'Policy Issuance API Logs Loaded Successfully',
             position: 'top',
