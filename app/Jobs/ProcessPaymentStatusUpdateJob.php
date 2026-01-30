@@ -36,7 +36,7 @@ class ProcessPaymentStatusUpdateJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(NotificationService $notificationService): void
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::PAYMENT_STATUS_UPDATE, $this->quoteId);
+        LoggerService::startQuoteLogging($this->quoteId, LoggerFeatureEnum::PAYMENT_STATUS_UPDATE);
 
         // Call the service method directly - JsonResponse return value is ignored in job context
         $notificationService->paymentStatusUpdate($this->quoteType, $this->quoteId);

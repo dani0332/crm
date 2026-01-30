@@ -12,17 +12,10 @@ class LoggerService
 {
     public static function startFeatureLogging(LoggerFeatureEnum $feature, $code = null)
     {
-        // Build context array once for efficiency
-        $logContext = ['feature' => $feature->value];
-        if ($code) {
-            $logContext['code'] = $code;
-        }
-
-        // Set log context once with all data
-        Log::withContext($logContext);
-
-        // Add feature to context for activity log (used by SpatieActivityLog trait)
-        Context::add('feature', $feature->value);
+        Log::withContext(['feature' => $feature->value]);
+        
+         // Add feature to context for activity log
+         Context::add('feature', $feature->value);
 
         if ($code) {
             Context::add('code', $code);

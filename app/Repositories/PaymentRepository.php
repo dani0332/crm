@@ -1177,7 +1177,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $insurerPaymentQuery = (clone $query)
             ->where('payments.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
             ->whereIn('payments.payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
-            ->where('payments.collection_date', '>=', $thirtyDaysAgo)
+            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
             ->select('payments.id');
 
         // Use UNION ALL and COUNT DISTINCT to get unique payment count
