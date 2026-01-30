@@ -31,7 +31,6 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         // If the lead is not SIC, assign the team based on the health team routing
         if (! $isSIC) {
-
             LoggerService::info('Non-SIC lead detected, health team routing is applicable');
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
@@ -51,6 +50,7 @@ class AssignTeamPipe extends BaseAllocationPipe
                 $this->lead->save();
             }
         } else {
+            LoggerService::info('SIC lead detected, health team routing is not applicable. Continuing to assign team based on prices');
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
                 [
@@ -108,6 +108,8 @@ class AssignTeamPipe extends BaseAllocationPipe
                 return;
             }
             $this->logGbpCheckResult($gbpMinPrice, $priceStartingFrom, 'price-based');
+        } else {
+            LoggerService::info('Non-AUH lead detected, assigning team based on price range');
         }
 
         $healthTeam = $this->fetchTeamByPriceAndCategory($priceStartingFrom, $category);
@@ -141,10 +143,10 @@ class AssignTeamPipe extends BaseAllocationPipe
                 : $this->lead->price_starting_from;
 
             $planStatus = ! empty($this->lead->plan_id) ? 'found' : 'not found';
-            LoggerService::info("Plan {$planStatus} with plan id: {$this->lead->plan_id} | premium: {$this->lead->premium}");
+            LoggerService::info("Plan {$planStatus} with plan id: {$this->lead->plan_id} | premium: {$price}");
         } else {
             $price = $this->lead->price_starting_from;
-            LoggerService::info("No SIC lead | plan id: {$this->lead->plan_id} | premium: {$this->lead->premium}");
+            LoggerService::info("No SIC lead | plan id: {$this->lead->plan_id} | premium: {$price}");
         }
 
         return $price;
