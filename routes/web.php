@@ -103,7 +103,6 @@ use App\Http\Middleware\SetReadDbConnection;
 use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
-use App\Services\QuoteDocumentService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -1007,9 +1006,4 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return view('pdf.bor-document', $pdfData);
     });
-});
-
-Route::get('/test-temp-url', function () {
-    $tempUrl = app(QuoteDocumentService::class)->getDocumentUrl(null);
-    return $tempUrl;
 });
