@@ -164,7 +164,7 @@ class ClaimStatusesService extends BaseService
 
         if ($claimStatusOpen) {
             $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
-            LoggerService::info(' Claim status updated to '.$claimStatusOpen?->text.' - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated to '.$claimStatusOpen?->text['value'].' - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusOpen->id,
@@ -181,7 +181,7 @@ class ClaimStatusesService extends BaseService
 
         if ($claimStatusClosed) {
             $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
-            LoggerService::info(' Claim status updated to '.$claimStatusClosed?->text.' - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated to '.$claimStatusClosed?->text['value'].' - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusClosed->id,
