@@ -3,7 +3,6 @@
 namespace App\Services\AML;
 
 use App\Enums\CustomerTypeEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CustomerInsured;
@@ -12,7 +11,6 @@ use App\Models\Insured;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteType;
 use App\Repositories\CarQuoteRepository;
-use App\Services\AML\DTOs\AMLOperationResult;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -43,24 +41,28 @@ class AMLEntityService
     /**
      * Link entity details to a quote
      * Handles both new structure and legacy structure migration
+     * 
+     * @return array{status: bool, response: mixed, message: string}
      */
-    public function linkEntityToQuote(
-        int $quoteTypeId,
-        int $quoteRequestId,
-        int $entityId,
-        ?string $triggeredFrom = null
-    ): AMLOperationResult {
+    public function linkEntityToQuote(int $quoteTypeId, int $quoteRequestId, int $entityId, ?string $triggeredFrom = null): array
+    {
         $quoteType = QuoteType::where('id', $quoteTypeId)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $quoteRequestId);
 
-        LoggerService::startQuoteLogging($quoteObject, LoggerFeatureEnum::AML_SCREENING);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+        LoggerService::startQuoteLogging($quoteObject);
+        LoggerService::info('Link Entity to Quote Process Start');
 
         // Get insured entity
         $insured = Insured::where('id', $entityId)->first();
 
         if (! $insured) {
-            return AMLOperationResult::failure('Entity not found');
+            LoggerService::info('Link Entity to Quote Process - Entity not found');
+
+            return [
+                'status' => false,
+                'response' => null,
+                'message' => 'Entity not found',
+            ];
         }
 
         // Update insured in personal quote (new structure)
@@ -82,18 +84,18 @@ class AMLEntityService
             $this->updateCarQuoteCompanyDetails($quoteRequestId, $entity);
         }
 
-        return AMLOperationResult::success($entity, 'Entity Linked Successfully');
+        return [
+            'status' => true,
+            'response' => $entity,
+            'message' => 'Entity Linked Successfully',
+        ];
     }
 
     /**
      * Link customer to insured
      */
-    private function linkCustomerInsured(
-        int $quoteTypeId,
-        int $quoteRequestId,
-        int $customerId,
-        int $insuredId
-    ): void {
+    private function linkCustomerInsured(int $quoteTypeId, int $quoteRequestId, int $customerId, int $insuredId): void
+    {
         $customerInsured = CustomerInsured::where('customer_id', $customerId)
             ->where('insured_id', $insuredId)
             ->whereNull('quote_type_id')
@@ -122,12 +124,8 @@ class AMLEntityService
      * Handle legacy entity structure migration
      * TODO: Remove when new structure is completely mapped
      */
-    private function handleLegacyEntityStructure(
-        int $quoteTypeId,
-        int $quoteRequestId,
-        Insured $insured,
-        ?string $triggeredFrom
-    ): Entity {
+    private function handleLegacyEntityStructure(int $quoteTypeId, int $quoteRequestId, Insured $insured, ?string $triggeredFrom): Entity
+    {
         // Find old structure entity
         $oldStructureEntity = Entity::where('trade_license_no', $insured->trade_license_no)->first();
         $existingEntityMapping = QuoteRequestEntityMapping::where([

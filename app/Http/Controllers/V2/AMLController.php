@@ -65,6 +65,7 @@ class AMLController extends Controller
 
     public function __construct()
     {
+        // TODO:: move middleware to routes file (route specific middleware)
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
         $this->middleware('permission:'.PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API, ['only' => ['togglePolicyIssuanceAutomation']]);
     }
@@ -117,9 +118,10 @@ class AMLController extends Controller
             $request->code
         );
 
-        return response()->json($result->toArray());
+        return response()->json($result);
     }
 
+    // Note: Tested
     public function fetchEntity(Request $request, AMLEntityService $entityService)
     {
         $entity = $entityService->fetchEntityByTradeLicense($request->trade_license);
@@ -138,19 +140,20 @@ class AMLController extends Controller
         ]);
     }
 
+    // Note: Tested
     public function linkEntityDetails(Request $request, AMLEntityService $entityService)
     {
         $result = $entityService->linkEntityToQuote(
-            $request->quote_type_id,
-            $request->quote_request_id,
-            $request->entity_id,
+            $request->quote_type_id, 
+            $request->quote_request_id, 
+            $request->entity_id, 
             $request->triggeredFrom
         );
 
-        return response()->json($result->toArray());
+        return response()->json($result);
     }
 
-    public function export(Request $request)
+    public function export(Request $request, KycLogsExport $kycLogsExport)
     {
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
@@ -161,10 +164,10 @@ class AMLController extends Controller
         ]);
 
         if ($request->exportType == 'email') {
-            return app(KycLogsExport::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
+            return $kycLogsExport->emailCSV("AML Logs {$reportDateRange}", $request->all());
         }
 
-        return app(KycLogsExport::class)->download("AML Logs {$reportDateRange}");
+        return $kycLogsExport->download("AML Logs {$reportDateRange}");
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)

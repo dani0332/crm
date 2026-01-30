@@ -3,10 +3,8 @@
 namespace App\Services\AML;
 
 use App\Enums\CustomerTypeEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
-use App\Services\AML\DTOs\AMLOperationResult;
 use App\Services\Logger\LoggerService;
 
 /**
@@ -19,6 +17,7 @@ class AMLInsuredService
      * Get insured details by customer type and identification
      *
      * @param  string|null  $code  For logging purposes
+     * @return array{status: bool, response: mixed, message: string}
      */
     public function getInsuredDetails(
         ?string $customerType,
@@ -26,9 +25,9 @@ class AMLInsuredService
         ?string $idNumber,
         ?string $tradeLicense,
         ?string $code = null
-    ): AMLOperationResult {
+    ): array {
         if ($code) {
-            LoggerService::startQuoteLogging($code, LoggerFeatureEnum::AML_SCREENING);
+            LoggerService::startQuoteLogging($code);
         }
 
         LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
@@ -55,9 +54,11 @@ class AMLInsuredService
         $status = (bool) $insuredDetails;
         $message = $this->getResponseMessage($resolvedCustomerType, $status);
 
-        return $status
-            ? AMLOperationResult::success($insuredDetails, $message)
-            : AMLOperationResult::failure($message);
+        return [
+            'status' => $status,
+            'response' => $insuredDetails,
+            'message' => $message,
+        ];
     }
 
     /**

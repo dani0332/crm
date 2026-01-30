@@ -30,22 +30,15 @@ class AMLDisplayService
         // Eager load relationships to avoid N+1
         $aml->load('quotetype');
 
-        // Add quote type text to AML model
         $aml->quote_type_text = $aml->quotetype->text;
-
-        // Process AML results through dedicated processor
         $processedResults = $this->resultsProcessor->process($aml);
 
-        // Get quote object using trait method
         $quoteObject = $this->getQuoteObject(
             $aml->quotetype->code,
             $aml->quote_request_id
         );
 
-        // Get insured with KYC if ID provided
         $insured = $this->getInsuredWithKyc($insuredId);
-
-        // Prepare enum arrays
         $enums = $this->prepareEnums();
 
         return new AMLPageData([
