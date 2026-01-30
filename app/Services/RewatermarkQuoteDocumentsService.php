@@ -16,15 +16,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class RewatermarkQuoteDocumentsService
 {
-    private const DEFAULT_LIMIT = 500;
-
-    /** @var array<int, int>|null */
-    private static ?array $skipWatermarkProviderIdsCache = null;
-
-    public function __construct(private QuoteDocumentService $quoteDocumentService)
-    {
-    }
-
     /**
      * Basic dispatcher: accepts quote_type_id OR quote_documentable_type + quote_documents.id list,
      * and dispatches watermark jobs for those documents.
@@ -76,6 +67,8 @@ class RewatermarkQuoteDocumentsService
         $skippedMissingQuote = 0;
         $skippedMissingDocumentType = 0;
         $skippedProvider = 0;
+        $skipWatermarkProviderIds = $this->skipWatermarkProviderIds();
+        // Load once per request (not a class property) to avoid stale state in Octane long-lived workers.
 
         foreach ($documents as $document) {
             $quote = $document->quoteDocumentable;
@@ -95,7 +88,7 @@ class RewatermarkQuoteDocumentsService
                 $insuranceProviderId = $quote->plan->provider_id ?? null;
             }
 
-            if (! $this->isWatermarkAllowedForProvider($insuranceProviderId ? (int) $insuranceProviderId : null)) {
+            if (! $this->isWatermarkAllowedForProvider($insuranceProviderId ? (int) $insuranceProviderId : null, $skipWatermarkProviderIds)) {
                 $skippedProvider++;
                 continue;
             }
@@ -131,13 +124,13 @@ class RewatermarkQuoteDocumentsService
      * - Returns false when provider is configured to skip watermarking.
      * - Returns true when provider is allowed (or provider id is missing/unknown).
      */
-    public function isWatermarkAllowedForProvider(?int $insuranceProviderId): bool
+    public function isWatermarkAllowedForProvider(?int $insuranceProviderId, array $skipWatermarkProviderIds): bool
     {
-        if (!$insuranceProviderId) {
+        if (! $insuranceProviderId) {
             return true;
         }
 
-        return !in_array($insuranceProviderId, $this->skipWatermarkProviderIds(), true);
+        return ! in_array($insuranceProviderId, $skipWatermarkProviderIds, true);
     }
 
     /**
@@ -145,17 +138,11 @@ class RewatermarkQuoteDocumentsService
      */
     private function skipWatermarkProviderIds(): array
     {
-        if (self::$skipWatermarkProviderIdsCache !== null) {
-            return self::$skipWatermarkProviderIdsCache;
-        }
-
-        self::$skipWatermarkProviderIdsCache = InsuranceProvider::query()
+        return InsuranceProvider::query()
             ->where('skip_watermark', 1)
             ->pluck('id')
             ->map(static fn ($id) => (int) $id)
             ->toArray();
-
-        return self::$skipWatermarkProviderIdsCache;
     }
 }
 
