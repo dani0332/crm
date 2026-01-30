@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
-use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
