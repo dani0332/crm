@@ -180,6 +180,13 @@ class ClaimsService extends BaseService
 
     public function applyFilters($query, $filters)
     {
+        //is loggedin user is claim manager
+        $user = auth()->user();
+        $isClaimManager = $user?->hasRole(RolesEnum::CLAIM_MANAGER);
+        if ($isClaimManager) {
+            $query->where('manager_id', $user->id);
+        }
+
         if (! empty($filters['code'])) {
             $query->where('code', $filters['code']);
         }
