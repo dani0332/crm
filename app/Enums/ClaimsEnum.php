@@ -49,6 +49,7 @@ enum ClaimsEnum: string
 
     /* Claim Request Status */
     case CLAIM_STATUS_OPEN = 'open';
+    case CLAIM_STATUS_REOPEN = 're-open';
     case CLAIM_STATUS_CLOSED = 'close';
 
     // Complaint Status Codes

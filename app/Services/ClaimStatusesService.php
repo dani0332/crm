@@ -156,15 +156,15 @@ class ClaimStatusesService extends BaseService
         return in_array($newClaimStatus?->text['value'], $subStatusListForClaimClosed);
     }
 
-    public function markClaimAsOpen(ClaimRequest $claimRequest): void
+    public function markClaimAsReOpen(ClaimRequest $claimRequest): void
     {
-        $claimStatusOpen = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_OPEN->value)
+        $claimStatusOpen = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_REOPEN->value)
             ->active()
             ->first();
 
         if ($claimStatusOpen) {
             $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
-            LoggerService::info(' Claim status updated to "Open" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated to '.$claimStatusOpen?->text.' - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusOpen->id,
@@ -181,7 +181,7 @@ class ClaimStatusesService extends BaseService
 
         if ($claimStatusClosed) {
             $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
-            LoggerService::info(' Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated to '.$claimStatusClosed?->text.' - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusClosed->id,
@@ -320,7 +320,7 @@ class ClaimStatusesService extends BaseService
             $isNewStatusComplaintOpen = $newComplaintStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 
             if ($isNewStatusComplaintOpen) {
-                $this->markClaimAsOpen($claim);
+                $this->markClaimAsReOpen($claim);
             }
 
             LoggerService::info(' Complaint status updated successfully', extra: [
