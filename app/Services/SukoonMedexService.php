@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
+use App\Enums\CustomerTypeEnum;
 
 class SukoonMedexService
 {
@@ -737,6 +738,7 @@ class SukoonMedexService
     public function validateCustomerDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
+        $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
         if (empty($insuredKyc)) {
@@ -745,7 +747,8 @@ class SukoonMedexService
 
         $missingFields = [];
 
-        if (empty($insuredKyc?->residential_address)) {
+        if ((empty($insuredKyc?->residential_address) && $customerType == CustomerTypeEnum::Individual) || 
+            (empty($insuredKyc?->registered_address) && $customerType == CustomerTypeEnum::Entity)) {
             $missingFields[] = 'residential-address';
         }
 
@@ -763,6 +766,7 @@ class SukoonMedexService
     private function prepareUserDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
+        $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
         if (! empty($quote->quoteRequestEntityMapping)) {
@@ -792,6 +796,8 @@ class SukoonMedexService
                 .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
         }
 
+        $address = $customerType == CustomerTypeEnum::Individual ? $insuredKyc?->residential_address : $insuredKyc?->registered_address;
+
         return [
             'form_name' => 'personal_details',
             'title' => $title,
@@ -804,7 +810,7 @@ class SukoonMedexService
             'emirates_id_number' => $emirateIdNumber,
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',
-            'address' => $insuredKyc?->residential_address ?? '',
+            'address' => $address ?? '',
         ];
     }
 
