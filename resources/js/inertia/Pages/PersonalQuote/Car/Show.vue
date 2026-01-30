@@ -6,7 +6,10 @@ import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdate
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import { usePayment } from '@/inertia/Composables/usePayment';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import {
+  applyEmiratesNumberMasking,
+  useLazyLoadSection,
+} from '@/inertia/Composables/utilities.js';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';
@@ -30,7 +33,6 @@ defineProps({
   advisors: Array,
   quoteDocuments: Array,
   documentTypes: Object,
-  cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
@@ -67,7 +69,6 @@ defineProps({
   websiteURL: String,
   docUploadURL: String,
   planURL: String,
-  storageUrl: String,
   insuranceProviders: Array,
   insuranceProvidersByQuoteType: Object,
   advisor: Object,
@@ -169,6 +170,7 @@ const prepareDate = date => {
     date.split(' ')[0].split('-').reverse().join('-') + 'T' + date.split(' ')[1]
   );
 };
+
 const leadStatusForm = useForm({
   modelType: 'Car',
   leadId: page.props.record.id,
@@ -436,6 +438,13 @@ const onLoadAvailablePlansData = async () => {
       isLoadingAvailablePlans.value = false;
     });
 };
+
+// Lazy load Available Plans using Intersection Observer (generic composable)
+const { sectionRef: plansSectionRef, isLoaded: plansLoaded } =
+  useLazyLoadSection(onLoadAvailablePlansData, {
+    threshold: 0.1,
+    rootMargin: '100px',
+  });
 
 const loadEmbeddedProducts = async () => {
   let url = `/embedded/get-by-quote?quote_id=${page.props.record.id}&quote_type_id=${page.props.quoteTypeId}`;
@@ -1354,7 +1363,6 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
-  onLoadAvailablePlansData();
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
@@ -1890,6 +1898,8 @@ const handleCancelConfirmationModal = () => {
   modals.showConfirmationModal = false;
   modals.isConfirmed = false; // Reset confirmation flag when user cancels
 };
+
+const { openTempUrl } = useDocumentTempUrl();
 </script>
 
 <template>
@@ -2449,6 +2459,18 @@ const handleCancelConfirmationModal = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                   <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    {{
+                      applyEmiratesNumberMasking(record.driver_eid_number) ?? ''
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ record.driver_gender ?? '' }}</dd>
                 </div>
               </dl>
             </div>
@@ -3265,9 +3287,8 @@ const handleCancelConfirmationModal = () => {
               <template v-for="doc in item.documents" :key="doc">
                 <p class="my-2">
                   <a
-                    class="underline"
-                    target="_blank"
-                    :href="leadDocsStoragePath + doc.path"
+                    class="text-primary-600 cursor-pointer"
+                    @click.prevent="openTempUrl(doc.path)"
                     >Document</a
                   >
                 </p>
@@ -3512,7 +3533,7 @@ const handleCancelConfirmationModal = () => {
       :vatPrice="vatPercentage"
     />
 
-    <div v-else class="p-4 rounded shadow mb-6 bg-white">
+    <div v-else ref="plansSectionRef" class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -3524,7 +3545,10 @@ const handleCancelConfirmationModal = () => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div v-if="isLoadingAvailablePlans" class="flex justify-center my-8">
+          <div
+            v-if="!plansLoaded || isLoadingAvailablePlans"
+            class="flex justify-center my-8"
+          >
             <x-spinner size="lg" />
           </div>
           <template v-else>
@@ -4115,7 +4139,6 @@ const handleCancelConfirmationModal = () => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -4237,7 +4260,6 @@ const handleCancelConfirmationModal = () => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
       @copyUploadURL="copyUploadURL"
@@ -4618,6 +4640,7 @@ const handleCancelConfirmationModal = () => {
       :canDelete="false"
       :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

@@ -118,20 +118,6 @@ class DrivingLicenseDataProcessor
         }
     }
 
-    private function getNationalityId(?string $nationality): ?int
-    {
-        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
-        if (empty($nationality)) {
-            return null;
-        }
-
-        $query = Nationality::where('text', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->orWhere('code', $nationality);
-
-        return $query->value('id');
-    }
-
     public function getProcessingSummary(): array
     {
         $vehicleDriverDetail = $this->quote->vehicleDriverDetail;
