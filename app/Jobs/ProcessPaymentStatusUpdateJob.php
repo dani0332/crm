@@ -11,6 +11,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
 class ProcessPaymentStatusUpdateJob implements ShouldQueue
@@ -38,5 +39,20 @@ class ProcessPaymentStatusUpdateJob implements ShouldQueue
 
         // Call the service method directly - JsonResponse return value is ignored in job context
         $notificationService->paymentStatusUpdate($this->quoteType, $this->quoteId);
+    }
+
+    public function uniqueId(): string
+    {
+        return 'payment-status-update-job-'.$this->quoteId;
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        LoggerService::error("Payment Status Update Job failed for: {$this->quoteId} ", exception: $exception);
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->quoteId))->dontRelease()];
     }
 }
