@@ -99,8 +99,10 @@ class EndingPoliciesReportService extends ManagementReport
                 'p.frequency as payment_frequency',
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
             );
 
+        $this->branchJoin($query);
         $this->applyFilters($query, $request, isSSR: true);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);

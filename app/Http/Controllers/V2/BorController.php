@@ -121,7 +121,7 @@ class BorController extends Controller
 
     public function downloadDocument(Request $request)
     {
-        $file_content = Storage::disk('azureIM')->get($request->path);
+        $file_content = Storage::disk('azureIMPrivate')->get($request->path);
         $file = explode('/', $request->path);
         $lastIndex = count($file);
 
