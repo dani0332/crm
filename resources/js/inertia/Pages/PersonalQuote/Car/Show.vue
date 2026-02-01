@@ -6,11 +6,10 @@ import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdate
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import { usePayment } from '@/inertia/Composables/usePayment';
-import
-  {
-    applyEmiratesNumberMasking,
-    useLazyLoadSection,
-  } from '@/inertia/Composables/utilities.js';
+import {
+  applyEmiratesNumberMasking,
+  useLazyLoadSection,
+} from '@/inertia/Composables/utilities.js';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import AdditionalDriverDetails from '../../Aml/Partials/AdditionalDriverDetails.vue';

@@ -25,8 +25,7 @@ const modals = reactive({
 const planExchangeRate = ref(1);
 const sharedAvailablePlans = ref([]);
 
-export function useSavingsPlans(options = {})
-{
+export function useSavingsPlans(options = {}) {
   const {
     quote,
     localLookups = ref({}),
@@ -51,7 +50,6 @@ export function useSavingsPlans(options = {})
   const planRates = ref({});
   const ratesLoading = ref(false);
 
-
   // =========================================================================
   // 2. LOOKUP OPTIONS (Computed)
   // =========================================================================
@@ -59,48 +57,49 @@ export function useSavingsPlans(options = {})
   /**
    * Currency options from localLookups
    */
-  const currencyOptions = computed(() =>
-  {
-    return localLookups.value?.currencies?.map(item => ({
-      value: item.id || item.code,
-      label: item.text,
-      id: item.id,
-    })) || [];
+  const currencyOptions = computed(() => {
+    return (
+      localLookups.value?.currencies?.map(item => ({
+        value: item.id || item.code,
+        label: item.text,
+        id: item.id,
+      })) || []
+    );
   });
 
   /**
    * Investment frequency options from localLookups
    */
-  const investmentFrequencyOptions = computed(() =>
-  {
-    return localLookups.value?.investmentFrequencies?.map(item => ({
-      value: item.code?.toLowerCase() || item.text?.toLowerCase(),
-      label: item.text,
-      id: item.id,
-    })) || [
+  const investmentFrequencyOptions = computed(() => {
+    return (
+      localLookups.value?.investmentFrequencies?.map(item => ({
+        value: item.code?.toLowerCase() || item.text?.toLowerCase(),
+        label: item.text,
+        id: item.id,
+      })) || [
         { value: 'regular', label: 'Regular', id: null },
         { value: 'lumpsum', label: 'Lumpsum', id: null },
-      ];
+      ]
+    );
   });
 
   /**
    * Payment term options from localLookups
    */
-  const paymentTermOptions = computed(() =>
-  {
-    return localLookups.value?.paymentTerms?.map(item => ({
-      value: item.value,
-      label: item.text,
-    })) || [];
+  const paymentTermOptions = computed(() => {
+    return (
+      localLookups.value?.paymentTerms?.map(item => ({
+        value: item.value,
+        label: item.text,
+      })) || []
+    );
   });
 
   /**
    * Tenure of savings options from lookUpData (1-30 years)
    */
-  const tenureOfSavingsOptions = computed(() =>
-  {
-    if (lookUpData.value?.savingsTenure?.length)
-    {
+  const tenureOfSavingsOptions = computed(() => {
+    if (lookUpData.value?.savingsTenure?.length) {
       return lookUpData.value.savingsTenure.map(item => ({
         value: parseInt(item.code) || parseInt(item.text) || item.id,
         label: item.text,
@@ -109,9 +108,12 @@ export function useSavingsPlans(options = {})
     }
     // Fallback: generate 1-30 years
     const options = [];
-    for (let i = 1; i <= 30; i++)
-    {
-      options.push({ value: i, label: `${i} Year${i > 1 ? 's' : ''}`, id: null });
+    for (let i = 1; i <= 30; i++) {
+      options.push({
+        value: i,
+        label: `${i} Year${i > 1 ? 's' : ''}`,
+        id: null,
+      });
     }
     return options;
   });
@@ -119,26 +121,28 @@ export function useSavingsPlans(options = {})
   /**
    * Plan type options from localLookups
    */
-  const planTypeOptions = computed(() =>
-  {
-    return localLookups.value?.planTypes?.map(item => ({
-      value: item.code || item.id,
-      label: item.text,
-    })) || [
+  const planTypeOptions = computed(() => {
+    return (
+      localLookups.value?.planTypes?.map(item => ({
+        value: item.code || item.id,
+        label: item.text,
+      })) || [
         { value: 'savings', label: 'Savings' },
         { value: 'whole_of_life', label: 'Whole of Life' },
-      ];
+      ]
+    );
   });
 
   /**
    * Insurance provider options
    */
-  const insuranceProviderOptions = computed(() =>
-  {
-    return insuranceProviders.value?.map(provider => ({
-      value: provider.id,
-      label: provider.text,
-    })) || [];
+  const insuranceProviderOptions = computed(() => {
+    return (
+      insuranceProviders.value?.map(provider => ({
+        value: provider.id,
+        label: provider.text,
+      })) || []
+    );
   });
 
   // =========================================================================
@@ -150,8 +154,7 @@ export function useSavingsPlans(options = {})
    * @param {Number} term - Payment term (0, 1, 3, 6, 12)
    * @returns {String} Frequency label
    */
-  const getFrequencyFromPaymentTerm = (term) =>
-  {
+  const getFrequencyFromPaymentTerm = term => {
     const termValue = parseInt(term);
     const map = {
       12: 'Monthly',
@@ -168,8 +171,7 @@ export function useSavingsPlans(options = {})
    * @param {Number} paymentTerm - Payment term value
    * @returns {String} Display label or 'N/A'
    */
-  const getPaymentTermLabel = (paymentTerm) =>
-  {
+  const getPaymentTermLabel = paymentTerm => {
     const term = parseInt(paymentTerm);
     const labels = {
       0: 'Lumpsum',
@@ -186,8 +188,7 @@ export function useSavingsPlans(options = {})
    * @param {Number} paymentTerm - Payment term value
    * @returns {String|null} Display title
    */
-  const getPaymentTermTitle = (paymentTerm) =>
-  {
+  const getPaymentTermTitle = paymentTerm => {
     if (!paymentTerm && paymentTerm !== 0) return null;
     const term = parseInt(paymentTerm);
     const map = {
@@ -206,13 +207,14 @@ export function useSavingsPlans(options = {})
    * @param {Array} options - Investment frequency options (optional, uses computed if not provided)
    * @returns {Boolean}
    */
-  const isLumpsumFrequency = (frequency, options = null) =>
-  {
+  const isLumpsumFrequency = (frequency, options = null) => {
     if (!frequency) return false;
 
     // Check by string value
-    if (typeof frequency === 'string' && frequency.toLowerCase() === 'lumpsum')
-    {
+    if (
+      typeof frequency === 'string' &&
+      frequency.toLowerCase() === 'lumpsum'
+    ) {
       return true;
     }
 
@@ -229,8 +231,7 @@ export function useSavingsPlans(options = {})
    * @param {Number} value - Price value
    * @returns {String} Formatted price
    */
-  const formatPrice = (value) =>
-  {
+  const formatPrice = value => {
     if (!value && value !== 0) return '';
     return useFormatPrice(value, true);
   };
@@ -240,8 +241,7 @@ export function useSavingsPlans(options = {})
    * @param {Number} value - Number to format
    * @returns {String} Formatted number or 'N/A'
    */
-  const formatNumber = (value) =>
-  {
+  const formatNumber = value => {
     if (value === 'N/A' || value === null || value === undefined) return 'N/A';
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
@@ -255,10 +255,8 @@ export function useSavingsPlans(options = {})
    * @param {String} code - Eligibility code
    * @returns {String} Eligibility value or 'N/A'
    */
-  const getEligibilityValue = (plan, code) =>
-  {
-    if (plan?.eligibilities && Array.isArray(plan.eligibilities))
-    {
+  const getEligibilityValue = (plan, code) => {
+    if (plan?.eligibilities && Array.isArray(plan.eligibilities)) {
       const found = plan.eligibilities.find(item => item.code === code);
       return found ? found.value : 'N/A';
     }
@@ -270,25 +268,20 @@ export function useSavingsPlans(options = {})
    * @param {Object} item - Plan item with actualPremium and paymentTerm
    * @returns {Number|null} Total annual price
    */
-  const calculateTotalAnnualPrice = (item) =>
-  {
+  const calculateTotalAnnualPrice = item => {
     const price = parseFloat(item.actualPremium || item.price || 0);
     if (!price) return null;
 
     const paymentTerm = parseInt(item.paymentTerm);
     let multiplier = 1; // Default to annual/lumpsum
 
-    if (paymentTerm === 12)
-    {
+    if (paymentTerm === 12) {
       multiplier = 12; // Monthly - multiply by 12
-    } else if (paymentTerm === 3)
-    {
+    } else if (paymentTerm === 3) {
       multiplier = 4; // Quarterly - multiply by 4
-    } else if (paymentTerm === 6)
-    {
+    } else if (paymentTerm === 6) {
       multiplier = 2; // Semi-Annual - multiply by 2
-    } else if (paymentTerm === 1 || paymentTerm === 0)
-    {
+    } else if (paymentTerm === 1 || paymentTerm === 0) {
       multiplier = 1; // Annual or Lumpsum - multiply by 1
     }
 
@@ -300,8 +293,7 @@ export function useSavingsPlans(options = {})
    * @param {String} str - String to convert
    * @returns {String} Title cased string
    */
-  const toTitleCase = (str) =>
-  {
+  const toTitleCase = str => {
     if (!str) return '';
     return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
   };
@@ -311,12 +303,13 @@ export function useSavingsPlans(options = {})
    * @param {String|Number} currencyId - Currency ID or value
    * @returns {Object|null} Currency option or null
    */
-  const findCurrencyOption = (currencyId) =>
-  {
+  const findCurrencyOption = currencyId => {
     if (!currencyId) return null;
-    return currencyOptions.value.find(
-      opt => opt.value === currencyId || opt.id === currencyId,
-    ) || null;
+    return (
+      currencyOptions.value.find(
+        opt => opt.value === currencyId || opt.id === currencyId,
+      ) || null
+    );
   };
 
   /**
@@ -324,12 +317,13 @@ export function useSavingsPlans(options = {})
    * @param {String|Number} frequency - Frequency value or id
    * @returns {Object|null} Investment frequency option or null
    */
-  const findInvestmentFrequencyOption = (frequency) =>
-  {
+  const findInvestmentFrequencyOption = frequency => {
     if (!frequency) return null;
-    return investmentFrequencyOptions.value.find(
-      opt => opt.value === frequency || opt.id === frequency,
-    ) || null;
+    return (
+      investmentFrequencyOptions.value.find(
+        opt => opt.value === frequency || opt.id === frequency,
+      ) || null
+    );
   };
 
   /**
@@ -337,21 +331,22 @@ export function useSavingsPlans(options = {})
    * @param {Object} planData - Plan data with amount, rate, years, paymentTerm, investmentFrequency
    * @returns {Object|null} { payout, formattedPayout } or null if validation fails
    */
-  const calculatePlanPayout = (planData) =>
-  {
+  const calculatePlanPayout = planData => {
     if (!planData) return null;
 
     const { calculatePayout } = useSavingsCalculator();
 
-    const amount = parseFloat(planData.actualPremium || planData.investment_amount || 0);
-    const rate = parseFloat(planData.expectedRor || planData.expected_rate_of_return || 0);
+    const amount = parseFloat(
+      planData.actualPremium || planData.investment_amount || 0,
+    );
+    const rate = parseFloat(
+      planData.expectedRor || planData.expected_rate_of_return || 0,
+    );
     const years = parseInt(planData.tenure || planData.tenure_of_savings || 0);
 
     // Validate required fields
-    if (!amount || !rate || !years)
-    {
-      if (notification)
-      {
+    if (!amount || !rate || !years) {
+      if (notification) {
         notification.warning({
           title: 'Please fill Investment Amount, Rate of Return, and Tenure',
           position: 'top',
@@ -361,11 +356,14 @@ export function useSavingsPlans(options = {})
     }
 
     // Determine frequency based on investment type
-    const frequencyValue = planData.investmentFrequency || planData.investment_frequency;
+    const frequencyValue =
+      planData.investmentFrequency || planData.investment_frequency;
     const isLumpsum = isLumpsumFrequency(frequencyValue);
     const frequency = isLumpsum
       ? 'Single Payment'
-      : getFrequencyFromPaymentTerm(planData.paymentTerm || planData.payment_term);
+      : getFrequencyFromPaymentTerm(
+          planData.paymentTerm || planData.payment_term,
+        );
 
     // Calculate payout
     const payout = calculatePayout({ amount, rate, years, frequency });
@@ -383,20 +381,17 @@ export function useSavingsPlans(options = {})
   /**
    * Show riders if available
    */
-  const showRiders = computed(() =>
-  {
+  const showRiders = computed(() => {
     return ridersData.value.length > 0;
   });
 
   /**
    * Calculate total rider price from active riders
    */
-  const totalRiderPrice = computed(() =>
-  {
+  const totalRiderPrice = computed(() => {
     return ridersData.value
       .filter(rider => rider.active)
-      .reduce((total, rider) =>
-      {
+      .reduce((total, rider) => {
         const price = parseFloat(rider.coverValue2 || rider.price || 0);
         return total + price;
       }, 0);
@@ -406,12 +401,10 @@ export function useSavingsPlans(options = {})
    * Fetch rider details for a plan
    * @param {Number} planId - Plan ID
    */
-  const getRiderDetails = async (planId) =>
-  {
+  const getRiderDetails = async planId => {
     if (!planId) return;
 
-    try
-    {
+    try {
       const res = await axios.get(`/personal-quotes/savings/riders/${planId}`);
 
       // Map riders data
@@ -429,10 +422,8 @@ export function useSavingsPlans(options = {})
         coverType: rider.cover_type || null,
         maxAge: rider.max_age || null,
       }));
-    } catch (error)
-    {
-      if (notification)
-      {
+    } catch (error) {
+      if (notification) {
         notification.error({
           title: 'Error fetching rider details',
           position: 'top',
@@ -447,13 +438,14 @@ export function useSavingsPlans(options = {})
    * @param {Array} riders - Riders data (optional, uses ridersData if not provided)
    * @returns {Array} Processed riders array
    */
-  const processRidersForAPI = (riders = null) =>
-  {
+  const processRidersForAPI = (riders = null) => {
     const ridersToProcess = riders || ridersData.value;
     return ridersToProcess.map(rider => ({
       riderId: rider.riderId,
       active: rider.active ? true : false,
-      price: Number(parseFloat(rider.coverValue2 || rider.price || 0).toFixed(2)) || 0,
+      price:
+        Number(parseFloat(rider.coverValue2 || rider.price || 0).toFixed(2)) ||
+        0,
       coverValue: Number(parseFloat(rider.coverValue || 0).toFixed(2)) || 0,
     }));
   };
@@ -461,8 +453,7 @@ export function useSavingsPlans(options = {})
   /**
    * Reset riders data
    */
-  const resetRiders = () =>
-  {
+  const resetRiders = () => {
     ridersData.value = [];
   };
 
@@ -475,12 +466,10 @@ export function useSavingsPlans(options = {})
    * @param {String} quoteUuid - Quote UUID
    * @returns {Promise<Array>} Available plans
    */
-  const onLoadAvailablePlansData = async (savingQuoteUuid = null) =>
-  {
+  const onLoadAvailablePlansData = async (savingQuoteUuid = null) => {
     let quoteUuid = savingQuoteUuid || quote.uuid;
     availablePlansTable.isLoading = true;
-    try
-    {
+    try {
       const url = `/quotes/savings/available-plans/${quoteUuid}`;
       const { data } = await axios.post(url, { jsonData: true });
 
@@ -501,12 +490,10 @@ export function useSavingsPlans(options = {})
       // Update global shared plans so ecomDetail computed property can reactively update
       sharedAvailablePlans.value = processedPlans;
       return processedPlans;
-    } catch (err)
-    {
+    } catch (err) {
       availablePlansTable.data = [];
       return [];
-    } finally
-    {
+    } finally {
       availablePlansTable.isLoading = false;
     }
   };
@@ -517,24 +504,23 @@ export function useSavingsPlans(options = {})
    * @param {String} quoteUuid - Quote UUID
    * @returns {Promise<Object|null>} Plan details
    */
-  const getPlanDetails = async (planId, quoteUuid) =>
-  {
-    try
-    {
+  const getPlanDetails = async (planId, quoteUuid) => {
+    try {
       // First try to find in availablePlansTable
-      const foundPlan = availablePlansTable.data.find(plan => plan.id === planId);
-      if (foundPlan)
-      {
+      const foundPlan = availablePlansTable.data.find(
+        plan => plan.id === planId,
+      );
+      if (foundPlan) {
         return foundPlan;
       }
 
       // If not found, fetch from API
-      const { data } = await axios.get(`/savings/${quoteUuid}/plan_details/${planId}`);
+      const { data } = await axios.get(
+        `/savings/${quoteUuid}/plan_details/${planId}`,
+      );
       return data;
-    } catch (error)
-    {
-      if (notification)
-      {
+    } catch (error) {
+      if (notification) {
         notification.error({
           title: 'Error',
           message: 'Plan Details Not Found',
@@ -550,33 +536,27 @@ export function useSavingsPlans(options = {})
    * @param {Number} providerId - Provider ID
    * @returns {Promise<Array>} Provider plans
    */
-  const fetchProviderPlans = async (providerId) =>
-  {
-    if (!providerId)
-    {
+  const fetchProviderPlans = async providerId => {
+    if (!providerId) {
       providerPlans.value = [];
       return [];
     }
 
     providerPlansLoading.value = true;
-    try
-    {
+    try {
       const { data } = await axios.get(
         `/personal-quotes/savings/provider-plans/${providerId}`,
       );
 
-      if (data.plans)
-      {
+      if (data.plans) {
         providerPlans.value = data.plans;
         return data.plans;
       }
 
       providerPlans.value = [];
       return [];
-    } catch (err)
-    {
-      if (notification)
-      {
+    } catch (err) {
+      if (notification) {
         notification.error({
           title: 'Failed to fetch plans',
           position: 'top',
@@ -584,8 +564,7 @@ export function useSavingsPlans(options = {})
       }
       providerPlans.value = [];
       return [];
-    } finally
-    {
+    } finally {
       providerPlansLoading.value = false;
     }
   };
@@ -600,31 +579,36 @@ export function useSavingsPlans(options = {})
    * @param {Object} options - Additional options
    * @returns {Object} API payload
    */
-  const buildPlanPayload = (planData, options = {}) =>
-  {
+  const buildPlanPayload = (planData, options = {}) => {
     const { isUpdate = false } = options;
 
     return {
       quoteUID: planData.quoteUUID || planData.quote_uuid,
       update: isUpdate,
-      plans: [{
-        planId: planData.planId || planData.plan_id,
-        plan_type: planData.planType || planData.plan_type,
-        isDisabled: planData.isDisabled || false,
-        isManualUpdate: planData.isManualUpdate || false,
-        insurerQuoteNo: planData.insurerQuoteNo || '',
-        investmentAmount: parseFloat(planData.investmentAmount) || 0,
-        currency: planData.currency || 'AED',
-        currencyId: planData.currencyId,
-        paymentTerm: parseInt(planData.paymentTerm) || 0,
-        tenure: planData.tenure,
-        tenureId: planData.tenureId,
-        ror: parseFloat(planData.expectedRor || planData.ror) || 0,
-        investmentFrequency: planData.investmentFrequencyLabel || planData.investmentFrequency || 'Regular',
-        investmentFrequencyId: planData.investmentFrequencyId,
-        lumpSumPayout: parseFloat(planData.lumpSumPayout || planData.lumpsum_payout) || 0,
-        riders: planData.riders || [],
-      }],
+      plans: [
+        {
+          planId: planData.planId || planData.plan_id,
+          plan_type: planData.planType || planData.plan_type,
+          isDisabled: planData.isDisabled || false,
+          isManualUpdate: planData.isManualUpdate || false,
+          insurerQuoteNo: planData.insurerQuoteNo || '',
+          investmentAmount: parseFloat(planData.investmentAmount) || 0,
+          currency: planData.currency || 'AED',
+          currencyId: planData.currencyId,
+          paymentTerm: parseInt(planData.paymentTerm) || 0,
+          tenure: planData.tenure,
+          tenureId: planData.tenureId,
+          ror: parseFloat(planData.expectedRor || planData.ror) || 0,
+          investmentFrequency:
+            planData.investmentFrequencyLabel ||
+            planData.investmentFrequency ||
+            'Regular',
+          investmentFrequencyId: planData.investmentFrequencyId,
+          lumpSumPayout:
+            parseFloat(planData.lumpSumPayout || planData.lumpsum_payout) || 0,
+          riders: planData.riders || [],
+        },
+      ],
     };
   };
 
@@ -635,10 +619,8 @@ export function useSavingsPlans(options = {})
    * @param {Object} options - Additional options (riders, etc.)
    * @returns {Promise} API response promise
    */
-  const updatePlan = async (planDetails, quoteUuid, options = {}) =>
-  {
-    if (!planDetails || !quoteUuid)
-    {
+  const updatePlan = async (planDetails, quoteUuid, options = {}) => {
+    if (!planDetails || !quoteUuid) {
       throw new Error('Plan details and quote UUID are required');
     }
 
@@ -646,9 +628,7 @@ export function useSavingsPlans(options = {})
     const investmentFrequencyOption = findInvestmentFrequencyOption(
       planDetails.investmentFrequency,
     );
-    const currencyOption = findCurrencyOption(
-      planDetails.currencyId,
-    );
+    const currencyOption = findCurrencyOption(planDetails.currencyId);
 
     // Process riders if provided
     const processedRiders = options.riders
@@ -684,15 +664,13 @@ export function useSavingsPlans(options = {})
     );
 
     // Make API call
-    try
-    {
+    try {
       const response = await axios.post(
         `/quotes/savings/${quoteUuid}/savings-plan-manual-process`,
         apiPayload,
       );
 
-      if (notification)
-      {
+      if (notification) {
         notification.success({
           title: 'Plan updated successfully',
           position: 'top',
@@ -700,20 +678,16 @@ export function useSavingsPlans(options = {})
       }
 
       return response;
-    } catch (error)
-    {
-      if (notification)
-      {
+    } catch (error) {
+      if (notification) {
         notification.error({
           title: error.response?.data?.message || 'Failed to update plan',
           position: 'top',
         });
 
         // Show validation errors if present
-        if (error.response?.data?.errors)
-        {
-          Object.keys(error.response.data.errors).forEach(function (key)
-          {
+        if (error.response?.data?.errors) {
+          Object.keys(error.response.data.errors).forEach(function (key) {
             notification.error({
               title: error.response.data.errors[key][0],
               position: 'top',
@@ -732,10 +706,8 @@ export function useSavingsPlans(options = {})
    * @param {Object} options - Additional options (riders, etc.)
    * @returns {Promise} API response promise
    */
-  const createPlan = async (formData, quoteUuid, options = {}) =>
-  {
-    if (!formData || !quoteUuid)
-    {
+  const createPlan = async (formData, quoteUuid, options = {}) => {
+    if (!formData || !quoteUuid) {
       throw new Error('Form data and quote UUID are required');
     }
 
@@ -756,7 +728,10 @@ export function useSavingsPlans(options = {})
         planId: formData.savings_plan_id,
         planType: formData.plan_type,
         isDisabled: formData.is_disabled || false,
-        isManualUpdate: formData.is_manual_update !== undefined ? formData.is_manual_update : true,
+        isManualUpdate:
+          formData.is_manual_update !== undefined
+            ? formData.is_manual_update
+            : true,
         insurerQuoteNo: formData.insurer_quote_no || '',
         investmentAmount: formData.investment_amount || formData.actual_premium,
         currency: formData.currency || 'AED',
@@ -775,15 +750,13 @@ export function useSavingsPlans(options = {})
     );
 
     // Make API call
-    try
-    {
+    try {
       const response = await axios.post(
         `/quotes/savings/${quoteUuid}/savings-plan-manual-process`,
         apiPayload,
       );
 
-      if (notification)
-      {
+      if (notification) {
         notification.success({
           title: 'Savings plan created successfully',
           position: 'top',
@@ -797,20 +770,16 @@ export function useSavingsPlans(options = {})
       });
 
       return response;
-    } catch (error)
-    {
-      if (notification)
-      {
+    } catch (error) {
+      if (notification) {
         notification.error({
           title: error.response?.data?.message || 'Failed to create plan',
           position: 'top',
         });
 
         // Show validation errors if present
-        if (error.response?.data?.errors)
-        {
-          Object.keys(error.response.data.errors).forEach(function (key)
-          {
+        if (error.response?.data?.errors) {
+          Object.keys(error.response.data.errors).forEach(function (key) {
             notification.error({
               title: error.response.data.errors[key][0],
               position: 'top',
@@ -830,15 +799,17 @@ export function useSavingsPlans(options = {})
    * @param {Number} providerId - Provider ID (optional, will try to get from planDetails if not provided)
    * @returns {Promise} API response promise
    */
-  const togglePlanVisibility = async (planId, quoteUuid, isDisabled, providerId = null) =>
-  {
-    if (!planId || !quoteUuid)
-    {
+  const togglePlanVisibility = async (
+    planId,
+    quoteUuid,
+    isDisabled,
+    providerId = null,
+  ) => {
+    if (!planId || !quoteUuid) {
       throw new Error('Plan ID and quote UUID are required');
     }
 
-    try
-    {
+    try {
       const response = await axios.post(
         route('savings-plan-toggle-visibility'),
         {
@@ -849,8 +820,7 @@ export function useSavingsPlans(options = {})
         },
       );
 
-      if (notification)
-      {
+      if (notification) {
         notification.success({
           title: `Plan has been ${isDisabled ? 'hidden' : 'shown'}`,
           position: 'top',
@@ -858,12 +828,11 @@ export function useSavingsPlans(options = {})
       }
 
       return response;
-    } catch (error)
-    {
-      if (notification)
-      {
+    } catch (error) {
+      if (notification) {
         notification.error({
-          title: error.response?.data?.message || 'Error updating plan visibility',
+          title:
+            error.response?.data?.message || 'Error updating plan visibility',
           position: 'top',
         });
       }
@@ -880,8 +849,7 @@ export function useSavingsPlans(options = {})
    * @param {Object} form - Form object
    * @param {String} currencyValue - Currency value
    */
-  const syncCurrencyId = (form, currencyValue) =>
-  {
+  const syncCurrencyId = (form, currencyValue) => {
     const selectedOption = currencyOptions.value.find(
       opt => opt.value === currencyValue,
     );
@@ -894,8 +862,7 @@ export function useSavingsPlans(options = {})
    * @param {Object} form - Form object
    * @param {Number} tenureValue - Tenure value
    */
-  const syncTenureId = (form, tenureValue) =>
-  {
+  const syncTenureId = (form, tenureValue) => {
     const selectedOption = tenureOfSavingsOptions.value.find(
       opt => opt.value === tenureValue,
     );
@@ -908,8 +875,7 @@ export function useSavingsPlans(options = {})
    * @param {Object} form - Form object
    * @param {String|Number} frequencyValue - Frequency value
    */
-  const syncInvestmentFrequencyId = (form, frequencyValue) =>
-  {
+  const syncInvestmentFrequencyId = (form, frequencyValue) => {
     const selectedOption = investmentFrequencyOptions.value.find(
       opt => opt.value === frequencyValue || opt.id === frequencyValue,
     );
@@ -922,8 +888,7 @@ export function useSavingsPlans(options = {})
    * @param {Object} form - Form object
    * @param {String|Number} frequency - Investment frequency
    */
-  const syncPaymentTermByFrequency = (form, frequency) =>
-  {
+  const syncPaymentTermByFrequency = (form, frequency) => {
     const checkIsLumpsum = isLumpsumFrequency(frequency);
 
     // Find Single Payment option by label
@@ -932,12 +897,10 @@ export function useSavingsPlans(options = {})
     );
 
     // Auto-select payment term based on frequency
-    if (checkIsLumpsum && singlePaymentOption)
-    {
+    if (checkIsLumpsum && singlePaymentOption) {
       form.payment_term = singlePaymentOption.value;
       form.paymentTerm = singlePaymentOption.value;
-    } else if (form.payment_term === singlePaymentOption?.value)
-    {
+    } else if (form.payment_term === singlePaymentOption?.value) {
       form.payment_term = null;
       form.paymentTerm = null;
     }
@@ -950,23 +913,18 @@ export function useSavingsPlans(options = {})
   /**
    * Fetch exchange rates from API
    */
-  const fetchExchangeRates = async () =>
-  {
+  const fetchExchangeRates = async () => {
     if (Object.keys(exchangeRates.value).length > 0) return;
 
     ratesLoading.value = true;
-    try
-    {
+    try {
       const { data } = await axios.get('https://open.er-api.com/v6/latest/USD');
-      if (data?.rates)
-      {
+      if (data?.rates) {
         exchangeRates.value = data.rates;
       }
-    } catch (e)
-    {
+    } catch (e) {
       // Exchange rate fetch failed silently
-    } finally
-    {
+    } finally {
       ratesLoading.value = false;
     }
   };
@@ -976,8 +934,7 @@ export function useSavingsPlans(options = {})
    * @param {Object} item - Plan item with currency
    * @returns {Number|null} Exchange rate or null
    */
-  const getExchangeRate = (item) =>
-  {
+  const getExchangeRate = item => {
     const id = item.id;
     const cur = (item.currency || 'USD').toUpperCase();
     const usdToAed = exchangeRates.value['AED'] || null;
@@ -1000,11 +957,9 @@ export function useSavingsPlans(options = {})
    * @param {Number} planId - Plan ID
    * @param {Number} rate - Exchange rate
    */
-  const setExchangeRate = (planId, rate) =>
-  {
+  const setExchangeRate = (planId, rate) => {
     const num = parseFloat(rate);
-    if (!isNaN(num) && num > 0)
-    {
+    if (!isNaN(num) && num > 0) {
       planRates.value[planId] = num;
     }
   };
@@ -1015,8 +970,7 @@ export function useSavingsPlans(options = {})
    * @param {Object} item - Plan item with currency
    * @returns {Number|null} Amount in AED
    */
-  const convertToAED = (amount, item) =>
-  {
+  const convertToAED = (amount, item) => {
     const rate = getExchangeRate(item);
     return rate ? Math.round(amount * rate * 100) / 100 : null;
   };
@@ -1030,8 +984,7 @@ export function useSavingsPlans(options = {})
   /**
    * Get ecom display price from plan item
    */
-  const getEcomDisplayPrice = (item) =>
-  {
+  const getEcomDisplayPrice = item => {
     if (!item) return 0;
     return parseFloat(item.actualPremium || item.totalPrice || 0);
   };
@@ -1039,30 +992,25 @@ export function useSavingsPlans(options = {})
   /**
    * Computed property: ecomDetail automatically updates when sharedAvailablePlans or quote.plan_id changes
    */
-  const ecomDetail = computed(() =>
-  {
+  const ecomDetail = computed(() => {
     const allPlans = sharedAvailablePlans.value || [];
     const quoteValue = quote?.value || quote;
     const selectedPlanId = quoteValue?.plan_id;
 
-    if (!allPlans.length || !selectedPlanId)
-    {
+    if (!allPlans.length || !selectedPlanId) {
       return null;
     }
 
-    const foundPlan = allPlans.find(
-      plan =>
-      {
-        const matchesId = String(plan.id) === String(selectedPlanId) ||
-          String(plan.planId) === String(selectedPlanId) ||
-          String(plan.plan_id) === String(selectedPlanId);
-        const isNotDisabled = !plan.isDisabled;
-        return matchesId && isNotDisabled;
-      },
-    );
+    const foundPlan = allPlans.find(plan => {
+      const matchesId =
+        String(plan.id) === String(selectedPlanId) ||
+        String(plan.planId) === String(selectedPlanId) ||
+        String(plan.plan_id) === String(selectedPlanId);
+      const isNotDisabled = !plan.isDisabled;
+      return matchesId && isNotDisabled;
+    });
 
-    if (foundPlan)
-    {
+    if (foundPlan) {
       return {
         ...foundPlan,
         providerName:
@@ -1090,16 +1038,14 @@ export function useSavingsPlans(options = {})
    * Update sharedAvailablePlans (for backward compatibility and manual updates)
    * @param {Array} allPlans - Array of plans to set
    */
-  const updateEcomDetailFromPlans = (allPlans = []) =>
-  {
+  const updateEcomDetailFromPlans = (allPlans = []) => {
     sharedAvailablePlans.value = allPlans;
   };
 
   /**
    * Calculate total annual price for ecom detail
    */
-  const totalAnnualPrice = computed(() =>
-  {
+  const totalAnnualPrice = computed(() => {
     const ecom = ecomDetail.value;
     if (!ecom) return 'N/A';
     const displayPrice = getEcomDisplayPrice(ecom);
@@ -1116,8 +1062,7 @@ export function useSavingsPlans(options = {})
   /**
    * Get total annual price in AED
    */
-  const getTotalAnnualPriceAED = () =>
-  {
+  const getTotalAnnualPriceAED = () => {
     const ecom = ecomDetail.value;
     if (!ecom) return 'N/A';
     const displayPrice = getEcomDisplayPrice(ecom);
@@ -1129,7 +1074,7 @@ export function useSavingsPlans(options = {})
       1;
     return formatNumber(
       calculateTotalAnnualPrice({ actualPremium: priceInAED, paymentTerm }) ||
-      0,
+        0,
     );
   };
 
