@@ -190,11 +190,12 @@ const onToggleHidePlan = async () => {
   const previousValue = !toggleValue;
 
   // Get providerId from planDetails or quote
-  const providerId = props.planDetails.providerId || 
-                      props.planDetails.insuranceProviderId || 
-                      props.planDetails.insurance_provider_id ||
-                      props.quote?.insurance_provider_id ||
-                      null;
+  const providerId =
+    props.planDetails.providerId ||
+    props.planDetails.insuranceProviderId ||
+    props.planDetails.insurance_provider_id ||
+    props.quote?.insurance_provider_id ||
+    null;
 
   try {
     await togglePlanVisibility(
