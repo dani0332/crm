@@ -15,7 +15,6 @@ class SendSavingsOCAEmailJob implements ShouldQueue
     use Queueable;
 
     protected string $quoteUID;
-
     protected array $data;
 
     /**
@@ -49,4 +48,3 @@ class SendSavingsOCAEmailJob implements ShouldQueue
         LoggerService::error('Savings OCA email failed', ['exception' => $exception]);
     }
 }
-

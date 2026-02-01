@@ -11,10 +11,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
-use App\Models\SavingsQuote;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use App\Services\Quotes\SavingsQuoteService;
 
 class SavingsEmailService
 {
@@ -152,4 +150,3 @@ class SavingsEmailService
         ])->with('advisor')->first();
     }
 }
-

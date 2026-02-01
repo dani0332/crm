@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class InsurancePlansEligibility extends Model
 {
     protected $table = 'insurance_plans_eligibility';
-
     protected $guarded = [];
 
     public function plan()
@@ -15,4 +14,3 @@ class InsurancePlansEligibility extends Model
         return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id');
     }
 }
-
