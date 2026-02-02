@@ -101,6 +101,6 @@ class SendUpdateLog extends Model implements AuditableContract
 
     public function epLogs(): MorphMany
     {
-        return $this->morphMany(EPLog::class, 'loggable');
+        return $this->morphMany(EpLog::class, 'loggable');
     }
 }

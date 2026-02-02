@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\EPLog;
+use App\Models\EpLog;
 use App\Models\SendUpdateLog;
 use App\Services\SageApiService;
 use Carbon\Carbon;
@@ -55,7 +55,7 @@ describe('SageApiService - createEPLog Real Database Test', function () {
         ]);
 
         // 2. Query the database directly and verify
-        $epLog = EPLog::where('embedded_transaction_id', $ePTransactionId)
+        $epLog = EpLog::where('embedded_transaction_id', $ePTransactionId)
             ->where('event', 'reversal')
             ->first();
 
@@ -91,11 +91,11 @@ describe('SageApiService - createEPLog Real Database Test', function () {
             ->and($epLog->updated_at)->toBeInstanceOf(Carbon::class);
 
         // 6. Verify we can query by different fields
-        $foundByEvent = EPLog::where('event', 'reversal')
+        $foundByEvent = EpLog::where('event', 'reversal')
             ->where('embedded_transaction_id', $ePTransactionId)
             ->exists();
 
-        $foundByLoggable = EPLog::where('loggable_type', SendUpdateLog::class)
+        $foundByLoggable = EpLog::where('loggable_type', SendUpdateLog::class)
             ->where('loggable_id', $sendUpdateLog->id)
             ->where('embedded_transaction_id', $ePTransactionId)
             ->exists();
@@ -104,7 +104,7 @@ describe('SageApiService - createEPLog Real Database Test', function () {
             ->and($foundByLoggable)->toBeTrue();
 
         // 7. Verify the exact count
-        $totalEpLogsForThisSendUpdate = EPLog::where('loggable_id', $sendUpdateLog->id)
+        $totalEpLogsForThisSendUpdate = EpLog::where('loggable_id', $sendUpdateLog->id)
             ->where('loggable_type', SendUpdateLog::class)
             ->count();
 
@@ -219,7 +219,7 @@ describe('SageApiService - EP Log Database Integration Tests', function () {
         ]);
 
         // Verify the actual record
-        $epLog = EPLog::where('embedded_transaction_id', 100)->first();
+        $epLog = EpLog::where('embedded_transaction_id', 100)->first();
 
         expect($epLog)->not->toBeNull()
             ->and($epLog->event)->toBe('reversal')
@@ -270,7 +270,7 @@ describe('SageApiService - EP Log Database Integration Tests', function () {
         ]);
 
         // Verify the actual record
-        $epLog = EPLog::where('embedded_transaction_id', 200)->first();
+        $epLog = EpLog::where('embedded_transaction_id', 200)->first();
 
         expect($epLog)->not->toBeNull()
             ->and($epLog->event)->toBe('reversal')
@@ -379,7 +379,7 @@ describe('SageApiService - EP Log Database Integration Tests', function () {
         $afterCreation = Carbon::now()->addSecond();
 
         // Assert
-        $epLog = EPLog::where('embedded_transaction_id', 500)->first();
+        $epLog = EpLog::where('embedded_transaction_id', 500)->first();
 
         expect($epLog->created_at)->not->toBeNull()
             ->and($epLog->updated_at)->not->toBeNull()

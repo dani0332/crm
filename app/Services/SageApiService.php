@@ -49,7 +49,6 @@ use Cache;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
-use App\Models\EPLog;
 
 class SageApiService
 {

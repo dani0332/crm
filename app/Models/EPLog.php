@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * Tracks embedded product events and their associated data.
  */
-class EPLog extends Model
+class EpLog extends Model
 {
     /**
      * The table associated with the model.
