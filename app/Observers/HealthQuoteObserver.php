@@ -184,5 +184,13 @@ class HealthQuoteObserver
         if (isset($dirty['quote_status_id'])) {
             app(SLAService::class)->meetSLAOnStatusUpdate($healthQuote);
         }
+
+        if (isset($dirty['aml_status'])) {
+            app(SLAService::class)->meetSLAOnAMLStatusUpdate($healthQuote);
+        }
+
+        if (isset($dirty['kyc_decision'])) {
+            app(SLAService::class)->meetSLAOnKYCStatusUpdate($healthQuote);
+        }
     }
 }

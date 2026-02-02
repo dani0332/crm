@@ -54,4 +54,5 @@ enum LoggerFeatureEnum: string
     case WATERMARK_DOCUMENT = 'watermark-document';
     case CONVERSION_API = 'conversion-api';
     case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
+    case PAYMENT_STATUS_UPDATE = 'payment-status-update';
 }
