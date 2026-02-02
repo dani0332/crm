@@ -382,7 +382,6 @@ class UserController extends Controller
                         $quoteTypeName = $type->name;
                     }
                     $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
-                // dd($quoteTypeId);
                     if (! empty($quoteTypeId)) {
                         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
                         if (empty($isLead)) {
