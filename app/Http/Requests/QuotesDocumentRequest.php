@@ -110,8 +110,6 @@ class QuotesDocumentRequest extends FormRequest
         }
 
         if (! empty($quote)) {
-            // $uploadedDocuments = $quote->documents->where('document_type_code', request()->document_type_code)->count();
-
             $uploadedDocuments = $quote->documents()->where('document_type_code', request()->document_type_code);
 
             // Apply member detail id if provided (for health, later can work for any other lob)
