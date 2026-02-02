@@ -122,10 +122,9 @@ class CarQuoteObserver
             try {
                 app(EmbeddedTransactionService::class)->retargetEpReminder($lead, QuoteTypeId::Car);
             } catch (Exception $e) {
-                Log::error('CarQuoteObserver - retarget ep reminder failed', [
-                    'error' => $e->getMessage(),
+                LoggerService::error('CarQuoteObserver - retarget ep reminder failed', [
                     'uuid' => $lead->uuid,
-                ]);
+                ], exception: $e);
             }
 
             try {

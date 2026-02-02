@@ -13,6 +13,7 @@ class CoreSchema
         $this->ensureUserAndPermissionTables();
         $this->ensureReferenceTables();
         $this->ensureApplicationStorageTable();
+        $this->ensurePcpConfigTable();
         $this->ensureTeamTables();
         $this->ensureUserManagementTables();
         $this->ensureQueueTables();
@@ -20,6 +21,8 @@ class CoreSchema
         $this->ensureCustomerTables();
         $this->ensureInsuranceProviderTables();
         $this->ensureQuoteTables();
+        $this->ensureEmbeddedProductTables();
+        $this->ensureEmailStatusTable();
         $this->ensurePaymentTables();
         $this->ensureDocumentTables();
         $this->ensurePolicyIssuanceTables();
@@ -356,6 +359,7 @@ class CoreSchema
                 $table->string('previous_quote_policy_number')->nullable();
                 $table->date('previous_policy_expiry_date')->nullable();
                 $table->date('policy_expiry_date')->nullable();
+                $table->date('policy_booking_date')->nullable();                
                 $table->boolean('is_ecommerce')->default(0);
                 $table->decimal('car_value', 15, 2)->nullable();
                 $table->unsignedBigInteger('car_make_id')->nullable();
@@ -632,6 +636,70 @@ class CoreSchema
         ]);
     }
 
+    /**
+     * Tables used by EmbeddedTransactionRepository::getRetargetingCarEpReminderData()
+     * (car_quote_request is in ensureQuoteTables; car_make, car_model, users, car_plan, insurance_provider exist elsewhere).
+     */
+    private function ensureEmbeddedProductTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'embedded_products' => function (Blueprint $table) {
+                $table->id();
+                $table->string('short_code')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->string('product_name')->nullable();
+                $table->string('display_name')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+                $table->softDeletes();
+            },
+            'embedded_product_options' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('embedded_product_id');
+                $table->decimal('price', 10, 2)->nullable();
+                $table->string('variant')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+                $table->softDeletes();
+            },
+            'embedded_transactions' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->unsignedBigInteger('quote_request_id')->nullable();
+                $table->string('quote_request_type')->nullable();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->unsignedBigInteger('product_id')->nullable();
+                $table->boolean('is_selected')->default(false);
+                $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->string('policy_status')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            },
+        ]);
+    }
+
+    /**
+     * Email status table used by EmailStatusService (e.g. retargeting-ep-reminder-callback,
+     * addBirdEmailStatus) and related flows.
+     */
+    private function ensureEmailStatusTable(): void
+    {
+        SchemaUtils::ensureTable('email_status', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('quote_type_id')->nullable();
+            $table->unsignedBigInteger('quote_id')->nullable();
+            $table->string('email_address')->nullable();
+            $table->string('msg_id')->nullable();
+            $table->string('reason')->nullable();
+            $table->string('email_status')->nullable();
+            $table->string('email_subject')->nullable();
+            $table->string('template_id')->nullable();
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->boolean('customer_replied')->default(false);
+            $table->timestamps();
+        });
+    }
+
     private function ensureApplicationStorageTable(): void
     {
         SchemaUtils::ensureTable('application_storage', function (Blueprint $table) {
@@ -641,6 +709,28 @@ class CoreSchema
             $table->boolean('is_active')->default(1);
             $table->softDeletes();
             $table->timestamps();
+        });
+    }
+
+    /**
+     * PCP (Private Client) config table required when CarQuoteObserver (and other quote observers)
+     * dispatch PrivateClientUpdatedEvent with PolicyBooked – ApplyPrivateClientTagListener
+     * uses PrivateClientConfigService which queries pcp_config.
+     */
+    private function ensurePcpConfigTable(): void
+    {
+        SchemaUtils::ensureTable('pcp_config', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('quote_type_id');
+            $table->string('field_name')->nullable();
+            $table->string('operator')->nullable();
+            $table->boolean('status')->default(1);
+            $table->unsignedInteger('version')->nullable();
+            $table->string('active_version')->default('0');
+            $table->string('quote_type')->nullable();
+            $table->json('config')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

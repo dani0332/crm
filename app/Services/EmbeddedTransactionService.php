@@ -11,6 +11,7 @@ use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
+use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
@@ -28,29 +29,52 @@ class EmbeddedTransactionService extends BaseService
         parent::__construct();
     }
 
-    public function retargetEpReminder($quote, int $quoteTypeId): void
+    public function isRetargetingEpReminderEnabled(): bool
     {
-        $epTransactions = $this->embeddedTransactionRepo->getDraftEpTransactions($quote->id, $quoteTypeId, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS);
-        foreach ($epTransactions as $epTransaction) {
-            $this->triggerBirdWorkflowForRetargetingEpReminder($quote, $quoteTypeId, $epTransaction);
+        return (bool) $this->getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER);
+    }
+    public function getAppStorageValueByKey(string $appStorageKeyName): string | bool
+    {
+        return match($appStorageKeyName) {
+            ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL => getAppStorageValueByKey($appStorageKeyName, useCache: true, cacheTime: 120),
+            ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL => getAppStorageValueByKey($appStorageKeyName, useCache: true, cacheTime: 120),
+            ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER => getAppStorageValueByKey($appStorageKeyName),
+            default => false,
+        };
+    }
+
+    public function retargetEpReminder(CarQuote $quote, int $quoteTypeId)
+    {
+        if (! $this->isRetargetingEpReminderEnabled()) {
+            LoggerService::info("retargetEpReminder: Retargeting EP Reminder is not enabled");
+            return false;
         }
+
+        $epTransactions = $this->embeddedTransactionRepo->getDraftEpTransactions($quote->id, $quoteTypeId, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS);
+        if($epTransactions->isEmpty()) {
+            LoggerService::info("retargetEpReminder: No draft EP transactions found");
+            return false;
+        }
+
+        $response = [];
+        foreach ($epTransactions as $epTransaction) {
+            $result = $this->triggerBirdWorkflowRetargetEpReminder($quote, $quoteTypeId, $epTransaction);
+            $response[] = ['embeddedTransactionCode' => $epTransaction->code, 'status_code' => $result->status_code, 'message' => $result->message ?? ''];
+        }
+
+        LoggerService::info("retargetEpReminder: Retargeting EP Reminder Successfully Triggered", extra: ['response' => $response]);
+
+        return $response;
     }
 
     /**
      * This function use to trigger bird workflow
      */
-    private function triggerBirdWorkflowForRetargetingEpReminder($quote, int $quoteTypeId, EmbeddedTransaction $epTransaction)
+    protected function triggerBirdWorkflowRetargetEpReminder(CarQuote $quote, int $quoteTypeId, EmbeddedTransaction $epTransaction)
     {
-        if (! (bool) getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER)) {
-            LoggerService::info('triggerBirdWorkflowForRetargetingEpReminder: Retargeting EP Reminder is not enabled');
-            return;
-        }
-
-        $birdWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL);
-
+        $birdWorkflowUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL);
         if (empty($birdWorkflowUrl)) {
-            LoggerService::info('triggerBirdWorkflowForRetargetingEpReminder: Configuration URL not found');
-            return;
+            return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Bird EP Reminder Workflow URL not found'];
         }
 
         $getRetargetingEpReminderUrl = route('get.retargeting-ep-reminder', ['quoteId' => $quote->id, 'quoteTypeId' => $quoteTypeId, 'embeddedTransactionCode' => $epTransaction->code]);
@@ -64,8 +88,8 @@ class EmbeddedTransactionService extends BaseService
             'getRetargetingEpReminderUrl' => $getRetargetingEpReminderUrl,
         ];
 
-        LoggerService::info('triggerBirdWorkflowForRetargetingEpReminder: ', extra: ['data' => $birdEmailData]);
-        app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
+        LoggerService::info('triggerBirdWorkflowRetargetEpReminder: ', extra: ['data' => $birdEmailData]);
+        return app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
     public function getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode)
@@ -104,7 +128,7 @@ class EmbeddedTransactionService extends BaseService
         }
 
         $templateId = $this->embeddedTransactionRepo->getEpRetargetingReminderEmailTemplateId($quoteData->embeddedProduct->short_code);
-        $birdCarEpReminderEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL);
+        $birdCarEpReminderEmailWorkflowUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL);
 
         if (empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
             LoggerService::info('getRetargetingCarEpReminderData: Template / Email Workflow URL not found', extra: ['templateId' => $templateId, 'birdReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl]);
