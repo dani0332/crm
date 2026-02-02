@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmbeddedProductOption extends Model
 {
-    use HasFactory, HasFactory, UsesTestConnection;
+    use HasFactory, UsesTestConnection;
 
     protected $fillable = ['embedded_product_id', 'price', 'variant', 'is_active'];
 
