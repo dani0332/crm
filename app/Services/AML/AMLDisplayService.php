@@ -17,7 +17,7 @@ class AMLDisplayService
         private readonly AMLResultsProcessor $resultsProcessor
     ) {}
 
-    public function prepareShowData(AML $aml, ?int $insuredId = null, ?int $customerId = null): array 
+    public function prepareShowData(AML $aml, ?int $insuredId = null, ?int $customerId = null): array
     {
         // Eager load relationships to avoid N+1
         $aml->load('quotetype');

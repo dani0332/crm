@@ -11,6 +11,7 @@ use App\Models\AML;
 use App\Models\PersonalQuote;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -22,11 +23,7 @@ class AMLQueryService
 {
     public function getAMLQuotes(object $request): \Illuminate\Contracts\Pagination\Paginator|array
     {
-        if (! $request->ajax()) {
-            return [];
-        }
-
-        if (! isset($request->quoteType) || empty($request->quoteType)) {
+        if (! $request->ajax() || ! isset($request->quoteType) || empty($request->quoteType)) {
             return [];
         }
 
@@ -61,24 +58,22 @@ class AMLQueryService
             QuoteTypes::HOME->id(),
         ];
 
-        if (! in_array($quoteTypeId, $personalQuoteTypes)) {
-            return $quoteRequestTable;
-        }
-
-        // Check if data has been migrated based on date
-        if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
-            return AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate)
-                ? 'personal_quotes'
-                : $quoteRequestTable;
-        }
-
-        // Check migration status based on search criteria
-        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
-            $createdDate = $this->getCreatedDateForSearch($request);
-            if ($createdDate) {
-                return AMLService::isDataMigrated($quoteTypeId, '', $createdDate)
+        if (in_array($quoteTypeId, $personalQuoteTypes)) {
+            // Check if data has been migrated based on date
+            if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
+                return AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate)
                     ? 'personal_quotes'
                     : $quoteRequestTable;
+            }
+
+            // Check migration status based on search criteria
+            if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
+                $createdDate = $this->getCreatedDateForSearch($request);
+                if ($createdDate) {
+                    return AMLService::isDataMigrated($quoteTypeId, '', $createdDate)
+                        ? 'personal_quotes'
+                        : $quoteRequestTable;
+                }
             }
         }
 
@@ -87,25 +82,29 @@ class AMLQueryService
 
     private function getCreatedDateForSearch(object $request): ?string
     {
+        $createdDate = null;
         $searchType = match ($request->searchType) {
             'cdbId' => DatabaseColumnsString::CODE,
             'customerEmail' => DatabaseColumnsString::EMAIL,
             default => null,
         };
 
-        if (! $searchType) {
-            return null;
-        }
-
-        try {
-            if ($request->searchType === 'id') {
-                return AML::where($searchType, $request->searchField)->firstOrFail()->created_at;
+        if ($searchType) {
+            try {
+                $createdDate = $request->searchType === 'id'
+                    ? AML::where($searchType, $request->searchField)->firstOrFail()->created_at
+                    : PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
+            } catch (\Exception $e) {
+                LoggerService::warning('Error getting created date for search', extra: [
+                    'search_type' => $request->searchType,
+                    'search_field' => $request->searchField,
+                    'exception' => $e->getMessage(),
+                ]);
+                $createdDate = null;
             }
-
-            return PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
-        } catch (\Exception $e) {
-            return null;
         }
+
+        return $createdDate;
     }
 
     private function buildBaseQuery(string $quoteRequestTable, object $request, int $quoteTypeId): Builder

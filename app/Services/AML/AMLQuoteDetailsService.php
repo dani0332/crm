@@ -171,8 +171,8 @@ class AMLQuoteDetailsService
         }
 
         $checkScreeningStatus = [
-            AMLStatusCode::AMLScreeningCleared => AMLStatusCode::AMLScreeningClearedInt,
-            AMLStatusCode::AMLScreeningFailed => AMLStatusCode::AMLScreeningFailedInt,
+            AMLStatusCode::AMLScreeningCleared => AMLStatusCode::AML_SCREENING_CLEARED_ID,
+            AMLStatusCode::AMLScreeningFailed => AMLStatusCode::AML_SCREENING_FAILED_ID,
         ];
 
         return $checkScreeningStatus[$amlStatusCode] ?? null;

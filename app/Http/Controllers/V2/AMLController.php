@@ -93,7 +93,7 @@ class AMLController extends Controller
         return inertia('Aml/DetailPage', $data);
     }
 
-    public function show(AML $aml, $insuredId = null, $customerId = null, AMLDisplayService $amlDisplayService)
+    public function show(AML $aml, AMLDisplayService $amlDisplayService, $insuredId = null, $customerId = null)
     {
         $data = $amlDisplayService->prepareShowData(
             $aml,
@@ -138,9 +138,9 @@ class AMLController extends Controller
     public function linkEntityDetails(Request $request, AMLEntityService $entityService)
     {
         $result = $entityService->linkEntityToQuote(
-            $request->quote_type_id, 
-            $request->quote_request_id, 
-            $request->entity_id, 
+            $request->quote_type_id,
+            $request->quote_request_id,
+            $request->entity_id,
             $request->triggeredFrom
         );
 

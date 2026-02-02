@@ -108,9 +108,19 @@ class AMLInsuredService
         return $messages[$customerType][$messageType];
     }
 
-    public function getInsuredDetailsByQuote(int $customerId, int $quoteTypeId, int $quoteRequestId): ?CustomerInsured
+    public function getInsuredDetailsByQuote(?int $customerId, int $quoteTypeId, int $quoteRequestId): ?CustomerInsured
     {
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
+
+        if ($customerId === null) {
+            LoggerService::info('No CustomerInsured record found - customer_id is null', [
+                'customer_id' => $customerId,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+            ]);
+
+            return null;
+        }
 
         $customerInsured = CustomerInsured::where([
             'quote_type_id' => $quoteTypeId,
