@@ -410,6 +410,11 @@ class QuoteDocumentController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
+    public function getS3TempUrl(Request $request)
+    {
+        return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
+    }
+
     private function updateAccuracyMatrixOnDeletion(QuoteDocument $document): void
     {
 
