@@ -582,9 +582,15 @@ class CustomerVerificationService
         };
     }
 
-    private function getQuoteTypeId($quote)
+    private function getQuoteTypeId(Model $quote): ?int
     {
-        return ($quote instanceof CarQuote) ? (int) QuoteTypes::CAR->id() : $quote->quote_type_id;
+        return match (true) {
+            $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
+            $quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
+            $quote instanceof PersonalQuote => $quote->quote_type_id,
+            // Add other quote types here as needed
+            default => null,
+        };
     }
 
     public function isCustomerVerificationEnabled(): bool
