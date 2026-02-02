@@ -57,10 +57,6 @@ class RetargetingEpReminderCallbackRequest extends FormRequest
             'customerId.integer' => 'Customer ID must be an integer',
             'subject.required' => 'Subject is required',
             'subject.string' => 'Subject must be a string',
-            'responseCode.required' => 'Response code is required',
-            'reminderNumber.required' => 'Reminder number is required',
-            'reminderNumber.integer' => 'Reminder number must be an integer',
-            'reminderNumber.in' => 'Reminder number must be 1 or 2',
         ];
     }
 }
