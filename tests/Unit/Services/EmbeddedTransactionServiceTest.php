@@ -347,7 +347,7 @@ describe('retargetEpReminder', function () {
         ]);
     });
 
-    test('processes all transactions when BirdService throws for one transaction', function () {
+    test('returns first success, second failure entry & and skip third transaction when BirdService throws on second transaction', function () {
         $epTransaction1 = Mockery::mock(EmbeddedTransaction::class)->makePartial();
         $epTransaction1->code = 'MDX-'.$this->quoteCode;
         $epTransaction2 = Mockery::mock(EmbeddedTransaction::class)->makePartial();
@@ -366,11 +366,11 @@ describe('retargetEpReminder', function () {
         $callCount = 0;
         $this->mock(BirdService::class, function ($mock) use ($workflowUrl, &$callCount) {
             $mock->shouldReceive('triggerWebHookRequest')
-                ->times(3)
+                ->twice()
                 ->with($workflowUrl, Mockery::type('object'))
                 ->andReturnUsing(function () use (&$callCount) {
                     $callCount++;
-                    if ($callCount === 1) {
+                    if ($callCount === 2) {
                         throw new \RuntimeException('Bird API connection failed');
                     }
 
@@ -391,21 +391,16 @@ describe('retargetEpReminder', function () {
         $result = $service->retargetEpReminder($quote, QuoteTypeId::Car);
 
         expect($result)->toBeArray();
-        expect($result)->toHaveCount(3);
+        expect($result)->toHaveCount(2);
         expect($result[0])->toMatchArray([
             'embeddedTransactionCode' => 'MDX-'.$this->quoteCode,
-            'status_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
-            'message' => 'Bird API connection failed',
+            'status_code' => Response::HTTP_OK,
+            'message' => 'OK',
         ]);
         expect($result[1])->toMatchArray([
             'embeddedTransactionCode' => 'ECB-'.$this->quoteCode,
-            'status_code' => Response::HTTP_OK,
-            'message' => 'OK',
-        ]);
-        expect($result[2])->toMatchArray([
-            'embeddedTransactionCode' => 'COU-'.$this->quoteCode,
-            'status_code' => Response::HTTP_OK,
-            'message' => 'OK',
+            'status_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            'message' => 'Bird API connection failed',
         ]);
     });
 });
