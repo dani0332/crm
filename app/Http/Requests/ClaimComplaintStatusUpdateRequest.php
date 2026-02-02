@@ -32,11 +32,9 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
                 'required',
                 'date',
                 function (string $attribute, mixed $value, \Closure $fail): void {
-                    // Frontend sends local time but may append "Z"; strip Z so we parse as app timezone, not UTC
-                    $requestComplaintDateTime = preg_replace('/Z$/i', '', (string) $value);
-                    $complaintDateTime = Carbon::parse($requestComplaintDateTime);
-                    $cutoff = now()->addMinute();
-                    if ($complaintDateTime->isAfter($cutoff)) {
+                    $complaintDateTime = Carbon::parse($value);
+                    $endOfToday = now()->endOfDay();
+                    if ($complaintDateTime->isAfter($endOfToday)) {
                         $fail('The complaint date cannot be in the future.');
                     }
                 },
@@ -84,6 +82,23 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
             $this->merge([
                 'notes' => trim($this->input('notes', '')),
             ]);
+        }
+
+        // Normalise complaint_datetime to app timezone (frontend may send ISO with Z; treat as local time like NextFollowUp)
+        if ($this->has('complaint_datetime')) {
+            $value = $this->input('complaint_datetime');
+            if (is_string($value) && $value !== '') {
+                $valueWithoutZ = preg_replace('/Z$/i', '', $value);
+                $appTimezone = config('app.timezone');
+                try {
+                    $parsed = Carbon::parse($valueWithoutZ, $appTimezone);
+                    $this->merge([
+                        'complaint_datetime' => $parsed->format('Y-m-d H:i:s'),
+                    ]);
+                } catch (\Throwable) {
+                    // Leave as-is; validation will fail with date rule
+                }
+            }
         }
     }
 }
