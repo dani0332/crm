@@ -7,6 +7,7 @@ namespace App\Services\CQF\NonMotor\LOBs;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\BikeQuote;
+use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
@@ -28,6 +29,10 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         int $renewalDaysThreshold,
         array &$epCodes = []
     ): ?Model {
+        if ($quote instanceof CarQuote) {
+            return $this->storeRenewalQuoteFromCarQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $epCodes);
+        }
+
         if (! $quote instanceof PersonalQuote) {
             return null;
         }
@@ -73,6 +78,88 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         return $newQuote;
+    }
+
+    /**
+     * Create Bike renewal lead from CarQuote (car_quote_request where vehicle_type_id is Bike).
+     *
+     * @param  array<int, string>  $epCodes
+     */
+    protected function storeRenewalQuoteFromCarQuote(
+        CarQuote $quote,
+        RenewalsUploadLeads $renewalsUploadLeads,
+        int $renewalDaysThreshold,
+        array &$epCodes = []
+    ): ?Model {
+        LoggerService::info(self::class.' - Storing bike CQF renewal quote from car_quote_request');
+
+        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
+        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
+        $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
+
+        $quoteUuid = $this->generateUUID();
+        if ($quoteUuid === null) {
+            LoggerService::error(self::class.' - Failed to generate UUID for bike renewal quote (from car)');
+
+            return null;
+        }
+
+        $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
+        $quoteData['policy_start_date'] = $policyStartDate;
+        $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
+
+        $newQuote = PersonalQuote::create($quoteData);
+
+        if ($newQuote) {
+            $newQuote->quoteDetail()->create([]);
+
+            $this->copyCarQuoteToBikeQuoteDetail($newQuote, $quote);
+
+            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
+
+            LoggerService::info(self::class.' - Bike CQF renewal quote created from car quote successfully', [
+                'previous_car_quote_id' => $quote->id,
+                'new_quote_uuid' => $newQuote->uuid,
+                'new_quote_id' => $newQuote->id,
+            ]);
+        }
+
+        return $newQuote;
+    }
+
+    /**
+     * Copy CarQuote (Bike vehicle type) detail to new BikeQuote. FR: Car Make → Bike Make, Car Model → Bike Model, etc.
+     */
+    protected function copyCarQuoteToBikeQuoteDetail(PersonalQuote $newQuote, CarQuote $carQuote): void
+    {
+        $bikeQuoteData = [
+            'personal_quote_id' => $newQuote->id,
+            'bike_company_to_insure' => null,
+            'year_of_manufacture' => $carQuote->getAttribute('Year_of_manufacture') ?? $carQuote->getAttribute('year_of_manufacture') ?? null,
+            'uae_license_held_for_id' => $carQuote->uae_license_held_for_id ?? null,
+            'bike_value_tier' => null,
+            'make_id' => $carQuote->car_make_id,
+            'model_id' => $carQuote->car_model_id,
+            'currently_insured_with' => $carQuote->currently_insured_with ?? null,
+            'cubic_capacity' => $carQuote->getAttribute('cylinder') ?? $carQuote->getAttribute('cubic_capacity') ?? null,
+            'emirate_of_registration_id' => $carQuote->emirate_of_registration_id ?? null,
+            'claim_history_id' => $carQuote->claim_history_id ?? null,
+            'bike_value' => $carQuote->car_value ?? null,
+        ];
+
+        $vehicleDetail = $carQuote->vehicle_detail_id;
+        $chassisNumber = $vehicleDetail?->chassis_number ?? null;
+        if ($chassisNumber !== null) {
+            $bikeQuoteData['chassis_number'] = $chassisNumber;
+        }
+
+        $newBikeQuote = BikeQuote::create($bikeQuoteData);
+
+        if ($chassisNumber !== null) {
+            $newBikeQuote->bikeQuoteRequestDetail()->create(['chassis_number' => $chassisNumber]);
+        }
+
+        LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
     }
 
     public function generateUUID(): ?string

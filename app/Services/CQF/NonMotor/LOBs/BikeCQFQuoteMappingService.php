@@ -9,6 +9,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\LookupRepository;
@@ -20,6 +21,10 @@ class BikeCQFQuoteMappingService implements CQFQuoteMappingInterface
 {
     public function mapRenewalQuote(Model $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
     {
+        if ($quote instanceof CarQuote) {
+            return $this->mapRenewalQuoteFromCarQuote($quote, $renewalsUploadLeads, $quoteUuid);
+        }
+
         if (! $quote instanceof PersonalQuote) {
             return [];
         }
@@ -63,8 +68,84 @@ class BikeCQFQuoteMappingService implements CQFQuoteMappingInterface
         return $quoteData;
     }
 
+    /**
+     * Map CarQuote (vehicle_type_id = Bike) to renewal quote data for Bike LOB.
+     *
+     * @return array<string, mixed>
+     */
+    protected function mapRenewalQuoteFromCarQuote(CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
+    {
+        $quoteData = [
+            'customer_id' => $quote->getAttribute('customer_id'),
+            'first_name' => $quote->first_name,
+            'last_name' => $quote->last_name,
+            'email' => $quote->email,
+            'mobile_no' => $quote->mobile_no,
+            'uuid' => $quoteUuid,
+            'code' => sprintf('%s%s', str_replace('-', '', QuoteTypes::BIKE->shortCode()), $quoteUuid),
+            'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+            'dob' => $quote->dob ?? null,
+            'advisor_id' => null,
+            'assignment_type' => null,
+            'renewal_batch' => null,
+            'renewal_batch_id' => null,
+            'quote_status_id' => QuoteStatusEnum::NewLead,
+            'renewal_import_code' => $renewalsUploadLeads->renewal_import_code,
+            'previous_quote_policy_number' => $quote->policy_number,
+            'previous_policy_start_date' => $quote->policy_start_date ?? null,
+            'previous_policy_expiry_date' => $quote->policy_expiry_date,
+            'previous_quote_policy_premium' => $quote->premium ?? null,
+            'previous_advisor_id' => $quote->advisor_id ?? null,
+            'previous_quote_id' => $quote->id,
+            'quote_type_id' => QuoteTypeId::Bike,
+            'nationality_id' => $quote->nationality_id ?? null,
+            'currently_insured_with_id' => is_numeric($quote->currently_insured_with ?? null) ? (int) $quote->currently_insured_with : null,
+            'insurance_provider_id' => $quote->insurance_provider_id ?? null,
+        ];
+
+        $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
+            ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
+            ->first();
+
+        if ($lookup) {
+            $quoteData['transaction_type_id'] = $lookup->id;
+        }
+
+        return $quoteData;
+    }
+
     public function mapFailedQuoteData(Model $quote): array
     {
+        if ($quote instanceof CarQuote) {
+            $make = $quote->carMake?->text ?? null;
+            $model = $quote->carModel?->text ?? null;
+            $year = $quote->getAttribute('Year_of_manufacture') ?? $quote->getAttribute('year_of_manufacture') ?? null;
+
+            return [
+                'customer_name' => trim($quote->first_name.' '.($quote->last_name ?? '')),
+                'email' => $quote->email ?? null,
+                'mobile_no' => $quote->mobile_no ?? null,
+                'quote_type' => str_replace('-', '', QuoteTypes::BIKE->shortCode()),
+                'insurer' => $quote->insuranceProvider?->text ?? null,
+                'product' => 'Bike insurance',
+                'product_type' => null,
+                'advisor' => null,
+                'policy_number' => $quote->policy_number ?? null,
+                'start_date' => $quote->policy_start_date ? Carbon::parse($quote->policy_start_date)->format('d/m/Y') : null,
+                'end_date' => $quote->policy_expiry_date ? Carbon::parse($quote->policy_expiry_date)->format('d/m/Y') : null,
+                'batch' => null,
+                'make' => $make,
+                'model' => $model,
+                'year' => $year,
+                'previous_advisor' => $quote->advisor?->email ?? null,
+                'previous_quote_policy_premium' => $quote->premium ?? null,
+                'source' => $quote->source ?? null,
+                'notes' => $quote->notes ?? null,
+                'plan_name' => null,
+                'errors' => $quote->validation_errors ?? null,
+            ];
+        }
+
         if (! $quote instanceof PersonalQuote) {
             return [];
         }

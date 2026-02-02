@@ -23,41 +23,41 @@ class NonMotorCQFRegistry
             'mapper' => \App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteMappingService::class,
             'storage' => \App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteStorageService::class,
         ],
-        QuoteTypes::YACHT->value => [
-            'validator' => \App\Services\CQF\NonMotor\LOBs\YachtCQFValidationService::class,
-            'mapper' => \App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteMappingService::class,
-            'storage' => \App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteStorageService::class,
-        ],
-        QuoteTypes::JETSKI->value => [
-            'validator' => \App\Services\CQF\NonMotor\LOBs\JetskiCQFValidationService::class,
-            'mapper' => \App\Services\CQF\NonMotor\LOBs\JetskiCQFQuoteMappingService::class,
-            'storage' => \App\Services\CQF\NonMotor\LOBs\JetskiCQFQuoteStorageService::class,
-        ],
-        QuoteTypes::CYCLE->value => [
-            'validator' => \App\Services\CQF\NonMotor\LOBs\CycleCQFValidationService::class,
-            'mapper' => \App\Services\CQF\NonMotor\LOBs\CycleCQFQuoteMappingService::class,
-            'storage' => \App\Services\CQF\NonMotor\LOBs\CycleCQFQuoteStorageService::class,
-        ],
-        QuoteTypes::PET->value => [
-            'validator' => \App\Services\CQF\NonMotor\LOBs\PetCQFValidationService::class,
-            'mapper' => \App\Services\CQF\NonMotor\LOBs\PetCQFQuoteMappingService::class,
-            'storage' => \App\Services\CQF\NonMotor\LOBs\PetCQFQuoteStorageService::class,
-        ],
-        QuoteTypes::HOME->value => [
-            'validator' => \App\Services\CQF\NonMotor\LOBs\HomeCQFValidationService::class,
-            'mapper' => \App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteMappingService::class,
-            'storage' => \App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteStorageService::class,
-        ],
-        QuoteTypes::LIFE->value => [
-            'validator' => \App\Services\CQF\NonMotor\LOBs\LifeCQFValidationService::class,
-            'mapper' => \App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteMappingService::class,
-            'storage' => \App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteStorageService::class,
-        ],
-        QuoteTypes::SAVINGS->value => [
-            'validator' => \App\Services\CQF\NonMotor\LOBs\SavingsCQFValidationService::class,
-            'mapper' => \App\Services\CQF\NonMotor\LOBs\SavingsCQFQuoteMappingService::class,
-            'storage' => \App\Services\CQF\NonMotor\LOBs\SavingsCQFQuoteStorageService::class,
-        ],
+        // QuoteTypes::YACHT->value => [
+        //     'validator' => \App\Services\CQF\NonMotor\LOBs\YachtCQFValidationService::class,
+        //     'mapper' => \App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteMappingService::class,
+        //     'storage' => \App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteStorageService::class,
+        // ],
+        // QuoteTypes::JETSKI->value => [
+        //     'validator' => \App\Services\CQF\NonMotor\LOBs\JetskiCQFValidationService::class,
+        //     'mapper' => \App\Services\CQF\NonMotor\LOBs\JetskiCQFQuoteMappingService::class,
+        //     'storage' => \App\Services\CQF\NonMotor\LOBs\JetskiCQFQuoteStorageService::class,
+        // ],
+        // QuoteTypes::CYCLE->value => [
+        //     'validator' => \App\Services\CQF\NonMotor\LOBs\CycleCQFValidationService::class,
+        //     'mapper' => \App\Services\CQF\NonMotor\LOBs\CycleCQFQuoteMappingService::class,
+        //     'storage' => \App\Services\CQF\NonMotor\LOBs\CycleCQFQuoteStorageService::class,
+        // ],
+        // QuoteTypes::PET->value => [
+        //     'validator' => \App\Services\CQF\NonMotor\LOBs\PetCQFValidationService::class,
+        //     'mapper' => \App\Services\CQF\NonMotor\LOBs\PetCQFQuoteMappingService::class,
+        //     'storage' => \App\Services\CQF\NonMotor\LOBs\PetCQFQuoteStorageService::class,
+        // ],
+        // QuoteTypes::HOME->value => [
+        //     'validator' => \App\Services\CQF\NonMotor\LOBs\HomeCQFValidationService::class,
+        //     'mapper' => \App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteMappingService::class,
+        //     'storage' => \App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteStorageService::class,
+        // ],
+        // QuoteTypes::LIFE->value => [
+        //     'validator' => \App\Services\CQF\NonMotor\LOBs\LifeCQFValidationService::class,
+        //     'mapper' => \App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteMappingService::class,
+        //     'storage' => \App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteStorageService::class,
+        // ],
+        // QuoteTypes::SAVINGS->value => [
+        //     'validator' => \App\Services\CQF\NonMotor\LOBs\SavingsCQFValidationService::class,
+        //     'mapper' => \App\Services\CQF\NonMotor\LOBs\SavingsCQFQuoteMappingService::class,
+        //     'storage' => \App\Services\CQF\NonMotor\LOBs\SavingsCQFQuoteStorageService::class,
+        // ],
     ];
 
     public function __construct(

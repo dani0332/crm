@@ -13,6 +13,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Jobs\SendFailedNonMotorRenewalsJob;
+use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
@@ -29,6 +30,11 @@ use Illuminate\Support\Sleep;
 
 class NonMotorCQFRenewalExecutionService
 {
+    /**
+     * Vehicle type id in car_quote_request for Bike (FR: bike quote can reside in car_quote_request when vehicle_type_id is Bike).
+     */
+    public const BIKE_VEHICLE_TYPE_ID = 13;
+
     private int $totalQuotesProcessed = 0;
     private int $errorQuotes = 0;
 
@@ -64,22 +70,27 @@ class NonMotorCQFRenewalExecutionService
         $quoteTypeId = (int) $quoteType->id();
         $shortCode = str_replace('-', '', $quoteType->shortCode());
 
-        $hasQuotes = PersonalQuote::whereDate('policy_expiry_date', $startDate)
-            ->where('quote_type_id', $quoteTypeId)
-            ->whereNotIn('quote_status_id', [
+        $paymentAndStatusFilter = [
+            'quote_status' => [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,
                 QuoteStatusEnum::CancellationPending,
-            ])
-            ->whereIn('payment_status_id', [
+            ],
+            'payment_status' => [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
-            ])
-            ->exists();
+            ],
+        ];
 
-        if (! $hasQuotes) {
+        $hasPersonalQuotes = $this->hasEligiblePersonalQuotes($startDate, $quoteTypeId, $paymentAndStatusFilter);
+
+        $hasCarBikeQuotes = $quoteType === QuoteTypes::BIKE
+            ? $this->hasEligibleBikeQuotesFromCar($startDate, $paymentAndStatusFilter)
+            : false;
+
+        if (! $hasPersonalQuotes && ! $hasCarBikeQuotes) {
             LoggerService::info(self::class." - No {$shortCode} quotes found for start date: {$startDate}");
 
             return;
@@ -87,32 +98,71 @@ class NonMotorCQFRenewalExecutionService
 
         $renewalsUploadLeads = $this->createRenewalsUploadLeads($shortCode);
 
-        PersonalQuote::whereDate('policy_expiry_date', $startDate)
-            ->where('quote_type_id', $quoteTypeId)
-            ->whereNotIn('quote_status_id', [
-                QuoteStatusEnum::PolicyCancelled,
-                QuoteStatusEnum::PolicyCancelledReissued,
-                QuoteStatusEnum::CancellationPending,
-            ])
-            ->whereIn('payment_status_id', [
-                PaymentStatusEnum::PAID,
-                PaymentStatusEnum::PARTIALLY_PAID,
-                PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PARTIAL_CAPTURED,
-            ])
-            ->with($this->getEagerLoadRelationsForLOB($quoteType))
-            ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold, $quoteType) {
-                $quoteCount = $quotes->count();
-                LoggerService::info(self::class." - Processing {$quoteCount} {$quoteType->value} CQF renewal quotes in chunk");
+        if ($hasPersonalQuotes) {
+            PersonalQuote::whereDate('policy_expiry_date', $startDate)
+                ->where('quote_type_id', $quoteTypeId)
+                ->whereNotIn('quote_status_id', $paymentAndStatusFilter['quote_status'])
+                ->whereIn('payment_status_id', $paymentAndStatusFilter['payment_status'])
+                ->with($this->getEagerLoadRelationsForLOB($quoteType))
+                ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold, $quoteType) {
+                    $quoteCount = $quotes->count();
+                    LoggerService::info(self::class." - Processing {$quoteCount} {$quoteType->value} CQF renewal quotes (personal) in chunk");
 
-                $this->processQuotesChunk($quotes, $renewalsUploadLeads, $renewalDaysThreshold, $quoteType);
-            });
+                    $this->processQuotesChunk($quotes, $renewalsUploadLeads, $renewalDaysThreshold, $quoteType);
+                });
+        }
+
+        if ($hasCarBikeQuotes) {
+            CarQuote::whereDate('policy_expiry_date', $startDate)
+                ->where('vehicle_type_id', self::BIKE_VEHICLE_TYPE_ID)
+                ->whereNotIn('quote_status_id', $paymentAndStatusFilter['quote_status'])
+                ->whereIn('payment_status_id', $paymentAndStatusFilter['payment_status'])
+                ->with(['carMake', 'carModel', 'insuranceProvider', 'advisor', 'vehicle_detail_id'])
+                ->chunkById(100, function ($quotes) use ($renewalsUploadLeads, $renewalDaysThreshold, $quoteType) {
+                    $quoteCount = $quotes->count();
+                    LoggerService::info(self::class." - Processing {$quoteCount} {$quoteType->value} CQF renewal quotes (from car_quote_request) in chunk");
+
+                    $this->processQuotesChunk($quotes, $renewalsUploadLeads, $renewalDaysThreshold, $quoteType);
+                });
+        }
 
         $this->finalizeProcessing($renewalsUploadLeads);
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Collection<int, PersonalQuote>  $quotes
+     * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
+     */
+    protected function hasEligiblePersonalQuotes(Carbon $startDate, int $quoteTypeId, array $filter): bool
+    {
+        return PersonalQuote::whereDate('policy_expiry_date', $startDate)
+            ->where('quote_type_id', $quoteTypeId)
+            ->whereNotIn('quote_status_id', $filter['quote_status'])
+            ->whereIn('payment_status_id', $filter['payment_status'])
+            ->exists();
+    }
+
+    /**
+     * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
+     */
+    protected function hasEligibleBikeQuotesFromPersonal(Carbon $startDate, array $filter): bool
+    {
+        return $this->hasEligiblePersonalQuotes($startDate, (int) QuoteTypes::BIKE->id(), $filter);
+    }
+
+    /**
+     * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
+     */
+    protected function hasEligibleBikeQuotesFromCar(Carbon $startDate, array $filter): bool
+    {
+        return CarQuote::whereDate('policy_expiry_date', $startDate)
+            ->where('vehicle_type_id', self::BIKE_VEHICLE_TYPE_ID)
+            ->whereNotIn('quote_status_id', $filter['quote_status'])
+            ->whereIn('payment_status_id', $filter['payment_status'])
+            ->exists();
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Collection<int, PersonalQuote|CarQuote>  $quotes
      */
     protected function processQuotesChunk($quotes, RenewalsUploadLeads $renewalsUploadLeads, int $renewalDaysThreshold, QuoteTypes $quoteType): void
     {
@@ -186,7 +236,7 @@ class NonMotorCQFRenewalExecutionService
         return RenewalsUploadLeads::create($uploadLeadData);
     }
 
-    protected function markQuoteAsCompleted(PersonalQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, bool $status): void
+    protected function markQuoteAsCompleted(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, bool $status): void
     {
         RenewalsUploadLeads::where('id', $renewalsUploadLeads->id)->update(['good' => DB::raw('good+1')]);
         $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote, $renewalsUploadLeads);
@@ -198,7 +248,7 @@ class NonMotorCQFRenewalExecutionService
     /**
      * @param  array<string, string>  $validationErrors
      */
-    protected function markQuoteAsFailed(PersonalQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, array $validationErrors, $mapper): void
+    protected function markQuoteAsFailed(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, array $validationErrors, $mapper): void
     {
         RenewalsUploadLeads::where('id', $renewalsUploadLeads->id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
         $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote, $renewalsUploadLeads);
@@ -216,7 +266,7 @@ class NonMotorCQFRenewalExecutionService
         LoggerService::info(self::class.' - Renewal quote process not created for quote (validation failed)');
     }
 
-    protected function createRenewalQuoteProcess(PersonalQuote $quote, RenewalsUploadLeads $renewalsUploadLeads): RenewalQuoteProcess
+    protected function createRenewalQuoteProcess(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads): RenewalQuoteProcess
     {
         return RenewalQuoteProcess::create([
             'renewals_upload_lead_id' => $renewalsUploadLeads->id,
