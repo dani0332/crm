@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\EmailStatusExport;
 use App\Facades\Ken;
@@ -34,17 +33,21 @@ use App\Http\Requests\UpdateCustomerRepliedRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
+use App\Jobs\ProcessLeadOCRDataComparison;
+use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\RunCQFJobs;
+use App\Jobs\TagPcpCustomerJob;
+use App\Jobs\TagPCQualifiedJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
-use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\CQF\CarCQFFileExportService;
+use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
@@ -53,17 +56,21 @@ use App\Services\MetLife\MetLifeApiService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
+    private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
+
     use GenericQueriesAllLobs, PrivateClient;
 
     private const REQUIRED_STRING = 'required|string';
@@ -72,13 +79,16 @@ class ApiController extends Controller
     public $inboundEmailsHookService;
     public $outboundEmailsHookService;
     protected $emailStatusService;
+    protected $quoteDocumentService;
+    protected $ocrReponseStructure;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService, QuoteDocumentService $quoteDocumentService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
         $this->outboundEmailsHookService = $outboundEmailsHookService;
+        $this->quoteDocumentService = $quoteDocumentService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -119,6 +129,8 @@ class ApiController extends Controller
 
     public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::PAYMENT_STATUS_UPDATE, $request->quoteId);
+
         return app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
     }
 
@@ -376,87 +388,46 @@ class ApiController extends Controller
         return $this->apiService->triggerAIGWorkflow($request);
     }
 
-    /**
-     * Process the one-time exercise to tag customers as Private Clients based on criteria
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function tagPrivateClients(Request $request)
     {
-        LoggerService::info(self::class.': Private client tag exercise has been initiated');
-
         $request->validate([
-            'batch_size' => 'required|integer|min:1',
-            'cursor' => 'nullable|string',
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
         ]);
 
-        try {
+        LoggerService::info(self::class.': Private client tag exercise has been initiated');
 
-            $batchSize = $request->input('batch_size');
-            $cursor = $request->input('cursor');
+        dispatch(new TagPCQualifiedJob($request->input('uuids')));
 
-            $quotes = PersonalQuote::with('customer')->whereNull('pc_qualified')
-                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                ->whereNotNull('policy_expiry_date')
-                ->where('policy_expiry_date', '>', now())
-                ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging job has been dispatched!');
+    }
 
-            if ($cursor) {
-                $quotes->where('id', '>', $cursor);
-            }
+    public function tagPcpCustomers(Request $request)
+    {
+        $request->validate([
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
+        ]);
 
-            $quotes = $quotes->limit($batchSize)->orderBy('created_at', 'asc')->get();
+        LoggerService::info(self::class.': PC customer tag exercise has been initiated');
 
-            if ($quotes->isEmpty()) {
-                LoggerService::info(self::class.': No quotes found without PCP tag');
+        dispatch(new TagPcpCustomerJob($request->input('uuids')));
 
-                return apiResponse(
-                    null,
-                    Response::HTTP_OK,
-                    'No quotes found without PCP tag.'
-                );
-            }
+        return apiResponse(null, Response::HTTP_OK, 'Private client tagging job has been dispatched!');
+    }
 
-            $nextCursor = $quotes->last()->id;
-            $hasMore = $quotes->count() === $batchSize;
+    public function removePcQualified(Request $request)
+    {
+        $request->validate([
+            'uuids' => 'required|array|min:1',
+            'uuids.*' => 'required',
+        ]);
 
-            $data = [
-                'data' => [
-                    'next_cursor' => $nextCursor,
-                    'has_more' => $hasMore,
-                ],
-                'message' => 'Private client tagging exercise has been completed.',
-                'status' => 'success',
-            ];
+        LoggerService::info(self::class.': PC qualified removal exercise has been initiated');
 
-            foreach ($quotes as $quote) {
+        dispatch(new RemovePcQualifiedJob($request->input('uuids')));
 
-                $customerData = [
-                    'customer_id' => $quote->customer->id,
-                    'customer_name' => $quote->customer->first_name.' '.$quote->customer->last_name,
-                    'email' => $quote->customer->email,
-                ];
-
-                LoggerService::info(self::class.': Private client tag marking activity started', extra: $customerData);
-
-                LoggerService::startQuoteLogging(QuoteTypes::getName($quote->quote_type_id)->refId($quote->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                $this->applyPcpTag($quote->uuid, $quote->quote_type_id);
-                LoggerService::endLogging();
-
-                LoggerService::info(self::class.': Private client tag marking activity completed', extra: $customerData);
-            }
-
-            return apiResponse($data, Response::HTTP_OK);
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.': Private client tagging exercise failed', exception: $e);
-
-            return apiResponse(
-                $e->getMessage(),
-                Response::HTTP_INTERNAL_SERVER_ERROR,
-                'An error occurred while completing the private client tagging exercise.'
-            );
-        }
-        LoggerService::info(self::class.': Private client tag exercise has been completed');
+        return apiResponse(null, Response::HTTP_OK, 'PC qualified removal job has been dispatched!');
     }
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
@@ -683,5 +654,85 @@ class ApiController extends Controller
                 'quote_uuid' => $validatedData['quote_uuid'],
             ], 500);
         }
+    }
+
+    public function exportFailedIlaLeads($quoteType)
+    {
+        try {
+            $response = app(FailedILAEmailService::class)->exportFailedIlaLeads($quoteType);
+
+            $fileResponse = $response['file'];
+            // Add custom header for total leads count
+            $fileResponse->headers->set('X-Total-Leads', $response['total_leads'] ?? 0);
+
+            return $fileResponse;
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.': Failed to export failed ILA leads', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export failed ILA leads',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+    public function getLeadOCRComparison(Request $request)
+    {
+        $request->validate(
+            [
+                'uuid' => 'required_without_all:start_date,end_date|string',
+                'start_date' => 'required_without:uuid|date_format:Y-m-d',
+                'end_date' => 'required_without:uuid|date_format:Y-m-d',
+                'recalculate_comparison' => 'sometimes|boolean',
+                'limit' => 'sometimes|integer|min:1|max:15',
+            ],
+            [
+                'uuid.required_without_all' => 'UUID is required when start date and end date are not provided',
+                'start_date.required_without' => 'Start date is required when UUID is not provided',
+                'start_date.date_format' => 'Start date must be in YYYY-MM-DD format',
+                'end_date.required_without' => 'End date is required when UUID is not provided',
+                'end_date.date_format' => 'End date must be in YYYY-MM-DD format',
+                'recalculate_comparison.boolean' => 'Recalculate comparison must be true or false',
+                'limit.integer' => 'Limit must be an integer',
+                'limit.min' => 'Limit must be at least 1',
+                'limit.max' => 'Limit cannot exceed 15',
+            ]
+        );
+
+        $startDate = $request->filled('start_date')
+        ? Carbon::createFromFormat('Y-m-d', $request->start_date)
+        : null;
+
+        $endDate = $request->filled('end_date')
+            ? Carbon::createFromFormat('Y-m-d', $request->end_date)
+            : null;
+
+        $recalculateComparison = $request->boolean('recalculate_comparison', false);
+        $limit = $request->integer('limit', 15);
+
+        if (getAppStorageValueByKey(ApplicationStorageEnums::OCR_UTIL_ENABLED) != '1') {
+            return apiResponse(null, Response::HTTP_OK, 'OCR util processing is disabled');
+        }
+
+        // Atomically set cache lock - returns false if key already exists
+        if (! Cache::add('lead_ocr_data_comparison', true, now()->addMinutes(10))) {
+            return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job is already running');
+        }
+
+        LoggerService::info(self::OCR_UTIL_FEAT.' - '.self::class.': Lead vs OCR data comparison is going to be initiated', extra: [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'uuid' => $request->uuid,
+            'recalculate_comparison' => $recalculateComparison,
+            'user_agent' => $request->userAgent(),
+            'ip' => $request->ip(),
+            'limit' => $limit,
+        ]);
+
+        ProcessLeadOCRDataComparison::dispatch($request->uuid, $startDate, $endDate, $recalculateComparison, $limit)
+            ->onConnection('redis')
+            ->onQueue('lead_ocr_data_comparison');
+
+        return apiResponse(null, Response::HTTP_OK, 'Lead vs OCR data comparison job has been initiated');
     }
 }

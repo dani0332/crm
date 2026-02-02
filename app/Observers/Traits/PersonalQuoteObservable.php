@@ -2,6 +2,7 @@
 
 namespace App\Observers\Traits;
 
+use App\Enums\BranchEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
@@ -21,7 +22,9 @@ use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BirdService;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
@@ -40,7 +43,6 @@ trait PersonalQuoteObservable
 
             if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                 $this->handlePolicyBookedOrSentToCustomer($personalQuote);
-                event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             }
 
             // For now PolicyCancelled Handling is only for Bike
@@ -79,9 +81,12 @@ trait PersonalQuoteObservable
             LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Dispatched for Home renewal quote: {$personalQuote->uuid}");
         }
 
+        if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicyBooked])) {
+            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
+        }
+
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             $this->handlePolicyIssued($personalQuote);
-            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
             if ($personalQuote->isHome()) {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$personalQuote->code.' Policy Issued ');
                 SendPolicyIssueWhatsappMessageJob::dispatch($personalQuote->uuid, $personalQuote->quote_type_id)->onQueue('insly');
@@ -177,6 +182,31 @@ trait PersonalQuoteObservable
                     'error' => $e->getMessage(),
                     'uuid' => $personalQuote->uuid,
                 ]);
+            }
+        }
+
+        if ($personalQuote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            try {
+                app(BranchAssignmentService::class)->saveBranchOverride($personalQuote, $personalQuote->quote_type_id);
+                PersonalQuote::withoutEvents(function () use ($personalQuote) {
+
+                    $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($personalQuote, QuoteTypes::getName($personalQuote->quote_type_id)->value);
+                    $branch_id = null;
+                    if ($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($personalQuote?->advisor?->primaryBranch?->branch_id, $personalQuote->quote_type_id);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+
+                    $personalQuote->update([
+                        'branch_id' => $branch_id,
+                    ]);
+                });
+            } catch (Exception $e) {
+                LoggerService::error('PersonalQuoteObserver - save branch data failed', [
+                    'uuid' => $personalQuote->uuid,
+                ], exception: $e);
             }
         }
     }

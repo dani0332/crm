@@ -1,8 +1,13 @@
 <script setup>
+import { setQueryStringFilters } from '../../Composables/utilities.js';
+
 defineProps({
   embeddedProduct: Object,
   ep_enums: Object,
   sync_statuses: Object,
+  sage_statuses: Array,
+  payment_statuses: Array,
+  policy_statuses: Array,
 });
 
 const dateFormat = date =>
@@ -28,6 +33,11 @@ const filters = reactive({
   chassis_number: '',
   sync_status: 'all',
   months: '',
+  ep_payment_status: [],
+  ep_api_status: [],
+  ep_sage_status: [],
+  tax_invoice_no: '',
+  tax_invoice_buyer_no: '',
 });
 
 const getLink = (quote_uuid, quote_type_id, ref_id) =>
@@ -51,7 +61,14 @@ const tableHeader = [
   { text: 'Vehicle', value: 'vehicle' },
   { text: 'Contribution Amount', value: 'contribution_amount', sortable: true },
   { text: 'Policy Issue Status', value: 'status' },
+
+  { text: 'EP Payment Status', value: 'ep_payment_status' },
+  { text: 'EP API Status', value: 'ep_api_status' },
+  { text: 'EP Sage Status', value: 'ep_sage_status' },
+
   { text: 'Certificate Number', value: 'certificate_number' },
+  { text: 'Tax Invoice Number', value: 'tax_invoice_no' },
+  { text: 'Tax Invoice Raised by Buyer Number', value: 'tax_invoice_buyer_no' },
   { text: 'Model Year', value: 'model_year' },
   { text: 'Make', value: 'make' },
   { text: 'Model', value: 'model' },
@@ -61,7 +78,13 @@ const tableHeader = [
 
 function resetFilters() {
   for (const key in filters) {
-    filters[key] = '';
+    if (Array.isArray(filters[key])) {
+      filters[key] = [];
+    } else if (key === 'sync_status') {
+      filters[key] = 'all';
+    } else {
+      filters[key] = '';
+    }
   }
   router.visit(
     route(
@@ -117,22 +140,6 @@ function filterTransactions(isValid) {
       },
     },
   );
-}
-
-function setQueryFilters() {
-  var currentParams = {
-    ...params,
-    ...serverOptions.value,
-  };
-  Object(currentParams).hasOwnProperty('rowsPerPage') &&
-    delete currentParams.rowsPerPage;
-  for (const [key] of Object.entries(currentParams)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = currentParams[key];
-    } else {
-      filters[key] = currentParams[key];
-    }
-  }
 }
 
 function exportReport() {
@@ -195,7 +202,13 @@ function reSync(code) {
 }
 
 onMounted(() => {
-  setQueryFilters();
+  setQueryStringFilters(
+    {
+      ...params,
+      ...serverOptions.value,
+    },
+    filters,
+  );
 });
 
 watch(
@@ -215,6 +228,18 @@ const filteredHeaders = computed(() => {
       );
     }
 
+    // Show Tax Invoice columns only for MDX, RDX, and ECB
+    if (
+      header.value === 'tax_invoice_no' ||
+      header.value === 'tax_invoice_buyer_no'
+    ) {
+      return [
+        page.props.ep_enums.ECB,
+        page.props.ep_enums.RDX,
+        page.props.ep_enums.MDX,
+      ].includes(page.props.embeddedProduct.detail.short_code);
+    }
+
     if (
       page.props.embeddedProduct.detail.short_code === page.props.ep_enums.ECB
     ) {
@@ -226,6 +251,25 @@ const filteredHeaders = computed(() => {
         'nationality',
         'vehicle',
       ];
+      return !excludeHeaders.includes(header.value);
+    } else if (
+      ![
+        page.props.ep_enums.ECB,
+        page.props.ep_enums.RDX,
+        page.props.ep_enums.MDX,
+      ].includes(page.props.embeddedProduct.detail.short_code)
+    ) {
+      /** exclude these columns (from filtering out) if its -- NOT -- from ECB,RDX,MDX */
+      const excludeHeaders = ['ep_api_status', 'ep_sage_status'];
+
+      if (
+        page.props.embeddedProduct.detail.short_code !==
+        page.props.ep_enums.COURIER
+      ) {
+        /** only exclude this column (from filtering out) for ECB,RDX,MDX AND COURIER */
+        excludeHeaders.push('ep_payment_status');
+      }
+
       return !excludeHeaders.includes(header.value);
     } else {
       let excludeHeaders = [
@@ -254,6 +298,37 @@ const showCertificateNumberFilter = computed(() => {
   }
   return false;
 });
+
+const showEpPaymentStatusFilter = (function () {
+  const reports = [
+    page.props.ep_enums.ECB,
+    page.props.ep_enums.RDX,
+    page.props.ep_enums.MDX,
+    page.props.ep_enums.COURIER,
+  ];
+
+  return reports.includes(page.props.embeddedProduct.detail.short_code);
+})();
+
+const showEpApiStatusFilter = (function () {
+  const reports = [
+    page.props.ep_enums.ECB,
+    page.props.ep_enums.RDX,
+    page.props.ep_enums.MDX,
+  ];
+
+  return reports.includes(page.props.embeddedProduct.detail.short_code);
+})();
+
+const showEpSageStatusFilter = (function () {
+  const reports = [
+    page.props.ep_enums.ECB,
+    page.props.ep_enums.RDX,
+    page.props.ep_enums.MDX,
+  ];
+
+  return reports.includes(page.props.embeddedProduct.detail.short_code);
+})();
 </script>
 
 <template>
@@ -357,6 +432,7 @@ const showCertificateNumberFilter = computed(() => {
             label="Name"
           />
         </div>
+
         <div>
           <x-tooltip placement="bottom">
             <label
@@ -410,6 +486,98 @@ const showCertificateNumberFilter = computed(() => {
             label="Sync Status"
           />
         </div>
+
+        <div v-if="showEpPaymentStatusFilter">
+          <x-select
+            v-model="filters.ep_payment_status"
+            placeholder="Select EP Payment Status"
+            :options="payment_statuses"
+            class="w-full"
+            multiple
+            truncate
+            filterable
+            filterPlaceholder="Filter EP Payment Status...."
+            label="EP Payment Status"
+          />
+        </div>
+
+        <div v-if="showEpApiStatusFilter">
+          <x-select
+            v-model="filters.ep_api_status"
+            placeholder="Select EP API Status"
+            :options="policy_statuses"
+            class="w-full"
+            multiple
+            truncate
+            filterable
+            filterPlaceholder="Filter EP API Status...."
+            label="EP API Status"
+          />
+        </div>
+
+        <div v-if="showEpSageStatusFilter">
+          <x-select
+            v-model="filters.ep_sage_status"
+            placeholder="Select EP Sage Status"
+            :options="sage_statuses"
+            class="w-full"
+            multiple
+            truncate
+            filterable
+            filterPlaceholder="Filter EP Sage Status...."
+            label="EP Sage Status"
+          />
+        </div>
+
+        <div
+          v-if="
+            [ep_enums.ECB, ep_enums.RDX, ep_enums.MDX].includes(
+              embeddedProduct.detail.short_code,
+            )
+          "
+        >
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Tax Invoice Number
+            </label>
+            <template #tooltip> Tax Invoice Number </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.tax_invoice_no"
+            type="search"
+            name="tax_invoice_no"
+            class="w-full"
+            placeholder="Search by Tax Invoice Number"
+          />
+        </div>
+
+        <div
+          v-if="
+            [ep_enums.ECB, ep_enums.RDX, ep_enums.MDX].includes(
+              embeddedProduct.detail.short_code,
+            )
+          "
+        >
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Tax Invoice Raised by Buyer Number
+            </label>
+            <template #tooltip>
+              Tax Invoice Raised by Buyer Number
+            </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.tax_invoice_buyer_no"
+            type="search"
+            name="tax_invoice_buyer_no"
+            class="w-full"
+            placeholder="Search by Tax Invoice Raised by Buyer Number"
+          />
+        </div>
       </div>
       <div class="flex flex-row-reverse gap-3">
         <div class="flex justify-self-end gap-3">
@@ -444,7 +612,11 @@ const showCertificateNumberFilter = computed(() => {
 
       <template
         #item-ref_id="item"
-        v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
+        v-if="
+          [ep_enums.ECB, ep_enums.MDX, ep_enums.RDX, ep_enums.COURIER].includes(
+            embeddedProduct.detail.short_code,
+          )
+        "
       >
         <SanitizeHtml
           v-if="item.quote_request"

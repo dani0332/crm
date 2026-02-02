@@ -3,6 +3,7 @@
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DatabaseConnectionEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
@@ -32,6 +33,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -565,6 +567,9 @@ if (! function_exists('getBase64FileInfo')) {
 if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
+        // Normalize NBSP/narrow NBSP to plain spaces so they can be handled like regular whitespace
+        $fileName = str_replace(["\u{00A0}", "\u{202F}"], ' ', $fileName);
+
         // Remove any Unicode control characters, including non-breaking spaces
         $fileName = preg_replace('/[\x{00}-\x{1F}\x{7F}\x{A0}]/u', '', $fileName);
 
@@ -796,7 +801,7 @@ if (! function_exists('checkAuthUserRole')) {
             return false;
         }
 
-        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::BusinessManager, RolesEnum::HomeManager, RolesEnum::LifeManager, RolesEnum::PetManager, RolesEnum::YachtManager, RolesEnum::TravelManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::JetskiManager])) {
+        if (Auth::user()->hasAnyRole(getManagerRoles())) {
             return true;
         } else {
             return false;
@@ -914,10 +919,6 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->where('code', $request->code);
         }
 
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $partialQuery->where('renewal_batch', $request->renewal_batch);
-        }
-
         if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $partialQuery->whereIn('quote_status_id', $request->quote_status);
         }
@@ -963,8 +964,8 @@ if (! function_exists('getCardViewRequestFilters')) {
             });
         }
 
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $partialQuery->where('renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && is_array($request->renewal_batches) && count($request->renewal_batches) > 0) {
+            $partialQuery->whereIn('renewal_batch_id', $request->renewal_batches);
         }
 
         if (isset($request->sub_team) && $request->sub_team != '') {
@@ -1097,13 +1098,22 @@ if (! function_exists('getAppStorageValueByKey')) {
     function getAppStorageValueByKey($keyName, $default = false, bool $useCache = false, $cacheTime = null)
     {
         $getStorageValue = function () use ($keyName, $default) {
-            $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+            try {
+                $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
-            if (! $query) {
-                return $default;
+                if (! $query) {
+                    return $default;
+                }
+
+                return $query->value;
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Handle missing table gracefully (e.g., during tests)
+                // This can happen when the application_storage table doesn't exist yet
+                if (str_contains($e->getMessage(), 'no such table')) {
+                    return $default;
+                }
+                throw $e;
             }
-
-            return $query->value;
         };
 
         if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {
@@ -1782,5 +1792,55 @@ if (! function_exists('getUserIpAddress')) {
 
         // Fallback to Laravel's built-in method
         return $request->ip();
+    }
+}
+
+if (! function_exists('formatEmiratesIdNumber')) {
+    function formatEmiratesIdNumber($idNumber): string
+    {
+        $eidNumber = str_replace('-', '', $idNumber);
+
+        return substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
+            .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
+    }
+}
+
+if (! function_exists('ensureWriteDefaultConnection')) {
+    /**
+     * Ensure the application's default DB connection is the write-enabled connection.
+     * This changes the global default connection for the current PHP process/request.
+     */
+    function ensureWriteDefaultConnection(array $context = []): void
+    {
+        if (DB::getDefaultConnection() !== DatabaseConnectionEnum::MYSQL_READ->value) {
+            return;
+        }
+
+        LoggerService::warning('ensureWriteDefaultConnection - Default DB connection is read replica; switching to write connection', context: [
+            ...$context,
+            'from' => DB::getDefaultConnection(),
+            'to' => DatabaseConnectionEnum::MYSQL->value,
+        ]);
+
+        DB::setDefaultConnection(DatabaseConnectionEnum::MYSQL->value);
+    }
+}
+
+if (! function_exists('getManagerRoles')) {
+    function getManagerRoles(): array
+    {
+        return [
+            RolesEnum::CarManager,
+            RolesEnum::HealthManager,
+            RolesEnum::TravelManager,
+            RolesEnum::LifeManager,
+            RolesEnum::HomeManager,
+            RolesEnum::PetManager,
+            RolesEnum::BikeManager,
+            RolesEnum::CycleManager,
+            RolesEnum::YachtManager,
+            RolesEnum::JetskiManager,
+            RolesEnum::BusinessManager,
+        ];
     }
 }

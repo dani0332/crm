@@ -4,7 +4,10 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
@@ -14,10 +17,10 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
+use App\Services\QuoteDocumentService;
 use App\Services\SageApiEmbeddedProductService;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class EmbeddedProductController extends Controller
 {
@@ -182,6 +185,10 @@ class EmbeddedProductController extends Controller
             ],
             'ep_enums' => EmbeddedProductEnum::asArray(),
             'sync_statuses' => CourierSyncStatusEnum::withLabels(),
+            'sage_statuses' => SageEmbeddedProductEnum::withLabels(),
+            // BenSampo enums expose withLabels() helpers (built from asArray())
+            'payment_statuses' => PaymentStatusEnum::withLabels(),
+            'policy_statuses' => EmbeddedTransactionEnum::withLabels(),
         ]);
     }
 
@@ -211,7 +218,25 @@ class EmbeddedProductController extends Controller
 
     public function force(Request $request)
     {
-        $file_content = Storage::disk('azureIM')->get($request->path);
+        // Generate a temporary URL for the file
+        $documentUrl = app(QuoteDocumentService::class)->getDocumentUrl($request->path);
+
+        // Check if the file exists
+        if ($documentUrl === null) {
+            return response()->json([
+                'error' => 'File not found on storage disk',
+            ], 404);
+        }
+
+        // Get the file content using the temporary URL
+        $file_content = file_get_contents($documentUrl);
+
+        // Check if file_get_contents failed
+        if ($file_content === false) {
+            return response()->json([
+                'error' => 'Failed to retrieve file content',
+            ], 500);
+        }
         $file = explode('/', $request->path);
         $lastIndex = count($file);
 

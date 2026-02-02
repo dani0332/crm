@@ -23,6 +23,7 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use League\CommonMark\Extension\SmartPunct\Quote;
 
@@ -136,6 +137,8 @@ class SendEmailCustomerService extends BaseService
             if ($result['code'] == 201) {
                 $result['sent'] = 1;
                 LoggerService::info("{$fnName} ---- Mail Sent Successfully");
+            } else {
+                LoggerService::error("{$fnName} ---- Mail Sent Failed: ", ['result' => $result, 'response' => $response]);
             }
 
             return $result;
@@ -346,7 +349,20 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
-            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
+            // Clean document URLs to avoid attachment name errors brevo send attachment error
+            $cleanedDocumentUrls = [];
+            if (! empty($emailData->documentUrl) && $emailData->documentUrl !== null) {
+                $documentUrls = is_array($emailData->documentUrl) ? $emailData->documentUrl : [$emailData->documentUrl];
+                foreach ($documentUrls as $documentURL) {
+                    if (! empty($documentURL)) {
+                        $cleanUrl = strtok($documentURL, '?');
+                        $cleanUrl = preg_replace('/\s+$/m', '', $cleanUrl);
+                        $cleanedDocumentUrls[] = $cleanUrl;
+                    }
+                }
+            }
+
+            $emailAttachments = ! empty($cleanedDocumentUrls) ? $cleanedDocumentUrls : null;
 
             if ($emailAttachments) {
                 LoggerService::info(self::class.' - sendRenewalsOcbEmail - Processing email attachments', extra: [
@@ -861,11 +877,15 @@ class SendEmailCustomerService extends BaseService
 
                         continue;
                     }
-                    $documentURL = $path !== '' ? $websiteURL.$path : '';
-                    $attachments[] = [
-                        'url' => $this->encodeUrl($documentURL),
-                        'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
-                    ];
+                    $documentExtension = app(QuoteDocumentService::class)->getDocumentExtension($path);
+                    $documentName = 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.$documentExtension;
+                    $documentURL = app(QuoteDocumentService::class)->getDocumentUrl($path);
+                    if ($documentURL) {
+                        $attachments[] = [
+                            'url' => $documentURL,
+                            'name' => $documentName,
+                        ];
+                    }
                 }
             }
 
@@ -1105,8 +1125,6 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
             $documents = $emailData->documents;
             $attachments = [];
             if (! empty($documents)) {
@@ -1117,11 +1135,15 @@ class SendEmailCustomerService extends BaseService
 
                         continue;
                     }
-                    $documentURL = $path !== '' ? $websiteURL.$path : '';
-                    $attachments[] = [
-                        'url' => $documentURL,
-                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->code.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
-                    ];
+                    $documentExtension = app(QuoteDocumentService::class)->getDocumentExtension($path);
+                    $documentName = 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->code.'.'.$documentExtension;
+                    $documentURL = app(QuoteDocumentService::class)->getDocumentUrl($path);
+                    if ($documentURL) {
+                        $attachments[] = [
+                            'url' => $documentURL,
+                            'name' => $documentName,
+                        ];
+                    }
                 }
             }
 
@@ -2014,6 +2036,52 @@ class SendEmailCustomerService extends BaseService
         }
 
         return true;
+    }
+
+    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $attemptedBy): ?object
+    {
+        $workflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW);
+        $itSupportEmail = getAppStorageValueByKey(ApplicationStorageEnums::IT_SUPPORT_EMAIL);
+
+        if (empty($workflowUrl)) {
+            LoggerService::error('Manager Deactivation Attempt: BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW not found in ApplicationStorage.');
+
+            return null;
+        }
+
+        if (empty($itSupportEmail)) {
+            LoggerService::error('Manager Deactivation Attempt: IT_SUPPORT_EMAIL not found in ApplicationStorage.');
+
+            return null;
+        }
+
+        $emailData = (object) [
+            'recipientEmail' => $itSupportEmail,
+            'recipientName' => 'IT Support AFIA',
+            'managerIds' => $baseManagers->pluck('id')->filter()->values()->implode(','),
+            'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
+            'timestamp' => now()->toDateTimeString(),
+        ];
+
+        /* Base user's manager's */
+        $managerEmails = $baseManagers
+            ->flatMap(fn ($manager) => collect(data_get($manager, 'managers', [])))
+            ->pluck('email')
+            ->filter()
+            ->values()
+            ->all();
+
+        if (! empty($managerEmails)) {
+            $emailData->managerEmails = $managerEmails;
+        }
+
+        LoggerService::info('Sending manager deactivation attempt email via Bird', [
+            'manager_ids' => $emailData->managerIds,
+            'attempted_by' => $attemptedBy->id,
+            'emailData' => $emailData,
+        ]);
+
+        return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
     }
 
 }

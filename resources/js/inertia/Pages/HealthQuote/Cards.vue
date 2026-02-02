@@ -13,6 +13,7 @@ const props = defineProps({
   teams: Object,
   areBothTeamsPresent: Boolean,
   is_renewal: String,
+  renewalBatches: Array,
 });
 
 const page = usePage();
@@ -68,7 +69,7 @@ const filters = reactive({
   is_ecommerce: '',
   is_renewal: props.is_renewal,
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
@@ -96,6 +97,13 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
   }));
 });
 
@@ -459,14 +467,28 @@ const validateDateRange = () => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <x-select
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
-        />
+          :options="renewalBatchOptions"
+          filterable
+          filterPlaceholder="Filter Renewal Batch...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.renewal_batches = renewalBatchOptions.map(
+                  renewalBatch => renewalBatch.value,
+                )
+              "
+              @clear="filters.renewal_batches = []"
+            />
+          </template>
+        </x-select>
 
         <DatePicker
           v-if="!hasAnyRole([rolesEnum.CarAdvisor])"

@@ -1,5 +1,6 @@
 <script setup>
 import { watch } from 'vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const notification = useNotifications('toast');
 
@@ -28,7 +29,8 @@ const props = defineProps({
   },
 });
 
-const { isRequired, isEmail, maxValue, maxCharacters } = useRules();
+const { isRequired, isEmail, maxValue, maxCharacters, emiratesNumber } =
+  useRules();
 const isEmptyField = ref(false);
 const isCommercialCar = ref(false);
 const isError = ref(false);
@@ -145,6 +147,9 @@ const quoteForm = useForm({
   company_contact_name:
     `${props.quote.first_name || ''} ${props.quote.last_name || ''}`.trim(),
   business_activity_id: props.quote?.business_activity_id || '',
+  driver_emirates_id_number:
+    applyEmiratesNumberMasking(props.quote?.driver_eid_number) || '',
+  driver_gender: props.quote?.driver_gender || null,
 });
 
 const isCompanyCar = computed(() => {
@@ -578,6 +583,10 @@ const emirateOptions = computed(() => {
     label: emirate.text,
   }));
 });
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (quoteForm.driver_emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -923,8 +932,42 @@ const emirateOptions = computed(() => {
           placeholder="Select Nationality"
         />
 
+        <x-input
+          v-if="
+            isPrivateCar &&
+            can(permissionEnum.COMPANY_PRIVATE_CAR_DRIVER_UPDATES)
+          "
+          label="DRIVER'S EMIRATES ID NUMBER"
+          required
+          placeholder="xxx-xxxx-xxxxxxx-x"
+          v-model="quoteForm.driver_emirates_id_number"
+          :rules="[isRequired, emiratesNumber]"
+          @input="
+            applyEmiratesIdNumMasking(quoteForm.driver_emirates_id_number)
+          "
+          class="w-full"
+          :error="quoteForm.errors.driver_emirates_id_number"
+        />
+
         <x-select
-          label="GENDER"
+          v-if="
+            isPrivateCar &&
+            can(permissionEnum.COMPANY_PRIVATE_CAR_DRIVER_UPDATES)
+          "
+          label="DRIVER'S GENDER"
+          required
+          v-model="quoteForm.driver_gender"
+          :options="[
+            { value: 'male', label: 'Male' },
+            { value: 'Female', label: 'female' },
+          ]"
+          placeholder="Driver's Gender"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.driver_gender"
+        />
+
+        <x-select
+          :label="isPrivateCar ? 'Owner\'s GENDER' : 'GENDER'"
           v-model="quoteForm.gender"
           :options="gender"
           placeholder="Gender"

@@ -20,6 +20,7 @@ class RDX extends MDX
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
+            'paymentStatus',
         ];
     }
 

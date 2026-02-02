@@ -4,9 +4,9 @@ namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\SageEmbeddedProductEnum;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -38,7 +38,12 @@ class EmbeddedProduct
             'VEHICLE',
             'CONTRIBUTION AMOUNT',
             'POLICY ISSUE STATUS',
+            'EP Payment Status',
+            'EP API Status',
+            'EP Sage Status',
             'CERTIFICATE NUMBER',
+            'Tax Invoice Number',
+            'Tax Invoice Raised by Buyer Number',
         ];
     }
 
@@ -57,7 +62,12 @@ class EmbeddedProduct
             $certificate->vehicle,
             $certificate->contribution_amount,
             $certificate->status,
+            $certificate->ep_payment_status,
+            $certificate->ep_api_status,
+            $certificate->ep_sage_status,
             $certificate->certificate_number,
+            $certificate->tax_invoice_no ?? '',
+            $certificate->tax_invoice_buyer_no ?? '',
         ];
     }
 
@@ -104,7 +114,14 @@ class EmbeddedProduct
             $item->name = $firstName.' '.$lastName;
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
+            $item->ep_payment_status = $item->paymentStatus?->text ?? '';
+            $item->ep_api_status = $item->policy_status ?? '';
+            $item->ep_sage_status = $item->sage_status instanceof SageEmbeddedProductEnum
+                ? $item->sage_status->value
+                : ($item->sage_status ?? '');
             $item->emirates_id_number = $emiratesIdNumber;
+            $item->tax_invoice_no = $item->tax_invoice_no ?? '';
+            $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
                 $item->sync_status = $item->courier_sync_status_info;
@@ -160,6 +177,7 @@ class EmbeddedProduct
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
+            'paymentStatus',
         ];
     }
 
@@ -168,13 +186,16 @@ class EmbeddedProduct
         $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
             $query->where('id', $ep->id);
         });
+
         $dataset = $productTransaction->with($this->getReportRelations())
             ->join('payments', function ($join) {
                 $join->on('embedded_transactions.id', '=', 'payments.paymentable_id')
                     ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
             })
             ->where('embedded_transactions.is_selected', true)
-            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->when(! empty($filters['ep_payment_status'] ?? null), function ($query) use ($filters) {
+                $query->whereIn('embedded_transactions.payment_status_id', (array) $filters['ep_payment_status']);
+            })
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
             })
@@ -213,6 +234,22 @@ class EmbeddedProduct
             })
             ->when(isset($filters['sync_status']), function ($query) use ($filters) {
                 $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
+            })
+            ->when(! empty($filters['ep_api_status'] ?? null), function ($query) use ($filters) {
+                $query->whereIn('embedded_transactions.policy_status', (array) $filters['ep_api_status']);
+            })
+            ->when(! empty($filters['ep_sage_status'] ?? null), function ($query) use ($filters) {
+                $sageStatusIds = SageEmbeddedProductEnum::idsFromValues((array) $filters['ep_sage_status']);
+
+                if (! empty($sageStatusIds)) {
+                    $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
+                }
+            })
+            ->when(isset($filters['tax_invoice_no']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.tax_invoice_no', 'like', "%{$filters['tax_invoice_no']}%");
+            })
+            ->when(isset($filters['tax_invoice_buyer_no']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.tax_invoice_buyer_no', 'like', "%{$filters['tax_invoice_buyer_no']}%");
             });
 
         $dataset = $this->updateQuery($dataset, $filters);
