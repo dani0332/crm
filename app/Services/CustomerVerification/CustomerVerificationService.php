@@ -422,7 +422,7 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
+                'quote_type' => $this->getQuoteType($quote),
             ]);
 
             return;
@@ -435,7 +435,7 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => QuoteTypes::CAR->value,
+                'quote_type' => $this->getQuoteType($quote),
                 'error' => $e->getMessage(),
             ]);
         }
@@ -576,6 +576,7 @@ class CustomerVerificationService
     {
         return match (true) {
             $quote instanceof CarQuote => QuoteTypes::CAR->value,
+            $quote instanceof HealthQuote => QuoteTypes::HEALTH->value,
             $quote instanceof PersonalQuote => QuoteTypes::PERSONAL->value,
             // Add other quote types here as needed
             default => null,
