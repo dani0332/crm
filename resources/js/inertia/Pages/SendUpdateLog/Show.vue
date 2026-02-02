@@ -933,7 +933,7 @@ const cancelOptionsList = computed(() => {
     />
 
     <EpLogs
-      v-if="props.sendUpdateLog.category.code == props.sendUpdateStatusEnum.CI"
+      v-if="props.sendUpdateLog?.category?.code == props.sendUpdateStatusEnum.CI"
       :type="modelClass"
       :id="$page.props.sendUpdateLog.id"
       :expanded="true"
