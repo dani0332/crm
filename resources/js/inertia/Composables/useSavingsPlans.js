@@ -174,7 +174,7 @@ export function useSavingsPlans(options = {}) {
   const getPaymentTermLabel = paymentTerm => {
     const term = parseInt(paymentTerm);
     const labels = {
-      0: 'Lumpsum',
+      0: 'Single Payment',
       1: 'Annual',
       3: 'Quarterly',
       6: 'Semi-Annual',
