@@ -34,9 +34,9 @@ class EmbeddedTransactionService extends BaseService
     {
         return (bool) $this->getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER);
     }
-    public function getAppStorageValueByKey(string $appStorageKeyName): string | bool
+    public function getAppStorageValueByKey(string $appStorageKeyName): string|bool
     {
-        return match($appStorageKeyName) {
+        return match ($appStorageKeyName) {
             ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL => getAppStorageValueByKey($appStorageKeyName, useCache: true, cacheTime: 120),
             ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL => getAppStorageValueByKey($appStorageKeyName, useCache: true, cacheTime: 120),
             ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER => getAppStorageValueByKey($appStorageKeyName),
@@ -47,23 +47,39 @@ class EmbeddedTransactionService extends BaseService
     public function retargetEpReminder(CarQuote $quote, int $quoteTypeId)
     {
         if (! $this->isRetargetingEpReminderEnabled()) {
-            LoggerService::info("retargetEpReminder: Retargeting EP Reminder is not enabled");
+            LoggerService::info('retargetEpReminder: Retargeting EP Reminder is not enabled');
+
             return false;
         }
 
         $epTransactions = $this->embeddedTransactionRepo->getDraftEpTransactions($quote->id, $quoteTypeId, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS);
-        if($epTransactions->isEmpty()) {
-            LoggerService::info("retargetEpReminder: No draft EP transactions found");
+        if ($epTransactions->isEmpty()) {
+            LoggerService::info('retargetEpReminder: No draft EP transactions found');
+
             return false;
         }
 
         $response = [];
         foreach ($epTransactions as $epTransaction) {
-            $result = $this->triggerBirdWorkflowRetargetEpReminder($quote, $quoteTypeId, $epTransaction);
-            $response[] = ['embeddedTransactionCode' => $epTransaction->code, 'status_code' => $result->status_code, 'message' => $result->message ?? ''];
+            try {
+                $result = $this->triggerBirdWorkflowRetargetEpReminder($quote, $quoteTypeId, $epTransaction);
+                $response[] = ['embeddedTransactionCode' => $epTransaction->code, 'status_code' => $result->status_code, 'message' => $result->message ?? ''];
+            } catch (\Throwable $e) {
+                LoggerService::error('retargetEpReminder: Bird workflow request failed for transaction', extra: [
+                    'embeddedTransactionCode' => $epTransaction->code,
+                    'quoteId' => $quote->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $response[] = [
+                    'embeddedTransactionCode' => $epTransaction->code,
+                    'status_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
+                    'message' => $e->getMessage(),
+                ];
+                break;
+            }
         }
 
-        LoggerService::info("retargetEpReminder: Retargeting EP Reminder Successfully Triggered", extra: ['response' => $response]);
+        LoggerService::info('retargetEpReminder: Retargeting EP Reminder processing completed', extra: ['response' => $response]);
 
         return $response;
     }
@@ -90,6 +106,7 @@ class EmbeddedTransactionService extends BaseService
         ];
 
         LoggerService::info('triggerBirdWorkflowRetargetEpReminder: ', extra: ['data' => $birdEmailData]);
+
         return $this->birdService->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
@@ -108,12 +125,14 @@ class EmbeddedTransactionService extends BaseService
         $vehicle = $quoteData->vehicle ?? null;
         $plan = $quoteData->plan ?? null;
 
-        if($quote?->quote_status_id != QuoteStatusEnum::PolicyBooked) {
+        if ($quote?->quote_status_id != QuoteStatusEnum::PolicyBooked) {
             LoggerService::info('getRetargetingCarEpReminderData: Quote is not booked', extra: ['quote_status_id' => $quote?->quote_status_id]);
+
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Quote is not booked');
         }
-        if($embeddedTransaction?->payment_status_id != PaymentStatusEnum::DRAFT) {
+        if ($embeddedTransaction?->payment_status_id != PaymentStatusEnum::DRAFT) {
             LoggerService::info('getRetargetingCarEpReminderData: Embedded transaction payment status is not draft', extra: ['et_payment_status_id' => $embeddedTransaction?->payment_status_id]);
+
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Embedded transaction payment status is not draft');
         }
 
@@ -125,6 +144,7 @@ class EmbeddedTransactionService extends BaseService
             || empty($vehicle->make) || empty($vehicle->model)
         ) {
             LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quoteData]);
+
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
@@ -133,14 +153,17 @@ class EmbeddedTransactionService extends BaseService
 
         if (empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
             LoggerService::info('getRetargetingCarEpReminderData: Template / Email Workflow URL not found', extra: ['templateId' => $templateId, 'birdReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl]);
+
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Template / Email Workflow URL not found');
         }
 
         $buyNowUrlQueryParams = [];
-        if (! empty($plan?->id))
+        if (! empty($plan?->id)) {
             $buyNowUrlQueryParams['planId'] = $plan->id;
-        if (! empty($plan?->provider_code))
+        }
+        if (! empty($plan?->provider_code)) {
             $buyNowUrlQueryParams['providerCode'] = $plan->provider_code;
+        }
 
         $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid
             .'/payment/?'.http_build_query([
@@ -161,9 +184,9 @@ class EmbeddedTransactionService extends BaseService
                 'buyNowUrl' => $buyNowUrl,
                 'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
                 'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
-                "epShortCode" => $quoteData->embeddedProduct->short_code,
-                "vehicleMake" => $vehicle->make,
-                "vehicleModel" => $vehicle->model
+                'epShortCode' => $quoteData->embeddedProduct->short_code,
+                'vehicleMake' => $vehicle->make,
+                'vehicleModel' => $vehicle->model,
             ],
         ];
 

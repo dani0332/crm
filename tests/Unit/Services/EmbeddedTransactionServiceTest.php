@@ -78,7 +78,7 @@ describe('getRetargetingCarEpReminderData', function () {
         expect($json['message'])->toBe('Quote not found');
         expect($json['status'])->toBe(Response::HTTP_NOT_FOUND);
     });
-    
+
     test('return 404 when required data is missing', function () {
         $rawData = embeddedTransactionServiceRawQuoteData([
             'quote.uuid' => null,
@@ -346,6 +346,68 @@ describe('retargetEpReminder', function () {
             'message' => 'OK',
         ]);
     });
+
+    test('processes all transactions when BirdService throws for one transaction', function () {
+        $epTransaction1 = Mockery::mock(EmbeddedTransaction::class)->makePartial();
+        $epTransaction1->code = 'MDX-'.$this->quoteCode;
+        $epTransaction2 = Mockery::mock(EmbeddedTransaction::class)->makePartial();
+        $epTransaction2->code = 'ECB-'.$this->quoteCode;
+        $epTransaction3 = Mockery::mock(EmbeddedTransaction::class)->makePartial();
+        $epTransaction3->code = 'COU-'.$this->quoteCode;
+        $epTransactions = collect([$epTransaction1, $epTransaction2, $epTransaction3]);
+
+        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
+        $repoMock->shouldReceive('getDraftEpTransactions')
+            ->once()
+            ->with($this->quoteId, QuoteTypeId::Car, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
+            ->andReturn($epTransactions);
+
+        $workflowUrl = 'https://test-bird.example/ep-reminder/invoke-sync';
+        $callCount = 0;
+        $this->mock(BirdService::class, function ($mock) use ($workflowUrl, &$callCount) {
+            $mock->shouldReceive('triggerWebHookRequest')
+                ->times(3)
+                ->with($workflowUrl, Mockery::type('object'))
+                ->andReturnUsing(function () use (&$callCount) {
+                    $callCount++;
+                    if ($callCount === 1) {
+                        throw new \RuntimeException('Bird API connection failed');
+                    }
+
+                    return (object) ['status_code' => Response::HTTP_OK, 'message' => 'OK'];
+                });
+        });
+
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
+        $service->shouldReceive('isRetargetingEpReminderEnabled')->once()->andReturn(true);
+        $service->shouldReceive('getAppStorageValueByKey')
+            ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
+            ->andReturn($workflowUrl);
+
+        $quote = Mockery::mock(CarQuote::class)->makePartial();
+        $quote->id = $this->quoteId;
+        $quote->code = $this->quoteCode;
+
+        $result = $service->retargetEpReminder($quote, QuoteTypeId::Car);
+
+        expect($result)->toBeArray();
+        expect($result)->toHaveCount(3);
+        expect($result[0])->toMatchArray([
+            'embeddedTransactionCode' => 'MDX-'.$this->quoteCode,
+            'status_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            'message' => 'Bird API connection failed',
+        ]);
+        expect($result[1])->toMatchArray([
+            'embeddedTransactionCode' => 'ECB-'.$this->quoteCode,
+            'status_code' => Response::HTTP_OK,
+            'message' => 'OK',
+        ]);
+        expect($result[2])->toMatchArray([
+            'embeddedTransactionCode' => 'COU-'.$this->quoteCode,
+            'status_code' => Response::HTTP_OK,
+            'message' => 'OK',
+        ]);
+    });
 });
 
 describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', function () {
@@ -418,7 +480,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
         expect($result)->toHaveCount(1);
         expect($result[0])->toMatchArray([
             'embeddedTransactionCode' => 'MDX-'.$this->quoteCode,
-            'status_code' => Response::HTTP_NOT_FOUND
+            'status_code' => Response::HTTP_NOT_FOUND,
         ]);
     });
 
@@ -439,6 +501,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
                 ->once()
                 ->with($workflowUrl, Mockery::on(function ($data) use (&$capturedData) {
                     $capturedData = $data;
+
                     return true;
                 }))
                 ->andReturn((object) ['status_code' => Response::HTTP_OK, 'message' => 'OK']);
