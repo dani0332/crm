@@ -185,7 +185,7 @@ const openFile = file => {
     : file.path;
 
   return openTempUrl(documentPath);
-}
+};
 
 const viewDocument = id => {
   viewDocumentLoader.value = true;
