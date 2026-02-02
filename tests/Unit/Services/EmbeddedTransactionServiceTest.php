@@ -16,7 +16,6 @@ use App\Services\BirdService;
 use App\Services\EmailStatusService;
 use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
-use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 
 beforeEach(function () {
     $this->quoteUuid = 'RETARGET003';
