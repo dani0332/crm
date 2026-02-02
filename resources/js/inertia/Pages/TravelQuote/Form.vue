@@ -526,10 +526,12 @@ const floorLabel = computed(() => {
 });
 
 const emirateOptions = computed(() => {
-  return props.emirates.map(emirate => ({
-    value: emirate.text,
-    label: emirate.text,
-  }));
+  return props.emirates
+    .map(emirate => {
+      const label = emirate?.text ?? emirate?.label ?? '';
+      return label ? { value: label, label } : null;
+    })
+    .filter(Boolean);
 });
 </script>
 

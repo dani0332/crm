@@ -578,10 +578,12 @@ watch(
 );
 
 const emirateOptions = computed(() => {
-  return props.emirates.map(emirate => ({
-    value: emirate.text,
-    label: emirate.text,
-  }));
+  return props.emirates
+    .map(emirate => {
+      const label = emirate?.text ?? emirate?.label ?? '';
+      return label ? { value: label, label } : null;
+    })
+    .filter(Boolean);
 });
 
 const applyEmiratesIdNumMasking = emiratesId =>
@@ -889,7 +891,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 class="w-full"
                 :disabled="isCourierStatusPending"
               />
-      <!--              label="City" -->
             </div>
             <div class="w-1/2 px-2">
               <x-input

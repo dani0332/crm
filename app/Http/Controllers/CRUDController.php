@@ -495,7 +495,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
-            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+            $emirates = Emirate::getOptions("id", "text", true);
 
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
@@ -1450,7 +1450,7 @@ class CRUDController extends Controller
                 $record->company_contact_name = $record->first_name.' '.$record->last_name;
             }
 
-            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+            $emirates = Emirate::getOptions('id', 'text', true);
 
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,

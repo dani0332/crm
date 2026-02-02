@@ -257,7 +257,7 @@ class TravelController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
         $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $emirates = Emirate::getOptions('id', 'text', true);
         $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
         $sendUpdateOptions = [];
@@ -405,7 +405,7 @@ class TravelController extends Controller
 
         $model = $this->genericModel;
         $subSources = $this->lookupService->getSubSource();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $emirates = Emirate::getOptions('id', 'text', true);
 
         LoggerService::info('Travel create method called with parameters', [
             'type' => $request->input('type'),
