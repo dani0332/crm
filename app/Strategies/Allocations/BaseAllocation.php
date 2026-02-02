@@ -303,15 +303,16 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
             return;
         }
+        // temporary disable non advisor email for savings quote
         if (! $this->lead->isSuppressIntroEmail()) {
-            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
-                $this->lead,
-                $this->quoteType->value,
-                isNonAdvisorEmail: true,
-            );
+            // app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+            //     $this->lead,
+            //     $this->quoteType->value,
+            //     isNonAdvisorEmail: true,
+            // );
         }
 
-        $this->lead->touch('non_advisor_email_sent_at');
+        // $this->lead->touch('non_advisor_email_sent_at');
         LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
