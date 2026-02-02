@@ -1153,38 +1153,22 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        // Base query with optimized joins and indexes
-        $query = DB::table('payments')
-            ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code');
-
-        // Apply user/team filtering early to reduce dataset
-        if ($isManager) {
-            // For managers, join user_team and filter by team_id
-            $query->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
-                ->whereIn('user_team.team_id', $userTeamIds);
-        } else {
-            // For non-managers, filter directly by advisor_id (more efficient)
-            $query->where('pq.advisor_id', $user->id);
-        }
-
-        // Optimize OR conditions by using UNION ALL for better index usage
-        // This allows each branch to use specific indexes effectively
-        $authorisedQuery = (clone $query)
-            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
-            ->select('payments.id');
-
-        $insurerPaymentQuery = (clone $query)
-            ->where('payments.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
-            ->whereIn('payments.payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
-            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
-            ->select('payments.id');
-
-        // Use UNION ALL and COUNT DISTINCT to get unique payment count
-        return DB::table(DB::raw("({$authorisedQuery->toSql()} UNION ALL {$insurerPaymentQuery->toSql()}) as combined_payments"))
-            ->mergeBindings($authorisedQuery)
-            ->mergeBindings($insurerPaymentQuery)
-            ->count(DB::raw('DISTINCT id'));
+        return DB::table('payments')
+            ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
+            ->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
+            ->where(function ($query) use ($thirtyDaysAgo) {
+                $query->where(function ($q) use ($thirtyDaysAgo) {
+                    $q->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                        ->where('payments.authorized_at', '>=', $thirtyDaysAgo);
+                });
+            })
+            ->when($isManager, function ($query) use ($userTeamIds) {
+                $query->whereIn('user_team.team_id', $userTeamIds);
+            }, function ($query) use ($user) {
+                $query->where('pq.advisor_id', $user->id);
+            })
+            ->distinct()
+            ->count('payments.id');
     }
 
     public function fetchMainQuotePayment($quote)

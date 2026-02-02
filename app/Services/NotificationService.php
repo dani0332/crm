@@ -164,10 +164,6 @@ class NotificationService extends BaseService
                 $query->where(function ($q) use ($thirtyDaysAgo) {
                     $q->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
                         ->where('authorized_at', '>=', $thirtyDaysAgo);
-                })->orWhere(function ($q) use ($thirtyDaysAgo) {
-                    $q->where('payment_methods_code', PaymentMethodsEnum::InsurerPayment)
-                        ->whereIn('payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
-                        ->where('collection_date', '>=', $thirtyDaysAgo);
                 });
             })
             ->exists();
