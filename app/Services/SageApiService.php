@@ -385,15 +385,15 @@ class SageApiService
                         ]);
                         $quoteSageRequest->quoteTypeId = $quoteTypeId;
                         $quoteSageRequest->userId = $sageRequestPayload->userId;
-                        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : Start Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################');
+                        LoggerService::info(self::class . ' fn: ' . __FUNCTION__ . ' - ################################## Reversal Of EP Booking : Start Sage booking Process for : ' . $quote->code . ' , EP Transaction Code : ' . $ePTransaction->code . ' ##################################');
                         $embeddedProductSageBookingResponse = (new SageApiEmbeddedProductService)->bookReversalOfEmbeddedProductOnSage([$quote, $preparedData['sendUpdateLog'], $quoteSageRequest, $ePTransaction], $ePTransaction?->product?->embeddedProduct?->short_code);
-                        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : End Sage booking Process for : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################', extra: $embeddedProductSageBookingResponse);
-                        if (! $embeddedProductSageBookingResponse['status']) {
+                        LoggerService::info(self::class . ' fn: ' . __FUNCTION__ . ' - ################################## Reversal Of EP Booking : End Sage booking Process for : ' . $quote->code . ' , EP Transaction Code : ' . $ePTransaction->code . ' ##################################', extra: $embeddedProductSageBookingResponse);
+                        if (!$embeddedProductSageBookingResponse['status']) {
                             return $embeddedProductSageBookingResponse;
                         }
                     } else {
                         LoggerService::info(
-                            self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : not eligible : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################',
+                            self::class . ' fn: ' . __FUNCTION__ . ' - ################################## Reversal Of EP Booking : not eligible : ' . $quote->code . ' , EP Transaction Code : ' . $ePTransaction->code . ' ##################################',
                             extra: [
                                 'code' => $ePTransaction->code,
                                 'captured_at' => $epPaymentDate,
