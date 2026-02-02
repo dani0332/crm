@@ -21,6 +21,10 @@ class EmbeddedProductController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    public function __construct(
+        private readonly EmbeddedTransactionService $embeddedTransactionService
+    ) {}
+
     public function sendDocument(EmbeddedProducDocumentRequest $request)
     {
         $data = $request->validated();
@@ -46,12 +50,12 @@ class EmbeddedProductController extends Controller
 
     public function getRetargetingEpReminderData(GetRetargetingEpReminderRequest $request): JsonResponse
     {
-        return app(EmbeddedTransactionService::class)
+        return $this->embeddedTransactionService
             ->getRetargetingCarEpReminderData($request->quoteId, $request->embeddedTransactionCode);
     }
 
     public function retargetingEpReminderCallback(RetargetingEpReminderCallbackRequest $request): JsonResponse
     {
-        return app(EmbeddedTransactionService::class)->retargetingCarEpReminderCallback($request);
+        return $this->embeddedTransactionService->retargetingCarEpReminderCallback($request);
     }
 }
