@@ -931,5 +931,11 @@ const cancelOptionsList = computed(() => {
       :id="$page.props.sendUpdateLog.id"
       :expanded="true"
     />
+
+    <EPLogs
+      :type="modelClass"
+      :id="$page.props.sendUpdateLog.id"
+      :expanded="true"
+    />
   </div>
 </template>

@@ -12,6 +12,7 @@ use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
 use App\Models\LifeQuote;
 use App\Models\OcrLog;
+use App\Models\EpLog;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
@@ -21,6 +22,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AuditableController extends Controller
 {
@@ -235,6 +237,43 @@ class AuditableController extends Controller
                 'message' => 'Failed to load OCR logs',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadEpLogs(Request $request)
+    {
+        try {
+            $auditableType = $request->input('type');
+            $auditableId = $request->input('id');
+
+            $logs = EpLog::where('loggable_type', $auditableType)
+                ->where('loggable_id', $auditableId)
+                ->with('embeddedTransaction', 'embeddedTransaction.payment')
+                ->get()
+                ->map(function ($log) {
+                    $capturedAt = $log->embeddedTransaction?->payment?->getRawOriginal('captured_at');
+                    return [
+                        'id' => $log->id,
+                        'event' => $log->event,
+                        'product_type' => $log->embeddedTransaction?->code ? substr($log->embeddedTransaction->code, 0, 3) : null,
+                        'captured_at' => $log->embeddedTransaction?->payment?->getRawOriginal('captured_at') ?? null,
+                        'values' => $log->values ?? null,
+                        'created_at' => $log->created_at,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+
+            LoggerService::error('Failed to load EP logs - ', exception: $e);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load EP logs',
+            ]);
         }
     }
 }
