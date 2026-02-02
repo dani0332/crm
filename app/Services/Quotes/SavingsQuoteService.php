@@ -2,6 +2,7 @@
 
 namespace App\Services\Quotes;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\LookupsEnum;
@@ -11,6 +12,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\ApplicationStorage;
 use App\Facades\Capi;
 use App\Models\CurrencyType;
 use App\Models\InsuranceProviderPlan;
@@ -301,6 +303,7 @@ class SavingsQuoteService extends BaseQuoteService
         // Get lookups for CreatePlan and PlanDetails dropdowns
         $lookUpData = $this->getSavingsQuoteLookUpData();
         $localLookups = $this->getLocalLookups();
+        $savingsCutOffDate = ApplicationStorage::where('key_name', ApplicationStorageEnums::SAVINGS_CUT_OFF_DATE)->first()->value ?? null;
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
@@ -308,6 +311,7 @@ class SavingsQuoteService extends BaseQuoteService
             'websiteURL' => config('constants.WEBSITE_URL'),
             'lookUpData' => $lookUpData,
             'localLookups' => $localLookups,
+            'savingsCutOffDate' => $savingsCutOffDate,
             ...$data,
         ];
     }
