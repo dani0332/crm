@@ -105,23 +105,26 @@ class ClaimAllocationService
 
     public function syncClaimAllocationConfig(int $userId, object $data)
     {
-
-        DB::table('claims_lead_allocation_config')->updateOrInsert(
-            [
+        if(isset($data->quoteTypeId) && !empty($data->quoteTypeId)){
+            $isExists = ClaimsLeadAllocationConfig::where('user_id', $userId)->where('quote_type_id', $data->quoteTypeId)->first();
+            if($isExists){
+                LoggerService::warning('Claim allocation config already exists for user: '.$userId.' and quote type: '.$data->quoteTypeId);
+                return true;
+            }
+            ClaimsLeadAllocationConfig::create([
                 'user_id' => $userId,
                 'quote_type_id' => $data->quoteTypeId,
-            ],
-            [
                 'max_capacity' => 100,
                 'allocation_count' => 0,
                 'auto_assignment_count' => 0,
                 'manual_assignment_count' => 0,
-                'last_allocated' => now()->timestamp,
+                'last_allocated' =>null,
                 'reset_cap' => 0,
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]
-        );
+            ]);
+            return true;
+        }
+        LoggerService::warning('Quote type id is not set for user: '.$userId);
+        return false;
     }
 
     /**
