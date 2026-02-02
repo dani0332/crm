@@ -23,7 +23,9 @@ class EmbeddedTransactionService extends BaseService
      * Create a new class instance.
      */
     public function __construct(
-        protected EmbeddedTransactionRepository $embeddedTransactionRepo
+        protected EmbeddedTransactionRepository $embeddedTransactionRepo,
+        protected BirdService $birdService,
+        protected EmailStatusService $emailStatusService
     ) {
         parent::__construct();
     }
@@ -88,7 +90,7 @@ class EmbeddedTransactionService extends BaseService
         ];
 
         LoggerService::info('triggerBirdWorkflowRetargetEpReminder: ', extra: ['data' => $birdEmailData]);
-        return app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
+        return $this->birdService->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
     public function getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode)
@@ -170,7 +172,7 @@ class EmbeddedTransactionService extends BaseService
 
     public function retargetingCarEpReminderCallback(RetargetingEpReminderCallbackRequest $request)
     {
-        $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
+        $response = $this->emailStatusService->addBirdEmailStatus($request);
         if ($response->status) {
             return apiResponse(null, Response::HTTP_OK, $response->message);
         }

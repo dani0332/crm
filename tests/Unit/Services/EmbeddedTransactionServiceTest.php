@@ -269,7 +269,7 @@ describe('retargetEpReminder', function () {
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
         $repoMock->shouldNotReceive('getDraftEpTransactions');
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock])->makePartial();
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
         $service->shouldReceive('isRetargetingEpReminderEnabled')->once()->andReturn(false);
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
@@ -288,7 +288,7 @@ describe('retargetEpReminder', function () {
             ->with($this->quoteId, QuoteTypeId::Car, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
             ->andReturn(collect([]));
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock])->makePartial();
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
         $service->shouldReceive('isRetargetingEpReminderEnabled')->once()->andReturn(true);
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
@@ -321,7 +321,7 @@ describe('retargetEpReminder', function () {
                 ->andReturn((object) ['status_code' => Response::HTTP_OK, 'message' => 'OK']);
         });
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock])->makePartial();
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
         $service->shouldReceive('isRetargetingEpReminderEnabled')->once()->andReturn(true);
         $service->shouldReceive('getAppStorageValueByKey')
             ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
@@ -363,7 +363,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
             $mock->shouldNotReceive('triggerWebHookRequest');
         });
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock])->makePartial();
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
         $service->shouldReceive('isRetargetingEpReminderEnabled')->once()->andReturn(true);
         $service->shouldReceive('getAppStorageValueByKey')
             ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
@@ -402,7 +402,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
                 ->andReturn((object) ['status_code' => Response::HTTP_NOT_FOUND, 'body' => `{"code":"NotFound","message":"The resource doesn't exist or you don't have access to it."}`]);
         });
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock])->makePartial();
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
         $service->shouldReceive('isRetargetingEpReminderEnabled')->once()->andReturn(true);
         $service->shouldReceive('getAppStorageValueByKey')
             ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
@@ -444,7 +444,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
                 ->andReturn((object) ['status_code' => Response::HTTP_OK, 'message' => 'OK']);
         });
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock])->makePartial();
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
         $service->shouldReceive('isRetargetingEpReminderEnabled')->once()->andReturn(true);
         $service->shouldReceive('getAppStorageValueByKey')
             ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
@@ -486,7 +486,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
         $epTransaction->code = $this->embeddedTransactionCode;
 
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock])->makePartial();
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
         $service->shouldReceive('getAppStorageValueByKey')
             ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
             ->andReturn('');
@@ -515,7 +515,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
                 ->andReturn((object) ['status_code' => Response::HTTP_OK]);
         });
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock])->makePartial();
+        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class), app(EmailStatusService::class)])->makePartial();
         $service->shouldReceive('getAppStorageValueByKey')
             ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
             ->andReturn($workflowUrl);
@@ -534,7 +534,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
 describe('isRetargetingEpReminderEnabled', function () {
     test('return a boolean', function () {
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $service = new EmbeddedTransactionServiceTestDouble($repoMock);
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class), app(EmailStatusService::class));
 
         $result = $service->isRetargetingEpReminderEnabled();
 
@@ -548,8 +548,13 @@ describe('isRetargetingEpReminderEnabled', function () {
  */
 class EmbeddedTransactionServiceTestDouble extends EmbeddedTransactionService
 {
-    public function __construct(EmbeddedTransactionRepository $repo)
-    {
+    public function __construct(
+        EmbeddedTransactionRepository $repo,
+        BirdService $birdService,
+        EmailStatusService $emailStatusService
+    ) {
         $this->embeddedTransactionRepo = $repo;
+        $this->birdService = $birdService;
+        $this->emailStatusService = $emailStatusService;
     }
 }
