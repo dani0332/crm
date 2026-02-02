@@ -497,9 +497,10 @@ class CustomerVerificationService
 
     private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
     {
+        $quoteTypeId = $this->getQuoteTypeId($quote);
         $data = CustomerVerificationDetail::where('quotable_type', QuoteTypes::CAR->modelClass())
             ->where('quotable_id', $quote->id)
-            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->where('quote_type_id', $quoteTypeId)
             ->first();
 
         LoggerService::info('Customer verification found:'.json_encode($data));
@@ -513,7 +514,7 @@ class CustomerVerificationService
             CustomerVerificationDetail::create([
                 'quotable_type' => QuoteTypes::CAR->modelClass(),
                 'quotable_id' => $quote->id,
-                'quote_type_id' => QuoteTypes::CAR->id(),
+                'quote_type_id' => $quoteTypeId,
                 'customer_verified_data' => json_encode($verificationData),
             ]);
         }
@@ -522,7 +523,7 @@ class CustomerVerificationService
             'document_type' => $documentType,
             'quote_id' => $quote->id,
             'quote_code' => $quote->code ?? null,
-            'quote_type' => QuoteTypes::CAR->value,
+            'quote_type' => $this->getQuoteType($quote),
             'updated_fields' => array_keys($verificationData),
         ]);
 
