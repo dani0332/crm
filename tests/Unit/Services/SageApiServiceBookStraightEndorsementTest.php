@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Models\EpLog;
 use App\Models\SendUpdateLog;
 use App\Services\SageApiService;
 use Carbon\Carbon;
 use Tests\Helpers\TestSchemaCreator;
+use App\Models\EpLog;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
