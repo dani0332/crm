@@ -42,7 +42,7 @@ class EmiratesIdDataProcessor
     {
         try {
             DB::beginTransaction();
-            $isPrincipal = $insuredUpdated = $kycUpdated = $vehicleDriverDetailUpdated = false;
+            $isPrincipal = $insuredUpdated = $kycUpdated = $vehicleDriverDetailUpdated = $isMemberUpdated = false;
 
             $this->extractedData = $this->emiratesIdExtractor->extractEmiratesIdData()->getExtractedData();
 
@@ -51,7 +51,7 @@ class EmiratesIdDataProcessor
             // Check if member provided
             if ($this->memberDetailId != 0) {
                 // Save member emirates data
-                $this->saveHealthMembersEmiratesData($this->memberDetailId);
+                $isMemberUpdated = $this->saveHealthMembersEmiratesData($this->memberDetailId);
 
                 // Check if it's principal
                 $memberDetail = CustomerMembers::find($this->memberDetailId);
@@ -80,7 +80,7 @@ class EmiratesIdDataProcessor
 
             LoggerService::info('Emirates ID data processing completed successfully');
 
-            return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
+            return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated || $isMemberUpdated;
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -304,11 +304,15 @@ class EmiratesIdDataProcessor
                 'memberDetailId' => $memberDetailId,
             ]);
 
-            CustomerMembers::where('id', $memberDetailId)->update([
-                'emirates_id_issuance_date' => $this->extractedData['issuing_date'],
-                'emirates_id_expiry_date' => $this->extractedData['expiry_date'],
-                'emirates_id_number' => $this->extractedData['eid_number'],
+            $updateData = array_filter([
+                'emirates_id_issuance_date' => $this->extractedData['issuing_date'] ?? null,
+                'emirates_id_expiry_date' => $this->extractedData['expiry_date'] ?? null,
+                'emirates_id_number' => $this->extractedData['eid_number'] ?? null,
             ]);
+
+            CustomerMembers::where('id', $memberDetailId)->update($updateData);
+
+            return true;
         } catch (Exception $e) {
             LoggerService::error('Failed to save health members', exception: $e);
 

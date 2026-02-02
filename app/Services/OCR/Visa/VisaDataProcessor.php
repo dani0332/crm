@@ -36,7 +36,10 @@ class VisaDataProcessor
 
             $this->addOrUpdateVisaDetails();
 
-            LoggerService::info('Visa data processor completed');
+            LoggerService::info('Visa data processor completed', [
+                'extracted_data' => $this->extractedData,
+                'document_type_code' => $this->documentTypeCode,
+            ]);
 
             DB::commit();
 
