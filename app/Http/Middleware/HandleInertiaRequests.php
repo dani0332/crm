@@ -167,6 +167,7 @@ class HandleInertiaRequests extends Middleware
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
             'genericRequestEnum' => GenericRequestEnum::asArray(),
             'collectionTypeEnum' => CollectionTypeEnum::asArray(),
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
         ];
     }
 
