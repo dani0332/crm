@@ -296,7 +296,7 @@ class EmiratesIdDataProcessor
         }
     }
 
-    private function saveHealthMembersEmiratesData($memberDetailId): void
+    private function saveHealthMembersEmiratesData($memberDetailId): bool
     {
         try {
             LoggerService::info('Saving health members emirates data', [
