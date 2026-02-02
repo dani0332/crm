@@ -76,6 +76,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedBranchData();
         $this->seedOcrUtilEnabled();
         $this->seedCarOcbEmailTemplatesUpdate();
+        $this->seedNonMotorCQFRenewals();
     }
 
     private function livaCarAutomationSeed()
@@ -1242,6 +1243,29 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE],
             [
                 'value' => 778,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedNonMotorCQFRenewals()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => 120,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
