@@ -141,6 +141,7 @@ const selectedPaymentForEdit = ref(null);
 const showInsurerReceiptNumberInputField = ref(false);
 const isInsurerReceiptNumberExistsModalOpen = ref(false);
 const insurerReceiptNumberCheckInProcess = ref(false);
+const currentFileURL = ref('');
 
 // Short: is life plan details enabled
 const isLifePlanDetailsEnabled = computed(() => {
@@ -1291,6 +1292,7 @@ watch(
             @close-insurer-receipt-number-exists-modal="
               closeInsurerReceiptNumberExistsModal
             "
+            @update-current-file-url="value => (currentFileURL = value)"
           />
 
           <!-- Image Gallery Modal -->
@@ -1301,6 +1303,8 @@ watch(
             :storage-url="storageUrl"
             @update:model-value="val => val === false && closeInnerModal()"
             class="max-w-6xl mx-auto"
+            :currentFileURL="currentFileURL"
+            @update:currentFileURL="currentFileURL = $event"
           />
         </x-modal>
 

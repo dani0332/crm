@@ -92,6 +92,7 @@ class DocumentTypeCode extends Enum
     const PAYMENT_RECEIPT = 'SPD';
     const DRIVING_LICENSE = 'DL';
     const EMIRATES_ID = 'CEID';
+    const DRIVER_EMIRATES_ID = 'DRIVER_EID';
     const REGISTRATION_CARD_MULKIYA = 'CAR_MULKIY';
     const POLICY_CERTIFICATE = 'CPC';
     const POLICY_SCHEDULE = 'CPS';

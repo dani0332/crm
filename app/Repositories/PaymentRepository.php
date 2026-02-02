@@ -13,7 +13,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\SendFTCEmailJob;
@@ -1150,19 +1149,42 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         $userTeamIds = $teamIds ?: $user->getUserTeamIds();
 
-        $personalCount = DB::table('payments')
-            ->distinct()
-            ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('user_team', 'user_team.user_id', 'pq.advisor_id')
-            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
+        $isManager = $user->hasAnyRole(getManagerRoles());
 
-        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
-            $personalCount = $personalCount->whereIn('user_team.team_id', $userTeamIds);
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
+
+        // Base query with optimized joins and indexes
+        $query = DB::table('payments')
+            ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code');
+
+        // Apply user/team filtering early to reduce dataset
+        if ($isManager) {
+            // For managers, join user_team and filter by team_id
+            $query->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
+                ->whereIn('user_team.team_id', $userTeamIds);
         } else {
-            $personalCount = $personalCount->where('pq.advisor_id', $user->id);
+            // For non-managers, filter directly by advisor_id (more efficient)
+            $query->where('pq.advisor_id', $user->id);
         }
 
-        return $personalCount->count('payments.id');
+        // Optimize OR conditions by using UNION ALL for better index usage
+        // This allows each branch to use specific indexes effectively
+        $authorisedQuery = (clone $query)
+            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
+            ->select('payments.id');
+
+        $insurerPaymentQuery = (clone $query)
+            ->where('payments.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
+            ->whereIn('payments.payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
+            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
+            ->select('payments.id');
+
+        // Use UNION ALL and COUNT DISTINCT to get unique payment count
+        return DB::table(DB::raw("({$authorisedQuery->toSql()} UNION ALL {$insurerPaymentQuery->toSql()}) as combined_payments"))
+            ->mergeBindings($authorisedQuery)
+            ->mergeBindings($insurerPaymentQuery)
+            ->count(DB::raw('DISTINCT id'));
     }
 
     public function fetchMainQuotePayment($quote)

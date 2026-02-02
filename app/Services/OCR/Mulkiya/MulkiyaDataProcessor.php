@@ -237,18 +237,6 @@ class MulkiyaDataProcessor
         }
     }
 
-    private function getNationalityId(?string $nationality): ?int
-    {
-        if (empty($nationality)) {
-            return null;
-        }
-
-        return Nationality::where('text', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->orWhere('code', $nationality)
-            ->value('id');
-    }
-
     public function getProcessingSummary(): array
     {
         $carQuoteDetail = $this->quote->carQuoteRequestDetail;

@@ -3,7 +3,9 @@
 namespace App\Strategies;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BranchEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
@@ -13,6 +15,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\Branch;
 use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\Lookup;
@@ -115,6 +118,11 @@ class ManagementReport
             ->values()
             ->toArray();
 
+        $branches = Branch::query()
+            ->select('id', 'name')
+            ->active()
+            ->get();
+
         return [
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
@@ -124,6 +132,7 @@ class ManagementReport
             'departments' => $departments,
             'lobs' => $lobs,
             'subSources' => $subSources,
+            'branches' => $branches,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
@@ -259,6 +268,22 @@ class ManagementReport
                 });
             }
         }
+
+        $query->when(! empty($request['branch']), function ($q) use ($request) {
+            // Normalize branch to array to handle both scalar and array inputs
+            $branches = is_array($request['branch']) ? $request['branch'] : [$request['branch']];
+
+            if (in_array('not_applicable', $branches)) {
+                $q->where('personal_quotes.is_branch_applicable', 0);
+            } elseif (in_array('not_assigned', $branches)) {
+                $q->where('personal_quotes.is_branch_applicable', 1)
+                    ->whereNull('b.id');
+            } else {
+                $q->where('personal_quotes.is_branch_applicable', 1)
+                    ->whereIn('b.id', $branches);
+            }
+
+        });
 
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
@@ -563,7 +588,7 @@ class ManagementReport
     private static function mapEndorsementsToReport($item, $endorsementData, $request)
     {
         foreach ($endorsementData as $endorsement) {
-            if ($item[$request->groupBy] === $endorsement->{$request->groupBy}) {
+            if ($item[$request->groupBy] === $endorsement->{$request->groupBy} && $item->branch_name === $endorsement->branch_name) {
                 $item->total_endorsements = $endorsement->total_endorsements ?? 0;
                 $item->total_transaction = $item->total_policies + $item->total_endorsements;
                 $item->endorsements_amount = (float) $endorsement->total_endorsement_amount;
@@ -600,7 +625,9 @@ class ManagementReport
          * check if there are any endorsements that are not in the report data
          */
         foreach ($endorsementData as $endorsement) {
-            $found = $reportData->contains($request->groupBy, $endorsement->{$request->groupBy});
+            $found = $reportData->contains(function ($item) use ($request, $endorsement) {
+                return $item->{$request->groupBy} === $endorsement->{$request->groupBy} && $item->branch_name === $endorsement->branch_name;
+            });
             if (! $found) {
                 $endorsement->total_policies = 0;
                 $endorsement->endorsements_amount = (float) $endorsement->total_endorsement_amount;
@@ -654,5 +681,133 @@ class ManagementReport
         }
 
         return $routeName;
+    }
+
+    protected function getPaymentMappingCTE(): string
+    {
+        $quoteTypesUsingQuoteId = [
+            QuoteTypeId::Car,
+            QuoteTypeId::Health,
+            QuoteTypeId::Travel,
+            QuoteTypeId::Business,
+        ];
+
+        $quoteIdConditions = implode(',', $quoteTypesUsingQuoteId);
+
+        return "
+            SELECT
+                pq.id,
+                CASE
+                    WHEN pq.quote_type_id IN ({$quoteIdConditions}) THEN pq.quote_id
+                    ELSE pq.id
+                END AS payment_join_id,
+
+                CASE
+                    WHEN pq.quote_type_id = ".QuoteTypeId::Car." THEN 'App\\\\Models\\\\CarQuote'
+                    WHEN pq.quote_type_id = ".QuoteTypeId::Health." THEN 'App\\\\Models\\\\HealthQuote'
+                    WHEN pq.quote_type_id = ".QuoteTypeId::Travel." THEN 'App\\\\Models\\\\TravelQuote'
+                    WHEN pq.quote_type_id = ".QuoteTypeId::Business." THEN 'App\\\\Models\\\\BusinessQuote'
+                    ELSE 'App\\\\Models\\\\PersonalQuote'
+                END AS payment_join_type
+            FROM personal_quotes pq
+        ";
+    }
+
+    public function paymentJoin($query, $additionalConditions = null, $alias = 'p', $joinType = 'join', $cteJoin = 'join')
+    {
+        $cte = $this->getPaymentMappingCTE();
+        $query->withExpression('personal_quotes_mapped', $cte);
+
+        // Join the CTE to create the mapping based on the CTE join type
+        $query->{$cteJoin}('personal_quotes_mapped as pqm', 'pqm.id', '=', 'personal_quotes.id');
+
+        // Then join payments using the mapped fields
+        $query->{$joinType}("payments as {$alias}", function ($join) use ($additionalConditions, $alias) {
+            $join->on("{$alias}.paymentable_id", '=', 'pqm.payment_join_id')
+                ->on("{$alias}.paymentable_type", '=', 'pqm.payment_join_type')
+                ->whereNull("{$alias}.send_update_log_id");
+
+            // Apply additional conditions if provided
+            if ($additionalConditions && is_callable($additionalConditions)) {
+                $additionalConditions($join);
+            }
+        });
+    }
+
+    protected function getLatestCustomerInsuredCTE(): string
+    {
+        $businessQuoteType = QuoteTypeId::Business;
+
+        return "
+            SELECT
+                ci.quote_request_id,
+                ci.quote_type_id,
+                ci.customer_id,
+                ci.insured_id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY ci.quote_request_id, ci.quote_type_id, ci.customer_id
+                    ORDER BY ci.updated_at DESC
+                ) AS rn
+            FROM customer_insured ci
+            WHERE ci.quote_type_id = {$businessQuoteType}
+        ";
+    }
+
+    protected function getBranchMappingCTE(): string
+    {
+        $now = now()->format('Y-m-d H:i:s');
+        $healthQuoteType = QuoteTypeId::Health;
+        $groupMedicalId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+        $abuDhabiEmirate = EmirateEnum::ABU_DHABI;
+        $abuDhabiBranch = BranchEnum::ABU_DHABI->value;
+
+        return "
+            SELECT
+                pq.id,
+                COALESCE(
+                    pq.branch_id,
+                    oc.target_branch_id,
+                    CASE
+                        WHEN pq.advisor_id IS NOT NULL AND pq.quote_type_id = {$healthQuoteType} AND hqr.emirate_of_your_visa_id = {$abuDhabiEmirate}
+                            THEN {$abuDhabiBranch}
+                        WHEN pq.advisor_id IS NOT NULL AND pq.business_type_of_insurance_id = {$groupMedicalId} AND i.emirate_of_registration_id = {$abuDhabiEmirate}
+                            THEN {$abuDhabiBranch}
+                        ELSE ub.branch_id
+                    END
+                ) AS resolved_branch_id
+            FROM personal_quotes pq
+            LEFT JOIN user_branches ub ON ub.user_id = pq.advisor_id
+                AND ub.is_primary = 1
+                AND ub.status = 1
+                AND pq.branch_id IS NULL
+            LEFT JOIN branch_override_config oc ON oc.source_branch_id = ub.branch_id
+                AND oc.quote_type_id = pq.quote_type_id
+                AND oc.start_date < '{$now}'
+                AND (oc.end_date IS NULL OR oc.end_date > '{$now}')
+                AND pq.branch_id IS NULL
+                AND (pq.business_type_of_insurance_id IS NULL OR pq.business_type_of_insurance_id != {$groupMedicalId})
+            LEFT JOIN health_quote_request hqr ON hqr.id = pq.quote_id
+                AND pq.quote_type_id = {$healthQuoteType}
+                AND pq.branch_id IS NULL
+            LEFT JOIN latest_customer_insured lci ON lci.quote_request_id = pq.quote_id
+                AND lci.quote_type_id = pq.quote_type_id
+                AND lci.customer_id = pq.customer_id
+                AND lci.rn = 1
+                AND pq.branch_id IS NULL
+                AND pq.business_type_of_insurance_id = {$groupMedicalId}
+            LEFT JOIN insured i ON i.id = lci.insured_id
+        ";
+    }
+
+    protected function branchJoin($query): void
+    {
+        $latestCustomerInsuredCte = $this->getLatestCustomerInsuredCTE();
+        $query->withExpression('latest_customer_insured', $latestCustomerInsuredCte);
+
+        $branchMappingCte = $this->getBranchMappingCTE();
+        $query->withExpression('branch_mapped', $branchMappingCte);
+
+        $query->leftJoin('branch_mapped as bm', 'bm.id', '=', 'personal_quotes.id')
+            ->leftJoin('branches as b', 'b.id', '=', 'bm.resolved_branch_id');
     }
 }

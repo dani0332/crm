@@ -165,6 +165,40 @@ class SLAService
         }
     }
 
+    public function meetSLAOnAMLStatusUpdate(Model $lead): void
+    {
+        if (! $this->isLOBEnabled($lead)) {
+            return;
+        }
+
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+
+        if (in_array($lead->aml_status, self::getMeetableAMLStatuses())) {
+            LoggerService::info("SLAService - AML status updated to {$lead->aml_status}, marking SLA as met", [
+                'new_aml_status' => $lead->aml_status,
+            ]);
+
+            $this->meetSLA($lead, SLAActionTypeEnum::AML_STATUS_UPDATED, "Lead AML status updated to: {$lead->aml_status}");
+        }
+    }
+
+    public function meetSLAOnKYCStatusUpdate(Model $lead): void
+    {
+        if (! $this->isLOBEnabled($lead)) {
+            return;
+        }
+
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::SLA_TRACKING);
+
+        if (in_array($lead->kyc_decision, self::getMeetableKYCDecisionStatuses())) {
+            LoggerService::info("SLAService - KYC decision updated to {$lead->kyc_decision}, marking SLA as met", [
+                'new_kyc_decision' => $lead->kyc_decision,
+            ]);
+
+            $this->meetSLA($lead, SLAActionTypeEnum::KYC_STATUS_UPDATED, "Lead KYC decision updated to: {$lead->kyc_decision}");
+        }
+    }
+
     public function meetSLAOnEdit(Model $lead, SLAActionTypeEnum $actionType): void
     {
         if (! $this->isLOBEnabled($lead)) {

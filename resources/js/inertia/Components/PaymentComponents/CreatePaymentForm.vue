@@ -11,6 +11,8 @@ import {
   PaymentFormVerification,
   PaymentFormFooter,
 } from './PaymentFormComps/index.js';
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
+const { getTempUrl } = useDocumentTempUrl();
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -2045,7 +2047,7 @@ const uploadDocument = (doc, files, count) => {
  *
  * @param {number} fileId - ID of the file to display initially
  */
-const openInnerModal = fileId => {
+const openInnerModal = async fileId => {
   // Prepare the files array for the gallery modal by combining files from different sources
   filesTest.value = [
     ...fileUploadModels.value.flat(),
@@ -2058,9 +2060,20 @@ const openInnerModal = fileId => {
     item => item.id === fileId,
   );
 
-  // Open the modal
-  // isGalleryModelOpen.value = true;
-  emit('update-gallery-model-open', true);
+  // Get the current file
+  const currentFile = filesTest.value[currentFileIndex.value];
+
+  if (currentFile && currentFile.doc_url) {
+    // Use centralized composable to get the URL
+    const documentUrl = await getTempUrl(currentFile.doc_url);
+
+    if (documentUrl) {
+      // Set the URL first, then open the modal
+      emit('update-current-file-url', documentUrl);
+      // Now open the modal
+      emit('update-gallery-model-open', true);
+    }
+  }
 };
 
 const deleteDocument = (docName, count, doc_id, doc_uuid) => {
