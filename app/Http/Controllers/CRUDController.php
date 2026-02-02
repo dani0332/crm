@@ -495,7 +495,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
-            $emirates = Emirate::getOptions("id", "text", true);
+            $emirates = Emirate::getOptions('id', 'text', true);
 
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,

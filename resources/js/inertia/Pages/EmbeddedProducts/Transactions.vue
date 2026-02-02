@@ -566,9 +566,7 @@ const showEpSageStatusFilter = (function () {
             >
               Tax Invoice Raised by Buyer Number
             </label>
-            <template #tooltip>
-              Tax Invoice Raised by Buyer Number
-            </template>
+            <template #tooltip> Tax Invoice Raised by Buyer Number </template>
           </x-tooltip>
           <x-input
             v-model="filters.tax_invoice_buyer_no"
