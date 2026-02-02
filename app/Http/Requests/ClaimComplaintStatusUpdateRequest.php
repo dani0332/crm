@@ -32,9 +32,11 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
                 'required',
                 'date',
                 function (string $attribute, mixed $value, \Closure $fail): void {
-                    $inputDate = Carbon::parse($value);
-                    // Allow current datetime: allow up to 1 minute in future for client-server clock skew
-                    if ($inputDate->isAfter(now()->addMinute())) {
+                    // Frontend sends local time but may append "Z"; strip Z so we parse as app timezone, not UTC
+                    $requestComplaintDateTime = preg_replace('/Z$/i', '', (string) $value);
+                    $complaintDateTime = Carbon::parse($requestComplaintDateTime);
+                    $cutoff = now()->addMinute();
+                    if ($complaintDateTime->isAfter($cutoff)) {
                         $fail('The complaint date cannot be in the future.');
                     }
                 },
