@@ -374,6 +374,7 @@ class CustomerVerificationService
     {
         match ($quoteType) {
             QuoteTypes::CAR => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
+            QuoteTypes::HEALTH => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
             // Add other quote types here as needed
             default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
         };
@@ -539,7 +540,7 @@ class CustomerVerificationService
     private function updateCustomerVerificationStatus(Model $quote): void
     {
         $requestData = ['quoteUuid' => $quote->uuid,
-            'quoteTypeId' => QuoteTypes::getId(QuoteTypes::from($this->getQuoteType($quote))),
+            'quoteTypeId' => $this->getQuoteTypeId($quote),
             'callSource' => LeadSourceEnum::IMCRM,
         ];
 
@@ -583,7 +584,7 @@ class CustomerVerificationService
 
     private function getQuoteTypeId($quote)
     {
-        return ($quote instanceof CarQuote) ? QuoteTypes::CAR->id() : $quote->quote_type_id;
+        return ($quote instanceof CarQuote) ? (int) QuoteTypes::CAR->id() : $quote->quote_type_id;
     }
 
     public function isCustomerVerificationEnabled(): bool
