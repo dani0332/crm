@@ -496,6 +496,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
+            $emirates = Emirate::getOptions('id', 'text', true);
 
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
@@ -503,6 +504,7 @@ class CRUDController extends Controller
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
                 'subSources' => $subSources,
+                'emirates' => $emirates,
                 'leadSourceParams' => [
                     'type' => $request->input('type'),
                     'subSource' => $request->input('subSourceId'),
@@ -1454,6 +1456,8 @@ class CRUDController extends Controller
                 $record->company_contact_name = $record->first_name.' '.$record->last_name;
             }
 
+            $emirates = Emirate::getOptions('id', 'text', true);
+
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -1467,6 +1471,7 @@ class CRUDController extends Controller
                 'ecbExcludedCarMakeCodes' => EpEcbExcludeVehicleEnum::CAR_MAKE_CODES,
                 'ecbExcludedCarModelCodes' => EpEcbExcludeVehicleEnum::CAR_MODEL_CODES,
                 'subSources' => $subSources,
+                'emirates' => $emirates,
             ]);
         }
 
