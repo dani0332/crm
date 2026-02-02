@@ -65,12 +65,11 @@ class AMLController extends Controller
 
     public function __construct()
     {
-        // TODO:: move middleware to routes file (route specific middleware)
+        // Reminder:: move middleware to routes file (route specific middleware)
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
         $this->middleware('permission:'.PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API, ['only' => ['togglePolicyIssuanceAutomation']]);
     }
 
-    // Note: Tested
     public function index(AMLRequest $request, AMLQueryService $amlQueryService)
     {
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
@@ -84,7 +83,6 @@ class AMLController extends Controller
         ]);
     }
 
-    // Note: Tested
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId, AMLQuoteDetailsService $amlQuoteDetailsService)
     {
         $data = $amlQuoteDetailsService->prepareQuoteDetailsData(
@@ -95,7 +93,6 @@ class AMLController extends Controller
         return inertia('Aml/DetailPage', $data);
     }
 
-    // Note: Tested
     public function show(AML $aml, $insuredId = null, $customerId = null, AMLDisplayService $amlDisplayService)
     {
         $data = $amlDisplayService->prepareShowData(
@@ -107,7 +104,6 @@ class AMLController extends Controller
         return inertia('Aml/Show', $data);
     }
     
-    // Note: Tested
     public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): \Illuminate\Http\JsonResponse
     {
         $result = $amlInsuredService->getInsuredDetails(
@@ -121,7 +117,6 @@ class AMLController extends Controller
         return response()->json($result);
     }
 
-    // Note: Tested
     public function fetchEntity(Request $request, AMLEntityService $entityService)
     {
         $entity = $entityService->fetchEntityByTradeLicense($request->trade_license);
@@ -140,7 +135,6 @@ class AMLController extends Controller
         ]);
     }
 
-    // Note: Tested
     public function linkEntityDetails(Request $request, AMLEntityService $entityService)
     {
         $result = $entityService->linkEntityToQuote(
@@ -169,6 +163,8 @@ class AMLController extends Controller
 
         return $kycLogsExport->download("AML Logs {$reportDateRange}");
     }
+
+    // Above functions are refactored and tested
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {

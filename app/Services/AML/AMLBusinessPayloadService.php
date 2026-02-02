@@ -9,15 +9,8 @@ use App\Models\CommunicationMode;
 use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
 
-/**
- * Service for handling business-specific AML payload data
- * Extracts business quote type, cover type, and communication mode information
- */
 class AMLBusinessPayloadService
 {
-    /**
-     * Get business-specific payload data
-     */
     public function getBusinessPayload(QuoteType $quoteType, object $quoteRequest): array
     {
         if ($quoteType->code !== quoteTypeCode::Business) {
@@ -33,9 +26,6 @@ class AMLBusinessPayloadService
         ];
     }
 
-    /**
-     * Get business type code
-     */
     private function getBusinessTypeCode(object $quoteRequest): ?string
     {
         if (! isset($quoteRequest->business_type_of_insurance_id)) {
@@ -46,9 +36,6 @@ class AMLBusinessPayloadService
             ->value('code');
     }
 
-    /**
-     * Get business cover type text
-     */
     private function getBusinessCoverTypeText(object $quoteRequest): ?string
     {
         if (! isset($quoteRequest->business_cover_type_id)) {
@@ -59,9 +46,6 @@ class AMLBusinessPayloadService
             ->value('text');
     }
 
-    /**
-     * Get business communication mode text
-     */
     private function getBusinessCommunicationModeText(object $quoteRequest): ?string
     {
         if (! isset($quoteRequest->business_communication_mode_id)) {

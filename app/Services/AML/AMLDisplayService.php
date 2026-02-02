@@ -9,10 +9,6 @@ use App\Models\AML;
 use App\Models\Insured;
 use App\Traits\GenericQueriesAllLobs;
 
-/**
- * Service for preparing AML data for display
- * Handles all business logic for the AML show page
- */
 class AMLDisplayService
 {
     use GenericQueriesAllLobs;
@@ -21,9 +17,6 @@ class AMLDisplayService
         private readonly AMLResultsProcessor $resultsProcessor
     ) {}
 
-    /**
-     * Prepare AML data for display
-     */
     public function prepareShowData(AML $aml, ?int $insuredId = null, ?int $customerId = null): array 
     {
         // Eager load relationships to avoid N+1
@@ -50,9 +43,6 @@ class AMLDisplayService
         ];
     }
 
-    /**
-     * Get insured with KYC relationship
-     */
     private function getInsuredWithKyc(?int $insuredId): ?Insured
     {
         if (! $insuredId) {
@@ -62,9 +52,6 @@ class AMLDisplayService
         return Insured::with('insuredKyc')->find($insuredId);
     }
 
-    /**
-     * Prepare enum arrays for view
-     */
     private function prepareEnums(): array
     {
         return [

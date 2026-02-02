@@ -7,18 +7,8 @@ use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Services\Logger\LoggerService;
 
-/**
- * Service for handling AML insured operations
- * Manages individual and entity insured search and retrieval with various ID types
- */
 class AMLInsuredService
 {
-    /**
-     * Get insured details by customer type and identification
-     *
-     * @param  string|null  $code  For logging purposes
-     * @return array{status: bool, response: mixed, message: string}
-     */
     public function getInsuredDetails(
         ?string $customerType,
         ?string $idType,
@@ -61,9 +51,6 @@ class AMLInsuredService
         ];
     }
 
-    /**
-     * Determine if the search is for an entity or individual
-     */
     private function determineIfEntity(?string $customerType, ?string $tradeLicense): bool
     {
         // Check if explicitly set as entity
@@ -79,9 +66,6 @@ class AMLInsuredService
         return false;
     }
 
-    /**
-     * Search for insured based on customer type and identification
-     */
     private function searchInsured(
         string $customerType,
         bool $isEntity,
@@ -106,9 +90,6 @@ class AMLInsuredService
             ->first();
     }
 
-    /**
-     * Get appropriate response message based on customer type and status
-     */
     private function getResponseMessage(string $customerType, bool $found): string
     {
         $messages = [
@@ -127,10 +108,6 @@ class AMLInsuredService
         return $messages[$customerType][$messageType];
     }
 
-    /**
-     * Get insured details by customer ID, quote type ID, and quote request ID
-     * Used in AML quote details page to retrieve customer-insured mapping
-     */
     public function getInsuredDetailsByQuote(int $customerId, int $quoteTypeId, int $quoteRequestId): ?CustomerInsured
     {
         LoggerService::info(self::class.' fn: '.__FUNCTION__);

@@ -153,16 +153,6 @@ class AMLQueryService
             }
         }
 
-        // Apply match found filter
-        if (isset($request->matchFound)) {
-            if ($request->matchFound === 'False') {
-                $dataAml->where('kyc_logs.results_found', '=', '0');
-            }
-            if ($request->matchFound === 'True') {
-                $dataAml->where('kyc_logs.results_found', '>', '0');
-            }
-        }
-
         // Apply date range filter
         if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
             isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)

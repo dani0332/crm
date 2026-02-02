@@ -23,10 +23,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
-/**
- * Service for preparing AML Quote Details page data
- * Handles all business logic for the AML screening/detail page
- */
 class AMLQuoteDetailsService
 {
     public function __construct(
@@ -45,7 +41,6 @@ class AMLQuoteDetailsService
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 
-        LoggerService::startQuoteLogging($quoteRequest);
         LoggerService::info('AML Details Page - Prepare Quote Details Data');
 
         // Add quote link to quote request
@@ -142,9 +137,6 @@ class AMLQuoteDetailsService
         ], $businessPayload, $rtaConfigurationData);
     }
 
-    /**
-     * Add quote link to quote request object
-     */
     private function addQuoteLinkToRequest(object $quoteRequest, QuoteType $quoteType): void
     {
         $quoteRequest->quote_link = checkPersonalQuotes($quoteType->code)
@@ -152,11 +144,6 @@ class AMLQuoteDetailsService
             : '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
     }
 
-    /**
-     * Count escalated logs
-     *
-     * @param  \Illuminate\Support\Collection  $kycLogs
-     */
     private function countEscalatedLogs($kycLogs): int
     {
         if ($kycLogs->isEmpty()) {
@@ -168,9 +155,6 @@ class AMLQuoteDetailsService
         })->count();
     }
 
-    /**
-     * Get card holder name from payment
-     */
     private function getCardHolderName(string $code): string
     {
         $payment = Payment::where('code', $code)
@@ -180,9 +164,6 @@ class AMLQuoteDetailsService
         return $payment?->getCustomerPaymentInstrument?->card_holder_name ?? '';
     }
 
-    /**
-     * Get quote AML status
-     */
     private function getQuoteAmlStatus(?string $amlStatusCode): ?int
     {
         if ($amlStatusCode === null) {
@@ -197,9 +178,6 @@ class AMLQuoteDetailsService
         return $checkScreeningStatus[$amlStatusCode] ?? null;
     }
 
-    /**
-     * Get insurer default email based on provider code
-     */
     private function getInsurerDefaultEmail(string $providerCode): string
     {
         $isLIVA = $providerCode == InsuranceProvidersEnum::RSA;
@@ -209,9 +187,6 @@ class AMLQuoteDetailsService
             : GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
     }
 
-    /**
-     * Check if policy automation is enabled for the insurer
-     */
     private function isPolicyAutomationEnabled(QuoteType $quoteType, ?object $insuranceProvider): bool
     {
         if ($quoteType->code !== quoteTypeCode::Car || ! $insuranceProvider) {
@@ -226,9 +201,6 @@ class AMLQuoteDetailsService
         return $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
     }
 
-    /**
-     * Prepare enum arrays for view
-     */
     private function prepareEnums(): array
     {
         return [

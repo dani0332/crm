@@ -15,10 +15,6 @@ use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 
-/**
- * Service for handling AML entity operations
- * Manages entity lookup, linking, and legacy structure migration
- */
 class AMLEntityService
 {
     use GenericQueriesAllLobs;
@@ -27,9 +23,6 @@ class AMLEntityService
         private readonly AMLService $amlService
     ) {}
 
-    /**
-     * Fetch entity by trade license number
-     */
     public function fetchEntityByTradeLicense(string $tradeLicense): ?Insured
     {
         return Insured::where([
@@ -91,9 +84,6 @@ class AMLEntityService
         ];
     }
 
-    /**
-     * Link customer to insured
-     */
     private function linkCustomerInsured(int $quoteTypeId, int $quoteRequestId, int $customerId, int $insuredId): void
     {
         $customerInsured = CustomerInsured::where('customer_id', $customerId)
@@ -122,7 +112,7 @@ class AMLEntityService
 
     /**
      * Handle legacy entity structure migration
-     * TODO: Remove when new structure is completely mapped
+     * Reminder:: Remove when new structure is completely mapped
      */
     private function handleLegacyEntityStructure(int $quoteTypeId, int $quoteRequestId, Insured $insured, ?string $triggeredFrom): Entity
     {
@@ -162,9 +152,6 @@ class AMLEntityService
         return $entity;
     }
 
-    /**
-     * Clean up previous entity if no longer referenced
-     */
     private function cleanupPreviousEntity(?QuoteRequestEntityMapping $existingEntityMapping): void
     {
         if (! $existingEntityMapping) {
@@ -182,9 +169,6 @@ class AMLEntityService
         }
     }
 
-    /**
-     * Update car quote company details
-     */
     private function updateCarQuoteCompanyDetails(int $quoteRequestId, Entity $entity): void
     {
         CarQuoteRepository::where('id', $quoteRequestId)->update([
@@ -196,7 +180,7 @@ class AMLEntityService
     /**
      * Get entity details by quote type ID and quote request ID
      * Used in AML quote details page to retrieve entity mapping
-     * TODO: This will be removed when customer members mapping is updated with insured id
+     * Reminder:: This will be removed when customer members mapping is updated with insured id
      */
     public function getEntityDetailsByQuote(int $quoteTypeId, int $quoteRequestId)
     {
