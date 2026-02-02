@@ -325,6 +325,12 @@ class QuoteDocumentController extends Controller
         if ($documentUrl) {
             $contents = file_get_contents($documentUrl);
 
+            if ($contents === false) {
+                return response()->json([
+                    'error' => 'Failed to retrieve file content',
+                ], 500);
+            }
+
             return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
         } else {
             abort(404);
