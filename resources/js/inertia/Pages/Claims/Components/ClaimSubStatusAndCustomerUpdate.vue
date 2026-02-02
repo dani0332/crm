@@ -81,7 +81,11 @@ const subStatusOptions = computed(() => {
 const updateClaimSubStatusAndCustomer = async isValid => {
   // Check if required field is filled before submitting
   let isCarOrBikeLOB = isCarLOB.value || isBikeLOB.value;
-  if ( isCarOrBikeLOB &&!isRequiredFieldFilled.value && requiredFieldName.value) {
+  if (
+    isCarOrBikeLOB &&
+    !isRequiredFieldFilled.value &&
+    requiredFieldName.value
+  ) {
     notification.error({
       title: `Please fill ${requiredFieldName.value} before updating`,
       position: 'top',
@@ -250,7 +254,6 @@ const enableSendMessageButton = computed(() => {
 watch(
   () => claimSubStatusAndCustomerForm.claim_sub_status_id,
   (newStatusId, oldStatusId) => {
-
     let isCarOrBikeLOB = isCarLOB.value || isBikeLOB.value;
     // Only show alert if status actually changed and we have a requirement
     if (
