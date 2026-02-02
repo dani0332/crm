@@ -275,6 +275,14 @@ onUnmounted(() => {
 });
 
 const { openTempUrl } = useDocumentTempUrl();
+
+// Filter Quote signed medical application form documents to show under issuing tab
+const signedMedicalApplicationDocs = computed(() => {
+  const signedMedicalApplicationDocs = page.props.quoteDocuments.filter(
+    doc => doc.document_type_code == 'MED_HLTH' && (doc.original_name || doc.doc_name).includes('signed')
+  );
+  return signedMedicalApplicationDocs;
+});
 </script>
 
 <template>
@@ -486,7 +494,7 @@ const { openTempUrl } = useDocumentTempUrl();
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
-                {{ documentType.text }}
+                {{ documentType.text }}  
                 <span class="text-red-500">
                   {{ documentType.is_required ? '*' : '' }}</span
                 >
@@ -560,14 +568,22 @@ const { openTempUrl } = useDocumentTempUrl();
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
-                <!-- Show quote document medical signed document here -->
-                <a
-                  v-if="documentType.text == 'Signed medical application form'"
-                  href="javascript:void(0)"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                >
-                  Show medical signed doc here
-                </a>
+
+                <!-- Show quote document medical signed document here as per ADNIC requirement --> 
+                  <div v-for="(doc, index) in signedMedicalApplicationDocs" :key="index">
+                    <a
+                      v-if="documentType.text == 'Signed medical application form'"
+                      :href="
+                        storageUrl +
+                        (doc.watermarked_doc_url || doc.doc_url)
+                      "
+                      target="_blank"
+                      class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                    >
+                        {{ doc.original_name || doc.doc_name }}
+                    </a>
+                  </div>
+             
               </template>
             </div>
           </div>
