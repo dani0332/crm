@@ -503,7 +503,7 @@ class TravelController extends Controller
             : 'Pending';
 
         $subSources = $this->lookupService->getSubSource();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $emirates = Emirate::getOptions('id', 'text', true);
 
         return inertia('TravelQuote/Form', [
             'quote' => $record,
