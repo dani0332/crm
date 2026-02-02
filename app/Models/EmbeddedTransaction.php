@@ -6,13 +6,14 @@ use App\Enums\CourierSyncStatusEnum;
 use App\Enums\RolesEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Traits\SpatieActivityLog;
+use App\Traits\UsesTestConnection;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EmbeddedTransaction extends Model
 {
-    use HasFactory, SpatieActivityLog;
+    use HasFactory, SpatieActivityLog, UsesTestConnection;
 
     protected $guarded = [];
     protected $appends = [
