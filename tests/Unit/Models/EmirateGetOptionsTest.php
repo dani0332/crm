@@ -33,4 +33,3 @@ it('can include inactive emirates when withActive is false', function (): void {
     expect($options)->toHaveCount(3);
     expect($options->pluck('label')->all())->toContain('Sharjah');
 });
-

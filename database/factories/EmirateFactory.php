@@ -18,4 +18,3 @@ class EmirateFactory extends Factory
         ];
     }
 }
-
