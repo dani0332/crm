@@ -27,6 +27,11 @@ const claimSubStatusAndCustomerForm = useForm({
   claim_sub_status_id: props.claim?.claim_sub_status_id || '',
 });
 
+// Check if the selected line of business is Car
+const isCarLOB = computed(() => {
+  return page.props.quoteTypeIds?.Car === page.props.claim.quote_type_id;
+});
+
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
   let isHealth =
@@ -75,7 +80,8 @@ const subStatusOptions = computed(() => {
 
 const updateClaimSubStatusAndCustomer = async isValid => {
   // Check if required field is filled before submitting
-  if (!isRequiredFieldFilled.value && requiredFieldName.value) {
+  let isCarOrBikeLOB = isCarLOB.value || isBikeLOB.value;
+  if ( isCarOrBikeLOB &&!isRequiredFieldFilled.value && requiredFieldName.value) {
     notification.error({
       title: `Please fill ${requiredFieldName.value} before updating`,
       position: 'top',
@@ -221,13 +227,14 @@ const requiredFieldName = computed(() => {
 
 // Check if required field is filled based on selected status
 const isRequiredFieldFilled = computed(() => {
+  let isCarOrBikeLOB = isCarLOB.value || isBikeLOB.value;
   const requirement = getStatusFieldRequirement.value;
   if (!requirement) {
     return true; // No field requirement for this status
   }
 
   const fieldValue = props.claim?.[requirement.fieldName];
-  return isFieldFilled(fieldValue);
+  return isCarOrBikeLOB ? isFieldFilled(fieldValue) : true;
 });
 
 const enableSendMessageButton = computed(() => {
@@ -243,12 +250,15 @@ const enableSendMessageButton = computed(() => {
 watch(
   () => claimSubStatusAndCustomerForm.claim_sub_status_id,
   (newStatusId, oldStatusId) => {
+
+    let isCarOrBikeLOB = isCarLOB.value || isBikeLOB.value;
     // Only show alert if status actually changed and we have a requirement
     if (
       newStatusId &&
       newStatusId !== oldStatusId &&
       requiredFieldName.value &&
-      !isRequiredFieldFilled.value
+      !isRequiredFieldFilled.value &&
+      isCarOrBikeLOB
     ) {
       notification.error({
         title: `Please fill ${requiredFieldName.value} before updating`,
