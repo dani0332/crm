@@ -46,6 +46,7 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id', 'policy_status')
             ->where(['quote_request_id' => $quoteId, 'quote_type_id' => $quoteTypeId, 'payment_status_id' => PaymentStatusEnum::DRAFT])
             ->whereHas('product.embeddedProduct', fn ($q) => $q->whereIn('short_code', $epShortCodes))
+            ->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', QuoteStatusEnum::PolicyBooked))
             ->get();
     }
 
