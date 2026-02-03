@@ -20,7 +20,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use App\Http\Requests\EpLogsRequest;
 
 class AuditableController extends Controller
@@ -247,7 +246,6 @@ class AuditableController extends Controller
                 ->with('embeddedTransaction', 'embeddedTransaction.payment')
                 ->get()
                 ->map(function ($log) {
-                    $capturedAt = $log->embeddedTransaction?->payment?->getRawOriginal('captured_at');
                     return [
                         'id' => $log->id,
                         'event' => $log->event,
