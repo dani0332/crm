@@ -95,6 +95,7 @@ class AMLService
                 $createdDate = Carbon::createFromFormat('Y-m-d', '2023-11-30');
             }
         }
+        
         $dateForNonMigratedPersonalQuotes = Carbon::parse($parseDate)->format(config('constants.DATE_FORMAT_ONLY'));
         $dataMigrationDate = match ((int) $quoteTypeId) {
             (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-12'),

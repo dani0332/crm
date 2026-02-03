@@ -15,10 +15,6 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Service class for handling AML query operations
- * Manages data retrieval, filtering, and pagination for AML listings
- */
 class AMLQueryService
 {
     public function getAMLQuotes(object $request): \Illuminate\Contracts\Pagination\Paginator|array
@@ -28,45 +24,29 @@ class AMLQueryService
         }
 
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
-        $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
+        $quoteType = $quoteTypes->where('code', $request->quoteType)->first();
 
-        if (! $quoteTypeId) {
+        if (! $quoteType) {
             return [];
         }
 
-        $quoteRequestTable = $this->determineQuoteRequestTable($quoteTypeId, $request);
-        $dataAml = $this->buildBaseQuery($quoteRequestTable, $request, $quoteTypeId);
-        $dataAml = $this->applyFilters($dataAml, $quoteRequestTable, $request);
+        $quoteRequestTable = $this->determineQuoteRequestTable($quoteType, $request);
+        $dataAml = $this->buildBaseQuery($quoteRequestTable, $request, $quoteType->id);
+        $dataAml = $this->applyFilters($dataAml, $quoteRequestTable, $request, $quoteType->id);
         $dataAml = $dataAml->orderBy($quoteRequestTable.'.created_at', 'desc');
 
         return $dataAml->simplePaginate(10)->withQueryString();
     }
 
-    private function determineQuoteRequestTable(int $quoteTypeId, object $request): string
+    private function determineQuoteRequestTable(QuoteTypes $quoteType, object $request): string
     {
         $quoteRequestTable = strtolower($request->quoteType).'_quote_request';
 
-        if (! $this->isPersonalQuoteType($quoteTypeId)) {
+        if (! checkPersonalQuotes($quoteType->code)) {
             return $quoteRequestTable;
         }
 
-        return $this->resolvePersonalQuoteTable($quoteTypeId, $request, $quoteRequestTable);
-    }
-
-    private function isPersonalQuoteType(int $quoteTypeId): bool
-    {
-        $personalQuoteTypes = [
-            QuoteTypes::BIKE->id(),
-            QuoteTypes::YACHT->id(),
-            QuoteTypes::PET->id(),
-            QuoteTypes::CYCLE->id(),
-            QuoteTypes::JETSKI->id(),
-            QuoteTypes::LIFE->id(),
-            QuoteTypes::SAVINGS->id(),
-            QuoteTypes::HOME->id(),
-        ];
-
-        return in_array($quoteTypeId, $personalQuoteTypes);
+        return $this->resolvePersonalQuoteTable($quoteType->id, $request, $quoteRequestTable);
     }
 
     private function resolvePersonalQuoteTable(int $quoteTypeId, object $request, string $fallbackTable): string
