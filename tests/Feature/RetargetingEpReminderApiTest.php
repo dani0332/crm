@@ -5,8 +5,10 @@ use App\Services\EmailStatusService;
 use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
+use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
     $testData = RetargetingEpReminderTestDataHelper::setupTestData();
     $this->carQuote = $testData['carQuote'];
     $this->quoteId = $testData['quoteId'];

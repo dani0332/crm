@@ -18,6 +18,7 @@ use App\Services\EmailStatusService;
 use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
+use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     $this->quoteUuid = 'RETARGET003';
@@ -173,7 +174,10 @@ describe('getRetargetingCarEpReminderData', function () {
     describe('return 200', function () {
 
         test('successfully returns data', function () {
+
+            TestSchemaCreator::createMinimalSchema();
             $data = RetargetingEpReminderTestDataHelper::setupTestData();
+
             $quoteId = $data['quoteId'];
             $quoteUuid = $data['quoteUuid'];
             $embeddedTransactionCode = $data['epMDXTransaction']->code;

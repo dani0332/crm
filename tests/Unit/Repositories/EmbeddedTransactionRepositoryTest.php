@@ -12,8 +12,10 @@ use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
+use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
     $this->repository = new EmbeddedTransactionRepository;
 });
 
