@@ -573,7 +573,7 @@ const signedMedicalApplicationDocs = computed(() => {
               </template>
                   
               <!-- Show quote medical signed document here as per ADNIC requirement --> 
-              <div v-if="documentType.text.includes('Signed medical application form')">
+              <div v-if="documentType.text?.includes('Signed medical application form')">
                   <a v-for="doc in signedMedicalApplicationDocs" :key="doc.id"
                     :href="
                       storageUrl +
