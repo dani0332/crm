@@ -459,12 +459,12 @@ test('car quotes index returns only active advisors', function () {
 });
 
 test('savings quotes index returns only active advisors', function () {
-    // Mock the CAPI HTTP request for savings lookups
-    Http::fake([
-        '*' => Http::response([
+    // Mock the Capi facade for savings lookups
+    $mockCapi = Mockery::mock('alias:App\Facades\Capi');
+    $mockCapi->shouldReceive('request')
+        ->andReturn((object) [
             'savingsInvestmentType' => [],
-        ], 200),
-    ]);
+        ]);
 
     $teamId = seedRolesAndTeams();
     $admin = TestDataSeeder::createUserWithRole(RolesEnum::Admin);

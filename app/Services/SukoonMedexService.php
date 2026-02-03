@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -29,7 +30,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
-use App\Enums\CustomerTypeEnum;
 
 class SukoonMedexService
 {
@@ -747,7 +747,7 @@ class SukoonMedexService
 
         $missingFields = [];
 
-        if ((empty($insuredKyc?->residential_address) && $customerType == CustomerTypeEnum::Individual) || 
+        if ((empty($insuredKyc?->residential_address) && $customerType == CustomerTypeEnum::Individual) ||
             (empty($insuredKyc?->registered_address) && $customerType == CustomerTypeEnum::Entity)) {
             $missingFields[] = 'residential-address';
         }
