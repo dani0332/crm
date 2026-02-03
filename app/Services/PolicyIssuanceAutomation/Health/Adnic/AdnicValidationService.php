@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
 use App\Services\Logger\LoggerService;
+use App\Enums\DocumentTypeCode;
 
 class AdnicValidationService
 {
@@ -74,6 +75,43 @@ class AdnicValidationService
                 'status' => false,
                 'error' => 'Insured info details not found',
                 'message' => 'Insured info details not found',
+            ];
+        }
+
+        // Define mandatory document types based on ADNIC requirements
+        $mandatoryDocuments = [
+            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM, // Medical application form
+            DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE, // Others (Customer Due Diligence)
+            DocumentTypeCode::HEA_EID, // Emirates ID
+            DocumentTypeCode::HEA_PAS, // Passport
+            DocumentTypeCode::HEA_VISA, // Visa
+            DocumentTypeCode::HEA_BIRTH_CERTIFICATE, // Birth Certificate
+        ];
+
+
+        // Group uploaded documents by type code
+        $uploadedDocumentCodes = $quoteDocuments->pluck('document_type_code')->unique()->toArray();
+
+        // Check for missing mandatory documents
+        $missingDocuments = [];
+        foreach ($mandatoryDocuments as $docCode) {
+            if (! in_array($docCode, $uploadedDocumentCodes, true)) {
+                $missingDocuments[] = $docCode;
+            }
+        }
+
+        if (! empty($missingDocuments)) {
+            $missingList = implode(', ', $missingDocuments);
+            LoggerService::error('Missing mandatory documents for ADNIC policy issuance', extra: [
+                'quote_uuid' => $quote->uuid ?? null,
+                'missing_documents' => $missingDocuments,
+                'uploaded_documents' => $uploadedDocumentCodes
+            ]);
+
+            return [
+                'status' => false,
+                'error' => "Missing required documents: {$missingList}",
+                'message' => "Missing required documents: {$missingList}",
             ];
         }
 
