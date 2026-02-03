@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
-use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -738,12 +737,7 @@ class SukoonMedexService
     public function validateCustomerDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
-        $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
-
-        if ($customerType != CustomerTypeEnum::Individual) {
-            throw new EpEcbException('Insured record should be individual customer-type');
-        }
 
         if (empty($insuredKyc)) {
             throw new EpEcbException('KYC is not found');
