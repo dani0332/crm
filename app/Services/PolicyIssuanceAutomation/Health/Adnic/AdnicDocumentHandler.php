@@ -112,6 +112,36 @@ class AdnicDocumentHandler
                 'insurerDocName' => 'Emirates ID',
                 'uploaded' => false,
             ],
+            DocumentTypeCode::HEA_EID_FRONT => [
+                'code' => DocumentTypeCode::HEA_EID_FRONT,
+                'insurerDocCode' => '4',
+                'insurerDocName' => 'Emirates ID Front',
+                'uploaded' => false,
+            ],
+            DocumentTypeCode::HEA_EID_BACK => [
+                'code' => DocumentTypeCode::HEA_EID_BACK,
+                'insurerDocCode' => '5',
+                'insurerDocName' => 'Emirates ID Back',
+                'uploaded' => false,
+            ],
+            DocumentTypeCode::HEA_BIRTH_CERTIFICATE => [
+                'code' => DocumentTypeCode::HEA_BIRTH_CERTIFICATE,
+                'insurerDocCode' => '11',
+                'insurerDocName' => 'Birth Certificate',
+                'uploaded' => false,
+            ],
+            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM => [
+                'code' => DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM,
+                'insurerDocCode' => '18',
+                'insurerDocName' => 'Medical Application Form',
+                'uploaded' => false,
+            ],
+            DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE => [
+                'code' => DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE,
+                'insurerDocCode' => '17',
+                'insurerDocName' => 'Customer Due Diligence',
+                'uploaded' => false,
+            ],
         ]);
     }
 
