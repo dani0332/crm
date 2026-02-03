@@ -54,12 +54,12 @@ class EmbeddedTransactionRepository extends BaseRepository
     {
         return EmbeddedTransaction::select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id')
             ->with(
-                'product:id,embedded_product_id', 
-                'product.embeddedProduct:id,short_code', 
-                'quoteRequest:id,uuid,quote_status_id,policy_booking_date,customer_id,email,first_name,last_name,car_make_id,car_model_id,advisor_id,plan_id', 
-                'quoteRequest.carMake:id,text', 
-                'quoteRequest.carModel:id,text', 
-                'quoteRequest.advisor:id,email', 
+                'product:id,embedded_product_id',
+                'product.embeddedProduct:id,short_code',
+                'quoteRequest:id,uuid,quote_status_id,policy_booking_date,customer_id,email,first_name,last_name,car_make_id,car_model_id,advisor_id,plan_id',
+                'quoteRequest.carMake:id,text',
+                'quoteRequest.carModel:id,text',
+                'quoteRequest.advisor:id,email',
                 'quoteRequest.plan:id,provider_id',
                 'quoteRequest.plan.insuranceProvider:id,code',
             )
@@ -68,6 +68,7 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->where('quote_request_type', CarQuote::class)
             ->where('payment_status_id', PaymentStatusEnum::DRAFT)
             ->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', QuoteStatusEnum::PolicyBooked))
+            ->whereHas('product.embeddedProduct', fn ($q) => $q->whereIn('short_code', EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS))
             ->first();
     }
 
@@ -75,10 +76,11 @@ class EmbeddedTransactionRepository extends BaseRepository
     {
         if (! in_array($epShortCode, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)) {
             LoggerService::info("getEpRetargetingReminderEmailTemplateId: EP Reminder is not allowed for epShortCode: {$epShortCode}");
+
             return false;
         }
 
-        $templateKey = match($epShortCode) {
+        $templateKey = match ($epShortCode) {
             EmbeddedProductEnum::MDX => ApplicationStorageEnums::CAR_EP_REMINDER_MDX_EMAIL_TEMPLATE,
             EmbeddedProductEnum::ECB => ApplicationStorageEnums::CAR_EP_REMINDER_ECB_EMAIL_TEMPLATE,
             default => null,
@@ -86,12 +88,14 @@ class EmbeddedTransactionRepository extends BaseRepository
 
         if (empty($templateKey)) {
             LoggerService::info("getEpRetargetingReminderEmailTemplateId: Template key not defined for epShortCode: {$epShortCode}");
+
             return false;
         }
 
         $templateId = getAppStorageValueByKey($templateKey, useCache: true);
         if (empty($templateId)) {
             LoggerService::info("getEpRetargetingReminderEmailTemplateId: Template Id not found for epShortCode: {$epShortCode}");
+
             return false;
         }
 

@@ -129,10 +129,10 @@ class EmbeddedTransactionService extends BaseService
         }
 
         $buyNowUrlQueryParams = [];
-        if (! empty($quote->plan->id ?? null)) {
-            $buyNowUrlQueryParams['planId'] = $quote->plan->id;
+        if (! empty($quote->plan?->id ?? null)) {
+            $buyNowUrlQueryParams['planId'] = $quote->plan?->id;
         }
-        $providerCode = $quote->plan->insuranceProvider->code ?? null;
+        $providerCode = $quote->plan?->insuranceProvider?->code ?? null;
         if (! empty($providerCode)) {
             $buyNowUrlQueryParams['providerCode'] = $providerCode;
         }
@@ -151,8 +151,8 @@ class EmbeddedTransactionService extends BaseService
                 'customerId' => $quote->customer_id,
                 'customerEmail' => $quote->email,
                 'customerName' => $quote->full_name,
-                'advisorEmail' => $quote->advisor->email ?? null,
-                'displayName' => "InsuranceMarket.ae",
+                'advisorEmail' => $quote->advisor?->email ?? null,
+                'displayName' => 'InsuranceMarket.ae',
                 'buyNowUrl' => $buyNowUrl,
                 'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
                 'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
