@@ -78,6 +78,16 @@ class SendClaimGoogleReviewEmailJob implements ShouldQueue
                 return;
             }
 
+
+            $isReviewEmailSent = $claimRequest->google_review_email_sent_at;
+            if ($isReviewEmailSent) {
+                LoggerService::info(' Google review email already sent - Claim UUID: '.$this->claimRequestUuid, [
+                    'claim_request_uuid' => $this->claimRequestUuid,
+                ]);
+
+                return;
+            }
+
             // Check if customer is eligible for review email
             if (! $claimRequestEmailService->isEligibleForReviewEmail($claimRequest)) {
                 LoggerService::info(' Customer not eligible for Google review email - Claim UUID: '.$claimRequest->uuid, [
@@ -94,6 +104,9 @@ class SendClaimGoogleReviewEmailJob implements ShouldQueue
 
             // Log success or failure based on response code
             if (in_array($responseCode, [200, 201])) {
+                $claimRequest->google_review_email_sent_at = now();
+                $claimRequest->save();
+
                 LoggerService::info(' Google review email sent successfully - Claim UUID: '.$this->claimRequestUuid, [
                     'response_code' => $responseCode,
                     'customer_email' => $claimRequest->email,
