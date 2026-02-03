@@ -113,7 +113,7 @@ class EmbeddedTransactionService extends BaseService
         $carMake = $quote->carMake?->text ?? null;
         $carModel = $quote->carModel?->text ?? null;
         $epShortCode = $embeddedTransaction->product?->embeddedProduct?->short_code ?? null;
-        if (empty($carMake) || empty($carModel) || empty($epShortCode) || empty($quote->email)) {
+        if (empty($carMake) || empty($carModel) || empty($epShortCode) || empty($quote->email) || empty($quote->customer_id)) {
             LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quote]);
 
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
