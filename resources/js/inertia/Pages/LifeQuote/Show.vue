@@ -43,7 +43,6 @@ const props = defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
-  storageUrl: String,
   vatPercentage: Number,
   payments: Array,
   paymentTooltipEnum: Object,
@@ -1274,7 +1273,10 @@ const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const isMetLife = item => {
   if (!item) return false;
 
-  return item.providerCode === insuranceProviderCodeEnum?.MTL;
+  return (
+    item.providerCode === insuranceProviderCodeEnum?.MTL &&
+    item.instantPolicy === true
+  ); // only for metlife instant policy
 };
 
 const canSelectMetLifePlan = computed(() => {
@@ -1379,7 +1381,7 @@ const getDisplayPriceInAED = item => {
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Life Detail</h2>
         <x-button
-          v-if="quote?.life_quote?.pc_qualified == true"
+          v-if="quote?.customer?.pcp_tag == true"
           size="sm"
           color="#BFA100"
           tag="div"
@@ -1432,7 +1434,6 @@ const getDisplayPriceInAED = item => {
             :notes="quoteNotes"
             :modelType="modelType"
             :quote="quote"
-            :cdn="cdnPath"
           />
 
           <Link
@@ -2172,6 +2173,7 @@ const getDisplayPriceInAED = item => {
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail
@@ -2947,7 +2949,6 @@ const getDisplayPriceInAED = item => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -2988,7 +2989,6 @@ const getDisplayPriceInAED = item => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote?.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"

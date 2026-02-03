@@ -1,0 +1,405 @@
+<?php
+
+namespace Tests\Helpers;
+
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\AuthGuardEnum;
+use App\Enums\PermissionsEnum;
+use App\Models\CarQuote;
+use App\Models\Nationality;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
+class TestDataSeeder
+{
+    /**
+     * Create a test user with authentication.
+     */
+    public static function createUser(array $attributes = []): User
+    {
+        $defaults = [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+            // Required for routes behind CheckLastLoginMiddleware (last_login_check)
+            'last_login' => now(),
+        ];
+
+        $user = User::factory()->create(array_merge($defaults, $attributes));
+        $user->setConnection('sqlite');
+
+        return $user;
+    }
+
+    /**
+     * Create a user with a specific role.
+     */
+    public static function createUserWithRole(string $roleName, array $attributes = []): User
+    {
+        $user = self::createUser($attributes);
+
+        // Create role if it doesn't exist using DB facade
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $roleId = $db->table('roles')
+            ->where('name', $roleName)
+            ->where('guard_name', AuthGuardEnum::Web->value)
+            ->value('id');
+        if (! $roleId) {
+            $roleId = $db->table('roles')->insertGetId([
+                'name' => $roleName,
+                'guard_name' => AuthGuardEnum::Web->value,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Assign role
+        $db->table('model_has_roles')->insertOrIgnore([
+            'role_id' => $roleId,
+            'model_type' => User::class,
+            'model_id' => $user->id,
+        ]);
+
+        return $user;
+    }
+
+    /**
+     * Seed permissions for a single role (Spatie permissions tables) on sqlite.
+     *
+     * @param  array<int, string>  $permissionNames
+     */
+    public static function seedRolePermissions(string $roleName, array $permissionNames): void
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        $guardName = AuthGuardEnum::Web->value;
+
+        $roleId = $db->table('roles')
+            ->where('name', $roleName)
+            ->where('guard_name', $guardName)
+            ->value('id');
+
+        if (! $roleId) {
+            $roleId = $db->table('roles')->insertGetId([
+                'name' => $roleName,
+                'guard_name' => $guardName,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $permissionIds = collect($permissionNames)
+            ->filter(fn ($permissionName) => is_string($permissionName) && $permissionName !== '')
+            ->unique()
+            ->map(function (string $permissionName) use ($db, $guardName): int {
+                $permissionId = $db->table('permissions')
+                    ->where('name', $permissionName)
+                    ->where('guard_name', $guardName)
+                    ->value('id');
+
+                if (! $permissionId) {
+                    $permissionId = $db->table('permissions')->insertGetId([
+                        'name' => $permissionName,
+                        'guard_name' => $guardName,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                return (int) $permissionId;
+            })
+            ->values()
+            ->all();
+
+        foreach ($permissionIds as $permissionId) {
+            $db->table('role_has_permissions')->insertOrIgnore([
+                'permission_id' => $permissionId,
+                'role_id' => $roleId,
+            ]);
+        }
+
+        // Ensure Spatie doesn't serve stale permission mappings in the same process. Ensures cache is cleared so new/updated roles and permissions are recognized immediately
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    /**
+     * Seed required lookup data for LifeQuote tests.
+     *
+     * @return array Array of created lookup IDs
+     */
+    public static function seedLifeQuoteLookups(): array
+    {
+        // Use DB facade to insert directly and avoid mass assignment issues
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        // Create Nationality
+        $nationalityId = $db->table('nationality')->where('text', 'Test Nationality')->value('id');
+        if (! $nationalityId) {
+            $nationalityId = $db->table('nationality')->insertGetId([
+                'text' => 'Test Nationality',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Create Currency
+        $currencyId = $db->table('currency_type')->where('text', 'AED')->value('id');
+        if (! $currencyId) {
+            $currencyId = $db->table('currency_type')->insertGetId([
+                'text' => 'AED',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Create Marital Status
+        $maritalStatusId = $db->table('marital_status')->where('text', 'Single')->value('id');
+        if (! $maritalStatusId) {
+            $maritalStatusId = $db->table('marital_status')->insertGetId([
+                'text' => 'Single',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Create Life Insurance Purpose
+        $purposeId = $db->table('life_insurance_purpose')->where('text', 'Test Purpose')->value('id');
+        if (! $purposeId) {
+            $purposeId = $db->table('life_insurance_purpose')->insertGetId([
+                'text' => 'Test Purpose',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Create Life Number of Years
+        $numberOfYearsId = $db->table('life_number_of_year')->where('text', '10 Years')->value('id');
+        if (! $numberOfYearsId) {
+            $numberOfYearsId = $db->table('life_number_of_year')->insertGetId([
+                'text' => '10 Years',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'nationality_id' => $nationalityId,
+            'currency_id' => $currencyId,
+            'marital_status_id' => $maritalStatusId,
+            'purpose_of_insurance_id' => $purposeId,
+            'number_of_years_id' => $numberOfYearsId,
+        ];
+    }
+
+    /**
+     * Create a user with Admin role for testing.
+     */
+    public static function createAdminUser(array $attributes = [], array $permissionNames = []): User
+    {
+        $user = self::createUser($attributes);
+
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+        $roleId = $db->table('roles')
+            ->where('name', \App\Enums\RolesEnum::Admin)
+            ->where('guard_name', AuthGuardEnum::Web->value)
+            ->value('id');
+        if (! $roleId) {
+            $roleId = $db->table('roles')->insertGetId([
+                'name' => \App\Enums\RolesEnum::Admin,
+                'guard_name' => AuthGuardEnum::Web->value,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $db->table('model_has_roles')->insertOrIgnore([
+            'role_id' => $roleId,
+            'model_type' => User::class,
+            'model_id' => $user->id,
+        ]);
+
+        // In app, Admin users are expected to pass permission middleware checks.
+        // For SQLite tests, attach all known PermissionsEnum permissions unless explicitly overridden.
+        $permissionsToSeed = $permissionNames !== []
+            ? $permissionNames
+            : array_values(PermissionsEnum::asArray());
+
+        self::seedRolePermissions(\App\Enums\RolesEnum::Admin, $permissionsToSeed);
+
+        return $user;
+    }
+
+    /**
+     * Seed the Bird workflow URL used by AIG workflow (same key as NB motor workflow).
+     */
+    public static function seedBirdNbMotorWorkflowUrl(string $url = 'https://example.test/workflow'): void
+    {
+        $db = DB::connection('sqlite');
+
+        $existingId = $db->table('application_storage')
+            ->where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)
+            ->value('id');
+
+        if ($existingId) {
+            $db->table('application_storage')
+                ->where('id', $existingId)
+                ->update(['value' => $url, 'updated_at' => now()]);
+
+            return;
+        }
+
+        $db->table('application_storage')->insert([
+            'key_name' => ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW,
+            'value' => $url,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * Seed the Bird AccessKey used for access-key authenticated Bird calls.
+     */
+    public static function seedBirdAccessKey(string $accessKey = 'test-access-key'): void
+    {
+        $db = DB::connection('sqlite');
+
+        $existingId = $db->table('application_storage')
+            ->where('key_name', ApplicationStorageEnums::BIRD_ACCESS_KEY)
+            ->value('id');
+
+        if ($existingId) {
+            $db->table('application_storage')
+                ->where('id', $existingId)
+                ->update(['value' => $accessKey, 'updated_at' => now()]);
+
+            return;
+        }
+
+        $db->table('application_storage')->insert([
+            'key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY,
+            'value' => $accessKey,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * Create a minimal CarQuote record for AIG workflow tests (SQLite connection).
+     */
+    public static function createCarQuote(array $overrides = []): CarQuote
+    {
+        $defaults = [
+            'uuid' => 'test-car-quote-uuid-'.uniqid(),
+            'code' => 'TEST-'.uniqid(),
+            'first_name' => 'Test',
+            'last_name' => 'Customer',
+            'email' => 'customer@example.com',
+            'mobile_no' => '0500000000',
+            'advisor_id' => null,
+            'quote_status_id' => null,
+            'aig_flow_executed_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $db = DB::connection('sqlite');
+        $id = $db->table('car_quote_request')->insertGetId(array_merge($defaults, $overrides));
+
+        return CarQuote::on('sqlite')->findOrFail($id);
+    }
+
+    /**
+     * Seed required lookup data for CarQuote tests.
+     *
+     * @return array Array of created lookup IDs
+     */
+    public static function seedCarQuoteLookups(): array
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        // Create Insurance Provider (RSA)
+        $insuranceProviderId = $db->table('insurance_provider')->where('code', \App\Enums\InsuranceProvidersEnum::RSA)->value('id');
+        if (! $insuranceProviderId) {
+            $insuranceProviderId = $db->table('insurance_provider')->insertGetId([
+                'code' => \App\Enums\InsuranceProvidersEnum::RSA,
+                'text' => 'RSA Insurance',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Create Car Plan
+        $carPlanId = $db->table('car_plan')->insertGetId([
+            'provider_id' => $insuranceProviderId,
+            'plan_name' => 'Test Car Plan',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return [
+            'insurance_provider_id' => $insuranceProviderId,
+            'plan_id' => $carPlanId,
+        ];
+    }
+
+    /**
+     * Seed application_storage key/value pairs on sqlite.
+     *
+     * @param  array<string, mixed>  $keyValueMap
+     */
+    public static function seedApplicationStorage(array $keyValueMap): void
+    {
+        $rows = collect($keyValueMap)
+            ->map(fn ($value, $key) => [
+                'key_name' => $key,
+                'value' => $value,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ])
+            ->values()
+            ->all();
+
+        \Illuminate\Support\Facades\DB::connection('sqlite')
+            ->table('application_storage')
+            ->insertOrIgnore($rows);
+    }
+
+    /**
+     * Seed a basic product -> team hierarchy on sqlite.
+     *
+     * @return array{productTeamId:int, teamId:int}
+     */
+    public static function seedTeamHierarchy(): array
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        $productTeamId = (int) $db->table('teams')->insertGetId([
+            'name' => 'TEST_PRODUCT',
+            'type' => \App\Enums\TeamTypeEnum::PRODUCT,
+            'is_active' => 1,
+            'parent_team_id' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $teamId = (int) $db->table('teams')->insertGetId([
+            'name' => 'TEST_TEAM',
+            'type' => \App\Enums\TeamTypeEnum::TEAM,
+            'is_active' => 1,
+            'parent_team_id' => $productTeamId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return compact('productTeamId', 'teamId');
+    }
+}

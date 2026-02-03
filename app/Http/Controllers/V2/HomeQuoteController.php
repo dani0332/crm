@@ -18,6 +18,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
+use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HomeQuoteService;
@@ -92,6 +93,7 @@ class HomeQuoteController extends Controller
             abort(404, 'No Quote Found. Please check your details and try again.');
         }
 
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Home));
         $quoteWithData = HomeQuoteRepository::getShowFormOptions($quote);
 
         return inertia('HomeQuote/Show', $quoteWithData);
@@ -216,9 +218,11 @@ class HomeQuoteController extends Controller
         // Fetch advisors and lead statuses
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Home);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,
+            'renewalBatches' => $renewalBatches,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,

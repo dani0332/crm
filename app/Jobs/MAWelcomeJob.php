@@ -56,6 +56,7 @@ class MAWelcomeJob implements ShouldQueue
             'customerEmail' => $this->customer->email,
         ];
         try {
+            ensureWriteDefaultConnection();
             $statusCode = app(SendEmailCustomerService::class)->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source);
 
             if ($statusCode == 201) {

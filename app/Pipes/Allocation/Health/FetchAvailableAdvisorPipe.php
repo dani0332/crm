@@ -20,6 +20,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {
     protected bool $isBuyLeadAdvisor = false;
     protected $buyLeadRequest = null;
+    protected ?array $ruleUserIds = null;
 
     /**
      * Handle the incoming request.
@@ -90,9 +91,15 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $advisors = collect([]);
 
+        $rules = $this->allocationRequest->get('rules');
+        if (! empty($rules) && $rules->isNotEmpty()) {
+            $this->ruleUserIds = $this->allocationRequest->get('ruleUserIds', []);
+
+            LoggerService::info(self::class.'::fetchEligibleAdvisors - rule user ids are: '.json_encode($this->ruleUserIds));
+        }
+
         if ($this->lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($this->lead->isValueLead() || $this->lead->isVolumeLead())) {
             $advisors = $this->fetchAdvisorByType('getBLAdvisorsByStatus', $teamId);
-
         }
 
         if (count($advisors) < 1) {
@@ -105,6 +112,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
         $eligibleUsers = [];
+
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class."::fetchAdvisorByType - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
@@ -129,13 +137,26 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             $this->lead->isValueLead()
         );
 
+        LoggerService::info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
+
+        if (! is_null($this->ruleUserIds)) {
+            $userIds = array_values(array_intersect(
+                $buyLeadRequestedUserIds,
+                $this->ruleUserIds
+            ));
+
+            LoggerService::info(self::class.'::getBLAdvisorsByStatus - user ids after intersection with rule users are: '.json_encode($userIds));
+        } else {
+            $userIds = $buyLeadRequestedUserIds;
+        }
+
         $advisors = $this->getAdvisorBaseQuery($status, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor], true)
             ->when($this->lead->isValueLead(), function ($q) {
                 $q->isValueUser($this->allocationRequest->getQuoteType());
             }, function ($q) {
                 $q->isVolumeUser($this->allocationRequest->getQuoteType());
             })
-            ->whereIn('users.id', $buyLeadRequestedUserIds)
+            ->whereIn('users.id', $userIds)
             ->logRawSql()
             ->get();
 
@@ -153,6 +174,9 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         $advisors = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
             ->where('la.normal_allocation_enabled', true)
+            ->when(! is_null($this->ruleUserIds), function ($q) {
+                $q->whereIn('users.id', $this->ruleUserIds);
+            })
             ->logRawSql()
             ->get();
 
@@ -174,6 +198,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         } else {
             // If no rules are found, get user IDs from rule lead sources.
             $ruleUserIds = $this->allocationRequest->get('ruleUserIds');
+            $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
 
             LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUserIds).' and teamId is : '.$teamId);
 

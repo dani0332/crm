@@ -23,8 +23,8 @@ class AllocationThresholdController extends Controller
      */
     public function index()
     {
-        $teams = Team::whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::PCP])->where('type', TeamTypeEnum::TEAM)->get();
-        $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::PCP];
+        $teams = Team::whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::GBP])->where('type', TeamTypeEnum::TEAM)->get();
+        $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB, TeamNameEnum::GBP];
         $sortedTeams = $teams->sortBy(function ($team) use ($customSequence) {
             $index = array_search($team['name'], $customSequence);
 

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ClaimHistory extends BaseModel
 {
     protected $table = 'claim_history';
 
-    use HasFactory;
+    use HasFactory, SpatieActivityLog;
 
     /**
      * scope to get active records

@@ -13,7 +13,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\SendFTCEmailJob;
@@ -88,8 +87,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             // Initialize payment source and get quote model
             $paymentSource = 'Main Lead';
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-            LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::CREATE_PAYMENT);
             $quoteCode = $quoteModel->code;
+            LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::CREATE_PAYMENT, $quoteCode);
             LoggerService::info("Starting manual payment creation process for quote code: {$quoteCode}");
             $masterPayment = (object) $request->payment;
 
@@ -684,13 +683,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $quote = $masterPayment?->paymentable;
         $sageResponseStatus = false;
 
-        $isHealthAUH = $this->isHealthAUHLead(ucfirst($request->modelType), $quote);
+        $isAbuDhabiBranch = $this->isAbuDhabiBranch(ucfirst($request->modelType), $quote);
         /* Handle NRA case where payment is approved after policy/send update is booked */
         $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quote, $splitPayment);
         info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
 
         // Process Sage API call outside transaction if needed
-        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isHealthAUH) {
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && ! $isAbuDhabiBranch) {
             $sageRequest = $request->safe();
             $sageRequest->userId = auth()->id();
             $sageRequest->quoteType = $request->modelType;
@@ -1150,19 +1149,42 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         $userTeamIds = $teamIds ?: $user->getUserTeamIds();
 
-        $personalCount = DB::table('payments')
-            ->distinct()
-            ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('user_team', 'user_team.user_id', 'pq.advisor_id')
-            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
+        $isManager = $user->hasAnyRole(getManagerRoles());
 
-        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
-            $personalCount = $personalCount->whereIn('user_team.team_id', $userTeamIds);
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
+
+        // Base query with optimized joins and indexes
+        $query = DB::table('payments')
+            ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code');
+
+        // Apply user/team filtering early to reduce dataset
+        if ($isManager) {
+            // For managers, join user_team and filter by team_id
+            $query->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
+                ->whereIn('user_team.team_id', $userTeamIds);
         } else {
-            $personalCount = $personalCount->where('pq.advisor_id', $user->id);
+            // For non-managers, filter directly by advisor_id (more efficient)
+            $query->where('pq.advisor_id', $user->id);
         }
 
-        return $personalCount->count('payments.id');
+        // Optimize OR conditions by using UNION ALL for better index usage
+        // This allows each branch to use specific indexes effectively
+        $authorisedQuery = (clone $query)
+            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
+            ->select('payments.id');
+
+        $insurerPaymentQuery = (clone $query)
+            ->where('payments.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
+            ->whereIn('payments.payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
+            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
+            ->select('payments.id');
+
+        // Use UNION ALL and COUNT DISTINCT to get unique payment count
+        return DB::table(DB::raw("({$authorisedQuery->toSql()} UNION ALL {$insurerPaymentQuery->toSql()}) as combined_payments"))
+            ->mergeBindings($authorisedQuery)
+            ->mergeBindings($insurerPaymentQuery)
+            ->count(DB::raw('DISTINCT id'));
     }
 
     public function fetchMainQuotePayment($quote)
