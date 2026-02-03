@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Services\Logger\LoggerService;
@@ -51,41 +52,22 @@ class EmbeddedTransactionRepository extends BaseRepository
 
     public function getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode)
     {
-        return DB::table('car_quote_request as cqr')
-            ->select(
-                'cqr.id as quote.id',
-                'cqr.uuid as quote.uuid',
-                'cqr.quote_status_id as quote.quote_status_id',
-                'cqr.policy_booking_date as quote.policy_booking_date',
-                'cqr.customer_id as quote.customer_id',
-                'cqr.email as quote.email',
-                'cqr.first_name as quote.first_name',
-                'cqr.last_name as quote.last_name',
-                'ep.short_code as embeddedProduct.short_code',
-                'et.code as embeddedTransaction.code',
-                'et.is_selected as embeddedTransaction.is_selected',
-                'et.payment_status_id as embeddedTransaction.payment_status_id',
-                'et.product_id as embeddedTransaction.product_id',
-                'c_make.text as vehicle.make',
-                'c_model.text as vehicle.model',
-                'cqr.advisor_id as advisor.id',
-                'adv.email as advisor.email',
-                'cqr.plan_id as plan.id',
-                'ip.code as plan.provider_code'
+        return EmbeddedTransaction::select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id')
+            ->with(
+                'product:id,embedded_product_id', 
+                'product.embeddedProduct:id,short_code', 
+                'quoteRequest:id,uuid,quote_status_id,policy_booking_date,customer_id,email,first_name,last_name,car_make_id,car_model_id,advisor_id,plan_id', 
+                'quoteRequest.carMake:id,text', 
+                'quoteRequest.carModel:id,text', 
+                'quoteRequest.advisor:id,email', 
+                'quoteRequest.plan:id,provider_id',
+                'quoteRequest.plan.insuranceProvider:id,code',
             )
-            ->leftJoin('embedded_transactions as et', function ($join) use ($embeddedTransactionCode) {
-                $join->on('et.quote_request_id', '=', 'cqr.id')
-                    ->where('et.quote_request_type', '=', CarQuote::class)
-                    ->where('et.code', '=', $embeddedTransactionCode);
-            })
-            ->leftJoin('embedded_product_options as epo', 'et.product_id', '=', 'epo.id')
-            ->leftJoin('embedded_products as ep', 'epo.embedded_product_id', '=', 'ep.id')
-            ->leftJoin('car_make as c_make', 'cqr.car_make_id', '=', 'c_make.id')
-            ->leftJoin('car_model as c_model', 'cqr.car_model_id', '=', 'c_model.id')
-            ->leftJoin('users as adv', 'cqr.advisor_id', '=', 'adv.id')
-            ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
-            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
-            ->where('cqr.id', $carQuoteRequestId)
+            ->where('code', $embeddedTransactionCode)
+            ->where('quote_request_id', $carQuoteRequestId)
+            ->where('quote_request_type', CarQuote::class)
+            ->where('payment_status_id', PaymentStatusEnum::DRAFT)
+            ->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', QuoteStatusEnum::PolicyBooked))
             ->first();
     }
 

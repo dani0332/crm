@@ -119,12 +119,15 @@ class CarQuoteObserver
                 ]);
             }
 
-            try {
-                app(EmbeddedTransactionService::class)->retargetEpReminder($lead, QuoteTypeId::Car);
-            } catch (Exception $e) {
-                LoggerService::error('CarQuoteObserver - retarget ep reminder failed', [
-                    'uuid' => $lead->uuid,
-                ], exception: $e);
+            if (app(EmbeddedTransactionService::class)->isRetargetingEpReminderEnabled()) {
+                try {
+                    $response = app(EmbeddedTransactionService::class)->retargetEpReminder($lead, QuoteTypeId::Car);
+                    LoggerService::info('CarQuoteObserver - retarget ep reminder triggered', ['uuid' => $lead->uuid, 'response' => $response]);
+                } catch (Exception $e) {
+                    LoggerService::error('CarQuoteObserver - retarget ep reminder failed', [
+                        'uuid' => $lead->uuid,
+                    ], exception: $e);
+                }
             }
 
             try {

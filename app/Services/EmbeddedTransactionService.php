@@ -46,17 +46,11 @@ class EmbeddedTransactionService extends BaseService
 
     public function retargetEpReminder(CarQuote $quote, int $quoteTypeId)
     {
-        if (! $this->isRetargetingEpReminderEnabled()) {
-            LoggerService::info('retargetEpReminder: Retargeting EP Reminder is not enabled');
-
-            return false;
-        }
-
         $epTransactions = $this->embeddedTransactionRepo->getDraftEpTransactions($quote->id, $quoteTypeId, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS);
         if ($epTransactions->isEmpty()) {
-            LoggerService::info('retargetEpReminder: No draft EP transactions found');
+            LoggerService::info('retargetEpReminder: Record not found', extra: ['quoteId' => $quote->id, 'quoteTypeId' => $quoteTypeId]);
 
-            return false;
+            return [];
         }
 
         $response = [];
@@ -112,43 +106,23 @@ class EmbeddedTransactionService extends BaseService
 
     public function getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode)
     {
-        $quoteData = $this->embeddedTransactionRepo->getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode);
+        $embeddedTransaction = $this->embeddedTransactionRepo->getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode);
+        $quote = $embeddedTransaction->quoteRequest ?? null;
 
-        if (empty($quoteData)) {
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found');
+        if (empty($embeddedTransaction) || empty($quote)) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Record not found');
         }
 
-        $quoteData = (object) array_map(fn ($item) => (object) $item, Arr::undot((array) $quoteData));
-        $quote = $quoteData->quote ?? null;
-        $embeddedTransaction = $quoteData->embeddedTransaction ?? null;
-        $advisor = $quoteData->advisor ?? null;
-        $vehicle = $quoteData->vehicle ?? null;
-        $plan = $quoteData->plan ?? null;
-
-        if ($quote?->quote_status_id != QuoteStatusEnum::PolicyBooked) {
-            LoggerService::info('getRetargetingCarEpReminderData: Quote is not booked', extra: ['quote_status_id' => $quote?->quote_status_id]);
-
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Quote is not booked');
-        }
-        if ($embeddedTransaction?->payment_status_id != PaymentStatusEnum::DRAFT) {
-            LoggerService::info('getRetargetingCarEpReminderData: Embedded transaction payment status is not draft', extra: ['et_payment_status_id' => $embeddedTransaction?->payment_status_id]);
-
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Embedded transaction payment status is not draft');
-        }
-
-        $customerFullName = trim(($quote->first_name ?? '').' '.($quote->last_name ?? ''));
-        if (empty($quote->uuid) || empty($quoteData->embeddedProduct->short_code)
-            || empty($quote->customer_id) || empty($quote->email)
-            || empty($customerFullName)
-            || empty($embeddedTransaction->code)
-            || empty($vehicle->make) || empty($vehicle->model)
-        ) {
-            LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quoteData]);
+        $carMake = $quote->carMake->text ?? null;
+        $carModel = $quote->carModel->text ?? null;
+        $epShortCode = $embeddedTransaction->product->embeddedProduct->short_code ?? null;
+        if (empty($carMake) || empty($carModel) || empty($epShortCode) || empty($quote->email)) {
+            LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quote]);
 
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
-        $templateId = $this->embeddedTransactionRepo->getEpRetargetingReminderEmailTemplateId($quoteData->embeddedProduct->short_code);
+        $templateId = $this->embeddedTransactionRepo->getEpRetargetingReminderEmailTemplateId($epShortCode);
         $birdCarEpReminderEmailWorkflowUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL);
 
         if (empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
@@ -158,11 +132,12 @@ class EmbeddedTransactionService extends BaseService
         }
 
         $buyNowUrlQueryParams = [];
-        if (! empty($plan?->id)) {
-            $buyNowUrlQueryParams['planId'] = $plan->id;
+        if (! empty($quote->plan->id ?? null)) {
+            $buyNowUrlQueryParams['planId'] = $quote->plan->id;
         }
-        if (! empty($plan?->provider_code)) {
-            $buyNowUrlQueryParams['providerCode'] = $plan->provider_code;
+        $providerCode = $quote->plan->insuranceProvider->code ?? null;
+        if (! empty($providerCode)) {
+            $buyNowUrlQueryParams['providerCode'] = $providerCode;
         }
 
         $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid
@@ -172,21 +147,21 @@ class EmbeddedTransactionService extends BaseService
             ]);
 
         $data = [
-            'quote' => Arr::only((array) $quote, ['id', 'uuid', 'quote_status_id', 'policy_booking_date']),
-            'embeddedTransaction' => $embeddedTransaction,
+            'quote' => $quote->only(['id', 'uuid', 'quote_status_id', 'policy_booking_date']),
+            'embeddedTransaction' => $embeddedTransaction->only(['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id']),
             'emailWorkflowData' => [
                 'templateId' => $templateId,
                 'customerId' => $quote->customer_id,
                 'customerEmail' => $quote->email,
-                'customerName' => $customerFullName,
-                'advisorEmail' => $advisor->email ?? null,
-                'displayName' => config('constants.IM_FROM_EMAIL'),
+                'customerName' => $quote->full_name,
+                'advisorEmail' => $quote->advisor->email ?? null,
+                'displayName' => "InsuranceMarket.ae",
                 'buyNowUrl' => $buyNowUrl,
                 'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
                 'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
-                'epShortCode' => $quoteData->embeddedProduct->short_code,
-                'vehicleMake' => $vehicle->make,
-                'vehicleModel' => $vehicle->model,
+                'epShortCode' => $epShortCode,
+                'vehicleMake' => $carMake,
+                'vehicleModel' => $carModel,
             ],
         ];
 
