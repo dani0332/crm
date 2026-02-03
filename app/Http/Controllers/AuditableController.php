@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
-use App\Http\Requests\OcrLogsRequest;
 use App\Models\HealthInsurerRequestResponse;
 use App\Models\HealthQuote;
+use App\Http\Requests\LogsRequest;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -22,7 +22,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\EpLogsRequest;
 
 class AuditableController extends Controller
 {
@@ -195,7 +194,7 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadOcrLogs(OcrLogsRequest $request)
+    public function loadOcrLogs(LogsRequest $request)
     {
         try {
             $auditableType = $request->input('type');
@@ -240,7 +239,7 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadEpLogs(EpLogsRequest $request)
+    public function loadEpLogs(LogsRequest $request)
     {
         try {
             $auditableType = $request->input('type');
