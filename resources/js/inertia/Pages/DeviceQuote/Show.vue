@@ -524,6 +524,21 @@ const copyLink = () => {
       position: 'top',
     });
 };
+
+const formatToDateTime = (dateString) => {
+      if (!dateString) return null;
+
+      // Replace hyphens with spaces and add space before am/pm
+      const formattedString = dateString.replace(/-/g, ' ').replace(/(\d)(am|pm)$/i, '$1 $2');
+
+      const date = new Date(formattedString);
+
+      if (isNaN(date)) return null; // invalid date
+
+      const pad = (n) => n.toString().padStart(2, '0');
+
+      return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    };
 </script>
 
 <template>
@@ -715,11 +730,11 @@ const copyLink = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ quote.created_at }}</dd>
+                <dd>{{ dateFormat(formatToDateTime(quote.created_at)) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
-                <dd>{{ quote.updated_at }}</dd>
+                    <dd>{{ dateFormat(formatToDateTime(quote.updated_at)) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
