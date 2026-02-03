@@ -76,9 +76,8 @@ class TriggerConversionApisTest extends TestCase
         $this->listener->handle($event);
 
         Log::shouldHaveReceived('info')
-            ->with(\Mockery::pattern('/TriggerConversionApis - Processing conversion APIs for PolicyBooked quote/'), \Mockery::on(function ($context) use ($quoteUID, $quoteTypeId) {
-                return isset($context['quoteUID']) && $context['quoteUID'] === $quoteUID
-                    && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId
+            ->with('TriggerConversionApis - Processing conversion APIs for PolicyBooked quote', \Mockery::on(function ($context) use ($quoteTypeId) {
+                return isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId
                     && isset($context['eventType']) && $context['eventType'] === 'Purchase';
             }))
             ->once();
@@ -106,9 +105,9 @@ class TriggerConversionApisTest extends TestCase
         $this->listener->handle($event);
 
         Log::shouldHaveReceived('info')
-            ->with(\Mockery::pattern('/TriggerConversionApis - Conversion APIs processing completed/'), \Mockery::on(function ($context) use ($quoteUID, $quoteTypeId) {
-                return isset($context['quoteUID']) && $context['quoteUID'] === $quoteUID
-                    && isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId
+            ->with('TriggerConversionApis - Conversion APIs processing completed', \Mockery::on(function ($context) use ($quoteTypeId) {
+                return isset($context['quoteTypeId']) && $context['quoteTypeId'] === $quoteTypeId
+                    && isset($context['eventType']) && $context['eventType'] === 'Purchase'
                     && isset($context['facebookSuccess']) && $context['facebookSuccess'] === true
                     && isset($context['googleSuccess']) && $context['googleSuccess'] === true;
             }))
@@ -137,7 +136,7 @@ class TriggerConversionApisTest extends TestCase
         $this->listener->handle($event);
 
         Log::shouldHaveReceived('info')
-            ->with(\Mockery::pattern('/TriggerConversionApis - Conversion APIs processing completed/'), \Mockery::on(function ($context) {
+            ->with('TriggerConversionApis - Conversion APIs processing completed', \Mockery::on(function ($context) {
                 return isset($context['facebookSuccess']) && $context['facebookSuccess'] === false
                     && isset($context['googleSuccess']) && $context['googleSuccess'] === false;
             }))
@@ -162,11 +161,14 @@ class TriggerConversionApisTest extends TestCase
         $this->listener->handle($event);
 
         Log::shouldHaveReceived('error')
-            ->with(\Mockery::pattern('/TriggerConversionApis - Exception occurred while processing conversion APIs/'), \Mockery::on(function ($context) {
+            ->with('TriggerConversionApis - Exception occurred while processing conversion APIs', \Mockery::on(function ($context) {
                 return isset($context['exception']) && is_array($context['exception'])
                     && isset($context['exception']['message'])
                     && isset($context['exception']['trace'])
-                    && isset($context['exception']['code']);
+                    && isset($context['exception']['code'])
+                    && isset($context['quoteTypeId'])
+                    && isset($context['eventType'])
+                    && isset($context['error']);
             }))
             ->once();
 
