@@ -53,7 +53,7 @@ class DeleteQuoteDocumentRequest extends FormRequest
 
             // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
             if ($metLifeValidator->shouldValidatePayment(request()->provider_code)
-                && $quote->quote_type_id != QuoteTypes::SAVINGS->id()) {
+            && ! in_array($quote->quote_type_id, [QuoteTypes::SAVINGS->id(), QuoteTypes::HEALTH->id()])) {
                 // validate if payment is authorized
                 if (empty($quote->payment) ||
                     ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
