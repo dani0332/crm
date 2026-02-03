@@ -106,6 +106,8 @@ class AdnicApiService
             return $validationResult;
         }
 
+        $isEIDFrontBackUploaded = $validationResult['isEIDFrontBackUploaded'];
+
         $endPoint = '/UploadDocument';
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_DOCUMENTS);
 

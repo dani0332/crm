@@ -115,7 +115,14 @@ class AdnicValidationService
             ];
         }
 
-        return ['status' => true];
+        // check if there are 2 Emirates ID documents uploaded (front and back)
+        $isEIDFrontBackUploaded = false;
+        $emiratesIdDocuments = $quoteDocuments->where('document_type_code', DocumentTypeCode::HEA_EID)->count();
+        if ($emiratesIdDocuments > 1) {
+            $isEIDFrontBackUploaded = true;
+        }
+
+        return ['status' => true, 'isEIDFrontBackUploaded' => $isEIDFrontBackUploaded];
     }
 
     public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array

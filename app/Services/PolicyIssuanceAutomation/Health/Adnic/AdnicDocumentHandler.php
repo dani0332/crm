@@ -178,6 +178,11 @@ class AdnicDocumentHandler
             DocumentTypeCode::HEA_EID => '3', // Emirates ID (Front side & Back side)
             DocumentTypeCode::HEA_VISA => '6', // Visa
             DocumentTypeCode::HEA_PAS => '1', // Passport
+            DocumentTypeCode::HEA_EID_FRONT => '4', // Emirates ID Front
+            DocumentTypeCode::HEA_EID_BACK => '5', // Emirates ID Back
+            DocumentTypeCode::HEA_BIRTH_CERTIFICATE => '11', // Birth Certificate
+            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM => '18', // Medical Application Form
+            DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE => '17', // Customer Due Diligence
             default => null
         };
     }
