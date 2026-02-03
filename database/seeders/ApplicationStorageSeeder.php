@@ -76,6 +76,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedBranchData();
         $this->seedOcrUtilEnabled();
         $this->seedCarOcbEmailTemplatesUpdate();
+        $this->seedOCRCustomerJourneyHealthEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -620,6 +621,19 @@ class ApplicationStorageSeeder extends Seeder
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::OCR_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOCRCustomerJourneyHealthEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED],
             [
                 'value' => 1,
                 'created_at' => now(),
