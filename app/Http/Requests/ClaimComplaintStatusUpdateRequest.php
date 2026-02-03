@@ -32,6 +32,7 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
                 'required',
                 'date',
                 function (string $attribute, mixed $value, \Closure $fail): void {
+                    // Parse the normalized datetime and compare with end of today
                     $complaintDateTime = Carbon::parse($value);
                     $endOfToday = now()->endOfDay();
                     if ($complaintDateTime->isAfter($endOfToday)) {
@@ -84,18 +85,20 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
             ]);
         }
 
-        // Normalise complaint_datetime to app timezone (frontend may send ISO with Z; treat as local time like NextFollowUp)
+        // Handle datetime conversion from frontend (same as NextFollowUp)
         if ($this->has('complaint_datetime')) {
-            $value = $this->input('complaint_datetime');
-            if (is_string($value) && $value !== '') {
-                $valueWithoutZ = preg_replace('/Z$/i', '', $value);
-                $appTimezone = config('app.timezone');
+            $dateValue = $this->input('complaint_datetime');
+
+            // If it's a JavaScript Date object string or ISO format, convert it
+            if (is_string($dateValue)) {
                 try {
-                    $parsed = Carbon::parse($valueWithoutZ, $appTimezone);
+                    $date = new \DateTime($dateValue);
+                    $formattedDate = $date->format('Y-m-d H:i:s');
+
                     $this->merge([
-                        'complaint_datetime' => $parsed->format('Y-m-d H:i:s'),
+                        'complaint_datetime' => $formattedDate,
                     ]);
-                } catch (\Throwable) {
+                } catch (\Exception $e) {
                     // Leave as-is; validation will fail with date rule
                 }
             }
