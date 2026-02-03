@@ -2482,7 +2482,7 @@ class CentralService extends BaseService
             $homeQuote = $parentRecord->homeQuote;
             $homeDataArr['has_contents'] = $homeQuote->has_contents ?? 0;
             $homeDataArr['has_building'] = $homeQuote->has_building ?? 0;
-            $homeDataArr['have_claimed_losses'] = $homeQuote->have_claimed_losses ?? 0;
+            $homeDataArr['have_claimed_losses'] = $homeQuote->has_claimed_losses ?? 0;
             $homeDataArr['building_aed'] = $homeQuote->building_aed ?? null;
             $homeDataArr['has_personal_belongings'] = $homeQuote->has_personal_belongings ?? 0;
             $homeDataArr['owner_occupancy_type_id'] = $homeQuote->owner_occupancy_type_id ?? null;
