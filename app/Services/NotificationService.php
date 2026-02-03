@@ -70,10 +70,12 @@ class NotificationService extends BaseService
             'quote_type_code' => $quoteTypeCode,
         ]);
 
-        event(new PaymentNotifications($model, $url, $quoteTypeCode));
+        // Temporarily commented out due to Pusher quota exceeded
+        // event(new PaymentNotifications($model, $url, $quoteTypeCode));
 
         // Broadcast authorised payment count update if this is a PersonalQuote with authorised payment
-        $this->broadcastAuthorisedPaymentCountIfNeeded($model);
+        // Temporarily commented out due to Pusher quota exceeded
+        // $this->broadcastAuthorisedPaymentCountIfNeeded($model);
 
         LoggerService::info('Payment Status Update - Completed successfully', extra: [
             'quote_uuid' => $model->uuid,

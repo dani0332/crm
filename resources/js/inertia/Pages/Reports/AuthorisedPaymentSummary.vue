@@ -217,7 +217,8 @@ function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
 
     const paymentStatusIds = [
       paymentStatusEnum.AUTHORISED,
-      paymentStatusEnum.NEW,
+      paymentStatusEnum.PENDING,
+      paymentStatusEnum.PAYMENT_LINK_REQUESTED,
     ];
     const paymentStatusParams = paymentStatusIds
       .map(id => `payment_status_id[]=${id}`)

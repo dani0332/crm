@@ -355,7 +355,13 @@ class SageApiService
             $quote = $this->getQuoteObjectBy($request->quoteType, $preparedData['sendUpdateLog']->quote_uuid, 'uuid');
             $isLobAllowedForEmbeddedProductBooking = $this->isLobAllowedForEmbeddedProductBooking($quoteTypeId);
             $isTapPaymentGateway = $preparedData['payment']->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_TAP;
-            $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? [];
+            $ePTransactions = $this->getEPTransactions($quote, $quoteTypeId) ?? collect([]);
+            if ($ePTransactions->isNotEmpty()) {
+                $ePTransactions->load([
+                    'payments',
+                    'sageApiLogs',
+                ]);
+            }
 
             foreach ($ePTransactions as $ePTransaction) {
 
