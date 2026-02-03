@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Http\Requests\EpLogsRequest;
 
 class AuditableController extends Controller
 {
@@ -240,7 +241,7 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadEpLogs(Request $request)
+    public function loadEpLogs(EpLogsRequest $request)
     {
         try {
             $auditableType = $request->input('type');
