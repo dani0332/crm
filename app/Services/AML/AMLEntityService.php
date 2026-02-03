@@ -34,7 +34,7 @@ class AMLEntityService
     /**
      * Link entity details to a quote
      * Handles both new structure and legacy structure migration
-     * 
+     *
      * @return array{status: bool, response: mixed, message: string}
      */
     public function linkEntityToQuote(int $quoteTypeId, int $quoteRequestId, int $entityId, ?string $triggeredFrom = null): array

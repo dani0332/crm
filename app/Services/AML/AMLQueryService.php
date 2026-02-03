@@ -46,7 +46,15 @@ class AMLQueryService
     {
         $quoteRequestTable = strtolower($request->quoteType).'_quote_request';
 
-        // Check if quote type uses personal_quotes table
+        if (! $this->isPersonalQuoteType($quoteTypeId)) {
+            return $quoteRequestTable;
+        }
+
+        return $this->resolvePersonalQuoteTable($quoteTypeId, $request, $quoteRequestTable);
+    }
+
+    private function isPersonalQuoteType(int $quoteTypeId): bool
+    {
         $personalQuoteTypes = [
             QuoteTypes::BIKE->id(),
             QuoteTypes::YACHT->id(),
@@ -58,26 +66,32 @@ class AMLQueryService
             QuoteTypes::HOME->id(),
         ];
 
-        if (in_array($quoteTypeId, $personalQuoteTypes)) {
-            // Check if data has been migrated based on date
-            if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
-                return AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate)
-                    ? 'personal_quotes'
-                    : $quoteRequestTable;
-            }
+        return in_array($quoteTypeId, $personalQuoteTypes);
+    }
 
-            // Check migration status based on search criteria
-            if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
-                $createdDate = $this->getCreatedDateForSearch($request);
-                if ($createdDate) {
-                    return AMLService::isDataMigrated($quoteTypeId, '', $createdDate)
-                        ? 'personal_quotes'
-                        : $quoteRequestTable;
-                }
+    private function resolvePersonalQuoteTable(int $quoteTypeId, object $request, string $fallbackTable): string
+    {
+        // Check if data has been migrated based on date
+        if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
+            return $this->getMigratedTableName($quoteTypeId, $request->amlCreatedStartDate, $fallbackTable);
+        }
+
+        // Check migration status based on search criteria
+        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
+            $createdDate = $this->getCreatedDateForSearch($request);
+            if ($createdDate) {
+                return $this->getMigratedTableName($quoteTypeId, $createdDate, $fallbackTable);
             }
         }
 
-        return $quoteRequestTable;
+        return $fallbackTable;
+    }
+
+    private function getMigratedTableName(int $quoteTypeId, string $date, string $fallbackTable): string
+    {
+        return AMLService::isDataMigrated($quoteTypeId, '', $date)
+            ? 'personal_quotes'
+            : $fallbackTable;
     }
 
     private function getCreatedDateForSearch(object $request): ?string
