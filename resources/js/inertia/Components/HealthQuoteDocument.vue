@@ -496,7 +496,7 @@ const signedMedicalApplicationDocs = computed(() => {
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
-                {{ documentType.text }}  
+                {{ documentType.text }}
                 <span class="text-red-500">
                   {{ documentType.is_required ? '*' : '' }}</span
                 >
@@ -569,21 +569,24 @@ const signedMedicalApplicationDocs = computed(() => {
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                </a>           
+                </a>
               </template>
-                  
-              <!-- Show quote medical signed document here as per ADNIC requirement --> 
-              <div v-if="documentType.text?.includes('Signed medical application form')">
-                  <a v-for="doc in signedMedicalApplicationDocs" :key="doc.id"
-                    :href="
-                      storageUrl +
-                      (doc.watermarked_doc_url || doc.doc_url)
-                    "
-                    target="_blank"
-                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                  >
-                      {{ doc.original_name || doc.doc_name }}
-                  </a>
+
+              <!-- Show quote medical signed document here as per ADNIC requirement -->
+              <div
+                v-if="
+                  documentType.text?.includes('Signed medical application form')
+                "
+              >
+                <a
+                  v-for="doc in signedMedicalApplicationDocs"
+                  :key="doc.id"
+                  :href="storageUrl + (doc.watermarked_doc_url || doc.doc_url)"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ doc.original_name || doc.doc_name }}
+                </a>
               </div>
             </div>
           </div>
