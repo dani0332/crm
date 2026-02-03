@@ -41,8 +41,6 @@ class AMLQuoteDetailsService
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 
-        LoggerService::info('AML Details Page - Prepare Quote Details Data');
-
         // Add quote link to quote request
         $this->addQuoteLinkToRequest($quoteRequest, $quoteType);
 

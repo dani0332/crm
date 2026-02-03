@@ -9,22 +9,13 @@ use App\Services\Logger\LoggerService;
 
 class AMLInsuredService
 {
-    public function getInsuredDetails(
-        ?string $customerType,
-        ?string $idType,
-        ?string $idNumber,
-        ?string $tradeLicense,
-        ?string $code = null
-    ): array {
-        if ($code) {
-            LoggerService::startQuoteLogging($code);
-        }
-
-        LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
-            'customer_type' => $customerType,
-            'id_type' => $idType,
-            'id_number' => $idNumber,
-            'trade_license' => $tradeLicense,
+    public function getInsuredDetails(?string $customerType, ?string $idType, ?string $idNumber, ?string $tradeLicense): array
+    {
+        LoggerService::info('Get Insured Details', extra: [
+            'customer_type' => $customerType ?? null,
+            'id_type' => $idType ?? null,
+            'id_number' => $idNumber ?? null,
+            'trade_license' => $tradeLicense ?? null,
         ]);
 
         // Determine if entity or individual
@@ -41,7 +32,7 @@ class AMLInsuredService
         );
 
         // Prepare response
-        $status = (bool) $insuredDetails;
+        $status = (bool) $insuredDetails;        
         $message = $this->getResponseMessage($resolvedCustomerType, $status);
 
         return [
@@ -55,11 +46,20 @@ class AMLInsuredService
     {
         // Check if explicitly set as entity
         if ($customerType == CustomerTypeEnum::Entity) {
+            LoggerService::info('Customer type is Entity', extra: [
+                'customer_type' => $customerType,
+            ]);
+
             return true;
         }
 
         // If customer type is empty or null, check if trade license is provided
         if (empty($customerType) || is_null($customerType) || $customerType == 'null') {
+            LoggerService::info('Customer type is empty or null', extra: [
+                'customer_type' => $customerType ?? null,
+                'trade_license' => $tradeLicense ?? null,
+            ]);
+            
             return ! empty($tradeLicense);
         }
 

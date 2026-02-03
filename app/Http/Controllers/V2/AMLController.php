@@ -110,8 +110,7 @@ class AMLController extends Controller
             $request->customer_type,
             $request->id_type,
             $request->id_number,
-            $request->trade_license,
-            $request->code
+            $request->trade_license
         );
 
         return response()->json($result);

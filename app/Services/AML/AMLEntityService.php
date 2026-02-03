@@ -74,6 +74,7 @@ class AMLEntityService
 
         // Update car quote if applicable
         if ($quoteTypeId == QuoteTypeId::Car) {
+            LoggerService::info('Updating car quote company details');
             $this->updateCarQuoteCompanyDetails($quoteRequestId, $entity);
         }
 
@@ -93,12 +94,14 @@ class AMLEntityService
             ->first();
 
         if ($customerInsured) {
+            LoggerService::info('Customer Insured found against orphaned record');
             $customerInsured->update([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quoteRequestId,
                 'updated_at' => now(),
             ]);
         } else {
+            LoggerService::info('Customer Insured not found against orphaned record, creating new one');
             CustomerInsured::updateOrCreate([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quoteRequestId,
@@ -130,6 +133,12 @@ class AMLEntityService
         ];
 
         // Update or create entity mapping
+        LoggerService::info('Updating or creating entity mapping', extra: [
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+            'update_fields' => $updateFields,
+        ]);
+
         QuoteRequestEntityMapping::updateOrCreate(
             ['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId],
             $updateFields
@@ -155,6 +164,7 @@ class AMLEntityService
     private function cleanupPreviousEntity(?QuoteRequestEntityMapping $existingEntityMapping): void
     {
         if (! $existingEntityMapping) {
+            LoggerService::info('No existing entity mapping found');
             return;
         }
 
@@ -165,6 +175,7 @@ class AMLEntityService
 
         // Delete if no mappings exist and no trade license (Jawad's change for car commercial quote)
         if ($entityMappingCount === 0 && empty($previousEntity->trade_license_no)) {
+            LoggerService::info('Deleting previous entity because no mappings exist and no trade license');
             $previousEntity->delete();
         }
     }
@@ -184,8 +195,6 @@ class AMLEntityService
      */
     public function getEntityDetailsByQuote(int $quoteTypeId, int $quoteRequestId)
     {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
-
         return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
             ->first() ?? [];
