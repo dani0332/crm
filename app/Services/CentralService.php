@@ -2521,5 +2521,5 @@ class CentralService extends BaseService
 
         return $homeDataArr;
     }
-    
+
 }
