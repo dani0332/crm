@@ -61,12 +61,14 @@ function getRetargetingCarEpReminderDataMock(array $overrides = []): object
     $quote->advisor = ! array_key_exists('advisor_email', $overrides)
         ? (object) ['email' => 'advisor@example.com']
         : ($overrides['advisor_email'] === null ? null : (object) ['email' => $overrides['advisor_email']]);
-    $quote->plan = (array_key_exists('plan_id', $overrides) && $overrides['plan_id'] == null)
+    $quote->plan = (array_key_exists('plan_id', $overrides) && $overrides['plan_id'] === null)
         ? null
         : (object) [
             'id' => $overrides['plan_id'] ?? 5,
             'provider_id' => 1,
-            'insuranceProvider' => (object) ['code' => $overrides['plan_provider_code'] ?? 'PROV01'],
+            'insuranceProvider' => array_key_exists('plan_insurance_provider', $overrides) && $overrides['plan_insurance_provider'] === null
+                ? null
+                : (object) ['code' => array_key_exists('plan_provider_code', $overrides) ? $overrides['plan_provider_code'] : 'PROV01'],
         ];
 
     $quote->shouldReceive('only')->andReturnUsing(function (array $keys) use ($quote) {
@@ -177,6 +179,12 @@ describe('getRetargetingCarEpReminderData', function () {
         test('successfully returns data', function () {
 
             TestSchemaCreator::createMinimalSchema();
+            ApplicationStorage::forceCreate([
+                'key_name' => ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL,
+                'value' => 'https://example.com/bird-car-ep-reminder-email-workflow',
+                'is_active' => 1,
+            ]);
+
             $data = RetargetingEpReminderTestDataHelper::setupTestData();
 
             $quoteId = $data['quoteId'];
@@ -189,12 +197,6 @@ describe('getRetargetingCarEpReminderData', function () {
                 'et_code' => $embeddedTransactionCode,
             ]);
             $quote = $mockData->quoteRequest;
-
-            ApplicationStorage::forceCreate([
-                'key_name' => ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL,
-                'value' => 'https://example.com/bird-car-ep-reminder-email-workflow',
-                'is_active' => 1,
-            ]);
 
             $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData, $quoteId, $embeddedTransactionCode) {
                 $mock->shouldReceive('getRetargetingCarEpReminderData')
@@ -231,6 +233,48 @@ describe('getRetargetingCarEpReminderData', function () {
             expect($json['data']['emailWorkflowData']['vehicleMake'])->toBe($quote->carMake?->text);
             expect($json['data']['emailWorkflowData']['vehicleModel'])->toBe($quote->carModel?->text);
         });
+
+        test('Success with missing any optional field', function (array $overrides, ?string $expectedAdvisorEmail, bool $expectBuyNowUrlHasPlanOrProvider) {
+
+            TestSchemaCreator::createMinimalSchema();
+            ApplicationStorage::forceCreate([
+                'key_name' => ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL,
+                'value' => 'https://example.com/bird-car-ep-reminder-email-workflow',
+                'is_active' => 1,
+            ]);
+
+            $mockData = getRetargetingCarEpReminderDataMock($overrides);
+
+            $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData) {
+                $mock->shouldReceive('getRetargetingCarEpReminderData')
+                    ->once()
+                    ->andReturn($mockData);
+                $mock->shouldReceive('getEpRetargetingReminderEmailTemplateId')
+                    ->once()
+                    ->with(EmbeddedProductEnum::MDX)
+                    ->andReturn('templateId-1');
+            });
+
+            $service = app(EmbeddedTransactionService::class);
+            $response = $service->getRetargetingCarEpReminderData($this->quoteId, $this->embeddedTransactionCode);
+
+            expect($response->getStatusCode())->toBe(Response::HTTP_OK);
+            $json = $response->getData(true);
+            expect($json['data']['emailWorkflowData']['advisorEmail'])->toBe($expectedAdvisorEmail);
+            $buyNowUrl = $json['data']['emailWorkflowData']['buyNowUrl'];
+            if ($expectBuyNowUrlHasPlanOrProvider) {
+                expect(str_contains($buyNowUrl, 'planId') || str_contains($buyNowUrl, 'providerCode'))->toBeTrue();
+            } else {
+                expect(str_contains($buyNowUrl, 'planId='))->toBeFalse()
+                    ->and(str_contains($buyNowUrl, 'providerCode='))->toBeFalse();
+            }
+        })->with([
+            'advisor missing' => [['advisor_email' => null], null, true],
+            'advisor email empty' => [['advisor_email' => ''], '', true],
+            'plan missing' => [['plan_id' => null], 'advisor@example.com', false],
+            'plan provider missing' => [['plan_insurance_provider' => null], 'advisor@example.com', true],
+            'plan provider code empty' => [['plan_provider_code' => ''], 'advisor@example.com', true],
+        ]);
     });
 });
 
