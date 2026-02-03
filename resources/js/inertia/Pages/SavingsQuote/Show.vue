@@ -859,6 +859,10 @@ const handlePlanSelected = plan => {
                   <dt class="font-medium">MARITAL STATUS</dt>
                   <dd>{{ quote?.savings_quote?.marital_status?.text }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">SALARY</dt>
+                  <dd>{{ quote.savings_quote?.salary }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Savings'" />
               </dl>
               <dl
