@@ -102,6 +102,13 @@ const isLifeQuoteFrequencyReadonly = computed(() => {
   );
 });
 
+// Computed property to check if frequency should be readonly/disabled for savings quotes
+const isSavingsQuoteFrequencyReadonly = computed(() => {
+  return (
+    props.quoteType === props.quoteTypeCodeEnum.SAVINGS
+  );
+});
+
 const localDiscountValue = ref(props.discountValue);
 
 watch(
@@ -225,7 +232,7 @@ const isMasterPaymentPaid = computed(() => {
       <ToolTip
         title="FREQUENCY"
         :tooltip="
-          isLifeQuoteFrequencyReadonly
+          isLifeQuoteFrequencyReadonly || isSavingsQuoteFrequencyReadonly
             ? 'To make changes, please update the payment term in the Available Plan section.'
             : paymentTooltipEnum.FREQUENCY
         "
@@ -240,7 +247,7 @@ const isMasterPaymentPaid = computed(() => {
           }}
         </span>
         <select
-          v-if="!isFieldReadonly && !isLifeQuoteFrequencyReadonly"
+          v-if="!isFieldReadonly && !isLifeQuoteFrequencyReadonly && !isSavingsQuoteFrequencyReadonly"
           :class="{
             'custom-select-error': isPaymentFrequencyNotSelected,
           }"
@@ -256,7 +263,7 @@ const isMasterPaymentPaid = computed(() => {
           </template>
         </select>
         <input
-          v-if="!isFieldReadonly && isLifeQuoteFrequencyReadonly"
+          v-if="!isFieldReadonly && (isLifeQuoteFrequencyReadonly || isSavingsQuoteFrequencyReadonly)"
           class="custom-select cursor-not-allowed bg-gray-100"
           :value="
             frequencyTypes.find(
