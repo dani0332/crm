@@ -11,18 +11,80 @@ use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\InsuranceProvider;
-use Tests\Helpers\Payments\PaymentTestDataHelper;
 
 /**
- * Test data helper for Retargeting EP Reminder API feature tests.
- * Creates minimal schema and car quote data required for get-retargeting-ep-reminder
- * and retargeting-ep-reminder-callback endpoints.
+ * Universal test data helper for Retargeting EP Reminder tests.
+ * Use setupTestData() for API/observer tests; use setupRepositoryTestData() for repository tests.
  */
 class RetargetingEpReminderTestDataHelper
 {
     /**
-     * Set up test data for RetargetingEpReminderApiTest.
-     * Creates schema, insurance provider, car plan, car quote, and embedded products (MDX, ECB).
+     * Set up test data for repository tests (getDraftEpTransactions, getRetargetingCarEpReminderData).
+     * Creates provider, plan, two quotes (policy booked / policy issued), MDX/ECB/COU products and transactions.
+     *
+     * @return object{carQuotePolicyBooked: CarQuote, carQuotePolicyIssued: CarQuote, validTransaction: EmbeddedTransaction, notBookedTransaction: EmbeddedTransaction, epECBTransaction: EmbeddedTransaction, notAllowedEpTransaction: EmbeddedTransaction, notDraftTransaction: EmbeddedTransaction}
+     */
+    public static function setupRepositoryTestData(): object
+    {
+        $insuranceProvider = InsuranceProvider::forceCreate(InsuranceProvider::factory()->definition());
+        $carPlan = CarPlan::forceCreate(array_merge(
+            CarPlan::factory()->definition(),
+            ['provider_id' => $insuranceProvider->id]
+        ));
+
+        $carQuotePolicyBooked = CarQuote::forceCreate(array_merge(CarQuote::factory()->definition(), [
+            'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            'plan_id' => $carPlan->id,
+            'insurance_provider_id' => $insuranceProvider->id,
+        ]));
+        $carQuotePolicyIssued = CarQuote::forceCreate(array_merge(CarQuote::factory()->definition(), [
+            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+            'plan_id' => null,
+        ]));
+
+        $epMDX = EmbeddedProduct::factory()->mdx()->forInsuranceProvider($insuranceProvider->id)->create();
+        $epECB = EmbeddedProduct::factory()->ecb()->forInsuranceProvider($insuranceProvider->id)->create();
+        $epCOU = EmbeddedProduct::factory()->cou()->forInsuranceProvider($insuranceProvider->id)->create();
+        $optionMDX = EmbeddedProductOption::factory()->forEmbeddedProduct($epMDX->id)->create();
+        $optionECB = EmbeddedProductOption::factory()->forEmbeddedProduct($epECB->id)->create();
+        $optionCOU = EmbeddedProductOption::factory()->forEmbeddedProduct($epCOU->id)->create();
+
+        $validTransaction = EmbeddedTransaction::factory()
+            ->forCarQuote($carQuotePolicyBooked)
+            ->forProduct($optionMDX->id)
+            ->create(['code' => 'ET-VALID']);
+        $notBookedTransaction = EmbeddedTransaction::factory()
+            ->forCarQuote($carQuotePolicyIssued)
+            ->forProduct($optionMDX->id)
+            ->create(['code' => 'ET-NOT-BOOKED']);
+        $epECBTransaction = EmbeddedTransaction::factory()
+            ->forCarQuote($carQuotePolicyBooked)
+            ->forProduct($optionECB->id)
+            ->create(['code' => 'ET-ECB-DRAFT']);
+        $notAllowedEpTransaction = EmbeddedTransaction::factory()
+            ->forCarQuote($carQuotePolicyBooked)
+            ->forProduct($optionCOU->id)
+            ->create(['code' => 'ET-NOT-ALLOWED-EP']);
+        $notDraftTransaction = EmbeddedTransaction::factory()
+            ->forCarQuote($carQuotePolicyBooked)
+            ->forProduct($optionMDX->id)
+            ->nonDraft()
+            ->create(['code' => 'ET-AUTHORISED']);
+
+        return (object) [
+            'carQuotePolicyBooked' => $carQuotePolicyBooked,
+            'carQuotePolicyIssued' => $carQuotePolicyIssued,
+            'validTransaction' => $validTransaction,
+            'notBookedTransaction' => $notBookedTransaction,
+            'epECBTransaction' => $epECBTransaction,
+            'notAllowedEpTransaction' => $notAllowedEpTransaction,
+            'notDraftTransaction' => $notDraftTransaction,
+        ];
+    }
+
+    /**
+     * Set up test data for API and observer tests (get-retargeting-ep-reminder, retargeting-ep-reminder-callback, CarQuoteObserver).
+     * Creates insurance provider, car plan, car quote (PolicyIssued), and one MDX embedded transaction.
      *
      * @return array{
      *     carQuote: CarQuote,
@@ -68,7 +130,6 @@ class RetargetingEpReminderTestDataHelper
         $epMDXTransaction = EmbeddedTransaction::factory()
             ->forCarQuote($carQuote)
             ->forProduct($epMDXOption->id)
-            ->draft()
             ->create(['code' => "MDX-{$carQuote->code}"]);
 
         return [
@@ -78,7 +139,7 @@ class RetargetingEpReminderTestDataHelper
             'quoteUuid' => $quoteUuid,
             'quoteId' => $carQuote->id,
             'quoteCode' => $quoteCode,
-            'epMDXTransaction' => $epMDXTransaction
+            'epMDXTransaction' => $epMDXTransaction,
         ];
     }
 }

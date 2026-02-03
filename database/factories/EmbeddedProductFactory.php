@@ -70,4 +70,14 @@ class EmbeddedProductFactory extends Factory
             'short_code' => EmbeddedProductEnum::ECB,
         ]);
     }
+
+    /**
+     * Indicate that the embedded product has the COU short code (retargeting allowed).
+     */
+    public function cou(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'short_code' => EmbeddedProductEnum::COURIER,
+        ]);
+    }
 }

@@ -8,6 +8,7 @@ use App\Models\CarQuote;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Arr;
 
 class EmbeddedTransactionFactory extends Factory
 {
@@ -73,10 +74,10 @@ class EmbeddedTransactionFactory extends Factory
     /**
      * Indicate that the transaction has draft payment status.
      */
-    public function draft(): static
+    public function nonDraft(): static
     {
         return $this->state(fn (array $attributes) => [
-            'payment_status_id' => PaymentStatusEnum::DRAFT,
+            'payment_status_id' => Arr::random([PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED]),
         ]);
     }
 
