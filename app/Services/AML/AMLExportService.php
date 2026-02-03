@@ -9,28 +9,24 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Service for handling AML/KYC export operations
- * Centralizes export logic for KYC logs and AML reports
- */
 class AMLExportService
 {
     public function __construct(
         private readonly KycLogsExport $kycLogsExport
     ) {}
 
-    /**
-     * Export AML logs based on request parameters
-     */
     public function exportAMLLogs(Request $request): StreamedResponse|JsonResponse
     {
-        $this->logExportRequest($request);
+        LoggerService::info('AML Export requested', extra: [
+            'export_type' => $request->exportType ?? 'download',
+            'date_range' => [
+                'start' => $request->amlCreatedStartDate,
+                'end' => $request->amlCreatedEndDate,
+            ],
+            'user' => auth()->user()?->id ?? 'guest',
+        ]);
 
-        $reportDateRange = $this->formatDateRange(
-            $request->amlCreatedStartDate,
-            $request->amlCreatedEndDate
-        );
-
+        $reportDateRange = $this->formatDateRange($request->amlCreatedStartDate, $request->amlCreatedEndDate);
         $exportParams = $this->prepareExportParams($request, $reportDateRange);
 
         if ($request->exportType === 'email') {
@@ -40,22 +36,15 @@ class AMLExportService
         return $this->downloadExport($reportDateRange);
     }
 
-    /**
-     * Format date range for display
-     */
     private function formatDateRange(?string $startDate, ?string $endDate): string
     {
-        // This check not already mentioned before refactored change
         if (! $startDate || ! $endDate) {
-            return Carbon::now()->format('Y-m-d');
+            return Carbon::now()->format('Y-m-d') . ' - ' . Carbon::now()->format('Y-m-d');
         }
 
         return Carbon::parse($startDate)->toDateString().' - '.Carbon::parse($endDate)->toDateString();
     }
 
-    /**
-     * Prepare export parameters
-     */
     private function prepareExportParams(Request $request, string $reportDateRange): array
     {
         return [
@@ -66,9 +55,6 @@ class AMLExportService
         ];
     }
 
-    /**
-     * Send export via email
-     */
     private function emailExport(string $reportDateRange, array $params): JsonResponse
     {
         try {
@@ -107,20 +93,5 @@ class AMLExportService
         ]);
 
         return $this->kycLogsExport->download("AML Logs {$reportDateRange}");
-    }
-
-    /**
-     * Log export request for audit trail
-     */
-    private function logExportRequest(Request $request): void
-    {
-        LoggerService::info('AML Export requested', extra: [
-            'export_type' => $request->exportType ?? 'download',
-            'date_range' => [
-                'start' => $request->amlCreatedStartDate,
-                'end' => $request->amlCreatedEndDate,
-            ],
-            'user' => auth()->user()?->id ?? 'guest',
-        ]);
     }
 }

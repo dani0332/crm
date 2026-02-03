@@ -146,12 +146,10 @@ class AMLController extends Controller
         return response()->json($result);
     }
 
-    public function export(Request $request, KycLogsExport $kycLogsExport)
+    public function export(Request $request, AMLExportService $amlExportService)
     {
-        return app(AMLExportService::class)->exportAMLLogs($request);
+        return $amlExportService->exportAMLLogs($request);
     }
-
-    // Above functions are refactored and tested
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
