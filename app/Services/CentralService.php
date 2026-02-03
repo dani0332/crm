@@ -2469,7 +2469,7 @@ class CentralService extends BaseService
         return $lifeDataArr;
     }
 
-    private function prepareHomeQuoteDuplicateData(PersonalQuote $parentRecord): array
+    private function prepareHomeQuoteDuplicateData($parentRecord): array
     {
         $homeDataArr = [
             'first_name' => $parentRecord->first_name,
@@ -2478,7 +2478,7 @@ class CentralService extends BaseService
             'mobile_no' => $parentRecord->mobile_no,
         ];
 
-        if ($parentRecord->quote_type_id == QuoteTypeId::Home && $parentRecord->homeQuote) {
+        if ($parentRecord instanceof PersonalQuote && $parentRecord->quote_type_id == QuoteTypeId::Home && $parentRecord->homeQuote) {
             $homeQuote = $parentRecord->homeQuote;
             $homeDataArr['has_contents'] = $homeQuote->has_contents ?? 0;
             $homeDataArr['has_building'] = $homeQuote->has_building ?? 0;
