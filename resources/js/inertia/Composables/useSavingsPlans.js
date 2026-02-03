@@ -1005,9 +1005,9 @@ export function useSavingsPlans(options = {})
     try
     {
       const { data } = await axios.get('https://v6.exchangerate-api.com/v6/7defc3b81189dcc54b09144a/latest/USD');
-      if (data?.rates)
+      if (data?.conversion_rates)
       {
-        exchangeRates.value = data.rates;
+        exchangeRates.value = { ...data?.conversion_rates };
       }
     } catch (e)
     {
