@@ -186,8 +186,8 @@ class FailedILAEmailService
             })
             ->when(! $businessTypeOfInsuranceId, function ($query) {
                 $query->whereNotIn('business_type_of_insurance_id', [BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL])
-                ->whereNotNull('health_plan_type_id')
-                ->whereNotNull('number_of_employees');
+                    ->whereNotNull('health_plan_type_id')
+                    ->whereNotNull('number_of_employees');
             })
             ->when(
                 $justCount,
