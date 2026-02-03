@@ -453,6 +453,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
     Route::get('quotes/{quoteType}/{quote}/proforma-payment-request', [QuoteDocumentController::class, 'createProformaPaymentRequest'])->name('create.proforma.payment.request');
     Route::get('proforma-payment-request/{quote_document}/download', [QuoteDocumentController::class, 'downloadProformaPaymentRequest'])->name('download.proforma.payment.request');
+    Route::post('documents/temp-url', [QuoteDocumentController::class, 'getTempUrl'])->name('documents.temp-url');
 
     Route::post('documents/download', [QuoteDocumentController::class, 'downloadAllDocuments']);
 
@@ -460,6 +461,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update');
         Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses'])->name('batch-plans-processes');
+        Route::get('batches/{id}/plans-processes-status', [RenewalsUploadController::class, 'plansProcessesStatus'])->name('batch-plans-processes-status');
 
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');

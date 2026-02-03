@@ -6,15 +6,8 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Models\AML;
 use Illuminate\Support\Collection;
 
-/**
- * Service for processing and filtering AML screening results
- * Handles JSON parsing, filtering, and decision determination
- */
 class AMLResultsProcessor
 {
-    /**
-     * Process and filter AML results
-     */
     public function process(AML $aml): array
     {
         $amlResults = $this->parseResults($aml->results);
@@ -35,9 +28,6 @@ class AMLResultsProcessor
         );
     }
 
-    /**
-     * Parse JSON results safely
-     */
     private function parseResults(?string $results): ?object
     {
         if (empty($results)) {
@@ -49,17 +39,11 @@ class AMLResultsProcessor
         return collect($decoded)->first();
     }
 
-    /**
-     * Extract manual status updates from results
-     */
     private function extractManualStatusUpdates(object $amlResults): Collection
     {
         return collect($amlResults->ManualStatusUpdateIM ?? []);
     }
 
-    /**
-     * Filter and enrich watchlist matches with decisions
-     */
     private function filterAndEnrichMatches(
         array $matches,
         Collection $manualStatusUpdates
@@ -78,9 +62,6 @@ class AMLResultsProcessor
             ->toArray();
     }
 
-    /**
-     * Determine the decision status for a match
-     */
     private function determineDecision(
         object $match,
         Collection $manualStatusUpdates

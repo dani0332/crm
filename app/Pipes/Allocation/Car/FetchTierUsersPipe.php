@@ -86,6 +86,25 @@ class FetchTierUsersPipe extends BaseAllocationPipe
 
     private function executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId): mixed
     {
+        $lead = $this->allocationRequest->getLead();
+
+        // Skip team filter for PUA leads with REVIVAL_PAID or RENEWAL_UPLOAD source if ORGANIC team is assigned
+        // This handles normal allocation flow where EvaluateTeamPipe sets teamId = ORGANIC
+        $organicTeamId = getTeamId(TeamNameEnum::ORGANIC);
+        if (in_array($leadSource, [LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::RENEWAL_UPLOAD]) && $lead->isPUA() && $teamId == $organicTeamId) {
+            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - Skipping team filter for PUA lead', [
+                'leadSource' => $leadSource,
+                'isPUA' => true,
+                'assignedTeamId' => $teamId,
+                'organicTeamId' => $organicTeamId,
+                'paymentStatusId' => $lead->payment_status_id,
+                'tierUserCount' => count($tierUserIds),
+                'reason' => 'PUA + REVIVAL/RENEWAL with ORGANIC team assigned should skip team filter',
+            ]);
+
+            return $tierUserIds;
+        }
+
         $teamMap = [
             LeadSourceEnum::REVIVAL_REPLIED => TeamNameEnum::ORGANIC,
             LeadSourceEnum::RENEWAL_UPLOAD => $teamId == 0 ? TeamNameEnum::ORGANIC : null,
@@ -93,14 +112,27 @@ class FetchTierUsersPipe extends BaseAllocationPipe
         ];
 
         if (isset($teamMap[$leadSource])) {
+            $mappedTeam = $teamMap[$leadSource];
+            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - Applying team filter', [
+                'leadSource' => $leadSource,
+                'mappedTeam' => $mappedTeam,
+                'tierUserCountBefore' => count($tierUserIds),
+            ]);
+
             // Retrieve team IDs for the relevant team
-            $teamIds = Team::where('name', $teamMap[$leadSource])->pluck('id')->toArray();
+            $teamIds = Team::where('name', $mappedTeam)->pluck('id')->toArray();
 
             // Retrieve user IDs associated with the relevant team
             $userIds = UserTeams::whereIn('team_id', $teamIds)->pluck('user_id')->toArray();
 
             // Get only the common user IDs
             $tierUserIds = array_intersect($tierUserIds, $userIds);
+
+            LoggerService::info(self::class.'::executeRevivalAndRenewalCheck - After array_intersect', [
+                'mappedTeam' => $mappedTeam,
+                'tierUserCountAfter' => count($tierUserIds),
+                'tierUsers' => $tierUserIds,
+            ]);
         }
 
         return $tierUserIds;

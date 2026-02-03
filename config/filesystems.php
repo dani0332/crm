@@ -86,6 +86,13 @@ return [
             'url' => env('AZURE_IM_STORAGE_URL'),
             'prefix' => null,
         ],
+        'azureIMPrivate' => [
+            'driver' => 'azure-storage-blob',
+            'connection_string' => 'DefaultEndpointsProtocol=https;AccountName='.env('AZURE_IM_STORAGE_PRIVATE_NAME').';AccountKey='.env('AZURE_IM_STORAGE_PRIVATE_KEY').';EndpointSuffix=core.windows.net',
+            'container' => env('AZURE_IM_STORAGE_PRIVATE_CONTAINER'),
+            'url' => env('AZURE_IM_STORAGE_PRIVATE_URL'),
+            'prefix' => null,
+        ],
         'instantchat' => [
             'driver' => 'local',
             'root' => storage_path('InstantChat'),

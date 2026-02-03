@@ -27,6 +27,7 @@ use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\UAELicenseHeldFor;
+use App\Services\AML\AMLLookupsService;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
@@ -586,7 +587,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
 
-        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
@@ -788,15 +789,22 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         foreach ($requiredDocuments as $document) {
             try {
-                // Get the file path (assuming documents are stored in storage)
-                $filePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$document['doc_url']; // Adjust path as needed
+                $fileContent = Storage::disk('azureIMPrivate')->get($document['doc_url']);
 
-                // Read file content and convert to base64
-                $fileContent = file_get_contents($filePath);
+                if (empty($fileContent) || $fileContent === false) {
+                    LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Document file is empty', extra: [
+                        'file_path' => $document['doc_url'],
+                        'document_type' => $document['document_type_code'] ?? 'unknown',
+                        'document_name' => $document['document_type_text'] ?? 'unknown',
+                    ]);
+
+                    continue;
+                }
+
                 $base64Content = base64_encode($fileContent);
 
                 // Get file extension
-                $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+                $extension = pathinfo($document['doc_url'], PATHINFO_EXTENSION);
 
                 // Map document type based on your business logic
                 $documentType = $this->getDocTypeCodeForLIVA($document['document_type_code'] ?? 'other');
@@ -1269,7 +1277,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public function getLIVALookups($leadSource)
     {
         $insuranceProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)->first()->id;
-        $additionalLookups = app(AMLService::class)->getAMLLookups($insuranceProviderId, [
+        $additionalLookups = app(AMLLookupsService::class)->getAMLLookups($insuranceProviderId, [
             LookupsEnum::RTA_TRANSACTION_TYPE,
             LookupsEnum::RTA_PLATE_CATEGORY,
             LookupsEnum::VEHICLE_COLOR,

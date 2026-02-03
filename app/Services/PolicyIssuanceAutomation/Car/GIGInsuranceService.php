@@ -27,6 +27,7 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\User;
+use App\Services\AML\AMLLookupsService;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
@@ -328,7 +329,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $documentTypeFailedCount = 0;
 
             foreach ($documentsForThisType as $quoteDocument) {
-                $documentFile = Storage::disk('azureIM')->get($quoteDocument->doc_url);
+                $documentFile = Storage::disk('azureIMPrivate')->get($quoteDocument->doc_url);
                 $docFileBase64 = base64_encode($documentFile);
                 // Create payload with guaranteed field order for GIG API
                 $payload = [];
@@ -851,7 +852,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
 
-        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
@@ -1176,7 +1177,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
     {
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quoteDetails->code.' started');
-        $colors = collect(app(AMLService::class)->getAMLLookups($quoteDetails?->plan?->provider_id, [
+        $colors = collect(app(AMLLookupsService::class)->getAMLLookups($quoteDetails?->plan?->provider_id, [
             LookupsEnum::VEHICLE_COLOR,
         ])->toArray()['vehicle_color'] ?? [])->pluck('text', 'code')->toArray();
 

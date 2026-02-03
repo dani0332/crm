@@ -11,6 +11,7 @@ use App\Models\AML;
 use App\Models\PersonalQuote;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -22,11 +23,7 @@ class AMLQueryService
 {
     public function getAMLQuotes(object $request): \Illuminate\Contracts\Pagination\Paginator|array
     {
-        if (! $request->ajax()) {
-            return [];
-        }
-
-        if (! isset($request->quoteType) || empty($request->quoteType)) {
+        if (! $request->ajax() || ! isset($request->quoteType) || empty($request->quoteType)) {
             return [];
         }
 
@@ -49,7 +46,15 @@ class AMLQueryService
     {
         $quoteRequestTable = strtolower($request->quoteType).'_quote_request';
 
-        // Check if quote type uses personal_quotes table
+        if (! $this->isPersonalQuoteType($quoteTypeId)) {
+            return $quoteRequestTable;
+        }
+
+        return $this->resolvePersonalQuoteTable($quoteTypeId, $request, $quoteRequestTable);
+    }
+
+    private function isPersonalQuoteType(int $quoteTypeId): bool
+    {
         $personalQuoteTypes = [
             QuoteTypes::BIKE->id(),
             QuoteTypes::YACHT->id(),
@@ -61,51 +66,59 @@ class AMLQueryService
             QuoteTypes::HOME->id(),
         ];
 
-        if (! in_array($quoteTypeId, $personalQuoteTypes)) {
-            return $quoteRequestTable;
-        }
+        return in_array($quoteTypeId, $personalQuoteTypes);
+    }
 
+    private function resolvePersonalQuoteTable(int $quoteTypeId, object $request, string $fallbackTable): string
+    {
         // Check if data has been migrated based on date
         if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
-            return AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate)
-                ? 'personal_quotes'
-                : $quoteRequestTable;
+            return $this->getMigratedTableName($quoteTypeId, $request->amlCreatedStartDate, $fallbackTable);
         }
 
         // Check migration status based on search criteria
         if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
             $createdDate = $this->getCreatedDateForSearch($request);
             if ($createdDate) {
-                return AMLService::isDataMigrated($quoteTypeId, '', $createdDate)
-                    ? 'personal_quotes'
-                    : $quoteRequestTable;
+                return $this->getMigratedTableName($quoteTypeId, $createdDate, $fallbackTable);
             }
         }
 
-        return $quoteRequestTable;
+        return $fallbackTable;
+    }
+
+    private function getMigratedTableName(int $quoteTypeId, string $date, string $fallbackTable): string
+    {
+        return AMLService::isDataMigrated($quoteTypeId, '', $date)
+            ? 'personal_quotes'
+            : $fallbackTable;
     }
 
     private function getCreatedDateForSearch(object $request): ?string
     {
+        $createdDate = null;
         $searchType = match ($request->searchType) {
             'cdbId' => DatabaseColumnsString::CODE,
             'customerEmail' => DatabaseColumnsString::EMAIL,
             default => null,
         };
 
-        if (! $searchType) {
-            return null;
-        }
-
-        try {
-            if ($request->searchType === 'id') {
-                return AML::where($searchType, $request->searchField)->firstOrFail()->created_at;
+        if ($searchType) {
+            try {
+                $createdDate = $request->searchType === 'id'
+                    ? AML::where($searchType, $request->searchField)->firstOrFail()->created_at
+                    : PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
+            } catch (\Exception $e) {
+                LoggerService::warning('Error getting created date for search', extra: [
+                    'search_type' => $request->searchType,
+                    'search_field' => $request->searchField,
+                    'exception' => $e->getMessage(),
+                ]);
+                $createdDate = null;
             }
-
-            return PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
-        } catch (\Exception $e) {
-            return null;
         }
+
+        return $createdDate;
     }
 
     private function buildBaseQuery(string $quoteRequestTable, object $request, int $quoteTypeId): Builder
@@ -150,16 +163,6 @@ class AMLQueryService
 
             if ($request->searchType === 'customerEmail') {
                 $dataAml->where($quoteRequestTable.'.email', $request->searchField);
-            }
-        }
-
-        // Apply match found filter
-        if (isset($request->matchFound)) {
-            if ($request->matchFound === 'False') {
-                $dataAml->where('kyc_logs.results_found', '=', '0');
-            }
-            if ($request->matchFound === 'True') {
-                $dataAml->where('kyc_logs.results_found', '>', '0');
             }
         }
 

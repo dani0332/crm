@@ -190,7 +190,6 @@ class JetskiQuoteController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
-            'storageUrl' => storageUrl(),
             'embeddedProducts' => $embeddedProducts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'modelType' => QuoteTypes::JETSKI,

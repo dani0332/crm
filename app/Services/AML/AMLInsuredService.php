@@ -3,38 +3,19 @@
 namespace App\Services\AML;
 
 use App\Enums\CustomerTypeEnum;
-use App\Enums\Logger\LoggerFeatureEnum;
+use App\Models\CustomerInsured;
 use App\Models\Insured;
-use App\Services\AML\DTOs\AMLOperationResult;
 use App\Services\Logger\LoggerService;
 
-/**
- * Service for handling AML insured operations
- * Manages individual and entity insured search and retrieval with various ID types
- */
 class AMLInsuredService
 {
-    /**
-     * Get insured details by customer type and identification
-     *
-     * @param  string|null  $code  For logging purposes
-     */
-    public function getInsuredDetails(
-        ?string $customerType,
-        ?string $idType,
-        ?string $idNumber,
-        ?string $tradeLicense,
-        ?string $code = null
-    ): AMLOperationResult {
-        if ($code) {
-            LoggerService::startQuoteLogging($code, LoggerFeatureEnum::AML_SCREENING);
-        }
-
-        LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
-            'customer_type' => $customerType,
-            'id_type' => $idType,
-            'id_number' => $idNumber,
-            'trade_license' => $tradeLicense,
+    public function getInsuredDetails(?string $customerType, ?string $idType, ?string $idNumber, ?string $tradeLicense): array
+    {
+        LoggerService::info('Get Insured Details', extra: [
+            'customer_type' => $customerType ?? null,
+            'id_type' => $idType ?? null,
+            'id_number' => $idNumber ?? null,
+            'trade_license' => $tradeLicense ?? null,
         ]);
 
         // Determine if entity or individual
@@ -51,35 +32,40 @@ class AMLInsuredService
         );
 
         // Prepare response
-        $status = (bool) $insuredDetails;
+        $status = (bool) $insuredDetails;        
         $message = $this->getResponseMessage($resolvedCustomerType, $status);
 
-        return $status
-            ? AMLOperationResult::success($insuredDetails, $message)
-            : AMLOperationResult::failure($message);
+        return [
+            'status' => $status,
+            'response' => $insuredDetails,
+            'message' => $message,
+        ];
     }
 
-    /**
-     * Determine if the search is for an entity or individual
-     */
     private function determineIfEntity(?string $customerType, ?string $tradeLicense): bool
     {
         // Check if explicitly set as entity
         if ($customerType == CustomerTypeEnum::Entity) {
+            LoggerService::info('Customer type is Entity', extra: [
+                'customer_type' => $customerType,
+            ]);
+
             return true;
         }
 
         // If customer type is empty or null, check if trade license is provided
         if (empty($customerType) || is_null($customerType) || $customerType == 'null') {
+            LoggerService::info('Customer type is empty or null', extra: [
+                'customer_type' => $customerType ?? null,
+                'trade_license' => $tradeLicense ?? null,
+            ]);
+            
             return ! empty($tradeLicense);
         }
 
         return false;
     }
 
-    /**
-     * Search for insured based on customer type and identification
-     */
     private function searchInsured(
         string $customerType,
         bool $isEntity,
@@ -104,9 +90,6 @@ class AMLInsuredService
             ->first();
     }
 
-    /**
-     * Get appropriate response message based on customer type and status
-     */
     private function getResponseMessage(string $customerType, bool $found): string
     {
         $messages = [
@@ -123,5 +106,39 @@ class AMLInsuredService
         $messageType = $found ? 'found' : 'not_found';
 
         return $messages[$customerType][$messageType];
+    }
+
+    public function getInsuredDetailsByQuote(?int $customerId, int $quoteTypeId, int $quoteRequestId): ?CustomerInsured
+    {
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+
+        if ($customerId === null) {
+            LoggerService::info('No CustomerInsured record found - customer_id is null', [
+                'customer_id' => $customerId,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+            ]);
+
+            return null;
+        }
+
+        $customerInsured = CustomerInsured::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+            'customer_id' => $customerId,
+        ])
+            ->with(['customer', 'insured', 'insured.insuredKyc'])
+            ->latest('updated_at')
+            ->first();
+
+        if (! $customerInsured) {
+            LoggerService::info('No CustomerInsured record found', [
+                'customer_id' => $customerId,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+            ]);
+        }
+
+        return $customerInsured;
     }
 }

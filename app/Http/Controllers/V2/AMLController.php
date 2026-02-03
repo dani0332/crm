@@ -65,6 +65,7 @@ class AMLController extends Controller
 
     public function __construct()
     {
+        // Reminder:: move middleware to routes file (route specific middleware)
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
         $this->middleware('permission:'.PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API, ['only' => ['togglePolicyIssuanceAutomation']]);
     }
@@ -82,30 +83,42 @@ class AMLController extends Controller
         ]);
     }
 
-    public function show(AML $aml, $insuredId = null, $customerId = null)
+    public function amlQuoteDetails($quoteTypeId, $quoteRequestId, AMLQuoteDetailsService $amlQuoteDetailsService)
     {
-        $data = app(AMLDisplayService::class)->prepareShowData(
+        $data = $amlQuoteDetailsService->prepareQuoteDetailsData(
+            $quoteTypeId,
+            $quoteRequestId
+        );
+
+        return inertia('Aml/DetailPage', $data);
+    }
+
+    public function show(AML $aml, AMLDisplayService $amlDisplayService, $insuredId = null, $customerId = null)
+    {
+        $data = $amlDisplayService->prepareShowData(
             $aml,
             $insuredId,
             $customerId
         );
 
-        return inertia('Aml/Show', $data->toArray());
+        return inertia('Aml/Show', $data);
     }
-
-    public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
+    
+    public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): \Illuminate\Http\JsonResponse
     {
-        $data = app(AMLQuoteDetailsService::class)->prepareQuoteDetailsData(
-            $quoteTypeId,
-            $quoteRequestId
+        $result = $amlInsuredService->getInsuredDetails(
+            $request->customer_type,
+            $request->id_type,
+            $request->id_number,
+            $request->trade_license
         );
 
-        return inertia('Aml/DetailPage', $data->toArray());
+        return response()->json($result);
     }
 
-    public function fetchEntity(Request $request)
+    public function fetchEntity(Request $request, AMLEntityService $entityService)
     {
-        $entity = app(AMLEntityService::class)->fetchEntityByTradeLicense($request->trade_license);
+        $entity = $entityService->fetchEntityByTradeLicense($request->trade_license);
 
         if ($entity) {
             return response()->json([
@@ -121,35 +134,24 @@ class AMLController extends Controller
         ]);
     }
 
-    public function linkEntityDetails(Request $request)
+    public function linkEntityDetails(Request $request, AMLEntityService $entityService)
     {
-        $result = app(AMLEntityService::class)->linkEntityToQuote(
+        $result = $entityService->linkEntityToQuote(
             $request->quote_type_id,
             $request->quote_request_id,
             $request->entity_id,
             $request->triggeredFrom
         );
 
-        return response()->json($result->toArray());
+        return response()->json($result);
     }
 
-    public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $result = app(AMLInsuredService::class)->getInsuredDetails(
-            $request->customer_type,
-            $request->id_type,
-            $request->id_number,
-            $request->trade_license,
-            $request->code
-        );
-
-        return response()->json($result->toArray());
-    }
-
-    public function export(Request $request)
+    public function export(Request $request, KycLogsExport $kycLogsExport)
     {
         return app(AMLExportService::class)->exportAMLLogs($request);
     }
+
+    // Above functions are refactored and tested
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
