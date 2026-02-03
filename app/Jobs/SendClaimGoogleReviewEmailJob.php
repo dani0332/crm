@@ -78,7 +78,6 @@ class SendClaimGoogleReviewEmailJob implements ShouldQueue
                 return;
             }
 
-
             $isReviewEmailSent = $claimRequest->google_review_email_sent_at;
             if ($isReviewEmailSent) {
                 LoggerService::info(' Google review email already sent - Claim UUID: '.$this->claimRequestUuid, [
