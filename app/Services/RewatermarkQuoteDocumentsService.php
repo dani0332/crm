@@ -90,12 +90,14 @@ class RewatermarkQuoteDocumentsService
             $quote = $document->quoteDocumentable;
             if (! $quote) {
                 $skippedMissingQuote++;
+
                 continue;
             }
 
             $documentType = $document->documentType;
             if (! $documentType) {
                 $skippedMissingDocumentType++;
+
                 continue;
             }
 
@@ -106,6 +108,7 @@ class RewatermarkQuoteDocumentsService
 
             if (! $this->isWatermarkAllowedForProvider($insuranceProviderId ? (int) $insuranceProviderId : null, $skipWatermarkProviderIds)) {
                 $skippedProvider++;
+
                 continue;
             }
 
@@ -181,4 +184,3 @@ class RewatermarkQuoteDocumentsService
             ->toArray();
     }
 }
-

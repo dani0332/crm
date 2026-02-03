@@ -701,6 +701,7 @@ class ApiController extends Controller
     public function rewatermarkQuoteDocuments(RewatermarkQuoteDocumentsRequest $request, RewatermarkQuoteDocumentsService $service)
     {
         $result = $service->handle($request->validated());
+
         return apiResponse($result, Response::HTTP_OK, 'Watermark jobs dispatched');
     }
 
