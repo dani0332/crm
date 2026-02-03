@@ -968,13 +968,18 @@ class QuoteDocumentService extends BaseService
 
     public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5)
     {
-        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
-
-        if (Storage::disk($storageDisk)->exists($filePath)) {
-            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
-        } else {
+        // Early return if filePath is empty or null to avoid any errors
+        if (empty($filePath)) {
             return null;
         }
+
+        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
+
+        if (Storage::disk($storageDisk)->exists(path: $filePath)) {
+            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
+        }
+
+        return null;
     }
 
     /**
