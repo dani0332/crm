@@ -2,7 +2,6 @@
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
-import LeadHistory from '@/inertia/Components/LeadHistory.vue';
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
@@ -4674,13 +4673,6 @@ const { openTempUrl } = useDocumentTempUrl();
         </template>
       </Collapsible>
     </div>
-
-    <LeadHistory
-      modelType="car"
-      :recordId="page.props.paymentEntityModel.id"
-      :quoteTypeId="page.props.quoteTypeId"
-      :expanded="sectionExpanded"
-    />
 
     <CustomerChatLogs
       :customerName="record?.first_name + ' ' + record?.last_name"
