@@ -463,6 +463,7 @@ class OCRService
             LoggerService::info('OCR API call data: '.json_encode($data));
 
             if ($data) {
+
                 $result = $this->processOcrData(
                     $quote,
                     $quoteType,

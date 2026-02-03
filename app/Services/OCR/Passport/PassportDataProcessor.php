@@ -59,7 +59,7 @@ class PassportDataProcessor
             [
                 'quoteable_type' => get_class($this->quote),
                 'quoteable_id' => $this->quote->id,
-                'customer_member_id' => $this->memberDetailId,
+                'customer_member_id' => $this->memberDetailId > 0 ? $this->memberDetailId : null,
             ],
             [
                 'passport_number' => $this->extractedData['passport_number'] ?? null,
