@@ -107,7 +107,7 @@ class EmbeddedTransactionService extends BaseService
     public function getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode)
     {
         $embeddedTransaction = $this->embeddedTransactionRepo->getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode);
-        $quote = $embeddedTransaction->quoteRequest ?? null;
+        $quote = $embeddedTransaction?->quoteRequest ?? null;
 
         if (empty($embeddedTransaction) || empty($quote)) {
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Record not found');
