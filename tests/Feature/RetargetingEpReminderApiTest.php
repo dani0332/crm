@@ -55,17 +55,17 @@ describe('GET /api/get-retargeting-ep-reminder', function () {
         $response->assertJsonValidationErrors(['quoteId']);
     });
 
-    test('returns 400 when quote exists but is not booked', function () {
+    test('returns 404 when record not found, due to quote is not booked', function () {
         $response = $this->getJson(route('get.retargeting-ep-reminder', [
             'quoteId' => $this->quoteId,
             'quoteTypeId' => QuoteTypeId::Car,
             'embeddedTransactionCode' => $this->epMDXTransaction->code,
         ]));
 
-        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
         $response->assertJson([
-            'message' => 'Quote is not booked',
-            'status' => Response::HTTP_BAD_REQUEST,
+            'message' => 'Record not found',
+            'status' => Response::HTTP_NOT_FOUND,
         ]);
     });
 
