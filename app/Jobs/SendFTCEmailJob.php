@@ -24,15 +24,17 @@ class SendFTCEmailJob implements ShouldQueue
     private $quoteType;
     private $paymentLink;
     private $isInsurerPayment;
+    private $isPaymentBypass;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(string $quoteUUID, QuoteTypes $quoteType, bool $isInsurerPayment = false)
+    public function __construct(string $quoteUUID, QuoteTypes $quoteType, bool $isInsurerPayment = false, bool $isPaymentBypass = false)
     {
         $this->quoteUUID = $quoteUUID;
         $this->quoteType = $quoteType;
         $this->isInsurerPayment = $isInsurerPayment;
+        $this->isPaymentBypass = $isPaymentBypass;
 
         $this->afterCommit();
     }
@@ -66,7 +68,7 @@ class SendFTCEmailJob implements ShouldQueue
             // Lead must be SIC LEAD and payment authorized
             if ($lead) {
                 $isPaymentAuthorized = $lead->isPaymentAuthorized();
-                if ($isPaymentAuthorized || $lead->isPaymentLinkRequested() || $this->isInsurerPayment) {
+                if ($isPaymentAuthorized || $lead->isPaymentLinkRequested() || $this->isInsurerPayment || $this->isPaymentBypass) {
                     $data = [
                         'quoteUID' => $this->quoteUUID,
                         'quoteTypeId' => (int) $this->quoteType->id(),

@@ -73,7 +73,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         // upload file to azure
         $fileNameAzure = uniqid().'_'.$docmentableTypeEntry->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords($quoteType).'/'.$fileNameAzure;
-        $azureDisk = Storage::disk('azureIM');
+        $azureDisk = Storage::disk('azureIMPrivate');
         $azureDisk->put($filePathAzure, $pdf->output());
 
         $document = $docmentableTypeEntry->documents()->create([
