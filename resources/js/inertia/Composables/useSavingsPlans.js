@@ -1004,10 +1004,10 @@ export function useSavingsPlans(options = {})
     ratesLoading.value = true;
     try
     {
-      const { data } = await axios.get('https://v6.exchangerate-api.com/v6/7defc3b81189dcc54b09144a/latest/USD');
-      if (data?.conversion_rates)
+      const { data } = await axios.get('https://open.er-api.com/v6/latest/USD');
+      if (data?.rates)
       {
-        exchangeRates.value = { ...data?.conversion_rates };
+        exchangeRates.value = { ...data?.rates };
       }
     } catch (e)
     {
@@ -1191,7 +1191,6 @@ export function useSavingsPlans(options = {})
       ecom?.paymentTerm ??
       (quote?.value || quote)?.savings_quote?.payment_term ??
       1;
-    console.log(priceInAED, paymentTerm);
     return formatNumber(
       calculateTotalAnnualPrice({ actualPremium: priceInAED, paymentTerm }) ||
       0,
