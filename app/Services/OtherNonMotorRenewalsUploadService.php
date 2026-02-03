@@ -46,13 +46,13 @@ class OtherNonMotorRenewalsUploadService
         $renewalsUploadLead = RenewalsUploadLeads::find($renewalsUploadLeadId);
 
         if (! $renewalsUploadLead) {
-            LoggerService::warning('Non-motor upload and update lead not found. Lead ID: ' . $renewalsUploadLeadId);
+            LoggerService::warning('Non-motor upload and update lead not found. Lead ID: '.$renewalsUploadLeadId);
+
             return $result;
         }
 
-
         try {
-            LoggerService::info('Non-motor upload and update lead found. Lead ID: ' . $renewalsUploadLeadId . ' uploading update leads in Progress Now');
+            LoggerService::info('Non-motor upload and update lead found. Lead ID: '.$renewalsUploadLeadId.' uploading update leads in Progress Now');
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
             DB::transaction(function () use ($renewalsUploadLead) {
@@ -74,19 +74,20 @@ class OtherNonMotorRenewalsUploadService
                 ->count();
 
             if ($validationSuccessCount === 0) {
-                LoggerService::info('No validated jobs to dispatch for lead: ' . $renewalsUploadLead->id);
+                LoggerService::info('No validated jobs to dispatch for lead: '.$renewalsUploadLead->id);
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                 $result = false;
             } else {
-                LoggerService::info('Validated jobs to dispatch for lead: ' . $renewalsUploadLead->id);
+                LoggerService::info('Validated jobs to dispatch for lead: '.$renewalsUploadLead->id);
                 $this->dispatchProcessingJobs($renewalsUploadLead);
                 $result = true;
             }
         } catch (\Throwable $exception) {
-            LoggerService::error('Non-motor upload and update process failed. Lead ID: ' . $renewalsUploadLeadId . ' Error: ' . $exception->getMessage());
+            LoggerService::error('Non-motor upload and update process failed. Lead ID: '.$renewalsUploadLeadId.' Error: '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
             $result = false;
         }
+
         return $result;
     }
 
@@ -94,7 +95,7 @@ class OtherNonMotorRenewalsUploadService
     {
         $jobs = [];
 
-        LoggerService::info('Dispatching processing jobs for lead: ' . $renewalsUploadLead->id);
+        LoggerService::info('Dispatching processing jobs for lead: '.$renewalsUploadLead->id);
         RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)
             ->where('renewals_upload_lead_id', $renewalsUploadLead->id)
             ->chunkById(100, function ($processes) use (&$jobs, $renewalsUploadLead) {
@@ -132,12 +133,13 @@ class OtherNonMotorRenewalsUploadService
 
     public function processSingle(int $leadId, int $processId): void
     {
-        LoggerService::info('Processing single lead: ' . $leadId . ' process: ' . $processId);
+        LoggerService::info('Processing single lead: '.$leadId.' process: '.$processId);
         $lead = RenewalsUploadLeads::find($leadId);
         $process = RenewalQuoteProcess::find($processId);
 
         if (! $lead || ! $process || $process->status !== RenewalProcessStatuses::NEW) {
-            LoggerService::info('Single lead not found or process not new. Lead ID: ' . $leadId . ' Process ID: ' . $processId);
+            LoggerService::info('Single lead not found or process not new. Lead ID: '.$leadId.' Process ID: '.$processId);
+
             return;
         }
 
@@ -146,7 +148,7 @@ class OtherNonMotorRenewalsUploadService
 
     private function assignLead(RenewalQuoteProcess $process, RenewalsUploadLeads $renewalsUploadLead): void
     {
-        LoggerService::info('Assigning lead: ' . $process->id . ' to lead: ' . $renewalsUploadLead->id);
+        LoggerService::info('Assigning lead: '.$process->id.' to lead: '.$renewalsUploadLead->id);
         $data = Arr::wrap($process->data);
         $refId = isset($data['ref_id']) ? trim($data['ref_id']) : null;
         $advisorEmail = isset($data['advisor_email']) ? strtolower(trim($data['advisor_email'])) : null;
@@ -167,7 +169,7 @@ class OtherNonMotorRenewalsUploadService
         // Import already enforces business validations (renewal_upload source, not manually assigned).
         // Here we only guard against missing records.
         if (! $advisor || ! $quote) {
-            LoggerService::info('Advisor or quote not found. Lead ID: ' . $renewalsUploadLead->id . ' Process ID: ' . $process->id);
+            LoggerService::info('Advisor or quote not found. Lead ID: '.$renewalsUploadLead->id.' Process ID: '.$process->id);
             $process->status = RenewalProcessStatuses::BAD_DATA;
             $process->fetch_plans_status = FetchPlansStatuses::OUTDATED;
             $process->save();
@@ -176,8 +178,8 @@ class OtherNonMotorRenewalsUploadService
             return;
         }
 
-        LoggerService::info('Advisor found: ' . $advisor->id . ' for email: ' . $advisorEmail);
-        LoggerService::info('Quote found: ' . $quote->id . ' for ref ID: ' . $refId);
+        LoggerService::info('Advisor found: '.$advisor->id.' for email: '.$advisorEmail);
+        LoggerService::info('Quote found: '.$quote->id.' for ref ID: '.$refId);
 
         $process->update([
             'quote_type' => self::QUOTE_TYPE,
@@ -188,7 +190,7 @@ class OtherNonMotorRenewalsUploadService
         ]);
 
         $this->assignAdvisor($quote, $advisor->id);
-        LoggerService::info('Advisor assigned: ' . $advisor->id . ' to quote: ' . $quote->id);
+        LoggerService::info('Advisor assigned: '.$advisor->id.' to quote: '.$quote->id);
         $renewalsUploadLead->increment('good');
     }
 
