@@ -1128,9 +1128,6 @@ class SagePayloadFactory
         if (! isset($sageRequest->customer_id)) {
             $sageRequest->customer_id = $quote->customer_id;
         }
-        if ($paymentSplit->sr_no == 1) {
-            $sageRequest->discount = $payment->discount_value;
-        }
 
         if (! isset($sageRequest->advisorDepartment)) {
             $advisorDepartment = '';
@@ -1218,7 +1215,6 @@ class SagePayloadFactory
 
         $sageRequest->quoteRefId = $personalQuote?->code ?? '';
         $sageRequest->userId = auth()->id();
-        $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
