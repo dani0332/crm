@@ -126,6 +126,8 @@ class OtherNonMotorRenewalsUploadService
             })
             ->allowFailures()
             ->dispatch();
+
+        return true;
     }
 
     public function processSingle(int $leadId, int $processId): void
@@ -146,22 +148,21 @@ class OtherNonMotorRenewalsUploadService
     {
         LoggerService::info('Assigning lead: ' . $process->id . ' to lead: ' . $renewalsUploadLead->id);
         $data = Arr::wrap($process->data);
-        LoggerService::startQuoteLogging($data['ref_id']);
         $refId = isset($data['ref_id']) ? trim($data['ref_id']) : null;
         $advisorEmail = isset($data['advisor_email']) ? strtolower(trim($data['advisor_email'])) : null;
 
         $advisor = null;
         if (! empty($advisorEmail)) {
             $advisor = User::where('email', $advisorEmail)->first();
-            LoggerService::info('Advisor found: ' . $advisor->id . ' for email: ' . $advisorEmail);
         }
 
         $quote = null;
         if ($refId) {
             $refId = strtoupper(trim((string) $refId));
             $quote = $this->findEligibleQuote($refId);
-            LoggerService::info('Quote found: ' . $quote->id . ' for ref ID: ' . $refId);
         }
+
+        LoggerService::startQuoteLogging($refId);
 
         // Import already enforces business validations (renewal_upload source, not manually assigned).
         // Here we only guard against missing records.
@@ -174,6 +175,9 @@ class OtherNonMotorRenewalsUploadService
 
             return;
         }
+
+        LoggerService::info('Advisor found: ' . $advisor->id . ' for email: ' . $advisorEmail);
+        LoggerService::info('Quote found: ' . $quote->id . ' for ref ID: ' . $refId);
 
         $process->update([
             'quote_type' => self::QUOTE_TYPE,
