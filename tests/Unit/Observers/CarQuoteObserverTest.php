@@ -7,15 +7,11 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
-use Tests\Helpers\Payments\PaymentTestDataHelper;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
-use Tests\Helpers\TestSchemaCreator;
 
 // return false when retargeting is not enabled
 // repo query test
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
-
     $testData = RetargetingEpReminderTestDataHelper::setupTestData();
     $this->carQuote = $testData['carQuote'];
     $this->quoteId = $testData['quoteId'];
@@ -43,10 +39,10 @@ describe('CarQuoteObserver', function () {
                     )
                     ->andReturn([
                         [
-                            'embeddedTransactionCode' => $this->epMDXTransaction->code, 
-                            'status_code' => Response::HTTP_OK, 
+                            'embeddedTransactionCode' => $this->epMDXTransaction->code,
+                            'status_code' => Response::HTTP_OK,
                             'message' => '',
-                        ]
+                        ],
                     ]);
             });
 
