@@ -4,6 +4,7 @@ namespace App\Jobs\Renewals;
 
 use App\Enums\ProcessStatusCode;
 use App\Models\RenewalsUploadLeads;
+use App\Services\Logger\LoggerService;
 use App\Services\OtherNonMotorRenewalsUploadService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -44,6 +45,6 @@ class ProcessOtherNonMotorRenewal implements ShouldQueue
     {
         $renewalsUploadLead = RenewalsUploadLeads::find($this->renewalsUploadLeadId);
         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-        info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
+        LoggerService::info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
     }
 }
