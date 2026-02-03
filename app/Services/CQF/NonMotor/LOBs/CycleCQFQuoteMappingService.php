@@ -31,7 +31,7 @@ class CycleCQFQuoteMappingService implements CQFQuoteMappingInterface
             'email' => $quote->email,
             'mobile_no' => $quote->mobile_no,
             'uuid' => $quoteUuid,
-            'code' => sprintf('%s%s', str_replace('-', '', QuoteTypes::CYCLE->shortCode()), $quoteUuid),
+            'code' => sprintf('%s-%s', str_replace('-', '', QuoteTypes::CYCLE->shortCode()), $quoteUuid),
             'source' => LeadSourceEnum::RENEWAL_UPLOAD,
             'dob' => $quote->dob,
             'advisor_id' => null,

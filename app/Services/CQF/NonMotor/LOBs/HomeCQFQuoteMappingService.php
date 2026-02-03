@@ -31,7 +31,7 @@ class HomeCQFQuoteMappingService implements CQFQuoteMappingInterface
             'email' => $quote->email,
             'mobile_no' => $quote->mobile_no,
             'uuid' => $quoteUuid,
-            'code' => sprintf('%s%s', str_replace('-', '', QuoteTypes::HOME->shortCode()), $quoteUuid),
+            'code' => sprintf('%s-%s', str_replace('-', '', QuoteTypes::HOME->shortCode()), $quoteUuid),
             'source' => LeadSourceEnum::RENEWAL_UPLOAD,
             'dob' => $quote->dob,
             'advisor_id' => null,

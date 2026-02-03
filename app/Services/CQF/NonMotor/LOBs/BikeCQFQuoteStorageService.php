@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
 
 class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
 {
+    
     public function __construct(
         protected BikeCQFQuoteMappingService $mappingService
     ) {}
@@ -133,6 +134,8 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
     protected function copyCarQuoteToBikeQuoteDetail(PersonalQuote $newQuote, CarQuote $carQuote): void
     {
         $bikeQuoteData = [
+            'uuid' => $newQuote->uuid,
+            'code' => $newQuote->code,
             'personal_quote_id' => $newQuote->id,
             'bike_company_to_insure' => null,
             'year_of_manufacture' => $carQuote->getAttribute('Year_of_manufacture') ?? $carQuote->getAttribute('year_of_manufacture') ?? null,
@@ -153,11 +156,7 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
             $bikeQuoteData['chassis_number'] = $chassisNumber;
         }
 
-        $newBikeQuote = BikeQuote::create($bikeQuoteData);
-
-        if ($chassisNumber !== null) {
-            $newBikeQuote->bikeQuoteRequestDetail()->create(['chassis_number' => $chassisNumber]);
-        }
+        BikeQuote::create($bikeQuoteData);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
     }
@@ -188,6 +187,8 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         $bikeQuoteData = [
+            'uuid' => $newQuote->uuid,
+            'code' => $newQuote->code,
             'personal_quote_id' => $newQuote->id,
             'bike_company_to_insure' => $oldBikeQuote->bike_company_to_insure,
             'year_of_manufacture' => $oldBikeQuote->year_of_manufacture,
@@ -200,19 +201,10 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
             'emirate_of_registration_id' => $oldBikeQuote->emirate_of_registration_id,
             'claim_history_id' => $oldBikeQuote->claim_history_id,
             'bike_value' => $oldBikeQuote->bike_value,
+            'chassis_number' => $oldBikeQuote->chassis_number,
         ];
 
-        if (isset($oldBikeQuote->chassis_number)) {
-            $bikeQuoteData['chassis_number'] = $oldBikeQuote->chassis_number;
-        }
-
-        $newBikeQuote = BikeQuote::create($bikeQuoteData);
-
-        if ($oldBikeQuote->bikeQuoteRequestDetail) {
-            $newBikeQuote->bikeQuoteRequestDetail()->create([
-                'chassis_number' => $oldBikeQuote->bikeQuoteRequestDetail->chassis_number ?? null,
-            ]);
-        }
+        BikeQuote::create($bikeQuoteData);
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');
     }
