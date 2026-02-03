@@ -89,7 +89,7 @@ class EmbeddedTransactionRepository extends BaseRepository
             return false;
         }
 
-        $templateId = getAppStorageValueByKey($templateKey);
+        $templateId = getAppStorageValueByKey($templateKey, useCache: true);
         if (empty($templateId)) {
             LoggerService::info("getEpRetargetingReminderEmailTemplateId: Template Id not found for epShortCode: {$epShortCode}");
             return false;
