@@ -106,7 +106,10 @@ class LeadAllocationDashboardService extends BaseService
             ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
                 $q->where('quote_type_id', $quoteType->id());
             })
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->when($quoteType == QuoteTypes::GROUP_MEDICAL, function ($q) {
+                $q->whereNotNull('health_plan_type_id')
+                    ->whereNotNull('number_of_employees');
+            })->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY]);
     }
 

@@ -26,6 +26,7 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\LifeSyncHealthQuestionnaireRequest;
 use App\Http\Requests\PaymentNotificationRequest;
+use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWhatsappRequest;
 use App\Http\Requests\SICWorkflowRequest;
@@ -60,6 +61,7 @@ use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
+use App\Services\RewatermarkQuoteDocumentsService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PrivateClient;
 use Carbon\Carbon;
@@ -739,6 +741,14 @@ class ApiController extends Controller
             ], Response::HTTP_BAD_REQUEST);
         }
     }
+
+    public function rewatermarkQuoteDocuments(RewatermarkQuoteDocumentsRequest $request, RewatermarkQuoteDocumentsService $service)
+    {
+        $result = $service->handle($request->validated());
+
+        return apiResponse($result, Response::HTTP_OK, 'Watermark jobs dispatched');
+    }
+
     public function getLeadOCRComparison(Request $request)
     {
         $request->validate(

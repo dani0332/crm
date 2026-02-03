@@ -215,16 +215,7 @@ function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
       .map(id => `quote_status_id[]=${id}`)
       .join('&');
 
-    const paymentStatusIds = [
-      paymentStatusEnum.AUTHORISED,
-      paymentStatusEnum.PENDING,
-      paymentStatusEnum.PAYMENT_LINK_REQUESTED,
-    ];
-    const paymentStatusParams = paymentStatusIds
-      .map(id => `payment_status_id[]=${id}`)
-      .join('&');
-
-    url = `/${personalQuoteTypes.has(filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&${paymentStatusParams}&created_at_start=${created_at_start}&created_at_end=${created_at_end}`;
+    url = `/${personalQuoteTypes.has(filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4&created_at_start=${created_at_start}&created_at_end=${created_at_end}`;
     window.location.href = url;
   }
 }
