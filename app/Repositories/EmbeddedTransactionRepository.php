@@ -11,7 +11,6 @@ use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class EmbeddedTransactionRepository extends BaseRepository
 {

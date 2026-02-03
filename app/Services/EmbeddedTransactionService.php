@@ -6,8 +6,6 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
 use App\Models\CarQuote;
@@ -15,7 +13,6 @@ use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Response;
-use Illuminate\Support\Arr;
 
 class EmbeddedTransactionService extends BaseService
 {
@@ -113,9 +110,9 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Record not found');
         }
 
-        $carMake = $quote->carMake->text ?? null;
-        $carModel = $quote->carModel->text ?? null;
-        $epShortCode = $embeddedTransaction->product->embeddedProduct->short_code ?? null;
+        $carMake = $quote->carMake?->text ?? null;
+        $carModel = $quote->carModel?->text ?? null;
+        $epShortCode = $embeddedTransaction->product?->embeddedProduct?->short_code ?? null;
         if (empty($carMake) || empty($carModel) || empty($epShortCode) || empty($quote->email)) {
             LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quote]);
 
