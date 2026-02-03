@@ -11,15 +11,6 @@ class RenewalsUploadLeadsFactory extends Factory
 {
     protected $model = RenewalsUploadLeads::class;
 
-    public function configure()
-    {
-        return $this->afterMaking(function (RenewalsUploadLeads $lead) {
-            if (app()->environment('testing')) {
-                $lead->setConnection('sqlite');
-            }
-        });
-    }
-
     public function definition(): array
     {
         return [

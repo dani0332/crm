@@ -53,6 +53,9 @@ enum LoggerFeatureEnum: string
     case LEAD_OCR_DATA_COMPARISON = 'lead-ocr-data-comparison';
     case WATERMARK_DOCUMENT = 'watermark-document';
 
+    // renewals features
+    case NON_MOTOR_UPLOAD_AND_UPDATE = 'non-motor-upload-and-update';
+
     case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
     case PAYMENT_STATUS_UPDATE = 'payment-status-update';
 }

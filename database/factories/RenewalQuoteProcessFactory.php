@@ -12,15 +12,6 @@ class RenewalQuoteProcessFactory extends Factory
 {
     protected $model = RenewalQuoteProcess::class;
 
-    public function configure()
-    {
-        return $this->afterMaking(function (RenewalQuoteProcess $process) {
-            if (app()->environment('testing')) {
-                $process->setConnection('sqlite');
-            }
-        });
-    }
-
     public function definition(): array
     {
         return [

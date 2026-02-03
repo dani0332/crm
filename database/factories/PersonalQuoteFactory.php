@@ -11,18 +11,6 @@ class PersonalQuoteFactory extends Factory
 {
     protected $model = PersonalQuote::class;
 
-    /**
-     * Ensure sqlite connection in tests.
-     */
-    public function configure()
-    {
-        return $this->afterMaking(function (PersonalQuote $quote) {
-            if (app()->environment('testing')) {
-                $quote->setConnection('sqlite');
-            }
-        });
-    }
-
     public function definition(): array
     {
         $uuid = $this->faker->unique()->uuid();
