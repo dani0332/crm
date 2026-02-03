@@ -9,9 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class RiderOption extends Model
 {
     protected $table = 'rider_option';
-
     protected $guarded = [];
-
     protected $casts = [
         'input_required' => 'boolean',
         'is_active' => 'boolean',
@@ -32,4 +30,3 @@ class RiderOption extends Model
         return $query->where('is_active', 1);
     }
 }
-

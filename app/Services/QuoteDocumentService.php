@@ -59,13 +59,26 @@ class QuoteDocumentService extends BaseService
      *
      * @return mixed
      */
-    public function getQuoteDocumentsToReceive($quoteTypeId)
+    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null)
     {
         return DocumentType::where([
             'is_active' => 1,
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
+            ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($registrationType, $vehicleUse) {
+                $query->where(function ($query) use ($registrationType) {
+                    $query->whereNull('registration_type')
+                        ->orWhere('registration_type', $registrationType);
+                });
+
+                $query->where(function ($query) use ($vehicleUse) {
+                    $query->whereNull('vehicle_use')
+                        ->orWhere('vehicle_use', $vehicleUse);
+                });
+
+                return $query;
+            })
             ->orderBy('sort_order')
             ->get();
     }
@@ -196,7 +209,7 @@ class QuoteDocumentService extends BaseService
 
                 // Set the filename for Azure storage
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                Storage::disk('azureIM')->put($filePathAzure, base64_decode($file_data));
+                Storage::disk('azureIMPrivate')->put($filePathAzure, base64_decode($file_data));
             } elseif ($isPaymentReceipt) {
                 $originalName = 'Receipt-'.$data['pdf_filename'].'.pdf';
 
@@ -207,7 +220,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -225,7 +238,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -239,7 +252,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/homeSAL/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -253,7 +266,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -266,7 +279,7 @@ class QuoteDocumentService extends BaseService
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_original_'.$docName;
-                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
             }
 
             // Generate a unique UUID
@@ -402,7 +415,7 @@ class QuoteDocumentService extends BaseService
      *
      * @return array
      */
-    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
+    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null, $quote = null)
     {
         $borPermission = PermissionsEnum::BOR_DOCUMENT_UPLOAD;
         $havePermission = Auth::user()->hasPermissionTo($borPermission);
@@ -422,6 +435,21 @@ class QuoteDocumentService extends BaseService
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
 
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
+            })
+            ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($quote) {
+                $registrationType = $quote?->registration_type ?? null;
+                $vehicleUse = $quote?->vehicle_use ?? null;
+                $query->where(function ($query) use ($registrationType) {
+                    $query->whereNull('registration_type')
+                        ->orWhere('registration_type', $registrationType);
+                });
+
+                $query->where(function ($query) use ($vehicleUse) {
+                    $query->whereNull('vehicle_use')
+                        ->orWhere('vehicle_use', $vehicleUse);
+                });
+
+                return $query;
             })
             ->sortDocumentType()->get();
         // Handle documents for quote types like CORPLINE and GroupMedical.
@@ -612,14 +640,17 @@ class QuoteDocumentService extends BaseService
             $outputFile = $outputPath = storage_path('temp/'.$docName);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         if (! $fileContent) {
-            LoggerService::error("Unable to read file azureFilePath: $azureFilePath ");
-            throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
         }
 
         // Save the source file
@@ -798,10 +829,13 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         $manager = new ImageManager(new Driver);
 
@@ -854,7 +888,7 @@ class QuoteDocumentService extends BaseService
         // Set the filename for Azure storage
         $watermarkedFileNameAzure = uniqid().'_'.$uuid.'_'.$docName;
         // upload file to azure
-        $filePathAzure = Storage::disk('azureIM')->putFileAs('documents/'.$documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
+        $filePathAzure = Storage::disk('azureIMPrivate')->putFileAs('documents/'.$documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
 
         // delete temp file
         if (file_exists(storage_path('temp/'.$docName))) {
@@ -873,10 +907,13 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
@@ -903,36 +940,36 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5)
     {
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
-        if (Storage::disk($storageDisk)->exists($fileName)) {
-            $encodedFileName = urlencode($fileName);
-
-            return Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
+        if (Storage::disk($storageDisk)->exists($filePath)) {
+            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
         } else {
             return null;
         }
     }
 
     /**
-     * Generate a temporary URL for a document stored in a specified storage disk.
+     * Get document file extension from file path
      *
-     * @param  string  $fileName  The name of the file for which to generate the temporary URL.
-     * @param  string  $storageDisk  The storage disk where the file is located. Default is 'azureIM'.
-     * @param  int  $expiryTimeInMinutes  The expiry time for the temporary URL in minutes. Default is 20 minutes.
-     * @return \Illuminate\Http\JsonResponse JSON response containing the temporary URL or an error message.
+     * @param  string  $filePath
+     * @return string
      */
-    public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    public function getDocumentExtension($filePath)
     {
-        $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
-
-        if ($url) {
-            return response()->json(['url' => $url]);
-        } else {
-            return response()->json(['error' => 'File does not exist on server']);
+        if (empty($filePath)) {
+            return '';
         }
+
+        // Clean the URL by removing query parameters
+        $cleanPath = strtok($filePath, '?');
+
+        // Remove trailing whitespace
+        $cleanPath = preg_replace('/\s+$/m', '', $cleanPath);
+
+        return pathinfo($cleanPath, PATHINFO_EXTENSION);
     }
 
     /**

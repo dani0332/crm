@@ -192,7 +192,6 @@ class LifeQuoteController extends Controller
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
-            'storageUrl' => storageUrl(),
             'quoteType' => QuoteTypes::LIFE,
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,

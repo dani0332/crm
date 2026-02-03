@@ -25,8 +25,8 @@ class DeleteTempOCBPDFFileJob implements ShouldQueue
     public function handle(): void
     {
         // Check if the file exists and delete it
-        if (Storage::disk('azureIM')->exists($this->tempFilePath)) {
-            Storage::disk('azureIM')->delete($this->tempFilePath);
+        if (Storage::disk('azureIMPrivate')->exists($this->tempFilePath)) {
+            Storage::disk('azureIMPrivate')->delete($this->tempFilePath);
             info("Temporary file deleted: {$this->tempFilePath}");
         } else {
             info("Temporary file not found: {$this->tempFilePath}");

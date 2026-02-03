@@ -783,6 +783,7 @@ class SavingsQuoteService extends BaseQuoteService
 
     /**
      * Create a new savings plan manually (deprecated - use processSavingsPlan)
+     *
      * @deprecated Use processSavingsPlan instead
      */
     public function createSavingsPlan($request, $quoteUuId)
@@ -838,7 +839,6 @@ class SavingsQuoteService extends BaseQuoteService
     /**
      * Toggle savings plan visibility (hide/show)
      *
-     * @param  array  $data
      * @return mixed
      */
     public function toggleSavingsPlanVisibility(array $data)

@@ -10,13 +10,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsPlanUpdateRequest;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Jobs\SendSavingsOCAEmailJob;
-use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Repositories\LostReasonRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\Quotes\SavingsQuoteService;
-use App\Services\Savings\SavingsEmailService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 

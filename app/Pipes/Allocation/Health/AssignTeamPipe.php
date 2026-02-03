@@ -56,7 +56,7 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         if ($healthTeam) {
             LoggerService::info("Filtered team is: {$healthTeam->name}");
-            $this->lead->health_team_type = ($healthTeam->name === HealthTeamType::PCP && $this->lead->members->count() > 2)
+            $this->lead->health_team_type = ($healthTeam->name === HealthTeamType::GBP && $this->lead->members->count() > 2)
                 ? HealthTeamType::RM_NB
                 : $healthTeam->name;
         } else {

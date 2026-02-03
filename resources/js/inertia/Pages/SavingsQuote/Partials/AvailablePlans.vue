@@ -5,7 +5,6 @@ import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import LazyCreatePlan from './CreatePlan.vue';
 import PlanDetails from './PlanDetails.vue';
 
-
 const props = defineProps({
   quote: Object,
   payments: Array,
@@ -56,7 +55,6 @@ const fmt = formatNumber;
 const getRate = getExchangeRate;
 const setRate = setExchangeRate;
 const toAED = convertToAED;
-
 
 const availablePlansTableColumns = reactive([
   {

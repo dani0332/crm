@@ -10,6 +10,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
@@ -18,6 +19,7 @@ use App\Services\NationalityAllocationService;
 use App\Services\RuleService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
+use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -303,12 +305,14 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
             return;
         }
+        // temporary disable non advisor email for savings quote
         if (! $this->lead->isSuppressIntroEmail()) {
-            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
-                $this->lead,
-                $this->quoteType->value,
-                isNonAdvisorEmail: true,
-            );
+            SendSavingsOCAEmailJob::dispatch($this->lead->uuid)->delay(now()->addSeconds(10));
+            // app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+            //     $this->lead,
+            //     $this->quoteType->value,
+            //     isNonAdvisorEmail: true,
+            // );
         }
 
         $this->lead->touch('non_advisor_email_sent_at');

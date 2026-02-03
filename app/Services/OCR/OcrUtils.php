@@ -9,6 +9,7 @@ use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\DocumentType;
+use App\Models\Nationality;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
@@ -486,5 +487,19 @@ trait OcrUtils
         return $issuancePlaces->first(function ($place) use ($issuancePlace) {
             return strtolower($place->text) === strtolower($issuancePlace);
         })?->code ?? null;
+    }
+
+    protected function getNationalityId(?string $nationality): ?int
+    {
+        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
+        if (empty($nationality)) {
+            return null;
+        }
+
+        $query = Nationality::where('text', $nationality)
+            ->orWhere('country_name', $nationality)
+            ->orWhere('code', $nationality);
+
+        return $query->value('id');
     }
 }
