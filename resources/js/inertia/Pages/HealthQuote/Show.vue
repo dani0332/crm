@@ -4496,6 +4496,13 @@ const validateEmirateOfVisa = () => {
       :logs="clientInquiryLogs"
     />
 
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
     <lead-raw-data
       :modelType="'Health'"
       :uuid="$page.props.quote.uuid"
