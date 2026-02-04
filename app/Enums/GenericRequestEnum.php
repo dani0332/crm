@@ -62,4 +62,5 @@ final class GenericRequestEnum extends Enum
     const PREVIOUS_POLICY_EXPIRED_STATUS_ID = 99;
     const SEND_UPDATE_LOG = 'SendUpdateLog';
     const UNKNOWN_ERROR = 'Unknown error';
+    const SEND_UPDATE_AS_QUOTE_TYPE = 'sendupdate';
 }

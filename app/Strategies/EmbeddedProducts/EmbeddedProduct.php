@@ -42,6 +42,8 @@ class EmbeddedProduct
             'EP API Status',
             'EP Sage Status',
             'CERTIFICATE NUMBER',
+            'Tax Invoice Number',
+            'Tax Invoice Raised by Buyer Number',
         ];
     }
 
@@ -64,6 +66,8 @@ class EmbeddedProduct
             $certificate->ep_api_status,
             $certificate->ep_sage_status,
             $certificate->certificate_number,
+            $certificate->tax_invoice_no ?? '',
+            $certificate->tax_invoice_buyer_no ?? '',
         ];
     }
 
@@ -112,6 +116,8 @@ class EmbeddedProduct
                 ? $item->sage_status->value
                 : ($item->sage_status ?? '');
             $item->emirates_id_number = $emiratesIdNumber;
+            $item->tax_invoice_no = $item->tax_invoice_no ?? '';
+            $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
                 $item->sync_status = $item->courier_sync_status_info;
@@ -233,6 +239,12 @@ class EmbeddedProduct
                 if (! empty($sageStatusIds)) {
                     $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
                 }
+            })
+            ->when(isset($filters['tax_invoice_no']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.tax_invoice_no', 'like', "%{$filters['tax_invoice_no']}%");
+            })
+            ->when(isset($filters['tax_invoice_buyer_no']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.tax_invoice_buyer_no', 'like', "%{$filters['tax_invoice_buyer_no']}%");
             });
 
         $dataset = $this->updateQuery($dataset, $filters);
