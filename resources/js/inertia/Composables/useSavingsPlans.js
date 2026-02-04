@@ -33,10 +33,7 @@ export function useSavingsPlans(options = {})
   const ridersData = ref([]);
   const providerPlans = ref([]);
   const providerPlansLoading = ref(false);
-
-  const planDetails = ref(null);
   const planRates = ref({});
-  const ratesLoading = ref(false);
 
   const currencyOptions = computed(() =>
   {
@@ -360,10 +357,6 @@ export function useSavingsPlans(options = {})
     }));
   };
 
-  const resetRiders = () =>
-  {
-    ridersData.value = [];
-  };
 
   const onLoadAvailablePlansData = async (savingQuoteUuid = null) =>
   {
@@ -446,7 +439,6 @@ export function useSavingsPlans(options = {})
 
       if (data.plans)
       {
-        console.log(availablePlansTable.data);
         providerPlans.value = data.plans.filter(plan =>
           !availablePlansTable.data.some(
             existingPlan => existingPlan.id === plan.id,
@@ -634,7 +626,6 @@ export function useSavingsPlans(options = {})
       { isUpdate: false },
     );
 
-    console.log(apiPayload);
     try
     {
       const response = await axios.post(
@@ -778,7 +769,6 @@ export function useSavingsPlans(options = {})
   {
     if (Object.keys(exchangeRates.value).length > 0) return;
 
-    ratesLoading.value = true;
     try
     {
       const { data } = await axios.get('https://open.er-api.com/v6/latest/USD');
@@ -788,13 +778,13 @@ export function useSavingsPlans(options = {})
       }
     } catch (e)
     {
-      notification.error({
-        title: 'Failed to fetch exchange rates',
-        position: 'top',
-      });
-    } finally
-    {
-      ratesLoading.value = false;
+      if (notification)
+      {
+        notification.error({
+          title: 'Failed to fetch exchange rates',
+          position: 'top',
+        });
+      }
     }
   };
 
@@ -966,11 +956,9 @@ export function useSavingsPlans(options = {})
     providerPlans,
     providerPlansLoading,
     availablePlansTable,
-    planDetails,
     modals,
     exchangeRates,
     planRates,
-    ratesLoading,
     currencyOptions,
     investmentFrequencyOptions,
     paymentTermOptions,
@@ -993,11 +981,9 @@ export function useSavingsPlans(options = {})
     totalRiderPrice,
     getRiderDetails,
     processRidersForAPI,
-    resetRiders,
     onLoadAvailablePlansData,
     getPlanDetails,
     fetchProviderPlans,
-    buildPlanPayload,
     updatePlan,
     createPlan,
     togglePlanVisibility,
