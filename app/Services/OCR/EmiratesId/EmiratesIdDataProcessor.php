@@ -7,14 +7,16 @@ namespace App\Services\OCR\EmiratesId;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
+use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\CustomerMembers;
+use App\Models\HealthQuote;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
-use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -417,12 +419,11 @@ class EmiratesIdDataProcessor
 
     private function getQuoteTypeId(): int
     {
-        // Using this approach to get quote type id in all lobs
-        $personalQuote = PersonalQuote::where('uuid', $this->quote->uuid)
-            ->select('quote_type_id')
-            ->first();
-
-        return $personalQuote?->quote_type_id;
+        return match (true) {
+            $this->quote instanceof CarQuote => QuoteTypes::CAR->id(),
+            $this->quote instanceof HealthQuote => QuoteTypes::HEALTH->id(),
+            default => $this->quote->quote_type_id,
+        };
     }
 
     public function getProcessingSummary(): array
