@@ -568,7 +568,7 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quote = $this->getQuoteObjectBy($quoteType, $quoteUuid, 'uuid');
-            if ($quote->policy_booking_date) {
+            if ($quote && $quote?->policy_booking_date) {
                 $previousStatusId = $quote->quote_status_id;
 
                 $quote->update([
