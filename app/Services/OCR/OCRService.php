@@ -233,7 +233,8 @@ class OCRService
         float $startTime,
         float $apiCallStartTime,
         object $data,
-        bool $isSendUpdateEligibleForOCR = false
+        bool $isSendUpdateEligibleForOCR,
+        int $memberDetailId
     ): ?bool {
         $apiCallEndTime = microtime(true);
         $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
@@ -249,7 +250,9 @@ class OCRService
             $data,
             $documentCategory,
             $isSendUpdateEligibleForOCR,
-            $quoteType
+            $quoteType,
+            $documentType->code,
+            $memberDetailId
         );
 
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
@@ -375,7 +378,8 @@ class OCRService
         string $fileMimeType,
         int $userId,
         bool $isEcom,
-        bool $isSendUpdateEligibleForOCR
+        bool $isSendUpdateEligibleForOCR,
+        int $memberDetailId
     ): ?bool {
         // Record start time for OCR processing
         $startTime = microtime(true);
@@ -474,7 +478,8 @@ class OCRService
                     $startTime,
                     $apiCallStartTime,
                     $data,
-                    $isSendUpdateEligibleForOCR
+                    $isSendUpdateEligibleForOCR,
+                    $memberDetailId
                 );
             } else {
                 $result = $this->handleProcessingFailure(
@@ -510,8 +515,9 @@ class OCRService
         $quote,
         string $filePathAzure,
         string $fileMimeType,
+        int $memberDetailId = 0,
         ?string $quoteTypeParam = null,
-        bool $isSendUpdateEligibleForOCR = false,
+        bool $isSendUpdateEligibleForOCR = false
     ): void {
 
         // early return if Customer OCR Journey is not supported on prod
@@ -599,7 +605,8 @@ class OCRService
                 $fileMimeType,
                 $userId ?? 0,
                 $isEcom,
-                $isSendUpdateEligibleForOCR
+                $isSendUpdateEligibleForOCR,
+                $memberDetailId
             );
         } else {
             LoggerService::warning('OCR Dispatch - Missing required parameters - Quote UUID: '.$quote->uuid);

@@ -325,6 +325,12 @@ class QuoteDocumentController extends Controller
         if ($documentUrl) {
             $contents = file_get_contents($documentUrl);
 
+            if ($contents === false) {
+                return response()->json([
+                    'error' => 'Failed to retrieve file content',
+                ], 500);
+            }
+
             return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
         } else {
             abort(404);
@@ -408,6 +414,11 @@ class QuoteDocumentController extends Controller
         }
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function getS3TempUrl(Request $request)
+    {
+        return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
     }
 
     private function updateAccuracyMatrixOnDeletion(QuoteDocument $document): void

@@ -312,7 +312,7 @@ class QuoteDocumentService extends BaseService
             }
 
             LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
                 WatermarkDocumentsJob::dispatch(
@@ -393,7 +393,12 @@ class QuoteDocumentService extends BaseService
             // Return documents filtered by document type codes if provided
             // If watermarked_doc_url is not null then we can send watermarked document in email
             // Bor Signature document is not show on document section
-            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with(self::CREATED_BY_RELATION)->latest()->get();
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)
+                ->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)
+                ->with(self::CREATED_BY_RELATION)
+                ->with('memberDetail')
+                ->latest()->get();
+
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Exclude documents that contain "Certificate of Insurance" followed by any text or space
@@ -405,7 +410,9 @@ class QuoteDocumentService extends BaseService
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
-        return $quote ? $quote->documents()->with(self::CREATED_BY_RELATION)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
+        return $quote
+            ? $quote->documents()->with(self::CREATED_BY_RELATION)->with('memberDetail')->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get()
+            : [];
     }
 
     /**
@@ -901,6 +908,25 @@ class QuoteDocumentService extends BaseService
         ];
     }
 
+    /**
+     * Generate a temporary URL for a document stored in a specified storage disk.
+     *
+     * @param  string  $fileName  The name of the file for which to generate the temporary URL.
+     * @param  string  $storageDisk  The storage disk where the file is located. Default is 'azureIM'.
+     * @param  int  $expiryTimeInMinutes  The expiry time for the temporary URL in minutes. Default is 20 minutes.
+     * @return \Illuminate\Http\JsonResponse JSON response containing the temporary URL or an error message.
+     */
+    public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    {
+        $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
+
+        if ($url) {
+            return response()->json(['url' => $url]);
+        } else {
+            return response()->json(['error' => 'File does not exist on server']);
+        }
+    }
+
     public function watermarkWordDocs($file, $docName, $uuid, $documentType)
     {
         if (! file_exists(storage_path('/temp'))) {
@@ -1179,7 +1205,7 @@ class QuoteDocumentService extends BaseService
         }
     }
 
-    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
+    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $memberDetailId)
     {
         LoggerService::info('Dispatching OCR job from API');
 
@@ -1188,7 +1214,7 @@ class QuoteDocumentService extends BaseService
             $quote,
             $filePathAzure,
             $fileMimeType,
+            $memberDetailId,
         );
     }
-
 }
