@@ -133,6 +133,14 @@ trait OcrUtils
 
     public function getProvider(Model $quote)
     {
+        $quoteTypeId = $this->getQuoteTypeId($quote);
+        $isOcrWithoutPayment = in_array($quoteTypeId, self::quoteTypesOcrWithoutPayment());
+
+        // Check if quoet type does not require payment for OCR
+        if ($isOcrWithoutPayment) {
+            return $quote->insuranceProvider?->code ?? null;
+        }
+
         if ($quote instanceof SendUpdateLog) {
             return $quote->insuranceProvider?->code ?? null;
         }
@@ -363,10 +371,14 @@ trait OcrUtils
         $providerCode = null;
         $quoteTypeId = $this->getQuoteTypeId($quote);
         $isOcrWithoutPayment = in_array($quoteTypeId, self::quoteTypesOcrWithoutPayment());
+        $extractionSource = 'none';
 
-        // Check if quoet type does not require payment for OCR
+        // Check if quote type does not require payment for OCR
         if ($isOcrWithoutPayment) {
             $providerCode = $quote->insuranceProvider?->code ?? null;
+            if ($providerCode) {
+                $extractionSource = 'insuranceProvider';
+            }
         }
 
         // First priority: Check payments for all model types if not OCR without payment
@@ -374,12 +386,14 @@ trait OcrUtils
             $latestPayment = $quote->payments->first();
             if ($latestPayment && $latestPayment->insuranceProvider) {
                 $providerCode = $latestPayment->insuranceProvider->code;
+                $extractionSource = 'payments';
             }
         }
 
         // Second priority: For SendUpdateLog, use insuranceProvider if payments didn't yield a result
         if ($providerCode === null && $quote instanceof SendUpdateLog && $quote->insuranceProvider) {
             $providerCode = $quote->insuranceProvider->code;
+            $extractionSource = 'insuranceProvider';
         }
 
         // Log the result for debugging
@@ -388,7 +402,8 @@ trait OcrUtils
             'provider_code' => $providerCode,
             'has_insurance_provider' => $quote instanceof SendUpdateLog ? isset($quote->insuranceProvider) : false,
             'has_payments' => $quote->payments && $quote->payments->isNotEmpty(),
-            'extraction_source' => $providerCode ? ($quote->payments && $quote->payments->isNotEmpty() ? 'payments' : 'insuranceProvider') : 'none',
+            'is_ocr_without_payment' => $isOcrWithoutPayment,
+            'extraction_source' => $extractionSource,
         ]);
 
         return $providerCode;

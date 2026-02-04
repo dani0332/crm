@@ -3,7 +3,6 @@
 namespace App\Services\OCR;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\OCRSourceEnum;
@@ -11,7 +10,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Jobs\OCR\PopulateDocumentData;
-use App\Models\BusinessQuote;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
@@ -640,34 +638,6 @@ class OCRService
 
         // For all other cases, use the normal mapping
         return QuoteTypes::getName($quote->quote_type_id);
-    }
-
-    public function isGroupMedicalBusiness($quote)
-    {
-        try {
-            // Handle direct BusinessQuote instances
-            if ($quote instanceof BusinessQuote) {
-                return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
-            }
-
-            // Handle SendUpdateLog instances
-            if ($quote instanceof SendUpdateLog && $quote->quote_type_id == QuoteTypes::getId(QuoteTypes::BUSINESS)) {
-                $actualQuote = BusinessQuote::where('uuid', $quote->quote_uuid)->first();
-
-                return $actualQuote && $actualQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            LoggerService::error('Error checking Group Medical business type', [
-                'error' => $e->getMessage(),
-                'quote_type' => get_class($quote),
-                'quote_id' => $quote->id ?? 'N/A',
-                'quote_uuid' => $quote->uuid ?? 'N/A',
-            ]);
-
-            return false;
-        }
     }
 
     public function getEligibleProviders(): array
