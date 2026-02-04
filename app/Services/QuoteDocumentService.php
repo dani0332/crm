@@ -916,7 +916,7 @@ class QuoteDocumentService extends BaseService
      * @param  int  $expiryTimeInMinutes  The expiry time for the temporary URL in minutes. Default is 20 minutes.
      * @return \Illuminate\Http\JsonResponse JSON response containing the temporary URL or an error message.
      */
-    public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    public function getDocumentTempURL($fileName, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 20)
     {
         $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
 
