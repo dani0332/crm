@@ -967,7 +967,7 @@ trait GenericQueriesAllLobs
      */
     public function isParentPolicyCancellationReissuedPending($record, $text)
     {
-        
+
         $return = false;
         if (
             isset($record->parent_duplicate_quote_id) &&
