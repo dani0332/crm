@@ -87,13 +87,19 @@ describe('OCRService validations / gates', function () {
 
         $documentType = DocumentType::on('sqlite')->where('code', 'SAV_PP')->firstOrFail();
 
+        // NOTE:
+        // Use an in-memory runtime Model instance for this test only.
+        // Eloquent model attributes are stored in $attributes and accessed via __get(),
+        // so property_exists($eloquentModel, 'quote_status_id') will be false.
+        // Declaring the property on a runtime model makes property_exists() true.
         $quote = new class extends Model
         {
-            protected $table = 'personal_quotes';
-            public int $quote_status_id = 14;
+            public int $quote_status_id;
+            public Collection $payments;
         };
+        $quote->quote_status_id = 14;
+        $quote->payments = collect();
         $quote->setAttribute('uuid', 'X85DUBM9');
-        $quote->setAttribute('code', 'SAV-X85DUBM9');
 
         $result = $service->process(
             QuoteTypes::SAVINGS,
