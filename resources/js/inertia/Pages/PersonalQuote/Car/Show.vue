@@ -1461,7 +1461,10 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
 
   entity_id: page.props.record.entity_id ?? null,
-  trade_license_no: page.props.record.insured_id_type === genericRequestEnum.TRADE_LICENSE ? page.props.record.insured_id_number : null,
+  trade_license_no:
+    page.props.record.insured_id_type === genericRequestEnum.TRADE_LICENSE
+      ? page.props.record.insured_id_number
+      : null,
   company_name: page.props.record.company_name ?? null,
   company_address: page.props.record.company_address ?? null,
   entity_type_code: page.props.record.entity_type_code ?? 'Parent',
