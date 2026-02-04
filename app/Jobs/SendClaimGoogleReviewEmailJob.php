@@ -102,7 +102,7 @@ class SendClaimGoogleReviewEmailJob implements ShouldQueue
             $responseCode = $claimRequestEmailService->sendClaimGoogleReviewEmail($claimRequest);
 
             // Log success or failure based on response code
-            if (in_array($responseCode, [200, 201])) {
+            if (in_array($responseCode, [200, 201, 202])) {
                 $claimRequest->google_review_email_sent_at = now();
                 $claimRequest->save();
 

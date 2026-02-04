@@ -76,9 +76,6 @@ const validateForm = (showRequiredErrors = true) => {
         selectedDate.getDate(),
       );
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      console.log('selectedDay', selectedDay);
-      console.log('today', today);
-      console.log('selectedDay > today', selectedDay > today);
       if (selectedDay > today) {
         errors.complaint_datetime =
           'The complaint date cannot be in the future.';
