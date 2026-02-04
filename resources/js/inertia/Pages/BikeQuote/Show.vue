@@ -185,7 +185,11 @@ const customerProfileForm = useForm({
     page.props.quote?.customer?.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
-  trade_license_no: page.props.quote?.latest_insured?.id_type === genericRequestEnum.TRADE_LICENSE ? page.props.quote?.latest_insured?.id_number : null,
+  trade_license_no:
+    page.props.quote?.latest_insured?.id_type ===
+    genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote?.latest_insured?.id_number
+      : null,
   company_name:
     page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
     null,

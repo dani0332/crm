@@ -688,7 +688,7 @@ class AMLController extends Controller
         // Reminder:: Entity id is Insured ID which we get from 'fetchEntity()' function
         $insured = Insured::where('id', $request->entity_id)->first();
 
-        if (!$insured) {
+        if (! $insured) {
             LoggerService::warning('Insured record not found', extra: [
                 'entity_id' => $request->entity_id,
                 'quote_type_id' => $request->quote_type_id,
@@ -706,7 +706,7 @@ class AMLController extends Controller
         $tradeLicenseNo = ($insured->id_type === GenericRequestEnum::TRADE_LICENSE) ? $insured->id_number : null;
         $oldStructureEntity = $tradeLicenseNo ? Entity::where('trade_license_no', $tradeLicenseNo)->first() : null;
 
-        if (!$oldStructureEntity) {
+        if (! $oldStructureEntity) {
             LoggerService::warning('Entity not found', extra: [
                 'trade_license_no' => $tradeLicenseNo,
                 'insured_id' => $insured->id,
