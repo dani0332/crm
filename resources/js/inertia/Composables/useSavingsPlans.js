@@ -506,7 +506,12 @@ export function useSavingsPlans(options = {})
   {
     if (!planDetails || !quoteUuid)
     {
-      throw new Error('Plan details and quote UUID are required');
+      notification.error({
+        title: 'Error',
+        message: 'Plan details and quote UUID are required',
+        position: 'top',
+      });
+      return;
     }
 
     const investmentFrequencyOption = findInvestmentFrequencyOption(
@@ -681,7 +686,12 @@ export function useSavingsPlans(options = {})
   {
     if (!planId || !quoteUuid)
     {
-      throw new Error('Plan ID and quote UUID are required');
+      notification.error({
+        title: 'Error',
+        message: 'Plan ID or quote UUID is required',
+        position: 'top',
+      });
+      return;
     }
 
     try
@@ -715,7 +725,6 @@ export function useSavingsPlans(options = {})
           position: 'top',
         });
       }
-      throw error;
     }
   };
 
@@ -724,8 +733,9 @@ export function useSavingsPlans(options = {})
     const selectedOption = currencyOptions.value.find(
       opt => opt.value === currencyValue,
     );
+    console.log(selectedOption);
     form.currency_id = selectedOption?.id || null;
-    form.currencyId = selectedOption?.id || null;
+    // form.currencyId = selectedOption?.id || null;
   };
 
   const syncTenureId = (form, tenureValue) =>

@@ -217,13 +217,13 @@ watch(
   },
 );
 
-// // Sync currency ID when currency changes
-// watchEffect(
-//   () => addPlanForm.currency,
-//   () => {
-//     syncCurrencyId(addPlanForm, addPlanForm.currency);
-//   },
-// );
+// Sync currency ID when currency changes
+watch(
+  () => addPlanForm.currency,
+  () => {
+    syncCurrencyId(addPlanForm, addPlanForm.currency);
+  },
+);
 
 // Sync tenure ID when tenure changes
 watch(
