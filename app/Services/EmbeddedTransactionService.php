@@ -140,7 +140,7 @@ class EmbeddedTransactionService extends BaseService
         $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid
             .'/payment/?'.http_build_query([
                 ...$buyNowUrlQueryParams,
-                'selectEtCode' => $embeddedTransaction->code,
+                'selectEpShortCode' => $epShortCode,
             ]);
 
         $data = [

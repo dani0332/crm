@@ -140,6 +140,7 @@ class RetargetingEpReminderTestDataHelper
             'quoteId' => $carQuote->id,
             'quoteCode' => $quoteCode,
             'epMDXTransaction' => $epMDXTransaction,
+            'epMDX' => $epMDX,
         ];
     }
 }

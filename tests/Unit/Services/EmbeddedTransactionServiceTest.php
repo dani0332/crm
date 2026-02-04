@@ -190,6 +190,7 @@ describe('getRetargetingCarEpReminderData', function () {
             $quoteId = $data['quoteId'];
             $quoteUuid = $data['quoteUuid'];
             $embeddedTransactionCode = $data['epMDXTransaction']->code;
+            $epMDXShortCode = $data['epMDX']->short_code;
 
             $mockData = getRetargetingCarEpReminderDataMock([
                 'quote_id' => $quoteId,
@@ -226,7 +227,7 @@ describe('getRetargetingCarEpReminderData', function () {
             expect($json['data']['emailWorkflowData']['displayName'])->toBe('InsuranceMarket.ae');
             expect($json['data']['emailWorkflowData']['buyNowUrl'])->toContain($quoteUuid)
                 ->and($json['data']['emailWorkflowData']['buyNowUrl'])->toContain('/payment/')
-                ->and($json['data']['emailWorkflowData']['buyNowUrl'])->toContain('selectEtCode='.$embeddedTransactionCode);
+                ->and($json['data']['emailWorkflowData']['buyNowUrl'])->toContain('selectEpShortCode='.$epMDXShortCode);
             expect($json['data']['emailWorkflowData']['birdCarEpReminderEmailWorkflowUrl'])->toBe('https://example.com/bird-car-ep-reminder-email-workflow');
             expect($json['data']['emailWorkflowData']['retargetingEpReminderCallbackUrl'])->toContain('retargeting-ep-reminder-callback');
             expect($json['data']['emailWorkflowData']['epShortCode'])->toBe(EmbeddedProductEnum::MDX);
