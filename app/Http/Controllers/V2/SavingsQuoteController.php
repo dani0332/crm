@@ -299,4 +299,12 @@ class SavingsQuoteController extends Controller
 
         return response()->json(['message' => 'Savings plan visibility toggled successfully']);
     }
+
+
+    public function updateExchangeRate(Request $request)
+    {
+        $this->savingsQuoteService->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+
+        return response()->json(['message' => 'Exchange rate updated successfully']);
+    }
 }
