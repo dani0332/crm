@@ -20,6 +20,13 @@ use Illuminate\Database\Eloquent\Model;
 
 trait OcrUtils
 {
+    private static function quoteTypesOcrWithoutPayment(): array
+    {
+        return [
+            QuoteTypes::getId(QuoteTypes::HEALTH),
+        ];
+    }
+
     public function getCleanData(array $data): array
     {
         return array_filter($data, function ($value) {
@@ -352,9 +359,16 @@ trait OcrUtils
     public function extractProviderCode(Model $quote): ?string
     {
         $providerCode = null;
+        $quoteTypeId = $this->getQuoteTypeId($quote);
+        $isOcrWithoutPayment = in_array($quoteTypeId, self::quoteTypesOcrWithoutPayment());
 
-        // First priority: Check payments for all model types
-        if ($quote->payments && $quote->payments->isNotEmpty()) {
+        // Check if quoet type does not require payment for OCR
+        if ($isOcrWithoutPayment) {
+            $providerCode = $quote->insuranceProvider?->code ?? null;
+        }
+
+        // First priority: Check payments for all model types if not OCR without payment
+        if (! $isOcrWithoutPayment && $quote->payments && $quote->payments->isNotEmpty()) {
             $latestPayment = $quote->payments->first();
             if ($latestPayment && $latestPayment->insuranceProvider) {
                 $providerCode = $latestPayment->insuranceProvider->code;
