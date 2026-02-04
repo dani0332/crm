@@ -373,8 +373,8 @@ class CustomerVerificationService
     public function processEmiratesIdVerification($quote, QuoteTypes $quoteType, array $ocrData, string $documentType): void
     {
         match ($quoteType) {
-            QuoteTypes::CAR => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
-            QuoteTypes::HEALTH => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType),
+            QuoteTypes::CAR => $this->processEmiratesIdVerificationData($quote, $ocrData, $documentType),
+            QuoteTypes::HEALTH => $this->processEmiratesIdVerificationData($quote, $ocrData, $documentType),
             // Add other quote types here as needed
             default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
         };
@@ -389,7 +389,7 @@ class CustomerVerificationService
         };
     }
 
-    private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType): void
+    private function processEmiratesIdVerificationData($quote, array $ocrData, string $documentType): void
     {
         $verificationData = [];
 
