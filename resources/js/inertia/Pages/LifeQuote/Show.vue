@@ -457,9 +457,7 @@ const getTotalAnnualPremiumAED = item => {
 
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
-    return item.isManualPlan
-      ? getTotalAnnualPremium(item)
-      : getTotalAnnualPremium(item);
+    return getTotalAnnualPremium(item);
   }
   return 'N/A';
 };

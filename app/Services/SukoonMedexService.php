@@ -780,7 +780,6 @@ class SukoonMedexService
 
         $quoteType = $quote->quote_type_id ?? null;
         $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote?->emirates ?? null) : ($quote->emirate ?? null);
-        $emirateIdNumber = str_replace('-', '', $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '');
 
         if ($this->quoteTypeId == QuoteTypeId::Car &&
         $quote->registration_type == CarRegistrationType::COMPANY &&

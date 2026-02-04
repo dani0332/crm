@@ -817,11 +817,7 @@ if (! function_exists('checkAuthUserRole')) {
             return false;
         }
 
-        if (Auth::user()->hasAnyRole(getManagerRoles())) {
-            return true;
-        } else {
-            return false;
-        }
+        return Auth::user()->hasAnyRole(getManagerRoles());
     }
 }
 
