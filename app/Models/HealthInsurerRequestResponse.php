@@ -17,6 +17,6 @@ class HealthInsurerRequestResponse extends Model
 
     public function quote()
     {
-        return $this->belongsTo(HealthQuote::class, 'quoteUid', 'uuid');
+        return $this->belongsTo(HealthQuote::class, 'quoteUuid', 'uuid');
     }
 }
