@@ -298,16 +298,22 @@ const findOption = (item, key) => {
 
 const expandNotes = ref(false);
 
-const disableTooltip = ref('Please complete the policy booking before proceeding with cancellation');
-const disableOption = (slug) => {
-  if ([
+const disableTooltip = ref(
+  'Please complete the policy booking before proceeding with cancellation',
+);
+const disableOption = slug => {
+  if (
+    [
       quoteStatusEnum.PolicyCancelledReissued,
       quoteStatusEnum.PolicyCancelled,
     ].includes(props.reportable.quote_status_id)
   ) {
-    disableTooltip.value = 'No further updates are allowed because this policy has already been cancelled.';
-    
-    return [sendUpdateEnum.MPC, sendUpdateEnum.CI, sendUpdateEnum.CIR].includes(slug);
+    disableTooltip.value =
+      'No further updates are allowed because this policy has already been cancelled.';
+
+    return [sendUpdateEnum.MPC, sendUpdateEnum.CI, sendUpdateEnum.CIR].includes(
+      slug,
+    );
   }
 
   if (
@@ -321,13 +327,13 @@ const disableOption = (slug) => {
 };
 
 // only for MPC option.
-const disableOptionTooltip = (isDisabled) => {
+const disableOptionTooltip = isDisabled => {
   if (isDisabled) {
     return disableTooltip.value;
   }
 };
 
-const disableCategoryTooltip = (category) => {
+const disableCategoryTooltip = category => {
   if (
     (category.slug === sendUpdateEnum.CI && disableOption(category.slug)) ||
     (category.slug === sendUpdateEnum.CIR && disableOption(category.slug))
@@ -337,7 +343,6 @@ const disableCategoryTooltip = (category) => {
 
   return category.description;
 };
-
 </script>
 
 <template>
@@ -579,7 +584,10 @@ const disableCategoryTooltip = (category) => {
             filterPlaceholder="Send Update Options...."
           >
             <template #prefix="{ item }">
-              <x-toggle-tip v-if="item.disabled" :content="disableOptionTooltip(item.disabled)" />
+              <x-toggle-tip
+                v-if="item.disabled"
+                :content="disableOptionTooltip(item.disabled)"
+              />
             </template>
           </x-select>
           <div class="flex justify-end mt-2">
