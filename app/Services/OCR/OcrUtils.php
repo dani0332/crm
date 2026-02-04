@@ -133,6 +133,14 @@ trait OcrUtils
 
     public function getProvider(Model $quote)
     {
+        $quoteTypeId = $this->getQuoteTypeId($quote);
+        $isOcrWithoutPayment = in_array($quoteTypeId, self::quoteTypesOcrWithoutPayment());
+
+        // Check if quoet type does not require payment for OCR
+        if ($isOcrWithoutPayment) {
+            return $quote->insuranceProvider?->code ?? null;
+        }
+
         if ($quote instanceof SendUpdateLog) {
             return $quote->insuranceProvider?->code ?? null;
         }
