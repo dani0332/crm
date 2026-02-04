@@ -412,13 +412,20 @@ class HealthEmailService extends BaseService
         try {
             LoggerService::startQuoteLogging(QuoteTypes::HEALTH->refId($lead->uuid));
             LoggerService::info(self::class." - Inside for UUID: {$lead->uuid}");
-            $advisor = User::where('id', $lead->advisor_id)->first();
+            $advisor = User::activeUser()->where('id', $lead->advisor_id)->first();
+            if (! $advisor) {
+                LoggerService::error(self::class." - Advisor not found for lead UUID: {$lead->uuid}");  
+                return [
+                    'success' => false,
+                    'message' => 'Advisor not found',
+                ];
+            }
 
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, $isApiFailed ? WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED : WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION);
 
             if (! $isApiFailed) {
                 app(PusherNotificationService::class)->sendSTPAdvisorNotification($lead);
-                LoggerService::info(self::class." - Pusher notification sent to advisor (ID: {$advisor->id}) for UUID: {$lead->uuid}");
+                LoggerService::info(self::class.' - Pusher notification sent to advisor (ID: '.($advisor?->id ?? $lead->advisor_id ?? 'N/A').") for UUID: {$lead->uuid}");
             }
 
             $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW, useCache: true);
