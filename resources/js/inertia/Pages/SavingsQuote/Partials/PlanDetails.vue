@@ -494,7 +494,7 @@ watch(
                 <div class="flex items-center">
                   <span class="text-sm text-gray-600 w-36">Currency</span>
                   <x-select
-                    v-model="planDetails.currencyId"
+                    v-model="planDetails.currency"
                     :options="currencyOptions"
                     placeholder="Select Currency"
                     size="sm"

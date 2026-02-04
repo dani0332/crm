@@ -1,7 +1,7 @@
 <script setup>
 import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { cleanFormattedValueToFloat } from '@/inertia/Composables/utilities';
-import { defineEmits, watchEffect } from 'vue';
+import { defineEmits } from 'vue';
 
 const emit = defineEmits(['success', 'error']);
 
@@ -217,13 +217,13 @@ watch(
   },
 );
 
-// Sync currency ID when currency changes
-watchEffect(
-  () => addPlanForm.currency,
-  () => {
-    syncCurrencyId(addPlanForm, addPlanForm.currency);
-  },
-);
+// // Sync currency ID when currency changes
+// watchEffect(
+//   () => addPlanForm.currency,
+//   () => {
+//     syncCurrencyId(addPlanForm, addPlanForm.currency);
+//   },
+// );
 
 // Sync tenure ID when tenure changes
 watch(
@@ -349,7 +349,7 @@ const validateDecimal = event => {
         </label>
         <div class="flex gap-2">
           <x-select
-            v-model="addPlanForm.currency_id"
+            v-model="addPlanForm.currency"
             :options="currencyOptions"
             placeholder="Currency"
             class="w-24"

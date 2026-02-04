@@ -11,6 +11,11 @@ const modals = reactive({
   savingsCalculator: false,
 });
 
+const availablePlansTable = reactive({
+  data: [],
+  isLoading: false,
+});
+
 const planExchangeRate = ref(1);
 const sharedAvailablePlans = ref([]);
 const exchangeRates = ref({});
@@ -28,10 +33,7 @@ export function useSavingsPlans(options = {})
   const ridersData = ref([]);
   const providerPlans = ref([]);
   const providerPlansLoading = ref(false);
-  const availablePlansTable = reactive({
-    data: [],
-    isLoading: false,
-  });
+
   const planDetails = ref(null);
   const planRates = ref({});
   const ratesLoading = ref(false);
@@ -40,7 +42,7 @@ export function useSavingsPlans(options = {})
   {
     return (
       localLookups.value?.currencies?.map(item => ({
-        value: item.id || item.code,
+        value: item.code || item.id,
         label: item.text,
         id: item.id,
       })) || []
@@ -444,8 +446,13 @@ export function useSavingsPlans(options = {})
 
       if (data.plans)
       {
-        providerPlans.value = data.plans;
-        return data.plans;
+        console.log(availablePlansTable.data);
+        providerPlans.value = data.plans.filter(plan =>
+          !availablePlansTable.data.some(
+            existingPlan => existingPlan.id === plan.id,
+          ),
+        );
+        return providerPlans.value;
       }
 
       providerPlans.value = [];
@@ -482,6 +489,8 @@ export function useSavingsPlans(options = {})
           isManualUpdate: planData.isManualUpdate || false,
           insurerQuoteNo: planData.insurerQuoteNo || '',
           investmentAmount: parseFloat(planData.investmentAmount) || 0,
+          actualPremium: parseFloat(planData.actualPremium) || 0,
+          discountAmount: parseFloat(planData.discountAmount) || 0,
           currency: planData.currency || 'AED',
           currencyId: planData.currencyId,
           paymentTerm: parseInt(planData.paymentTerm) || 0,
@@ -520,15 +529,14 @@ export function useSavingsPlans(options = {})
     const apiPayload = buildPlanPayload(
       {
         quoteUUID: quoteUuid,
+        actualPremium: planDetails.actualPremium,
+        discountAmount: planDetails.discountAmount,
         planId: planDetails.id || planDetails.planId,
         isDisabled: planDetails.isDisabled || false,
         isManualUpdate: planDetails.isManualUpdate || false,
         insurerQuoteNo: planDetails.insurerQuoteNo || '',
         investmentAmount: planDetails.actualPremium,
-        currency:
-          currencyOption?.value ||
-          currencyOption?.label ||
-          planDetails.currency ||
+        currency: planDetails.currency ||
           'AED',
         currencyId: planDetails.currencyId,
         paymentTerm: planDetails.paymentTerm,
@@ -611,7 +619,7 @@ export function useSavingsPlans(options = {})
             : true,
         insurerQuoteNo: formData.insurer_quote_no || '',
         investmentAmount: formData.investment_amount || formData.actual_premium,
-        currency: formData.currency || 'AED',
+        currency: formData.currency,
         currencyId: formData.currency_id,
         paymentTerm: formData.payment_term,
         tenure: formData.tenure_of_savings,
@@ -626,6 +634,7 @@ export function useSavingsPlans(options = {})
       { isUpdate: false },
     );
 
+    console.log(apiPayload);
     try
     {
       const response = await axios.post(
@@ -644,7 +653,7 @@ export function useSavingsPlans(options = {})
       await onLoadAvailablePlansData(quoteUuid);
       router.reload({
         preserveScroll: true,
-        only: ['availablePlansTable.data'],
+        only: ['quote'],
       });
 
       return response;
