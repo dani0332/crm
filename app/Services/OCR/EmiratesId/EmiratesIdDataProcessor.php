@@ -420,8 +420,8 @@ class EmiratesIdDataProcessor
     private function getQuoteTypeId(): int
     {
         return match (true) {
-            $this->quote instanceof CarQuote => QuoteTypes::CAR->id(),
-            $this->quote instanceof HealthQuote => QuoteTypes::HEALTH->id(),
+            $this->quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
+            $this->quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
             default => $this->quote->quote_type_id,
         };
     }
