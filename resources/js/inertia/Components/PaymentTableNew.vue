@@ -185,15 +185,15 @@ const showLackingPayment = () => {
 };
 
 const getInitalAmountForLifeLOB = () => {
-  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-    const premiumInAED =
-      Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
-    return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
-  } else {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
     return (
       props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
     );
   }
+  
+  const premiumInAED =
+    Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
+  return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
 };
 
 const getInitalAmountForSavingsLOB = () => {
@@ -202,7 +202,6 @@ const getInitalAmountForSavingsLOB = () => {
       props.quoteRequest.premium * props.quoteRequest?.savings_quote?.payment_term
     );
   }
-  
   const premiumInAED =
     Math.round(props.quoteRequest.premium * savingExchangeRate.value * 100) / 100;
   return premiumInAED * props.quoteRequest?.savings_quote?.payment_term;
