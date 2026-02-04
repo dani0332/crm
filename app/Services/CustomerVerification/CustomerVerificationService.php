@@ -558,7 +558,7 @@ class CustomerVerificationService
 
         LoggerService::info('Customer verification status updated, broadcasting event', extra: [
             'quote_uuid' => $quote->uuid,
-            'quote_type' => QuoteTypes::CAR->value,
+            'quote_type' => get_class($quote),
             'verification_success' => $verificationSuccess,
             'has_response' => $response !== null,
         ]);
