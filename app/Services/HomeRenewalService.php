@@ -304,7 +304,6 @@ class HomeRenewalService extends RenewalsUploadService
         }
     }
 
-    
     public function getPlans($uuid, $isRenewalHistorical = false)
     {
         $quotePlans = app(HomeQuoteService::class)->getQuotePlans($uuid, [
