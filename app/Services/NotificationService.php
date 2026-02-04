@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
@@ -74,8 +73,7 @@ class NotificationService extends BaseService
         // event(new PaymentNotifications($model, $url, $quoteTypeCode));
 
         // Broadcast authorised payment count update if this is a PersonalQuote with authorised payment
-        // Temporarily commented out due to Pusher quota exceeded
-        // $this->broadcastAuthorisedPaymentCountIfNeeded($model);
+        $this->broadcastAuthorisedPaymentCountIfNeeded($model);
 
         LoggerService::info('Payment Status Update - Completed successfully', extra: [
             'quote_uuid' => $model->uuid,
@@ -164,10 +162,6 @@ class NotificationService extends BaseService
                 $query->where(function ($q) use ($thirtyDaysAgo) {
                     $q->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
                         ->where('authorized_at', '>=', $thirtyDaysAgo);
-                })->orWhere(function ($q) use ($thirtyDaysAgo) {
-                    $q->where('payment_methods_code', PaymentMethodsEnum::InsurerPayment)
-                        ->whereIn('payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
-                        ->where('collection_date', '>=', $thirtyDaysAgo);
                 });
             })
             ->exists();

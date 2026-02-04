@@ -8,6 +8,7 @@ use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\QuoteEmailUpdated;
+use App\Events\QuotePolicyBooked;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Listeners\Axiom\HandleAxiomBatchFlush;
 use App\Listeners\HandleBikeAdvisorUpdated;
@@ -19,6 +20,7 @@ use App\Listeners\Health\HandleHealthTransactionApproved;
 use App\Listeners\Impersonation\HandleImpersonatedSession;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
+use App\Listeners\TriggerConversionApis;
 use App\Listeners\UpdateCustomerEmail;
 use App\Models\RenewalBatch;
 use App\Observers\RenewalBatchObserver;
@@ -97,6 +99,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         \App\Events\PrivateClientUpdatedEvent::class => [
             \App\Listeners\ApplyPrivateClientTagListener::class,
+        ],
+        QuotePolicyBooked::class => [
+            TriggerConversionApis::class,
         ],
 
     ];

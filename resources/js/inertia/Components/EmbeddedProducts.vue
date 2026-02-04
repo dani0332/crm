@@ -179,6 +179,14 @@ const downloadFile = download => {
   }, 1300);
 };
 
+const openFile = file => {
+  const documentPath = file.is_watermarked
+    ? file.watermarked_doc_path
+    : file.path;
+
+  return openTempUrl(documentPath);
+};
+
 const viewDocument = id => {
   viewDocumentLoader.value = true;
 
@@ -912,7 +920,7 @@ const onAddDocumentSubmit = event => {
                   size="xs"
                   color="primary"
                   outlined
-                  @click.prevent="openTempUrl(item.path)"
+                  @click.prevent="openFile(item)"
                 >
                   View
                 </x-button>

@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\OCR\EmiratesId;
 
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
 use App\Models\CarQuote;
 use App\Models\CustomerInsured;
+use App\Models\CustomerMembers;
+use App\Models\HealthQuote;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
@@ -35,7 +34,8 @@ class EmiratesIdDataProcessor
     public function __construct(
         private Model $quote,
         private object $data,
-        private string $documentTypeCode
+        private string $documentTypeCode,
+        private int $memberDetailId
     ) {
         $this->emiratesIdExtractor = new EmiratesIdExtractor($this->data);
     }
@@ -44,33 +44,50 @@ class EmiratesIdDataProcessor
     {
         try {
             DB::beginTransaction();
+            $isPrincipal = $insuredUpdated = $kycUpdated = $vehicleDriverDetailUpdated = $isMemberUpdated = false;
 
             $this->extractedData = $this->emiratesIdExtractor->extractEmiratesIdData()->getExtractedData();
 
             LoggerService::info('Emirates ID data processor started');
 
-            $insured = $this->getOrCreateInsuredRecord();
-            if (! $insured) {
-                throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');
+            // Check if member provided
+            if ($this->memberDetailId != 0) {
+                // Save member emirates data
+                $isMemberUpdated = $this->saveHealthMembersEmiratesData($this->memberDetailId);
+
+                // Check if it's principal
+                $memberDetail = CustomerMembers::find($this->memberDetailId);
+
+                if ($memberDetail && $memberDetail->is_principal) {
+                    $isPrincipal = true;
+                }
             }
 
-            $insuredUpdated = $this->updateInsuredTable($insured);
-            $kycUpdated = $this->updateInsuredKycTable($insured);
+            if ($this->memberDetailId == 0 || $isPrincipal) {
+                $insured = $this->getOrCreateInsuredRecord();
+                if (! $insured) {
+                    throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');
+                }
 
-            $vehicleDriverDetailUpdated = false;
-            if (! ($this->quote->registration_type == CarRegistrationType::COMPANY && $this->quote->vehicle_use == CarVehicleUse::PRIVATE)) {
+                $insuredUpdated = $this->updateInsuredTable($insured);
+                $kycUpdated = $this->updateInsuredKycTable($insured);
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
             }
 
             // Trigger OCR success validation
-            $isOCRSuccess = app(OCRDocumentValidator::class)->validateEIDFields($this->quote->id);
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $ocrDocumentValidator->validateEIDFields($this->documentTypeCode);
             LoggerService::info('EmiratesId data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
 
             DB::commit();
 
             LoggerService::info('Emirates ID data processing completed successfully');
 
-            return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated;
+            return $insuredUpdated || $kycUpdated || $vehicleDriverDetailUpdated || $isMemberUpdated;
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -91,7 +108,7 @@ class EmiratesIdDataProcessor
 
             if (! empty($fieldsToUpdate)) {
                 $quote->vehicleDriverDetail()->updateOrCreate(
-                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $quote->id],
+                    ['quoteable_type' => get_class($quote), 'quoteable_id' => $quote->id],
                     $fieldsToUpdate
                 );
 
@@ -286,6 +303,30 @@ class EmiratesIdDataProcessor
         }
     }
 
+    private function saveHealthMembersEmiratesData($memberDetailId): bool
+    {
+        try {
+            LoggerService::info('Saving health members emirates data', [
+                'data' => $this->extractedData,
+                'memberDetailId' => $memberDetailId,
+            ]);
+
+            $updateData = array_filter([
+                'emirates_id_issuance_date' => $this->extractedData['issuing_date'] ?? null,
+                'emirates_id_expiry_date' => $this->extractedData['expiry_date'] ?? null,
+                'emirates_id_number' => $this->extractedData['eid_number'] ?? null,
+            ]);
+
+            CustomerMembers::where('id', $memberDetailId)->update($updateData);
+
+            return true;
+        } catch (Exception $e) {
+            LoggerService::error('Failed to save health members', exception: $e);
+
+            throw $e;
+        }
+    }
+
     private function getNationalityId(?string $nationality): ?int
     {
         if (empty($nationality)) {
@@ -360,7 +401,9 @@ class EmiratesIdDataProcessor
                 'insured_id' => $insured->id,
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $this->quote->id,
-            ])->first();
+            ])
+                ->latest('updated_at')
+                ->first();
 
             if (! $existingLink) {
                 CustomerInsured::create([
@@ -368,6 +411,7 @@ class EmiratesIdDataProcessor
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $this->quote->id,
+                    'is_active' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -380,11 +424,13 @@ class EmiratesIdDataProcessor
             LoggerService::error('Failed to create CustomerInsured relationship - Quote UUID: '.$this->quote->uuid, exception: $e);
         }
     }
-
     private function getQuoteTypeId(): int
     {
-        // Currently only supporting Car quotes for Emirates ID OCR
-        return QuoteTypes::getId(QuoteTypes::CAR) ?? QuoteTypeId::Car;
+        return match (true) {
+            $this->quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
+            $this->quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
+            default => $this->quote->quote_type_id,
+        };
     }
 
     public function getProcessingSummary(): array
