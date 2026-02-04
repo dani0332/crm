@@ -8,7 +8,9 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\DocumentType;
+use App\Models\HealthQuote;
 use App\Models\Nationality;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
@@ -20,6 +22,13 @@ use Illuminate\Database\Eloquent\Model;
 
 trait OcrUtils
 {
+    private static function quoteTypesOcrWithoutPayment(): array
+    {
+        return [
+            QuoteTypes::getId(QuoteTypes::HEALTH),
+        ];
+    }
+
     public function getCleanData(array $data): array
     {
         return array_filter($data, function ($value) {
@@ -352,9 +361,16 @@ trait OcrUtils
     public function extractProviderCode(Model $quote): ?string
     {
         $providerCode = null;
+        $quoteTypeId = $this->getQuoteTypeId($quote);
+        $isOcrWithoutPayment = in_array($quoteTypeId, self::quoteTypesOcrWithoutPayment());
 
-        // First priority: Check payments for all model types
-        if ($quote->payments && $quote->payments->isNotEmpty()) {
+        // Check if quoet type does not require payment for OCR
+        if ($isOcrWithoutPayment) {
+            $providerCode = $quote->insuranceProvider?->code ?? null;
+        }
+
+        // First priority: Check payments for all model types if not OCR without payment
+        if (! $isOcrWithoutPayment && $quote->payments && $quote->payments->isNotEmpty()) {
             $latestPayment = $quote->payments->first();
             if ($latestPayment && $latestPayment->insuranceProvider) {
                 $providerCode = $latestPayment->insuranceProvider->code;
@@ -376,6 +392,15 @@ trait OcrUtils
         ]);
 
         return $providerCode;
+    }
+
+    private function getQuoteTypeId($quote): int
+    {
+        return match (true) {
+            $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
+            $quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
+            default => $quote->quote_type_id,
+        };
     }
 
     public function getRefId(Model $quote): string
