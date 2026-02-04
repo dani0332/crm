@@ -29,14 +29,18 @@ class AMLCheckRequest extends FormRequest
     public function rules(): array
     {
         LoggerService::info('AML Check Request - Validation Rules');
-        $rules = [];
+        $rules = [
+            'screening_id_type' => 'required|string',
+            'screening_id_number' => 'required|string',
+        ];
+
         if ($this->customer_type == CustomerTypeEnum::Individual) {
-            $rules = [
+            $rules = array_merge($rules, [
                 'nationality_id' => 'required',
                 'dob' => 'required',
                 'insured_first_name' => 'required|max:200',
                 'insured_last_name' => 'required|max:200',
-            ];
+            ]);
 
             if (in_array($this->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value])) {
                 LoggerService::info('AML Check Request - Email Validation');
@@ -45,14 +49,14 @@ class AMLCheckRequest extends FormRequest
         }
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {
-            $rules = [
+            $rules = array_merge($rules, [
                 'trade_license_no' => 'required|max:200',
                 'company_name' => 'required|max:200',
                 'company_address' => 'required',
                 'entity_type_code' => 'nullable',
                 'industry_type_code' => 'nullable',
                 'emirate_of_registration_id' => 'nullable',
-            ];
+            ]);
         }
 
         $rules['customer_type'] = 'required|string';

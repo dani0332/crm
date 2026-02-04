@@ -31,6 +31,7 @@ const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const insurerName = page.props.insurerName;
+const genericRequestEnum = page.props.genericRequestEnum;
 const generateOptions = (items, valueKey, labelKey) =>
   useGenerateOptions(items, valueKey, labelKey);
 const rules = {
@@ -156,12 +157,13 @@ const IndividualDetailsFound = ref(false);
 const EntityDetailsFound = ref(false);
 const isInsuredPayer = ref(false);
 const validateNationality = ref(false);
-// const previousCustomerType = ref(null);
+
 const loader = reactive({
   //   individualSearch: false,
   //   entitySearch: false,
   insuredSearch: false,
 });
+
 const showModal = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val),
@@ -184,7 +186,7 @@ const screeningFormDetails = useForm({
   screening_id_type: page.props.insuredDetails?.insured?.id_type ?? null,
   screening_id_number:
     page.props.insuredDetails?.insured?.id_number &&
-    page.props.insuredDetails?.insured?.id_type === 'emiratesId'
+    page.props.insuredDetails?.insured?.id_type === genericRequestEnum.EMIRATES_ID
       ? applyScreeningIdMask(page.props.insuredDetails.insured.id_number)
       : (page.props.insuredDetails?.insured?.id_number ?? null),
   insured_first_name:
@@ -212,8 +214,9 @@ const screeningFormDetails = useForm({
   // Entity Type
   // entity_id: page.props.entityDetails?.entity?.id ?? null,
   entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
-  trade_license_no:
-    page.props.insuredDetails?.insured?.trade_license_no ?? null,
+  trade_license_no: 
+    (page.props.insuredDetails?.insured?.id_number &&
+    page.props.insuredDetails?.insured?.id_type === genericRequestEnum.TRADE_LICENSE) ? page.props.insuredDetails?.insured?.id_number : null,
   company_name: page.props.insuredDetails?.insured?.company_name ?? null,
   company_address: page.props.insuredDetails?.insured?.company_address,
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
@@ -223,6 +226,7 @@ const screeningFormDetails = useForm({
   insurance_provider_code:
     page.props.quoteRequest?.plan?.insurance_provider.code,
 });
+
 const modalHeaderMessage = () => {
   if (
     page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Business &&
@@ -246,7 +250,6 @@ const modalHeaderMessage = () => {
 
 const clearErrors = () => {
   screeningFormDetails.clearErrors();
-
   screeningFormDetails.errors.dob = '';
   screeningFormDetails.errors.screening_gender = '';
 };
@@ -277,8 +280,6 @@ watch(
   (newValue, oldValue) => {
     oldCustomerType.value = oldValue;
     newCustomerType.value = newValue;
-    // Debug the current customer type
-    // console.log('Customer type changed:', oldValue, '->', newValue);
   },
 );
 
@@ -306,7 +307,7 @@ const updateScreeningDetails = () => {
 const documentIDTypeForScreening = computed(() => {
   return page.props.lookups.id_type
     ?.filter(docIDTypeScreening =>
-      ['emiratesId', 'passport'].includes(docIDTypeScreening.code),
+      [genericRequestEnum.EMIRATES_ID, genericRequestEnum.PASSPORT].includes(docIDTypeScreening.code),
     )
     ?.map(docIDTypeScreening => ({
       value: docIDTypeScreening.code,
@@ -361,7 +362,7 @@ const individualSearchValidation = computed(() => {
     });
     return false;
   } else {
-    if (screeningFormDetails.screening_id_type === 'emiratesId') {
+    if (screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID) {
       let validateEmirate = rules.emirateNumberCheck(
         screeningFormDetails.screening_id_number,
       );
@@ -370,7 +371,7 @@ const individualSearchValidation = computed(() => {
         return false;
       }
     }
-    if (screeningFormDetails.screening_id_type === 'passport') {
+    if (screeningFormDetails.screening_id_type === genericRequestEnum.PASSPORT) {
       let validatePassport = rules.passportNumberCheck(
         screeningFormDetails.screening_id_number,
       );
@@ -383,6 +384,7 @@ const individualSearchValidation = computed(() => {
     }
   }
   screeningFormDetails.clearErrors('screening_id_number');
+
   return true;
 });
 const entitySearchValidation = computed(() => {
@@ -396,6 +398,10 @@ const entitySearchValidation = computed(() => {
     return false;
   }
   screeningFormDetails.clearErrors('trade_license_no');
+
+  screeningFormDetails.screening_id_type = genericRequestEnum.TRADE_LICENSE;
+  screeningFormDetails.screening_id_number = screeningFormDetails.trade_license_no;
+  
   return true;
 });
 const searchResultData = ref(null);
@@ -407,6 +413,7 @@ const searchInsuredDetails = customerType => {
   )
     ? individualSearchValidation.value
     : entitySearchValidation.value;
+    
   if (searchInsuredValidation) {
     loader.insuredSearch = true;
     let url = `/kyc/get-insured-details?customer_type=${customerType}&id_type=${screeningFormDetails.screening_id_type}&id_number=${screeningFormDetails.screening_id_number}&trade_license=${screeningFormDetails.trade_license_no}&quote_code=${quoteRequest.code}`;
@@ -431,8 +438,8 @@ const searchInsuredDetails = customerType => {
             screeningFormDetails.screening_gender = response?.gender;
           } else {
             EntityDetailsFound.value = true;
-            screeningFormDetails.entity_id = response.id;
-            screeningFormDetails.trade_license = response.trade_license_no;
+            screeningFormDetails.entity_id = response.id; // this is the insured id
+            screeningFormDetails.trade_license = response.id_number;
             screeningFormDetails.company_name = response.company_name;
             screeningFormDetails.company_address = response.company_address;
             screeningFormDetails.industry_type_code =
@@ -493,6 +500,14 @@ function screeningFormValidate() {
     );
     isValid = false;
   }
+  
+  if (screeningFormDetails.customer_type == customerTypeEnum.Entity) {
+    if (screeningFormDetails.trade_license_no) {
+      screeningFormDetails.screening_id_type = genericRequestEnum.TRADE_LICENSE;
+      screeningFormDetails.screening_id_number = screeningFormDetails.trade_license_no;
+    }
+  }
+  
   // Individual customer validation
   document.getElementById('customer-type-field').scrollIntoView({
     behavior: 'smooth',
@@ -503,7 +518,7 @@ function screeningFormValidate() {
     screeningFormDetails.customer_type == customerTypeEnum.Individual ||
     screeningFormDetails.customer_type == null
   ) {
-    if (screeningFormDetails.screening_id_type === 'emiratesId') {
+    if (screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID) {
       if (!screeningFormDetails.screening_id_number) {
         screeningFormDetails.setError(
           'screening_id_number',
@@ -519,7 +534,7 @@ function screeningFormValidate() {
           isValid = false;
         }
       }
-    } else if (screeningFormDetails.screening_id_type === 'passport') {
+    } else if (screeningFormDetails.screening_id_type === genericRequestEnum.PASSPORT) {
       if (!screeningFormDetails.screening_id_number) {
         screeningFormDetails.setError(
           'screening_id_number',
@@ -707,8 +722,8 @@ function updateScreeningIdType() {
     screeningFormDetails.screening_id_type =
       page.props.quoteType.id === page.props.quoteTypeIdEnum.Travel &&
       quoteRequest.direction_code === 'travelUaeInbound'
-        ? 'passport'
-        : 'emiratesId';
+        ? genericRequestEnum.PASSPORT
+        : genericRequestEnum.EMIRATES_ID;
   }
 }
 
@@ -784,7 +799,6 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
     <x-divider class="mb-4 mt-1" />
     <p class="text-center mb-10">{{ headerMessage }}</p>
     <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-      <!-- Form Details as per the Individual Customer -->
       <template v-if="isScreeningIndividual">
         <x-field label="ID Type" required>
           <x-select
@@ -795,9 +809,8 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
           />
         </x-field>
         <x-field label="ID number" required>
-          <!-- Emirates ID Should be get from Enums -->
           <template
-            v-if="screeningFormDetails.screening_id_type === 'emiratesId'"
+            v-if="screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID"
           >
             <x-input
               v-model="screeningFormDetails.screening_id_number"
@@ -915,7 +928,6 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
           />
         </x-field>
       </template>
-      <!-- Form Details as per the Entity -->
       <template v-else>
         <x-field label="Entity Type" required>
           <x-select

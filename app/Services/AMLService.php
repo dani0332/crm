@@ -1401,7 +1401,7 @@ class AMLService
         return $customerInsured;
     }
 
-    // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data
+    // Reminder:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data
     public function getEntityDetails($quoteTypeId, $quoteRequestId)
     {
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
@@ -1731,7 +1731,8 @@ class AMLService
     {
         if ($isEntity) {
             LoggerService::info('Entity Details', extra: [
-                'trade_license_no' => $request->trade_license_no,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
@@ -1740,12 +1741,14 @@ class AMLService
 
             $insured = Insured::updateOrCreate([
                 'customer_type' => CustomerTypeEnum::Entity,
-                'trade_license_no' => $request->trade_license_no,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
             ], [
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
+                'trade_license_no' => $request->screening_id_number,
             ]);
         } else {
             // Reminder:: remove get insured details after id_number format is consistent
@@ -1952,16 +1955,16 @@ class AMLService
     private function handleEntityData($request, $quoteTypeId, $quote): int
     {
         $entityData = [
-            'trade_license_no' => $request->trade_license_no,
+            'trade_license_no' => $request->screening_id_number,
             'company_name' => $request->company_name,
             'company_address' => $request->company_address,
             'industry_type_code' => $request->industry_type_code,
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
 
-        LoggerService::info('Handle Legacy Entity Data', extra: $entityData);
+        LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
 
-        $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
+        $entity = Entity::firstOrNew(['trade_license_no' => $request->screening_id_number]);
         $entity->fill($entityData);
 
         if (! $entity->exists) {

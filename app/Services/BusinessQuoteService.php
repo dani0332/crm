@@ -105,6 +105,8 @@ class BusinessQuoteService extends BaseService
                 'i.first_name as insured_first_name',
                 'i.last_name as insured_last_name',
                 DB::raw('IF(i.id_type = "emiratesId", i.id_number, "") as emirates_id_number'),
+                'i.id_type as insured_id_type',
+                'i.id_number as insured_id_number',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
