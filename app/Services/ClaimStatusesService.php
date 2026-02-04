@@ -120,6 +120,7 @@ class ClaimStatusesService extends BaseService
         $newClaimStatus = ClaimStatus::find($newClaimSubStatusId);
 
         $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
+        $isBikeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Bike;
         $isHealthQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Health;
         $isLifeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Life;
 
@@ -129,7 +130,7 @@ class ClaimStatusesService extends BaseService
             ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
         ];
 
-        if ($isCarQuoteType) {
+        if ($isCarQuoteType || $isBikeQuoteType) {
             $subStatusListForClaimClosed = [
                 ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED->value,
                 ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED->value,
