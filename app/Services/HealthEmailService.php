@@ -414,7 +414,8 @@ class HealthEmailService extends BaseService
             LoggerService::info(self::class." - Inside for UUID: {$lead->uuid}");
             $advisor = User::activeUser()->where('id', $lead->advisor_id)->first();
             if (! $advisor) {
-                LoggerService::error(self::class." - Advisor not found for lead UUID: {$lead->uuid}");  
+                LoggerService::error(self::class." - Advisor not found for lead UUID: {$lead->uuid}");
+
                 return [
                     'success' => false,
                     'message' => 'Advisor not found',
