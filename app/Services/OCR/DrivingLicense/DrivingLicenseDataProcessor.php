@@ -54,7 +54,7 @@ class DrivingLicenseDataProcessor
                 'quoteableType' => get_class($this->quote),
             ]);
 
-            $isOCRSuccess = $validator->validateDriverEidFields($this->quote);
+            $isOCRSuccess = $validator->validateDLFields($this->documentTypeCode);
             LoggerService::info('Driving License data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
 
             DB::commit();
