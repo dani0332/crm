@@ -66,7 +66,11 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         } elseif ($isSIC && $isAdvisorRequested) {
             LoggerService::info(self::class . ' - Lead is SIC and advisor is requested, continuing assignment');
             $continueAssignment = true;
-        } else {
+        }else if($lead->isPaymentAuthorized() || $lead->isPaymentAuthorizedOrDeclined()) {
+            LoggerService::info(self::class . ' - Lead is Payment Authorized or Payment Authorized or Declined, continuing assignment');
+            $continueAssignment = true;
+        } 
+        else {
             LoggerService::info(self::class . ' - Lead does not meet allocation criteria (SIC and advisor requested), skipping assignment', extra: [
                 'isSIC' => $isSIC,
                 'isAdvisorRequested' => $isAdvisorRequested
