@@ -186,7 +186,8 @@ const screeningFormDetails = useForm({
   screening_id_type: page.props.insuredDetails?.insured?.id_type ?? null,
   screening_id_number:
     page.props.insuredDetails?.insured?.id_number &&
-    page.props.insuredDetails?.insured?.id_type === genericRequestEnum.EMIRATES_ID
+    page.props.insuredDetails?.insured?.id_type ===
+      genericRequestEnum.EMIRATES_ID
       ? applyScreeningIdMask(page.props.insuredDetails.insured.id_number)
       : (page.props.insuredDetails?.insured?.id_number ?? null),
   insured_first_name:
@@ -214,9 +215,12 @@ const screeningFormDetails = useForm({
   // Entity Type
   // entity_id: page.props.entityDetails?.entity?.id ?? null,
   entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
-  trade_license_no: 
-    (page.props.insuredDetails?.insured?.id_number &&
-    page.props.insuredDetails?.insured?.id_type === genericRequestEnum.TRADE_LICENSE) ? page.props.insuredDetails?.insured?.id_number : null,
+  trade_license_no:
+    page.props.insuredDetails?.insured?.id_number &&
+    page.props.insuredDetails?.insured?.id_type ===
+      genericRequestEnum.TRADE_LICENSE
+      ? page.props.insuredDetails?.insured?.id_number
+      : null,
   company_name: page.props.insuredDetails?.insured?.company_name ?? null,
   company_address: page.props.insuredDetails?.insured?.company_address,
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
@@ -307,7 +311,9 @@ const updateScreeningDetails = () => {
 const documentIDTypeForScreening = computed(() => {
   return page.props.lookups.id_type
     ?.filter(docIDTypeScreening =>
-      [genericRequestEnum.EMIRATES_ID, genericRequestEnum.PASSPORT].includes(docIDTypeScreening.code),
+      [genericRequestEnum.EMIRATES_ID, genericRequestEnum.PASSPORT].includes(
+        docIDTypeScreening.code,
+      ),
     )
     ?.map(docIDTypeScreening => ({
       value: docIDTypeScreening.code,
@@ -362,7 +368,9 @@ const individualSearchValidation = computed(() => {
     });
     return false;
   } else {
-    if (screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID) {
+    if (
+      screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID
+    ) {
       let validateEmirate = rules.emirateNumberCheck(
         screeningFormDetails.screening_id_number,
       );
@@ -371,7 +379,9 @@ const individualSearchValidation = computed(() => {
         return false;
       }
     }
-    if (screeningFormDetails.screening_id_type === genericRequestEnum.PASSPORT) {
+    if (
+      screeningFormDetails.screening_id_type === genericRequestEnum.PASSPORT
+    ) {
       let validatePassport = rules.passportNumberCheck(
         screeningFormDetails.screening_id_number,
       );
@@ -400,8 +410,9 @@ const entitySearchValidation = computed(() => {
   screeningFormDetails.clearErrors('trade_license_no');
 
   screeningFormDetails.screening_id_type = genericRequestEnum.TRADE_LICENSE;
-  screeningFormDetails.screening_id_number = screeningFormDetails.trade_license_no;
-  
+  screeningFormDetails.screening_id_number =
+    screeningFormDetails.trade_license_no;
+
   return true;
 });
 const searchResultData = ref(null);
@@ -413,7 +424,7 @@ const searchInsuredDetails = customerType => {
   )
     ? individualSearchValidation.value
     : entitySearchValidation.value;
-    
+
   if (searchInsuredValidation) {
     loader.insuredSearch = true;
     let url = `/kyc/get-insured-details?customer_type=${customerType}&id_type=${screeningFormDetails.screening_id_type}&id_number=${screeningFormDetails.screening_id_number}&trade_license=${screeningFormDetails.trade_license_no}&quote_code=${quoteRequest.code}`;
@@ -500,14 +511,15 @@ function screeningFormValidate() {
     );
     isValid = false;
   }
-  
+
   if (screeningFormDetails.customer_type == customerTypeEnum.Entity) {
     if (screeningFormDetails.trade_license_no) {
       screeningFormDetails.screening_id_type = genericRequestEnum.TRADE_LICENSE;
-      screeningFormDetails.screening_id_number = screeningFormDetails.trade_license_no;
+      screeningFormDetails.screening_id_number =
+        screeningFormDetails.trade_license_no;
     }
   }
-  
+
   // Individual customer validation
   document.getElementById('customer-type-field').scrollIntoView({
     behavior: 'smooth',
@@ -518,7 +530,9 @@ function screeningFormValidate() {
     screeningFormDetails.customer_type == customerTypeEnum.Individual ||
     screeningFormDetails.customer_type == null
   ) {
-    if (screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID) {
+    if (
+      screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID
+    ) {
       if (!screeningFormDetails.screening_id_number) {
         screeningFormDetails.setError(
           'screening_id_number',
@@ -534,7 +548,9 @@ function screeningFormValidate() {
           isValid = false;
         }
       }
-    } else if (screeningFormDetails.screening_id_type === genericRequestEnum.PASSPORT) {
+    } else if (
+      screeningFormDetails.screening_id_type === genericRequestEnum.PASSPORT
+    ) {
       if (!screeningFormDetails.screening_id_number) {
         screeningFormDetails.setError(
           'screening_id_number',
@@ -810,7 +826,10 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
         </x-field>
         <x-field label="ID number" required>
           <template
-            v-if="screeningFormDetails.screening_id_type === genericRequestEnum.EMIRATES_ID"
+            v-if="
+              screeningFormDetails.screening_id_type ===
+              genericRequestEnum.EMIRATES_ID
+            "
           >
             <x-input
               v-model="screeningFormDetails.screening_id_number"
