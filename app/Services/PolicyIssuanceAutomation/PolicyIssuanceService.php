@@ -415,7 +415,9 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
         ]);
 
-        if (! $advisorId) {
+        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+
+        if (! $advisorId && $isPolicyBooked) {
             $allocationResult = $this->attemptAdvisorAllocation($quoteType, $uuid);
             $advisorId = $allocationResult['advisorId'] ?? null;
             LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
@@ -423,8 +425,6 @@ class PolicyIssuanceService
                 'allocation_response' => $allocationResult['response'] ?? null,
             ]);
         }
-
-        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
 
         if (
             $quoteType === QuoteTypes::CAR->value &&
