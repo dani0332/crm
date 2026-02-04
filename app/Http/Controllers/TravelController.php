@@ -257,7 +257,7 @@ class TravelController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
         $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $emirates = Emirate::getOptions('id', 'text', true);
         $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
         $sendUpdateOptions = [];
@@ -405,6 +405,7 @@ class TravelController extends Controller
 
         $model = $this->genericModel;
         $subSources = $this->lookupService->getSubSource();
+        $emirates = Emirate::getOptions('id', 'text', true);
 
         LoggerService::info('Travel create method called with parameters', [
             'type' => $request->input('type'),
@@ -418,6 +419,7 @@ class TravelController extends Controller
             'customTitles' => $customTitles,
             'fields' => $fields,
             'dropdownSource' => $dropdownSource,
+            'emirates' => $emirates,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
             'subSources' => $subSources,
@@ -501,6 +503,7 @@ class TravelController extends Controller
             : 'Pending';
 
         $subSources = $this->lookupService->getSubSource();
+        $emirates = Emirate::getOptions('id', 'text', true);
 
         return inertia('TravelQuote/Form', [
             'quote' => $record,
@@ -515,6 +518,7 @@ class TravelController extends Controller
             'customerAddressData' => $customerAddressData,
             'courierQuoteStatus' => $courierQuoteStatus,
             'subSources' => $subSources,
+            'emirates' => $emirates,
             'leadSourceParams' => [], // Empty for edit mode
         ]);
     }
