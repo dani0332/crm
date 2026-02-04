@@ -5,6 +5,7 @@ namespace Tests\Helpers;
 use Illuminate\Support\Facades\Schema;
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\CyberSchema;
+use Tests\Support\Schema\OCRSchema;
 use Tests\Support\Schema\RenewalsSchema;
 use Tests\Support\Schema\RulesSchema;
 
@@ -43,6 +44,13 @@ class TestSchemaCreator
         self::createMinimalSchema();
 
         (new RenewalsSchema)->register();
+    }
+
+    public static function createOCRSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new OCRSchema)->register();
     }
 
     public static function createRulesSchema(): void
