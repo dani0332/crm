@@ -46,7 +46,7 @@ class DriverEmiratesIdDataProcessor
             }
 
             // Trigger OCR success validation
-            $isOCRSuccess = app(OCRDocumentValidator::class)->validateDriverEidFields($this->quote, $this->documentTypeCode);
+            $isOCRSuccess = app(OCRDocumentValidator::class)->validateDriverEidFields($this->quote);
             LoggerService::info('Driver Emirates ID data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($this->extractedData));
 
             DB::commit();
