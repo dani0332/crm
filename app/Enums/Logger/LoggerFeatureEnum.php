@@ -52,6 +52,7 @@ enum LoggerFeatureEnum: string
     case INSURER_AML_SCREENING_WITH_KYC_DOCUMENT = 'insurer-aml-screening-with-kyc-document';
     case LEAD_OCR_DATA_COMPARISON = 'lead-ocr-data-comparison';
     case WATERMARK_DOCUMENT = 'watermark-document';
-
+    case CONVERSION_API = 'conversion-api';
     case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
+    case PAYMENT_STATUS_UPDATE = 'payment-status-update';
 }

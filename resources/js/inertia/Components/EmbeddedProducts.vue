@@ -1,6 +1,7 @@
 <script setup>
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 const notification = useNotifications('toast');
-
+const { openTempUrl } = useDocumentTempUrl();
 const page = usePage();
 const props = defineProps({
   data: {
@@ -176,6 +177,14 @@ const downloadFile = download => {
   setTimeout(() => {
     downloadLoader.value = false;
   }, 1300);
+};
+
+const openFile = file => {
+  const documentPath = file.is_watermarked
+    ? file.watermarked_doc_path
+    : file.path;
+
+  return openTempUrl(documentPath);
 };
 
 const viewDocument = id => {
@@ -911,10 +920,7 @@ const onAddDocumentSubmit = event => {
                   size="xs"
                   color="primary"
                   outlined
-                  :href="
-                    item.is_watermarked ? item.watermarked_doc_url : item.url
-                  "
-                  target="_blank"
+                  @click.prevent="openFile(item)"
                 >
                   View
                 </x-button>
