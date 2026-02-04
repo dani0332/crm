@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class PassportVisaDetail extends Model
 {
-    protected $table = 'passport_visa_details';
     protected $fillable = [
         'passport_number',
         'name',
