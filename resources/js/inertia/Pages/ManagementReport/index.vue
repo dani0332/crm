@@ -56,6 +56,7 @@ const filters = reactive({
   transactionType: props.defaultFilters.transactionType ?? [],
   teams: [],
   subTeams: [],
+  branch: [],
   leadSources: [],
   subSources: [],
   sub_source_options_id: [],
@@ -149,6 +150,19 @@ const lobs = computed(() => {
   });
 });
 
+const branchOptions = computed(() => {
+  const branchList =
+    props.filterOptions?.branches?.map(item => ({
+      value: item.id,
+      label: item.name,
+    })) ?? [];
+  return [
+    { value: 'not_applicable', label: 'Not Applicable' },
+    { value: 'not_assigned', label: 'Not Assigned' },
+    ...branchList,
+  ];
+});
+
 const teams = computed(() => {
   return Object.keys(props.filterOptions?.teams).map(key => ({
     value: key,
@@ -226,6 +240,7 @@ const groupBy = reactive([
   { label: 'Insurer', value: 'insurer' },
   { label: 'Line of Business', value: 'line_of_business' },
   { label: 'Department', value: 'department' },
+  { label: 'Branch', value: 'branch_name' },
 ]);
 
 const umtGroup = reactive([
@@ -474,6 +489,42 @@ watch(
           :rules="[isRequired]"
         />
       </div>
+      <div>
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
+            Branch
+          </label>
+          <template #tooltip> Branch assigned to the lead </template>
+        </x-tooltip>
+        <x-select
+          v-model="filters.branch"
+          placeholder="Filter by Branch"
+          :options="branchOptions"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter Branch...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.branch = branchOptions
+                  .filter(
+                    item =>
+                      item.value !== 'not_applicable' &&
+                      item.value !== 'not_assigned',
+                  )
+                  .map(item => item.value)
+              "
+              @clear="filters.branch = []"
+            />
+          </template>
+        </x-select>
+      </div>
       <div v-if="showBookingDate">
         <x-tooltip position="top">
           <label
@@ -589,8 +640,6 @@ watch(
           class="w-full"
         />
       </div>
-    </div>
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div>
         <x-tooltip position="top">
           <label
@@ -770,8 +819,6 @@ watch(
           </template>
         </x-select>
       </div>
-    </div>
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div>
         <x-tooltip position="top">
           <label
@@ -886,6 +933,8 @@ watch(
         label="Policy PEC Flag"
         v-if="
           filters.reportCategory != 'Sales Summary' &&
+          filters.lob &&
+          Array.isArray(filters.lob) &&
           filters.lob.includes('Health')
         "
       >

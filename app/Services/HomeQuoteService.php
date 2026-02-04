@@ -336,7 +336,7 @@ class HomeQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        if (Auth::user()->isSpecificTeamAdvisor('Home')) {
+        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Home)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }

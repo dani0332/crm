@@ -17,7 +17,6 @@ defineProps({
   insuranceProviders: Object,
   personalPlans: Object,
   isBetaUser: Boolean,
-  storageUrl: String,
   quoteType: String,
   quoteTypeId: Number,
   can: Object,
@@ -1391,7 +1390,6 @@ function capitalizeString(str) {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
@@ -1428,7 +1426,6 @@ function capitalizeString(str) {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :modelType="quoteType"
       :insly-id="quote?.quote_detail?.insly_id"

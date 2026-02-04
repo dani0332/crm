@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -26,6 +27,13 @@ class PaymentNotifications implements ShouldBroadcastNow
         $this->message = "$this->clientName has authorized the payment for ";
         $this->url = $url;
         $this->quoteType = $quoteType;
+
+        LoggerService::info('PaymentNotifications - Event created', extra: [
+            'quote_uuid' => $this->uuid,
+            'advisor_id' => $this->advisorId,
+            'url' => $this->url,
+            'quote_type' => $this->quoteType,
+        ]);
     }
 
     public function broadcastOn()
@@ -40,7 +48,12 @@ class PaymentNotifications implements ShouldBroadcastNow
 
     public function broadcastWith()
     {
-        info('Notification Send', [$this->uuid]);
+        LoggerService::info('PaymentNotifications - Broadcasting', extra: [
+            'quote_uuid' => $this->uuid,
+            'advisor_id' => $this->advisorId,
+            'url' => $this->url,
+            'quote_type' => $this->quoteType,
+        ]);
 
         return [
             'uuid' => $this->uuid,

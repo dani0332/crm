@@ -38,7 +38,6 @@ const props = defineProps({
   quoteRequest: Object,
   quoteDocuments: Object,
   quoteNotes: Object,
-  cdnPath: String,
   paymentTooltipEnum: Object,
   permissions: Object,
   enums: Object,
@@ -692,7 +691,6 @@ const getIncludedBenefitsTooltip = fieldText =>
           :notes="quoteNotes"
           :modelType="quoteType"
           :quote="quote"
-          :cdn="cdnPath"
         />
         <Link
           v-if="quote.quote_detail?.insly_id"

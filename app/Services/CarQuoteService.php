@@ -138,6 +138,8 @@ class CarQuoteService extends BaseService
             // Lead source fields from CreateLeadModal
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'driverEidNumber' => $request->driver_emirates_id_number ?? null,
+            'driverGender' => $request->driver_gender ?? null,
         ];
 
         LoggerService::info('saveQuote '.print_r([
@@ -240,6 +242,31 @@ class CarQuoteService extends BaseService
                 $entityMapping->delete();
                 if ($entityMappingCount == 1) {
                     $entityRecord->delete();
+                }
+            }
+        }
+
+        if (Auth::user()->can(PermissionsEnum::COMPANY_PRIVATE_CAR_DRIVER_UPDATES)) {
+            if (
+                $registrationType == CarRegistrationType::COMPANY &&
+                $vehicleUse == CarVehicleUse::PRIVATE
+            ) {
+
+                $carQuote->vehicleDriverDetail()->updateOrCreate(
+                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $carQuote->id],
+                    [
+                        'driver_eid_number' => $request->driver_emirates_id_number ?? null,
+                        'driver_gender' => $request->driver_gender ?? null,
+                    ]
+                );
+
+            } else {
+                $vehicleDriverDetail = $carQuote->vehicleDriverDetail;
+                if ($vehicleDriverDetail) {
+                    $vehicleDriverDetail->update([
+                        'driver_eid_number' => null,
+                        'driver_gender' => null,
+                    ]);
                 }
             }
         }
@@ -590,6 +617,8 @@ class CarQuoteService extends BaseService
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'cqr.is_branch_applicable',
+                'vdd.driver_eid_number',
+                'vdd.driver_gender',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -645,6 +674,10 @@ class CarQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'cqr.branch_id')
+            ->leftJoin('vehicle_driver_details as vdd', function ($join) {
+                $join->on('vdd.quoteable_id', '=', 'cqr.id')
+                    ->where('vdd.quoteable_type', '=', CarQuote::class);
+            })
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
             ->first();
@@ -1178,7 +1211,7 @@ class CarQuoteService extends BaseService
                 'previous_quote_policy_number',
                 'previous_policy_expiry_date',
             ]
-        )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
+        )->with(['advisor', 'carMake', 'carModel', 'latestUpdateRenewalQuoteProcess', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name', 'pcp_tag')->with(['additionalContacts' => function ($q) {
                 $q->where('key', 'email');
             }]);
@@ -1208,6 +1241,13 @@ class CarQuoteService extends BaseService
             }
         }
 
+        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
+            $leadValidationErrors = collect();
+            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
+            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
+            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
+        }
+
         $carQuote->plans = $plans;
 
         return $carQuote;
@@ -1215,9 +1255,11 @@ class CarQuoteService extends BaseService
 
     public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
     {
+        $process = '';
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         if ($useKen2Endpoint) {
             $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
+            $process = 'renewalsUpload';
         } else {
             $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
         }
@@ -1239,6 +1281,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            'callProcess' => $process,
             'callSource' => 'imcrm',
         ];
 
@@ -1281,7 +1324,11 @@ class CarQuoteService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            if (strpos($contents, 'Genesis') !== false) {
+                LoggerService::warning('FN: getQuotePlans KEN Genesis Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            } else {
+                LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            }
 
             if (isset($response->message)) {
                 $responseBodyAsString = $response->message;
