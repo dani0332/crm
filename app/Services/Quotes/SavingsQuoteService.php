@@ -723,10 +723,6 @@ class SavingsQuoteService extends BaseQuoteService
         $savingsPlanData = [
             'quoteUID' => $payload['quoteUID'] ?? $quoteUuId,
             'update' => $payload['update'] ?? false,
-            'url' => strval(request()->url()),
-            'ipAddress' => request()->ip(),
-            'userAgent' => request()->header('User-Agent'),
-            'userId' => strval(Auth::id()),
             'plans' => [],
         ];
 
@@ -776,6 +772,10 @@ class SavingsQuoteService extends BaseQuoteService
             'quote_uuid' => $quoteUuId,
             'update' => $savingsPlanData['update'],
             'plans_count' => $savingsPlanData['plans'] ?? [],
+             'url' => strval(request()->url()),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(Auth::id()),
         ]);
 
         return $this->httpService->processRequest($savingsPlanData, $apiCreds);
