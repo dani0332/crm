@@ -19,7 +19,6 @@ use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\AMLService;
-use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
@@ -27,15 +26,14 @@ class AMLQuoteDetailsService
 {
     public function __construct(
         private readonly AMLService $amlService,
+        private readonly AMLQueryService $queryService,
+        private readonly AMLInsurerService $insurerService,
         private readonly AMLBusinessPayloadService $businessPayloadService,
         private readonly AMLLookupsService $lookupsService,
         private readonly AMLInsuredService $insuredService,
         private readonly AMLEntityService $entityService
     ) {}
 
-    /**
-     * Prepare AML quote details data for display
-     */
     public function prepareQuoteDetailsData(int $quoteTypeId, int $quoteRequestId): array
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
@@ -44,9 +42,9 @@ class AMLQuoteDetailsService
         // Add quote link to quote request
         $this->addQuoteLinkToRequest($quoteRequest, $quoteType);
 
-        // Get KYC logs and check for escalations
-        $kycLogs = $this->amlService->getKYCLogs($quoteTypeId, $quoteRequestId);
-        $isAnyEscalated = $this->countEscalatedLogs($kycLogs);
+        // Get AML logs and check for escalations
+        $amlLogs = $this->queryService->getAMLLogs($quoteTypeId, $quoteRequestId);
+        $isAnyEscalated = $this->countEscalatedLogs($amlLogs);
 
         // Get insurance provider information
         $insuranceProvider = $quoteRequest?->plan?->insuranceProvider;
@@ -69,7 +67,7 @@ class AMLQuoteDetailsService
 
         // Get reference data
         $nationalities = NationalityRepository::withActive()->get();
-        $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
+        $emirates = Emirate::withActive()->orderBy('sort_order')->get();
 
         // Get member details
         $membersDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code);
@@ -84,12 +82,12 @@ class AMLQuoteDetailsService
 
         // Get AML status information
         $amlStatusName = AMLStatusCode::getName($quoteRequest->aml_status);
-        $screeningType = AMLService::getKycType($quoteTypeId, $quoteRequestId);
+        $screeningType = $this->queryService->getAMLScreeningType($quoteTypeId, $quoteRequestId);
         $quoteAmlStatus = $this->getQuoteAmlStatus($quoteRequest->aml_status);
 
         // Get insurer-specific configuration
         $gigInsurerDefaultEmail = $this->getInsurerDefaultEmail($providerCode);
-        $isInsurerSyncEnabled = $this->amlService->isInsurerSyncEnabled($quoteType, $quoteRequest);
+        $isInsurerSyncEnabled = $this->insurerService->isInsurerSyncEnabled($quoteType, $quoteRequest);
         $isPolicyAutomationEnabled = $this->isPolicyAutomationEnabled($quoteType, $insuranceProvider);
 
         // Get additional fields configuration
@@ -112,7 +110,7 @@ class AMLQuoteDetailsService
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
-            'kycLogs' => $kycLogs,
+            'amlLogs' => $amlLogs,
             'lookups' => $lookups,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
@@ -142,13 +140,13 @@ class AMLQuoteDetailsService
             : '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
     }
 
-    private function countEscalatedLogs($kycLogs): int
+    private function countEscalatedLogs($amlLogs): int
     {
-        if ($kycLogs->isEmpty()) {
+        if ($amlLogs->isEmpty()) {
             return 0;
         }
 
-        return $kycLogs->filter(function ($log) {
+        return $amlLogs->filter(function ($log) {
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })->count();
     }
