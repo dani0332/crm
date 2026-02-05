@@ -1070,9 +1070,9 @@ class CoreSchema
                 $table->unsignedBigInteger('model_id')->nullable();
                 $table->string('step')->nullable();
                 $table->string('status')->nullable();
-                $table->text('request_payload')->nullable();
-                $table->text('response_payload')->nullable();
-                $table->string('api_url')->nullable();
+                $table->text('payload')->nullable();
+                $table->text('response')->nullable();
+                $table->string('endPoint')->nullable();
                 $table->timestamps();
             },
             'policy_issuance_status' => function (Blueprint $table) {
