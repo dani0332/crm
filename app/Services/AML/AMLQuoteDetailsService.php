@@ -11,7 +11,6 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Emirate;
 use App\Models\Payment;
@@ -20,7 +19,6 @@ use App\Repositories\CustomerMembersRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\AMLService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
-use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 
 class AMLQuoteDetailsService
 {
@@ -88,7 +86,7 @@ class AMLQuoteDetailsService
         // Get insurer-specific configuration
         $gigInsurerDefaultEmail = $this->getInsurerDefaultEmail($providerCode);
         $isInsurerSyncEnabled = $this->insurerService->isInsurerSyncEnabled($quoteType, $quoteRequest);
-        $isPolicyAutomationEnabled = $this->isPolicyAutomationEnabled($quoteType, $insuranceProvider);
+        $isPolicyAutomationEnabled = $this->amlService->isPolicyAutomationEnabled($quoteType->code, $insuranceProvider?->code);
 
         // Get additional fields configuration
         $isAddionalFieldsEnabled = $this->amlService->isAdditionalVehicleAndDriverDetailsEnabled(
@@ -181,20 +179,6 @@ class AMLQuoteDetailsService
         return $isLIVA
             ? GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL
             : GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
-    }
-
-    private function isPolicyAutomationEnabled(QuoteType $quoteType, ?object $insuranceProvider): bool
-    {
-        if ($quoteType->code !== quoteTypeCode::Car || ! $insuranceProvider) {
-            return false;
-        }
-
-        $policyIssuanceService = app(PolicyIssuanceService::class)->init(
-            $quoteType->code,
-            $insuranceProvider->code
-        );
-
-        return $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
     }
 
     private function prepareEnums(): array

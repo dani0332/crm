@@ -139,4 +139,13 @@ class AMLInsuredService
 
         return $customerInsured;
     }
+
+    public function getInsuredWithKyc(?int $insuredId): ?Insured
+    {
+        if (! $insuredId) {
+            return null;
+        }
+
+        return Insured::with('insuredKyc')->find($insuredId);
+    }
 }

@@ -2500,4 +2500,18 @@ class AMLService
 
         return [];
     }
+
+    public function isPolicyAutomationEnabled(string $quoteTypeCode, ?string $insuranceProviderCode): bool
+    {
+        if ($quoteTypeCode !== quoteTypeCode::Car || ! $insuranceProviderCode) {
+            return false;
+        }
+
+        $policyIssuanceService = app(PolicyIssuanceService::class)->init(
+            $quoteTypeCode,
+            $insuranceProviderCode
+        );
+
+        return $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
+    }
 }
