@@ -383,8 +383,9 @@ class ReportsController extends Controller
     }
 
     public function fetchTeamsbyType(Request $request)
-    {
-        $parentId = Team::where('name', $request->lob)->first()->id;
+    {   
+        $teamName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $parentId = Team::where('name', $teamName)->first()->id;
         $teams = Team::where('parent_team_id', $parentId)
             ->select('name', 'id')
             ->orderBy('name')
@@ -398,6 +399,8 @@ class ReportsController extends Controller
             'teams' => $teams,
         ]);
     }
+
+   
 
     /**
      * generate renewal reports function.
