@@ -232,31 +232,6 @@ onMounted(() => {
   window.addEventListener('document-notification', handleDocumentNotification);
 });
 
-const getS3TempUrl = async docURL => {
-  try {
-    NProgress.start();
-    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
-      docURL,
-    });
-    NProgress.done();
-    // Check if the request was successful and the response contains the URL
-    if (response.status === 200 && response.data.url) {
-      // Open the URL in a new tab
-      window.open(response.data.url, '_blank');
-    } else {
-      notification.error({
-        title: response.data.error,
-        position: 'top',
-      });
-    }
-  } catch (error) {
-    notification.error({
-      title: error,
-      position: 'top',
-    });
-    console.error('An error occurred:', error);
-  }
-};
 const documentVerificationStatus = ref(page.props.quote.documents_verified);
 
 const handleDocumentNotification = event => {
@@ -554,7 +529,7 @@ const signedMedicalApplicationDocs = computed(() => {
               >
                 <a
                   v-if="hasAnyRole([rolesEnum.BetaUser])"
-                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                  @click.prevent="openTempUrl(quoteDocument.doc_url)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
