@@ -81,7 +81,7 @@ class QuoteDocumentController extends Controller
 
         $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->validated(), $quote);
 
-        return new QuoteDocumentResource($document);
+        return (new QuoteDocumentResource($document))->response()->setStatusCode(201);
     }
 
     /**
