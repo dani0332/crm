@@ -14,6 +14,10 @@ class AdnicDocumentHandler
 {
     private const ALLOWED_DOCUMENT_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
+    public function __construct(
+        private QuoteDocumentService $quoteDocumentService,
+    ) {}
+
     /**
      * Fetch document content from Azure storage
      */
@@ -54,7 +58,7 @@ class AdnicDocumentHandler
      */
     private function buildAzureDocumentPath(string $relativePath): string
     {
-        return rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/').'/'.rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/').'/'.ltrim($relativePath, '/');
+        return $this->quoteDocumentService->getDocumentUrl($relativePath);
     }
 
     /**
