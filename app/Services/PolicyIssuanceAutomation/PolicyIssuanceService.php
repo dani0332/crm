@@ -419,10 +419,13 @@ class PolicyIssuanceService
         if (! $advisorId && $isPolicyBooked) {
             $allocationResult = $this->attemptAdvisorAllocation($quoteType, $uuid);
             $advisorId = $allocationResult['advisorId'] ?? null;
-            LoggerService::info('Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
-                'advisorId' => $advisorId,
-                'allocation_response' => $allocationResult['response'] ?? null,
-            ]);
+
+            if ($allocationResult['allocationAttempted'] ?? false) {
+                LoggerService::info('Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                    'advisorId' => $advisorId,
+                    'allocation_response' => $allocationResult['response'] ?? null,
+                ]);
+            }
         }
 
         if (
@@ -470,8 +473,15 @@ class PolicyIssuanceService
     {
         $quoteTypeEnum = QuoteTypes::tryFrom($quoteType);
 
-        if (! $quoteTypeEnum || ! $this->isAllocationSupported($quoteTypeEnum)) {
-            return ['advisorId' => null, 'response' => null, 'quoteType' => $quoteTypeEnum?->value];
+        $allocationAttempted = $quoteTypeEnum && $this->isAllocationSupported($quoteTypeEnum);
+
+        if (! $allocationAttempted) {
+            return [
+                'advisorId' => null,
+                'response' => null,
+                'quoteType' => $quoteTypeEnum?->value,
+                'allocationAttempted' => false,
+            ];
         }
 
         $teamId = $this->getAllocationTeamId($quoteTypeEnum);
@@ -481,6 +491,7 @@ class PolicyIssuanceService
             'advisorId' => is_array($response) ? ($response['advisorId'] ?? null) : null,
             'response' => $response,
             'quoteType' => $quoteTypeEnum->value,
+            'allocationAttempted' => true,
         ];
     }
 
