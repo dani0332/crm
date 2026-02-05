@@ -1675,9 +1675,14 @@ class CentralService extends BaseService
             $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
             $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
             $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '';
-            $emailData->taxInvoice = $quoteDocuments->filter(function ($document) {
+
+            $taxInvoiceDocument = $quoteDocuments->filter(function ($document) {
                 return $document['document_type_code'] == DocumentTypeCode::CYB_TI;
-            })->first()?->watermarkedDocumentUrl ?? '';
+            })->first();
+            $taxInvoicePath = $taxInvoiceDocument?->watermarked_doc_url ?? $taxInvoiceDocument?->doc_url ?? null;
+            $emailData->taxInvoice = ! empty($taxInvoicePath)
+                ? app(QuoteDocumentService::class)->getDocumentUrl($taxInvoicePath, 'azureIMPrivate', 60) ?? ''
+                : '';
         }
 
         if (
@@ -1832,7 +1837,7 @@ class CentralService extends BaseService
             if (empty($emailData->policySchedule)) {
                 LoggerService::info('Policy Schedule not found.');
             } else {
-                $emailData->policySchedule = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policySchedule, 'azureIMPrivate') ?? '';
+                $emailData->policySchedule = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policySchedule, 'azureIMPrivate', 60) ?? '';
                 $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo(parse_url($emailData->policySchedule, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
             }
         }
