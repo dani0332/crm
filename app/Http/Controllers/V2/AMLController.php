@@ -43,6 +43,7 @@ use App\Services\AML\AMLDisplayService;
 use App\Services\AML\AMLEntityService;
 use App\Services\AML\AMLExportService;
 use App\Services\AML\AMLInsuredService;
+use App\Services\AML\AMLInsurerService;
 use App\Services\AML\AMLQueryService;
 use App\Services\AML\AMLQuoteDetailsService;
 use App\Services\AMLService;
@@ -103,7 +104,7 @@ class AMLController extends Controller
 
         return inertia('Aml/Show', $data);
     }
-    
+
     public function getInsuredDetails(Request $request, AMLInsuredService $amlInsuredService): \Illuminate\Http\JsonResponse
     {
         $result = $amlInsuredService->getInsuredDetails(
@@ -795,7 +796,7 @@ class AMLController extends Controller
 
     public function getQuoteDetailsFromInsurer(Request $request)
     {
-        $result = app(AMLService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $request->quoteUID);
+        $result = app(AMLInsurerService::class)->getQuoteDetailsFromInsurer($request->quoteTypeId, $request->quoteUID);
 
         return response()->json($result);
     }

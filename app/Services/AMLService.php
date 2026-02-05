@@ -18,7 +18,6 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -62,12 +61,10 @@ use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
-use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
 use App\Services\AML\AMLLookupsService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
@@ -95,16 +92,16 @@ class AMLService
                 $createdDate = Carbon::createFromFormat('Y-m-d', '2023-11-30');
             }
         }
-        
+
         $dateForNonMigratedPersonalQuotes = Carbon::parse($parseDate)->format(config('constants.DATE_FORMAT_ONLY'));
         $dataMigrationDate = match ((int) $quoteTypeId) {
-            (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-12'),
-            (int) QuoteTypes::YACHT->id() => Carbon::createFromFormat('Y-m-d', '2023-08-15'),
+            (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-12'), // Need to confirm because, no need to check migrated data for bike quotes
+            (int) QuoteTypes::YACHT->id() => Carbon::createFromFormat('Y-m-d', '2023-08-15'), // Need to confirm because, no need to check migrated data for yacht quotes
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
-            (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
-            (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'),
+            (int) QuoteTypes::LIFE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'), // Need to confirm because, no need to check migrated data for life quotes
+            (int) QuoteTypes::SAVINGS->id() => Carbon::createFromFormat('Y-m-d', '2025-02-14'), // Need to confirm because, no need to check migrated data for savings quotes
             (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
 
@@ -278,7 +275,7 @@ class AMLService
                     'savingsQuote',
                 ]),
             ],
-            default => throw new \InvalidArgumentException("Unsupported quote type ID: {$quoteTypeId}"),
+            default => abort(404),
         };
 
         // Build query based on configuration
@@ -579,31 +576,6 @@ class AMLService
         return $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request, $matchResultsForUpdate);
     }
 
-    public static function getKycType($quoteTypeId, $quoteRequestId)
-    {
-        $status = KycLog::withTrashed()->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
-            ->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->standardAmlFilters()
-            ->orderBy('id', 'desc')
-            ->value('splitted_customer_code');
-
-        if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
-            $status = CustomerTypeEnum::EntityShort;
-        } elseif ($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
-
-            $quote = CarQuoteRepository::where('id', $quoteRequestId)->select('registration_type')->first();
-            if ($quote->registration_type == CarRegistrationType::COMPANY) {
-                $status = CustomerTypeEnum::EntityShort;
-            } else {
-                $status = CustomerTypeEnum::IndividualShort;
-            }
-        } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
-            $status = CustomerTypeEnum::IndividualShort;
-        }
-
-        return $status;
-    }
-
     public static function checkAMLStatusFailed($quoteTypeId, $quoteRequestId)
     {
         LoggerService::info('fn:checkAMLStatusFailed - AMLService');
@@ -835,7 +807,7 @@ class AMLService
             }
 
             try {
-                $getQuoteResponse = $this->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
+                $getQuoteResponse = app(\App\Services\AML\AMLInsurerService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails->uuid);
 
                 if ($getQuoteResponse['success']) {
                     LoggerService::info('Successfully retrieved and updated quote details from insurer', extra: [
@@ -1338,15 +1310,6 @@ class AMLService
         }
 
         return $gender;
-    }
-
-    public function getKYCLogs($quoteTypeId, $quoteRequestId)
-    {
-        LoggerService::info('fn:getKYCLogs - AMLService');
-
-        return AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->standardAmlFilters()
-            ->orderBy('created_at', 'asc')->get();
     }
 
     public function prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType): bool
@@ -2443,84 +2406,6 @@ class AMLService
         return true;
     }
 
-    /**
-     * Check if insurer sync is enabled for the given quote type and request.
-     */
-    public function isInsurerSyncEnabled($quoteType, $quote): bool
-    {
-        $insurerScreenType = [
-            InsuranceProvidersEnum::AXA => AMLScreeningTypeEnum::INSURER_AXA,
-            InsuranceProvidersEnum::RSA => AMLScreeningTypeEnum::INSURER_RSA,
-        ];
-
-        $payment = $quote->payments()->mainLeadPayment()->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType->text);
-
-        if (! in_array($insuranceProvider?->code, array_keys($insurerScreenType))) {
-            return false;
-        }
-
-        if (
-            $insuranceProvider?->code == InsuranceProvidersEnum::RSA &&
-            auth()->user()->can(PermissionsEnum::EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS)
-        ) {
-            return true;
-        }
-
-        $kycLogs = KycLog::withTrashed()->where([
-            'quote_request_id' => $quote->id,
-            'quote_type_id' => $quoteType->id,
-        ])->where('screening_type', $insurerScreenType[$insuranceProvider->code])->latest()->first();
-
-        if (! $kycLogs || is_null($kycLogs->results)) {
-            return false;
-        }
-
-        $screeningResult = json_decode($kycLogs->results);
-
-        if (! isset($screeningResult->uwApprovalStatus, $screeningResult->quoteStatus)) {
-            return false;
-        }
-
-        return $screeningResult->uwApprovalStatus === GenericRequestEnum::EBAO_UW_APPROVAL_STATUS_NO
-            && $screeningResult->quoteStatus === GenericRequestEnum::EBAO_QUOTE_STATUS;
-    }
-
-    public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteUID)
-    {
-        try {
-            $quoteType = QuoteTypes::getName($quoteTypeId)->value;
-            $quoteDetails = $this->getQuoteObjectBy($quoteType, $quoteUID, 'uuid');
-            $insurerCode = getInsuranceProvider($quoteDetails->payments()->mainLeadPayment()->first(), $quoteType);
-
-            return match (ucfirst($quoteType)) {
-                QuoteTypes::CAR->value => match ($insurerCode->code) {
-                    InsuranceProvidersEnum::RSA => app(LIVAInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
-                    InsuranceProvidersEnum::AXA => app(GIGInsuranceService::class)->getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails),
-
-                    default => [
-                        'success' => false,
-                        'message' => 'Insurer not supported for quote type: '.$quoteType,
-                        'data' => null,
-                    ],
-                },
-                default => [
-                    'success' => false,
-                    'message' => 'Quote type not supported: '.$quoteType,
-                    'data' => null,
-                ],
-            };
-        } catch (\Exception $e) {
-            LoggerService::info('__class__: '.self::class.' fn: '.__FUNCTION__.' - Exception: '.$e->getMessage().' - QuoteUID: '.$quoteUID);
-
-            return [
-                'success' => false,
-                'message' => 'Exception occurred: '.$e->getMessage(),
-                'data' => null,
-            ];
-        }
-    }
-
     public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType, $detailPage = false)
     {
         if (! ($quoteTypeCode == quoteTypeCode::Car && $vehicleRegistrationType == CarRegistrationType::PERSONAL)) {
@@ -2614,5 +2499,19 @@ class AMLService
         }
 
         return [];
+    }
+
+    public function isPolicyAutomationEnabled(string $quoteTypeCode, ?string $insuranceProviderCode): bool
+    {
+        if ($quoteTypeCode !== quoteTypeCode::Car || ! $insuranceProviderCode) {
+            return false;
+        }
+
+        $policyIssuanceService = app(PolicyIssuanceService::class)->init(
+            $quoteTypeCode,
+            $insuranceProviderCode
+        );
+
+        return $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
     }
 }

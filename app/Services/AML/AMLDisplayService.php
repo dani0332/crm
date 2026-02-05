@@ -6,7 +6,6 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Models\AML;
-use App\Models\Insured;
 use App\Traits\GenericQueriesAllLobs;
 
 class AMLDisplayService
@@ -14,7 +13,8 @@ class AMLDisplayService
     use GenericQueriesAllLobs;
 
     public function __construct(
-        private readonly AMLResultsProcessor $resultsProcessor
+        private readonly AMLResultsProcessor $resultsProcessor,
+        private readonly AMLInsuredService $insuredService
     ) {}
 
     public function prepareShowData(AML $aml, ?int $insuredId = null, ?int $customerId = null): array
@@ -30,7 +30,7 @@ class AMLDisplayService
             $aml->quote_request_id
         );
 
-        $insured = $this->getInsuredWithKyc($insuredId);
+        $insured = $this->insuredService->getInsuredWithKyc($insuredId);
         $enums = $this->prepareEnums();
 
         return [
@@ -41,15 +41,6 @@ class AMLDisplayService
             'customerId' => $customerId,
             ...$enums,
         ];
-    }
-
-    private function getInsuredWithKyc(?int $insuredId): ?Insured
-    {
-        if (! $insuredId) {
-            return null;
-        }
-
-        return Insured::with('insuredKyc')->find($insuredId);
     }
 
     private function prepareEnums(): array

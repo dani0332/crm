@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\AML;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\AML;
+use App\Models\KycLog;
 use App\Models\PersonalQuote;
+use App\Repositories\CarQuoteRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
@@ -38,7 +42,7 @@ class AMLQueryService
         return $dataAml->simplePaginate(10)->withQueryString();
     }
 
-    private function determineQuoteRequestTable(QuoteTypes $quoteType, object $request): string
+    private function determineQuoteRequestTable($quoteType, object $request): string
     {
         $quoteRequestTable = strtolower($request->quoteType).'_quote_request';
 
@@ -72,6 +76,7 @@ class AMLQueryService
         return AMLService::isDataMigrated($quoteTypeId, '', $date)
             ? 'personal_quotes'
             : $fallbackTable;
+
     }
 
     private function getCreatedDateForSearch(object $request): ?string
@@ -85,9 +90,7 @@ class AMLQueryService
 
         if ($searchType) {
             try {
-                $createdDate = $request->searchType === 'id'
-                    ? AML::where($searchType, $request->searchField)->firstOrFail()->created_at
-                    : PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
+                $createdDate = PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
             } catch (\Exception $e) {
                 LoggerService::warning('Error getting created date for search', extra: [
                     'search_type' => $request->searchType,
@@ -157,5 +160,63 @@ class AMLQueryService
         }
 
         return $dataAml;
+    }
+
+    public function getAMLLogs(int $quoteTypeId, int $quoteRequestId): \Illuminate\Database\Eloquent\Collection
+    {
+        return AML::with('quotetype')
+            ->where([
+                'quote_request_id' => $quoteRequestId,
+                'quote_type_id' => $quoteTypeId,
+            ])
+            ->standardAmlFilters()
+            ->orderBy('created_at', 'asc')
+            ->get();
+    }
+
+    public function getAMLScreeningType(int $quoteTypeId, int $quoteRequestId): string
+    {
+        $customerCodePrefix = KycLog::withTrashed()
+            ->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
+            ->where([
+                'quote_request_id' => $quoteRequestId,
+                'quote_type_id' => $quoteTypeId,
+            ])
+            ->standardAmlFilters()
+            ->orderBy('id', 'desc')
+            ->value('splitted_customer_code');
+
+        if ($customerCodePrefix !== null) {
+            return $customerCodePrefix;
+        }
+
+        // Determine customer type based on quote type and business rules
+        return $this->determineCustomerTypeFromQuote($quoteTypeId, $quoteRequestId);
+    }
+
+    private function determineCustomerTypeFromQuote(int $quoteTypeId, int $quoteRequestId): string
+    {
+        if ($quoteTypeId === QuoteTypes::BUSINESS->id()) {
+            return CustomerTypeEnum::EntityShort;
+        }
+
+        if ($quoteTypeId === QuoteTypes::CAR->id()) {
+            return $this->getCarQuoteCustomerType($quoteRequestId);
+        }
+
+        return CustomerTypeEnum::IndividualShort;
+    }
+
+    private function getCarQuoteCustomerType(int $quoteRequestId): string
+    {
+        $quote = CarQuoteRepository::where('id', $quoteRequestId)
+            ->select('registration_type')
+            ->first();
+
+        if ($quote?->registration_type === CarRegistrationType::COMPANY) {
+            return CustomerTypeEnum::EntityShort;
+        }
+
+        return CustomerTypeEnum::IndividualShort;
     }
 }

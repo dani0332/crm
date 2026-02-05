@@ -32,7 +32,7 @@ class AMLInsuredService
         );
 
         // Prepare response
-        $status = (bool) $insuredDetails;        
+        $status = (bool) $insuredDetails;
         $message = $this->getResponseMessage($resolvedCustomerType, $status);
 
         return [
@@ -59,7 +59,7 @@ class AMLInsuredService
                 'customer_type' => $customerType ?? null,
                 'trade_license' => $tradeLicense ?? null,
             ]);
-            
+
             return ! empty($tradeLicense);
         }
 
@@ -110,8 +110,6 @@ class AMLInsuredService
 
     public function getInsuredDetailsByQuote(?int $customerId, int $quoteTypeId, int $quoteRequestId): ?CustomerInsured
     {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
-
         if ($customerId === null) {
             LoggerService::info('No CustomerInsured record found - customer_id is null', [
                 'customer_id' => $customerId,
@@ -140,5 +138,14 @@ class AMLInsuredService
         }
 
         return $customerInsured;
+    }
+
+    public function getInsuredWithKyc(?int $insuredId): ?Insured
+    {
+        if (! $insuredId) {
+            return null;
+        }
+
+        return Insured::with('insuredKyc')->find($insuredId);
     }
 }

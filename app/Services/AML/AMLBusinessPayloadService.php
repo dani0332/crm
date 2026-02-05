@@ -17,8 +17,6 @@ class AMLBusinessPayloadService
             return [];
         }
 
-        LoggerService::info('Business lead found against AML Screening');
-
         return [
             'businessTypeCode' => $this->getBusinessTypeCode($quoteRequest),
             'businessCoverTypeText' => $this->getBusinessCoverTypeText($quoteRequest),
