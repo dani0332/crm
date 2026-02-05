@@ -51,7 +51,7 @@ class RulesController extends Controller
     {
         return LeadSource::select('id', 'name')
             ->withActive()
-            ->applicableForRules()
+            // ->applicableForRules()
             ->get();
     }
 
@@ -73,12 +73,15 @@ class RulesController extends Controller
      */
     public function store(RuleRequest $request)
     {
-        $rule = Rule::create($request->except(['rule_users', 'lead_source_id']));
+        $rule = Rule::create($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
         // Create rule detail if lead_source_id is provided
         if ($request->filled('lead_source_id')) {
             $rule->ruleDetail()->create([
                 'lead_source_id' => $request->lead_source_id,
+                'utm_source' => $request->utm_source,
+                'utm_campaign' => $request->utm_campaign,
+                'utm_medium' => $request->utm_medium,
             ]);
         }
 
@@ -132,13 +135,18 @@ class RulesController extends Controller
     public function update(RuleRequest $request, $id)
     {
         $rule = Rule::findOrFail($id);
-        $rule->update($request->except(['rule_users', 'lead_source_id']));
+        $rule->update($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
         // Update or create rule detail if lead_source_id is provided
         if ($request->filled('lead_source_id')) {
             $rule->ruleDetail()->updateOrCreate(
                 ['rule_id' => $rule->id],
-                ['lead_source_id' => $request->lead_source_id]
+                [
+                    'lead_source_id' => $request->lead_source_id,
+                    'utm_source' => $request->utm_source,
+                    'utm_campaign' => $request->utm_campaign,
+                    'utm_medium' => $request->utm_medium,
+                ]
             );
         }
 

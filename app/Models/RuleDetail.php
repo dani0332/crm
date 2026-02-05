@@ -27,6 +27,9 @@ class RuleDetail extends Model implements AuditableContract
         'car_make_id',
         'car_model_id',
         'lead_source_id',
+        'utm_source',
+        'utm_campaign',
+        'utm_medium',
     ];
 
     /**

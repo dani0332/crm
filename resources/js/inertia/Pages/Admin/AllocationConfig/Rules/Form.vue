@@ -1,4 +1,6 @@
 <script setup>
+import ComboBox from '@/inertia/Components/ComboBox.vue';
+
 const props = defineProps({
   rule: Object,
   id: String,
@@ -21,6 +23,9 @@ const ruleForm = useForm({
   rule_type: props.rule?.rule_type.id ?? null,
   quote_type_id: props.rule?.quote_type?.id.toString() ?? '',
   lead_source_id: props.rule?.rule_detail?.lead_source_id ?? null,
+  utm_source: props.rule?.rule_detail?.utm_source ?? null,
+  utm_campaign: props.rule?.rule_detail?.utm_campaign ?? null,
+  utm_medium: props.rule?.rule_detail?.utm_medium ?? null,
 });
 
 const ruleUsers = computed(() => {
@@ -123,6 +128,19 @@ function onSubmit(isValid) {
 
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
+
+      <x-select
+        v-model="ruleForm.quote_type_id"
+        label="Quote Type"
+        :options="quoteTypesOptions"
+        :error="ruleForm.errors.quote_type_id"
+        filterable
+        filterPlaceholder="Filter Quote Type...."
+        placeholder="Select Quote Type"
+        required
+        :rules="[isRequired]"
+      />
+
       <x-input
         label="Rule Name"
         required
@@ -143,29 +161,41 @@ function onSubmit(isValid) {
         :rules="[isRequired]"
       />
 
-      <x-select
+      <ComboBox
         v-if="isLeadSourceRuleType"
         v-model="ruleForm.lead_source_id"
-        label="Lead Source URL"
         :options="leadSourcesOptions"
-        :error="ruleForm.errors.lead_source_id"
-        filterable
-        filterPlaceholder="Filter Lead Source...."
+        single
         placeholder="Select Lead Source URL"
-        required
-        :rules="[isRequired]"
+        label="Lead Source URL"
+        :has-error="!!ruleForm.errors.lead_source_id"
       />
 
-      <x-select
-        v-model="ruleForm.quote_type_id"
-        label="Quote Type"
-        :options="quoteTypesOptions"
-        :error="ruleForm.errors.quote_type_id"
-        filterable
-        filterPlaceholder="Filter Quote Type...."
-        placeholder="Select Quote Type"
-        required
-        :rules="[isRequired]"
+      <x-input
+        v-if="isLeadSourceRuleType"
+        label="UTM Source"
+        v-model="ruleForm.utm_source"
+        class="w-full"
+        :error="ruleForm.errors.utm_source"
+        placeholder="e.g., google, facebook, newsletter"
+      />
+
+      <x-input
+        v-if="isLeadSourceRuleType"
+        label="UTM Campaign"
+        v-model="ruleForm.utm_campaign"
+        class="w-full"
+        :error="ruleForm.errors.utm_campaign"
+        placeholder="e.g., summer_sale, product_launch"
+      />
+
+      <x-input
+        v-if="isLeadSourceRuleType"
+        label="UTM Medium"
+        v-model="ruleForm.utm_medium"
+        class="w-full"
+        :error="ruleForm.errors.utm_medium"
+        placeholder="e.g., cpc, email, social"
       />
 
       <x-select

@@ -41,6 +41,9 @@ class RuleRequest extends FormRequest
                     return $this->rule_type == 1;
                 }),
             ],
+            'utm_source' => 'nullable|string|max:255',
+            'utm_campaign' => 'nullable|string|max:255',
+            'utm_medium' => 'nullable|string|max:255',
         ];
     }
 }
