@@ -192,7 +192,8 @@ class QuoteDocumentService extends BaseService
         LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
 
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
-            LoggerService::warning('Invalid document type code provided ' . $data['document_type_code']);
+            LoggerService::warning('Invalid document type code provided '.$data['document_type_code']);
+
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
 
@@ -326,6 +327,7 @@ class QuoteDocumentService extends BaseService
             }
 
             LoggerService::info('Document uploaded successfully');
+
             return $quoteDocument;
         } catch (\Exception $exception) {
             LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'], exception: $exception);

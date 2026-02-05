@@ -76,7 +76,7 @@ class QuoteDocumentController extends Controller
             'document_type_code' => $request->document_type_code,
             'member_detail_id' => $request->member_detail_id,
         ]);
-        
+
         $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
         $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->validated(), $quote);
