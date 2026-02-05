@@ -527,7 +527,12 @@ const signedMedicalApplicationDocs = computed(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  @click.prevent="openTempUrl( quoteDocument.watermarked_doc_url || quoteDocument.doc_url)"
+                  @click.prevent="
+                    openTempUrl(
+                      quoteDocument.watermarked_doc_url ||
+                        quoteDocument.doc_url,
+                    )
+                  "
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
@@ -543,7 +548,9 @@ const signedMedicalApplicationDocs = computed(() => {
                 <a
                   v-for="doc in signedMedicalApplicationDocs"
                   :key="doc.id"
-                  @click.prevent="openTempUrl( doc.watermarked_doc_url || doc.doc_url)"
+                  @click.prevent="
+                    openTempUrl(doc.watermarked_doc_url || doc.doc_url)
+                  "
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ doc.original_name || doc.doc_name }}
