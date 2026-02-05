@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\LeadSource;
 use App\Models\QuoteType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -31,6 +32,15 @@ class RuleRequest extends FormRequest
             'is_active' => 'boolean',
             'rule_users' => 'required|array',
             'quote_type_id' => ['required', 'integer', Rule::exists(QuoteType::class, 'id')],
+            'lead_source_id' => [
+                'nullable',
+                'integer',
+                Rule::exists(LeadSource::class, 'id'),
+                Rule::requiredIf(function () {
+                    // Rule type 1 is "LEAD SOURCE"
+                    return $this->rule_type == 1;
+                }),
+            ],
         ];
     }
 }

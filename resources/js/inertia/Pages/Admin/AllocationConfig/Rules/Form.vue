@@ -5,6 +5,7 @@ const props = defineProps({
   usersList: Object,
   rulesTypeList: Object,
   quoteTypes: Object,
+  leadSourcesList: Object,
 });
 const { isRequired, isNumber } = useRules();
 
@@ -19,6 +20,7 @@ const ruleForm = useForm({
   rule_users: props.rule?.rule_users.map(x => x.id) ?? [],
   rule_type: props.rule?.rule_type.id ?? null,
   quote_type_id: props.rule?.quote_type?.id.toString() ?? '',
+  lead_source_id: props.rule?.rule_detail?.lead_source_id ?? null,
 });
 
 const ruleUsers = computed(() => {
@@ -49,6 +51,21 @@ const quoteTypesOptions = computed(() => {
       label: quoteType.name,
     };
   });
+});
+
+const leadSourcesOptions = computed(() => {
+  let leadSourcesList = Object.values(props.leadSourcesList);
+  return leadSourcesList.map(leadSource => {
+    return {
+      value: leadSource.id,
+      label: leadSource.name,
+    };
+  });
+});
+
+// Check if the selected rule type is "LEAD SOURCE" (id = 1)
+const isLeadSourceRuleType = computed(() => {
+  return ruleForm.rule_type === 1;
 });
 
 const selectedUsers = computed(() => {
@@ -122,6 +139,19 @@ function onSubmit(isValid) {
         filterable
         filterPlaceholder="Filter Rule Type...."
         placeholder="Select Rule Type"
+        required
+        :rules="[isRequired]"
+      />
+
+      <x-select
+        v-if="isLeadSourceRuleType"
+        v-model="ruleForm.lead_source_id"
+        label="Lead Source URL"
+        :options="leadSourcesOptions"
+        :error="ruleForm.errors.lead_source_id"
+        filterable
+        filterPlaceholder="Filter Lead Source...."
+        placeholder="Select Lead Source URL"
         required
         :rules="[isRequired]"
       />

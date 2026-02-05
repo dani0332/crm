@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
+use App\Models\LeadSource;
+use App\Models\QuoteType;
 use App\Models\Rule;
 use App\Models\RuleType;
 use App\Repositories\UserRepository;
@@ -45,15 +47,24 @@ class RulesController extends Controller
         ]);
     }
 
+    private function getLeadSourcesList()
+    {
+        return LeadSource::select('id', 'name')
+            ->withActive()
+            ->applicableForRules()
+            ->get();
+    }
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
+            'quoteTypes' => QuoteType::select('id', 'code as name')->get(),
+            'leadSourcesList' => $this->getLeadSourcesList(),
         ]);
     }
 
@@ -62,7 +73,14 @@ class RulesController extends Controller
      */
     public function store(RuleRequest $request)
     {
-        $rule = Rule::create($request->except(['rule_users']));
+        $rule = Rule::create($request->except(['rule_users', 'lead_source_id']));
+
+        // Create rule detail if lead_source_id is provided
+        if ($request->filled('lead_source_id')) {
+            $rule->ruleDetail()->create([
+                'lead_source_id' => $request->lead_source_id,
+            ]);
+        }
 
         // Attaching users
         $response = $rule->users()->attach($request->rule_users);
@@ -96,9 +114,12 @@ class RulesController extends Controller
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
+            'quoteTypes' => QuoteType::select('id', 'code as name')->get(),
+            'leadSourcesList' => $this->getLeadSourcesList(),
             'rule' => $rule->load([
                 'ruleUsers',
                 'ruleType',
+                'ruleDetail',
                 'leadSource',
                 'quoteType',
             ]),
@@ -111,7 +132,15 @@ class RulesController extends Controller
     public function update(RuleRequest $request, $id)
     {
         $rule = Rule::findOrFail($id);
-        $rule->update($request->except('rule_users'));
+        $rule->update($request->except(['rule_users', 'lead_source_id']));
+
+        // Update or create rule detail if lead_source_id is provided
+        if ($request->filled('lead_source_id')) {
+            $rule->ruleDetail()->updateOrCreate(
+                ['rule_id' => $rule->id],
+                ['lead_source_id' => $request->lead_source_id]
+            );
+        }
 
         // Sync users
         $response = $rule->users()->sync($request->rule_users);
