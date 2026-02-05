@@ -2,7 +2,6 @@
 
 namespace App\Services\Quotes;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\LookupsEnum;
@@ -12,7 +11,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Models\ApplicationStorage;
 use App\Facades\Capi;
 use App\Models\CurrencyType;
 use App\Models\InsuranceProviderPlan;
