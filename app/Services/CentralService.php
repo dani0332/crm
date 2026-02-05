@@ -1689,7 +1689,7 @@ class CentralService extends BaseService
 
                     $emailData->handBookDocuments = '';
                     if (! empty($policyHandBook)) {
-                        $emailData->handBookDocuments = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_POLICY_WORDING_CONTAINER').$policyHandBook;
+                        $emailData->handBookDocuments = config('constants.AZURE_IM_STORAGE_URL').$policyHandBook;
                     }
                 } else {
                     $emailData->handBookDocuments = '';
