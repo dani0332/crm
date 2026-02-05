@@ -1063,7 +1063,7 @@ class CoreSchema
                 $table->text('message')->nullable();
                 $table->timestamps();
             },
-            'policy_issuance_log' => function (Blueprint $table) {
+            'policy_issuance_logs' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('policy_issuance_id');
                 $table->string('model_type')->nullable();
