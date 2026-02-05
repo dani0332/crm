@@ -239,7 +239,7 @@ class SavingsQuoteController extends Controller
             LoggerService::info('SavingsQuoteController - savingsPlanManualProcess', [
                 'quote_uuid' => $quoteUuId,
                 'update' => $request->update ?? false,
-                'plans_count' => count($request->plans ?? []),
+                'plans_count' => $request->plans ?? [],
             ]);
 
             // Call the service to process the plan

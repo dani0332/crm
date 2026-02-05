@@ -775,7 +775,7 @@ class SavingsQuoteService extends BaseQuoteService
         LoggerService::info('SavingsQuoteService - processSavingsPlan', [
             'quote_uuid' => $quoteUuId,
             'update' => $savingsPlanData['update'],
-            'plans_count' => count($savingsPlanData['plans']),
+            'plans_count' => $savingsPlanData['plans'] ?? [],
         ]);
 
         return $this->httpService->processRequest($savingsPlanData, $apiCreds);
