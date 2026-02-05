@@ -413,6 +413,8 @@ class OCRService
             return false;
         }
 
+
+
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
         // Validate document type
@@ -420,6 +422,28 @@ class OCRService
         if (! $docTypeCheck) {
             return null;
         }
+
+        // Plan validation (doc-type aware): validator will skip if no mapping exists for this quote type / document type.
+        if (! $this->isPlanEligibleForOcr($quoteType, $docType, $quote)) {
+            LoggerService::info('OCR processing skipped - Plan not eligible for OCR - Quote UUID: '.$quote->uuid, [
+                'quote_type' => $quoteType->value,
+                'document_type' => $docType->value,
+            ]);
+
+            return false;
+        }
+
+
+        /**  Plan validation here
+         *   Savings and passport (this get validated at app/Services/OCR/OCRService.php:421)
+         *          check plans !== abc
+         *
+         *              return false;
+         *
+         *  Q/A
+         *  find Offcical name or code of plan ?
+         *
+         * */
 
         // Send start notification (skip for ecom)
         if (! $isEcom && $this->requiresOcrNotifications($docType)) {

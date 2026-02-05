@@ -9,6 +9,8 @@ class PassportVisaDetail extends Model
     protected $table = 'passport_visa_details';
     protected $fillable = [
         'passport_number',
+        'passport_country',
+        'passport_expiry_date',
         'name',
         'visa_number',
         'visa_file_number',

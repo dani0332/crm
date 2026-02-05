@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\OCR;
 
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
 use Exception;
@@ -129,5 +130,72 @@ trait OcrValidator
         );
 
         return $isSupported;
+    }
+
+
+    /* code from insurance_provider_plans table*/
+    private const QUOTE_TYPE_PLAN_MAPPING = [
+        QuoteTypes::SAVINGS->value => [
+            OCRDocumentTypeEnum::PASSPORT->value => ['SIRP'/*Plan code*/],
+        ],
+    ];
+
+    public function isPlanEligibleForOcr(QuoteTypes $quoteType, OCRDocumentTypeEnum $docType, Model $quote): bool
+    {
+        $logContext = [
+            'quote_uuid' => $quote->uuid ?? 'N/A',
+            'quote_type' => $quoteType->value,
+            'doc_type' => $docType->value,
+        ];
+
+        $quoteTypePlanMapping = self::QUOTE_TYPE_PLAN_MAPPING[$quoteType->value] ?? null;
+
+        /*If quote type is not present in mapping >> no validation needed */
+        if ($quoteTypePlanMapping === null) {
+            LoggerService::info('OCR Plan Eligibility - Accepted (no plan validation mapping for quote type)', $logContext);
+            return true;
+        }
+
+        $eligiblePlanCodes = $quoteTypePlanMapping[$docType->value] ?? null;
+
+        /*If doc_type is not present in mapping >> no validation needed */
+        if ($eligiblePlanCodes === null) {
+            LoggerService::info('OCR Plan Eligibility - Accepted (no plan validation mapping for document type)', $logContext);
+            return true;
+        }
+
+        $planCode = $this->extractPlanCode($quote);
+
+        if (! $planCode) {
+            LoggerService::info('OCR Plan Eligibility - Rejected (no plan selected in quote)', $logContext);
+            return false;
+        }
+
+        $isEligible = in_array($planCode, $eligiblePlanCodes, true);
+
+        LoggerService::info('OCR Plan Eligibility Check - '.($isEligible ? 'passed' : 'failed'), array_merge($logContext, [
+            'plan_code' => $planCode,
+            'eligible_plan_codes' => $eligiblePlanCodes,
+            'is_eligible' => $isEligible,
+        ]));
+
+        return $isEligible;
+    }
+
+    private function extractPlanCode(Model $quote): ?string
+    {
+        if (! method_exists($quote, 'insuranceProviderPlan')) {
+            return null;
+        }
+
+        try {
+            $plan = $quote->insuranceProviderPlan()->select(['code'])->first();
+
+            return $plan?->getAttribute('code');
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during extracting plan code for OCR eligibility', exception: $e);
+
+            return null;
+        }
     }
 }
