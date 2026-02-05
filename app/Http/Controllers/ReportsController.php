@@ -198,7 +198,7 @@ class ReportsController extends Controller
         $quoteType = QuoteTypes::tryFrom($request->lob);
         $lob = $request->lob;
         if ($quoteType !== null) {
-            $lob = $quoteType->getTeams()[0];
+            $lob = $quoteType->getTeams()[0]->value;
         }
 
         $usersReportToLoggedInUser = $this->getUsersByProductName($lob);
