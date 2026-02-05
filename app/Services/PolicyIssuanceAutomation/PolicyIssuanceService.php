@@ -420,7 +420,7 @@ class PolicyIssuanceService
         if (! $advisorId && $isPolicyBooked) {
             $allocationResult = $this->attemptAdvisorAllocation($quoteType, $uuid);
             $advisorId = $allocationResult['advisorId'] ?? null;
-            LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+            LoggerService::info('Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
                 'advisorId' => $advisorId,
                 'allocation_response' => $allocationResult['response'] ?? null,
             ]);
@@ -469,7 +469,7 @@ class PolicyIssuanceService
 
     private function attemptAdvisorAllocation(string $quoteType, string $uuid): array
     {
-        $quoteTypeEnum = $this->resolveQuoteTypeEnum($quoteType);
+        $quoteTypeEnum = QuoteTypes::tryFrom($quoteType);
 
         if (! $quoteTypeEnum || ! $this->isAllocationSupported($quoteTypeEnum)) {
             return ['advisorId' => null, 'response' => null, 'quoteType' => $quoteTypeEnum?->value];
@@ -483,17 +483,6 @@ class PolicyIssuanceService
             'response' => $response,
             'quoteType' => $quoteTypeEnum->value,
         ];
-    }
-
-    private function resolveQuoteTypeEnum(string $quoteType): ?QuoteTypes
-    {
-        $normalized = Str::of($quoteType)
-            ->replace(['_', '-'], ' ')
-            ->trim()
-            ->title()
-            ->value;
-
-        return QuoteTypes::tryFrom($normalized) ?? QuoteTypes::tryFrom($quoteType);
     }
 
     private function isAllocationSupported(QuoteTypes $quoteTypeEnum): bool
