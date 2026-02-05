@@ -1,0 +1,168 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\CQF\NonMotor;
+
+use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Models\PersonalQuote;
+use App\Models\RenewalBatch;
+use App\Models\RenewalsUploadLeads;
+use App\Repositories\LookupRepository;
+use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+
+/**
+ * Base mapping service for Non-motor CQF renewal quotes (PersonalQuote-based LOBs).
+ * Subclasses define quote type, product name, and LOB-specific failed-export fields.
+ */
+abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
+{
+    /**
+     * Resolve renewal batch ID for a given date (ISO week/year, same logic as RenewalsUploadService::validateBatch).
+     */
+    public static function getRenewalBatchIdForDate(Carbon|string $date): ?int
+    {
+        $endDateObj = $date instanceof Carbon ? $date : Carbon::parse($date);
+
+        $isoWeek = $endDateObj->isoWeek;
+        $isoYear = $endDateObj->isoWeekYear;
+        $weekNumber = 'W'.$isoWeek;
+
+        $batch = RenewalBatch::where([
+            ['name', $weekNumber.'-'.$isoYear],
+            ['quote_type_id', null],
+        ])->first();
+
+        if (! $batch) {
+            $calendarYear = $endDateObj->year;
+            $batch = RenewalBatch::where([
+                ['name', $weekNumber.'-'.$calendarYear],
+                ['quote_type_id', null],
+            ])->first();
+        }
+
+        return $batch?->id;
+    }
+
+    abstract protected function getQuoteType(): QuoteTypes;
+
+    /**
+     * Quote type ID (int constant from QuoteTypeId enum).
+     */
+    abstract protected function getQuoteTypeId(): int;
+
+    abstract protected function getProductName(): string;
+
+    /**
+     * LOB-specific columns for failed quote export. Merged with base failed data.
+     *
+     * @return array<string, mixed>
+     */
+    abstract protected function getFailedQuoteDataExtra(PersonalQuote $quote): array;
+
+    public function mapRenewalQuote(Model $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
+    {
+        if (! $quote instanceof PersonalQuote) {
+            return [];
+        }
+
+        return $this->buildBaseQuoteDataFromPersonalQuote($quote, $renewalsUploadLeads, $quoteUuid);
+    }
+
+    public function mapFailedQuoteData(Model $quote): array
+    {
+        if (! $quote instanceof PersonalQuote) {
+            return [];
+        }
+
+        return $this->buildBaseFailedQuoteDataFromPersonalQuote($quote);
+    }
+
+    /**
+     * Build common renewal quote data from PersonalQuote. Used by all PersonalQuote-based LOBs.
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildBaseQuoteDataFromPersonalQuote(
+        PersonalQuote $quote,
+        RenewalsUploadLeads $renewalsUploadLeads,
+        string $quoteUuid
+    ): array {
+        $renewalBatchId = self::getRenewalBatchIdForDate($quote->policy_expiry_date);
+        $shortCode = str_replace('-', '', $this->getQuoteType()->shortCode());
+
+        $quoteData = [
+            'customer_id' => $quote->customer_id,
+            'first_name' => $quote->first_name,
+            'last_name' => $quote->last_name,
+            'email' => $quote->email,
+            'mobile_no' => $quote->mobile_no,
+            'uuid' => $quoteUuid,
+            'code' => sprintf('%s-%s', $shortCode, $quoteUuid),
+            'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+            'dob' => $quote->dob,
+            'advisor_id' => null,
+            'assignment_type' => null,
+            'renewal_batch' => null,
+            'renewal_batch_id' => $renewalBatchId,
+            'quote_status_id' => QuoteStatusEnum::NewLead,
+            'renewal_import_code' => $renewalsUploadLeads->renewal_import_code,
+            'previous_quote_policy_number' => $quote->policy_number,
+            'previous_policy_start_date' => $quote->policy_start_date,
+            'previous_policy_expiry_date' => $quote->policy_expiry_date,
+            'previous_quote_policy_premium' => $quote->premium,
+            'previous_advisor_id' => $quote->advisor_id,
+            'previous_quote_id' => $quote->id,
+            'quote_type_id' => $this->getQuoteTypeId(),
+            'nationality_id' => $quote->nationality_id,
+            'currently_insured_with_id' => $quote->currently_insured_with_id,
+            'insurance_provider_id' => $quote->insurance_provider_id,
+        ];
+
+        $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
+            ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
+            ->first();
+
+        if ($lookup) {
+            $quoteData['transaction_type_id'] = $lookup->id;
+        }
+
+        return $quoteData;
+    }
+
+    /**
+     * Build common failed quote export data from PersonalQuote, merged with LOB-specific extra.
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildBaseFailedQuoteDataFromPersonalQuote(PersonalQuote $quote): array
+    {
+        $base = [
+            'customer_name' => trim($quote->first_name.' '.($quote->last_name ?? '')),
+            'email' => $quote->email ?? null,
+            'mobile_no' => $quote->mobile_no ?? null,
+            'quote_type' => str_replace('-', '', $this->getQuoteType()->shortCode()),
+            'insurer' => $quote->insuranceProvider?->text ?? $quote->currentlyInsuredWith?->text ?? null,
+            'product' => $this->getProductName(),
+            'product_type' => null,
+            'advisor' => null,
+            'policy_number' => $quote->policy_number ?? null,
+            'start_date' => $quote->policy_start_date ? Carbon::parse($quote->policy_start_date)->format('d/m/Y') : null,
+            'end_date' => $quote->policy_expiry_date ? Carbon::parse($quote->policy_expiry_date)->format('d/m/Y') : null,
+            'batch' => null,
+            'previous_advisor' => $quote->advisor?->email ?? null,
+            'previous_quote_policy_premium' => $quote->premium ?? null,
+            'source' => $quote->source ?? null,
+            'notes' => $quote->notes ?? null,
+            'plan_name' => null,
+            'errors' => $quote->validation_errors ?? null,
+        ];
+
+        return array_merge($base, $this->getFailedQuoteDataExtra($quote));
+    }
+}

@@ -17,7 +17,6 @@ use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
-use App\Services\CQF\NonMotor\Pipes\BaseValidationPipe;
 use App\Services\CQF\NonMotor\Pipes\DuplicateCheckPipe;
 use App\Services\CQF\NonMotor\Pipes\LOBValidationPipe;
 use App\Services\CQF\NonMotor\Pipes\StoragePipe;
@@ -171,7 +170,6 @@ class NonMotorCQFRenewalExecutionService
         $storage = $this->registry->getStorage($quoteType);
 
         $pipes = [
-            app(BaseValidationPipe::class),
             app(LOBValidationPipe::class),
             app(DuplicateCheckPipe::class),
             app(StoragePipe::class),

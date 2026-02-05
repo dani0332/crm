@@ -12,7 +12,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $this->service = new BikeCQFQuoteMappingService;
+    $this->service = app(BikeCQFQuoteMappingService::class);
 });
 
 it('returns empty array when quote is not PersonalQuote', function () {
