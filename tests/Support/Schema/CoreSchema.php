@@ -1054,7 +1054,7 @@ class CoreSchema
         SchemaUtils::ensureTables([
             'policy_issuance' => function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('insurance_provider_id');
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
                 $table->string('model_type');
                 $table->unsignedBigInteger('model_id');
                 $table->string('quote_type');
@@ -1066,6 +1066,8 @@ class CoreSchema
             'policy_issuance_log' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('policy_issuance_id');
+                $table->string('model_type')->nullable();
+                $table->unsignedBigInteger('model_id')->nullable();
                 $table->string('step')->nullable();
                 $table->string('status')->nullable();
                 $table->text('request_payload')->nullable();
