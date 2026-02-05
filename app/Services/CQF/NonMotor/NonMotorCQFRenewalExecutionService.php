@@ -143,14 +143,6 @@ class NonMotorCQFRenewalExecutionService
     /**
      * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
      */
-    protected function hasEligibleBikeQuotesFromPersonal(Carbon $startDate, array $filter): bool
-    {
-        return $this->hasEligiblePersonalQuotes($startDate, (int) QuoteTypes::BIKE->id(), $filter);
-    }
-
-    /**
-     * @param  array{quote_status: array<int>, payment_status: array<int>}  $filter
-     */
     protected function hasEligibleBikeQuotesFromCar(Carbon $startDate, array $filter): bool
     {
         return CarQuote::whereDate('policy_expiry_date', $startDate)
@@ -203,7 +195,7 @@ class NonMotorCQFRenewalExecutionService
                 }
 
                 if ($context->newQuote !== null) {
-                    $this->markQuoteAsCompleted($quote, $renewalsUploadLeads, true);
+                    $this->markQuoteAsCompleted($quote, $renewalsUploadLeads);
                 } else {
                     $this->markQuoteAsFailed($quote, $renewalsUploadLeads, ['storage' => 'Failed to create renewal quote'], $mapper);
                 }
@@ -234,7 +226,7 @@ class NonMotorCQFRenewalExecutionService
         return RenewalsUploadLeads::create($uploadLeadData);
     }
 
-    protected function markQuoteAsCompleted(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, bool $status): void
+    protected function markQuoteAsCompleted(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads): void
     {
         RenewalsUploadLeads::where('id', $renewalsUploadLeads->id)->update(['good' => DB::raw('good+1')]);
         $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote, $renewalsUploadLeads);
@@ -304,6 +296,15 @@ class NonMotorCQFRenewalExecutionService
     {
         return match ($quoteType) {
             QuoteTypes::BIKE => ['bikeQuote', 'bikeQuote.bikeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::HOME => ['homeQuote', 'homeQuote.homeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::PET => ['petQuote', 'petQuote.petQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::TRAVEL => ['travelQuote', 'travelQuote.travelQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::LIFE => ['lifeQuote', 'lifeQuote.lifeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::SAVINGS => ['savingsQuote', 'savingsQuote.savingsQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::CYCLE => ['cycleQuote', 'cycleQuote.cycleQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::YACHT => ['yachtQuote', 'yachtQuote.yachtQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::JETSKI => ['jetskiQuote', 'jetskiQuote.jetskiQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::BUSINESS => ['businessQuote', 'businessQuote.businessQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             default => ['insuranceProvider', 'currentlyInsuredWith', 'advisor'],
         };
     }

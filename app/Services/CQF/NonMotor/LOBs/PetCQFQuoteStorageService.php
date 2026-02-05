@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
-use App\Services\CapiRequestService;
 use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -39,7 +37,7 @@ class PetCQFQuoteStorageService implements CQFQuoteStorageInterface
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
 
-        $quoteUuid = $this->generateUUID();
+        $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
             LoggerService::error(self::class.' - Failed to generate UUID for pet renewal quote');
 
@@ -64,21 +62,6 @@ class PetCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         return $newQuote;
-    }
-
-    public function generateUUID(): ?string
-    {
-        if (checkPersonalQuotes(QuoteTypes::PET->value)) {
-            $response = app(CapiRequestService::class)->getPersonalQuoteUUID(QuoteTypes::PET->id());
-        } else {
-            $response = app(CapiRequestService::class)->getUUID(QuoteTypes::PET->id());
-        }
-
-        if ($response) {
-            return $response->uuid ?? null;
-        }
-
-        return null;
     }
 
     protected function copyPetQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void

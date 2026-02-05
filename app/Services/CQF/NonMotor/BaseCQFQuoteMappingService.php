@@ -12,6 +12,7 @@ use App\Models\PersonalQuote;
 use App\Models\RenewalBatch;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\LookupRepository;
+use App\Services\CapiRequestService;
 use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -64,6 +65,22 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
      * @return array<string, mixed>
      */
     abstract protected function getFailedQuoteDataExtra(PersonalQuote $quote): array;
+
+    /**
+     * Generate UUID for new renewal quote (from CAPI). Aligned with mapRenewalQuote which uses this UUID.
+     */
+    public function generateUUID(): ?string
+    {
+        $quoteType = $this->getQuoteType();
+
+        if (checkPersonalQuotes($quoteType->value)) {
+            $response = app(CapiRequestService::class)->getPersonalQuoteUUID($quoteType->id());
+        } else {
+            $response = app(CapiRequestService::class)->getUUID($quoteType->id());
+        }
+
+        return $response?->uuid ?? null;
+    }
 
     public function mapRenewalQuote(Model $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
     {

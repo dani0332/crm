@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Repositories\EmbeddedProductRepository;
-use App\Services\CapiRequestService;
 use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -39,7 +37,7 @@ class YachtCQFQuoteStorageService implements CQFQuoteStorageInterface
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
 
-        $quoteUuid = $this->generateUUID();
+        $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
             LoggerService::error(self::class.' - Failed to generate UUID for yacht renewal quote');
 
@@ -64,21 +62,6 @@ class YachtCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         return $newQuote;
-    }
-
-    public function generateUUID(): ?string
-    {
-        if (checkPersonalQuotes(QuoteTypes::YACHT->value)) {
-            $response = app(CapiRequestService::class)->getPersonalQuoteUUID(QuoteTypes::YACHT->id());
-        } else {
-            $response = app(CapiRequestService::class)->getUUID(QuoteTypes::YACHT->id());
-        }
-
-        if ($response) {
-            return $response->uuid ?? null;
-        }
-
-        return null;
     }
 
     protected function copyYachtQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void

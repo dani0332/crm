@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\CQF;
 
+use App\Enums\LeadSourceEnum;
+use App\Models\PersonalQuote;
 use App\Services\CQF\Contracts\CQFValidationInterface;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -63,11 +65,20 @@ class BaseCQFValidationService implements CQFValidationInterface
     }
 
     /**
-     * Default duplicate check: subclasses (e.g. Car, Non-motor) override with LOB-specific logic.
+     * Default duplicate check for PersonalQuote (renewal upload source).
+     * Subclasses (e.g. Bike for CarQuote) override for LOB-specific logic.
      */
     public function isDuplicateQuote(Model $quote): bool
     {
-        return false;
+        if (! $quote instanceof PersonalQuote) {
+            return false;
+        }
+
+        return PersonalQuote::where('previous_quote_id', $quote->id)
+            ->where('previous_quote_policy_number', $quote->policy_number)
+            ->where('previous_policy_expiry_date', $quote->policy_expiry_date)
+            ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->exists();
     }
 
     public function getValidationMessages(): array

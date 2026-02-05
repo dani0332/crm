@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Models\SavingsQuote;
 use App\Repositories\EmbeddedProductRepository;
-use App\Services\CapiRequestService;
 use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -38,7 +36,7 @@ class SavingsCQFQuoteStorageService implements CQFQuoteStorageInterface
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
 
-        $quoteUuid = $this->generateUUID();
+        $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
             LoggerService::error(self::class.' - Failed to generate UUID for savings renewal quote');
 
@@ -63,21 +61,6 @@ class SavingsCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         return $newQuote;
-    }
-
-    public function generateUUID(): ?string
-    {
-        if (checkPersonalQuotes(QuoteTypes::SAVINGS->value)) {
-            $response = app(CapiRequestService::class)->getPersonalQuoteUUID(QuoteTypes::SAVINGS->id());
-        } else {
-            $response = app(CapiRequestService::class)->getUUID(QuoteTypes::SAVINGS->id());
-        }
-
-        if ($response) {
-            return $response->uuid ?? null;
-        }
-
-        return null;
     }
 
     protected function copySavingsQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void

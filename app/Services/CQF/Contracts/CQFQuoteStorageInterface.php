@@ -21,9 +21,4 @@ interface CQFQuoteStorageInterface
         int $renewalDaysThreshold,
         array &$epCodes = []
     ): ?Model;
-
-    /**
-     * Generate UUID for new quote (e.g. from CAPI).
-     */
-    public function generateUUID(): ?string;
 }

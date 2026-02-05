@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Models\BikeQuote;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
-use App\Services\CapiRequestService;
 use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +17,6 @@ use Illuminate\Support\Carbon;
 
 class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
 {
-    
     public function __construct(
         protected BikeCQFQuoteMappingService $mappingService
     ) {}
@@ -50,7 +47,7 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
             'newPolicyExpiryDate' => $newPolicyExpiryDate,
         ]);
 
-        $quoteUuid = $this->generateUUID();
+        $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
             LoggerService::error(self::class.' - Failed to generate UUID for bike renewal quote');
 
@@ -98,7 +95,7 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
 
-        $quoteUuid = $this->generateUUID();
+        $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
             LoggerService::error(self::class.' - Failed to generate UUID for bike renewal quote (from car)');
 
@@ -159,21 +156,6 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         BikeQuote::create($bikeQuoteData);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
-    }
-
-    public function generateUUID(): ?string
-    {
-        if (checkPersonalQuotes(QuoteTypes::BIKE->value)) {
-            $response = app(CapiRequestService::class)->getPersonalQuoteUUID(QuoteTypes::BIKE->id());
-        } else {
-            $response = app(CapiRequestService::class)->getUUID(QuoteTypes::BIKE->id());
-        }
-
-        if ($response) {
-            return $response->uuid ?? null;
-        }
-
-        return null;
     }
 
     protected function copyBikeQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
