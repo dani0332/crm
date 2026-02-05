@@ -32,7 +32,7 @@ function makeHttpResponse(array $payload, int $status = 200): Response
 
 it('issues policy and updates quote data on success', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $payload = ['payload' => true];
     $headers = ['X-Test' => 'foo'];
@@ -86,7 +86,7 @@ it('issues policy and updates quote data on success', function () {
 
 it('returns failure when issue policy API responds with error', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $requestBuilder = Mockery::mock(AwnicRequestBuilder::class);
     $requestBuilder->shouldReceive('buildIssuePolicyPayload')->once()->andReturn([]);
@@ -123,7 +123,7 @@ it('returns failure when issue policy API responds with error', function () {
 
 it('skips upload documents call when validation fails', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $validation = Mockery::mock(AwnicValidationService::class);
     $validation->shouldReceive('validateUploadDocuments')->andReturn([
@@ -151,7 +151,7 @@ it('skips upload documents call when validation fails', function () {
 
 it('uploads documents and records policy issuance log', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $documentHandler = Mockery::mock(AwnicDocumentHandler::class);
     $documentHandler->shouldReceive('getDocumentByType')->andReturn([
@@ -195,7 +195,7 @@ it('uploads documents and records policy issuance log', function () {
 
 it('logs failure when document upload API fails', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $documentHandler = Mockery::mock(AwnicDocumentHandler::class);
     $documentHandler->shouldReceive('getDocumentByType')->andReturn([
@@ -244,7 +244,7 @@ it('uploads policy documents to IMCRM and records log entries', function () {
         'insurer_debit_note_doc_id' => 'DOC-DN',
         'insurer_policy_doc_id' => 'DOC-POL',
     ]);
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $documentHandler = Mockery::mock(AwnicDocumentHandler::class);
     $documentHandler->shouldReceive('getDocTypeCodeForIMCRM')->andReturn([
@@ -302,7 +302,7 @@ it('logs failure when insurer document download fails', function () {
         'insurer_debit_note_doc_id' => 'DOC-DN',
         'insurer_policy_doc_id' => 'DOC-POL',
     ]);
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $documentHandler = Mockery::mock(AwnicDocumentHandler::class);
     $documentHandler->shouldReceive('getDocTypeCodeForIMCRM')->andReturn([

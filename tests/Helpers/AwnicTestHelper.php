@@ -5,8 +5,8 @@ use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\PolicyIssuance;
 
-if (! function_exists('createPolicyIssuanceProcess')) {
-    function createPolicyIssuanceProcess(PersonalQuote $quote): PolicyIssuance
+if (! function_exists('createAwnicPolicyIssuanceProcess')) {
+    function createAwnicPolicyIssuanceProcess(PersonalQuote $quote): PolicyIssuance
     {
         $process = PolicyIssuance::factory()->forQuote($quote)->create([
             'status' => null,

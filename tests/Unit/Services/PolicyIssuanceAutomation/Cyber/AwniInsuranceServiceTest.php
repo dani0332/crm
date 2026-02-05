@@ -20,7 +20,7 @@ afterEach(function () {
 
 it('executes all AWNIC steps when validation passes', function () {
     $quote = PersonalQuote::factory()->cyberQuote()->withCyberDependencies()->create();
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $validation = Mockery::mock(AwnicValidationService::class);
     $validation
@@ -62,7 +62,7 @@ it('executes all AWNIC steps when validation passes', function () {
 
 it('stops execution when validation fails', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $validation = Mockery::mock(AwnicValidationService::class);
     $validation
@@ -89,7 +89,7 @@ it('stops execution when validation fails', function () {
 
 it('propagates step failure immediately', function () {
     $quote = PersonalQuote::factory()->withCyberDependencies()->create();
-    $process = createPolicyIssuanceProcess($quote);
+    $process = createAwnicPolicyIssuanceProcess($quote);
 
     $validation = Mockery::mock(AwnicValidationService::class);
     $validation

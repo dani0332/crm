@@ -19,7 +19,7 @@ afterEach(function () {
 
 it('marks insurer status when issue policy step fails', function () {
     $quote = PersonalQuote::factory()->cyberQuote()->withCyberDependencies()->create();
-    $process = PolicyIssuance::withoutEvents(fn () => createPolicyIssuanceProcess($quote));
+    $process = PolicyIssuance::withoutEvents(fn () => createAwnicPolicyIssuanceProcess($quote));
 
     $apiService = Mockery::mock(AwnicApiService::class);
     $apiService->shouldReceive('issuePolicy')->andReturn([
@@ -39,7 +39,7 @@ it('marks insurer status when issue policy step fails', function () {
 
 it('marks insurer status when upload documents step fails', function () {
     $quote = PersonalQuote::factory()->cyberQuote()->withCyberDependencies()->create();
-    $process = PolicyIssuance::withoutEvents(fn () => createPolicyIssuanceProcess($quote));
+    $process = PolicyIssuance::withoutEvents(fn () => createAwnicPolicyIssuanceProcess($quote));
 
     $apiService = Mockery::mock(AwnicApiService::class);
     $apiService->shouldReceive('uploadDocuments')->andReturn([
@@ -59,7 +59,7 @@ it('marks insurer status when upload documents step fails', function () {
 
 it('marks insurer status when uploading policy documents to IMCRM fails', function () {
     $quote = PersonalQuote::factory()->cyberQuote()->withCyberDependencies()->create();
-    $process = PolicyIssuance::withoutEvents(fn () => createPolicyIssuanceProcess($quote));
+    $process = PolicyIssuance::withoutEvents(fn () => createAwnicPolicyIssuanceProcess($quote));
 
     $apiService = Mockery::mock(AwnicApiService::class);
     $apiService->shouldReceive('uploadPolicyDocumentsToIMCRM')->andReturn([

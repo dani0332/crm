@@ -18,7 +18,7 @@ it('persists provided insurer and api issuance statuses', function () {
         ->withCyberDependencies()
         ->create(['quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED]);
 
-    $process = PolicyIssuance::withoutEvents(fn () => createPolicyIssuanceProcess($quote));
+    $process = PolicyIssuance::withoutEvents(fn () => createAwnicPolicyIssuanceProcess($quote));
     PolicyIssuance::withoutEvents(fn () => $process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]));
 
     app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
@@ -41,7 +41,7 @@ it('derives api issuance status when automation completes successfully', functio
         ->withCyberDependencies()
         ->create(['quote_status_id' => QuoteStatusEnum::PolicyBooked]);
 
-    $process = PolicyIssuance::withoutEvents(fn () => createPolicyIssuanceProcess($quote));
+    $process = PolicyIssuance::withoutEvents(fn () => createAwnicPolicyIssuanceProcess($quote));
     PolicyIssuance::withoutEvents(fn () => $process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]));
 
     app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus(
