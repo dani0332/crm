@@ -162,8 +162,9 @@ class ClaimDetailsUpdateRequest extends FormRequest
             // Custom validation logic can be added here if needed
             $quoteTypeId = request()?->quote_type_id;
             $isCarLob = $quoteTypeId == QuoteTypes::CAR->id();
+            $isBikeLob = $quoteTypeId == QuoteTypes::BIKE->id();
             $isHealthLob = $quoteTypeId == QuoteTypes::HEALTH->id();
-            if ($isCarLob) {
+            if ($isCarLob || $isBikeLob) {
                 $this->validateCarFields($validator);
             }
             if ($isHealthLob) {
@@ -179,20 +180,20 @@ class ClaimDetailsUpdateRequest extends FormRequest
     {
         // If car_make is provided, car_model should also be provided (when editing)
         if (! $this->filled('car_model')) {
-            $validator->errors()->add('car_model', 'Vehicle model is required when vehicle make is specified.');
+            $validator->errors()->add('car_model', 'Vehicle model is required when Car/Bike LOB is selected.');
         }
 
         // If car_model is provided, car_make should also be provided
         if (! $this->filled('car_make')) {
-            $validator->errors()->add('car_make', 'Vehicle make is required when vehicle model is specified.');
+            $validator->errors()->add('car_make', 'Vehicle make is required when Car/Bike LOB is selected.');
         }
 
         if (! $this->filled('plate_number')) {
-            $validator->errors()->add('plate_number', 'Vehicle plate number is required when vehicle model is specified.');
+            $validator->errors()->add('plate_number', 'Vehicle plate number is required when Car/Bike LOB is selected.');
         }
 
         if (! $this->filled('model_year')) {
-            $validator->errors()->add('model_year', 'Vehicle year is required when vehicle model is specified.');
+            $validator->errors()->add('model_year', 'Vehicle year is required when Car/Bike LOB is selected.');
         }
     }
 
