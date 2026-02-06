@@ -83,7 +83,7 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
 
             // Check if customer is eligible for review email
             if (! $claimRequestEmailService->isEligibleForReviewEmail($claimRequest)) {
-                LoggerService::info(' Customer not eligible for Google review email - Claim UUID: '.$claimRequest->uuid, [
+                LoggerService::info(' Customer not eligible for  Claim sub status update notification email - Claim UUID: '.$claimRequest->uuid, [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                     'customer_email' => $claimRequest->email,
@@ -92,7 +92,7 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
                 return;
             }
 
-            // Send the Google review email
+            // Send the  Claim sub status update notification email
             $responseCode = $claimRequestEmailService->sendClaimSubStatusCustomerUpdateEmail($claimRequest, $this->customerMessage);
 
             // Log success or failure based on response code
