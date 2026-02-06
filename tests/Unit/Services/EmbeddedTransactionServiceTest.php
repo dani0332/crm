@@ -487,6 +487,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
         $quote->code = $this->quoteCode;
+        $quote->uuid = $this->quoteUuid;
 
         $service->retargetEpReminder($quote, QuoteTypeId::Car);
 
@@ -494,6 +495,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
         expect($capturedData->quoteId)->toBe($this->quoteId);
         expect($capturedData->quoteTypeId)->toBe(QuoteTypeId::Car);
         expect($capturedData->refId)->toBe($this->quoteCode);
+        expect($capturedData->uuid)->toBe($this->quoteUuid);
         expect($capturedData->embeddedTransactionCode)->toBe($this->embeddedTransactionCode);
         expect($capturedData->workflowType)->toBe(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER);
         expect($capturedData->getRetargetingEpReminderUrl)->toContain('quoteId='.$this->quoteId);

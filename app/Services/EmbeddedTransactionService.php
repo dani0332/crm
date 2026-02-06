@@ -91,6 +91,7 @@ class EmbeddedTransactionService extends BaseService
             'quoteId' => $quote->id,
             'quoteTypeId' => $quoteTypeId,
             'refId' => $quote->code,
+            'uuid' => $quote->uuid,
             'embeddedTransactionCode' => $epTransaction->code,
             'workflowType' => WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER,
             'getRetargetingEpReminderUrl' => $getRetargetingEpReminderUrl,
