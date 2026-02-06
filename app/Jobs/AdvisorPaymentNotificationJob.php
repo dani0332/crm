@@ -4,10 +4,8 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Models\ApplicationStorage;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

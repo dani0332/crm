@@ -3,23 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\EmbeddedProductEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
 use App\Jobs\AdvisorPaymentNotificationJob;
-use App\Jobs\PaymentNotificationEmailJob;
-use App\Models\ApplicationStorage;
 use App\Models\Payment;
-use App\Models\User;
-use App\Repositories\PaymentRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 
 class SendPaymentEmailToAdvisor extends Command
 {
@@ -47,7 +38,7 @@ class SendPaymentEmailToAdvisor extends Command
     public function handle()
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::AUTHORISED_PAYMENT_NOTIFICATION_TO_ADVISOR);
-        
+
         $startTime = microtime(true);
 
         // Check if the advisor email notification is enabled for authorised payments.
@@ -94,9 +85,9 @@ class SendPaymentEmailToAdvisor extends Command
         $lastDay = Carbon::today()->subDays($authorizedDays);
 
         return Payment::with([
-                'personalQuote:id,code,advisor_id,premium',
-                'personalQuote.advisor:id,name,email'
-            ])
+            'personalQuote:id,code,advisor_id,premium',
+            'personalQuote.advisor:id,name,email',
+        ])
             ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->where('payments.authorized_at', '>=', $authorizedDate)
             ->get()
