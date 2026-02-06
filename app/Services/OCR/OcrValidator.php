@@ -136,7 +136,7 @@ trait OcrValidator
     /* code from insurance_provider_plans table*/
     private const QUOTE_TYPE_PLAN_MAPPING = [
         QuoteTypes::SAVINGS->value => [
-            OCRDocumentTypeEnum::PASSPORT->value => ['SIRP'/*Plan code*/],
+            OCRDocumentTypeEnum::PASSPORT->value => ['STF - 158'/*Plan code*/],
         ],
     ];
 

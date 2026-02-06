@@ -522,6 +522,17 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
+     * Get all related passport/visa detail records via the quoteable polymorphic relation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function passportVisaDetails(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(\App\Models\PassportVisaDetail::class, 'quoteable')->latest('updated_at');
+    }
+
+
+    /**
      * Check if any payment has IPL in its splits
      */
     public function hasInsurerPaymentLink(): bool

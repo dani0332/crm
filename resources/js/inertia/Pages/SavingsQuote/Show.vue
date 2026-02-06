@@ -176,6 +176,11 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date:
     page.props.quote?.latest_insured?.insured_kyc?.id_expiry_date,
 
+  passport_number: page.props.quote.passport_visa_details?.passport_number ?? null,
+  passport_country: page.props.quote.passport_visa_details?.passport_country ?? null,
+  passport_expiry_date: page.props.quote.passport_visa_details?.passport_expiry_date ?? null,
+
+
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
     page.props.quote?.latest_insured?.id_type ===
@@ -759,6 +764,46 @@ const handlePlanSelected = plan => {
                     />
                   </dd>
                 </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PASSPORT NUMBER</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.passport_number"
+                      :rules="[isRequired]"
+                      placeholder="PASSPORT NUMBER"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PASSPORT COUNTRY</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.passport_country"
+                      :rules="[isRequired]"
+                      placeholder="PASSPORT COUNTRY"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PASSPORT EXPIRY DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.passport_expiry_date"
+                      :rules="[isRequired]"
+                      placeholder="EMIRATES ID EXPIRY DATE"
+                      :disabled="!isProfileUpdateAllow"
+                      :min-date="new Date()"
+                    />
+                  </dd>
+                </div>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
                   <dd>{{ quote.gender_label }}</dd>
