@@ -15,6 +15,8 @@ beforeEach(function () {
     $this->quoteUuid = $testData['quoteUuid'];
     $this->quoteCode = $testData['quoteCode'];
     $this->epMDXTransaction = $testData['epMDXTransaction'];
+
+    $this->withoutMiddleware(\App\Http\Middleware\BasicAuth::class);
 });
 
 afterEach(function () {

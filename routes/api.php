@@ -87,6 +87,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 
     Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
 
+    Route::get('/get-retargeting-ep-reminder', [EmbeddedProductController::class, 'getRetargetingEpReminderData'])->name('get.retargeting-ep-reminder');
     Route::post('/retargeting-ep-reminder-callback', [EmbeddedProductController::class, 'retargetingEpReminderCallback'])->name('retargeting-ep-reminder-callback');
 });
 
@@ -142,7 +143,7 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
     Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
 
-    Route::get('/get-retargeting-ep-reminder', [EmbeddedProductController::class, 'getRetargetingEpReminderData'])->name('get.retargeting-ep-reminder');
+    Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
