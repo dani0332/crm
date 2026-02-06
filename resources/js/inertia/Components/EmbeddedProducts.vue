@@ -917,6 +917,7 @@ const onAddDocumentSubmit = event => {
             <template #item-actions="item">
               <div class="flex flex-row gap-3">
                 <x-button
+                  v-if="!item.is_policy_wordings"
                   size="xs"
                   color="primary"
                   outlined
@@ -924,7 +925,16 @@ const onAddDocumentSubmit = event => {
                 >
                   View
                 </x-button>
-
+                <x-button
+                  v-else
+                  size="xs"
+                  color="primary"
+                  outlined
+                  :href="item.url"
+                  target="_blank"
+                >
+                  View
+                </x-button>
                 <x-button
                   size="xs"
                   color="emerald"
