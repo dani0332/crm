@@ -37,6 +37,9 @@ class CarQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    private const LOG_LEAD_STATUS_UPDATED_FAILED = 'CarQuoteObserver - dispatch LeadStatusUpdated event failed';
+    private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'CarQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
+
     public function updating(CarQuote $quote): void
     {
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
@@ -147,7 +150,14 @@ class CarQuoteObserver
         $this->syncQuote($lead, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
-            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            try {
+                LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_LEAD_STATUS_UPDATED_FAILED, [
+                    'uuid' => $lead->uuid,
+                    'quote_status_id' => $lead->quote_status_id,
+                ], exception: $e);
+            }
 
             try {
                 EmbeddedProductRepository::cancelEmbeddedProducts($lead->id, quoteTypeCode::Car);
@@ -163,7 +173,15 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
-            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            try {
+                LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_LEAD_STATUS_UPDATED_FAILED, [
+                    'uuid' => $lead->uuid,
+                    'quote_status_id' => $lead->quote_status_id,
+                ], exception: $e);
+            }
+
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
             ExtendCustomerSubscriptionViaSQS::dispatch(
                 $lead->customer,
@@ -194,13 +212,15 @@ class CarQuoteObserver
                     'uuid' => $lead->uuid,
                 ], exception: $e);
             }
-        }
 
-        if (
-            isset($dirty['quote_status_id']) &&
-            in_array($lead->quote_status_id, [QuoteStatusEnum::PolicyBooked])
-        ) {
-            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
+            try {
+                event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $lead->uuid,
+                    'quote_status_id' => $lead->quote_status_id,
+                ], exception: $e);
+            }
         }
 
         if (
@@ -208,7 +228,16 @@ class CarQuoteObserver
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             SendPolicyIssueWhatsappMessageJob::dispatch($lead->uuid, QuoteTypes::CAR->id())->onQueue('insly');
-            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+
+            try {
+                LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_LEAD_STATUS_UPDATED_FAILED, [
+                    'uuid' => $lead->uuid,
+                    'quote_status_id' => $lead->quote_status_id,
+                ], exception: $e);
+            }
+            
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
         }
