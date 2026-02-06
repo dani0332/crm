@@ -501,6 +501,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
         expect($capturedData->getRetargetingEpReminderUrl)->toContain('quoteId='.$this->quoteId);
         expect($capturedData->getRetargetingEpReminderUrl)->toContain('quoteTypeId='.QuoteTypeId::Car);
         expect($capturedData->getRetargetingEpReminderUrl)->toContain('embeddedTransactionCode='.$this->embeddedTransactionCode);
+        expect($capturedData->reminderNumber)->toBe(1);
     });
 });
 

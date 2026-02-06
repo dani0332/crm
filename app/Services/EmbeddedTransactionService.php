@@ -95,6 +95,7 @@ class EmbeddedTransactionService extends BaseService
             'embeddedTransactionCode' => $epTransaction->code,
             'workflowType' => WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER,
             'getRetargetingEpReminderUrl' => $getRetargetingEpReminderUrl,
+            'reminderNumber' => 1,
         ];
 
         LoggerService::info('triggerBirdWorkflowRetargetEpReminder: ', extra: ['data' => $birdEmailData]);
