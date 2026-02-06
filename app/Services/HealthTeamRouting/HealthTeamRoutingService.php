@@ -11,6 +11,7 @@ use App\Enums\TeamTypeEnum;
 use App\Models\HealthQuote;
 use App\Models\Team;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 
 class HealthTeamRoutingService
 {
@@ -227,7 +228,7 @@ class HealthTeamRoutingService
             'pec_check',
             [
                 'is_pec_lead' => $isPECLead,
-                'pec_marked_at' => $lead->pec_marked_at?->format('Y-m-d H:i:s'),
+                'pec_marked_at' => $lead->pec_marked_at ? Carbon::parse($lead->pec_marked_at)->format('Y-m-d H:i:s') : null,
             ],
             $lead
         );
