@@ -60,12 +60,9 @@
         
         .documentation-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 25px;
             margin-top: 30px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
         }
         
         .doc-card {
@@ -169,6 +166,12 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
+        @media (max-width: 1024px) {
+            .documentation-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -179,7 +182,7 @@
             }
             
             .documentation-grid {
-                max-width: 100%;
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -214,13 +217,57 @@
                 </ul>
                 <a href="/docs/booking-process/index.html" class="doc-link">Explore Sage Integration →</a>
             </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🤖</span>
+                    Policy Issuance Automation
+                </h3>
+                <p>
+                    Complete documentation for automated policy issuance system with multiple insurance providers 
+                    across Health, Car, and Travel lines of business with comprehensive workflow automation.
+                </p>
+                <ul class="features">
+                    <li>4 Insurance Providers (ADNIC, GIG, Liva, Alliance)</li>
+                    <li>Health, Car & Travel Lines of Business</li>
+                    <li>3-5 Step Automation Workflows</li>
+                    <li>Pre-Captured Payment Integration</li>
+                    <li>OAuth2 & API Authentication</li>
+                    <li>Document Management & Azure Storage</li>
+                    <li>OCR Processing & Timeout Handling</li>
+                    <li>Comprehensive Logging & Audit Trails</li>
+                </ul>
+                <a href="/docs/policy-automation/index.html" class="doc-link">Explore Policy Automation →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🛡️</span>
+                    Claims Management System
+                </h3>
+                <p>
+                    Comprehensive insurance claims processing documentation covering the complete lifecycle 
+                    from registration to settlement with LOB-specific workflows and automated status transitions.
+                </p>
+                <ul class="features">
+                    <li>14+ Lines of Business Support</li>
+                    <li>LOB-Specific Validation Rules</li>
+                    <li>Observer Pattern Automation</li>
+                    <li>Status & Sub-Status Management</li>
+                    <li>Document Management with Azure S3</li>
+                    <li>AI-Powered Customer Notifications</li>
+                    <li>Comprehensive Audit Logging</li>
+                    <li>Vue 3 Component Architecture</li>
+                </ul>
+                <a href="/docs/claims-process/index.html" class="doc-link">Explore Claims System →</a>
+            </div>
         </div>
         
         <div class="footer">
             <p><strong>Afia Brokerage LLC</strong> - Technical Documentation</p>
             <p>Built with modern web technologies for scalable insurance solutions</p>
             <div class="tech-stack">
-                <span class="tech-badge">PHP 8.2+</span>
+                <span class="tech-badge">PHP 8.4</span>
                 <span class="tech-badge">Laravel 12</span>
                 <span class="tech-badge">Vue.js 3</span>
                 <span class="tech-badge">Inertia.js</span>
@@ -228,7 +275,9 @@
                 <span class="tech-badge">Sage 300</span>
                 <span class="tech-badge">MySQL</span>
                 <span class="tech-badge">Redis</span>
+                <span class="tech-badge">Azure Storage</span>
             </div>
+            <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">Last Updated: February 2026</p>
         </div>
     </div>
 </body>
