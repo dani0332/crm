@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 
 class NgiRequestBuilder
 {
     private const APPLICATION_JSON = 'application/json';
+
+    public function __construct(private readonly ApplicationStorageService $applicationStorageService)
+    {
+    }
 
     /**
      * Build payload for CreatePolicyFromQuote API
@@ -20,6 +26,9 @@ class NgiRequestBuilder
      */
     public function buildCreatePolicyFromQuotePayload($quote, $customer, $deviceQuote, $payment, $latestInsured): array
     {
+
+
+
         $emiratesIdNumber = ($latestInsured?->id_type == 'emiratesId') ? $latestInsured?->id_number : ($customer?->emirates_id_number ?? null);
         $paymentReferenceNumber = match (true) {
             $payment instanceof \App\Models\Payment => $payment?->paymentSplits?->first()?->paymentCharges?->transaction_id ?? null,
@@ -27,8 +36,11 @@ class NgiRequestBuilder
             default => null,
         } ?? '';
 
+        $customerMobileNumber = $this->applicationStorageService->getValueByKey(ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_MOBILE_NO) ?: null;
+        $customerEmailId = $this->applicationStorageService->getValueByKey(ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_EMAIL_ID) ?: null;
+
         return [
-            'client_reference_number' => $quote->code ?? null,
+            'client_reference_number' => "DEV-********",
             'quote_reference_number' => $quote->insurer_quote_number,
             'payment_reference_number' => $paymentReferenceNumber,
             'transaction_country' => 'UAE',
@@ -40,17 +52,15 @@ class NgiRequestBuilder
             'customer_info' => [
                 'customer_fname' => $quote->first_name ?? null,
                 'customer_lname' => $quote->last_name ?? null,
-                'customer_mobile_no' => $quote->mobile_no ?? null,
+                'customer_mobile_no' => $customerMobileNumber,
                 'customer_whatsapp_no' => null,
-                'customer_email_id' => $quote->email ?? null,
+                'customer_email_id' => $customerEmailId,
                 'customer_id_type' => 'EID',
                 'customer_id_no' => $this->formatEmiratesId($emiratesIdNumber),
-                'customer_id_expiry_date' => $customer?->emirates_id_expiry_date
-                    ? Carbon::parse($customer->emirates_id_expiry_date)->format('Y-m-d')
-                    : null,
-                'customer_address' => $customer?->address ?? null,
+                'customer_id_expiry_date' => null,
+                'customer_address' => null,
                 'customer_address_city' => null,
-                'customer_address_country' => 'UAE',
+                'customer_address_country' => null,
             ],
             'device_info' => [
                 'imei_no' => $deviceQuote?->imei ?? null,

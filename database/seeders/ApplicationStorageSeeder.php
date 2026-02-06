@@ -73,6 +73,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
         $this->seedDeviceSmartphonePolicyIssuanceSettings();
+        $this->seedPolicyIssuanceChiefDeputyOfficerContactDetails();
         $this->seedDeviceFailureEmailSettings();
         $this->seedLegacyPolicyKeys();
         $this->seedBranchData();
@@ -1198,6 +1199,28 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
                 'is_active' => 1,
             ],
+        );
+    }
+
+    private function seedPolicyIssuanceChiefDeputyOfficerContactDetails(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_MOBILE_NO],
+            [
+                'value' => '9710502732524',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_EMAIL_ID],
+            [
+                'value' => 'hitesh.motwani@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]
         );
     }
 
