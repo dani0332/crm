@@ -169,9 +169,6 @@ class ClaimDetailsUpdateRequest extends FormRequest
             if ($isHealthLob) {
                 $this->validateHealthFields($validator);
             }
-            if (! request()->claim_type_id) {
-                $validator->errors()->add('claim_type_id', 'Claim type is required.');
-            }
         });
     }
 
