@@ -39,7 +39,8 @@ class AdnicRequestBuilder
         $sponsorCategory = $healthUmafQuestionCollection->where('question_code', 'sponsorCategory')->first()['answer_text'] ?? null;
         $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()['answer_text'] ?? null;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()['answer_text'] ?? null;
-        $visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
+        //$visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
+        $visaType ='EXISTING VISA HOLDER';
         $customerClassification = AdnicEnum::CUSTOMER_CLASSIFICATION_NATURAL_PERSONS; // FIX Value
         $memberCategory = $sponsorCategory; // Member Category is same as Sponsor Category
 
