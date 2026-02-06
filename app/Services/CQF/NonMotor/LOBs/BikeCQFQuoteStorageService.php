@@ -14,6 +14,7 @@ use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
 {
@@ -58,13 +59,10 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         $quoteData['policy_start_date'] = $policyStartDate;
         $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
 
-        $newQuote = PersonalQuote::create($quoteData);
-
-        if ($newQuote) {
+        return DB::transaction(function () use ($quoteData, $quote) {
+            $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
-
             $this->copyBikeQuoteDetail($newQuote, $quote);
-
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
 
             LoggerService::info(self::class.' - Bike CQF renewal quote created successfully', [
@@ -73,9 +71,9 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
                 'previous_quote_id' => $quote->id,
                 'new_quote_id' => $newQuote->id,
             ]);
-        }
 
-        return $newQuote;
+            return $newQuote;
+        });
     }
 
     /**
@@ -106,13 +104,10 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         $quoteData['policy_start_date'] = $policyStartDate;
         $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
 
-        $newQuote = PersonalQuote::create($quoteData);
-
-        if ($newQuote) {
+        return DB::transaction(function () use ($quoteData, $quote) {
+            $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
-
             $this->copyCarQuoteToBikeQuoteDetail($newQuote, $quote);
-
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
 
             LoggerService::info(self::class.' - Bike CQF renewal quote created from car quote successfully', [
@@ -120,9 +115,9 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
                 'new_quote_uuid' => $newQuote->uuid,
                 'new_quote_id' => $newQuote->id,
             ]);
-        }
 
-        return $newQuote;
+            return $newQuote;
+        });
     }
 
     /**

@@ -13,6 +13,7 @@ use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class SavingsCQFQuoteStorageService implements CQFQuoteStorageInterface
 {
@@ -47,9 +48,8 @@ class SavingsCQFQuoteStorageService implements CQFQuoteStorageInterface
         $quoteData['policy_start_date'] = $policyStartDate;
         $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
 
-        $newQuote = PersonalQuote::create($quoteData);
-
-        if ($newQuote) {
+        return DB::transaction(function () use ($quoteData, $quote) {
+            $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copySavingsQuoteDetail($newQuote, $quote);
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Savings);
@@ -58,9 +58,9 @@ class SavingsCQFQuoteStorageService implements CQFQuoteStorageInterface
                 'previous_quote_uuid' => $quote->uuid,
                 'new_quote_uuid' => $newQuote->uuid,
             ]);
-        }
 
-        return $newQuote;
+            return $newQuote;
+        });
     }
 
     protected function copySavingsQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
