@@ -63,6 +63,20 @@ class CyberQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->when(request()->filled('api_issuance_status_id'), function ($q) {
+                $values = is_array(request('api_issuance_status_id')) 
+                    ? request('api_issuance_status_id') 
+                    : [request('api_issuance_status_id')];
+
+                $hasBlank = in_array('blank', $values);
+                $numericValues = array_filter($values, fn ($v) => $v !== 'blank' && is_numeric($v));
+
+                $q->where(fn ($subQuery) => $subQuery
+                    ->when(! empty($numericValues), fn ($q) => $q->whereIn('api_issuance_status_id', $numericValues))
+                    ->when($hasBlank, fn ($q) => $q->orWhereNull('api_issuance_status_id'))
+                );
+            })
+            ->filterIn('insurer_api_status_id')
             ->when(request()->filled('coverage_up_to'), function ($q) {
                 $q->whereHas('cyberQuote', function ($subQuery) {
                     $subQuery->where('coverage_id', request('coverage_up_to'));

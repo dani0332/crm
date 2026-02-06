@@ -54,6 +54,8 @@ class CyberQuoteController extends Controller
             'paymentStatuses' => $paymentStatuses,
             'cyberPlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::CYBER->id())->select(['id', 'code', 'text'])->get(),
             'cyberCoverages' => $cyberCoverages,
+            'apiIssuanceStatuses' => \App\Enums\PolicyIssuanceEnum::getAPIIssuanceStatuses(null, true),
+            'insurerApiStatuses' => app(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class)->getInsurerAPIStatuses(),
         ]);
     }
 
