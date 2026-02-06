@@ -227,6 +227,10 @@ class HealthTeamRoutingService
             [],
             $lead
         );
+        LoggerService::info('Checking GBP team min price for Non-AUH lead as first step', [
+            'lead_uuid' => $lead->uuid,
+            'premium' => $lead->price_starting_from,
+        ]);
 
         $gbpMinPrice = $this->getGbpTeamMinPrice();
         if ($gbpMinPrice !== null && $lead->price_starting_from >= $gbpMinPrice) {
@@ -236,6 +240,10 @@ class HealthTeamRoutingService
                 ['price_starting_from' => $lead->price_starting_from, 'gbp_min_price' => $gbpMinPrice],
                 $lead
             );
+
+            LoggerService::info("Price starting from ({$lead->price_starting_from}) is greater than or equal to GBP min price ({$gbpMinPrice}), assigning to GBP team", [
+                'lead_uuid' => $lead->uuid,
+            ]);
 
             return HealthTeamType::GBP;
         }
