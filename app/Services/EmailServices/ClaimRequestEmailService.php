@@ -195,11 +195,10 @@ class ClaimRequestEmailService extends BaseService
         $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
         $workflowType = WorkflowTypeEnum::CLAIM_SUB_STATUS_CUSTOMER_NOTIFICATION;
 
-        $subject = $claimRequest->code . ' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Request';
-        if($claimRequest->quote_type_id == QuoteTypeId::Health){
-            $subject = $claimRequest->code . ' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Reimbursement (Health)';
+        $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Request';
+        if ($claimRequest->quote_type_id == QuoteTypeId::Health) {
+            $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Reimbursement (Health)';
         }
-
 
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
