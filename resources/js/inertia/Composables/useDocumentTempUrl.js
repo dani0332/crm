@@ -16,13 +16,14 @@ export const useDocumentTempUrl = () => {
    * @param {string} filePath - The document file path to generate temporary URL for
    * @returns {Promise<void>}
    */
-  const openTempUrl = async filePath => {
+  const openTempUrl = async (filePath, isPolicyWordings = false) => {
     isLoading.value = true;
     showLoadingNotification();
 
     try {
       const requestData = {
         filePath,
+        isPolicyWordings,
       };
 
       const response = await axios.post(endpoint, requestData);
