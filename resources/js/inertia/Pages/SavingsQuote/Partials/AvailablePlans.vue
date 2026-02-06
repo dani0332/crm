@@ -410,7 +410,6 @@ const updateExchangeRate = (item, exchangeRate = null) => {
       if (isPlanSelected) {
         router.reload({
           preserveScroll: true,
-          only: ['quote'],
         });
       }
 

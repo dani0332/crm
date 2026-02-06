@@ -389,6 +389,9 @@ export function useSavingsPlans(options = {})
     } finally
     {
       availablePlansTable.isLoading = false;
+      router.reload({
+        preserveScroll: true,
+      });
     }
   };
 
