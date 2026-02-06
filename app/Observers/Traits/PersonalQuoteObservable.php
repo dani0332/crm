@@ -38,7 +38,7 @@ trait PersonalQuoteObservable
 
     private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'PersonalQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
     private const LOG_BIKE_ADVISOR_UPDATED_FAILED = 'PersonalQuoteObserver - dispatch BikeQuoteAdvisorUpdated event failed';
-    
+
     protected function handleQuoteStatusChange(PersonalQuote $personalQuote): void
     {
         if (checkPersonalQuotes($personalQuote->quoteType?->code)) {
