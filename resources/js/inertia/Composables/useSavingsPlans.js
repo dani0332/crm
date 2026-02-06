@@ -388,10 +388,6 @@ export function useSavingsPlans(options = {})
     } finally
     {
       availablePlansTable.isLoading = false;
-      // plansUpdateTrigger.value++;
-      // router.reload({
-      //   preserveScroll: true,
-      // });
     }
   };
 
@@ -650,10 +646,6 @@ export function useSavingsPlans(options = {})
       }
 
       await onLoadAvailablePlansData(quoteUuid);
-      // router.reload({
-      //   preserveScroll: true,
-      //   only: ['quote'],
-      // });
 
       return response;
     } catch (error)
@@ -737,7 +729,6 @@ export function useSavingsPlans(options = {})
       opt => opt.value === currencyValue,
     );
     form.currency_id = selectedOption?.id || null;
-    // form.currencyId = selectedOption?.id || null;
   };
 
   const syncTenureId = (form, tenureValue) =>
@@ -870,7 +861,6 @@ export function useSavingsPlans(options = {})
 
   const ecomDetail = computed(() =>
   {
-    // const _ = plansUpdateTrigger.value;
     const allPlans = sharedAvailablePlans.value || [];
     const quoteValue = quote?.value || quote;
     const selectedPlanId = quoteValue?.plan_id;
@@ -894,7 +884,7 @@ export function useSavingsPlans(options = {})
         providerName:
           foundPlan.providerName ||
           foundPlan.provider?.text ||
-          foundPlan.providerName,
+          null,
         planName: foundPlan.name || foundPlan.planName || foundPlan.text,
         actualPremium: parseFloat(
           foundPlan.actualPremium || foundPlan.totalPrice || 0,
@@ -919,7 +909,6 @@ export function useSavingsPlans(options = {})
 
   const totalAnnualPrice = computed(() =>
   {
-    // const _ = plansUpdateTrigger.value;
     const ecom = ecomDetail.value;
     if (!ecom) return 'N/A';
     const displayPrice = getEcomDisplayPrice(ecom);
@@ -935,9 +924,6 @@ export function useSavingsPlans(options = {})
 
   const totalPriceAED = computed(() =>
   {
-    // plansUpdateTrigger.value; // Track trigger
-    // exchangeRates.value; // Track exchange rates changes
-    // planRates.value; // Track plan rates changes
     const ecom = ecomDetail.value;
     if (!ecom) return 'N/A';
     const displayPrice = getEcomDisplayPrice(ecom);
@@ -954,9 +940,6 @@ export function useSavingsPlans(options = {})
 
   const getTotalAnnualPriceAED = computed(() =>
   {
-    // plansUpdateTrigger.value; // Track trigger
-    // exchangeRates.value; // Track exchange rates changes
-    // planRates.value; // Track plan rates changes
     const ecom = ecomDetail.value;
     if (!ecom) return 'N/A';
     const displayPrice = getEcomDisplayPrice(ecom);

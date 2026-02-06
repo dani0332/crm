@@ -2,6 +2,7 @@
 import SavingsCalculator from '@/inertia/Components/SavingsCalculator.vue';
 import SelectPlan from '@/inertia/Components/SelectPlan.vue';
 import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
+import { router } from '@inertiajs/vue3';
 import LazyCreatePlan from './CreatePlan.vue';
 import PlanDetails from './PlanDetails.vue';
 
@@ -28,7 +29,6 @@ const {
   // Helpers
   toTitleCase,
   formatNumber,
-  getEligibilityValue,
   getPaymentTermLabel,
   calculateTotalAnnualPrice,
   // Plans Data
@@ -131,13 +131,12 @@ const availablePlansTableColumns = reactive([
 ]);
 
 const selectedPlans = ref([]);
-const selectedPlanType = ref(null);
 const toggleLoader = ref(false);
 const viewButtonLoading = ref(false);
 const planDetails = ref(null);
 
 // Toggle plans visibility (Show/Hide)
-const onTogglePlans = toggle => {
+const onTogglePlans = async toggle => {
   toggleLoader.value = true;
 
   const planIds = [...new Set(selectedPlans.value.map(p => p.id))];
@@ -149,12 +148,12 @@ const onTogglePlans = toggle => {
       quote_uuid: props.quote.uuid,
       toggle: toggle,
     })
-    .then(response => {
+    .then(async response => {
       notification.success({
         title: 'Plans have been updated',
         position: 'top',
       });
-      onLoadAvailablePlansData();
+      await onLoadAvailablePlansData(props.quote.uuid);
       selectedPlans.value = [];
     })
     .catch(error => {
@@ -206,7 +205,7 @@ const handlePlanSelected = async plan => {
       only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
     });
   } catch (error) {
-    console.warn('Failed to reset exchange rate on plan selection:', error);
+    // Silently fail - exchange rate reset is optional
   }
 };
 
@@ -388,8 +387,7 @@ const updateExchangeRate = (item, exchangeRate = null) => {
         title: 'Failed to update exchange rate',
         position: 'top',
       });
-    })
-    .finally(() => {});
+    });
 };
 
 onMounted(() => {
@@ -454,22 +452,6 @@ onMounted(() => {
           </div>
 
           <div class="flex gap-2">
-            <!-- Show/Hide Button Group -->
-            <!-- <x-button-group v-if="selectedPlans.length > 0" size="sm">
-              <x-button
-                @click.prevent="onTogglePlans(false)"
-                :loading="toggleLoader"
-              >
-                Show
-              </x-button>
-              <x-button
-                @click.prevent="onTogglePlans(true)"
-                :loading="toggleLoader"
-              >
-                Hide
-              </x-button>
-            </x-button-group> -->
-
             <!-- Send OCA Email Button -->
             <x-tooltip placement="top" align="left">
               <x-button
@@ -745,9 +727,6 @@ onMounted(() => {
                   @click.prevent="updateExchangeRate(item, getRate(item))"
                 />
               </div>
-              <span v-else-if="ratesLoading && !getRate(item)">
-                <x-spinner size="xs" />
-              </span>
               <span v-else>{{ getRate(item) ?? 'N/A' }}</span>
             </template>
             <template #item-priceAed="item">
@@ -790,10 +769,7 @@ onMounted(() => {
                   size="sm"
                   color="primary"
                   outlined
-                  @click.prevent="
-                    selectedPlanType = 'normalPlans';
-                    fetchPlanDetails(item.id);
-                  "
+                  @click.prevent="fetchPlanDetails(item.id)"
                   :loading="viewButtonLoading"
                   class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
                 >
