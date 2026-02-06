@@ -3,6 +3,7 @@
 namespace App\Services\Quotes;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EnvEnum;
 use App\Enums\GenderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -304,8 +305,7 @@ class SavingsQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
-            'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL', config('constants.WEBSITE_URL').'/savings-insurance/quote/'),
-            'websiteURL' => config('constants.WEBSITE_URL'),
+            'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL'),
             'lookUpData' => $lookUpData,
             'localLookups' => $localLookups,
             ...$data,

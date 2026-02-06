@@ -106,7 +106,6 @@ class SavingsEmailService
             ? implode(',', $data['plan_ids'])
             : ($data['plan_ids'] ?? '');
         $dataSource = config('constants.SAVINGS_EMAIL_DATA_SOURCE', 'IMCRM');
-        $ecomQuoteLink = config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL', config('constants.WEBSITE_URL').'/savings-insurance/quote/').$lead->uuid;
 
         return (object) [
             // Lead-related data
