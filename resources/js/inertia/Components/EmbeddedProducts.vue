@@ -184,7 +184,7 @@ const openFile = file => {
     ? file.watermarked_doc_path
     : file.path;
 
-  return openTempUrl(documentPath, file.is_policy_wordings || false);
+  return openTempUrl(documentPath);
 };
 
 const viewDocument = id => {
