@@ -8,14 +8,11 @@ use App\Enums\PaymentStatusEnum;
 use App\Jobs\AdvisorPaymentNotificationJob;
 use App\Models\Payment;
 use App\Services\Logger\LoggerService;
-use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class SendPaymentEmailToAdvisor extends Command
 {
-    use TeamHierarchyTrait;
-
     /**
      * The name and signature of the console command.
      *
