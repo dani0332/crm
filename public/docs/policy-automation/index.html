@@ -241,6 +241,21 @@
                 The Policy Issuance Automation system is a comprehensive, modular architecture designed to automate the complete policy issuance workflow with insurance providers. It provides a <strong>standardized interface</strong> for integrating multiple insurers across different Lines of Business (LOB) - <strong>Health, Car, and Travel</strong>.
             </p>
 
+            <div style="background: linear-gradient(135deg, #27ae60, #229954); padding: 25px; border-radius: 10px; color: white; margin-bottom: 30px; border-left: 5px solid #fff;">
+                <h4 style="margin-bottom: 15px;">💳 Pre-Automation Payment Capture</h4>
+                <p style="margin: 0; line-height: 1.7;">
+                    <strong>Auto-capture is a critical prerequisite step</strong> that happens <strong>BEFORE</strong> the automation workflow begins:<br><br>
+                    ✓ <strong>Payment Flow:</strong> Customer pays online → Payment authorized → Background job processes split payment approval<br>
+                    ✓ <strong>Auto-Capture Executes:</strong> System captures authorized payment via Marshall/Tap API before automation starts<br>
+                    ✓ <strong>Success Path:</strong> If capture succeeds → Automation workflow is scheduled (<code>createPolicyIssuanceAutomation()</code>)<br>
+                    ✓ <strong>Failure Path:</strong> If capture fails → Quote marked with <code>AUTO_CAPTURE_FAILED</code> status and allocated to team for manual handling<br>
+                    ✓ <strong>Implementation:</strong> Located in <code>SplitPaymentService->processSplitPaymentApprove()</code> (lines 770-792, 1475-1487)<br>
+                    ✓ <strong>Retry Logic:</strong> Up to 3 attempts with 1-second delay between retries<br>
+                    ✓ <strong>Provider Support:</strong> Currently implemented for GIG (AXA) and potentially other providers<br><br>
+                    <strong>Note:</strong> This explains why documentation refers to "pre-captured" payments - the payment is already captured before any automation steps execute.
+                </p>
+            </div>
+
             <div style="background: linear-gradient(135deg, #3498db, #2980b9); padding: 25px; border-radius: 10px; color: white; margin-bottom: 30px;">
                 <h4 style="margin-bottom: 15px;">💡 Why This System?</h4>
                 <p style="margin: 0; line-height: 1.7;">

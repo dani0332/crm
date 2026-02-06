@@ -548,6 +548,13 @@ Content-Type: application/json</pre>
                     <span class="endpoint-url">/v3/policies</span>
                 </div>
                 
+                <div class="info-box" style="background: linear-gradient(135deg, #d4edda, #c3e6cb); border-left-color: #27ae60; margin-bottom: 20px;">
+                    <strong style="color: #155724;">💳 Pre-Captured Payment</strong>
+                    <p style="color: #155724; margin-top: 10px; margin-bottom: 0; line-height: 1.7;">
+                        <strong>Payment is already captured BEFORE this API call.</strong> Auto-capture executes during split payment approval process via <code>SplitPaymentService->processSplitPaymentApprove()</code>. If capture fails, automation is prevented from starting and quote is marked with <code>AUTO_CAPTURE_FAILED</code> status. Only payment amount and mode are sent in this request - no transaction_id is used.
+                    </p>
+                </div>
+                
                 <h4>Purpose</h4>
                 <p>Creates a car insurance policy with GIG using quote ID and payment information.</p>
 
