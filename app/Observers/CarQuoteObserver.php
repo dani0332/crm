@@ -13,6 +13,7 @@ use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\CourtesyEmailJob;
@@ -61,7 +62,7 @@ class CarQuoteObserver
      */
     public function updated(CarQuote $lead)
     {
-        $dirty = $lead->getDirty();
+        $dirty = $lead->getChanges();
         $changes = [];
 
         if (Route::currentRouteName() == 'car.update' && $this->checkIfAnythingDirty($dirty, ['first_name', 'last_name', 'email', 'mobile_no', 'updated_at', 'is_quote_locked', 'quote_updated_at', 'advisor_id'])) {
@@ -184,10 +185,24 @@ class CarQuoteObserver
 
         if (
             isset($dirty['quote_status_id']) &&
+            $lead->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
+            } catch (Exception $e) {
+                LoggerService::error('CarQuoteObserver - dispatch QuotePolicyBooked event failed', [
+                    'uuid' => $lead->uuid,
+                ], exception: $e);
+            }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicyBooked])
         ) {
             event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
+
         if (
             isset($dirty['quote_status_id']) &&
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
