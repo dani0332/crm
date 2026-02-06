@@ -1,6 +1,5 @@
 import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
 import { useFormatPrice } from '@/inertia/Composables/utilities';
-import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, reactive, ref } from 'vue';
 
@@ -19,6 +18,7 @@ const availablePlansTable = reactive({
 const planExchangeRate = ref(1);
 const sharedAvailablePlans = ref([]);
 const exchangeRates = ref({});
+const plansUpdateTrigger = ref(0);
 
 export function useSavingsPlans(options = {})
 {
@@ -381,7 +381,6 @@ export function useSavingsPlans(options = {})
 
       availablePlansTable.data = processedPlans;
       sharedAvailablePlans.value = processedPlans;
-      return processedPlans;
     } catch (err)
     {
       availablePlansTable.data = [];
@@ -389,9 +388,10 @@ export function useSavingsPlans(options = {})
     } finally
     {
       availablePlansTable.isLoading = false;
-      router.reload({
-        preserveScroll: true,
-      });
+      // plansUpdateTrigger.value++;
+      // router.reload({
+      //   preserveScroll: true,
+      // });
     }
   };
 
@@ -650,10 +650,10 @@ export function useSavingsPlans(options = {})
       }
 
       await onLoadAvailablePlansData(quoteUuid);
-      router.reload({
-        preserveScroll: true,
-        only: ['quote'],
-      });
+      // router.reload({
+      //   preserveScroll: true,
+      //   only: ['quote'],
+      // });
 
       return response;
     } catch (error)
@@ -736,7 +736,6 @@ export function useSavingsPlans(options = {})
     const selectedOption = currencyOptions.value.find(
       opt => opt.value === currencyValue,
     );
-    console.log(selectedOption);
     form.currency_id = selectedOption?.id || null;
     // form.currencyId = selectedOption?.id || null;
   };
@@ -871,6 +870,7 @@ export function useSavingsPlans(options = {})
 
   const ecomDetail = computed(() =>
   {
+    // const _ = plansUpdateTrigger.value;
     const allPlans = sharedAvailablePlans.value || [];
     const quoteValue = quote?.value || quote;
     const selectedPlanId = quoteValue?.plan_id;
@@ -919,6 +919,7 @@ export function useSavingsPlans(options = {})
 
   const totalAnnualPrice = computed(() =>
   {
+    // const _ = plansUpdateTrigger.value;
     const ecom = ecomDetail.value;
     if (!ecom) return 'N/A';
     const displayPrice = getEcomDisplayPrice(ecom);
@@ -934,6 +935,9 @@ export function useSavingsPlans(options = {})
 
   const totalPriceAED = computed(() =>
   {
+    // plansUpdateTrigger.value; // Track trigger
+    // exchangeRates.value; // Track exchange rates changes
+    // planRates.value; // Track plan rates changes
     const ecom = ecomDetail.value;
     if (!ecom) return 'N/A';
     const displayPrice = getEcomDisplayPrice(ecom);
@@ -948,8 +952,11 @@ export function useSavingsPlans(options = {})
     );
   });
 
-  const getTotalAnnualPriceAED = () =>
+  const getTotalAnnualPriceAED = computed(() =>
   {
+    // plansUpdateTrigger.value; // Track trigger
+    // exchangeRates.value; // Track exchange rates changes
+    // planRates.value; // Track plan rates changes
     const ecom = ecomDetail.value;
     if (!ecom) return 'N/A';
     const displayPrice = getEcomDisplayPrice(ecom);
@@ -962,6 +969,14 @@ export function useSavingsPlans(options = {})
       calculateTotalAnnualPrice({ actualPremium: priceInAED, paymentTerm }) ||
       0,
     );
+  });
+
+  const handlePageReload = () =>
+  {
+    router.reload({
+      preserveScroll: true,
+      only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
+    });
   };
 
   return {
@@ -1017,5 +1032,8 @@ export function useSavingsPlans(options = {})
     totalPriceAED,
     getTotalAnnualPriceAED,
     updateEcomDetailFromPlans,
+
+    plansUpdateTrigger,
+    handlePageReload
   };
 }

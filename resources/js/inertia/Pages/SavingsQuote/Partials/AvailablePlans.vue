@@ -216,7 +216,7 @@ const updatedExchangeRates = ref(new Set());
 //   return usdToCur ? Math.round((usdToAed / usdToCur) * 10000) / 10000 : null;
 // };
 
-const handlePlanSelected = plan => {
+const handlePlanSelected = async plan => {
   if (plan.insurerQuoteNo === '' || plan.insurerQuoteNo === null) {
     notification.error({
       title: 'Please select a plan with an insurer quote number',
@@ -229,11 +229,24 @@ const handlePlanSelected = plan => {
     selectedProviderPlan.value.providerName = plan.providerName;
     selectedProviderPlan.value.premium = plan.premium;
   }
-  // router.reload({
-  //   preserveState: true,
-  //   preserveScroll: true,
-  //   only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
-  // });
+
+  try {
+    await axios.post(
+      route('savings-plan-update-exchange-rate', {
+        quoteUID: props.quote.uuid,
+        exchangeRate: null,
+      }),
+    );
+    updatedExchangeRates.value.delete(plan.id);
+    planRates.value = {};
+    router.reload({
+      preserveScroll: true,
+      only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
+    });
+  } catch (error) {
+    console.warn('Failed to reset exchange rate on plan selection:', error);
+  }
+  // await onLoadAvailablePlansData(props.quote.uuid);
 };
 
 // Editable only for selected plan (non-AED)
@@ -752,6 +765,7 @@ onMounted(() => {
                 class="flex items-center justify-center gap-2"
               >
                 <x-input
+                  :key="`exchange-rate-${item.id}`"
                   :model-value="getRate(item)"
                   @update:model-value="val => setRate(item.id, val)"
                   type="number"

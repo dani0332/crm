@@ -1061,7 +1061,7 @@ const handlePlanSelected = plan => {
               >
                 <dt class="font-medium uppercase">Total Annual Price AED</dt>
                 <dd>
-                  {{ getTotalAnnualPriceAED() }}
+                  {{ getTotalAnnualPriceAED }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
