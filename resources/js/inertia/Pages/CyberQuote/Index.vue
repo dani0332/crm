@@ -201,12 +201,26 @@ const onDataExport = () => {
   };
 
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    if (result)
-      setTimeout(() => {
-        exportLoader.value = false;
-      }, 1000);
-  });
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result) {
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+      }
+    })
+    .catch(error => {
+      exportLoader.value = false;
+      
+      const errorMessage = error?.response?.data?.message || 
+                          error?.response?.data?.errors?.flash?.[0] ||
+                          'Export failed. Please try again.';
+      
+      notification.error({
+        title: errorMessage,
+        position: 'top',
+      });
+    });
 };
 
 const advisorOptions = computed(() => {
