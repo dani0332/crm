@@ -1,18 +1,8 @@
 import { useSavingsCalculator } from '@/inertia/Composables/useSavingsCalculator';
 import { useFormatPrice } from '@/inertia/Composables/utilities';
+import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, reactive, ref } from 'vue';
-
-/**
- * Comprehensive composable for savings plans business logic
- * @param {Object} options - Configuration options
- * @param {Object} options.quote - Current quote object
- * @param {Object} options.localLookups - Local lookup data
- * @param {Object} options.lookUpData - Additional lookup data
- * @param {Array} options.insuranceProviders - Insurance providers list
- * @param {Object} options.notification - Notification instance
- * @returns {Object} All reactive state, computed properties, and functions
- */
 
 const modals = reactive({
   planDetails: false,
@@ -21,7 +11,11 @@ const modals = reactive({
   savingsCalculator: false,
 });
 
-// Global shared state for ecom details (shared across all component instances)
+const availablePlansTable = reactive({
+  data: [],
+  isLoading: false,
+});
+
 const planExchangeRate = ref(1);
 const sharedAvailablePlans = ref([]);
 const exchangeRates = ref({});
@@ -36,43 +30,22 @@ export function useSavingsPlans(options = {})
     notification,
   } = options;
 
-  // =========================================================================
-  // 1. REACTIVE STATE
-  // =========================================================================
-
   const ridersData = ref([]);
   const providerPlans = ref([]);
   const providerPlansLoading = ref(false);
-  const availablePlansTable = reactive({
-    data: [],
-    isLoading: false,
-  });
-  const planDetails = ref(null);
-
   const planRates = ref({});
-  const ratesLoading = ref(false);
 
-  // =========================================================================
-  // 2. LOOKUP OPTIONS (Computed)
-  // =========================================================================
-
-  /**
-   * Currency options from localLookups
-   */
   const currencyOptions = computed(() =>
   {
     return (
       localLookups.value?.currencies?.map(item => ({
-        value: item.id || item.code,
+        value: item.code || item.id,
         label: item.text,
         id: item.id,
       })) || []
     );
   });
 
-  /**
-   * Investment frequency options from localLookups
-   */
   const investmentFrequencyOptions = computed(() =>
   {
     return (
@@ -87,9 +60,6 @@ export function useSavingsPlans(options = {})
     );
   });
 
-  /**
-   * Payment term options from localLookups
-   */
   const paymentTermOptions = computed(() =>
   {
     return (
@@ -100,9 +70,6 @@ export function useSavingsPlans(options = {})
     );
   });
 
-  /**
-   * Tenure of savings options from lookUpData (1-30 years)
-   */
   const tenureOfSavingsOptions = computed(() =>
   {
     if (lookUpData.value?.savingsTenure?.length)
@@ -113,7 +80,6 @@ export function useSavingsPlans(options = {})
         id: item.id,
       }));
     }
-    // Fallback: generate 1-30 years
     const options = [];
     for (let i = 1; i <= 30; i++)
     {
@@ -126,9 +92,6 @@ export function useSavingsPlans(options = {})
     return options;
   });
 
-  /**
-   * Plan type options from localLookups
-   */
   const planTypeOptions = computed(() =>
   {
     return (
@@ -142,9 +105,6 @@ export function useSavingsPlans(options = {})
     );
   });
 
-  /**
-   * Insurance provider options
-   */
   const insuranceProviderOptions = computed(() =>
   {
     return (
@@ -155,15 +115,6 @@ export function useSavingsPlans(options = {})
     );
   });
 
-  // =========================================================================
-  // 3. HELPER FUNCTIONS
-  // =========================================================================
-
-  /**
-   * Map payment term value to frequency label
-   * @param {Number} term - Payment term (0, 1, 3, 6, 12)
-   * @returns {String} Frequency label
-   */
   const getFrequencyFromPaymentTerm = term =>
   {
     const termValue = parseInt(term);
@@ -177,11 +128,6 @@ export function useSavingsPlans(options = {})
     return map[termValue] || 'Monthly';
   };
 
-  /**
-   * Get payment term display label
-   * @param {Number} paymentTerm - Payment term value
-   * @returns {String} Display label or 'N/A'
-   */
   const getPaymentTermLabel = paymentTerm =>
   {
     const term = parseInt(paymentTerm);
@@ -195,11 +141,6 @@ export function useSavingsPlans(options = {})
     return labels[term] || 'N/A';
   };
 
-  /**
-   * Get payment term display title (for Show.vue)
-   * @param {Number} paymentTerm - Payment term value
-   * @returns {String|null} Display title
-   */
   const getPaymentTermTitle = paymentTerm =>
   {
     if (!paymentTerm && paymentTerm !== 0) return null;
@@ -214,17 +155,10 @@ export function useSavingsPlans(options = {})
     return map[term] || null;
   };
 
-  /**
-   * Check if investment frequency is lumpsum type
-   * @param {String|Number} frequency - Frequency value
-   * @param {Array} options - Investment frequency options (optional, uses computed if not provided)
-   * @returns {Boolean}
-   */
   const isLumpsumFrequency = (frequency, options = null) =>
   {
     if (!frequency) return false;
 
-    // Check by string value
     if (
       typeof frequency === 'string' &&
       frequency.toLowerCase() === 'lumpsum'
@@ -233,7 +167,6 @@ export function useSavingsPlans(options = {})
       return true;
     }
 
-    // Check by comparing with options
     const optionsToUse = options || investmentFrequencyOptions.value;
     const selectedOption = optionsToUse.find(
       opt => opt.value === frequency || opt.id === frequency,
@@ -241,22 +174,12 @@ export function useSavingsPlans(options = {})
     return selectedOption?.label?.toLowerCase() === 'lumpsum';
   };
 
-  /**
-   * Format price with commas and decimals
-   * @param {Number} value - Price value
-   * @returns {String} Formatted price
-   */
   const formatPrice = value =>
   {
     if (!value && value !== 0) return '';
     return useFormatPrice(value, true);
   };
 
-  /**
-   * Format number with 2 decimal places
-   * @param {Number} value - Number to format
-   * @returns {String} Formatted number or 'N/A'
-   */
   const formatNumber = value =>
   {
     if (value === 'N/A' || value === null || value === undefined) return 'N/A';
@@ -266,12 +189,6 @@ export function useSavingsPlans(options = {})
     }).format(value);
   };
 
-  /**
-   * Extract eligibility value from plan
-   * @param {Object} plan - Plan object
-   * @param {String} code - Eligibility code
-   * @returns {String} Eligibility value or 'N/A'
-   */
   const getEligibilityValue = (plan, code) =>
   {
     if (plan?.eligibilities && Array.isArray(plan.eligibilities))
@@ -282,52 +199,37 @@ export function useSavingsPlans(options = {})
     return 'N/A';
   };
 
-  /**
-   * Calculate total annual price based on payment term
-   * @param {Object} item - Plan item with actualPremium and paymentTerm
-   * @returns {Number|null} Total annual price
-   */
   const calculateTotalAnnualPrice = item =>
   {
     const price = parseFloat(item.actualPremium || item.price || 0);
     if (!price) return null;
 
     const paymentTerm = parseInt(item.paymentTerm);
-    let multiplier = 1; // Default to annual/lumpsum
+    let multiplier = 1;
 
     if (paymentTerm === 12)
     {
-      multiplier = 12; // Monthly - multiply by 12
+      multiplier = 12;
     } else if (paymentTerm === 3)
     {
-      multiplier = 4; // Quarterly - multiply by 4
+      multiplier = 4;
     } else if (paymentTerm === 6)
     {
-      multiplier = 2; // Semi-Annual - multiply by 2
+      multiplier = 2;
     } else if (paymentTerm === 1 || paymentTerm === 0)
     {
-      multiplier = 1; // Annual or Lumpsum - multiply by 1
+      multiplier = 1;
     }
 
     return price * multiplier;
   };
 
-  /**
-   * Convert text to title case
-   * @param {String} str - String to convert
-   * @returns {String} Title cased string
-   */
   const toTitleCase = str =>
   {
     if (!str) return '';
     return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
   };
 
-  /**
-   * Find currency option by id or value
-   * @param {String|Number} currencyId - Currency ID or value
-   * @returns {Object|null} Currency option or null
-   */
   const findCurrencyOption = currencyId =>
   {
     if (!currencyId) return null;
@@ -338,11 +240,6 @@ export function useSavingsPlans(options = {})
     );
   };
 
-  /**
-   * Find investment frequency option by value or id
-   * @param {String|Number} frequency - Frequency value or id
-   * @returns {Object|null} Investment frequency option or null
-   */
   const findInvestmentFrequencyOption = frequency =>
   {
     if (!frequency) return null;
@@ -353,11 +250,6 @@ export function useSavingsPlans(options = {})
     );
   };
 
-  /**
-   * Calculate plan payout using savings calculator
-   * @param {Object} planData - Plan data with amount, rate, years, paymentTerm, investmentFrequency
-   * @returns {Object|null} { payout, formattedPayout } or null if validation fails
-   */
   const calculatePlanPayout = planData =>
   {
     if (!planData) return null;
@@ -372,7 +264,6 @@ export function useSavingsPlans(options = {})
     );
     const years = parseInt(planData.tenure || planData.tenure_of_savings || 0);
 
-    // Validate required fields
     if (!amount || !rate || !years)
     {
       if (notification)
@@ -385,7 +276,6 @@ export function useSavingsPlans(options = {})
       return null;
     }
 
-    // Determine frequency based on investment type
     const frequencyValue =
       planData.investmentFrequency || planData.investment_frequency;
     const isLumpsum = isLumpsumFrequency(frequencyValue);
@@ -395,7 +285,6 @@ export function useSavingsPlans(options = {})
         planData.paymentTerm || planData.payment_term,
       );
 
-    // Calculate payout
     const payout = calculatePayout({ amount, rate, years, frequency });
 
     return {
@@ -404,21 +293,11 @@ export function useSavingsPlans(options = {})
     };
   };
 
-  // =========================================================================
-  // 4. RIDERS MANAGEMENT
-  // =========================================================================
-
-  /**
-   * Show riders if available
-   */
   const showRiders = computed(() =>
   {
     return ridersData.value.length > 0;
   });
 
-  /**
-   * Calculate total rider price from active riders
-   */
   const totalRiderPrice = computed(() =>
   {
     return ridersData.value
@@ -430,10 +309,6 @@ export function useSavingsPlans(options = {})
       }, 0);
   });
 
-  /**
-   * Fetch rider details for a plan
-   * @param {Number} planId - Plan ID
-   */
   const getRiderDetails = async planId =>
   {
     if (!planId) return;
@@ -442,7 +317,6 @@ export function useSavingsPlans(options = {})
     {
       const res = await axios.get(`/personal-quotes/savings/riders/${planId}`);
 
-      // Map riders data
       ridersData.value = res.data.map(rider => ({
         id: rider.id,
         riderId: rider.rider_id,
@@ -470,11 +344,6 @@ export function useSavingsPlans(options = {})
     }
   };
 
-  /**
-   * Process riders for API submission
-   * @param {Array} riders - Riders data (optional, uses ridersData if not provided)
-   * @returns {Array} Processed riders array
-   */
   const processRidersForAPI = (riders = null) =>
   {
     const ridersToProcess = riders || ridersData.value;
@@ -488,23 +357,7 @@ export function useSavingsPlans(options = {})
     }));
   };
 
-  /**
-   * Reset riders data
-   */
-  const resetRiders = () =>
-  {
-    ridersData.value = [];
-  };
 
-  // =========================================================================
-  // 5. PLANS DATA MANAGEMENT
-  // =========================================================================
-
-  /**
-   * Load available plans data
-   * @param {String} quoteUuid - Quote UUID
-   * @returns {Promise<Array>} Available plans
-   */
   const onLoadAvailablePlansData = async (savingQuoteUuid = null) =>
   {
     let quoteUuid = savingQuoteUuid || quote.uuid;
@@ -514,7 +367,6 @@ export function useSavingsPlans(options = {})
       const url = `/quotes/savings/available-plans/${quoteUuid}`;
       const { data } = await axios.post(url, { jsonData: true });
 
-      // Process flat array
       const processedPlans = data.map(plan => ({
         ...plan,
         currency: plan.currencyName || plan.currency || 'USD',
@@ -528,7 +380,6 @@ export function useSavingsPlans(options = {})
       }));
 
       availablePlansTable.data = processedPlans;
-      // Update global shared plans so ecomDetail computed property can reactively update
       sharedAvailablePlans.value = processedPlans;
       return processedPlans;
     } catch (err)
@@ -541,17 +392,10 @@ export function useSavingsPlans(options = {})
     }
   };
 
-  /**
-   * Get plan details by ID
-   * @param {Number} planId - Plan ID
-   * @param {String} quoteUuid - Quote UUID
-   * @returns {Promise<Object|null>} Plan details
-   */
   const getPlanDetails = async (planId, quoteUuid) =>
   {
     try
     {
-      // First try to find in availablePlansTable
       const foundPlan = availablePlansTable.data.find(
         plan => plan.id === planId,
       );
@@ -560,7 +404,6 @@ export function useSavingsPlans(options = {})
         return foundPlan;
       }
 
-      // If not found, fetch from API
       const { data } = await axios.get(
         `/savings/${quoteUuid}/plan_details/${planId}`,
       );
@@ -579,11 +422,6 @@ export function useSavingsPlans(options = {})
     }
   };
 
-  /**
-   * Fetch provider plans by provider ID
-   * @param {Number} providerId - Provider ID
-   * @returns {Promise<Array>} Provider plans
-   */
   const fetchProviderPlans = async providerId =>
   {
     if (!providerId)
@@ -601,8 +439,12 @@ export function useSavingsPlans(options = {})
 
       if (data.plans)
       {
-        providerPlans.value = data.plans;
-        return data.plans;
+        providerPlans.value = data.plans.filter(plan =>
+          !availablePlansTable.data.some(
+            existingPlan => existingPlan.id === plan.id,
+          ),
+        );
+        return providerPlans.value;
       }
 
       providerPlans.value = [];
@@ -624,16 +466,6 @@ export function useSavingsPlans(options = {})
     }
   };
 
-  // =========================================================================
-  // 6. API PAYLOAD BUILDING
-  // =========================================================================
-
-  /**
-   * Build API payload for plan creation/update
-   * @param {Object} planData - Plan data
-   * @param {Object} options - Additional options
-   * @returns {Object} API payload
-   */
   const buildPlanPayload = (planData, options = {}) =>
   {
     const { isUpdate = false } = options;
@@ -649,6 +481,8 @@ export function useSavingsPlans(options = {})
           isManualUpdate: planData.isManualUpdate || false,
           insurerQuoteNo: planData.insurerQuoteNo || '',
           investmentAmount: parseFloat(planData.investmentAmount) || 0,
+          actualPremium: parseFloat(planData.actualPremium) || 0,
+          discountAmount: parseFloat(planData.discountAmount) || 0,
           currency: planData.currency || 'AED',
           currencyId: planData.currencyId,
           paymentTerm: parseInt(planData.paymentTerm) || 0,
@@ -668,44 +502,38 @@ export function useSavingsPlans(options = {})
     };
   };
 
-  /**
-   * Update plan via API - unified function for plan updates
-   * @param {Object} planDetails - Plan details object
-   * @param {String} quoteUuid - Quote UUID
-   * @param {Object} options - Additional options (riders, etc.)
-   * @returns {Promise} API response promise
-   */
   const updatePlan = async (planDetails, quoteUuid, options = {}) =>
   {
     if (!planDetails || !quoteUuid)
     {
-      throw new Error('Plan details and quote UUID are required');
+      notification.error({
+        title: 'Error',
+        message: 'Plan details and quote UUID are required',
+        position: 'top',
+      });
+      return;
     }
 
-    // Use helper functions to find options
     const investmentFrequencyOption = findInvestmentFrequencyOption(
       planDetails.investmentFrequency,
     );
     const currencyOption = findCurrencyOption(planDetails.currencyId);
 
-    // Process riders if provided
     const processedRiders = options.riders
       ? processRidersForAPI(options.riders)
       : processRidersForAPI(ridersData.value);
 
-    // Build payload using composable helper
     const apiPayload = buildPlanPayload(
       {
         quoteUUID: quoteUuid,
+        actualPremium: planDetails.actualPremium,
+        discountAmount: planDetails.discountAmount,
         planId: planDetails.id || planDetails.planId,
         isDisabled: planDetails.isDisabled || false,
         isManualUpdate: planDetails.isManualUpdate || false,
         insurerQuoteNo: planDetails.insurerQuoteNo || '',
         investmentAmount: planDetails.actualPremium,
-        currency:
-          currencyOption?.value ||
-          currencyOption?.label ||
-          planDetails.currency ||
+        currency: planDetails.currency ||
           'AED',
         currencyId: planDetails.currencyId,
         paymentTerm: planDetails.paymentTerm,
@@ -721,7 +549,6 @@ export function useSavingsPlans(options = {})
       { isUpdate: true },
     );
 
-    // Make API call
     try
     {
       const response = await axios.post(
@@ -747,7 +574,6 @@ export function useSavingsPlans(options = {})
           position: 'top',
         });
 
-        // Show validation errors if present
         if (error.response?.data?.errors)
         {
           Object.keys(error.response.data.errors).forEach(function (key)
@@ -763,13 +589,6 @@ export function useSavingsPlans(options = {})
     }
   };
 
-  /**
-   * Create plan via API - unified function for plan creation
-   * @param {Object} formData - Form data object (from Inertia form or plain object)
-   * @param {String} quoteUuid - Quote UUID
-   * @param {Object} options - Additional options (riders, etc.)
-   * @returns {Promise} API response promise
-   */
   const createPlan = async (formData, quoteUuid, options = {}) =>
   {
     if (!formData || !quoteUuid)
@@ -777,17 +596,14 @@ export function useSavingsPlans(options = {})
       throw new Error('Form data and quote UUID are required');
     }
 
-    // Use helper function to find investment frequency option
     const investmentFrequencyOption = findInvestmentFrequencyOption(
       formData.investment_frequency,
     );
 
-    // Process riders if provided
     const processedRiders = options.riders
       ? processRidersForAPI(options.riders)
       : processRidersForAPI(ridersData.value);
 
-    // Build payload using composable helper
     const apiPayload = buildPlanPayload(
       {
         quoteUUID: quoteUuid,
@@ -800,7 +616,7 @@ export function useSavingsPlans(options = {})
             : true,
         insurerQuoteNo: formData.insurer_quote_no || '',
         investmentAmount: formData.investment_amount || formData.actual_premium,
-        currency: formData.currency || 'AED',
+        currency: formData.currency,
         currencyId: formData.currency_id,
         paymentTerm: formData.payment_term,
         tenure: formData.tenure_of_savings,
@@ -815,7 +631,6 @@ export function useSavingsPlans(options = {})
       { isUpdate: false },
     );
 
-    // Make API call
     try
     {
       const response = await axios.post(
@@ -834,7 +649,7 @@ export function useSavingsPlans(options = {})
       await onLoadAvailablePlansData(quoteUuid);
       router.reload({
         preserveScroll: true,
-        only: ['availablePlansTable.data'],
+        only: ['quote'],
       });
 
       return response;
@@ -847,7 +662,6 @@ export function useSavingsPlans(options = {})
           position: 'top',
         });
 
-        // Show validation errors if present
         if (error.response?.data?.errors)
         {
           Object.keys(error.response.data.errors).forEach(function (key)
@@ -863,14 +677,6 @@ export function useSavingsPlans(options = {})
     }
   };
 
-  /**
-   * Toggle plan visibility (hide/show) via API
-   * @param {Number} planId - Plan ID
-   * @param {String} quoteUuid - Quote UUID
-   * @param {Boolean} isDisabled - Whether plan should be disabled (hidden)
-   * @param {Number} providerId - Provider ID (optional, will try to get from planDetails if not provided)
-   * @returns {Promise} API response promise
-   */
   const togglePlanVisibility = async (
     planId,
     quoteUuid,
@@ -880,7 +686,12 @@ export function useSavingsPlans(options = {})
   {
     if (!planId || !quoteUuid)
     {
-      throw new Error('Plan ID and quote UUID are required');
+      notification.error({
+        title: 'Error',
+        message: 'Plan ID or quote UUID is required',
+        position: 'top',
+      });
+      return;
     }
 
     try
@@ -889,9 +700,9 @@ export function useSavingsPlans(options = {})
         route('savings-plan-toggle-visibility'),
         {
           quoteUID: quoteUuid,
-          providerId: providerId || null, // Will be set by backend if not provided
+          providerId: providerId || null,
           planId: planId,
-          isDisabled: isDisabled, // true = hide, false = show
+          isDisabled: isDisabled,
         },
       );
 
@@ -914,33 +725,19 @@ export function useSavingsPlans(options = {})
           position: 'top',
         });
       }
-      throw error;
     }
   };
 
-  // =========================================================================
-  // 7. FORM SYNCHRONIZATION HELPERS
-  // =========================================================================
-
-  /**
-   * Sync currency ID from currency value
-   * @param {Object} form - Form object
-   * @param {String} currencyValue - Currency value
-   */
   const syncCurrencyId = (form, currencyValue) =>
   {
     const selectedOption = currencyOptions.value.find(
       opt => opt.value === currencyValue,
     );
+    console.log(selectedOption);
     form.currency_id = selectedOption?.id || null;
-    form.currencyId = selectedOption?.id || null;
+    // form.currencyId = selectedOption?.id || null;
   };
 
-  /**
-   * Sync tenure ID from tenure value
-   * @param {Object} form - Form object
-   * @param {Number} tenureValue - Tenure value
-   */
   const syncTenureId = (form, tenureValue) =>
   {
     const selectedOption = tenureOfSavingsOptions.value.find(
@@ -950,11 +747,6 @@ export function useSavingsPlans(options = {})
     form.tenureId = selectedOption?.id || null;
   };
 
-  /**
-   * Sync investment frequency ID from frequency value
-   * @param {Object} form - Form object
-   * @param {String|Number} frequencyValue - Frequency value
-   */
   const syncInvestmentFrequencyId = (form, frequencyValue) =>
   {
     const selectedOption = investmentFrequencyOptions.value.find(
@@ -964,21 +756,14 @@ export function useSavingsPlans(options = {})
     form.investmentFrequencyId = selectedOption?.id || null;
   };
 
-  /**
-   * Auto-select payment term based on investment frequency
-   * @param {Object} form - Form object
-   * @param {String|Number} frequency - Investment frequency
-   */
   const syncPaymentTermByFrequency = (form, frequency) =>
   {
     const checkIsLumpsum = isLumpsumFrequency(frequency);
 
-    // Find Single Payment option by label
     const singlePaymentOption = paymentTermOptions.value.find(opt =>
       opt.label?.toLowerCase().includes('single'),
     );
 
-    // Auto-select payment term based on frequency
     if (checkIsLumpsum && singlePaymentOption)
     {
       form.payment_term = singlePaymentOption.value;
@@ -990,18 +775,10 @@ export function useSavingsPlans(options = {})
     }
   };
 
-  // =========================================================================
-  // 8. EXCHANGE RATE MANAGEMENT (For Show.vue & AvailablePlans)
-  // =========================================================================
-
-  /**
-   * Fetch exchange rates from API
-   */
   const fetchExchangeRates = async () =>
   {
     if (Object.keys(exchangeRates.value).length > 0) return;
 
-    ratesLoading.value = true;
     try
     {
       const { data } = await axios.get('https://open.er-api.com/v6/latest/USD');
@@ -1011,45 +788,63 @@ export function useSavingsPlans(options = {})
       }
     } catch (e)
     {
-      notification.error({
-        title: 'Failed to fetch exchange rates',
-        position: 'top',
-      });
-    } finally
-    {
-      ratesLoading.value = false;
+      if (notification)
+      {
+        notification.error({
+          title: 'Failed to fetch exchange rates',
+          position: 'top',
+        });
+      }
     }
   };
 
-  /**
-   * Get exchange rate for a plan item
-   * @param {Object} item - Plan item with currency
-   * @returns {Number|null} Exchange rate or null
-   */
+  const isSelectedPlan = (item, selectedPlanId = null) =>
+  {
+    const quoteValue = quote?.value || quote;
+    const planId = selectedPlanId !== null ? selectedPlanId : quoteValue?.plan_id;
+
+    if (!planId || !item) return false;
+
+    return (
+      String(item.id) === String(planId) ||
+      String(item.planId) === String(planId) ||
+      String(item.plan_id) === String(planId)
+    );
+  };
+
   const getExchangeRate = item =>
   {
     const id = item.id;
     const cur = (item.currency || 'USD').toUpperCase();
-    const usdToAed = exchangeRates.value['AED'] || null;
+    const quoteValue = quote?.value || quote;
 
-    // Use user-edited rate if exists
+    const isPlanSelected = isSelectedPlan(item);
+
+    if (isPlanSelected)
+    {
+      const quoteExchangeRate = quoteValue?.exchange_rate ||
+        quoteValue?.savings_quote?.exchange_rate ||
+        quoteValue?.savingsQuote?.exchange_rate;
+
+      if (quoteExchangeRate !== null && quoteExchangeRate !== undefined)
+      {
+        return parseFloat(quoteExchangeRate);
+      }
+    }
+
     if (planRates.value[id] !== undefined) return planRates.value[id];
 
-    if (!usdToAed) return null; // API not loaded yet
+    const usdToAed = exchangeRates.value['AED'] || null;
+
+    if (!usdToAed) return null;
 
     if (cur === 'AED') return 1;
     if (cur === 'USD') return Math.round(usdToAed * 10000) / 10000;
 
-    // Other currencies: rate = usdToAed / (USD to Currency)
     const usdToCur = exchangeRates.value[cur];
     return usdToCur ? Math.round((usdToAed / usdToCur) * 10000) / 10000 : null;
   };
 
-  /**
-   * Set custom exchange rate for a plan
-   * @param {Number} planId - Plan ID
-   * @param {Number} rate - Exchange rate
-   */
   const setExchangeRate = (planId, rate) =>
   {
     const num = parseFloat(rate);
@@ -1059,36 +854,18 @@ export function useSavingsPlans(options = {})
     }
   };
 
-  /**
-   * Convert amount to AED
-   * @param {Number} amount - Amount to convert
-   * @param {Object} item - Plan item with currency
-   * @returns {Number|null} Amount in AED
-   */
   const convertToAED = (amount, item) =>
   {
     const rate = getExchangeRate(item);
     return rate ? Math.round(amount * rate * 100) / 100 : null;
   };
 
-  // =========================================================================
-  // 9. ECOM DETAILS MANAGEMENT
-  // =========================================================================
-  // Note: planExchangeRate and sharedAvailablePlans are global shared state
-  // ecomDetail is a computed property that reactively derives from sharedAvailablePlans and quote
-
-  /**
-   * Get ecom display price from plan item
-   */
   const getEcomDisplayPrice = item =>
   {
     if (!item) return 0;
     return parseFloat(item.actualPremium || item.totalPrice || 0);
   };
 
-  /**
-   * Computed property: ecomDetail automatically updates when sharedAvailablePlans or quote.plan_id changes
-   */
   const ecomDetail = computed(() =>
   {
     const allPlans = sharedAvailablePlans.value || [];
@@ -1102,10 +879,7 @@ export function useSavingsPlans(options = {})
 
     const foundPlan = allPlans.find(plan =>
     {
-      const matchesId =
-        String(plan.id) === String(selectedPlanId) ||
-        String(plan.planId) === String(selectedPlanId) ||
-        String(plan.plan_id) === String(selectedPlanId);
+      const matchesId = isSelectedPlan(plan, selectedPlanId);
       const isNotDisabled = !plan.isDisabled;
       return matchesId && isNotDisabled;
     });
@@ -1135,18 +909,11 @@ export function useSavingsPlans(options = {})
     return null;
   });
 
-  /**
-   * Update sharedAvailablePlans (for backward compatibility and manual updates)
-   * @param {Array} allPlans - Array of plans to set
-   */
   const updateEcomDetailFromPlans = (allPlans = []) =>
   {
     sharedAvailablePlans.value = allPlans;
   };
 
-  /**
-   * Calculate total annual price for ecom detail
-   */
   const totalAnnualPrice = computed(() =>
   {
     const ecom = ecomDetail.value;
@@ -1178,9 +945,6 @@ export function useSavingsPlans(options = {})
     );
   });
 
-  /**
-   * Get total annual price in AED
-   */
   const getTotalAnnualPriceAED = () =>
   {
     const ecom = ecomDetail.value;
@@ -1197,30 +961,20 @@ export function useSavingsPlans(options = {})
     );
   };
 
-  // =========================================================================
-  // RETURN ALL EXPORTS
-  // =========================================================================
-
   return {
-    // State
     ridersData,
     providerPlans,
     providerPlansLoading,
     availablePlansTable,
-    planDetails,
     modals,
     exchangeRates,
     planRates,
-    ratesLoading,
-    // Lookup Options
     currencyOptions,
     investmentFrequencyOptions,
     paymentTermOptions,
     tenureOfSavingsOptions,
     planTypeOptions,
     insuranceProviderOptions,
-
-    // Helper Functions
     getFrequencyFromPaymentTerm,
     getPaymentTermLabel,
     getPaymentTermTitle,
@@ -1233,38 +987,25 @@ export function useSavingsPlans(options = {})
     findCurrencyOption,
     findInvestmentFrequencyOption,
     calculatePlanPayout,
-
-    // Riders
     showRiders,
     totalRiderPrice,
     getRiderDetails,
     processRidersForAPI,
-    resetRiders,
-
-    // Plans Data
     onLoadAvailablePlansData,
     getPlanDetails,
     fetchProviderPlans,
-
-    // API
-    buildPlanPayload,
     updatePlan,
     createPlan,
     togglePlanVisibility,
-
-    // Form Sync
     syncCurrencyId,
     syncTenureId,
     syncInvestmentFrequencyId,
     syncPaymentTermByFrequency,
-
-    // Exchange Rates (for Show.vue & AvailablePlans)
     fetchExchangeRates,
     getExchangeRate,
     setExchangeRate,
     convertToAED,
-
-    // Ecom Details
+    isSelectedPlan,
     ecomDetail,
     planExchangeRate,
     sharedAvailablePlans,

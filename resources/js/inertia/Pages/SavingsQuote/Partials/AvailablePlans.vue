@@ -42,6 +42,7 @@ const {
   convertToAED,
   exchangeRates,
   planRates,
+  isSelectedPlan,
 } = useSavingsPlans({
   quote: props.quote,
   localLookups: computed(() => props.localLookups),
@@ -178,6 +179,9 @@ const selectedProviderPlan = ref({
   providerName: props.quote?.plans?.providerName,
   premium: props.quote?.plans?.premium,
 });
+
+// Track which plans have had their exchange rates updated
+const updatedExchangeRates = ref(new Set());
 
 // Fetch rates from free public API (no key required)
 // const fetchExchangeRates = async () => {
@@ -372,10 +376,71 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 
+const updateExchangeRate = (item, exchangeRate = null) => {
+  const currentRate = exchangeRate !== null ? exchangeRate : getRate(item);
+
+  if (!currentRate || currentRate <= 0) {
+    notification.error({
+      title: 'Please enter a valid exchange rate',
+      position: 'top',
+    });
+    return;
+  }
+
+  // Check if this is the selected plan
+  const isPlanSelected = isSelectedPlan(item);
+
+  axios
+    .post(
+      route('savings-plan-update-exchange-rate', {
+        quoteUID: props.quote.uuid,
+        exchangeRate: currentRate,
+      }),
+    )
+    .then(response => {
+      notification.success({
+        title: 'Exchange rate updated successfully',
+        position: 'top',
+      });
+
+      // Mark this plan's exchange rate as updated
+      updatedExchangeRates.value.add(item.id);
+
+      // If this is the selected plan, reload the page to update quote data
+      if (isPlanSelected) {
+        router.reload({
+          preserveScroll: true,
+          only: ['quote'],
+        });
+      }
+
+      // Reload plans data to reflect the update
+      onLoadAvailablePlansData(props.quote.uuid);
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Failed to update exchange rate',
+        position: 'top',
+      });
+    })
+    .finally(() => {});
+};
+
 onMounted(() => {
   onLoadAvailablePlansData(props.quote.uuid);
   fetchExchangeRates(); // Fetch rates on mount
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  if (props.quote?.plan_id) {
+    const quoteExchangeRate =
+      props.quote?.exchange_rate ||
+      props.quote?.savings_quote?.exchange_rate ||
+      props.quote?.savingsQuote?.exchange_rate;
+
+    if (quoteExchangeRate !== null && quoteExchangeRate !== undefined) {
+      updatedExchangeRates.value.add(props.quote.plan_id);
+    }
+  }
 });
 </script>
 
@@ -683,16 +748,36 @@ onMounted(() => {
               <span>{{ item.price || 'N/A' }}</span>
             </template>
             <template #item-exchangeRate="item">
-              <x-input
+              <div
                 v-if="isEditable(item)"
-                :model-value="getRate(item)"
-                @update:model-value="val => setRate(item.id, val)"
-                type="number"
-                step="0.0001"
-                min="0"
-                class="w-24"
-                size="sm"
-              />
+                class="flex items-center justify-center gap-2"
+              >
+                <x-input
+                  :model-value="getRate(item)"
+                  @update:model-value="val => setRate(item.id, val)"
+                  type="number"
+                  step="0.0001"
+                  min="0"
+                  class="w-24 mt-1"
+                  size="sm"
+                  :disabled="updatedExchangeRates.has(item.id)"
+                />
+                <x-icon
+                  v-if="updatedExchangeRates.has(item.id)"
+                  icon="lock"
+                  size="xl"
+                  color="text-primary"
+                  class="cursor-not-allowed opacity-50"
+                />
+                <x-icon
+                  v-else
+                  icon="unlock"
+                  size="xl"
+                  color="text-primary"
+                  class="cursor-pointer hover:text-primary-600"
+                  @click.prevent="updateExchangeRate(item, getRate(item))"
+                />
+              </div>
               <span v-else-if="ratesLoading && !getRate(item)">
                 <x-spinner size="xs" />
               </span>

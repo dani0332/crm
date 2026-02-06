@@ -723,10 +723,6 @@ class SavingsQuoteService extends BaseQuoteService
         $savingsPlanData = [
             'quoteUID' => $payload['quoteUID'] ?? $quoteUuId,
             'update' => $payload['update'] ?? false,
-            'url' => strval(request()->url()),
-            'ipAddress' => request()->ip(),
-            'userAgent' => request()->header('User-Agent'),
-            'userId' => strval(Auth::id()),
             'plans' => [],
         ];
 
@@ -775,7 +771,11 @@ class SavingsQuoteService extends BaseQuoteService
         LoggerService::info('SavingsQuoteService - processSavingsPlan', [
             'quote_uuid' => $quoteUuId,
             'update' => $savingsPlanData['update'],
-            'plans_count' => count($savingsPlanData['plans']),
+            'plans_count' => $savingsPlanData['plans'] ?? [],
+             'url' => strval(request()->url()),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(Auth::id()),
         ]);
 
         return $this->httpService->processRequest($savingsPlanData, $apiCreds);
@@ -856,5 +856,24 @@ class SavingsQuoteService extends BaseQuoteService
         }
 
         return app(KenService::class)->request('/toggle-savings-plan-visibility', 'post', $data);
+    }
+
+    public function updateExchangeRate(string $quoteUID, $exchangeRate)
+    {
+        LoggerService::startQuoteLogging($quoteUID);
+
+        LoggerService::info('fn: updateExchangeRate', extra: [
+            'exchangeRate' => $exchangeRate,
+        ]);
+
+        $quote = SavingsQuote::where('uuid', $quoteUID)->first();
+        $quote->exchange_rate = $exchangeRate;
+        if ($quote->save()) {
+            LoggerService::info('fn: updateExchangeRate - Exchange rate updated successfully');
+        } else {
+            LoggerService::error('fn: updateExchangeRate - Failed to update exchange rate');
+        }
+
+        return $quote;
     }
 }

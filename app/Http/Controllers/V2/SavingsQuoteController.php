@@ -239,7 +239,7 @@ class SavingsQuoteController extends Controller
             LoggerService::info('SavingsQuoteController - savingsPlanManualProcess', [
                 'quote_uuid' => $quoteUuId,
                 'update' => $request->update ?? false,
-                'plans_count' => count($request->plans ?? []),
+                'plans_count' => $request->plans ?? [],
             ]);
 
             // Call the service to process the plan
@@ -298,5 +298,13 @@ class SavingsQuoteController extends Controller
         LoggerService::info('fn: toggleSavingsPlanVisibility - Savings plan visibility toggled successfully');
 
         return response()->json(['message' => 'Savings plan visibility toggled successfully']);
+    }
+
+
+    public function updateExchangeRate(Request $request)
+    {
+        $this->savingsQuoteService->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+
+        return response()->json(['message' => 'Exchange rate updated successfully']);
     }
 }

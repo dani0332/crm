@@ -197,33 +197,24 @@ const onToggleHidePlan = async () => {
     props.quote?.insurance_provider_id ||
     null;
 
-  try {
-    await togglePlanVisibility(
-      props.planDetails.id,
-      props.quote.uuid,
-      toggleValue,
-      providerId,
-    );
-  } catch (error) {
-    console.error('Error toggling plan visibility:', error);
-    // Revert the toggle on error
-    props.planDetails.isDisabled = previousValue;
-  } finally {
-    toggleHideLoader.value = false;
-  }
+  await togglePlanVisibility(
+    props.planDetails.id,
+    props.quote.uuid,
+    toggleValue,
+    providerId,
+  );
+
+  props.planDetails.isDisabled = previousValue;
+  toggleHideLoader.value = false;
 };
 
 const onUpdateIndividualPlan = async () => {
   if (!props.planDetails) return;
 
-  try {
-    await updatePlan(props.planDetails, props.quote.uuid, {
-      riders: ridersData.value,
-    });
-    onLoadAvailablePlansDataAndPlanDetails();
-  } catch (error) {
-    console.error('Error updating plan:', error);
-  }
+  await updatePlan(props.planDetails, props.quote.uuid, {
+    riders: ridersData.value,
+  });
+  await onLoadAvailablePlansDataAndPlanDetails();
 };
 
 const onLoadAvailablePlansDataAndPlanDetails = async () => {
@@ -385,6 +376,19 @@ watch(
     }
   },
 );
+
+watch(
+  () => props.planDetails?.currency,
+  newCurrency => {
+    if (!newCurrency || !props.planDetails) return;
+    const selectedOption = currencyOptions.value.find(
+      opt => opt.value === newCurrency,
+    );
+    if (selectedOption && props.planDetails) {
+      props.planDetails.currencyId = selectedOption.id || null;
+    }
+  },
+);
 </script>
 
 <template>
@@ -494,7 +498,7 @@ watch(
                 <div class="flex items-center">
                   <span class="text-sm text-gray-600 w-36">Currency</span>
                   <x-select
-                    v-model="planDetails.currencyId"
+                    v-model="planDetails.currency"
                     :options="currencyOptions"
                     placeholder="Select Currency"
                     size="sm"
