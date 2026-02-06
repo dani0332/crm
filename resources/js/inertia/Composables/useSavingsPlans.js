@@ -743,7 +743,7 @@ export function useSavingsPlans(options = {})
   const syncInvestmentFrequencyId = (form, frequencyValue) =>
   {
     const selectedOption = investmentFrequencyOptions.value.find(
-      opt => opt.value === frequencyValue || opt.id === frequencyValue,
+      opt => opt.value.toLowerCase() === frequencyValue.toLowerCase() || opt.id === frequencyValue,
     );
     form.investment_frequency_id = selectedOption?.id || null;
     form.investmentFrequencyId = selectedOption?.id || null;

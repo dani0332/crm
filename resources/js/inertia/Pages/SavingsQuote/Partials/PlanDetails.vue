@@ -24,18 +24,14 @@ const {
   paymentTermOptions,
   tenureOfSavingsOptions,
   // Helpers
-  getFrequencyFromPaymentTerm,
   isLumpsumFrequency: checkIsLumpsumFrequency,
   formatPrice,
-  findCurrencyOption,
-  findInvestmentFrequencyOption,
   calculatePlanPayout,
   // Riders
   ridersData,
   showRiders,
   totalRiderPrice,
   getRiderDetails,
-  processRidersForAPI,
   // API
   updatePlan,
   togglePlanVisibility,
@@ -43,6 +39,8 @@ const {
   // Form Sync
   syncTenureId,
   syncInvestmentFrequencyId,
+  syncPaymentTermByFrequency,
+  syncCurrencyId,
 } = useSavingsPlans({
   quote: props.quote,
   localLookups: computed(() => props.localLookups),
@@ -84,13 +82,10 @@ const filteredPaymentTermOptions = computed(() => {
   }
 });
 
-// Format price with commas and 2 decimal places
+// Format price using composable helper
 const formattedPrice = computed(() => {
   const price = parseFloat(props.planDetails?.actualPremium || 0);
-  return price.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return formatPrice(price);
 });
 
 const addOns = [
@@ -131,16 +126,9 @@ const addOns = [
   },
 ];
 
-// Form for individual plan updates
-const planForm = useForm({
-  quote_uuid: '',
-  plan_id: '',
-  provider_name: '',
-  actual_premium: 0,
-  insurer_quote_no: '',
-  is_disabled: false,
-  is_manual_update: false,
-  current_url: '',
+// Loading state for plan updates
+const planForm = reactive({
+  processing: false,
 });
 
 // Define isLumpsumFrequency using composable helper
@@ -167,13 +155,6 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
 
 // Manual toggle state
 const toggleManualLoader = ref(false);
-
-const onToggleManual = () => {
-  toggleManualLoader.value = true;
-  setTimeout(() => {
-    toggleManualLoader.value = false;
-  }, 300);
-};
 
 // Hide/Unhide toggle state
 const toggleHideLoader = ref(false);
@@ -211,10 +192,15 @@ const onToggleHidePlan = async () => {
 const onUpdateIndividualPlan = async () => {
   if (!props.planDetails) return;
 
-  await updatePlan(props.planDetails, props.quote.uuid, {
-    riders: ridersData.value,
-  });
-  await onLoadAvailablePlansDataAndPlanDetails();
+  planForm.processing = true;
+  try {
+    await updatePlan(props.planDetails, props.quote.uuid, {
+      riders: ridersData.value,
+    });
+    await onLoadAvailablePlansDataAndPlanDetails();
+  } finally {
+    planForm.processing = false;
+  }
 };
 
 const onLoadAvailablePlansDataAndPlanDetails = async () => {
@@ -319,31 +305,17 @@ watch(
   { deep: true },
 );
 
-// Sync investment frequency ID and payment term when investmentFrequency changes (same as CreatePlan)
+// Sync investment frequency ID and payment term when investmentFrequency changes using composable helpers
 watch(
   () => props.planDetails?.investmentFrequency,
   newFreq => {
     if (!newFreq || !props.planDetails) return;
 
-    const selectedOption = investmentFrequencyOptions.value.find(
-      opt => opt.value === newFreq || opt.id === newFreq,
-    );
-    if (selectedOption && props.planDetails) {
-      props.planDetails.investmentFrequencyId = selectedOption.id || null;
-    }
+    // Use composable helper to sync investment frequency ID
+    syncInvestmentFrequencyId(props.planDetails, newFreq);
 
-    // Auto-select payment term based on frequency (similar to CreatePlan)
-    const checkIsLumpsum = checkIsLumpsumFrequency(newFreq);
-    const singlePaymentOption = paymentTermOptions.value.find(opt =>
-      opt.label?.toLowerCase().includes('single'),
-    );
-
-    if (checkIsLumpsum && singlePaymentOption) {
-      props.planDetails.paymentTerm = singlePaymentOption.value;
-    } else if (props.planDetails.paymentTerm === singlePaymentOption?.value) {
-      // Clear single payment if switching to regular
-      props.planDetails.paymentTerm = null;
-    }
+    // Use composable helper to sync payment term based on frequency
+    syncPaymentTermByFrequency(props.planDetails, newFreq);
   },
 );
 
@@ -362,31 +334,21 @@ watch(
   },
 );
 
-// Sync tenure ID when tenure value changes
+// Sync tenure ID when tenure value changes using composable helper
 watch(
   () => props.planDetails?.tenure,
   newTenure => {
     if (!newTenure || !props.planDetails) return;
-
-    const selectedOption = tenureOfSavingsOptions.value.find(
-      opt => opt.value === newTenure,
-    );
-    if (selectedOption && props.planDetails) {
-      props.planDetails.tenureId = selectedOption.id || null;
-    }
+    syncTenureId(props.planDetails, newTenure);
   },
 );
 
+// Sync currency ID when currency changes using composable helper
 watch(
   () => props.planDetails?.currency,
   newCurrency => {
     if (!newCurrency || !props.planDetails) return;
-    const selectedOption = currencyOptions.value.find(
-      opt => opt.value === newCurrency,
-    );
-    if (selectedOption && props.planDetails) {
-      props.planDetails.currencyId = selectedOption.id || null;
-    }
+    syncCurrencyId(props.planDetails, newCurrency);
   },
 );
 </script>
@@ -450,8 +412,6 @@ watch(
                       color="success"
                       label="Manual"
                       :disabled="isDisabled"
-                      @change="onToggleManual"
-                      :loading="toggleManualLoader"
                     />
                   </ToggleManualButtonTemplate>
 
@@ -729,12 +689,6 @@ watch(
                       <span class="text-sm text-gray-700">{{
                         rider.text || 'Rider'
                       }}</span>
-                      <!-- <span
-                        v-if="rider.inputRequired"
-                        class="ml-1 text-xs text-orange-500"
-                        title="Input Required"
-                        >*</span
-                      > -->
                     </div>
                     <!-- Status -->
                     <div class="w-[15%]">

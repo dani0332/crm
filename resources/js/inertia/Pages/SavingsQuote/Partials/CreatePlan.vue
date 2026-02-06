@@ -1,9 +1,6 @@
 <script setup>
 import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { cleanFormattedValueToFloat } from '@/inertia/Composables/utilities';
-import { defineEmits } from 'vue';
-
-const emit = defineEmits(['success', 'error']);
 
 const notification = useNotifications('toast');
 const props = defineProps({
@@ -28,7 +25,6 @@ const {
   planTypeOptions,
   insuranceProviderOptions,
   // Helpers
-  getFrequencyFromPaymentTerm,
   isLumpsumFrequency: checkIsLumpsumFrequency,
   formatPrice,
   calculatePlanPayout,
@@ -36,7 +32,6 @@ const {
   ridersData,
   showRiders,
   getRiderDetails,
-  processRidersForAPI,
   // Plans
   providerPlans,
   providerPlansLoading,
@@ -87,12 +82,6 @@ const onLumpsumPayoutBlur = () => {
 const isEmptyField = ref(false);
 
 const { isRequired, maxPrice, minPrice } = useRules();
-
-// Options for dynamically fetched data - use composable refs
-const options = reactive({
-  providerPlans: providerPlans,
-  loading: providerPlansLoading,
-});
 
 const addPlanForm = useForm({
   quote_uuid: page.props.quote.uuid,
@@ -283,20 +272,6 @@ const calculatePlan = () => {
     lumpsumPayoutDisplay.value = result.formattedPayout; // Update display
   }
 };
-
-const validateDecimal = event => {
-  if (
-    event.key === '.' ||
-    event.key === 'Backspace' ||
-    event.key === 'Delete'
-  ) {
-    return;
-  }
-  const regex = /^\d+(\.\d{0,2})?$/;
-  if (!regex.test(event.key)) {
-    event.preventDefault();
-  }
-};
 </script>
 
 <template>
@@ -339,7 +314,7 @@ const validateDecimal = event => {
           :options="insuranceProviderPlanOptions"
           placeholder="Select Plan"
           class="w-full"
-          :loading="options.loading"
+          :loading="providerPlansLoading"
         />
       </div>
       <div class="w-full md:w-1/2">
@@ -406,7 +381,6 @@ const validateDecimal = event => {
             type="number"
             step="any"
             disabled
-            @keydown="validateDecimal"
           />
           <span
             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
@@ -467,12 +441,6 @@ const validateDecimal = event => {
           <!-- Rider Name -->
           <div class="w-[20%]">
             <span class="text-sm text-gray-700">{{ rider.text }}</span>
-            <!-- <span
-              v-if="rider.inputRequired"
-              class="ml-1 text-xs text-orange-500"
-              title="Input Required"
-              >*</span
-            > -->
           </div>
           <!-- Status -->
           <div class="w-[15%]">
