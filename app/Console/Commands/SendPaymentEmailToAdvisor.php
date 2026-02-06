@@ -52,7 +52,7 @@ class SendPaymentEmailToAdvisor extends Command
 
         $advisorWisePayments = $this->getAdvisorWisePayments($authorizedDays);
 
-        if (empty($advisorWisePayments)) {
+        if ($advisorWisePayments->isEmpty()) {
             LoggerService::info('No advisor found to send payment email.');
 
             return false;
@@ -64,7 +64,7 @@ class SendPaymentEmailToAdvisor extends Command
             $iterationStartTime = microtime(true);
 
             if ($payment['advisorId']) {
-                LoggerService::info("Dispatching AdvisorPaymentNotification Job For Advisor ID {$payment['advisorName']}");
+                LoggerService::info("Dispatching AdvisorPaymentNotification Job For Advisor {$payment['advisorName']} (ID: {$payment['advisorId']})");
                 AdvisorPaymentNotificationJob::dispatch($payment)->onQueue('advisor-payment-notification');
             }
 
@@ -81,8 +81,7 @@ class SendPaymentEmailToAdvisor extends Command
 
     public function getAdvisorWisePayments($authorizedDays): \Illuminate\Support\Collection
     {
-        $authorizedDate = Carbon::now()->subDays($authorizedDays);
-        $lastDay = Carbon::today()->subDays($authorizedDays);
+        $authorizedDate = $lastDay = Carbon::today()->subDays($authorizedDays);
 
         return Payment::with([
             'personalQuote:id,code,advisor_id,premium',
