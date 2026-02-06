@@ -153,7 +153,7 @@ const isLifePlanDetailsEnabled = computed(() => {
 
 // for life only and savings
 const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
-const savingExchangeRate = ref(props.quoteRequest?.savings_quote?.exchange_rate ?? 1);
+const savingExchangeRate = ref(props.quoteRequest?.savings_quote?.exchange_rate);
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -448,6 +448,22 @@ const addPaymentModal = async () => {
       position: 'top',
     });
     return;
+  }
+
+  // Check exchange rate for Savings LOB - must be checked before plan selection
+  if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+    const savingsCurrency = props.quoteRequest?.savings_quote?.currency?.code;
+    if (
+      savingsCurrency &&
+      savingsCurrency !== 'AED' &&
+      (savingExchangeRate.value == null || savingExchangeRate.value == 0)
+    ) {
+      notification.error({
+        title: 'Please lock the exchange rate first',
+        position: 'top',
+      });
+      return;
+    }
   }
 
   if (
