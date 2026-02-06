@@ -168,11 +168,6 @@ const onTogglePlans = toggle => {
     });
 };
 
-// Exchange Rate Logic (Frontend-only, all rates from API)
-// const exchangeRates = ref({}); // { currency: rate } from API (USD base)
-// const planRates = ref({}); // { planId: rate } - user edited rates
-const ratesLoading = ref(false);
-
 const selectedProviderPlan = ref({
   id: props.quote?.plan_id,
   planName: props.quote?.plans?.name,
@@ -180,41 +175,7 @@ const selectedProviderPlan = ref({
   premium: props.quote?.plans?.premium,
 });
 
-// Track which plans have had their exchange rates updated
 const updatedExchangeRates = ref(new Set());
-
-// Fetch rates from free public API (no key required)
-// const fetchExchangeRates = async () => {
-//   if (Object.keys(exchangeRates.value).length > 0) return;
-//   ratesLoading.value = true;
-//   try {
-//     const { data } = await axios.get('https://open.er-api.com/v6/latest/USD');
-//     if (data?.rates) exchangeRates.value = data.rates;
-//   } catch (e) {
-//     console.error('Exchange rate fetch failed:', e);
-//   } finally {
-//     ratesLoading.value = false;
-//   }
-// };
-
-// Get exchange rate: 1 [Currency] = X AED (all from API)
-// const getRate = item => {
-//   const id = item.id;
-//   const cur = (item.currency || 'USD').toUpperCase();
-//   const usdToAed = exchangeRates.value['AED'] || null;
-
-//   // Use user-edited rate if exists
-//   if (planRates.value[id] !== undefined) return planRates.value[id];
-
-//   if (!usdToAed) return null; // API not loaded yet
-
-//   if (cur === 'AED') return 1;
-//   if (cur === 'USD') return Math.round(usdToAed * 10000) / 10000;
-
-//   // Other currencies: rate = usdToAed / (USD to Currency)
-//   const usdToCur = exchangeRates.value[cur];
-//   return usdToCur ? Math.round((usdToAed / usdToCur) * 10000) / 10000 : null;
-// };
 
 const handlePlanSelected = async plan => {
   if (plan.insurerQuoteNo === '' || plan.insurerQuoteNo === null) {
@@ -247,10 +208,8 @@ const handlePlanSelected = async plan => {
   } catch (error) {
     console.warn('Failed to reset exchange rate on plan selection:', error);
   }
-  // await onLoadAvailablePlansData(props.quote.uuid);
 };
 
-// Editable only for selected plan (non-AED)
 const isEditable = item =>
   item.currency?.toUpperCase() !== 'AED' &&
   String(selectedProviderPlan.value.id) === String(item.id);
@@ -401,7 +360,6 @@ const updateExchangeRate = (item, exchangeRate = null) => {
     return;
   }
 
-  // Check if this is the selected plan
   const isPlanSelected = isSelectedPlan(item);
 
   axios
@@ -420,7 +378,6 @@ const updateExchangeRate = (item, exchangeRate = null) => {
       // Mark this plan's exchange rate as updated
       updatedExchangeRates.value.add(item.id);
 
-      // await onLoadAvailablePlansData(props.quote.uuid);
       router.reload({
         preserveScroll: true,
         only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
@@ -437,7 +394,7 @@ const updateExchangeRate = (item, exchangeRate = null) => {
 
 onMounted(() => {
   onLoadAvailablePlansData(props.quote.uuid);
-  fetchExchangeRates(); // Fetch rates on mount
+  fetchExchangeRates();
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 
   if (props.quote?.plan_id) {

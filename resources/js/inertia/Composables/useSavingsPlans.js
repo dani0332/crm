@@ -971,14 +971,6 @@ export function useSavingsPlans(options = {})
     );
   });
 
-  const handlePageReload = () =>
-  {
-    router.reload({
-      preserveScroll: true,
-      only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
-    });
-  };
-
   return {
     ridersData,
     providerPlans,
@@ -1034,6 +1026,5 @@ export function useSavingsPlans(options = {})
     updateEcomDetailFromPlans,
 
     plansUpdateTrigger,
-    handlePageReload
   };
 }
