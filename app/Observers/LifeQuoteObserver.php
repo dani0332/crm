@@ -15,11 +15,11 @@ use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
-use App\Traits\PersonalQuoteSyncTrait;
+use Exception;
 
 class LifeQuoteObserver
 {
-    // use PersonalQuoteSyncTrait;
+    private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'LifeQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
 
     public function updating(LifeQuote $quote): void
     {
@@ -62,19 +62,6 @@ class LifeQuoteObserver
                 LoggerService::info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id}  Quote Status: {$lifeQuote->quote_status_id} ");
             }
         }
-        // $this->syncQuote($lifeQuote, $dirty);
-
-        if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            try {
-                // $this->updatePersonalQuote($lifeQuote->uuid, QuoteTypeId::Life, $dirty);
-            } catch (\Exception $e) {
-                // Log::error('LifeQuoteObserver - update personal quote failed', [
-                //     'error' => $e->getMessage(),
-                //     'uuid' => $lifeQuote->uuid,
-                // ]);
-            }
-
-        }
 
         if (
             isset($dirty['quote_status_id']) &&
@@ -96,7 +83,15 @@ class LifeQuoteObserver
             SendPolicyIssueWhatsappMessageJob::dispatch($lifeQuote->uuid, QuoteTypes::LIFE->id())->onQueue('insly');
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
-            event(new PrivateClientUpdatedEvent($lifeQuote, QuoteTypeId::Life));
+
+            try {
+                event(new PrivateClientUpdatedEvent($lifeQuote, QuoteTypeId::Life));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $lifeQuote->uuid,
+                    'quote_status_id' => $lifeQuote->quote_status_id,
+                ], exception: $e);
+            }
         }
     }
 }
