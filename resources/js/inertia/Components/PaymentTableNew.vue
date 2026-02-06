@@ -151,8 +151,9 @@ const isLifePlanDetailsEnabled = computed(() => {
   );
 });
 
-// for life only
+// for life only and savings
 const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
+const savingExchangeRate = ref(props.quoteRequest?.savings_quote?.exchange_rate);
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -184,15 +185,26 @@ const showLackingPayment = () => {
 };
 
 const getInitalAmountForLifeLOB = () => {
-  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-    const premiumInAED =
-      Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
-    return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
-  } else {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
     return (
       props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
     );
   }
+  
+  const premiumInAED =
+    Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
+  return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
+};
+
+const getInitalAmountForSavingsLOB = () => {
+  if (props.quoteRequest?.savings_quote?.currency?.code === 'AED') {
+    return (
+      props.quoteRequest.premium * props.quoteRequest?.savings_quote?.payment_term
+    );
+  }
+  const premiumInAED =
+    Math.round(props.quoteRequest.premium * savingExchangeRate.value * 100) / 100;
+  return premiumInAED * props.quoteRequest?.savings_quote?.payment_term;
 };
 
 // Check quoteType and set initialAmount.value accordingly
@@ -215,6 +227,8 @@ if (props.sendUpdate) {
   !props.isPlanDetailSectionEnabled
 ) {
   initialAmount.value = getInitalAmountForLifeLOB();
+} else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
+  initialAmount.value = getInitalAmountForSavingsLOB();
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -436,6 +450,22 @@ const addPaymentModal = async () => {
     return;
   }
 
+  // Check exchange rate for Savings LOB - must be checked before plan selection
+  if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+    const savingsCurrency = props.quoteRequest?.savings_quote?.currency?.code;
+    if (
+      savingsCurrency &&
+      savingsCurrency !== 'AED' &&
+      (savingExchangeRate.value == null || savingExchangeRate.value == 0)
+    ) {
+      notification.error({
+        title: 'Please lock the exchange rate first',
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -539,6 +569,20 @@ const addPaymentModal = async () => {
     paymentFormUpdateData.frequency =
       paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
       paymentFrequencyEnum.UPFRONT;
+  } else if (
+    props.quoteType === quoteTypeCodeEnum.SAVINGS &&
+    props.quoteRequest?.savings_quote?.payment_term
+  ) {
+    // Special handling for savings quotes - map payment term to frequency
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      3: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentFormUpdateData.frequency =
+      paymentTermToFrequency[props.quoteRequest?.savings_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
   } else {
     paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
   }
@@ -551,8 +595,11 @@ const addPaymentModal = async () => {
   createPaymentFormRef.value.handleCollectionTypeChange();
   createPaymentFormRef.value.calculatePaymentBreakup();
 
-  // Trigger frequency change for life quotes to update payment schedule
-  if (props.quoteType === quoteTypeCodeEnum.Life) {
+  // Trigger frequency change for life and savings quotes to update payment schedule
+  if (
+    props.quoteType === quoteTypeCodeEnum.Life ||
+    props.quoteType === quoteTypeCodeEnum.SAVINGS
+  ) {
     createPaymentFormRef.value.handleFrequencyChange();
   }
 
@@ -845,6 +892,8 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Life
     ) {
       initialAmount.value = getInitalAmountForLifeLOB();
+    } else if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+      initialAmount.value = getInitalAmountForSavingsLOB();
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
