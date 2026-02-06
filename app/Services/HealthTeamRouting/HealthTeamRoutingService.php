@@ -220,9 +220,28 @@ class HealthTeamRoutingService
 
     private function getTeamBasedOnNonAUHLead(HealthQuote $lead): ?string
     {
-        $isPECLead = $lead->has_pec_tag;
+        // Step 1: Check GBP team min price
+        $this->logStep(
+            'Checking GBP team min price for Non-AUH lead as first step',
+            'gbp_check',
+            [],
+            $lead
+        );
 
-        // Step 1: Check PEC flag
+        $gbpMinPrice = $this->getGbpTeamMinPrice();
+        if ($gbpMinPrice !== null && $lead->price_starting_from >= $gbpMinPrice) {
+            $this->logStep(
+                'Price starting from is greater than or equal to GBP min price, assigning to GBP team',
+                'gbp_assignment',
+                ['price_starting_from' => $lead->price_starting_from, 'gbp_min_price' => $gbpMinPrice],
+                $lead
+            );
+
+            return HealthTeamType::GBP;
+        }
+
+        // Step 2: Check PEC flag
+        $isPECLead = $lead->has_pec_tag;
         $this->logStep(
             'Checking PEC flag for Non-AUH lead',
             'pec_check',
@@ -245,6 +264,7 @@ class HealthTeamRoutingService
                         'team_name' => $team,
                         'is_pec_lead' => true,
                         'tier_routing_skipped' => true,
+                        'premium' => $lead->price_starting_from,
                     ],
                     $lead
                 );
@@ -271,7 +291,7 @@ class HealthTeamRoutingService
             }
         }
 
-        // Step 2: Apply tier-based routing for non-PEC leads
+        // Step 3: Apply tier-based routing for non-PEC leads
         $this->logStep(
             'Non-PEC lead, applying tier-based routing',
             'non_auh_tier_routing',
@@ -282,22 +302,6 @@ class HealthTeamRoutingService
             $lead
         );
         LoggerService::info('Non-PEC lead, applying tier-based routing', ['premium' => $lead->price_starting_from]);
-
-        // Validate premium data
-        if (empty($lead->price_starting_from)) {
-            $this->logStep(
-                'Premium missing, cannot determine Non-AUH tier',
-                'validation_error',
-                [
-                    'premium' => null,
-                    'category' => TeamCategoryEnum::NON_AUH->value,
-                ],
-                $lead
-            );
-            LoggerService::warning('Premium missing for Non-AUH lead', ['lead_id' => $lead->id]);
-
-            return null;
-        }
 
         try {
             $team = $this->fetchTeamByPriceAndCategory($lead->price_starting_from, TeamCategoryEnum::NON_AUH);
