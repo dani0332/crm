@@ -485,7 +485,7 @@ export function useSavingsPlans(options = {})
           insurerQuoteNo: planData.insurerQuoteNo || '',
           investmentAmount: parseFloat(planData.investmentAmount) || 0,
           actualPremium: parseFloat(planData.actualPremium) || 0,
-          discountAmount: parseFloat(planData.discountAmount) || 0,
+          discountPremium: parseFloat(planData.discountPremium) || 0,
           currency: planData.currency || 'AED',
           currencyId: planData.currencyId,
           paymentTerm: parseInt(planData.paymentTerm) || 0,
