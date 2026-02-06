@@ -237,7 +237,7 @@ class CarQuoteObserver
                     'quote_status_id' => $lead->quote_status_id,
                 ], exception: $e);
             }
-            
+
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
         }
