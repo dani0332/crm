@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
+use App\Enums\EnvEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
+use App\Services\ServerEnvironmentGuard;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -67,6 +69,13 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(NgiGetPolicyDocumentsService $service): void
     {
+        if (! ServerEnvironmentGuard::isAllowed([EnvEnum::TEST, EnvEnum::DEVELOPMENT])) {
+            LoggerService::info('Policy issuance job skipped by environment guard', [
+                'process_id' => $this->processId,
+                'environment' => app()->environment(),
+            ]);
+            return;
+        }
         $service->execute($this->processId, $this->attempts(), $this->tries);
     }
 

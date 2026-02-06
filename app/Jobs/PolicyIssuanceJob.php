@@ -2,9 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Enums\EnvEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
+use App\Services\ServerEnvironmentGuard;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Bus\Queueable;
@@ -47,6 +49,14 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function handle(): void
     {
+        if (! ServerEnvironmentGuard::isAllowed([EnvEnum::TEST, EnvEnum::DEVELOPMENT])) {
+            LoggerService::info('Policy issuance job skipped by environment guard', [
+                'process_id' => $this->processId,
+                'environment' => app()->environment(),
+            ]);
+            return;
+        }
+
         try {
             $this->loadProcess();
             $this->loadProcessModel();
