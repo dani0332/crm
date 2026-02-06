@@ -287,22 +287,27 @@
                     <h4>Controller Layer (Laravel Controllers)</h4>
                     <p>HTTP request handling, middleware integration, and response formatting</p>
                     <ul>
-                        <li>ClaimsController with 25+ methods for comprehensive CRUD operations</li>
+                        <li>ClaimsController with 20+ methods for comprehensive CRUD operations</li>
+                        <li>ClaimLogController with 4 dedicated log retrieval methods (NEW - v2.1)</li>
                         <li>Permission-based middleware with 11 specific claim permissions</li>
-                        <li>Request validation with Form Request classes</li>
+                        <li>Request validation with Form Request classes (12+ validation classes)</li>
                         <li>Error handling with comprehensive logging</li>
                         <li>Inertia responses for web routes, JSON for AJAX endpoints</li>
+                        <li>Service injection: ClaimsService, ClaimStatusesService, CustomerService</li>
                     </ul>
                 </div>
 
                 <div class="layer">
                     <h4>Service Layer (Business Logic)</h4>
-                    <p>Core business logic, external integrations, and data processing</p>
+                    <p>Core business logic, external integrations, and data processing with service separation</p>
                     <ul>
-                        <li>ClaimsService with 30+ methods for business operations</li>
+                        <li>ClaimsService with 25+ methods for business operations and claim management</li>
+                        <li>ClaimStatusesService with 12+ methods for status management and caching (NEW - v2.1)</li>
                         <li>CPAPI integration for claim creation only</li>
                         <li>InstantWriter AI integration for message optimization</li>
                         <li>Azure S3 integration for document management</li>
+                        <li>CacheManager integration for status dropdown data with CacheKeyEnum</li>
+                        <li>Email notification jobs: SendClaimSubStatusUpdateNotificationEmailJob</li>
                         <li>Complex filtering and pagination logic</li>
                     </ul>
                 </div>
@@ -556,32 +561,63 @@
 
         <div class="section">
             <h2>🔧 Service Layer Architecture</h2>
+            <p style="text-align: center; color: #7f8c8d; margin-bottom: 20px;">
+                Service layer separated into specialized services for better maintainability and single responsibility principle (v2.1)
+            </p>
             
             <div class="tech-grid">
                 <div class="tech-item">
-                    <h4>ClaimsService</h4>
+                    <h4>ClaimsService (Core Business Logic)</h4>
                     <ul>
                         <li><strong>Location:</strong> app/Services/ClaimsService.php</li>
                         <li><strong>Inheritance:</strong> Extends BaseService, uses CentralTrait</li>
                         <li><strong>Properties:</strong> $searchPrefix='claims.', $query (ClaimRequest with eager loading), $perPage=15</li>
                         <li><strong>Constructor:</strong> Builds optimized query with 25+ selected fields and 8+ eager loaded relationships</li>
-                        <li><strong>Methods:</strong> 30+ business logic methods for CRUD, filtering, integrations</li>
+                        <li><strong>Methods:</strong> 25+ business logic methods for CRUD, filtering, integrations</li>
                         <li><strong>Integrations:</strong> CustomerPortalApiFacade (creation only), InstantWriterAIFacade, Azure S3</li>
                         <li><strong>Performance:</strong> Specific field selection, eager loading, simplePaginate()</li>
                     </ul>
                 </div>
 
                 <div class="tech-item">
-                    <h4>Key Service Methods</h4>
+                    <h4>ClaimStatusesService (Status Management) - NEW v2.1</h4>
+                    <ul>
+                        <li><strong>Location:</strong> app/Services/ClaimStatusesService.php</li>
+                        <li><strong>Inheritance:</strong> Extends BaseService</li>
+                        <li><strong>Purpose:</strong> Isolated status management with caching for better performance</li>
+                        <li><strong>Caching:</strong> CacheManager with CacheKeyEnum for status dropdown data</li>
+                        <li><strong>Methods:</strong> 12+ methods for status operations (get, update, check closure)</li>
+                        <li><strong>Key Features:</strong> LOB-specific closure logic, reopen functionality, audit logging</li>
+                        <li><strong>Performance:</strong> Cached status dropdowns, saveQuietly to prevent observer loops</li>
+                    </ul>
+                </div>
+
+                <div class="tech-item">
+                    <h4>Key ClaimsService Methods</h4>
                     <ul>
                         <li><strong>getClaimsData():</strong> Main listing with 18+ filterable fields, pagination</li>
                         <li><strong>getClaimsDataForExport():</strong> Export data with same filtering logic</li>
                         <li><strong>createClaim():</strong> CPAPI integration for initial creation only (15+ data fields)</li>
-                        <li><strong>updateClaimStatus():</strong> Status updates with Activity logging</li>
-                        <li><strong>sendNotification():</strong> AI-optimized messaging via InstantWriterAIFacade</li>
+                        <li><strong>sendNotification():</strong> AI-optimized messaging via InstantWriterAIFacade + email job</li>
                         <li><strong>uploadClaimDocuments():</strong> Azure S3 document management</li>
-                        <li><strong>getDropdownData():</strong> Form options (statuses, types, providers)</li>
-                        <li><strong>searchPolicies():</strong> Internal policy search logic (not CPAPI)</li>
+                        <li><strong>getDropdownData():</strong> Form options using ClaimStatusesService</li>
+                        <li><strong>searchActivePolicies():</strong> Internal policy search logic (not CPAPI)</li>
+                        <li><strong>getClaimLeadHistory():</strong> Main status history for client-side pagination</li>
+                    </ul>
+                </div>
+
+                <div class="tech-item">
+                    <h4>Key ClaimStatusesService Methods</h4>
+                    <ul>
+                        <li><strong>getClaimStatuses():</strong> Cached main statuses from claim_statuses table</li>
+                        <li><strong>getClaimSubStatuses():</strong> Cached sub-statuses from claim_statuses table</li>
+                        <li><strong>getClaimComplaintStatuses():</strong> Cached complaint statuses</li>
+                        <li><strong>updateClaimStatus():</strong> Status updates with Activity logging</li>
+                        <li><strong>checkSubStatusForClaimClosure():</strong> LOB-specific closure logic</li>
+                        <li><strong>markClaimAsClosed():</strong> Close claim with updateQuietly</li>
+                        <li><strong>markClaimAsReOpen():</strong> Reopen claim when complaint opened</li>
+                        <li><strong>getClaimSubStatusLogs():</strong> Sub-status history for client-side pagination</li>
+                        <li><strong>updateComplaintStatus():</strong> Complaint status with auto-reopen logic</li>
                     </ul>
                 </div>
 
@@ -736,6 +772,7 @@
         <div class="footer">
             <p><strong>Claims System Architecture Documentation</strong></p>
             <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Version 2.1 | Last Updated: February 2026 | Implementation-Synced</p>
         </div>
     </div>
 </body>

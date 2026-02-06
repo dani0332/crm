@@ -451,7 +451,7 @@
             </div>
 
             <div class="highlight" style="margin-top: 20px; background: linear-gradient(135deg, #27ae60, #229954); padding: 20px; border-radius: 10px; color: white;">
-                <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated December 2024</h4>
+                <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated February 2026</h4>
                 <p style="margin: 0;">
                     <strong>All documentation has been synchronized with actual implementation:</strong><br>
                     • Complete LOB-specific validation rules for Motor/Car, Bike, Health, and Life<br>
@@ -460,7 +460,10 @@
                     • Azure S3 document management with ZIP creation and temp URL generation<br>
                     • AI-powered message optimization via InstantWriter integration explained<br>
                     • Dual logging system (ClaimActivity + Audits) with JSON extraction patterns<br>
-                    • All code examples verified against current ClaimsService and ClaimsController implementation<br>
+                    • Service separation: ClaimsService + ClaimStatusesService architecture<br>
+                    • ClaimLogController separation for cleaner log retrieval endpoints<br>
+                    • Email notification job for sub-status updates with queue management<br>
+                    • All code examples verified against current implementation (v2.1)<br>
                     • Frontend Vue 3 Composition API patterns with permission-based rendering
                 </p>
             </div>
@@ -470,11 +473,19 @@
                 <div class="tech-grid">
                     <div class="tech-item">
                         <strong>Primary Controller</strong>
-                        ClaimsController.php (25+ methods)
+                        ClaimsController.php (20+ methods)
+                    </div>
+                    <div class="tech-item">
+                        <strong>Log Controller</strong>
+                        ClaimLogController.php (4 log retrieval methods)
                     </div>
                     <div class="tech-item">
                         <strong>Business Logic</strong>
-                        ClaimsService.php (30+ methods)
+                        ClaimsService.php (25+ methods)
+                    </div>
+                    <div class="tech-item">
+                        <strong>Status Management</strong>
+                        ClaimStatusesService.php (12+ methods)
                     </div>
                     <div class="tech-item">
                         <strong>Core Models</strong>
@@ -483,6 +494,10 @@
                     <div class="tech-item">
                         <strong>Observer Pattern</strong>
                         ClaimRequestObserver.php
+                    </div>
+                    <div class="tech-item">
+                        <strong>Email Jobs</strong>
+                        SendClaimSubStatusUpdateNotificationEmailJob
                     </div>
                     <div class="tech-item">
                         <strong>Frontend Framework</strong>
@@ -499,6 +514,10 @@
                     <div class="tech-item">
                         <strong>Permissions</strong>
                         11 specific claim permissions
+                    </div>
+                    <div class="tech-item">
+                        <strong>Caching Strategy</strong>
+                        CacheManager with CacheKeyEnum for status data
                     </div>
                 </div>
             </div>
@@ -1033,16 +1052,18 @@
                     </p>
                 </div>
 
-                <div class="lob-card" style="border-left-color: #e74c3c;">
+                    <div class="lob-card" style="border-left-color: #e74c3c;">
                     <h4>🔧 Core Classes Reference</h4>
                     <p style="font-size: 0.95em; color: #7f8c8d; margin-bottom: 15px;">Key service classes and their responsibilities in the claims system.</p>
                     <ul style="font-size: 0.9em; color: #7f8c8d;">
-                        <li><strong>ClaimsController:</strong> 25+ methods for HTTP requests</li>
-                        <li><strong>ClaimsService:</strong> 30+ business logic methods</li>
+                        <li><strong>ClaimsController:</strong> 20+ methods for HTTP requests</li>
+                        <li><strong>ClaimLogController:</strong> 4 log retrieval endpoints</li>
+                        <li><strong>ClaimsService:</strong> 25+ business logic methods</li>
+                        <li><strong>ClaimStatusesService:</strong> 12+ status management methods</li>
                         <li><strong>ClaimRequest:</strong> Main model with relationships</li>
                         <li><strong>ClaimRequestObserver:</strong> Auto status updates</li>
                         <li><strong>ClaimsEnum:</strong> 80+ status and type constants</li>
-                        <li><strong>Form Requests:</strong> 10+ validation classes</li>
+                        <li><strong>Form Requests:</strong> 12+ validation classes</li>
                     </ul>
                     <p style="margin-top: 15px; font-size: 0.9em;">
                         <strong>Location:</strong> <code>app/Http/Controllers/</code> & <code>app/Services/</code>
@@ -1119,7 +1140,7 @@
         <div class="footer">
             <p><strong>Claims Management System Documentation</strong></p>
             <p>Part of the Afia Brokerage LLC Technical Documentation</p>
-            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Version 2.0 | Last Updated: December 2024 | Implementation-Synced</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Version 2.1 | Last Updated: February 2026 | Implementation-Synced</p>
         </div>
     </div>
 </body>

@@ -444,10 +444,10 @@
                     </tr>
                     <tr>
                         <td><span class="method post">POST</span></td>
-                        <td>/claim/{claimStatus}/optimize-message</td>
+                        <td>/claim/optimize-message</td>
                         <td>claims.optimize-message</td>
                         <td><span class="permission-badge">CLAIMS_SUB_STATUS_UPDATE</span></td>
-                        <td>AI message optimization for customer communication</td>
+                        <td>AI message optimization for customer communication (ClaimOptimizeMessageRequest)</td>
                     </tr>
                     <tr>
                         <td><span class="method post">POST</span></td>
@@ -507,7 +507,10 @@
         </div>
 
         <div class="section">
-            <h2>📊 History & Logs</h2>
+            <h2>📊 History & Logs (ClaimLogController)</h2>
+            <p style="color: #7f8c8d; margin-bottom: 20px; text-align: center;">
+                Log retrieval endpoints separated into dedicated ClaimLogController for cleaner architecture
+            </p>
             
             <table class="endpoint-table">
                 <thead>
@@ -525,31 +528,54 @@
                         <td>/claim/{claim:uuid}/lead-history</td>
                         <td>claims.lead-history</td>
                         <td><span class="permission-badge">CLAIM_SHOW</span></td>
-                        <td>Get claim status history for client-side pagination</td>
+                        <td>Get claim status history for client-side pagination (ClaimsService)</td>
                     </tr>
                     <tr>
                         <td><span class="method get">GET</span></td>
                         <td>/claim/{claim:uuid}/sub-status-logs</td>
                         <td>claims.sub-status-logs</td>
                         <td><span class="permission-badge">CLAIM_SHOW</span></td>
-                        <td>Get sub-status changes for client-side pagination</td>
+                        <td>Get sub-status changes for client-side pagination (ClaimStatusesService)</td>
                     </tr>
                     <tr>
                         <td><span class="method get">GET</span></td>
                         <td>/claim/{claim:uuid}/complaint-status-logs</td>
                         <td>claims.complaint-status-logs</td>
                         <td><span class="permission-badge">CLAIM_SHOW</span></td>
-                        <td>Get complaint status logs from audit trail</td>
+                        <td>Get complaint status logs from audit trail (ClaimStatusesService)</td>
                     </tr>
                     <tr>
                         <td><span class="method get">GET</span></td>
                         <td>/claim/{claim:uuid}/next-follow-up-logs</td>
                         <td>claims.next-follow-up-logs</td>
                         <td><span class="permission-badge">CLAIM_SHOW</span></td>
-                        <td>Get next follow-up logs from audit trail</td>
+                        <td>Get next follow-up logs from audit trail (ClaimsService)</td>
                     </tr>
                 </tbody>
             </table>
+
+            <div class="response-example" style="margin-top: 20px;">
+                <h5>ClaimLogController Architecture Pattern</h5>
+                <div class="code-block">
+// ClaimLogController - Dedicated controller for log retrieval
+class ClaimLogController extends Controller
+{
+    // Constructor injects ClaimsService and ClaimStatusesService
+    public function __construct(
+        ClaimsService $claimsService,
+        ClaimStatusesService $claimsStatusesService
+    )
+
+    // All methods return JsonResponse for AJAX consumption
+    // Permission middleware: CLAIM_SHOW for all log endpoints
+    
+    getClaimLeadHistory(ClaimRequest $claim): JsonResponse
+    getClaimSubStatusLogs(ClaimRequest $claim): JsonResponse
+    getComplaintStatusLogs(ClaimRequest $claim): JsonResponse
+    getNextFollowUpLogs(ClaimRequest $claim): JsonResponse
+}
+                </div>
+            </div>
         </div>
 
         <div class="section">
@@ -760,13 +786,25 @@
                 <div class="tech-item">
                     <h4>ClaimsController Methods</h4>
                     <ul>
-                        <li><strong>index():</strong> Claims listing with 18+ filterable fields</li>
+                        <li><strong>index(ClaimSearchRequest):</strong> Claims listing with validated search</li>
                         <li><strong>create():</strong> Show claim creation form with dropdown data</li>
                         <li><strong>store():</strong> CPAPI integration for claim creation only</li>
                         <li><strong>show():</strong> Display claim with all relationships</li>
                         <li><strong>edit():</strong> Show claim editing form</li>
                         <li><strong>update():</strong> Update existing claim</li>
                         <li><strong>searchPolicies():</strong> Internal policy search (not CPAPI)</li>
+                        <li><strong>updateClaimStatus():</strong> Uses ClaimStatusesService</li>
+                        <li><strong>updateComplaintStatus():</strong> Uses ClaimStatusesService</li>
+                    </ul>
+                </div>
+
+                <div class="tech-item">
+                    <h4>ClaimLogController Methods</h4>
+                    <ul>
+                        <li><strong>getClaimLeadHistory():</strong> Main status history</li>
+                        <li><strong>getClaimSubStatusLogs():</strong> Sub-status changes</li>
+                        <li><strong>getComplaintStatusLogs():</strong> Complaint logs</li>
+                        <li><strong>getNextFollowUpLogs():</strong> Follow-up logs</li>
                     </ul>
                 </div>
 
@@ -776,9 +814,23 @@
                         <li><strong>getClaimsData():</strong> Main listing with filtering and pagination</li>
                         <li><strong>createClaim():</strong> CPAPI integration with 15+ data fields</li>
                         <li><strong>searchActivePolicies():</strong> Internal PersonalQuote queries</li>
-                        <li><strong>updateClaimStatus():</strong> Status updates with Activity logging</li>
-                        <li><strong>sendNotification():</strong> AI-optimized messaging</li>
+                        <li><strong>sendNotification():</strong> AI-optimized messaging with email job</li>
                         <li><strong>uploadClaimDocuments():</strong> Azure S3 document management</li>
+                        <li><strong>getClaimLeadHistory():</strong> Main status history retrieval</li>
+                    </ul>
+                </div>
+
+                <div class="tech-item">
+                    <h4>ClaimStatusesService Implementation</h4>
+                    <ul>
+                        <li><strong>getClaimStatuses():</strong> Cached main statuses</li>
+                        <li><strong>getClaimSubStatuses():</strong> Cached sub-statuses</li>
+                        <li><strong>getClaimComplaintStatuses():</strong> Cached complaint statuses</li>
+                        <li><strong>updateClaimStatus():</strong> Status updates with Activity logging</li>
+                        <li><strong>markClaimAsClosed():</strong> Close claim with updateQuietly</li>
+                        <li><strong>markClaimAsReOpen():</strong> Reopen claim when complaint opened</li>
+                        <li><strong>checkSubStatusForClaimClosure():</strong> LOB-specific closure logic</li>
+                        <li><strong>getClaimSubStatusLogs():</strong> Sub-status change history</li>
                     </ul>
                 </div>
 
@@ -789,6 +841,8 @@
                         <li><strong>ClaimUpdateRequest:</strong> General claim update validation</li>
                         <li><strong>ClaimDetailsUpdateRequest:</strong> LOB-specific details validation</li>
                         <li><strong>ClaimStatusUpdateRequest:</strong> Status transition validation</li>
+                        <li><strong>ClaimSearchRequest:</strong> Claims listing search validation (NEW)</li>
+                        <li><strong>ClaimOptimizeMessageRequest:</strong> AI optimization validation (NEW)</li>
                         <li><strong>SearchPoliciesRequest:</strong> Policy search validation</li>
                         <li><strong>ClaimSendNotificationRequest:</strong> Notification validation</li>
                     </ul>
@@ -799,8 +853,18 @@
                     <ul>
                         <li><strong>ClaimRequestObserver:</strong> Monitors field changes</li>
                         <li><strong>Auto-Status Updates:</strong> Based on claim_number, approval amounts</li>
-                        <li><strong>Closure Detection:</strong> LOB-specific closure logic</li>
+                        <li><strong>Closure Detection:</strong> LOB-specific closure logic via ClaimStatusesService</li>
                         <li><strong>Audit Logging:</strong> Comprehensive change tracking</li>
+                    </ul>
+                </div>
+
+                <div class="tech-item">
+                    <h4>Email Notification Jobs</h4>
+                    <ul>
+                        <li><strong>SendClaimSubStatusUpdateNotificationEmailJob:</strong> Queued email job</li>
+                        <li><strong>Configuration:</strong> 3 attempts, 100s timeout, 5min backoff</li>
+                        <li><strong>Eligibility Check:</strong> Validates customer email eligibility</li>
+                        <li><strong>Error Handling:</strong> Comprehensive retry and failure logging</li>
                     </ul>
                 </div>
             </div>
@@ -827,6 +891,7 @@
                         <li><strong>Database Queries:</strong> PersonalQuote model with PolicyBooked status filter</li>
                         <li><strong>Performance:</strong> Optimized queries with eager loading</li>
                         <li><strong>LOB Data:</strong> Car-specific fields included in search results</li>
+                        <li><strong>Validation:</strong> SearchPoliciesRequest with email, policy number, LOB</li>
                     </ul>
                 </div>
 
@@ -865,6 +930,7 @@
         <div class="footer">
             <p><strong>Claims API Endpoints Documentation</strong></p>
             <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Version 2.1 | Last Updated: February 2026 | Implementation-Synced</p>
         </div>
     </div>
 </body>

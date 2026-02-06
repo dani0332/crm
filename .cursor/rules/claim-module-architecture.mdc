@@ -44,7 +44,7 @@ alwaysApply: false
 ## Claim-Specific Method Requirements
 
 ### ClaimsController
-- `index(Request $request): Response` - Claims listing with filtering
+- `index(ClaimSearchRequest $request): Response` - Claims listing with filtering using validated search request
 - `create()` - Show claim creation form
 - `store(ClaimStoreRequest $request)` - Store new claim via CAPI
 - `show($uuid)` - Display claim details with all relationships
@@ -52,21 +52,19 @@ alwaysApply: false
 - `update(ClaimUpdateRequest $request, $uuid): RedirectResponse` - Update claim
 - `searchPolicies(SearchPoliciesRequest $request): JsonResponse` - CAPI integration for claim creation only
 - `updateClaimDetails(ClaimDetailsUpdateRequest $request, ClaimRequest $claim): RedirectResponse` - internal system
-- `updateClaimStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): RedirectResponse` - internal system
-- `optimizeMessage(Request $request, ClaimStatus $claimStatus): JsonResponse` - AI message optimization with validation
+- `updateClaimStatus(ClaimStatusUpdateRequest $request, ClaimRequest $claim): RedirectResponse` - internal system using ClaimStatusesService
+- `optimizeMessage(ClaimOptimizeMessageRequest $request): JsonResponse` - AI message optimization with validation
 - `sendNotification(ClaimSendNotificationRequest $request, ClaimRequest $claim): JsonResponse` - send notifications with validation
-- `getClaimLeadHistory(Request $request, ClaimRequest $claim): JsonResponse` - fetch all claim status history for client-side pagination
-- `getClaimSubStatusLogs(Request $request, ClaimRequest $claim): JsonResponse` - fetch all sub-status changes for client-side pagination
-- `updateComplaintStatus(ClaimComplaintStatusUpdateRequest $request, ClaimRequest $claim)` - Update complaint status
+- `updateComplaintStatus(ClaimComplaintStatusUpdateRequest $request, ClaimRequest $claim)` - Update complaint status using ClaimStatusesService
 - `updateNextFollowUp(ClaimNextFollowUpUpdateRequest $request, ClaimRequest $claim)` - Update next follow-up
-- `getComplaintStatusLogs(Request $request, ClaimRequest $claim): JsonResponse` - Get complaint status logs
-- `getNextFollowUpLogs(Request $request, ClaimRequest $claim): JsonResponse` - Get next follow-up logs
 - `makeAdditionalContactPrimary(ClaimMakeAdditionalContactPrimaryRequest $request, ClaimRequest $claim)` - Make additional contact primary
-- `storeDocument(ClaimDocumentRequest $request, ClaimRequest $claim): JsonResponse` - Upload claim documents
-- `destroyDocument(ClaimRequest $claim, QuoteDocument $document): JsonResponse` - Delete claim document
-- `getS3TempUrl(Request $request): JsonResponse` - Get S3 temporary URL for document access
-- `downloadAllDocuments(Request $request, ClaimRequest $claim)` - Download all documents as ZIP
 - `export(ClaimExportValidationRequest $request)` - Export claims data
+
+### ClaimLogController (Separated Log Retrieval)
+- `getClaimLeadHistory(ClaimRequest $claim): JsonResponse` - Fetch all claim status history for client-side pagination
+- `getClaimSubStatusLogs(ClaimRequest $claim): JsonResponse` - Fetch all sub-status changes for client-side pagination using ClaimStatusesService
+- `getComplaintStatusLogs(ClaimRequest $claim): JsonResponse` - Get complaint status logs using ClaimStatusesService
+- `getNextFollowUpLogs(ClaimRequest $claim): JsonResponse` - Get next follow-up logs
 
 ### ClaimsService
 - `getClaimsData(Request $request)` - Get claims data with filtering and pagination
@@ -78,40 +76,40 @@ alwaysApply: false
 - `createClaim(array $data)` - Create claim via CAPI integration
 - `updateClaim($uuid, array $data): ClaimRequest` - Update existing claim with dynamic field handling
 - `updateClaimDetails(ClaimRequest $claimRequest, array $data): ClaimRequest` - Update specific claim details with filtered fields
-- `updateClaimStatus($claimRequest, $request): ClaimRequest` - Update claim status and create activity
-- `checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusId): bool` - Check closure logic based on LOB
-- `markClaimAsOpen(ClaimRequest $claimRequest): void` - Mark claim as open
-- `markClaimAsClosed(ClaimRequest $claimRequest): void` - Mark claim as closed
-- `updateClaimSubStatusToClaimRegistered(ClaimRequest $claim): void` - Set appropriate registered status based on LOB
-- `updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claimRequest): void` - Car-specific repair approved status
-- `updateClaimSubStatusToTotalLossOfferLetterShared(ClaimRequest $claimRequest): void` - Car-specific total loss status
-- `updateClaimSubStatusToCashLossApproved(ClaimRequest $claimRequest): void` - Car-specific cash loss status
 - `isRequiredFieldsFilled(ClaimRequest $claimRequest): bool` - Check if required fields are filled based on LOB
-- `isClaimStatusClosed(?int $statusId): bool` - Check if given status ID represents closed status
 - `sendNotification(ClaimRequest $claimRequest, $request)` - Send notification, update sub-status, and trigger closure if needed
 - `optimizeMessageWithAI(string $message, string $claimUuid)` - AI message optimization via InstantWriter
 - `getClaimLeadHistory(int $claimId)` - Fetch all claim status history (main statuses) for client-side pagination
-- `getClaimSubStatusLogs(int $claimId)` - Fetch all sub-status changes for client-side pagination
-- `updateComplaintStatus(ClaimRequest $claim, ?int $complaintStatusId, ?string $complaintDatetime, ?string $notes): ClaimRequest` - Update complaint status with auto-reopen logic
 - `updateNextFollowUp(ClaimRequest $claim, ?string $nextFollowUpDatetime, ?string $notes): ClaimRequest` - Update next follow-up datetime and notes
-- `getComplaintStatusLogs(int $claimId)` - Get complaint status logs from audit trail with JSON extraction
 - `getNextFollowUpLogs(int $claimId)` - Get next follow-up logs from audit trail with JSON extraction
 - `uploadClaimDocuments(ClaimRequest $claim, array $files, array $documentData): array` - Upload multiple documents with error handling
 - `deleteClaimDocument(ClaimRequest $claim, $documentId): bool` - Delete claim document with business validation
 - `createDocumentsZip(ClaimRequest $claim): array` - Create ZIP file of all claim documents with Azure Storage integration
 - `dispatchGoogleReviewEmail(ClaimRequest $claimRequest): void` - Dispatch Google review email job for closed claims
-- `getDropdownData(): array` - Get all dropdown data for forms (LOB, types, statuses, managers, car data)
+- `getDropdownData(): array` - Get all dropdown data for forms (LOB, types, statuses, managers, car data) - uses ClaimStatusesService
 - `getLineOfBusinessOptions(): array` - Get active quote types for LOB dropdown
 - `getClaimTypes(): array` - Get claim types from lookups
-- `getClaimStatuses(): array` - Get main claim statuses from claim_statuses table
-- `getClaimSubStatuses(): array` - Get sub-statuses from claim_statuses table
-- `getClaimComplaintStatuses(): array` - Get complaint statuses from claim_statuses table
 - `getClaimsManagers(): array` - Get users with CLAIM_MANAGER role
 - `getClaimRequestTypes(): array` - Get health claim request types from lookups
 - `getClaimServiceTypes(): array` - Get health service types from lookups
 - `getCarMake(): array` - Get active car makes
 - `getCarModelYear(): array` - Get years of manufacture
 - `getClaimDocumentTypes($quoteTypeId)` - Get LOB-specific document types
+
+### ClaimStatusesService (Separated Status Management)
+- `getClaimStatuses(): array` - Get main claim statuses from claim_statuses table with caching
+- `getClaimSubStatuses(): array` - Get sub-statuses from claim_statuses table with caching
+- `getClaimComplaintStatuses(): array` - Get complaint statuses from claim_statuses table with caching
+- `updateClaimSubStatusToClaimRegistered(ClaimRequest $claim): void` - Set appropriate registered status based on LOB
+- `checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusId): bool` - Check closure logic based on LOB
+- `markClaimAsReOpen(ClaimRequest $claimRequest): void` - Mark claim as reopened when complaint is opened
+- `markClaimAsClosed(ClaimRequest $claimRequest): void` - Mark claim as closed
+- `updateClaimStatus($claimRequest, $request)` - Update claim status and create activity
+- `updateClaimSubStatus(ClaimRequest $claimRequest, $claimStatus): void` - Update claim sub-status with saveQuietly
+- `isClaimStatusClosed(?int $statusId): bool` - Check if given status ID represents closed status
+- `getClaimSubStatusLogs(int $claimId)` - Fetch all sub-status changes for client-side pagination
+- `updateComplaintStatus(ClaimRequest $claim, ?int $complaintStatusId, ?string $complaintDatetime, ?string $notes): ClaimRequest` - Update complaint status with auto-reopen logic
+- `getComplaintStatusLogs(int $claimId)` - Get complaint status logs from audit trail with JSON extraction
 
 ### ClaimRequest Model
 - `scopeAssignedTo($query, $userId)` - Filter by assigned manager
@@ -234,6 +232,8 @@ This pattern:
 - `ClaimMakeAdditionalContactPrimaryRequest` - Make additional contact primary validation
 - `ClaimDocumentRequest` - Document upload validation
 - `ClaimExportValidationRequest` - Export validation
+- `ClaimSearchRequest` - Claims listing search and filtering validation
+- `ClaimOptimizeMessageRequest` - AI message optimization request validation
 - `SearchPoliciesRequest` - Policy search validation for CAPI integration
 
 ### Validation Implementation
@@ -290,15 +290,18 @@ This pattern:
 - `approved_cash_loss_amount` - Car/Bike LOB only: When changed from empty to filled, triggers "Cash loss approved" status
 - `claim_status_id` - Prepared for Google review email dispatch via `dispatchGoogleReviewEmail()` (currently commented out in observer)
 
-### Observer Business Logic Methods (from ClaimsService)
+### Observer Business Logic Methods (from ClaimStatusesService)
 - `updateClaimSubStatusToClaimRegistered(ClaimRequest $claim)` - Sets "Claims registered" for general or "Claim registered and awaiting inspection" for Car LOB
 - `checkSubStatusForClaimClosure(ClaimRequest $claim, $newClaimSubStatusId)` - Returns bool; checks if new sub-status is in closure list for claim's LOB
-- `markClaimAsClosed(ClaimRequest $claim)` - Updates claim_status_id to "Close" status
-- `markClaimAsOpen(ClaimRequest $claim)` - Updates claim_status_id to "Open" status
+- `markClaimAsClosed(ClaimRequest $claim)` - Updates claim_status_id to "Closed" status using updateQuietly
+- `markClaimAsReOpen(ClaimRequest $claim)` - Updates claim_status_id to "Reopen" status when complaint opened
+- `updateClaimSubStatus(ClaimRequest $claim, $claimStatus)` - Sets sub-status using saveQuietly to prevent observer loops
+- `isClaimStatusClosed(?int $statusId)` - Checks if status ID matches "Closed" status text
+
+### Observer Business Logic Methods (from ClaimsService)
 - `updateClaimSubStatusToRepairApprovedAndWIP(ClaimRequest $claim)` - Sets "Repair approved & work in progress" status
 - `updateClaimSubStatusToTotalLossOfferLetterShared(ClaimRequest $claim)` - Sets "Total Loss Offer Letter shared" status
 - `updateClaimSubStatusToCashLossApproved(ClaimRequest $claim)` - Sets "Cash loss approved" status
-- `isClaimStatusClosed(?int $statusId)` - Checks if status ID matches "Close" status text
 - `dispatchGoogleReviewEmail(ClaimRequest $claim)` - Dispatches SendGoogleReviewEmailJob for closed claims
 
 ## CAPI Integration Requirements
@@ -436,6 +439,30 @@ This pattern:
 
 *See Claims-Module-Documentation.md for complete status lists and transitions*
 
+## Email Notifications
+
+### SendClaimSubStatusUpdateNotificationEmailJob
+**Purpose**: Queued job to send claim sub-status update notification emails to customers
+
+#### Job Configuration
+- **Queue**: Default queue with 3 attempts
+- **Timeout**: 100 seconds
+- **Backoff**: 300 seconds (5 minutes between retries)
+- **Parameters**: `$claimRequestUuid`, `$customerMessage`
+
+#### Job Flow
+1. **Find Claim**: Retrieves ClaimRequest by UUID
+2. **Eligibility Check**: Verifies customer is eligible using `isEligibleForReviewEmail()`
+3. **Send Email**: Dispatches email via `sendClaimSubStatusCustomerUpdateEmail()`
+4. **Response Logging**: Logs success (200/201) or failure responses
+5. **Error Handling**: Re-throws exceptions to mark job as failed
+
+#### Integration Points
+- **Triggered By**: ClaimsService `sendNotification()` method
+- **Email Service**: ClaimRequestEmailService
+- **Logging**: Comprehensive LoggerService integration with CLAIM_SUB_STATUS_CUSTOMER_UPDATE_EMAIL feature
+- **Failure Handling**: Implements `failed()` method for permanent failure logging
+
 ## Implementation-Specific Notes
 
 ### Service Method Return Patterns
@@ -443,6 +470,12 @@ This pattern:
 - History/log methods return collections/arrays for frontend DataTables
 - Upload methods return associative arrays with success/error counts
 - Boolean methods for validation: `isRequiredFieldsFilled()`, `checkSubStatusForClaimClosure()`, `isClaimStatusClosed()`
+
+### Service Separation Pattern
+- **ClaimsService**: Core business logic for claim creation, updates, documents, and notifications
+- **ClaimStatusesService**: Isolated status management logic with caching for statuses, sub-statuses, complaint statuses
+- **ClaimLogController**: Separated log retrieval endpoints from main ClaimsController for cleaner architecture
+- **Caching Strategy**: ClaimStatusesService uses CacheManager for status dropdown data with CacheKeyEnum keys
 
 ### Observer Trigger Conditions
 - **Empty to Filled**: `if (empty($original) && !empty($new))` pattern prevents duplicate triggers
@@ -472,14 +505,17 @@ This pattern:
 
 **SYSTEM**: This rule file and documentation auto-update when significant claim module changes are detected.
 
-**Last Manual Update**: December 12, 2025
+**Last Manual Update**: February 6, 2026
 **Sync Status**: ✓ Synced with Implementation
-**Implementation Version**: Production (v2.0)
+**Implementation Version**: Production (v2.1)
 
 ### Auto-Detection Triggers
 1. **File Modifications** - Changes to claim-related files trigger analysis:
    - `app/Http/Controllers/ClaimsController.php`
+   - `app/Http/Controllers/ClaimLogController.php`
    - `app/Services/ClaimsService.php`
+   - `app/Services/ClaimStatusesService.php`
+   - `app/Jobs/SendClaimSubStatusUpdateNotificationEmailJob.php`
    - `app/Models/ClaimRequest*.php`
    - `app/Models/CustomerBankAccount.php`
    - `app/Http/Requests/Claim*.php`

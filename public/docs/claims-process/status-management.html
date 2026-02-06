@@ -436,7 +436,7 @@
 // ClaimRequestObserver::updating() method
 public function updating(ClaimRequest $claimRequest): void
 {
-    $claimService = new ClaimsService;
+    $claimStatusesService = new ClaimStatusesService;
 
     // Monitor claim number changes
     if ($claimRequest->isDirty('claim_number')) {
@@ -712,6 +712,7 @@ const canUpdateSubStatus = can(permissionsEnum.CLAIMS_SUB_STATUS_UPDATE);
         <div class="footer">
             <p><strong>Status Management Documentation</strong></p>
             <p>Part of the Claims Management System Technical Documentation</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Version 2.1 | Last Updated: February 2026 | Implementation-Synced</p>
         </div>
     </div>
 </body>
