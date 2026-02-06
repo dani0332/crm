@@ -119,14 +119,14 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
-        $templateId = $this->embeddedTransactionRepo->getEpRetargetingReminderEmailTemplateId($epShortCode);
-        $birdCarEpReminderEmailWorkflowUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL);
+        // $templateId = $this->embeddedTransactionRepo->getEpRetargetingReminderEmailTemplateId($epShortCode);
+        // $birdCarEpReminderEmailWorkflowUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL);
 
-        if (empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
-            LoggerService::info('getRetargetingCarEpReminderData: Template / Email Workflow URL not found', extra: ['templateId' => $templateId, 'birdReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl]);
+        // if (empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
+        //     LoggerService::info('getRetargetingCarEpReminderData: Template / Email Workflow URL not found', extra: ['templateId' => $templateId, 'birdReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl]);
 
-            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Template / Email Workflow URL not found');
-        }
+        //     return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Template / Email Workflow URL not found');
+        // }
 
         $buyNowUrlQueryParams = [];
         if (! empty($quote->plan?->id ?? null)) {
@@ -147,18 +147,18 @@ class EmbeddedTransactionService extends BaseService
             'quote' => $quote->only(['id', 'uuid', 'quote_status_id', 'policy_booking_date']),
             'embeddedTransaction' => $embeddedTransaction->only(['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id']),
             'emailWorkflowData' => [
-                'templateId' => $templateId,
-                'customerId' => $quote->customer_id,
                 'customerEmail' => $quote->email,
                 'customerName' => $quote->full_name,
                 'advisorEmail' => $quote->advisor?->email ?? null,
-                'displayName' => 'InsuranceMarket.ae',
                 'buyNowUrl' => $buyNowUrl,
-                'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
-                'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
                 'epShortCode' => $epShortCode,
                 'vehicleMake' => $carMake,
                 'vehicleModel' => $carModel,
+                // 'templateId' => $templateId,
+                // 'customerId' => $quote->customer_id,
+                // 'displayName' => 'InsuranceMarket.ae',
+                // 'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
+                // 'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
             ],
         ];
 
