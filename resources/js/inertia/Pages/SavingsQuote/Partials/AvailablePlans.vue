@@ -229,11 +229,11 @@ const handlePlanSelected = plan => {
     selectedProviderPlan.value.providerName = plan.providerName;
     selectedProviderPlan.value.premium = plan.premium;
   }
-  router.reload({
-    preserveState: true,
-    preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
-  });
+  // router.reload({
+  //   preserveState: true,
+  //   preserveScroll: true,
+  //   only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
+  // });
 };
 
 // Editable only for selected plan (non-AED)

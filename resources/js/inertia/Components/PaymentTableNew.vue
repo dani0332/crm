@@ -153,7 +153,11 @@ const isLifePlanDetailsEnabled = computed(() => {
 
 // for life only and savings
 const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
-const savingExchangeRate = ref(props.quoteRequest?.savings_quote?.exchange_rate);
+
+// using computed to track the exchange rate changes
+const savingExchangeRate = computed(() => {
+  return props.quoteRequest?.savings_quote?.exchange_rate ?? 0;
+});
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -190,7 +194,7 @@ const getInitalAmountForLifeLOB = () => {
       props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
     );
   }
-  
+
   const premiumInAED =
     Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
   return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
@@ -199,11 +203,13 @@ const getInitalAmountForLifeLOB = () => {
 const getInitalAmountForSavingsLOB = () => {
   if (props.quoteRequest?.savings_quote?.currency?.code === 'AED') {
     return (
-      props.quoteRequest.premium * props.quoteRequest?.savings_quote?.payment_term
+      props.quoteRequest.premium *
+      props.quoteRequest?.savings_quote?.payment_term
     );
   }
   const premiumInAED =
-    Math.round(props.quoteRequest.premium * savingExchangeRate.value * 100) / 100;
+    Math.round(props.quoteRequest.premium * savingExchangeRate.value * 100) /
+    100;
   return premiumInAED * props.quoteRequest?.savings_quote?.payment_term;
 };
 
