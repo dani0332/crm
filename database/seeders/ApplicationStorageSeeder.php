@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EnvEnum;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
 
@@ -77,6 +78,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOcrUtilEnabled();
         $this->seedCarOcbEmailTemplatesUpdate();
         $this->seedOCRCustomerJourneyHealthEnabled();
+        $this->seedAdvisorPaymentNotificationWorkflowUrl();
     }
 
     private function livaCarAutomationSeed()
@@ -1261,5 +1263,47 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+    }
+
+    #region Advisor Payment Notification
+
+    private function seedAdvisorPaymentNotificationWorkflowUrl()
+    {
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR],
+            [
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS_TO_ADVISOR],
+            [
+                'value' => 30,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/4f168567-e5fa-4617-9f74-43293e0f6c6c/invoke-sync';
+        if (env('APP_ENV') === EnvEnum::PRODUCTION) {
+            $birdWorkflowUrl = '';
+        }
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL],
+            [
+                'value' => $birdWorkflowUrl,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        #endregion
     }
 }

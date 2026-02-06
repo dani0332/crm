@@ -70,6 +70,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('SendPaymentEmailToAdvisor:cron')->timezone('Asia/Dubai')->dailyAt('12:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('PaymentExpireNotification:cron')
             ->timezone('Asia/Dubai')
