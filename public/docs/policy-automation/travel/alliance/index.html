@@ -324,6 +324,24 @@
         </div>
 
         <div class="overview-section">
+            <h2>💳 Pre-Automation Payment Capture</h2>
+            <div style="background: linear-gradient(135deg, #27ae60, #229954); padding: 25px; border-radius: 10px; color: white; margin-bottom: 30px; border-left: 5px solid #fff;">
+                <h4 style="margin-bottom: 15px;">🔑 Critical Prerequisite Step</h4>
+                <p style="margin: 0; line-height: 1.7;">
+                    <strong>Auto-capture executes BEFORE automation workflow starts</strong> during the split payment approval process:<br><br>
+                    ✓ <strong>When:</strong> During <code>SplitPaymentService->processSplitPaymentApprove()</code> execution (background job <code>CcPaymentProcess</code>)<br>
+                    ✓ <strong>What:</strong> Captures authorized payments via Marshall/Tap API using <code>CRUDService->capturePayment()</code><br>
+                    ✓ <strong>Code Location:</strong> <code>SplitPaymentService.php</code> lines 770-792, 1475-1487<br>
+                    ✓ <strong>Marshall API:</strong> Creates <code>PaymentAction</code> record with <code>action_type: 'CAPTURE'</code> and <code>amount</code><br>
+                    ✓ <strong>Retry Logic:</strong> Up to 3 attempts with 1-second delay between retries<br><br>
+                    <strong>Success:</strong> If capture succeeds → Automation workflow is scheduled via <code>createPolicyIssuanceAutomation()</code><br>
+                    <strong>Failure:</strong> If capture fails → <code>handleAutomationError()</code> sets <code>AUTO_CAPTURE_FAILED_STATUS_ID</code> and allocates to team (prevents automation from starting)<br><br>
+                    <strong>This is why documentation refers to "pre-captured" payments</strong> - the payment must be successfully captured before any automation steps can execute.
+                </p>
+            </div>
+        </div>
+
+        <div class="overview-section">
             <h2>🔄 Complete Automation Workflow</h2>
             <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
                 Sequential 5-step automation process with state management and error handling at each stage
