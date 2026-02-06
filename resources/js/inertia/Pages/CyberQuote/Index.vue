@@ -35,8 +35,8 @@ let availableFilters = {
   mobile_no: '',
   payment_status_id: '',
   is_ecommerce: '',
-  created_at_start: new Date() || '',
-  created_at_end: new Date() || '',
+  created_at_start: new Date().toISOString() || '',
+  created_at_end: new Date().toISOString() || '',
   quote_status_id: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
@@ -187,6 +187,8 @@ const handleSelectedFilters = selectedFilters => {
 
 const exportLoader = ref(false);
 const onDataExport = () => {
+  // Format dates to YYYY-MM-DD before exporting
+  
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'cyber');
   const payload = {
