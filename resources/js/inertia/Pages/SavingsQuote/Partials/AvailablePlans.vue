@@ -239,6 +239,7 @@ const handlePlanSelected = async plan => {
     );
     updatedExchangeRates.value.delete(plan.id);
     planRates.value = {};
+    await onLoadAvailablePlansData(props.quote.uuid);
     router.reload({
       preserveScroll: true,
       only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
@@ -419,15 +420,11 @@ const updateExchangeRate = (item, exchangeRate = null) => {
       // Mark this plan's exchange rate as updated
       updatedExchangeRates.value.add(item.id);
 
-      // If this is the selected plan, reload the page to update quote data
-      if (isPlanSelected) {
-        router.reload({
-          preserveScroll: true,
-        });
-      }
-
-      // Reload plans data to reflect the update
-      onLoadAvailablePlansData(props.quote.uuid);
+      // await onLoadAvailablePlansData(props.quote.uuid);
+      router.reload({
+        preserveScroll: true,
+        only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
+      });
     })
     .catch(error => {
       notification.error({
