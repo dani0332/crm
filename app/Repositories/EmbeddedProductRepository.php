@@ -665,7 +665,7 @@ class EmbeddedProductRepository extends BaseRepository
         } elseif ($isSukoonMedex) {
             return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep, $modelType, $isSalama);
         } elseif ($isECB) {
-            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType, $short_code);
+            return $this->sendECBEmail($transaction->first(), $quoteObject->id, $modelType);
         }
     }
 
@@ -804,7 +804,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendECBEmail($transaction, $quoteId, $modelType, $short_code)
+    private function sendECBEmail($transaction, $quoteId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $quote = $this->getQuoteObject($modelType, $quoteId);
