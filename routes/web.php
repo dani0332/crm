@@ -177,7 +177,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
 
-    Route::get('{quoteType}/report-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('retention-export');
+    Route::get('{quoteType}/report-export', [CentralController::class, 'exportLeads'])/* ->middleware(SetReadDbConnection::class) */ ->name('retention-export');
     Route::get('/reports/retention-report', [ReportsController::class, 'renderRetentionReport'])->name('retentionn-report');
     Route::get('/reports/fetch-retention-leads-data', [ReportsController::class, 'fetchRetentionLeadsData'])->name('fetch-retention-leads-data');
     Route::post('/reports/fetch-batch-by-date', [ReportsController::class, 'fetchBatchByDates']);
@@ -283,15 +283,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('customer/{uuid}/edit', [V2CustomerController::class, 'edit'])->name('customers-edit');
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
 
-        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('{quoteType}/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
-        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
+        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])/* ->middleware(SetReadDbConnection::class) */ ->name('data-extraction');
+        Route::get('{quoteType}/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])/* ->middleware(SetReadDbConnection::class) */ ->name('export-car-pua-updates');
+        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])/* ->middleware(SetReadDbConnection::class) */ ->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
         Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
-        Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-plan-detail');
-        Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-makes-models');
+        Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])/* ->middleware(SetReadDbConnection::class) */ ->name('export-plan-detail');
+        Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])/* ->middleware(SetReadDbConnection::class) */ ->name('export-makes-models');
 
         Route::group(['prefix' => 'renewals'], function () {
             Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals'])->name('renewals-upload-create');
@@ -299,7 +299,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
-            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')->middleware(SetReadDbConnection::class)->name('renewal-search-export');
+            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')/* ->middleware(SetReadDbConnection::class) */ ->name('renewal-search-export');
 
             // Non Motor
             Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update');
@@ -550,10 +550,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::group(['prefix' => 'quote-sync'], function () {
-            Route::middleware('readonly_db')->group(function () {
-                Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
-                Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
-            });
+            // Route::middleware('readonly_db')->group(function () {
+            Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
+            Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
+            // });
             Route::get('/edit/{quoteSync}', [QuoteSyncController::class, 'edit'])->name('admin.quotesync.edit');
             Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
             Route::post('/sync-stuck-entries', [QuoteSyncController::class, 'addStuckEntriesForSyncing'])->name('admin.quotesync.sync-stuck-entries');
@@ -607,7 +607,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('fetch-rate', [BuyLeadController::class, 'fetchRate'])->name('buy-leads.rate.fetch');
             Route::post('submit', [BuyLeadController::class, 'submit'])->name('buy-leads.request.submit');
             Route::get('export', [BuyLeadController::class, 'export'])->name('buy-leads.request.export');
-            Route::get('export-data', [BuyLeadController::class, 'exportBuyLeadsData'])->middleware(SetReadDbConnection::class)->name('buy-leads.request.export-data');
+            Route::get('export-data', [BuyLeadController::class, 'exportBuyLeadsData'])/* ->middleware(SetReadDbConnection::class) */ ->name('buy-leads.request.export-data');
             Route::post('update-employee-codes', [BuyLeadController::class, 'updateEmployeeCodes'])->name('buy-leads.request.update-employee-codes');
         });
     });
@@ -743,9 +743,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('get-insured-details', [AMLController::class, 'getInsuredDetails'])->name('get-insured-details');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
-        Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
+        Route::get('export', [AMLController::class, 'export'])/* ->middleware(SetReadDbConnection::class) */;
         Route::post('temp-skip-bridger-aml', [AMLController::class, 'tempSkipBridgerAML'])->name('temp-skip-bridger-aml');
-        Route::post('aml-ctf-report-export', [AMLController::class, 'amlCtfReportExport'])->name('aml-ctf-report-export')->middleware(SetReadDbConnection::class);
+        Route::post('aml-ctf-report-export', [AMLController::class, 'amlCtfReportExport'])->name('aml-ctf-report-export')/* ->middleware(SetReadDbConnection::class) */;
         Route::post('update-additional-vehicle-driver-details', [AMLController::class, 'updateAddtionalVehicleDriverDetails'])->name('update-additional-vehicle-driver-details');
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
@@ -856,14 +856,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Sending NB Car Followups
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
-    Route::group(['middleware' => ['readonly_db']], function () {
-        Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
-        Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+    // Route::group(['middleware' => ['readonly_db']], function () {
+    Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
-        // Sage Failed Processes Routes
-        Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.index');
-        Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])->middleware(SetReadDbConnection::class)->name('sage-failed-processes.export');
-    });
+    // Sage Failed Processes Routes
+    Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])/* ->middleware(SetReadDbConnection::class) */ ->name('sage-failed-processes.index');
+    Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])/* ->middleware(SetReadDbConnection::class) */ ->name('sage-failed-processes.export');
+    // });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
     Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
