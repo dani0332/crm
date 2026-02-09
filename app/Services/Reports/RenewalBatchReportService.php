@@ -714,7 +714,7 @@ class RenewalBatchReportService extends BaseService
                 : [$filters->currently_insured_with];
 
             // Health quotes store IDs directly, so use them as-is
-            $query->whereIn('health_quote_request.insurance_provider_id', $insurerIds);
+            $query->whereIn('health_quote_request.currently_insured_with_id', $insurerIds);
         }
 
         return $query;
