@@ -76,6 +76,8 @@ class AMLExportService
         return array_merge($request->all(), [
             'exportTitle' => 'AML',
             'reportDateRange' => $reportDateRange,
+            'created_at_start' => $request->amlCreatedStartDate,
+            'created_at_end' => $request->amlCreatedEndDate,
         ]);
     }
 
