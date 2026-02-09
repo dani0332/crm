@@ -100,13 +100,13 @@ class LifeQuoteRepository extends BaseRepository
         if (isset($response->quoteUID)) {
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
             $updateData = ['age' => $lifeQuote['age']];
-            
+
             foreach (['height', 'weight', 'bmi'] as $field) {
                 if (isset($lifeQuote[$field])) {
                     $updateData[$field] = $lifeQuote[$field];
                 }
             }
-            
+
             $quote->lifeQuote()->update($updateData);
         }
 
