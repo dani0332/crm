@@ -274,6 +274,14 @@ class RenewalBatchReportService extends BaseService
             $isRenewals = true;
         }
 
+        // Get active insurance providers
+        $insuranceProviders = \App\Models\InsuranceProvider::select('id', 'text')
+            ->where('is_active', true)
+            ->orderBy('text')
+            ->get()
+            ->map(fn ($provider) => ['value' => $provider->id, 'label' => $provider->text])
+            ->toArray();
+
         return [
             'advisors' => $carAdvisors,
             'segments' => $segments,
@@ -283,6 +291,7 @@ class RenewalBatchReportService extends BaseService
             'isBDM' => $isBDM,
             'isMCR' => $isMCR,
             'isRenewals' => $isRenewals,
+            'insuranceProviders' => $insuranceProviders,
         ];
     }
 
@@ -489,6 +498,22 @@ class RenewalBatchReportService extends BaseService
             $query->where('car_quote_request.vehicle_use', $filters->vehicle_use);
         }
 
+        // Currently Insured With filter
+        if (isset($filters->currently_insured_with) && ! empty($filters->currently_insured_with)) {
+            $insurerIds = is_array($filters->currently_insured_with)
+                ? $filters->currently_insured_with
+                : [$filters->currently_insured_with];
+
+            $insurerNames = \App\Models\InsuranceProvider::whereIn('id', $insurerIds)
+                ->where('is_active', true)
+                ->pluck('text')
+                ->toArray();
+
+            if (! empty($insurerNames)) {
+                $query->whereIn('car_quote_request.currently_insured_with', $insurerNames);
+            }
+        }
+
         /**
          * segment wise carsold and early renewal
          */
@@ -680,6 +705,16 @@ class RenewalBatchReportService extends BaseService
             $query->whereIn('health_quote_request.renewal_batch', $batchNo);
         } else {
             $query->whereIn('health_quote_request.renewal_batch', $dataBatches ?? $renewalBatches);
+        }
+
+        // Currently Insured With filter for Health - health_quote_request uses ID column directly
+        if (isset($filters->currently_insured_with) && ! empty($filters->currently_insured_with)) {
+            $insurerIds = is_array($filters->currently_insured_with)
+                ? $filters->currently_insured_with
+                : [$filters->currently_insured_with];
+
+            // Health quotes store IDs directly, so use them as-is
+            $query->whereIn('health_quote_request.insurance_provider_id', $insurerIds);
         }
 
         return $query;

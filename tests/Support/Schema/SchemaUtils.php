@@ -41,4 +41,13 @@ class SchemaUtils
             });
         }
     }
+
+    public static function ensureColumns(array $definitions): void
+    {
+        foreach ($definitions as $table => $columns) {
+            foreach ($columns as $column => $callback) {
+                self::addColumnIfMissing($table, $column, $callback);
+            }
+        }
+    }
 }
