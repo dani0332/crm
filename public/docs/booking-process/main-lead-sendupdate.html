@@ -1011,9 +1011,9 @@
             <h3>🔄 Send Update Job Processing</h3>
             <div class="info-grid">
                 <div class="info-card">
-                    <h4>BookEndorsementOnSageJob</h4>
+                    <h4>SendUpdateSageJob</h4>
                     <ul>
-                        <li><strong>Trigger:</strong> Scheduled via scheduleSageProcesses()</li>
+                        <li><strong>Trigger:</strong> Scheduled via scheduleSageProcesses() for request type SAGE_PROCESS_SEND_UPDATE_REQUEST</li>
                         <li><strong>Model:</strong> SendUpdateLog</li>
                         <li><strong>Middleware:</strong> WithoutOverlapping with send update ID lock</li>
                         <li><strong>Timeout:</strong> 80 seconds</li>
@@ -1025,7 +1025,7 @@
                 <div class="info-card">
                     <h4>Send Update Sage Process</h4>
                     <ul>
-                        <li><strong>Request Type:</strong> SAGE_PROCESS_BOOK_ENDORSEMENT_REQUEST</li>
+                        <li><strong>Request Type:</strong> SAGE_PROCESS_SEND_UPDATE_REQUEST</li>
                         <li><strong>Model Type:</strong> SendUpdateLog</li>
                         <li><strong>Model ID:</strong> Send Update Log ID</li>
                         <li><strong>Status Flow:</strong> PENDING → PROCESSING → COMPLETED/FAILED</li>

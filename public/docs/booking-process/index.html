@@ -400,7 +400,7 @@
             </div>
 
             <div class="highlight" style="margin-top: 20px; background: linear-gradient(135deg, #27ae60, #229954); padding: 20px; border-radius: 10px; color: white;">
-                <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated October 2024</h4>
+                <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated February 2025</h4>
                 <p style="margin: 0;">
                     <strong>All documentation has been updated to reflect actual implementation:</strong><br>
                     • Embedded Product booking for MDX (Driver Cover), RDX (Rider Medical Cover), and ECB (Excess Cashback) documented with product-specific differentiation<br>
@@ -437,7 +437,11 @@
                     </div>
                     <div class="tech-item">
                         <strong>Job Queue</strong>
-                        BookPolicyOnSageJob
+                        BookPolicyOnSageJob, SendUpdateSageJob, PostPrepaymentToSageJob, BookEmbeddedProductOnSageJob (insly queue)
+                    </div>
+                    <div class="tech-item">
+                        <strong>Scheduling</strong>
+                        scheduleSageProcesses(): one process per insurer (groupBy), Cache lock, optional timeout retry
                     </div>
                     <div class="tech-item">
                         <strong>Authentication</strong>
@@ -817,7 +821,7 @@
                     <li>Entry type determination (SCT_STRAIGHT, SCT_REVERSAL, SCT_CORRECTION)</li>
                     <li>Status tracking: quote_status_id vs send_update_logs.status</li>
                     <li>Payment differentiation: send_update_log_id NULL vs NOT NULL</li>
-                    <li>BookPolicyOnSageJob and BookEndorsementOnSageJob orchestration</li>
+                    <li>BookPolicyOnSageJob and SendUpdateSageJob orchestration</li>
                     <li>Database tables: quotes, send_update_logs, payments, sage_processes</li>
                     <li>Integration with customer creation, receipts, invoices, and payment application</li>
                 </ul>
