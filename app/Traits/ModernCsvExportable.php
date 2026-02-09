@@ -148,7 +148,6 @@ trait ModernCsvExportable
         );
 
         return response()->json([
-            'success' => true,
             'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
         ]);
     }

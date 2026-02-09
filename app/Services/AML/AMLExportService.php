@@ -17,6 +17,8 @@ class AMLExportService
 
     public function exportAMLLogs(Request $request): StreamedResponse|JsonResponse
     {
+        $response = null;
+
         try {
             LoggerService::info('AML Export requested', extra: [
                 'export_type' => $request->exportType ?? 'download',
@@ -30,18 +32,16 @@ class AMLExportService
             $reportDateRange = $this->formatDateRange($request->amlCreatedStartDate, $request->amlCreatedEndDate);
             $exportParams = $this->prepareExportParams($request, $reportDateRange);
 
-            if ($request->exportType === 'email') {
-                return $this->emailExport($reportDateRange, $exportParams);
-            }
-
-            return $this->downloadExport($reportDateRange, $exportParams);
+            $response = $request->exportType === 'email'
+                ? $this->emailExport($reportDateRange, $exportParams)
+                : $this->downloadExport($reportDateRange, $exportParams);
         } catch (\InvalidArgumentException $e) {
             LoggerService::warning('AML Export validation failed', extra: [
                 'error' => $e->getMessage(),
                 'request_data' => $request->only(['amlCreatedStartDate', 'amlCreatedEndDate', 'exportType']),
             ]);
 
-            return response()->json([
+            $response = response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 422);
@@ -51,11 +51,13 @@ class AMLExportService
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return response()->json([
+            $response = response()->json([
                 'success' => false,
                 'message' => 'An unexpected error occurred while processing the export.',
             ], 500);
         }
+
+        return $response;
     }
 
     private function formatDateRange(?string $startDate, ?string $endDate): string
