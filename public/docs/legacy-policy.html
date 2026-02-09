@@ -51,20 +51,20 @@
                 <div class="info-card">
                     <h4>📍 Routes</h4>
                     <ul>
-                        <li><strong>GET /legacy-policy</strong> – List (index) with optional filters</li>
-                        <li><strong>GET /legacy-policy/{id}</strong> – Show policy detail</li>
-                        <li><strong>POST /legacy-policy/move-to-imcrm</strong> – Move to IMCRM</li>
-                        <li><strong>GET /legacy-policy/{policyNumber}/policy</strong> – Redirect to show by policy number</li>
-                        <li><strong>POST /legacy-policy/get-s3-temp-url</strong> – Temporary URL for document viewing</li>
-                        <li><strong>POST /migrate-legacy-policy/{poid}</strong> – CAPI migration (separate flow)</li>
+                        <li><strong>GET /legacy-policy</strong> – List (index); search runs only when at least one filter is provided. Route name: <code>legacy-policy.index</code>.</li>
+                        <li><strong>GET /legacy-policy/{legacy_policy}</strong> – Show policy detail; <code>{legacy_policy}</code> is the MongoDB document <code>_id</code>. Route name: <code>legacy-policy.show</code>. Returns 404 if not found.</li>
+                        <li><strong>POST /legacy-policy/move-to-imcrm</strong> – Move to IMCRM (body: policy_oid, validateAll, isInertia).</li>
+                        <li><strong>GET /legacy-policy/{policyNumber}/policy</strong> – Look up by policy number, then redirect to show using MongoDB <code>_id</code>. Route name: <code>view-legacy-policy.renewal-uploads</code>.</li>
+                        <li><strong>POST /legacy-policy/get-s3-temp-url</strong> – Temporary URL for document viewing (body: <code>legacyPolicyId</code>, <code>fileName</code>).</li>
+                        <li><strong>POST /migrate-legacy-policy/{poid}</strong> – CAPI migration (separate flow). Route name: <code>migrate-legacy-policy</code>. Migrate (POID) form on Index is shown only to users with <code>MIGRATE_INSLY_LEAD</code>.</li>
                     </ul>
                 </div>
                 <div class="info-card">
                     <h4>🔑 Permissions</h4>
                     <ul>
-                        <li>Requires one of: <code>VIEW_LEGACY_DETAILS</code> or <code>VIEW_ALL_LEADS</code></li>
-                        <li>Applied to: <code>index</code>, <code>show</code>, <code>moveToImcrm</code></li>
-                        <li>Sidebar: "Legacy Policies" link under same permission check</li>
+                        <li>List, show, and Move to IMCRM require one of: <code>VIEW_LEGACY_DETAILS</code> or <code>VIEW_ALL_LEADS</code> (middleware on <code>index</code>, <code>show</code>, <code>moveToImcrm</code>).</li>
+                        <li>Sidebar: "Legacy Policies" link when user has <code>VIEW_LEGACY_DETAILS</code> or <code>VIEW_ALL_LEADS</code>.</li>
+                        <li>Migrate (CAPI) form visibility: <code>MIGRATE_INSLY_LEAD</code> (frontend only; route itself is not permission-gated in the controller).</li>
                     </ul>
                 </div>
             </div>
@@ -243,32 +243,45 @@ if (empty($email) && $tempCustomerPolicyId && (int) $tempCustomerPolicyId === (i
             <h2>🔄 Move to IMCRM Flow</h2>
             <p>
                 From the Legacy Policy detail page, the user clicks <strong>Move to IMCRM</strong>. The backend 
-                (<code>LegacyPolicyController::moveToImcrm</code> → <code>InslyDetailRepository::saveToImcrm</code>) 
-                runs the following logic.
+                (<code>LegacyPolicyController::moveToImcrm</code> → <code>InslyDetailRepository::fetchSaveToImcrm</code>) 
+                runs the following logic. The controller returns the repository response directly (JSON).
             </p>
 
             <div class="process-flow">
                 <div class="process-step">
                     <div class="step-number">1</div>
                     <h4>Resolve email & advisor</h4>
-                    <p>Use policy customer email or Application Storage temp email; resolve advisor from Insly or Application Storage temp sales person ID.</p>
+                    <p>Use policy customer email or Application Storage temp email; resolve advisor from Insly (renewer_person or quote.broker → InslyAdvisor) or Application Storage temp sales person ID. If email or advisor is missing after fallbacks, return 400.</p>
                 </div>
                 <div class="process-step">
                     <div class="step-number">2</div>
-                    <h4>Match by policy number</h4>
-                    <p>If an IMCRM quote exists with same policy_number (or previous_quote_policy_number), return 200 with link (user can open existing lead).</p>
+                    <h4>Resolve quote type & model</h4>
+                    <p>Map <code>policy.coverage</code> to quote type via <code>getQuoteTypeFromCoverage</code> (InslyDataService). Get model via <code>getModelObject($quoteType)</code>. If no model (unsupported coverage), return 400 "Quote Type not found."</p>
                 </div>
                 <div class="process-step">
                     <div class="step-number">3</div>
-                    <h4>Match by email + date</h4>
-                    <p>If validateAll: search quote by email and payment captured_at ±1 month of policy issue date; if found, return 200 with matching leads.</p>
+                    <h4>Match by policy number</h4>
+                    <p>Search quote by <code>policy_number</code> or <code>previous_quote_policy_number</code>. If found and <code>validateAll</code> is true, return 200 <code>type: 'policy_number'</code> with <code>data[0].link</code> and <code>code</code> (modal: open existing lead). If found but validateAll is false, the same 200 is still returned.</p>
                 </div>
                 <div class="process-step">
                     <div class="step-number">4</div>
+                    <h4>Match by email + payment date</h4>
+                    <p>Only when <code>validateAll</code> is true: join quote table with payments, filter by <code>email</code> and <code>captured_at</code> between policy issue_date −1 month and +1 month. If any quote found, return 200 <code>type: 'email'</code> with <code>data</code> array (modal: user picks one or "Create new").</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">5</div>
                     <h4>Create new lead</h4>
-                    <p>If no match: create new quote (LOB from coverage), set advisor_id, link insly_id to LOB detail table, set moved_to_imcrm and imcrm_link on policy. Return 201.</p>
+                    <p>If no match: build payload via <code>prePareData()</code> (includes Application Storage email fallback), set <code>advisor_id</code>, create main quote, then create/update LOB-specific detail with <code>insly_id</code> (e.g. CarQuoteRequestDetail, HealthQuoteRequestDetail, quoteDetail for personal LOBs). Set <code>moved_to_imcrm</code>, <code>imcrm_link</code>, <code>code</code>, <code>moved_to_imcrm_date</code>, <code>moved_to_imcrm_by</code> on the Insly document. Sync to CAPI/personal quote where applicable. Return 201 "Lead Created Successfully".</p>
                 </div>
             </div>
+
+            <h3>Supported LOBs (Move to IMCRM)</h3>
+            <p>
+                The quote type is derived from the policy’s <code>coverage</code> via <code>InslyDataService::inslyInsurances()</code>. 
+                Supported LOBs for lead creation include: <strong>Business</strong> (incl. Group Medical, CorpLine), <strong>Car</strong>, <strong>Life</strong>, 
+                <strong>Home</strong>, <strong>Travel</strong>, <strong>Health</strong>, <strong>Pet</strong>, <strong>Bike</strong>, <strong>Cycle</strong>, 
+                <strong>Yacht</strong>, <strong>Savings</strong>. If the coverage does not map to a known quote type, <code>getModelObject</code> returns false and the API returns 400 "Quote Type not found."
+            </p>
 
             <h3>Request Payload (Frontend)</h3>
             <div class="code-block" data-lang="json">
@@ -279,8 +292,8 @@ POST /legacy-policy/move-to-imcrm
   "isInertia": true
 }</div>
             <p>
-                <code>validateAll: true</code> (default) enforces policy number and email+date matching before creating a new lead; 
-                when false, matching steps can be skipped and a new lead is created if no policy number match.
+                <code>validateAll: true</code> (default) runs policy number match and email+payment-date match; if matches are found, the frontend shows a modal (open existing or create new). 
+                <code>validateAll: false</code> is used when the user chooses "Create new" in the modal—the backend skips returning existing leads by email+date and proceeds to create a new lead when no policy number match exists.
             </p>
 
             <h3>Response Types</h3>
@@ -294,10 +307,10 @@ POST /legacy-policy/move-to-imcrm
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>200</td><td>policy_number</td><td>Existing quote found by policy number; <code>data[0].link</code> and <code>code</code> for modal</td></tr>
-                        <tr><td>200</td><td>email</td><td>Existing quotes found by email + payment date; <code>data</code> array for modal (multiple links)</td></tr>
-                        <tr><td>201</td><td>—</td><td>New lead created; message "Lead Created Successfully"</td></tr>
-                        <tr><td>400</td><td>—</td><td>Customer email not found / Advisor not found / Quote not found / Quote Type not found</td></tr>
+                        <tr><td>200</td><td>policy_number</td><td>Existing quote found by policy number; <code>data[0].link</code>, <code>data[0].code</code>; frontend shows modal with link to open.</td></tr>
+                        <tr><td>200</td><td>email</td><td>Existing quotes found by email + payment date; <code>data</code> array (each item has <code>link</code>, <code>modelType</code>, etc.); user can select one or choose "Create new" (frontend then calls move-to-imcrm with <code>validateAll: false</code>).</td></tr>
+                        <tr><td>201</td><td>—</td><td>New lead created; <code>message</code> "Lead Created Successfully".</td></tr>
+                        <tr><td>400</td><td>—</td><td><code>message</code>: "Customer email not found." / "Advisor not found." / "Quote not found." / "Quote Type not found."</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -308,7 +321,7 @@ POST /legacy-policy/move-to-imcrm
             <h2>📂 InslyDetailRepository & Legacy Data</h2>
             <p>
                 <code>App\Repositories\InslyDetailRepository</code> works with the <code>InslyDetail</code> model (MongoDB). 
-                Static-style calls are forwarded to <code>fetch*</code> methods by <code>BaseRepository</code>.
+                Static-style calls (e.g. <code>InslyDetailRepository::getDataByIndex()</code>) are forwarded to <code>fetch*</code> methods by <code>BaseRepository</code>.
             </p>
 
             <div class="table-container">
@@ -324,27 +337,35 @@ POST /legacy-policy/move-to-imcrm
                         <tr>
                             <td><code>getDataByIndex()</code></td>
                             <td>fetchGetDataByIndex</td>
-                            <td>Search legacy policies with filters (policy_number, email, mobile_no), user coverage restriction, pagination; uses MongoDB Atlas Search index <code>insly_search_index</code></td>
+                            <td>Search legacy policies. <strong>Only runs when the request has at least one of:</strong> <code>policy_number</code>, <code>email</code>, <code>mobile_no</code> (index action passes request to repository). Filters: exact <code>policy_no</code>, free-text <code>customer.email</code>, regex/wildcard <code>customer.mobile_phone</code>, and <code>policy.coverage</code> IN user’s coverage list. Uses MongoDB Atlas Search index <code>insly_search_index</code>. Returns paginated structure: <code>data</code>, <code>current_page</code>, <code>per_page</code> (15), <code>from</code>, <code>to</code>, <code>next_page_url</code>, <code>prev_page_url</code>. If no filter is sent, controller returns empty <code>policies</code> array.</td>
                         </tr>
                         <tr>
                             <td><code>getBy('_id', $id)</code> / <code>getBy('policy_no', $number)</code></td>
                             <td>fetchGetBy</td>
-                            <td>Load one policy by _id or policy_no; mask email/phone in response; set quoteType and imcrm_link</td>
+                            <td>Load one policy by column and value. If <code>request()->policy_oid</code> is set, also matches <code>policy_oid</code> (orWhere). Uses <code>firstOrFail()</code> → 404 if not found. Masks <code>customer.email</code>, <code>customer.mobile_phone</code>, <code>customer.phone</code> in response. Sets <code>quoteType</code> (from coverage) and <code>imcrm_link</code> (current app URL). Premium from sum of <code>installments.gross_premium</code> if present.</td>
                         </tr>
                         <tr>
                             <td><code>saveToImcrm($request->toArray())</code></td>
                             <td>fetchSaveToImcrm</td>
-                            <td>Run Move to IMCRM: resolve email/advisor (including Application Storage), match or create lead, update policy with moved_to_imcrm, imcrm_link, code, dates, user</td>
+                            <td>Run Move to IMCRM: resolve email/advisor (including Application Storage), match by policy number or email+payment date, or create new lead; update Insly document with <code>moved_to_imcrm</code>, <code>imcrm_link</code>, <code>code</code>, <code>moved_to_imcrm_date</code>, <code>moved_to_imcrm_by</code>.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <h3>Coverage / LOB Filtering</h3>
             <p>
-                <code>getCoverageList(auth()->user())</code> returns Insly coverage values allowed for the current user’s roles 
-                (e.g. CarAdvisor → car coverages, HealthAdvisor → health). Listing and search only return policies whose 
-                <code>policy.coverage</code> is in that list.
+                <strong>Deprecated:</strong> <code>fetchGetData()</code> is a fallback listing implementation (non–Atlas Search, simple filters and <code>whereIn('policy.coverage', $coverage)</code>). Not used by the index when <code>getDataByIndex</code> is used.
+            </p>
+
+            <h3>Coverage / LOB Filtering (getCoverageList)</h3>
+            <p>
+                <code>getCoverageList($user)</code> returns the list of Insly <code>policy.coverage</code> values the user is allowed to see. It uses <code>InslyDataService::inslyInsurances()</code> and the user’s roles. Each role adds its coverages to the list:
+            </p>
+            <ul>
+                <li><code>BikeAdvisor</code> → Bike; <code>CorpLineAdvisor</code> → Business; <code>CarAdvisor</code> → Car; <code>LifeAdvisor</code> → Life; <code>HomeAdvisor</code> → Home; <code>TravelAdvisor</code> → Travel; <code>HealthAdvisor</code> → Health; <code>CycleAdvisor</code> → Cycle; <code>PetAdvisor</code> → Pet; <code>YachtAdvisor</code> → Yacht; <code>SavingsAdvisor</code> → Savings.</li>
+            </ul>
+            <p>
+                Coverage values are merged and lowercased for matching. Search (getDataByIndex) only returns policies whose <code>policy.coverage</code> is in this list. Users with none of these roles get an empty coverage list, so the coverage filter is omitted and other filters (policy_number, email, mobile_no) still apply.
             </p>
         </section>
 
@@ -352,25 +373,28 @@ POST /legacy-policy/move-to-imcrm
         <section class="content-section">
             <h2>🗺️ Product & Coverage Mappings (LegacyPolicyEnum)</h2>
             <p>
-                Insly product/coverage values are mapped to IMCRM product names for display and to determine quote type (LOB). 
-                Used on the Legacy Policy list and when creating leads.
+                <code>App\Enums\LegacyPolicyEnum</code> defines two mappings used for display on the Legacy Policy list (Index) and for resolving quote type when moving to IMCRM. 
+                The controller passes <code>legacyPolicyMapping</code> (INSLY_PRODUCT_MAPPING) and <code>coveragePolicyMapping</code> (INSLY_COVERAGE_MAPPING) to the Index page.
             </p>
             <div class="info-cards">
                 <div class="info-card">
                     <h4>INSLY_PRODUCT_MAPPING</h4>
                     <ul>
-                        <li>Maps Insly product strings (e.g. "casco", "home insurance") to labels like "Motor Insurance", "Home Insurance"</li>
-                        <li>Used in Index.vue to show <strong>Product</strong> column</li>
+                        <li>Maps Insly product strings (e.g. "casco", "home insurance", "pet insurance") to display labels (e.g. "Motor Insurance", "Home Insurance", "Pet Insurance").</li>
+                        <li>Used in Index.vue <code>productName(item)</code>: first checks <code>item.product.product</code> against this map (lowercased).</li>
                     </ul>
                 </div>
                 <div class="info-card">
                     <h4>INSLY_COVERAGE_MAPPING</h4>
                     <ul>
-                        <li>Overrides for specific coverages (e.g. "motor fleet" → "Business Insurance", "casco" → "Motor Insurance", "group medical insurance" → "Group Medical Insurance")</li>
-                        <li>Checked after product mapping when rendering list</li>
+                        <li>Override for specific coverages: "motor fleet" → "Business Insurance", "casco" → "Motor Insurance", "group medical insurance" → "Group Medical Insurance".</li>
+                        <li>In <code>productName(item)</code>, if product is not set, <code>item.policy.coverage</code> is checked against INSLY_COVERAGE_MAPPING first, then INSLY_PRODUCT_MAPPING, so coverage-based display is consistent.</li>
                     </ul>
                 </div>
             </div>
+            <p>
+                Quote type for Move to IMCRM is determined by <code>InslyDataService::inslyInsurances()</code> and <code>getQuoteTypeFromCoverage($coverage)</code>, not by these enum mappings directly.
+            </p>
         </section>
 
         <!-- Other Features -->
@@ -379,22 +403,37 @@ POST /legacy-policy/move-to-imcrm
             <h3>Document Viewing (S3 Temp URL)</h3>
             <p>
                 Legacy policy documents stored on the <code>insly_documents</code> disk can be viewed via a temporary URL. 
-                Frontend calls <code>POST /legacy-policy/get-s3-temp-url</code> with <code>legacyPolicyId</code> and <code>fileName</code>; 
-                backend returns a time-limited URL (e.g. 40 minutes) for the file.
+                Frontend calls <code>POST /legacy-policy/get-s3-temp-url</code> with body <code>{ legacyPolicyId, fileName }</code>. 
+                Backend checks <code>Storage::disk('insly_documents')->has($fileName)</code>; if the file exists, returns 
+                <code>{ "url": "…" }</code> with expiry 40 minutes (<code>now()->addMinutes(40)</code>). Otherwise returns 
+                <code>{ "error": "File does not exists on server" }</code>.
             </p>
 
             <h3>Migrate Policy (CAPI)</h3>
             <p>
-                <code>POST /migrate-legacy-policy/{poid}</code> calls an external CAPI endpoint <code>/api/migrate-policy</code> 
-                with <code>policyIds: [poid]</code>. This is a separate migration path (e.g. bulk/data migration), not the same as 
-                "Move to IMCRM" which creates/links leads inside IMCRM.
+                <code>POST /migrate-legacy-policy/{poid}</code> sends <code>{ "policyIds": [poid] }</code> to CAPI <code>/api/migrate-policy</code>. 
+                This is a separate migration path (e.g. bulk/data migration), not the same as "Move to IMCRM". 
+                Success: response must have <code>result</code> array with at least one item; <code>result[0]['msg']</code> is shown (or "Failed!"). 
+                If <code>msg == 'Failed!'</code>, redirect back with error; otherwise redirect back with success flash. 
+                The Migrate (POID) form on the Legacy Policy index page is only visible to users with <code>MIGRATE_INSLY_LEAD</code> permission.
             </p>
 
             <h3>View Legacy Policy from Quote Pages</h3>
             <p>
                 Many quote show pages (Car, Health, Travel, Life, Home, Pet, Bike, etc.) show a "View Legacy policy" link when 
-                the quote has an <code>insly_id</code>. The link goes to <code>/legacy-policy/{insly_id}</code> (Legacy Policy show page). 
-                Permission <code>view-legacy-policy.renewal-uploads</code> is used in some places for renewal-upload context.
+                the quote has an <code>insly_id</code>. The link goes to <code>/legacy-policy/{insly_id}</code> (Legacy Policy show page; <code>insly_id</code> is the MongoDB <code>_id</code>). 
+                The route <code>GET /legacy-policy/{policyNumber}/policy</code> is named <code>view-legacy-policy.renewal-uploads</code> and is used to open a legacy policy by policy number (redirects to show by <code>_id</code>).
+            </p>
+
+            <h3>prePareData (New Lead Payload)</h3>
+            <p>
+                When creating a new lead, <code>prePareData($policy, $quoteType, $isPersonalQuote)</code> builds the payload. 
+                It uses <code>getPrimaryAndAdditionalEmails</code> / <code>getPrimaryAndAdditionalMobileNumbers</code> from the policy; 
+                if <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> equals <code>policy['policy_oid']</code>, it overwrites email with <code>INSLY_TEMP_CUSTOMER_EMAIL</code>. 
+                Other fields: <code>previous_quote_policy_number</code>, <code>policy_number</code>, dates, insurer → <code>insurance_provider_id</code> via <code>InsuranceProviderRepository::getInslyProviderId</code>, 
+                customer name split into first/last, default <code>mobile_no</code> <code>0552244556</code> when missing, <code>CustomerService::createCustomerIfNotExists</code> and additional contacts, 
+                CAPI for <code>uuid</code> and <code>code</code>, <code>source</code> = INSLY, <code>insly_migrated</code> = true, <code>quote_status_id</code> = NewLead. 
+                Business quotes get <code>business_type_of_insurance_id</code> from coverage.
             </p>
         </section>
 
@@ -402,10 +441,10 @@ POST /legacy-policy/move-to-imcrm
         <section class="content-section">
             <h2>✅ Summary</h2>
             <ul class="features">
-                <li><strong>Legacy Policy</strong> = Insly (MongoDB) policies viewable and actionable in IMCRM; list (with filters), detail, S3 document URL, and CAPI migrate.</li>
-                <li><strong>Move to IMCRM</strong> = Resolve email and advisor (with Application Storage fallback), match by policy number or email+date, or create new lead and set <code>moved_to_imcrm</code>, <code>imcrm_link</code>, <code>code</code> on the Insly document.</li>
-                <li><strong>Application Storage</strong> keys <code>INSLY_TEMP_SALES_PERSON_ID</code> + <code>INSLY_TEMP_POLICY_OID</code> assign an advisor user ID to a specific policy OID when Insly has no renewer; <code>INSLY_TEMP_CUSTOMER_EMAIL</code> + <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> assign customer email when the policy has no email.</li>
-                <li><strong>InslyDetailRepository</strong> implements search (getDataByIndex), single fetch (getBy), and Move to IMCRM (saveToImcrm); all use Application Storage where configured.</li>
+                <li><strong>Legacy Policy</strong> = Insly (MongoDB) policies viewable and actionable in IMCRM. Index shows search results only when at least one of policy_number, email, mobile_no is provided (15 per page); show uses MongoDB <code>_id</code>; S3 temp URL (40 min) for documents; CAPI migrate for <code>/api/migrate-policy</code>. Permissions: <code>VIEW_LEGACY_DETAILS</code> or <code>VIEW_ALL_LEADS</code> for list/show/move; <code>MIGRATE_INSLY_LEAD</code> for Migrate form visibility.</li>
+                <li><strong>Move to IMCRM</strong> = Resolve email and advisor (Insly first, then Application Storage), resolve quote type from coverage, match by policy number or (if validateAll) by email + payment date ±1 month, or create new lead. New lead: prePareData payload, LOB-specific detail with <code>insly_id</code>, then update Insly document (<code>moved_to_imcrm</code>, <code>imcrm_link</code>, <code>code</code>, dates, user). Supported LOBs: Business, Car, Life, Home, Travel, Health, Pet, Bike, Cycle, Yacht, Savings.</li>
+                <li><strong>Application Storage</strong> keys <code>INSLY_TEMP_SALES_PERSON_ID</code> + <code>INSLY_TEMP_POLICY_OID</code> assign an advisor user ID to a specific policy OID when Insly has no renewer; <code>INSLY_TEMP_CUSTOMER_EMAIL</code> + <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> assign customer email when the policy has no email. Used in fetchSaveToImcrm and prePareData. Seeder creates placeholder rows; admin must set real values.</li>
+                <li><strong>InslyDetailRepository</strong>: getDataByIndex (Atlas Search, user coverage filter, pagination), getBy (single policy, optional policy_oid in request, masking), saveToImcrm (full Move to IMCRM). getCoverageList builds allowed coverages from user roles (BikeAdvisor, CorpLineAdvisor, CarAdvisor, LifeAdvisor, HomeAdvisor, TravelAdvisor, HealthAdvisor, CycleAdvisor, PetAdvisor, YachtAdvisor, SavingsAdvisor). fetchGetData is deprecated.</li>
             </ul>
         </section>
 
