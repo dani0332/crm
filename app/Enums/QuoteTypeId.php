@@ -42,4 +42,32 @@ final class QuoteTypeId extends Enum
 
         return $retval;
     }
+
+    /**
+     * Get display name for quote type ID
+     */
+    public static function getDisplayName(?int $quoteTypeId): ?string
+    {
+        $options = self::getOptions();
+        return $options[$quoteTypeId] ?? null;
+
+    }
+
+    /**
+     * Get all quote type IDs for claim documents
+     * @return array
+     */
+    public static function getClaimDocumentQuoteTypes(): array
+    {
+        return [
+            self::Yacht,
+            self::Travel,
+            self::Pet,
+            self::Cycle,
+            self::Life,
+            self::Home,
+            self::Health,
+            self::Business,
+        ];
+    }
 }

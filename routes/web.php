@@ -1044,4 +1044,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return view('pdf.bor-document', $pdfData);
     });
+    Route::get('claims/upload-documents', function () {
+        $exitCode = Artisan::call('claims:upload-documents');
+        $output = Artisan::output();
+
+        return response()->json([
+            'success' => $exitCode === 0,
+            'exit_code' => $exitCode,
+            'message' => $exitCode === 0 ? 'Document upload process completed successfully' : 'Document upload process completed with errors',
+            'output' => $output,
+        ], $exitCode === 0 ? 200 : 500);
+    });
+
 });

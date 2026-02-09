@@ -22,7 +22,7 @@ class GenericDocumentTypesSeeder extends Seeder
     {
         $genericDocumentTypes = [
             [
-                'code' => 'CLAIM_FORM',
+                'code' => \App\Enums\GenericDocumentTypeCode::CLAIM_FORM->value,
                 'text' => 'Claim form',
                 'description' => 'download and upload your signed and completed claim form.',
             ],

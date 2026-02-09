@@ -107,10 +107,11 @@ class GenericDocumentType extends Model implements AuditableContract
     }
 
     /**
-     * Relationship with generic documents.
+     * Morph relationship with generic documents.
+     * Documents that morph to this GenericDocumentType.
      */
-    public function genericDocuments()
+    public function morphDocuments()
     {
-        return $this->hasMany(GenericDocument::class, 'generic_document_type_id');
+        return $this->morphMany(GenericDocument::class, 'documentable');
     }
 }

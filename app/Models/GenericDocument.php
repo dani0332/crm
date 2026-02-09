@@ -18,4 +18,36 @@ class GenericDocument extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function genericDocumentType()
+    {
+        return $this->belongsTo(GenericDocumentType::class, 'generic_document_type_id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function businessTypeOfInsurance()
+    {
+        return $this->belongsTo(BusinessTypeOfInsurance::class, 'business_type_of_insurance_id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     */
+    public function documentable()
+    {
+        return $this->morphTo();
+    }
 }

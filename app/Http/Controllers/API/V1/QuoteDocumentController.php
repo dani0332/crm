@@ -123,4 +123,18 @@ class QuoteDocumentController extends Controller
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }
+
+    /**
+     * Get claim documents grouped by quote type and insurance provider
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getClaimDocuments()
+    {
+        $data = $this->quoteDocumentService->getClaimDocuments();
+
+        return response()->json([
+            'data' => $data
+        ]);
+    }
 }

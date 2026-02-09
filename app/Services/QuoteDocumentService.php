@@ -7,6 +7,7 @@ use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeText;
+use App\Enums\GenericDocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -21,7 +22,10 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BorLog;
 use App\Models\CarPlanPolicyWording;
+use App\Models\Claim;
 use App\Models\DocumentType;
+use App\Models\GenericDocument;
+use App\Models\GenericDocumentType;
 use App\Models\HealthPlanPolicyWording;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
@@ -1206,4 +1210,117 @@ class QuoteDocumentService extends BaseService
             $memberDetailId,
         );
     }
+
+    /**
+     * Get claim documents grouped by quote type and insurance provider
+     *
+     * @return array
+     */
+    public function getClaimDocuments(): array
+    {
+        // Get quote type IDs for claim documents
+        $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
+
+        // Query documents linked to Claim model only (from ClaimsDocumentUploadUtility)
+        $documents = GenericDocument::whereIn('quote_type_id', $quoteTypeIds)
+            ->where('documentable_type', Claim::class)
+            ->with(['insuranceProvider', 'businessTypeOfInsurance'])
+            ->get();
+
+        // Fallback to empty response structure if no documents are found
+        if ($documents->isEmpty()) {
+            return $this->getEmptyClaimDocumentsResponseStructure();
+        }
+
+        $grouped = $this->groupClaimDocumentsByQuoteType($documents);
+        
+        // Ensure all quote types are present in response even if empty
+        $emptyStructure = $this->getEmptyClaimDocumentsResponseStructure();
+        foreach ($emptyStructure as $lob => $structure) {
+            if (!isset($grouped[$lob])) {
+                $grouped[$lob] = $structure;
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Get empty response structure with all quote types for claim documents
+     *
+     * @return array
+     */
+    public function getEmptyClaimDocumentsResponseStructure(): array
+    {
+        $structure = [];
+
+        // Get all quote types from enum
+        $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
+        foreach ($quoteTypeIds as $quoteTypeId) {
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+            if ($lob) {
+                $structure[$lob] = [
+                    'quoteTypeId' => $quoteTypeId,
+                    'docs' => []
+                ];
+            }
+        }
+
+        return $structure;
+    }
+
+    /**
+     * Group claim documents by quote type and insurance provider
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $documents
+     * @return array
+     */
+    public function groupClaimDocumentsByQuoteType($documents): array
+    {
+        $grouped = $this->getEmptyClaimDocumentsResponseStructure();
+
+        foreach ($documents as $document) {
+            if (!$document->insuranceProvider) {
+                continue;
+            }
+
+            $quoteTypeId = $document->quote_type_id ?? null;
+            
+            // Skip if quote_type_id is null
+            if ($quoteTypeId === null) {
+                continue;
+            }
+
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+            
+            // If LOB not found or not in grouped structure, skip this document
+            if (!$lob || !isset($grouped[$lob])) {
+                continue;
+            }
+
+            $docUrl = $document->path ? storageUrl().$document->path : '';
+
+            $docData = [
+                'insuranceProviderId' => $document->insuranceProvider->id,
+                'insuranceProviderCode' => $document->insuranceProvider->code ?? '',
+                'docUrl' => $docUrl,
+                'docTitle' => $document->name
+            ];
+
+            // Only include business_type_of_insurance for Business LOB (quote_type_id = 5)
+            if ($quoteTypeId === QuoteTypeId::Business && !empty($document->business_type_of_insurance_id)) {
+                $docData['businessTypeOfInsuranceId'] = $document->business_type_of_insurance_id;
+                $docData['businessTypeOfInsurance'] = $document->businessTypeOfInsurance ? [
+                    'id' => $document->businessTypeOfInsurance->id,
+                    'text' => $document->businessTypeOfInsurance->text ?? null,
+                    'code' => $document->businessTypeOfInsurance->code ?? null,
+                ] : null;
+            }
+
+            $grouped[$lob]['docs'][] = $docData;
+        }
+
+        return $grouped;
+    }
+
 }
