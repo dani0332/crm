@@ -71,12 +71,12 @@ class EmiratesIdDataProcessor
                         'insured_id' => $insured->id,
                         'insured_customer_type' => $insured->customer_type,
                     ]);
-    
+
                     DB::rollBack();
-    
+
                     return false;
                 }
-    
+
                 $insuredUpdated = $this->updateInsuredTable($insured);
                 $kycUpdated = $this->updateInsuredKycTable($insured);
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
