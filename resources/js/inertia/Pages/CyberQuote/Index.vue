@@ -43,6 +43,7 @@ let availableFilters = {
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   advisor_id: [],
+  sic_advisor_requested: 'All',
   payment_due_date: '',
   booking_date: '',
   last_modified_date: '',
@@ -101,6 +102,11 @@ const tableHeader = ref([
   {
     text: 'BRANCH',
     value: 'branch_name',
+    is_active: true,
+  },
+  {
+    text: 'ADVISOR REQUESTED',
+    value: 'sic_advisor_requested',
     is_active: true,
   },
   {
@@ -605,6 +611,18 @@ const insurerApiStatusOptions = computed(() => {
             :options="advisorOptions"
           />
         </x-field>
+        <x-select
+          v-model="filters.sic_advisor_requested"
+          name="sic_advisor_requested"
+          placeholder="Search by Advisor Requested"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          label="Advisor Requested"
+        />
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -858,6 +876,13 @@ const insurerApiStatusOptions = computed(() => {
       </template>
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
+      </template>
+      <template #item-sic_advisor_requested="{ cyber_quote }">
+        <div class="text-center">
+          <x-tag size="sm" :color="cyber_quote?.sic_advisor_requested ? 'success' : 'error'">
+            {{ cyber_quote?.sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
       </template>
       <template
         #item-previous_policy_expiry_date="{

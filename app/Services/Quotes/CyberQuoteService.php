@@ -48,6 +48,7 @@ class CyberQuoteService extends BaseQuoteService
             'renewalBatchModel',
             'nationality',
             'insuranceProviderPlan',
+            'cyberQuote',
             'cyberQuote.coverage',
             'branch:id,name',
         ])
@@ -64,8 +65,8 @@ class CyberQuoteService extends BaseQuoteService
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->when(request()->filled('api_issuance_status_id'), function ($q) {
-                $values = is_array(request('api_issuance_status_id')) 
-                    ? request('api_issuance_status_id') 
+                $values = is_array(request('api_issuance_status_id'))
+                    ? request('api_issuance_status_id')
                     : [request('api_issuance_status_id')];
 
                 $hasBlank = in_array('blank', $values);
@@ -77,6 +78,11 @@ class CyberQuoteService extends BaseQuoteService
                 );
             })
             ->filterIn('insurer_api_status_id')
+            ->when(request()->filled('sic_advisor_requested') && request('sic_advisor_requested') !== 'All', function ($q) {
+                $q->whereHas('cyberQuote', function ($subQuery) {
+                    $subQuery->where('sic_advisor_requested', request('sic_advisor_requested'));
+                });
+            })
             ->when(request()->filled('coverage_up_to'), function ($q) {
                 $q->whereHas('cyberQuote', function ($subQuery) {
                     $subQuery->where('coverage_id', request('coverage_up_to'));
