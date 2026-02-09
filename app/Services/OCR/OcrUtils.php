@@ -409,7 +409,7 @@ trait OcrUtils
         return $providerCode;
     }
 
-    private function getQuoteTypeId($quote): int
+    private function getQuoteTypeId($quote): int|null|string
     {
         return match (true) {
             $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
