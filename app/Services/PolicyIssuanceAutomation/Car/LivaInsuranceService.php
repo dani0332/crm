@@ -28,7 +28,6 @@ use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\UAELicenseHeldFor;
 use App\Services\AML\AMLLookupsService;
-use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;

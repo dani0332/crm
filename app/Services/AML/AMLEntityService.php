@@ -165,6 +165,7 @@ class AMLEntityService
     {
         if (! $existingEntityMapping) {
             LoggerService::info('No existing entity mapping found');
+
             return;
         }
 
