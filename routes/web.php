@@ -551,8 +551,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::group(['prefix' => 'quote-sync'], function () {
             // Route::middleware('readonly_db')->group(function () {
-                Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
-                Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
+            Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
+            Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
             // });
             Route::get('/edit/{quoteSync}', [QuoteSyncController::class, 'edit'])->name('admin.quotesync.edit');
             Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
@@ -857,12 +857,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Sending NB Car Followups
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
     // Route::group(['middleware' => ['readonly_db']], function () {
-        Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
-        Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+    Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
-        // Sage Failed Processes Routes
-        Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])/* ->middleware(SetReadDbConnection::class) */ ->name('sage-failed-processes.index');
-        Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])/* ->middleware(SetReadDbConnection::class) */ ->name('sage-failed-processes.export');
+    // Sage Failed Processes Routes
+    Route::get('sage-processes/failed', [SageProcessesController::class, 'index'])/* ->middleware(SetReadDbConnection::class) */ ->name('sage-failed-processes.index');
+    Route::get('sage-processes/failed/export', [SageProcessesController::class, 'export'])/* ->middleware(SetReadDbConnection::class) */ ->name('sage-failed-processes.export');
     // });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
