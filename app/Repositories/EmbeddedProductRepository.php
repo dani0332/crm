@@ -513,13 +513,13 @@ class EmbeddedProductRepository extends BaseRepository
                         $response = ['success' => true];
 
                     } else {
-                        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($epShortCode);
+                        $epSentToCustomerDocTypeCodes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
                         $watermarkedDocuments = $item->documents()
-                            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
+                            ->whereIn('document_type_code', $epSentToCustomerDocTypeCodes)->get()
                             ->where('is_watermarked', true);
 
                         $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-                        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
+                        $missingReqWatermarkedDocTypes = array_diff($epSentToCustomerDocTypeCodes, $watermarkedDocumentTypes);
 
                         // make sure email required watermarked documents is not missing
                         if (empty($missingReqWatermarkedDocTypes)) {
@@ -809,13 +809,13 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $quote = $this->getQuoteObject($modelType, $quoteId);
 
-        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($short_code);
+        $epSentToCustomerDocTypeCodes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
         $watermarkedDocuments = $transaction->documents()
-            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
+            ->whereIn('document_type_code', $epSentToCustomerDocTypeCodes)->get()
             ->where('is_watermarked', true);
 
         $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
+        $missingReqWatermarkedDocTypes = array_diff($epSentToCustomerDocTypeCodes, $watermarkedDocumentTypes);
 
         // make sure watermarked documents is not missing
         if (! empty($missingReqWatermarkedDocTypes)) {
@@ -846,12 +846,13 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
         } else {
+            $epSentToCustomerDocTypeCodes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
             $watermarkedDocuments = $transaction->documents()
-                ->whereIn('document_type_code', QuoteDocumentsEnum::getSukoonInitialDocTypes())->get()
+                ->whereIn('document_type_code', $epSentToCustomerDocTypeCodes)->get()
                 ->where('is_watermarked', true);
 
             $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-            $missingReqWatermarkedDocTypes = array_diff(QuoteDocumentsEnum::getSukoonInitialDocTypes(), $watermarkedDocumentTypes);
+            $missingReqWatermarkedDocTypes = array_diff($epSentToCustomerDocTypeCodes, $watermarkedDocumentTypes);
 
             // make sure email required watermarked documents is not missing
             if (! empty($missingReqWatermarkedDocTypes)) {

@@ -197,13 +197,13 @@ class EpSendDocumentJob implements ShouldQueue
             throw new \Exception("Embedded product not found for transaction ID: {$this->context->etId}");
         }
 
-        $watermarkableDocTypeCodes = QuoteDocumentsEnum::getWatermarkableDocTypeCodes($this->context->epShortCode);
+        $epSentToCustomerDocTypeCodes = QuoteDocumentsEnum::getEpSentToCustomerDocTypes();
         $watermarkedDocuments = $transaction->documents()
-            ->whereIn('document_type_code', $watermarkableDocTypeCodes)->get()
+            ->whereIn('document_type_code', $epSentToCustomerDocTypeCodes)->get()
             ->where('is_watermarked', true);
 
         $watermarkedDocumentTypes = $watermarkedDocuments->pluck('document_type_code')->toArray();
-        $missingReqWatermarkedDocTypes = array_diff($watermarkableDocTypeCodes, $watermarkedDocumentTypes);
+        $missingReqWatermarkedDocTypes = array_diff($epSentToCustomerDocTypeCodes, $watermarkedDocumentTypes);
 
         // make sure email required watermarked documents is not missing
         if (! empty($missingReqWatermarkedDocTypes)) {
