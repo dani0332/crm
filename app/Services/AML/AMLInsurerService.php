@@ -50,7 +50,7 @@ class AMLInsurerService
         );
     }
 
-    private function checkKycLogsForSyncEligibility(int $quoteRequestId, int $quoteTypeId, string $screeningType): bool 
+    private function checkKycLogsForSyncEligibility(int $quoteRequestId, int $quoteTypeId, string $screeningType): bool
     {
         $kycLogs = KycLog::withTrashed()
             ->where([
