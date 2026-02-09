@@ -911,9 +911,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
                 return response()->json(['error' => 'Not authorized'], 403);
             }
-    
+
             \Illuminate\Support\Facades\Artisan::call('send-payment-email-to-advisor:cron');
-    
+
             return response()->json([
                 'message' => 'Advisor payment notification command executed successfully!',
                 'status' => 'completed',

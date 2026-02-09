@@ -11,7 +11,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class AdvisorPaymentNotificationJob implements ShouldQueue
@@ -19,15 +18,12 @@ class AdvisorPaymentNotificationJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-
     public $timeout = 30;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(private array $payment)
-    {
-    }
+    public function __construct(private array $payment) {}
 
     /**
      * Execute the job.
