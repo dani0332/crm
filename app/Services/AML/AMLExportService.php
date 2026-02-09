@@ -17,29 +17,53 @@ class AMLExportService
 
     public function exportAMLLogs(Request $request): StreamedResponse|JsonResponse
     {
-        LoggerService::info('AML Export requested', extra: [
-            'export_type' => $request->exportType ?? 'download',
-            'date_range' => [
-                'start' => $request->amlCreatedStartDate,
-                'end' => $request->amlCreatedEndDate,
-            ],
-            'user' => auth()->user()?->id ?? 'guest',
-        ]);
+        try {
+            LoggerService::info('AML Export requested', extra: [
+                'export_type' => $request->exportType ?? 'download',
+                'date_range' => [
+                    'start' => $request->amlCreatedStartDate,
+                    'end' => $request->amlCreatedEndDate,
+                ],
+                'user' => auth()->user()?->id ?? 'guest',
+            ]);
 
-        $reportDateRange = $this->formatDateRange($request->amlCreatedStartDate, $request->amlCreatedEndDate);
-        $exportParams = $this->prepareExportParams($request, $reportDateRange);
+            $reportDateRange = $this->formatDateRange($request->amlCreatedStartDate, $request->amlCreatedEndDate);
+            $exportParams = $this->prepareExportParams($request, $reportDateRange);
 
-        if ($request->exportType === 'email') {
-            return $this->emailExport($reportDateRange, $exportParams);
+            if ($request->exportType === 'email') {
+                return $this->emailExport($reportDateRange, $exportParams);
+            }
+
+            return $this->downloadExport($reportDateRange, $exportParams);
+        } catch (\InvalidArgumentException $e) {
+            LoggerService::warning('AML Export validation failed', extra: [
+                'error' => $e->getMessage(),
+                'request_data' => $request->only(['amlCreatedStartDate', 'amlCreatedEndDate', 'exportType']),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Exception $e) {
+            LoggerService::error('AML Export failed unexpectedly', extra: [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred while processing the export.',
+            ], 500);
         }
-
-        return $this->downloadExport($reportDateRange);
     }
 
     private function formatDateRange(?string $startDate, ?string $endDate): string
     {
         if (! $startDate || ! $endDate) {
-            return Carbon::now()->format('Y-m-d') . ' - ' . Carbon::now()->format('Y-m-d');
+            throw new \InvalidArgumentException(
+                'Date range parameters are required for AML export. Both amlCreatedStartDate and amlCreatedEndDate must be provided.'
+            );
         }
 
         return Carbon::parse($startDate)->toDateString().' - '.Carbon::parse($endDate)->toDateString();
@@ -47,29 +71,22 @@ class AMLExportService
 
     private function prepareExportParams(Request $request, string $reportDateRange): array
     {
-        return [
+        return array_merge($request->all(), [
             'exportTitle' => 'AML',
-            'created_at_start' => $request->amlCreatedStartDate,
-            'created_at_end' => $request->amlCreatedEndDate,
             'reportDateRange' => $reportDateRange,
-        ];
+        ]);
     }
 
     private function emailExport(string $reportDateRange, array $params): JsonResponse
     {
         try {
-            $this->kycLogsExport->emailCSV("AML Logs {$reportDateRange}", $params);
-
             LoggerService::info('AML Logs email export initiated', extra: [
                 'date_range' => $reportDateRange,
                 'params' => $params,
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Export is being processed. You will receive an email with the CSV file shortly.',
-                'date_range' => $reportDateRange,
-            ]);
+            // Return the response from emailCSV to maintain backward compatibility
+            return $this->kycLogsExport->emailCSV("AML Logs {$reportDateRange}", $params);
         } catch (\Exception $e) {
             LoggerService::warning('AML Logs email export failed', extra: [
                 'error' => $e->getMessage(),
@@ -77,21 +94,37 @@ class AMLExportService
             ]);
 
             return response()->json([
-                'status' => 'error',
+                'success' => false,
                 'message' => 'Failed to initiate export.',
-            ]);
+            ], 500);
         }
     }
 
     /**
      * Download export directly
      */
-    private function downloadExport(string $reportDateRange): StreamedResponse
+    private function downloadExport(string $reportDateRange, array $params): StreamedResponse|JsonResponse
     {
-        LoggerService::info('AML Logs download export initiated', extra: [
-            'date_range' => $reportDateRange,
-        ]);
+        try {
+            LoggerService::info('AML Logs download export initiated', extra: [
+                'date_range' => $reportDateRange,
+                'params' => $params,
+            ]);
 
-        return $this->kycLogsExport->download("AML Logs {$reportDateRange}");
+            // Merge params into request so they're available during streaming
+            request()->merge($params);
+
+            return $this->kycLogsExport->download("AML Logs {$reportDateRange}");
+        } catch (\Exception $e) {
+            LoggerService::error('AML Logs download export failed', extra: [
+                'error' => $e->getMessage(),
+                'date_range' => $reportDateRange,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to initiate download export.',
+            ], 500);
+        }
     }
 }
