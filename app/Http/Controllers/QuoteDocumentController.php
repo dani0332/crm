@@ -481,7 +481,7 @@ class QuoteDocumentController extends Controller
 
     public function getTempUrl(Request $request)
     {
-        $tempUrl = $this->quoteDocumentService->getDocumentUrl($request->filePath, $request->isPolicyWordings ? 'azureIM' : 'azureIMPrivate');
+        $tempUrl = $this->quoteDocumentService->getDocumentUrl($request->filePath);
 
         if ($tempUrl) {
             return response()->json(['url' => $tempUrl], 200);
