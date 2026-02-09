@@ -459,7 +459,7 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function insuranceProviderPlan()
     {
-        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id', 'sub_type_id']);
+        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'code', 'text', 'provider_id', 'sub_type_id']);
     }
 
     public function quoteCustomerPlan()
@@ -524,13 +524,12 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * Get all related passport/visa detail records via the quoteable polymorphic relation.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
-    public function passportVisaDetails(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    public function passportVisaDetails(): MorphOne
     {
-        return $this->morphOne(\App\Models\PassportVisaDetail::class, 'quoteable')->latest('updated_at');
+        return $this->morphOne(PassportVisaDetail::class, 'quoteable')->latest('updated_at');
     }
-
 
     /**
      * Check if any payment has IPL in its splits

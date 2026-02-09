@@ -161,6 +161,37 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const selectedInsuranceProviderPlan = computed(() => {
+  const plan = props.quote?.insurance_provider_plan;
+
+  if (Array.isArray(plan)) {
+    return plan[0] ?? null;
+  }
+
+  return plan ?? null;
+});
+
+const selectedInsuranceProviderPlanCode = computed(() => {
+  return selectedInsuranceProviderPlan.value?.code ?? null;
+});
+
+const passportOcrEligiblePlanCodes = computed(() => {
+  return page.props.ocrEligiblePlanCodes?.PP ?? []; //PP = passport
+});
+
+// Show passport fields only when an eligible plan (by code) is selected on quote
+const shouldShowPassportFields = computed(() => {
+  if (!selectedInsuranceProviderPlanCode.value) {
+    return false;
+  }
+
+  return passportOcrEligiblePlanCodes.value.includes(selectedInsuranceProviderPlanCode.value);
+});
+
+const passportFieldRules = computed(() => {
+  return shouldShowPassportFields.value ? [isRequired] : [];
+});
+
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -765,44 +796,46 @@ const handlePlanSelected = plan => {
                   </dd>
                 </div>
 
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">PASSPORT NUMBER</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.passport_number"
-                      :rules="[isRequired]"
-                      placeholder="PASSPORT NUMBER"
-                      class="w-full"
-                      :disabled="!isProfileUpdateAllow"
-                    />
-                  </dd>
-                </div>
+                <template v-if="shouldShowPassportFields">
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT NUMBER</dt>
+                    <dd>
+                      <x-input
+                        v-model="customerProfileForm.passport_number"
+                        :rules="passportFieldRules"
+                        placeholder="PASSPORT NUMBER"
+                        class="w-full"
+                        :disabled="!isProfileUpdateAllow"
+                      />
+                    </dd>
+                  </div>
 
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">PASSPORT COUNTRY</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.passport_country"
-                      :rules="[isRequired]"
-                      placeholder="PASSPORT COUNTRY"
-                      class="w-full"
-                      :disabled="!isProfileUpdateAllow"
-                    />
-                  </dd>
-                </div>
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT COUNTRY</dt>
+                    <dd>
+                      <x-input
+                        v-model="customerProfileForm.passport_country"
+                        :rules="passportFieldRules"
+                        placeholder="PASSPORT COUNTRY"
+                        class="w-full"
+                        :disabled="!isProfileUpdateAllow"
+                      />
+                    </dd>
+                  </div>
 
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">PASSPORT EXPIRY DATE</dt>
-                  <dd>
-                    <DatePicker
-                      v-model="customerProfileForm.passport_expiry_date"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID EXPIRY DATE"
-                      :disabled="!isProfileUpdateAllow"
-                      :min-date="new Date()"
-                    />
-                  </dd>
-                </div>
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT EXPIRY DATE</dt>
+                    <dd>
+                      <DatePicker
+                        v-model="customerProfileForm.passport_expiry_date"
+                        :rules="passportFieldRules"
+                        placeholder="EMIRATES ID EXPIRY DATE"
+                        :disabled="!isProfileUpdateAllow"
+                        :min-date="new Date()"
+                      />
+                    </dd>
+                  </div>
+                </template>
 
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>

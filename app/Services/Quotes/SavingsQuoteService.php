@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\OcrEligiblePlanCodeEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
@@ -177,7 +178,7 @@ class SavingsQuoteService extends BaseQuoteService
             'customer',
             'customer.insured' => function ($q) {
                 $q->select('insured.id', 'first_name', 'last_name', 'id_number')
-                ->with('insuredKyc:id,insured_id,id_expiry_date');
+                    ->with('insuredKyc:id,insured_id,id_expiry_date');
             },
             'passportVisaDetails',
         ])
@@ -319,6 +320,7 @@ class SavingsQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
+            'ocrEligiblePlanCodes' => OcrEligiblePlanCodeEnum::mapping()[QuoteTypes::SAVINGS->value] ?? [],
             'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL'),
             'lookUpData' => $lookUpData,
             'localLookups' => $localLookups,

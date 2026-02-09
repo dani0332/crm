@@ -6,6 +6,7 @@ namespace App\Services\OCR;
 
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\OcrEligiblePlanCodeEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
 use Exception;
@@ -132,14 +133,6 @@ trait OcrValidator
         return $isSupported;
     }
 
-
-    /* code from insurance_provider_plans table*/
-    private const QUOTE_TYPE_PLAN_MAPPING = [
-        QuoteTypes::SAVINGS->value => [
-            OCRDocumentTypeEnum::PASSPORT->value => ['STF - 158'/*Plan code*/],
-        ],
-    ];
-
     public function isPlanEligibleForOcr(QuoteTypes $quoteType, OCRDocumentTypeEnum $docType, Model $quote): bool
     {
         $logContext = [
@@ -148,19 +141,21 @@ trait OcrValidator
             'doc_type' => $docType->value,
         ];
 
-        $quoteTypePlanMapping = self::QUOTE_TYPE_PLAN_MAPPING[$quoteType->value] ?? null;
+        $quoteTypePlanMapping = OcrEligiblePlanCodeEnum::mapping()[$quoteType->value] ?? null;
 
-        /*If quote type is not present in mapping >> no validation needed */
+        /* If quote type is not present in mapping >> no validation needed */
         if ($quoteTypePlanMapping === null) {
             LoggerService::info('OCR Plan Eligibility - Accepted (no plan validation mapping for quote type)', $logContext);
+
             return true;
         }
 
         $eligiblePlanCodes = $quoteTypePlanMapping[$docType->value] ?? null;
 
-        /*If doc_type is not present in mapping >> no validation needed */
+        /* If doc_type is not present in mapping >> no validation needed */
         if ($eligiblePlanCodes === null) {
             LoggerService::info('OCR Plan Eligibility - Accepted (no plan validation mapping for document type)', $logContext);
+
             return true;
         }
 
@@ -168,6 +163,7 @@ trait OcrValidator
 
         if (! $planCode) {
             LoggerService::info('OCR Plan Eligibility - Rejected (no plan selected in quote)', $logContext);
+
             return false;
         }
 
