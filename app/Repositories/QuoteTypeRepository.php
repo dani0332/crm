@@ -24,7 +24,7 @@ class QuoteTypeRepository extends BaseRepository
     public function fetchAllowedQuoteForAml()
     {
         $notAllowedQuoted = [QuoteTypeId::CompanyCar];
-        $notAllowedQuoteTypeCodes = [QuoteTypes::GROUP_MEDICAL, QuoteTypes::CORPLINE];
+        $notAllowedQuoteTypeCodes = [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::CORPLINE->value];
 
         return $this->whereNotIn('id', $notAllowedQuoted)->whereNotIn('code', $notAllowedQuoteTypeCodes)->withActive()->orderBy('sort_order')->get();
     }

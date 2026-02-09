@@ -7,7 +7,6 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\QuoteType;
-use App\Services\Logger\LoggerService;
 
 class AMLBusinessPayloadService
 {
