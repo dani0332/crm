@@ -278,6 +278,26 @@
                 </ul>
                 <a href="/docs/booking-process/sage-failed-processes.html" class="doc-link">View Failed Processes Guide →</a>
             </div>
+
+            <!-- IP Address Resolver -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🌐</span>
+                    IP Address Resolver
+                </h3>
+                <p>
+                    Custom IP resolution from request headers for accurate audit logging behind Nginx and other proxies. 
+                    Ensures audit records store the real client IP.
+                </p>
+                <ul class="features">
+                    <li>Custom IpAddressResolver for Laravel Audit</li>
+                    <li>X-Real-IP and X-Forwarded-For with validation</li>
+                    <li>TrustProxies and trusted CIDRs (Docker, UAT, Staging, Prod)</li>
+                    <li>Nginx FastCGI params for IP and scheme</li>
+                    <li>Public IP validation to reduce spoofing risk</li>
+                </ul>
+                <a href="/docs/ip-address-resolver.html" class="doc-link">View IP Resolver Documentation →</a>
+            </div>
         </div>
         
         <div class="footer">
