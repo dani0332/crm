@@ -186,7 +186,6 @@ fastcgi_param REMOTE_ADDR $remote_addr;</div>
                 <li><strong>Config:</strong> <code>config/audit.php</code> uses the custom resolver for the <code>ip_address</code> resolver key.</li>
                 <li><strong>Proxies:</strong> <code>TrustProxies</code> middleware defines trusted proxies/CIDRs for local, Docker, UAT, Test, Staging, and Prod.</li>
                 <li><strong>Nginx:</strong> Docker Nginx configs pass <code>X-Real-IP</code>, <code>X-Forwarded-For</code>, <code>X-Forwarded-Proto</code>, and <code>REMOTE_ADDR</code> to PHP-FPM.</li>
-                <li><strong>Scheduling:</strong> <code>mis-report:run</code> is scheduled with environment-specific settings (default: Mondays 08:00 Asia/Dubai; staging: hourly).</li>
             </ul>
         </section>
 

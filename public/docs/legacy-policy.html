@@ -406,7 +406,8 @@ POST /legacy-policy/move-to-imcrm
                 Frontend calls <code>POST /legacy-policy/get-s3-temp-url</code> with body <code>{ legacyPolicyId, fileName }</code>. 
                 Backend checks <code>Storage::disk('insly_documents')->has($fileName)</code>; if the file exists, returns 
                 <code>{ "url": "…" }</code> with expiry 40 minutes (<code>now()->addMinutes(40)</code>). Otherwise returns 
-                <code>{ "error": "File does not exists on server" }</code>.
+                <code>{ "error": "File does not exists on server" }</code>. 
+                This endpoint has no permission middleware; access is effectively limited by the fact that <code>fileName</code> and <code>legacyPolicyId</code> are obtained from the Legacy Policy Show page (which is protected by <code>VIEW_LEGACY_DETAILS</code> or <code>VIEW_ALL_LEADS</code>).
             </p>
 
             <h3>Migrate Policy (CAPI)</h3>
