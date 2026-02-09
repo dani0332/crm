@@ -67,6 +67,7 @@ use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
 use App\Http\Controllers\V2\Admin\RulesController;
+use App\Http\Controllers\V2\Admin\LeadSourceController;
 use App\Http\Controllers\V2\Admin\TierController;
 use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
@@ -704,6 +705,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('tiers', TierController::class);
         Route::resource('quadrants', QuadrantController::class);
         Route::resource('rule', RulesController::class);
+        Route::post('lead-sources', [LeadSourceController::class, 'store'])->name('lead-source.store');
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });

@@ -16,6 +16,7 @@ class LeadSource extends Model implements AuditableContract
     protected $table = 'lead_sources';
     protected $fillable = [
         'name',
+        'code',
         'is_active',
         'is_applicable_for_rules',
     ];
