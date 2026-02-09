@@ -54,7 +54,7 @@ class SendPaymentEmailToAdvisor extends Command
 
         LoggerService::info($advisorWisePayments->count().' advisor wise payments found.');
 
-        /* foreach ($advisorWisePayments as $index => $payment) {
+        foreach ($advisorWisePayments as $index => $payment) {
             $iterationStartTime = microtime(true);
 
             if ($payment['advisorId']) {
@@ -65,24 +65,7 @@ class SendPaymentEmailToAdvisor extends Command
             $iterationEndTime = microtime(true);
             $iterationExecutionTime = $iterationEndTime - $iterationStartTime;
             LoggerService::info("SendPaymentEmailToAdvisor - Time: {$index} ({$payment['advisorEmail']}): ".number_format($iterationExecutionTime, 5).' seconds');
-        } */
-
-        $iterationStartTime = microtime(true);
-
-        $payment = [
-            'advisorId' => 1,
-            'advisorName' => 'Test Advisor',
-            'advisorEmail' => 'mirza.baig@myalfred.com',
-            'totalLeads' => (string) 10,
-            'totalExpiringLeads' => (string) 5,
-            'totalPremium' => (string) 1000,
-        ];
-
-        LoggerService::info("Dispatching AdvisorPaymentNotification Job For Advisor {$payment['advisorName']} (ID: {$payment['advisorId']})");
-        AdvisorPaymentNotificationJob::dispatch($payment)->onQueue('advisor-payment-notification');
-
-        $iterationEndTime = microtime(true);
-        $iterationExecutionTime = $iterationEndTime - $iterationStartTime;
+        }
 
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
@@ -95,7 +78,6 @@ class SendPaymentEmailToAdvisor extends Command
     private function getAdvisorWisePayments($authorizedDays): \Illuminate\Support\Collection
     {
         $authorizedDate = Carbon::today()->subDays($authorizedDays);
-        dd($authorizedDate);
 
         return Payment::with([
             'personalQuote:id,code,advisor_id,premium',
