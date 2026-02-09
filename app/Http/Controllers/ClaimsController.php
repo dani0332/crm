@@ -121,7 +121,7 @@ class ClaimsController extends Controller
             return response()->json([
                 'success' => true,
                 'policies' => $policies,
-                'message' => empty($policies) ? 'No available data' : 'Policies found successfully.',
+                'message' => $policies->isEmpty() ? 'No available data' : 'Policies found successfully.',
             ]);
         } catch (Exception $e) {
             LoggerService::error(' Error searching policies', extra: [
