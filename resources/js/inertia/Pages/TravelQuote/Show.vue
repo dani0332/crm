@@ -352,10 +352,9 @@ const memberRelationOptions = computed(() => {
 });
 
 const emiratesOptions = computed(() => {
-  return page.props.emirates.map(em => ({
-    value: em.id,
-    label: em.text,
-  }));
+  return (page.props.emirates || [])
+    .map(em => ({ value: em?.value, label: em?.label }))
+    .filter(opt => opt && opt.value != null && opt.label != null);
 });
 
 const travelerForm = useForm({

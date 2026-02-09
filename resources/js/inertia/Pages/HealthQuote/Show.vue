@@ -4176,7 +4176,7 @@ const validateEmirateOfVisa = () => {
       :payments="payments"
     />
 
-    <QuoteDocument
+    <HealthQuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :quote="quote"
@@ -4186,6 +4186,7 @@ const validateEmirateOfVisa = () => {
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
       :bookPolicyDetails="bookPolicyDetails"
+      :members="membersDetail"
     />
 
     <BorLogsSection
@@ -4501,6 +4502,13 @@ const validateEmirateOfVisa = () => {
 
     <ApiLogs
       v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <OcrLogs
+      v-if="can(permissionsEnum.API_LOG_VIEW)"
       :type="modelClass"
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"

@@ -703,7 +703,7 @@ class EmbeddedProductRepository extends BaseRepository
                 foreach ($documents as $item) {
                     $path = $item->path;
                     if (! empty($path)) {
-                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIMPrivate');
+                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIM');
                         if ($pwDoc && ! $isAlfredProtect) {
                             $fileInfo = new finfo(FILEINFO_MIME_TYPE);
                             $file = file_get_contents($pwDoc);

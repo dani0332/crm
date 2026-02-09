@@ -1122,11 +1122,17 @@ class EpEcbService extends EpBookingService
     {
         $customerTypeInfo = $this->getCustomerTypeInfo();
 
+        // Get customer name from Insured details (IMCRM - Customer Profile)
+        // Similar to MEDEX implementation
+        $latestInsuredData = $this->quote?->latestInsured;
+        $firstName = ($latestInsuredData?->first_name ?? $this->quote->customer?->insured_first_name) ?? '';
+        $lastName = ($latestInsuredData?->last_name ?? $this->quote->customer?->insured_last_name) ?? '';
+
         $customerDetails = [
             ...$customerTypeInfo,
             'customer_type' => null,
-            'customer_fname' => $this->quote?->first_name,
-            'customer_lname' => $this->quote?->last_name,
+            'customer_fname' => $firstName,
+            'customer_lname' => $lastName,
             'customer_mobile_no' => null,
             'customer_whatsapp_no' => null,
             'customer_email_id' => null,

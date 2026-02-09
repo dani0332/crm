@@ -169,6 +169,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
+    public function vehicleDriverDetail()
+    {
+        return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
+    }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
