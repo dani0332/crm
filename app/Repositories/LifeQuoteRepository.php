@@ -68,9 +68,6 @@ class LifeQuoteRepository extends BaseRepository
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
-            'height' => $data['height'],
-            'weight' => $data['weight'],
-            'bmi' => $data['bmi'],
             'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
@@ -86,6 +83,12 @@ class LifeQuoteRepository extends BaseRepository
             'additionalNotes' => $data['notes'] ?? null,
         ];
 
+        foreach (['height', 'weight', 'bmi'] as $field) {
+            if (isset($data[$field]) && $data[$field] !== null && is_numeric($data[$field])) {
+                $lifeQuote[$field] = $data[$field];
+            }
+        }
+
         LoggerService::info('saveLifeQuote: ', [
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
@@ -96,12 +99,15 @@ class LifeQuoteRepository extends BaseRepository
 
         if (isset($response->quoteUID)) {
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
-            $quote->lifeQuote()->update([
-                'height' => $lifeQuote['height'],
-                'weight' => $lifeQuote['weight'],
-                'bmi' => $lifeQuote['bmi'],
-                'age' => $lifeQuote['age'],
-            ]);
+            $updateData = ['age' => $lifeQuote['age']];
+            
+            foreach (['height', 'weight', 'bmi'] as $field) {
+                if (isset($lifeQuote[$field])) {
+                    $updateData[$field] = $lifeQuote[$field];
+                }
+            }
+            
+            $quote->lifeQuote()->update($updateData);
         }
 
         return $response;
