@@ -34,6 +34,9 @@ const validateTeams = () => {
     };
   });
 
+  console.log(teams.length);
+  return false;
+
   for (let i = 0; i < teams.length; i++) {
     const minPriceValue = parseFloat(
       teams[i] && teams[i].min_price == '' ? 0 : teams[i].min_price,
@@ -203,12 +206,17 @@ onMounted(() => {
         <h2 class="my-3 font-semibold text-primary">{{ team.name }}:</h2>
         <x-form :auto-focus="false">
           <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-            <x-input
-              type="number"
-              class="w-full"
-              v-model="team.min_price"
-              label="Min Price"
-            />
+            <div>
+              <x-input
+                type="number"
+                class="w-full"
+                v-model="team.min_price"
+                label="Min Price"
+              />
+              <p class="text-xs -mt-4">
+                Minimum annual premium (AED) required for this {{ tabs[activeTab].label }} tier to apply.
+              </p>
+            </div>
             <x-input
               type="number"
               class="w-full"
