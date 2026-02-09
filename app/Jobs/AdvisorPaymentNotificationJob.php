@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -13,23 +12,21 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class AdvisorPaymentNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $payment = [];
     public $tries = 3;
+
     public $timeout = 30;
 
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
-    public function __construct($payment)
+    public function __construct(private array $payment)
     {
-        $this->payment = $payment;
     }
 
     /**
@@ -39,14 +36,13 @@ class AdvisorPaymentNotificationJob implements ShouldQueue
      */
     public function handle(BirdService $birdService)
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::AUTHORISED_PAYMENT_NOTIFICATION_TO_ADVISOR);
-
-        $emailData = (object) array_merge([
-            'date' => Carbon::now()->format('d-m-Y'),
+        $emailData = (object) [
+            'date' => Carbon::now()->format(config('constants.DATE_DISPLAY_FORMAT')),
             'crmLink' => url('/reports/payment-summary'),
-        ], $this->payment);
+            ...$this->payment,
+        ];
 
-        $birdUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL) ?? '';
+        $birdUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL, useCache: true) ?? '';
         if (! $birdUrl) {
             LoggerService::error('AdvisorPaymentNotificationJob: Bird URL not found');
 
@@ -55,7 +51,7 @@ class AdvisorPaymentNotificationJob implements ShouldQueue
 
         $response = $birdService->triggerWebHookRequest($birdUrl, $emailData);
 
-        if ($response?->status_code == JsonResponse::HTTP_OK) {
+        if ($response?->status_code == Response::HTTP_OK) {
             LoggerService::info('AdvisorPaymentNotificationJob: Email sent successfully');
         } else {
             LoggerService::error('AdvisorPaymentNotificationJob: Email sent failed', [

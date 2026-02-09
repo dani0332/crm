@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Jobs\AdvisorPaymentNotificationJob;
 use App\Models\Payment;
@@ -18,7 +17,7 @@ class SendPaymentEmailToAdvisor extends Command
      *
      * @var string
      */
-    protected $signature = 'SendPaymentEmailToAdvisor:cron';
+    protected $signature = 'send-payment-email-to-advisor:cron';
 
     /**
      * The console command description.
@@ -34,28 +33,26 @@ class SendPaymentEmailToAdvisor extends Command
      */
     public function handle()
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::AUTHORISED_PAYMENT_NOTIFICATION_TO_ADVISOR);
-
         $startTime = microtime(true);
 
         // Check if the advisor email notification is enabled for authorised payments.
-        if (! getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR)) {
+        if (! getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR, false, true)) {
             LoggerService::info('ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR is Disable');
 
-            return false;
+            return Command::SUCCESS;
         }
 
-        $authorizedDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS_TO_ADVISOR) ?? 1;
+        $authorizedDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS_TO_ADVISOR, 1, true);
 
         $advisorWisePayments = $this->getAdvisorWisePayments($authorizedDays);
 
         if ($advisorWisePayments->isEmpty()) {
             LoggerService::info('No advisor found to send payment email.');
 
-            return false;
+            return Command::SUCCESS;
         }
 
-        LoggerService::info(count($advisorWisePayments).' advisor wise payments found.');
+        LoggerService::info($advisorWisePayments->count().' advisor wise payments found.');
 
         foreach ($advisorWisePayments as $index => $payment) {
             $iterationStartTime = microtime(true);
@@ -74,22 +71,24 @@ class SendPaymentEmailToAdvisor extends Command
         $executionTime = $endTime - $startTime;
 
         LoggerService::info('SendPaymentEmailToAdvisor - '.number_format($executionTime, 5).' seconds');
+
+        return Command::SUCCESS;
     }
 
-    public function getAdvisorWisePayments($authorizedDays): \Illuminate\Support\Collection
+    private function getAdvisorWisePayments($authorizedDays): \Illuminate\Support\Collection
     {
-        $authorizedDate = $lastDay = Carbon::today()->subDays($authorizedDays);
+        $authorizedDate = Carbon::today()->subDays($authorizedDays);
 
         return Payment::with([
             'personalQuote:id,code,advisor_id,premium',
             'personalQuote.advisor:id,name,email',
         ])
             ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('payments.authorized_at', '>=', $authorizedDate)
+            ->whereDate('payments.authorized_at', '>=', $authorizedDate)
             ->get()
             ->filter(fn ($payment) => $payment->personalQuote !== null)
             ->groupBy(fn ($payment) => $payment->personalQuote->advisor_id)
-            ->map(function ($advisorPayments, $advisorId) use ($lastDay) {
+            ->map(function ($advisorPayments, $advisorId) use ($authorizedDate) {
                 $advisor = $advisorPayments?->first()?->personalQuote?->advisor;
 
                 return [
@@ -98,7 +97,7 @@ class SendPaymentEmailToAdvisor extends Command
                     'advisorEmail' => $advisor?->email,
                     'totalLeads' => (string) $advisorPayments->count(),
                     'totalExpiringLeads' => (string) $advisorPayments->filter(
-                        fn ($p) => Carbon::parse($p->getRawOriginal('authorized_at'))->toDateString() === $lastDay->toDateString()
+                        fn ($p) => $p->authorized_at->isSameDay($authorizedDate)
                     )->count(),
                     'totalPremium' => (string) $advisorPayments->sum(fn ($p) => (float) $p->personalQuote->premium),
                 ];

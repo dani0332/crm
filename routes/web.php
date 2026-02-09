@@ -906,18 +906,20 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // for testing env only.
-    Route::get('/run-advisor-payment-notification', function () {
-        if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-            return response()->json(['error' => 'Not authorized'], 403);
-        }
-
-        \Illuminate\Support\Facades\Artisan::call('SendPaymentEmailToAdvisor:cron');
-
-        return response()->json([
-            'message' => 'Advisor payment notification command executed successfully!',
-            'status' => 'completed',
-        ]);
-    });
+    if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
+        Route::get('/run-advisor-payment-notification', function () {
+            if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+                return response()->json(['error' => 'Not authorized'], 403);
+            }
+    
+            \Illuminate\Support\Facades\Artisan::call('send-payment-email-to-advisor:cron');
+    
+            return response()->json([
+                'message' => 'Advisor payment notification command executed successfully!',
+                'status' => 'completed',
+            ]);
+        });
+    }
 
     // Command to bulk send policy documents
     Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {
