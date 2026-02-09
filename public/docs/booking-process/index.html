@@ -852,6 +852,65 @@
                 </ul>
                 <a href="/docs/booking-process/embedded-product-booking.html" class="doc-link">View Embedded Product Booking →</a>
             </div>
+
+            <!-- 8. Payment Proforma -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">📄</span>
+                    8. Proforma Payment Request
+                </h3>
+                <p>
+                    <strong>What it does:</strong> Generates preliminary invoice documents (proforma) sent to customers to request payment before 
+                    the actual policy invoice is issued. It serves as a payment requisition tool that helps track payment progress.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> Customer wants to pay later instead of upfront. We select "Proforma Payment Request" 
+                    as payment method, generate a PDF showing AED 2,500 due, and send it to the customer. When they're ready to pay, 
+                    they use this document to initiate payment.
+                </p>
+                <ul class="features">
+                    <li>Payment requisition before formal invoice issuance</li>
+                    <li>PDF generation with comprehensive payment breakdown</li>
+                    <li>Support for main leads and send updates (endorsements)</li>
+                    <li>Version tracking for multiple document generations</li>
+                    <li>Upfront and split payment scenarios</li>
+                    <li>Broker vs insurer collection type handling</li>
+                    <li>Discount application and zero-price policy support</li>
+                    <li>Secure document storage and delivery via S3</li>
+                    <li>Permission-based access control</li>
+                </ul>
+                <a href="/docs/booking-process/payment-proforma.html" class="doc-link">View Payment Proforma Documentation →</a>
+            </div>
+
+            <!-- 9. Sage Failed Processes -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🔍</span>
+                    9. Sage Failed Processes Management
+                </h3>
+                <p>
+                    <strong>What it does:</strong> Provides a comprehensive interface to monitor, troubleshoot, and resolve policy bookings 
+                    or endorsements that encountered errors during Sage 300 integration. Critical for maintaining financial accuracy.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> A car insurance policy was sold and customer paid AED 3,000, but the Sage booking 
+                    failed at the "Create AR Invoice" step due to a duplicate customer error. The policy appears in the failed processes list 
+                    where admins can see the exact error, fix the customer record in Sage, and retry the booking.
+                </p>
+                <ul class="features">
+                    <li>Comprehensive failed process listing with detailed filtering</li>
+                    <li>Multi-dimensional filters: provider, quote type, date range, main lead vs send update</li>
+                    <li>Complete payment and commission breakdown for each failure</li>
+                    <li>Extracted IMCRM-friendly error messages from Sage responses</li>
+                    <li>One-click copy functionality for error details and API endpoints</li>
+                    <li>CSV export with all filters applied for reporting</li>
+                    <li>Optimized query performance with eager loading and read replicas</li>
+                    <li>Permission-based access via SAGE_PROCESS_ISSUE_MANAGEMENT</li>
+                    <li>Clickable links to quote/send update detail pages</li>
+                    <li>Comprehensive troubleshooting guide with common error scenarios</li>
+                </ul>
+                <a href="/docs/booking-process/sage-failed-processes.html" class="doc-link">View Sage Failed Processes Documentation →</a>
+            </div>
         </div>
 
         <div class="overview-section" style="margin-top: 60px;">
