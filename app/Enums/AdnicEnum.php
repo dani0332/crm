@@ -25,6 +25,9 @@ class AdnicEnum
     public const PAYMENT_TYPE = 5;
     public const CUSTOMER_CLASSIFICATION_NATURAL_PERSONS = 1;
     public const NO = 'NO';
+    public const VISA_TYPE_EXISTING_VISA_HOLDER = 2;
+    public const NATIONALITY_ID_EMIRATES_ID = 1;
+    public const OCCUPATION_OTHER = 13;
 
     /* Insurer Document Keys */
     public const INSURER_DOCUMENT_KEY_POLICY_DOCUMENT = 'PolicyDocumentId';

@@ -40,7 +40,7 @@ class AdnicRequestBuilder
         $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()['answer_text'] ?? null;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()['answer_text'] ?? null;
         //$visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
-        $visaType ='EXISTING VISA HOLDER';
+        $visaType = AdnicEnum::VISA_TYPE_EXISTING_VISA_HOLDER;
         $customerClassification = AdnicEnum::CUSTOMER_CLASSIFICATION_NATURAL_PERSONS; // FIX Value
         $memberCategory = $sponsorCategory; // Member Category is same as Sponsor Category
 
@@ -71,7 +71,7 @@ class AdnicRequestBuilder
                 'Weight' => $insuredMember->Weight,
                 'MaritalStatus' => $insuredMember->MaritalStatus,
                 'DisclaimerSelected' => $insuredMember->DisclaimerSelected,
-                'Occupation' => $insuredMember->Occupation,
+                'Occupation' => $industry ?? AdnicEnum::OCCUPATION_OTHER,
                 'LoadingInfo' => [
                     'LoadingType' => AdnicEnum::LOADING_TYPE,
                     'LoadingTypeValue' => AdnicEnum::LOADING_VALUE,
@@ -88,7 +88,7 @@ class AdnicRequestBuilder
                 'Commission' => AdnicEnum::NO, // Optional Field, set as default value
                 'VisaType' => $visaType ?? '',
                 'City' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
-                'Nationality' => $this->mappingNationality($quote->nationality?->name ?? null),
+                'Nationality' => AdnicEnum::NATIONALITY_ID_EMIRATES_ID, // Emirates ID is the default nationality
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
                 'WorkLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
@@ -195,17 +195,13 @@ class AdnicRequestBuilder
     {
         $documentInfo = [];
         foreach ($uploadDocumentsResponse as $document) {
-            $responseData = json_decode($document->response);
+            $response = json_decode($document->response);
 
-            if (! isset($responseData->DocumentInfo) ||
-                is_null($responseData->DocumentInfo->DocumentType) ||
-                is_null($responseData->DocumentInfo->DocumentId)) {
-                continue;
-            }
+            $responseData = data_get($response, 'data');
 
-            $documentInfo[$responseData->memberSeqNo][] = [
-                'DocumentType' => $responseData->DocumentInfo->DocumentType,
-                'DocumentId' => $responseData->DocumentInfo->DocumentId,
+            $documentInfo[] = [
+                'DocumentType' => data_get($responseData, 'DocumentInfo.DocumentType'),
+                'DocumentId' => data_get($responseData, 'DocumentInfo.DocumentId'),
             ];
         }
 
