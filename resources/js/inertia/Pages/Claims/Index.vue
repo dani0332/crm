@@ -9,6 +9,7 @@ import {
   useObjToUrl,
 } from '@/inertia/Composables/utilities.js';
 import { formattedDateYmdWithTime } from '../../Composables/utilities';
+const { isEmail } = useRules();
 
 const props = defineProps({
   claims: Object,
@@ -60,7 +61,7 @@ const statusOptions = computed(() => {
   return (
     props.claimDropdownOptions?.claimStatuses?.map(cs => ({
       value: cs.id,
-      label: cs.text,
+      label: cs.text?.label,
     })) || []
   );
 });
@@ -89,12 +90,23 @@ const claimTypeOptions = computed(() => {
 });
 
 const claimSubStatusOptions = computed(() => {
+  // Explicitly track dependencies to ensure reactivity
+  const quoteTypeId = filters.quote_type_id;
+  const businessTypeId = filters.business_type_of_insurance_id;
+  const isHealth = isHealthLOB.value;
+  let isBike = isBikeLOB.value;
+
+  let quoteType = isHealth
+    ? page.props.quoteTypeIds?.Health
+    : isBike
+      ? page.props.quoteTypeIds?.Car
+      : quoteTypeId;
   return (
     props.claimDropdownOptions?.claimSubStatuses
-      ?.filter(ct => ct.quote_type_id === filters.quote_type_id)
+      ?.filter(ct => ct.quote_type_id === quoteType)
       ?.map(ct => ({
         value: ct.id,
-        label: ct.text,
+        label: ct.text?.label,
       })) || []
   );
 });
@@ -119,9 +131,9 @@ const managersOptions = computed(() => {
 
 const complaintStatusOptions = computed(() => {
   return (
-    props.claimDropdownOptions?.complaintStatuses?.map(status => ({
-      value: status.id,
-      label: status.text,
+    props.claimDropdownOptions?.complaintStatuses?.map(cs => ({
+      value: cs.id,
+      label: cs.text?.label || cs.text?.value || '',
     })) || []
   );
 });
@@ -193,6 +205,16 @@ const isPendingClaimRequestType = ref(
 
 function searchClaims(isValid) {
   if (isValid) {
+    if (filters.email) {
+      const emailValidation = isEmail(filters.email);
+      if (emailValidation !== true) {
+        notification.error({
+          title: emailValidation,
+          position: 'top',
+        });
+        return;
+      }
+    }
     // Validate date range before proceeding
     if (!validateDateRange()) {
       notification.error({
@@ -391,7 +413,11 @@ const isBikeLOB = computed(() => {
 
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
-  return quoteTypeIds.Health === filters.quote_type_id;
+  let isHealth = quoteTypeIds.Health === filters.quote_type_id;
+  let isGroupMedical =
+    page.props.quoteBusinessTypeIdEnum.GROUP_MEDICAL ===
+    filters.business_type_of_insurance_id;
+  return isHealth || isGroupMedical;
 });
 
 // Check if export is available based on date filters
@@ -560,6 +586,7 @@ watch(
         />
         <x-input
           v-model="filters.email"
+          :rules="[isEmail]"
           type="email"
           name="email"
           label="Email Address"

@@ -8,11 +8,15 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeShortCode;
+use App\Enums\RenewalProcessStatuses;
+use App\Enums\RenewalsUploadType;
 use App\Events\QuoteEmailUpdated;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +24,7 @@ use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
 {
-    use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
     protected $table = 'car_quote_request';
     protected $casts = [
@@ -642,5 +646,20 @@ class CarQuote extends BaseModel
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+
+    public function latestUpdateRenewalQuoteProcess()
+    {
+        return $this->hasOne(RenewalQuoteProcess::class, 'quote_id', 'id')
+            ->where('type', RenewalsUploadType::UPDATE_LEADS)
+            ->where('status', RenewalProcessStatuses::PLANS_FETCHED)
+            ->where('email_sent', 1)
+            ->where('quote_type', QuoteTypeShortCode::CAR)
+            ->latest('created_at');
+    }
+
+    public function hasCarValue()
+    {
+        return ! empty($this->car_value) && $this->car_value > 0;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ClaimStatusText;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,17 @@ class ClaimStatus extends Model implements AuditableContract
     protected $table = 'claim_statuses';
     protected $fillable = ['text', 'description', 'is_active',  'sort_order', 'claim_request_type_id', 'quote_type_id', 'access_type_id', 'status_type'];
 
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    public function casts(): array
+    {
+        return [
+            'text' => ClaimStatusText::class,
+        ];
+    }
     /**
      * Scope to filter active records
      */

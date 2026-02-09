@@ -405,11 +405,13 @@ function policyNotListed() {
 
 // Reset policy selection
 function resetPolicySelection() {
-  policySearch.showPolicies = false;
-  policySearch.searched = false;
-  claimForm.selected_policy_id = null;
-  claimForm.policy_not_listed = false;
-  policySearch.canSave = false;
+  if (!props.isEdit) {
+    policySearch.showPolicies = false;
+    policySearch.searched = false;
+    claimForm.selected_policy_id = null;
+    claimForm.policy_not_listed = false;
+    policySearch.canSave = false;
+  }
 }
 
 function onSubmit(isValid) {

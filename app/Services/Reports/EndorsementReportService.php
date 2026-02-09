@@ -150,11 +150,14 @@ class EndorsementReportService extends ManagementReport
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
                 'ls.text as sub_source',
-                'sso.text as sub_source_option'
-            )
-            ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
-            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
-            ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
+                'sso.text as sub_source_option',
+                'pq.frequency as payment_frequency',
+                'personal_quotes.created_at as quote_created_at',
+                'ipp.text as plan_name',
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
+            )->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id');
+        $this->paymentJoin($query, null, 'pq', 'leftJoin', 'leftJoin');
+        $query->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
@@ -164,6 +167,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('insurance_provider as ip3', 'ip3.id', '=', 'personal_quotes.insurance_provider_id')
+            ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'pq.plan_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
@@ -189,6 +193,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
             ->whereIn('send_update_logs.status', $statues)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
+        $this->branchJoin($query);
         $this->getUtmGroup($request, $query);
         $this->applyFilters($query, $request);
 
@@ -270,11 +275,14 @@ class EndorsementReportService extends ManagementReport
                 'tqr.region_cover_for_id as travel_region_cover_for_id',
                 'n.text as travel_destination_id_text',
                 'ls.text as sub_source',
-                'sso.text as sub_source_option'
-            )
-            ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
-            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
-            ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
+                'sso.text as sub_source_option',
+                'pq.frequency as payment_frequency',
+                'personal_quotes.created_at as quote_created_at',
+                'ipp.text as plan_name',
+                DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
+            )->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id');
+        $this->paymentJoin($reversalQuery, null, 'pq', 'leftJoin', 'leftJoin');
+        $reversalQuery->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
@@ -284,6 +292,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('insurance_provider as ip3', 'ip3.id', '=', 'personal_quotes.insurance_provider_id')
+            ->leftJoin('insurance_provider_plans as ipp', 'ipp.id', '=', 'pq.plan_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
@@ -308,6 +317,7 @@ class EndorsementReportService extends ManagementReport
             ->whereIn('send_update_logs.status', $statues)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
+        $this->branchJoin($reversalQuery);
         $this->getUtmGroup($request, $reversalQuery);
 
         if ($request['reportType'] == ManagementReportTypeEnum::APPROVED_TRANSACTIONS) {
@@ -409,6 +419,16 @@ class EndorsementReportService extends ManagementReport
             } else {
                 $item->travel_coverage = 'N/A';
                 $item->traveling_where = 'N/A';
+            }
+
+            if ($item->quote_type_id != QuoteTypeId::Life) {
+                $item->insurance_provider_name = 'N/A';
+                $item->payment_frequency = 'N/A';
+                $item->plan_name = 'N/A';
+                $item->quote_created_at = 'N/A';
+            } else {
+                $item->insurance_provider_name = $item->insurer;
+                $item->quote_created_at = ! empty($item->quote_created_at) ? Carbon::parse($item->quote_created_at)->format('Y-m-d') : null;
             }
         });
     }

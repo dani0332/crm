@@ -1,12 +1,11 @@
 <script setup>
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import { usePayment } from '@/inertia/Composables/usePayment.js';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { usePayment } from '@/inertia/Composables/usePayment.js';
 
 const page = usePage();
 defineProps({
@@ -29,7 +28,6 @@ defineProps({
   displaySendPolicyButton: Boolean,
   documentTypes: Object,
   documentType: Object,
-  cdnPath: String,
   memberCategories: Array,
   emailStatuses: Array,
   isAdmin: Boolean,
@@ -53,7 +51,6 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
-  storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
@@ -355,10 +352,9 @@ const memberRelationOptions = computed(() => {
 });
 
 const emiratesOptions = computed(() => {
-  return page.props.emirates.map(em => ({
-    value: em.id,
-    label: em.text,
-  }));
+  return (page.props.emirates || [])
+    .map(em => ({ value: em?.value, label: em?.label }))
+    .filter(opt => opt && opt.value != null && opt.label != null);
 });
 
 const travelerForm = useForm({
@@ -853,6 +849,14 @@ const onLoadAvailablePlansData = async () => {
       availablePlansTable.isLoading = false;
     });
 };
+
+const { sectionRef: planDataTable, isLoaded: plansLoaded } = useLazyLoadSection(
+  onLoadAvailablePlansData,
+  {
+    threshold: 0.1,
+    rootMargin: '100px',
+  },
+);
 
 const selectedPlanType = ref(null);
 
@@ -1368,7 +1372,6 @@ const readOnlyMode = reactive({
 });
 
 onMounted(() => {
-  onLoadAvailablePlansData();
   if (page.props.message) {
     notification.success({
       title: page.props.message,
@@ -2970,6 +2973,7 @@ const fullAddress = computed(() => {
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail
@@ -3116,7 +3120,7 @@ const fullAddress = computed(() => {
 
     <EmailStatus :emailStatuses="emailStatuses" :expanded="sectionExpanded" />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div ref="planDataTable" class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -3219,7 +3223,7 @@ const fullAddress = computed(() => {
           </div>
           <div v-else>
             <div
-              v-if="availablePlansTable.isLoading"
+              v-if="!plansLoaded || availablePlansTable.isLoading"
               class="flex justify-center my-8"
             >
               <x-spinner size="lg" />
@@ -3471,7 +3475,6 @@ const fullAddress = computed(() => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -3513,7 +3516,6 @@ const fullAddress = computed(() => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"

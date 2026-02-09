@@ -27,6 +27,7 @@ class ClaimStatusesSeeder extends Seeder
         // General Claim Statuses
         $generalStatuses = [
             ['text' => 'Open', 'description' => null, 'is_active' => 1, 'sort_order' => 1, 'claim_request_type_id' => null, 'access_type_id' => $claimAccessTypeSystem?->id, 'status_type' => ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value, 'created_at' => $now, 'updated_at' => $now],
+            ['text' => 'Re-Open', 'description' => null, 'is_active' => 1, 'sort_order' => 1, 'claim_request_type_id' => null, 'access_type_id' => $claimAccessTypeSystem?->id, 'status_type' => ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value, 'created_at' => $now, 'updated_at' => $now],
             ['text' => 'Close', 'description' => null, 'is_active' => 1, 'sort_order' => 2, 'claim_request_type_id' => null, 'access_type_id' => $claimAccessTypeSystem?->id, 'status_type' => ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value, 'created_at' => $now, 'updated_at' => $now],
         ];
         // General Complaint Statuses

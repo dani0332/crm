@@ -96,6 +96,7 @@ class SendUpdateLogService
             'renewal_batch',
             'policy_expiry_date',
             'vat',
+            'is_branch_applicable',
         ];
 
         $requestDetailsSkipColumns = [
@@ -1143,7 +1144,7 @@ class SendUpdateLogService
         } else {
             $sageProcessData['model_type'] = $quote::class;
             $sageProcessData['model_id'] = $quote->id;
-            $response = $sageScheduleResponse = SageProcess::create($sageProcessData);
+            $response = SageProcess::create($sageProcessData);
             if ($quote->status != SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
                 $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
             }

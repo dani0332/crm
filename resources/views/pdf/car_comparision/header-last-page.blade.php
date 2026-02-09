@@ -51,7 +51,7 @@
     <div id="header-content">
         <div class="logo-container">
             <img src="{{ public_path('images/logo-25k.png') }}" alt="Logo" class="main-logo">
-            <img src="{{ public_path('images/alfred-trans.png') }}" alt="Alfred Logo" class="alfred-logo">
+            <img src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-halfalfredstandingfoldinghandsinsuit.png" alt="Alfred Logo" class="alfred-logo">
         </div>
     </div> 
 </body>

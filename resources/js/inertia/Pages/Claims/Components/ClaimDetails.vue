@@ -123,9 +123,19 @@ const isCarLOB = computed(() => {
   return page.props.quoteTypeIds?.Car === page.props.claim.quote_type_id;
 });
 
+// Check if the selected line of business is Bike
+const isBikeLOB = computed(() => {
+  return page.props.quoteTypeIds?.Bike === page.props.claim.quote_type_id;
+});
+
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
-  return page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
+  let isHealth =
+    page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
+  let isGroupMedical =
+    page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL ===
+    page.props.claim.personal_quote?.business_type_of_insurance_id;
+  return isHealth || isGroupMedical;
 });
 
 function formatCurrency(amount) {
@@ -172,13 +182,6 @@ const validationRules = {
     return true;
   },
 
-  // Claim number validation
-  claimNumber: v => {
-    if (!v) return 'Claim number is required.';
-    if (v.length > 100) return 'Claim number cannot exceed 100 characters.';
-    return true;
-  },
-
   // Claim decline reason validation
   claimDeclineReason: v => {
     if (!v) return true;
@@ -191,44 +194,57 @@ const validationRules = {
   incidentDate: v => {
     if (!v) return 'Incident date is required.';
 
-    let date;
-    // Handle different date formats
-    if (v instanceof Date) {
-      date = new Date(v);
-    } else if (typeof v === 'string') {
-      // Try parsing the string - handle various formats
-      date = new Date(v);
-
-      // If invalid, try parsing as ISO date format
-      if (isNaN(date.getTime())) {
-        const isoDate = v.includes('T') ? v : v + 'T00:00:00';
-        date = new Date(isoDate);
+    // Helper function to parse date string
+    const parseDateString = str => {
+      // DD-MM-YYYY or DD/MM/YYYY format
+      const ddmmyyyy = /^(\d{2})[-\/](\d{2})[-\/](\d{4})$/;
+      const match = str.match(ddmmyyyy);
+      if (match) {
+        return new Date(
+          parseInt(match[3], 10),
+          parseInt(match[2], 10) - 1,
+          parseInt(match[1], 10),
+        );
       }
 
-      // If still invalid, try parsing DD/MM/YYYY format
-      if (isNaN(date.getTime()) && v.includes('/')) {
-        const parts = v.split('/');
-        if (parts.length === 3) {
-          // Assuming DD/MM/YYYY format
-          const day = parseInt(parts[0]);
-          const month = parseInt(parts[1]) - 1; // Month is 0-indexed
-          const year = parseInt(parts[2]);
-          date = new Date(year, month, day);
-        }
+      // YYYY-MM-DD format (ISO)
+      const yyyymmdd = /^(\d{4})-(\d{2})-(\d{2})$/;
+      const isoMatch = str.match(yyyymmdd);
+      if (isoMatch) {
+        return new Date(
+          parseInt(isoMatch[1], 10),
+          parseInt(isoMatch[2], 10) - 1,
+          parseInt(isoMatch[3], 10),
+        );
       }
-    } else {
-      date = new Date(v);
-    }
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // Set to end of today to allow today's date
+      // Fallback to native Date parsing
+      return new Date(str);
+    };
 
+    // Parse the date value
+    const date =
+      v instanceof Date
+        ? new Date(v)
+        : typeof v === 'string'
+          ? parseDateString(v)
+          : new Date(v);
+
+    // Validate the parsed date
     if (isNaN(date.getTime())) {
       return 'Incident date must be a valid date.';
     }
 
-    if (date > today) {
-      return 'Incident date cannot be in the future.';
+    // Normalize to date-only (remove time component) for comparison
+    const normalizeDate = d =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const normalizedDate = normalizeDate(date);
+    const normalizedToday = normalizeDate(new Date());
+
+    // Compare normalized dates - must be before today (yesterday or earlier)
+    if (normalizedDate > normalizedToday) {
+      return 'Incident date must be today or before.';
     }
 
     return true;
@@ -239,7 +255,7 @@ const validationRules = {
 const validateCarFields = () => {
   const errors = {};
 
-  if (isCarLOB.value) {
+  if (isCarLOB.value || isBikeLOB.value) {
     // For car LOB, all car fields are required
     if (!claimForm.plate_number?.trim()) {
       errors.plate_number = 'Vehicle plate number is required.';
@@ -315,16 +331,6 @@ const validateCommonFields = () => {
     errors.incident_date = incidentValidation;
   }
 
-  // Validate claim number if provided
-  if (claimForm.claim_number) {
-    const claimNumberValidation = validationRules.claimNumber(
-      claimForm.claim_number,
-    );
-    if (claimNumberValidation !== true) {
-      errors.claim_number = claimNumberValidation;
-    }
-  }
-
   // Validate claim decline reason if provided
   if (claimForm.claim_decline_reason) {
     const declineReasonValidation = validationRules.claimDeclineReason(
@@ -351,7 +357,7 @@ const validateForm = () => {
   allErrors = { ...allErrors, ...validateCommonFields() };
 
   // Validate LOB-specific fields
-  if (isCarLOB.value) {
+  if (isCarLOB.value || isBikeLOB.value) {
     allErrors = { ...allErrors, ...validateCarFields() };
   }
 
@@ -473,7 +479,7 @@ watch(
                 <dd>{{ claim.quote_type?.text }}</dd>
               </div>
               <template v-if="claim.claim_request_details">
-                <template v-if="isCarLOB">
+                <template v-if="isCarLOB || isBikeLOB">
                   <div class="grid sm:grid-cols-2">
                     <dt class="font-medium">
                       VEHICLE PLATE NUMBER <span class="text-red-500">*</span>
@@ -501,8 +507,10 @@ watch(
                         <x-select
                           v-model="claimForm.car_make"
                           @update:modelValue="getCarModel(true)"
+                          filterable
+                          filterPlaceholder="Filter Make...."
                           :options="carMakeOptions"
-                          placeholder="Select Vehicle Make"
+                          placeholder="Select Make"
                           class="w-full"
                           :error="claimForm.errors.car_make"
                           :rules="[isRequired, validationRules.carMake]"
@@ -522,10 +530,10 @@ watch(
                       <template v-else>
                         <x-select
                           v-model="claimForm.car_model"
-                          placeholder="Select Vehicle Model"
+                          placeholder="Select Model"
                           :options="carModelOptions"
                           filterable
-                          filterPlaceholder="Filter Car Model...."
+                          filterPlaceholder="Filter Model...."
                           :error="claimForm.errors.car_model"
                           :rules="[isRequired, validationRules.carModel]"
                         />
@@ -543,10 +551,10 @@ watch(
                       <template v-else>
                         <x-select
                           v-model="claimForm.model_year"
-                          placeholder="Select Car Model Year"
+                          placeholder="Select Year"
                           :options="carModelYearOptions"
                           filterable
-                          filterPlaceholder="Filter Car Model Year...."
+                          filterPlaceholder="Filter Year...."
                           :error="claimForm.errors.model_year"
                           :rules="[isRequired, validationRules.modelYear]"
                         />
@@ -631,7 +639,6 @@ watch(
                     placeholder="Enter Insurer Claim Number"
                     class="w-full"
                     :error="claimForm.errors.claim_number"
-                    :rules="[validationRules.claimNumber]"
                   />
                 </dd>
               </div>
@@ -674,7 +681,7 @@ watch(
                     :error="claimForm.errors.incident_date"
                     :clearable="false"
                     type="date"
-                    max-date="today"
+                    max-date="yesterday"
                     :utc="true"
                     :rules="[validationRules.incidentDate]"
                   />
@@ -688,17 +695,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Complaint Status</dt>
-                <dd>{{ claim.complaint_status?.text || 'N/A' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Next Follow Up Date</dt>
-                <dd>
-                  {{
-                    claim.next_followup_datetime
-                      ? formattedDateDmyWithTime(claim.next_followup_datetime)
-                      : 'N/A'
-                  }}
-                </dd>
+                <dd>{{ claim.complaint_status?.text?.label || 'N/A' }}</dd>
               </div>
               <template v-if="isHealthLOB">
                 <div class="grid sm:grid-cols-2">
@@ -720,6 +717,16 @@ watch(
                   <dd>{{ claim.customer_bank_accounts?.swift_code || '-' }}</dd>
                 </div>
               </template>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Next Follow Up Date</dt>
+                <dd>
+                  {{
+                    claim.next_followup_datetime
+                      ? formattedDateDmyWithTime(claim.next_followup_datetime)
+                      : 'N/A'
+                  }}
+                </dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ formattedDateDmyWithTime(claim.created_at) }}</dd>

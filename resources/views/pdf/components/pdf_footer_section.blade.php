@@ -267,7 +267,7 @@
                           @if(!empty($quote->advisor))
                             <!-- Advisor Photo -->
                             <div style="margin-right:10px;">
-                            <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/headset-with-bg.png') }}" 
+                            <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : 'https://cdn-prod.myalfred.me/media/assets/insurancemarket-alfredadvisorwithheadphonewithbg.png' }}" 
                                 alt="Advisor Photo" 
                                 style="width:40px; height:40px; border-radius:55%; object-fit:cover;">
                             </div>
@@ -295,13 +295,13 @@
                             </div>
                             @else
                               <!-- Alfred Photo -->
-                              <div style="margin-right:10px;">
+                              <div style="margin-right:15px;">
                                 <a
                                 class="text-white"
                                 href="{{$ecomInsuranceLink."/?IA=true"}}">
-                                <img src="{{ public_path('images/headset-with-bg.png') }}" 
+                                <img src="https://cdn-prod.myalfred.me/media/assets/insurancemarket-alfredadvisorwithheadphonewithbg.png" 
                                     alt="Alfred Photo" 
-                                    style="width:40px; height:40px; border-radius:55%; object-fit:cover;">
+                                    style="width:40px; height:40px; border-radius:55%; object-fit:cover; margin-top: 10px;">
                                 </a>
                                 </div>
                              

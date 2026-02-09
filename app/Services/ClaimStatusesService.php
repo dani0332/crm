@@ -120,6 +120,7 @@ class ClaimStatusesService extends BaseService
         $newClaimStatus = ClaimStatus::find($newClaimSubStatusId);
 
         $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
+        $isBikeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Bike;
         $isHealthQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Health;
         $isLifeQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Life;
 
@@ -129,7 +130,7 @@ class ClaimStatusesService extends BaseService
             ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
         ];
 
-        if ($isCarQuoteType) {
+        if ($isCarQuoteType || $isBikeQuoteType) {
             $subStatusListForClaimClosed = [
                 ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_COMPLETED_AND_CLAIM_SETTLED->value,
                 ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED->value,
@@ -153,18 +154,18 @@ class ClaimStatusesService extends BaseService
             ];
         }
 
-        return in_array($newClaimStatus?->text, $subStatusListForClaimClosed);
+        return in_array($newClaimStatus?->text['value'], $subStatusListForClaimClosed);
     }
 
-    public function markClaimAsOpen(ClaimRequest $claimRequest): void
+    public function markClaimAsReOpen(ClaimRequest $claimRequest): void
     {
-        $claimStatusOpen = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_OPEN->value)
+        $claimStatusOpen = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_REOPEN->value)
             ->active()
             ->first();
 
         if ($claimStatusOpen) {
             $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
-            LoggerService::info(' Claim status updated to "Open" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated to '.$claimStatusOpen?->text['value'].' - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusOpen->id,
@@ -181,7 +182,7 @@ class ClaimStatusesService extends BaseService
 
         if ($claimStatusClosed) {
             $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
-            LoggerService::info(' Claim status updated to "Closed" - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim status updated to '.$claimStatusClosed?->text['value'].' - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusClosed->id,
@@ -258,7 +259,7 @@ class ClaimStatusesService extends BaseService
         $closedStatus = ClaimStatus::active()
             ->find($statusId);
 
-        return $closedStatus?->text === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
+        return $closedStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
     }
 
     /**
@@ -286,7 +287,7 @@ class ClaimStatusesService extends BaseService
                     return [
                         'ModifiedAt' => $activity->created_at,
                         'ModifiedBy' => $activity->createdBy->name ?? null,
-                        'NewSubStatus' => $activity->claimStatus->text ?? null,
+                        'NewSubStatus' => $activity->claimStatus?->text['label'] ?? null,
                         'Notes' => $activity->comment,
                         'created_at' => $activity->created_at, // Include for frontend sorting
                     ];
@@ -317,10 +318,10 @@ class ClaimStatusesService extends BaseService
             // Check if complaint status has changed to open complaint status
             $newComplaintStatus = ClaimStatus::active()->find($complaintStatusId);
 
-            $isNewStatusComplaintOpen = $newComplaintStatus?->text === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
+            $isNewStatusComplaintOpen = $newComplaintStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 
             if ($isNewStatusComplaintOpen) {
-                $this->markClaimAsOpen($claim);
+                $this->markClaimAsReOpen($claim);
             }
 
             LoggerService::info(' Complaint status updated successfully', extra: [

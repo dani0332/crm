@@ -89,7 +89,8 @@ class ClaimsService extends BaseService
                     $query->with('serviceType:id,code,text');
                 },
                 'manager:id,name',
-            ]);
+            ])
+            ->orderBy('created_at', 'desc');
 
         $this->query = ClaimRequest::select([
             'id',
@@ -179,6 +180,13 @@ class ClaimsService extends BaseService
 
     public function applyFilters($query, $filters)
     {
+        // is loggedin user is claim manager
+        $user = auth()->user();
+        $isClaimManager = $user?->hasRole(RolesEnum::CLAIM_MANAGER);
+        if ($isClaimManager) {
+            $query->where('manager_id', $user->id);
+        }
+
         if (! empty($filters['code'])) {
             $query->where('code', $filters['code']);
         }
@@ -883,7 +891,7 @@ class ClaimsService extends BaseService
             $isRequiredFieldsFilled = $claimRequestDetails?->plate_number && $claimRequestDetails?->car_make && $claimRequestDetails?->car_model && $claimRequestDetails?->model_year;
         } else {
 
-            $isRequiredFieldsFilled = $claimRequest?->policy_number && $claimRequest?->claim_number && $claimRequest?->incident_date;
+            $isRequiredFieldsFilled = $claimRequest?->policy_number && $claimRequest?->incident_date;
         }
 
         return $isRequiredFieldsFilled;
@@ -905,17 +913,17 @@ class ClaimsService extends BaseService
 
     public function sendNotification(ClaimRequest $claimRequest, $request)
     {
-        $updateClaimData['claim_sub_status_id'] = $request->claim_sub_status_id;
+        $claimRequest->claim_sub_status_id = $request->claim_sub_status_id;
         $subStatus = ClaimStatus::find($request->claim_sub_status_id);
         $targetStatus = $this->claimsStatusesService->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
         if ($targetStatus) {
-            $updateClaimData['claim_status_id'] = ClaimStatus::byText($targetStatus)
+            $claimRequest->claim_status_id = ClaimStatus::byText($targetStatus)
                 ->byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
                 ->active()
                 ->first()?->id;
         }
 
-        $claimRequest->update($updateClaimData);
+        $claimRequest->save();
 
         $claimActivity = ClaimActivity::createForClaim(
             $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
@@ -953,7 +961,7 @@ class ClaimsService extends BaseService
                         'ModifiedAt' => $activity->created_at,
                         'Notes' => $activity->comment,
                         'ModifiedBy' => $activity->createdBy->name ?? null,
-                        'NewStatus' => $activity->claimStatus->text ?? null,
+                        'NewStatus' => $activity->claimStatus?->text['label'] ?? null,
                         'created_at' => $activity->created_at, // Include for frontend sorting
                     ];
                 });

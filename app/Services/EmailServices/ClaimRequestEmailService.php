@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SendClaimGoogleReviewEmailJob;
@@ -116,9 +117,11 @@ class ClaimRequestEmailService extends BaseService
         $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
 
         $isHealthClaim = $claimRequest->quote_type_id == QuoteTypeId::Health;
-        $workflowType = $isHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
+        $isGroupHealthClaim = $claimRequest->personalQuote?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+        $workflowType = $isHealthClaim || $isGroupHealthClaim ? WorkflowTypeEnum::CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL : WorkflowTypeEnum::CLAIM_GOOGLE_REVIEW_EMAIL;
 
         return (object) [
+            'claimUID' => $claimRequest->code ?? '',
             'customerName' => $claimRequest->full_name ?? '',
             'customerEmail' => $claimRequest->email ?? '',
             'managerName' => $claimRequest->manager?->name ?? '',
@@ -128,6 +131,7 @@ class ClaimRequestEmailService extends BaseService
             'managerMobilePhone' => $phoneNumber,
             'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
             'workflowType' => $workflowType,
+            'isWAConsent' => $claimRequest->whatsapp_consent,
         ];
     }
 
@@ -191,6 +195,11 @@ class ClaimRequestEmailService extends BaseService
         $phoneNumber = ! empty($claimRequest->manager->mobile_no) ? formatMobileNo($claimRequest->manager->mobile_no) : '';
         $workflowType = WorkflowTypeEnum::CLAIM_SUB_STATUS_CUSTOMER_NOTIFICATION;
 
+        $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Request';
+        if ($claimRequest->quote_type_id == QuoteTypeId::Health) {
+            $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Reimbursement (Health)';
+        }
+
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
             'customerName' => $claimRequest->full_name ?? '',
@@ -203,6 +212,8 @@ class ClaimRequestEmailService extends BaseService
             'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
             'workflowType' => $workflowType,
             'message' => $message,
+            'isWAConsent' => $claimRequest->whatsapp_consent,
+            'subject' => $subject,
         ];
     }
 

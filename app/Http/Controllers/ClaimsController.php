@@ -57,7 +57,6 @@ class ClaimsController extends Controller
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_EXPORT_DATA], ['only' => ['export']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['getClaimLeadHistory', 'getClaimSubStatusLogs', 'getComplaintStatusLogs', 'getNextFollowUpLogs']]);
     }
 
     /**
@@ -122,7 +121,7 @@ class ClaimsController extends Controller
             return response()->json([
                 'success' => true,
                 'policies' => $policies,
-                'message' => empty($policies) ? 'No available data' : 'Policies found successfully.',
+                'message' => $policies->isEmpty() ? 'No available data' : 'Policies found successfully.',
             ]);
         } catch (Exception $e) {
             LoggerService::error(' Error searching policies', extra: [

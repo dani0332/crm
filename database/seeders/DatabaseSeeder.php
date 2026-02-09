@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
-            AiAdvisorSeeder::class,
+            // AiAdvisorSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
@@ -51,6 +51,7 @@ class DatabaseSeeder extends Seeder
             DocRequiredForPolicySendSeeder::class,
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
+            SetPcpTeamAllocationThresholdDisabledSeeder::class,
         ]);
     }
 }

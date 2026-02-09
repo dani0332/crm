@@ -46,9 +46,7 @@ const props = defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   noteDocumentType: Object,
-  storageUrl: String,
   quoteNotes: Object,
-  cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   bookPolicyDetails: Array,
@@ -1173,7 +1171,6 @@ function handleOcrNotification(event) {
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"
-          :cdn="cdnPath"
         />
         <Link
           v-if="quote?.insly_id"
@@ -2055,6 +2052,7 @@ function handleOcrNotification(event) {
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail
@@ -2382,7 +2380,6 @@ function handleOcrNotification(event) {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -2428,7 +2425,6 @@ function handleOcrNotification(event) {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :modelType="quoteType"
       :insly-id="quote?.insly_id"

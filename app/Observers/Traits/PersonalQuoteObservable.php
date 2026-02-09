@@ -10,6 +10,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendAutomatedHomeRenewalFollowup;
@@ -205,6 +206,14 @@ trait PersonalQuoteObservable
                 });
             } catch (Exception $e) {
                 LoggerService::error('PersonalQuoteObserver - save branch data failed', [
+                    'uuid' => $personalQuote->uuid,
+                ], exception: $e);
+            }
+
+            try {
+                QuotePolicyBooked::dispatch($personalQuote->uuid, $personalQuote->quote_type_id);
+            } catch (Exception $e) {
+                LoggerService::error('PersonalQuoteObserver - dispatch QuotePolicyBooked event failed', [
                     'uuid' => $personalQuote->uuid,
                 ], exception: $e);
             }

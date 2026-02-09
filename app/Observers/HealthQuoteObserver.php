@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
@@ -162,6 +163,17 @@ class HealthQuoteObserver
 
         if (
             isset($dirty['quote_status_id']) &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($healthQuote->uuid, QuoteTypeId::Health);
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $healthQuote->uuid]);
+            }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             SendPolicyIssueWhatsappMessageJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH->id())->onQueue('insly');
@@ -171,6 +183,14 @@ class HealthQuoteObserver
 
         if (isset($dirty['quote_status_id'])) {
             app(SLAService::class)->meetSLAOnStatusUpdate($healthQuote);
+        }
+
+        if (isset($dirty['aml_status'])) {
+            app(SLAService::class)->meetSLAOnAMLStatusUpdate($healthQuote);
+        }
+
+        if (isset($dirty['kyc_decision'])) {
+            app(SLAService::class)->meetSLAOnKYCStatusUpdate($healthQuote);
         }
     }
 }

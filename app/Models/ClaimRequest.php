@@ -51,6 +51,7 @@ class ClaimRequest extends Model implements AuditableContract
         'complaint_status_id',
         'complaint_datetime',
         'complaint_notes',
+        'google_review_email_sent_at',
         'next_followup_notes',
         'next_followup_datetime',
         'approved_repair_amount',
@@ -60,6 +61,7 @@ class ClaimRequest extends Model implements AuditableContract
         'updated_at',
     ];
     protected $casts = [
+        'google_review_email_sent_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

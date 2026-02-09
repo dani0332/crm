@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ClaimComplaintStatusUpdateRequest extends FormRequest
@@ -30,7 +31,14 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
             'complaint_datetime' => [
                 'required',
                 'date',
-                'before_or_equal:now',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    // Parse the normalized datetime and compare with end of today
+                    $complaintDateTime = Carbon::parse($value);
+                    $endOfToday = now()->endOfDay();
+                    if ($complaintDateTime->isAfter($endOfToday)) {
+                        $fail('The complaint date cannot be in the future.');
+                    }
+                },
             ],
             'notes' => [
                 'nullable',
@@ -75,6 +83,25 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
             $this->merge([
                 'notes' => trim($this->input('notes', '')),
             ]);
+        }
+
+        // Handle datetime conversion from frontend (same as NextFollowUp)
+        if ($this->has('complaint_datetime')) {
+            $dateValue = $this->input('complaint_datetime');
+
+            // If it's a JavaScript Date object string or ISO format, convert it
+            if (is_string($dateValue)) {
+                try {
+                    $date = new \DateTime($dateValue);
+                    $formattedDate = $date->format('Y-m-d H:i:s');
+
+                    $this->merge([
+                        'complaint_datetime' => $formattedDate,
+                    ]);
+                } catch (\Exception $e) {
+                    // Leave as-is; validation will fail with date rule
+                }
+            }
         }
     }
 }

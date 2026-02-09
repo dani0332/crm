@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteQuoteDocumentRequest;
@@ -46,11 +47,13 @@ class QuoteDocumentController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function getQuoteDocumentsToReceive($quoteType, ActivitiesService $activitiesService, Request $request)
+    public function getQuoteDocumentsToReceive(Request $request, $quoteType, ActivitiesService $activitiesService, Request $request)
     {
-        $documentTypeCategory = $request->category;
         $quoteTypeId = $activitiesService->getQuoteTypeId($quoteType);
-        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $documentTypeCategory);
+        $registrationType = $request->input('registration_type');
+        $vehicleUse = $request->input('vehicle_use');
+
+        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse);
 
         return DocumentTypeResource::collection($documentTypes);
     }
@@ -65,11 +68,20 @@ class QuoteDocumentController extends Controller
      */
     public function store($quoteType, QuoteDocumentRequest $request)
     {
+        LoggerService::startQuoteLogging($request->quote_uuid, LoggerFeatureEnum::API_QUOTE_DOCUMENT_UPLOAD);
+
+        LoggerService::info('API request received to upload documents to Azure', [
+            'quote_uuid' => $request->quote_uuid,
+            'quote_type' => $quoteType,
+            'document_type_code' => $request->document_type_code,
+            'member_detail_id' => $request->member_detail_id,
+        ]);
+
         $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
         $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->validated(), $quote);
 
-        return new QuoteDocumentResource($document);
+        return (new QuoteDocumentResource($document))->response()->setStatusCode(201);
     }
 
     /**
