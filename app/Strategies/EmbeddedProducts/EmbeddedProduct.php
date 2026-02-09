@@ -324,6 +324,7 @@ class EmbeddedProduct
                 'document_number' => 'Not Applicable',
                 'url' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
                 'path' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+                'is_policy_wordings' => true,
             ]];
         }
         $epDocuments = [];
@@ -341,6 +342,7 @@ class EmbeddedProduct
                         'document_number' => 'Not Applicable',
                         'url' => $pwDoc,
                         'path' => $item->path,
+                        'is_policy_wordings' => true,
                     ];
                 }
             }
@@ -385,6 +387,7 @@ class EmbeddedProduct
                 'document_number' => $documentNumber,
                 'url' => $document->doc_url !== '' ? $websiteURL.$document->doc_url : '',
                 'path' => $document->doc_url,
+                'is_policy_wordings' => false,
             ];
         })->toArray();
 
