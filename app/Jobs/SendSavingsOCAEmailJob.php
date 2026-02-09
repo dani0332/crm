@@ -4,18 +4,28 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTypeId;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\Savings\SavingsEmailService;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
-class SendSavingsOCAEmailJob implements ShouldQueue
+class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     protected string $quoteUID;
     protected array $data;
+
+    /**
+     * The number of seconds after which the job's unique lock will be released.
+     *
+     * @var int
+     */
+    public $uniqueFor = 300; // 5 minutes
 
     /**
      * Create a new job instance.
@@ -27,6 +37,14 @@ class SendSavingsOCAEmailJob implements ShouldQueue
     }
 
     /**
+     * The unique ID of the job.
+     */
+    public function uniqueId(): string
+    {
+        return "savings-oca-email-{$this->quoteUID}";
+    }
+
+    /**
      * Execute the job.
      */
     public function handle(): void
@@ -34,6 +52,28 @@ class SendSavingsOCAEmailJob implements ShouldQueue
         LoggerService::startQuoteLogging($this->quoteUID);
 
         LoggerService::info('Savings OCA email job started');
+
+        // Idempotency check: Verify email hasn't already been sent
+        $lead = PersonalQuote::where('uuid', $this->quoteUID)
+            ->where('quote_type_id', QuoteTypeId::Savings)
+            ->first();
+
+        if (! $lead) {
+            LoggerService::warning('Savings OCA email job - Lead not found', [
+                'quote_uuid' => $this->quoteUID,
+            ]);
+
+            return;
+        }
+
+        if ($lead->isNonAdvisorEmailSent()) {
+            LoggerService::info('Savings OCA email job - Email already sent, skipping duplicate execution', [
+                'quote_uuid' => $this->quoteUID,
+                'non_advisor_email_sent_at' => $lead->non_advisor_email_sent_at,
+            ]);
+
+            return;
+        }
 
         app(SavingsEmailService::class)->sendOCAEmail($this->quoteUID, $this->data);
 
@@ -45,6 +85,18 @@ class SendSavingsOCAEmailJob implements ShouldQueue
      */
     public function failed(Throwable $exception): void
     {
-        LoggerService::error('Savings OCA email failed', ['exception' => $exception]);
+        LoggerService::startQuoteLogging($this->quoteUID);
+        
+        $exceptionDetails = [
+            'quote_uuid' => $this->quoteUID,
+            'exception_class' => get_class($exception),
+            'exception_message' => $exception->getMessage(),
+            'exception_file' => $exception->getFile(),
+            'exception_line' => $exception->getLine(),
+            'exception_code' => $exception->getCode(),
+            'exception_trace' => $exception->getTraceAsString(),
+        ];
+
+        LoggerService::error('Savings OCA email failed', $exceptionDetails, $exception);
     }
 }

@@ -204,6 +204,19 @@ class SavingsQuoteController extends Controller
                 'plan_ids' => $request->plan_ids ?? [],
             ]);
 
+            // Check if email already sent to prevent duplicates
+            if ($quote->isNonAdvisorEmailSent()) {
+                LoggerService::info('SavingsQuoteController - sendOCAEmail already sent', [
+                    'quote_uuid' => $quoteUuId,
+                    'non_advisor_email_sent_at' => $quote->non_advisor_email_sent_at,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'OCA email has already been sent for this quote',
+                ], 400);
+            }
+
             // Prepare data for the email
             $emailData = [
                 'plan_ids' => $request->plan_ids ?? [],
@@ -299,7 +312,6 @@ class SavingsQuoteController extends Controller
 
         return response()->json(['message' => 'Savings plan visibility toggled successfully']);
     }
-
 
     public function updateExchangeRate(Request $request)
     {

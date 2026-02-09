@@ -105,7 +105,6 @@ class SavingsEmailService
         $planIds = isset($data['plan_ids']) && is_array($data['plan_ids'])
             ? implode(',', $data['plan_ids'])
             : ($data['plan_ids'] ?? '');
-        $dataSource = config('constants.SAVINGS_EMAIL_DATA_SOURCE', 'IMCRM');
 
         return (object) [
             // Lead-related data
@@ -132,9 +131,6 @@ class SavingsEmailService
 
             // Workflow-related data
             'workflowType' => $workflowType,
-            'quotePlanLink' => $ecomQuoteLink,
-            'instantAlfredLink' => $ecomQuoteLink.'?IA=true',
-            'dataSource' => $dataSource,
         ];
     }
 
