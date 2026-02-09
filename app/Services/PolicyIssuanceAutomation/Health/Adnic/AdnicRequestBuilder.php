@@ -80,7 +80,8 @@ class AdnicRequestBuilder
                 'QuestionnarieInfo' => (array) $insuredMember->QuestionnarieInfo,
                 'PregnantStatus' => $currentlyPregnant ?? AdnicEnum::NO,
                 'PreviouslyCovered' => $previouslyCovered ?? AdnicEnum::NO,
-                'EmiratesId' => $emiratesId ?? '',
+                'EmiratesId' => $emiratesId && count($emiratesId) >=  15 ? $emiratesId : '',
+                'EidApplicationNo' => $emiratesId && count($emiratesId) <  15 ? $emiratesId : '',
                 'EntryPermitNoOrFileNo' => $visaFileNumber ?? '',
                 'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
                 'MemberCategory' => $memberCategory ?? '',
