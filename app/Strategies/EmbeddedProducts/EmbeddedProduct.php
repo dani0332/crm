@@ -387,7 +387,7 @@ class EmbeddedProduct
                 'document_number' => $documentNumber,
                 'url' => $document->doc_url !== '' ? $websiteURL.$document->doc_url : '',
                 'path' => $document->doc_url,
-                'is_policy_wordings' => false
+                'is_policy_wordings' => false,
             ];
         })->toArray();
 
