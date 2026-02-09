@@ -673,6 +673,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $attachments = [];
         $attachmentsUrls = [];
+        $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         if ($isSalama) {
             $url = self::SALAMA_POLICY_WORDINGS_URL;
@@ -684,25 +685,22 @@ class EmbeddedProductRepository extends BaseRepository
             ];
 
         } else {
-            $quoteDocumentService = app(QuoteDocumentService::class);
             $documents = json_decode($ep->company_documents);
             if (! empty($documents)) {
                 foreach ($documents as $item) {
                     $path = $item->path;
-                    if (! empty($path)) {
-                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIMPrivate');
-                        if ($pwDoc && ! $isAlfredProtect) {
-                            $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-                            $file = file_get_contents($pwDoc);
-                            $mimeType = $fileInfo->buffer($file);
-                            $attachments[] = [
-                                'Content' => base64_encode($file),
-                                'Name' => $ep->display_name.' - Policy Wordings.pdf',
-                                'ContentType' => $mimeType,
-                            ];
-                        } elseif ($pwDoc) {
-                            $attachmentsUrls[] = $pwDoc;
-                        }
+                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
+                    if (! empty($path) && ! $isAlfredProtect) {
+                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+                        $file = file_get_contents($pwDoc);
+                        $mimeType = $fileInfo->buffer($file);
+                        $attachments[] = [
+                            'Content' => base64_encode(file_get_contents($pwDoc)),
+                            'Name' => $ep->display_name.'- Policy Wordings.pdf',
+                            'ContentType' => $mimeType,
+                        ];
+                    } else {
+                        $attachmentsUrls[] = $pwDoc;
                     }
                 }
             }
