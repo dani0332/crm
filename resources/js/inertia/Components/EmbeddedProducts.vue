@@ -160,7 +160,9 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      documentPath;
+      documentPath +
+      '&is_policy_wordings=' +
+      download.is_policy_wordings;
     save.target = '_blank';
     save.download = download.name;
     save.dispatchEvent(new MouseEvent('click'));
@@ -170,7 +172,9 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      documentPath; // so that it opens new tab for IE11
+      documentPath +
+      '&is_policy_wordings=' +
+      download.is_policy_wordings;
   }
 
   downloadLoader.value = true;
