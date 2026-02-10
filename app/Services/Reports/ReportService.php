@@ -709,8 +709,22 @@ class ReportService extends BaseService
             $query->whereIn('personal_quotes.quote_status_id', $request->statusId);
         }
 
-        if (! empty($request->vehicle_use) && $request->vehicle_use != 'All') {
-            $query->where('vehicle_use', $request->vehicle_use);
+        // Car-specific filters - need to join car_quote_request
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $hasRegistrationType = ! empty($request->registration_type) && $request->registration_type !== 'All';
+            $hasVehicleUse = ! empty($request->vehicle_use) && $request->vehicle_use !== 'All';
+
+            if ($hasRegistrationType || $hasVehicleUse) {
+                $query->join('car_quote_request as cqr', 'cqr.code', '=', 'personal_quotes.code');
+
+                if ($hasRegistrationType) {
+                    $query->where('cqr.registration_type', $request->registration_type);
+                }
+
+                if ($hasVehicleUse) {
+                    $query->where('cqr.vehicle_use', $request->vehicle_use);
+                }
+            }
         }
 
         if (isset($request->expireDate)) {
