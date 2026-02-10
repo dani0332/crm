@@ -16,6 +16,7 @@ const page = usePage();
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 
 // const { isRequired } = useRules();
 
@@ -26,7 +27,7 @@ const filters = reactive({
   thisWeek: [],
   customDate: [],
   teams: [],
-  quoteType: '',
+  quoteTypeId: '',
   selectedAdvisor: '',
   userIds: [],
   statusId: [],
@@ -179,49 +180,49 @@ function showCustomDate() {
 function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
   let url = '';
 
-  if (!filters || !filters.quoteType) {
+  if (!filters || !filters.quoteTypeId) {
     notification.error({
       title: 'Please select a line of business.',
       position: 'top',
     });
   } else {
     const quoteTypeMapping = {
-      'Car Insurance': 'car',
-      'Health Insurance': 'health',
-      'Business Insurance': 'business',
-      'Bike Insurance': 'bike',
-      'Life Insurance': 'life',
-      'Pet Insurance': 'pet',
-      'Jetski Insurance': 'jetski',
-      'Yacht Insurance': 'yacht',
-      'Travel Insurance': 'travel',
-      'Cycle Insurance': 'cycle',
-      'Home Insurance': 'home',
+      [quoteTypeIdEnum.Car]: 'car',
+      [quoteTypeIdEnum.Health]: 'health',
+      [quoteTypeIdEnum.Business]: 'business',
+      [quoteTypeIdEnum.Bike]: 'bike',
+      [quoteTypeIdEnum.Life]: 'life',
+      [quoteTypeIdEnum.Pet]: 'pet',
+      [quoteTypeIdEnum.Jetski]: 'jetski',
+      [quoteTypeIdEnum.Yacht]: 'yacht',
+      [quoteTypeIdEnum.Travel]: 'travel',
+      [quoteTypeIdEnum.Cycle]: 'cycle',
+      [quoteTypeIdEnum.Home]: 'home',
     };
 
     const personalQuoteTypes = new Set([
-      'Home Insurance',
-      'Life Insurance',
-      'Bike Insurance',
-      'Jetski Insurance',
-      'Cycle Insurance',
-      'Pet Insurance',
-      'Yacht Insurance',
+      quoteTypeIdEnum.Home,
+      quoteTypeIdEnum.Life,
+      quoteTypeIdEnum.Bike,
+      quoteTypeIdEnum.Jetski,
+      quoteTypeIdEnum.Cycle,
+      quoteTypeIdEnum.Pet,
+      quoteTypeIdEnum.Yacht,
     ]);
 
-    const formattedQuoteType = quoteTypeMapping[filters.quoteType];
+    const formattedQuoteType = quoteTypeMapping[filters.quoteTypeId];
 
     const quoteStatusParams = quote_status_id
       .map(id => `quote_status_id[]=${id}`)
       .join('&');
 
-    url = `/${personalQuoteTypes.has(filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4&created_at_start=${created_at_start}&created_at_end=${created_at_end}`;
+    url = `/${personalQuoteTypes.has(filters.quoteTypeId) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4&created_at_start=${created_at_start}&created_at_end=${created_at_end}`;
     window.location.href = url;
   }
 }
 
 watch(
-  () => filters.quoteType,
+  () => filters.quoteTypeId,
   newQuoteType => {
     if (newQuoteType) {
       onSubmit(true);
@@ -240,7 +241,7 @@ onMounted(() => {
 });
 
 const isCarLob = computed(() => {
-  return filters.quoteType === 'Car Insurance';
+  return filters.quoteTypeId === quoteTypeIdEnum.Car;
 });
 
 const registrationTypeOptions = [
@@ -290,7 +291,7 @@ const isVehicleUseDisabled = computed(() => {
         </template>
       </x-select>
       <x-select
-        v-model="filters.quoteType"
+        v-model="filters.quoteTypeId"
         label="Line of Business"
         placeholder="Select Line of Business"
         :options="quoteTypesOptions"
