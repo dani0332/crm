@@ -656,9 +656,10 @@ class ReportService extends BaseService
 
     public function getPaymentAuthorisedSummary($request)
     {
-
         $user = auth()->user();
-        $userTeams = ! empty($request->selectedTeams) ? (array) $request->selectedTeams : $user->getUserTeamIds();
+        $userTeams = ! empty($request->selectedTeams)
+            ? (is_array($request->selectedTeams) ? $request->selectedTeams : [$request->selectedTeams])
+            : $user->getUserTeamIds();
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
         $quoteTypeId = $request->quoteTypeId;
