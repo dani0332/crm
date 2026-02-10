@@ -662,52 +662,6 @@ class ReportService extends BaseService
         $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
-        $lobTable = [
-            quoteTypeCode::Car => ['table' => 'car_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Home => ['table' => 'home_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Health => ['table' => 'health_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Business => ['table' => 'business_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Travel => ['table' => 'travel_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Life => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Life],
-            quoteTypeCode::Pet => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Pet],
-            quoteTypeCode::Yacht => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Yacht],
-            quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],
-            quoteTypeCode::Cycle => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
-            quoteTypeCode::Jetski => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
-            quoteTypeCode::SAVINGS => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Savings],
-        ];
-
-        $quoteTypes = [
-            QuoteTypes::CAR,
-            QuoteTypes::HOME,
-            QuoteTypes::HEALTH,
-            QuoteTypes::LIFE,
-            QuoteTypes::BUSINESS,
-            QuoteTypes::BIKE,
-            QuoteTypes::YACHT,
-            QuoteTypes::TRAVEL,
-            QuoteTypes::PET,
-            QuoteTypes::CYCLE,
-            QuoteTypes::JETSKI,
-            QuoteTypes::SAVINGS,
-        ];
-
-        $allowedLOBs = [];
-        if (isset($request->quoteType)) {
-            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
-            $allowedLOBs[] = $lobTable[ucfirst($quoteType)];
-        } else {
-            $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
-            foreach ($quoteTypes as $quoteType) {
-                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles) || (auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($quoteType))) {
-                    $allowedLOBs[] = $lobTable[$quoteType->value];
-                } elseif (in_array(RolesEnum::Admin, $userRoles)) {
-                    $allowedLOBs[] = $lobTable[$quoteType->value];
-                } else {
-                    continue;
-                }
-            }
-        }
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $dataCollection = collect();
