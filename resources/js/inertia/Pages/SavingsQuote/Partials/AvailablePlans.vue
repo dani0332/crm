@@ -424,7 +424,7 @@ onMounted(() => {
 
         <!-- Action buttons for Available Plans -->
         <div
-          class="flex justify-between items-center flex-wrap gap-2 mb-4"
+          class="flex flex-wrap gap-3 justify-between items-center mb-4"
           v-if="
             readOnlyMode.isDisable === true &&
             !availablePlansTable.isLoading &&
@@ -432,8 +432,8 @@ onMounted(() => {
             typeof availablePlansTable.data !== 'string'
           "
         >
-          <div class="flex gap-2">
-            <!-- Savings Calculator Button -->
+          <!-- Savings Calculator Button -->
+          <div>
             <x-tooltip placement="top" align="left">
               <x-button
                 @click.prevent="openSavingsCalculator"
@@ -451,7 +451,8 @@ onMounted(() => {
             </x-tooltip>
           </div>
 
-          <div class="flex gap-2">
+          <!-- Right side buttons -->
+          <div class="flex gap-3">
             <!-- Send OCA Email Button -->
             <x-tooltip placement="top" align="left">
               <x-button
@@ -480,7 +481,7 @@ onMounted(() => {
                 availablePlansTable.data && availablePlansTable.data.length > 0
               "
               size="sm"
-              color="emerald"
+              color="orange"
               @click.prevent="copyLink"
             >
               Copy Link
@@ -490,7 +491,7 @@ onMounted(() => {
             <x-button
               @click.prevent="modals.createPlan = true"
               size="sm"
-              color="orange"
+              color="emerald"
             >
               Add Plan
             </x-button>
@@ -764,23 +765,21 @@ onMounted(() => {
               }}</span>
             </template>
             <template #item-action="item">
-              <div class="flex gap-3">
+              <div class="flex gap-2">
                 <x-button
-                  size="sm"
+                  size="xs"
                   color="primary"
                   outlined
                   @click.prevent="fetchPlanDetails(item.id)"
                   :loading="viewButtonLoading"
-                  class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
                 >
                   View
                 </x-button>
                 <x-button
-                  size="sm"
-                  color="error"
+                  size="xs"
+                  color="emerald"
                   outlined
                   @click.prevent="copyPlanURL(item)"
-                  class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
                 >
                   Copy
                 </x-button>
@@ -801,17 +800,15 @@ onMounted(() => {
                     }"
                     :payments="payments"
                     :insuranceProviderId="item.insuranceProviderId"
-                    button-size="sm"
-                    button-class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
+                    button-size="xs"
                   />
 
                   <x-button
                     v-else
-                    size="sm"
+                    size="xs"
                     color="orange"
                     outlined
                     :disabled="true"
-                    class="min-w-[100px] !rounded-xl !px-5 !py-1 !font-normal"
                   >
                     Selected
                   </x-button>
