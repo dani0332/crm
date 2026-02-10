@@ -758,27 +758,13 @@ class ReportService extends BaseService
 
         $result = $sorted->values()->all();
 
+        // Use Laravel's LengthAwarePaginator for proper Inertia integration
         $perPage = 5;
         $currentPage = (int) $request->input('page', 1);
         $total = count($result);
-        $lastPage = ceil($total / $perPage);
 
         $paginatedData = array_slice($result, ($currentPage - 1) * $perPage, $perPage);
 
-        $path = $request->fullUrl();
-
-        $key = 'page';
-        // Remove specific parameter from query string
-        $path = preg_replace('~(\?|&)'.$key.'=[^&]*~', '$1', $path);
-
-        $nextPageUrl = $currentPage < $lastPage
-            ? $path.'?&page='.($currentPage + 1) : null;
-
-        $prevPageUrl = $currentPage > 1
-            ? $path.'?&page='.($currentPage - 1) : null;
-
-        $pagination = [
-            'data' => $paginatedData,
             'current_page' => $currentPage,
             'per_page' => $perPage,
             'total' => $total,
@@ -790,6 +776,7 @@ class ReportService extends BaseService
         ];
 
         return $pagination;
+        return $paginator;
     }
 
     public function getRevivalReportsData($request)
