@@ -62,11 +62,12 @@ const validateTeams = () => {
     }
 
     // Chcek sequence
-    if ( i != 0 && teams[i].min_price !== teams[i - 1].max_price + 1) {
+    if (i != 0 && teams[i].min_price !== teams[i - 1].max_price + 1) {
       notification.error({
         title: {
           team: teams[i].name,
-          error: 'Tier start values must increase sequentially and must not overlap or skip ranges',
+          error:
+            'Tier start values must increase sequentially and must not overlap or skip ranges',
         },
         position: 'top',
       });
