@@ -72,6 +72,8 @@ enum QuoteTypes: string
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
     case CAR_CAT_A = 'CAR_CAT_A';
+    case DEVICE = 'Device';
+    case CYBER = 'Cyber';
 
     public function id(): string
     {
