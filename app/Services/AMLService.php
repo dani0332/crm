@@ -777,11 +777,11 @@ class AMLService
             return false;
         }
 
-        $insuredPersonDetails = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteDetails->id,
-            'customer_id' => $quoteDetails->customer_id,
-        ])->with(['customer', 'insured'])->latest('updated_at')->first();
+        $insuredPersonDetails = CustomerInsured::active()
+            ->forQuote($quoteTypeId, $quoteDetails->id)
+            ->where('customer_id', $quoteDetails->customer_id)
+            ->with(['customer', 'insured'])
+            ->first();
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$providerCode);
 
@@ -843,11 +843,11 @@ class AMLService
                     LoggerService::info('Failed to retrieve quote details from insurer', extra: [
                         'quote_type_id' => $quoteTypeId,
                         'customer_type' => $customerType,
-                        'error' => $getQuoteResponse['message'] ?? 'Unknown error',
+                        'error' => $getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR,
                     ]);
                     $screeningResponse = [
                         'status' => AMLStatusCode::AMLPending,
-                        'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? 'Unknown error').')',
+                        'message' => $isRenewalUpload ? 'Renewal upload - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR).')' : 'Insured and Driver are not the same - Check Insurer AML status after GetQuote API call (GetQuote API failed: '.($getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR).')',
                         'screening_type' => $screeningType,
                     ];
 
@@ -864,7 +864,7 @@ class AMLService
                         LoggerService::info('GetQuote API failed: Setting to Pending', extra: [
                             'quote_type_id' => $quoteTypeId,
                             'customer_type' => $customerType,
-                            'error' => $getQuoteResponse['message'] ?? 'Unknown error',
+                            'error' => $getQuoteResponse['message'] ?? GenericRequestEnum::UNKNOWN_ERROR,
                         ]);
                         $screeningResponse['message'] = $getQuoteResponse['message'] ?? 'Insurer GetQuote API failed';
                         $screeningResponse['is_get_quote_api_failed'] = true;
@@ -1607,7 +1607,7 @@ class AMLService
         return $data;
     }
 
-    public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening)
+    public function processInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening, $checkApplicableForScreening = true)
     {
         LoggerService::info('Processing Insured Data for Screening');
 
@@ -1617,7 +1617,11 @@ class AMLService
         $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
 
         $isCustomerInsuredAssociationUpdated = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
-        $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
+
+        $shouldApplicableForScreening = false;
+        if ($checkApplicableForScreening) {
+            $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
+        }
 
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
 
@@ -1627,9 +1631,9 @@ class AMLService
     private function createOrUpdateInsured($request, bool $isEntity): Insured
     {
         if ($isEntity) {
-
             LoggerService::info('Entity Details', extra: [
-                'trade_license_no' => $request->trade_license_no,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
@@ -1638,15 +1642,17 @@ class AMLService
 
             $insured = Insured::updateOrCreate([
                 'customer_type' => CustomerTypeEnum::Entity,
-                'trade_license_no' => $request->trade_license_no,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
             ], [
                 'company_name' => $request->company_name,
                 'company_address' => $request->company_address,
                 'industry_type_code' => $request->industry_type_code,
                 'emirate_of_registration_id' => $request->emirate_of_registration_id,
+                'trade_license_no' => $request->screening_id_number,
             ]);
         } else {
-            // todo: remove get insured details after id_number format is consistent
+            // Reminder:: remove get insured details after id_number format is consistent
             $insured = Insured::where('customer_type', CustomerTypeEnum::Individual)
                 ->where('id_type', $request->screening_id_type)
                 ->when($request->screening_id_type == 'emiratesId', function ($query) use ($request) {
@@ -1656,6 +1662,7 @@ class AMLService
                     $query->where('id_number', $request->screening_id_number);
                 })
                 ->first();
+
             $idNumber = $insured?->id_number ?? $request->screening_id_number;
 
             LoggerService::info('Individual Details', extra: [
@@ -1664,9 +1671,9 @@ class AMLService
                 'formatted_id_number' => $idNumber,
                 'insured_first_name' => $request->insured_first_name,
                 'insured_last_name' => $request->insured_last_name,
-                'dob' => $request->dob,
-                'nationality_id' => $request->nationality_id,
-                'gender' => $request->screening_gender,
+                'dob' => $request->dob ?? null,
+                'nationality_id' => $request->nationality_id ?? null,
+                'gender' => $request->screening_gender ?? null,
             ]);
 
             $insured = Insured::updateOrCreate([
@@ -1676,9 +1683,9 @@ class AMLService
             ], [
                 'first_name' => $request->insured_first_name,
                 'last_name' => $request->insured_last_name,
-                'dob' => $request->dob,
-                'nationality_id' => $request->nationality_id,
-                'gender' => $request->screening_gender,
+                'dob' => $request->dob ?? null,
+                'nationality_id' => $request->nationality_id ?? null,
+                'gender' => $request->screening_gender ?? null,
             ]);
         }
 
@@ -1714,52 +1721,70 @@ class AMLService
         return $getPersonalQuote;
     }
 
-    private function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
+    public function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
     {
         $isCustomerInsuredAssociationUpdated = false;
 
-        // Check for orphaned record (without quote mapping) first
-        $orphanedRecord = CustomerInsured::where([
-            'customer_id' => $request->customer_id,
-            'insured_id' => $insured->id,
-        ])->whereNull('quote_type_id')
-            ->whereNull('quote_request_id')
-            ->first();
-
-        // Create or update the customer-insured mapping
-        if ($orphanedRecord) {
-            // Update the existing orphaned record instead of deleting and creating new
-            $isCustomerInsuredAssociationUpdated = true;
-            $orphanedRecord->update([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-                'updated_at' => now(),
-            ]);
-
-            LoggerService::info('Updated orphaned customer_insured record', extra: [
-                'customer_insured_id' => $orphanedRecord->id,
+        // Handle orphaned record within transaction with proper locking to prevent race conditions
+        DB::transaction(function () use ($request, $quoteTypeId, $quote, $insured, &$isCustomerInsuredAssociationUpdated) {
+            // Lock and find orphaned record within transaction to prevent concurrent updates
+            $orphanedRecord = CustomerInsured::where([
                 'customer_id' => $request->customer_id,
                 'insured_id' => $insured->id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-            ]);
-        } else {
-            // Check existing quote mapping
-            $existingQuoteMapping = CustomerInsured::where([
-                'customer_id' => $request->customer_id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quote->id,
-            ])->orderBy('updated_at', 'desc')->first();
+            ])->whereNull('quote_type_id')
+                ->whereNull('quote_request_id')
+                ->lockForUpdate()
+                ->first();
 
-            if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
-                // Create new record or update existing quote mapping
+            if ($orphanedRecord) {
+                // Update the existing orphaned record instead of deleting and creating new
                 $isCustomerInsuredAssociationUpdated = true;
-                CustomerInsured::updateOrCreate([
+
+                // Deactivate existing records for this quote first with row-level locking
+                // This prevents race conditions where concurrent requests could create multiple active records
+                CustomerInsured::forQuote($quoteTypeId, $quote->id)
+                    ->lockForUpdate()->get()->each(function ($record) {
+                        $record->update(['is_active' => false]);
+                    });
+
+                // Activate the orphaned record
+                $orphanedRecord->update([
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ]);
+
+                LoggerService::info('Updated orphaned customer_insured record', extra: [
+                    'customer_insured_id' => $orphanedRecord->id,
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ], ['updated_at' => now()]);
+                ]);
+            }
+        });
+
+        // If no orphaned record was found, check for existing quote mapping
+        if (! $isCustomerInsuredAssociationUpdated) {
+            // Check existing quote mapping
+            $existingQuoteMapping = CustomerInsured::active()
+                ->where([
+                    'customer_id' => $request->customer_id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                ])->first();
+
+            if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
+                // Create new record or update existing quote mapping
+                $isCustomerInsuredAssociationUpdated = true;
+
+                CustomerInsured::createOrUpdateActive([
+                    'customer_id' => $request->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                ]);
 
                 // Update quote status
                 $quote->update(['kyc_decision' => Kyc::PENDING]);
@@ -1773,12 +1798,13 @@ class AMLService
             } elseif (! $existingQuoteMapping) {
                 // This is a completely new quote-insured association
                 $isCustomerInsuredAssociationUpdated = true;
-                CustomerInsured::updateOrCreate([
+
+                CustomerInsured::createOrUpdateActive([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ], ['updated_at' => now()]);
+                ]);
 
                 LoggerService::info('New insured association created for quote', extra: [
                     'insured_id' => $insured->id,
@@ -1815,7 +1841,7 @@ class AMLService
         return false;
     }
 
-    // TODO:: this function is added because universal search and customer members have dependency on customer and entity details.
+    // Reminder:: this function is added because universal search, customer members and Sage have dependency on customer and entity details.
     private function handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, bool $isEntity): ?int
     {
         if ($isEntity) {
@@ -1830,16 +1856,16 @@ class AMLService
     private function handleEntityData($request, $quoteTypeId, $quote): int
     {
         $entityData = [
-            'trade_license_no' => $request->trade_license_no,
+            'trade_license_no' => $request->screening_id_number,
             'company_name' => $request->company_name,
             'company_address' => $request->company_address,
             'industry_type_code' => $request->industry_type_code,
             'emirate_of_registration_id' => $request->emirate_of_registration_id,
         ];
 
-        LoggerService::info('Handle Legacy Entity Data', extra: $entityData);
+        LoggerService::info('Handle Legacy Entity Data (trade_license_no still used in entities table for backward compatibility)', extra: $entityData);
 
-        $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
+        $entity = Entity::firstOrNew(['trade_license_no' => $request->screening_id_number]);
         $entity->fill($entityData);
 
         if (! $entity->exists) {
@@ -2139,6 +2165,7 @@ class AMLService
             ->select(['ci.quote_request_id', 'ci.insured_id', 'ci.customer_id', 'ci.quote_type_id'])
             ->whereIn('ci.quote_request_id', $quoteIds)
             ->where('ci.quote_type_id', $quoteTypeId)
+            ->where('ci.is_active', true)
             ->get()
             ->keyBy('quote_request_id');
 

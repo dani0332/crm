@@ -125,52 +125,16 @@ class Customer extends Model implements AuditableContract
         return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
     }
 
-    public function insured()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'customer_id', // Foreign key on CustomerInsured table
-            'id', // Foreign key on Insured table
-            'id', // Local key on Customer table
-            'insured_id' // Local key on CustomerInsured table
-        );
-    }
-
-    // Get all insured records for this customer
-    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function insureds()
     {
         return $this->hasManyThrough(
             Insured::class,
             CustomerInsured::class,
-            'customer_id', // Foreign key on CustomerInsured table
-            'id', // insured.id
-            'id', // personal_quotes.id
-            'insured_id' // customer_insured.insured_id
-        );
-    }
-
-    // Get the latest/most recent insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
             'customer_id', // customer_insured.customer_id
             'id', // insured.id
-            'id', // customer.id
+            'id', // customer.id (customer_insured.customer_id)
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
-    }
-
-    /**
-     * Get all customer insured records associated with this customer.
-     *
-     * @todo Review this relationship after customer insured process is updated
-     */
-    public function customerInsured(): HasMany
-    {
-        return $this->hasMany(CustomerInsured::class, 'customer_id', 'id');
+        )->where('customer_insured.is_active', true);
     }
 
     public function pcpTagFormatted(): Attribute
