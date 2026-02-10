@@ -658,7 +658,7 @@ class ReportService extends BaseService
     {
 
         $user = auth()->user();
-        $userTeams = isset($request->selectedTeams) ? [$request->selectedTeams] : $user->getUserTeamIds($user->id);
+        $userTeams = ! empty($request->selectedTeams) ? (array) $request->selectedTeams : $user->getUserTeamIds();
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
         $quoteTypeId = $request->quoteTypeId;
