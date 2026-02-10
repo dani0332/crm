@@ -23,7 +23,7 @@ use App\Models\VehicleDriverDetail;
 use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
-use App\Traits\GenericQueriesAllLobs;
+use App\Services\OCR\OcrUtils;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -31,7 +31,7 @@ use Illuminate\Support\Str;
 
 class CustomerVerificationService
 {
-    use GenericQueriesAllLobs;
+    use OcrUtils;
 
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
@@ -44,7 +44,7 @@ class CustomerVerificationService
 
     public function __construct(
         private CapiService $capiService,
-        private CarQuoteService $carQuoteService
+        private CarQuoteService $carQuoteService,
     ) {}
 
     private function handleUnsupportedQuoteType(QuoteTypes $quoteType): array
@@ -585,7 +585,7 @@ class CustomerVerificationService
         };
     }
 
-    private function getQuoteTypeId(Model $quote): ?int
+    /*private function getQuoteTypeId(Model $quote): ?int
     {
         return match (true) {
             $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
@@ -594,7 +594,7 @@ class CustomerVerificationService
             // Add other quote types here as needed
             default => null,
         };
-    }
+    }*/
 
     public function isCustomerVerificationEnabled(): bool
     {
