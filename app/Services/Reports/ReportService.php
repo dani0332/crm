@@ -658,8 +658,7 @@ class ReportService extends BaseService
     {
 
         $user = auth()->user();
-        $userTeams = $user->getUserTeams($user->id);
-        $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
+        $userTeams = isset($request->selectedTeams) ? [$request->selectedTeams] : $user->getUserTeamIds($user->id);
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
         $quoteTypeId = $request->quoteTypeId;
@@ -697,7 +696,7 @@ class ReportService extends BaseService
         } else {
             $query->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->whereIn('teams.name', $userTeams);
+                ->whereIn('teams.id', $userTeams);
         }
         if (isset($request->userIds)) {
             $query->whereIn('advisor_id', $request->userIds);

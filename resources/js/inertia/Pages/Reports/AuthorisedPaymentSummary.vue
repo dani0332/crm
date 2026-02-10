@@ -26,7 +26,7 @@ const filters = reactive({
   tomorrowDate: '',
   thisWeek: [],
   customDate: [],
-  teams: [],
+  selectedTeams: [],
   quoteTypeId: '',
   selectedAdvisor: '',
   userIds: [],
@@ -274,7 +274,7 @@ const isVehicleUseDisabled = computed(() => {
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-select
         label="Teams"
-        v-model="filters.teams"
+        v-model="filters.selectedTeams"
         placeholder="Search By Teams"
         :options="teams"
         :rules="[maxSelections(3)]"
@@ -285,8 +285,8 @@ const isVehicleUseDisabled = computed(() => {
       >
         <template #content-footer>
           <ui-select-actions
-            @select-all="filters.teams = teams.map(team => team.value)"
-            @clear="filters.teams = []"
+            @select-all="filters.selectedTeams = teams.map(team => team.value)"
+            @clear="filters.selectedTeams = []"
           />
         </template>
       </x-select>
