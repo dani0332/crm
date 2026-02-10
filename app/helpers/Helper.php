@@ -1856,3 +1856,52 @@ if (! function_exists('getManagerRoles')) {
         ];
     }
 }
+
+/**
+ * Get allowed quote type IDs based on user roles and selected LOB filter.
+ */
+if (! function_exists('getAllowedQuoteTypeIds')) {
+    function getAllowedQuoteTypeIds($user, $quoteTypeId = null): array
+    {
+        // If a specific LOB is selected, return only that ID
+        if ($quoteTypeId !== null) {
+            return [(int) $quoteTypeId];
+        }
+
+        // Otherwise, filter by user's role-based LOB permissions
+        $userRoles = $user->getRoleNames()->toArray();
+        $isAdmin = in_array(RolesEnum::Admin, $userRoles);
+
+        $quoteTypes = [
+            QuoteTypes::CAR,
+            QuoteTypes::HOME,
+            QuoteTypes::HEALTH,
+            QuoteTypes::LIFE,
+            QuoteTypes::BUSINESS,
+            QuoteTypes::BIKE,
+            QuoteTypes::YACHT,
+            QuoteTypes::TRAVEL,
+            QuoteTypes::PET,
+            QuoteTypes::CYCLE,
+            QuoteTypes::JETSKI,
+            QuoteTypes::SAVINGS,
+        ];
+
+        $allowedIds = [];
+
+        foreach ($quoteTypes as $quoteType) {
+            $hasRole = in_array($quoteType->name.'_ADVISOR', $userRoles)
+                || in_array($quoteType->name.'_MANAGER', $userRoles);
+            $hasPermission = $user->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($quoteType);
+
+            if ($isAdmin || $hasRole || $hasPermission) {
+                $id = QuoteTypes::getId($quoteType);
+                if ($id) {
+                    $allowedIds[] = $id;
+                }
+            }
+        }
+
+        return $allowedIds;
+    }
+}
