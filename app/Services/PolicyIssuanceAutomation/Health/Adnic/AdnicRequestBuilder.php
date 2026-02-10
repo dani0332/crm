@@ -15,6 +15,42 @@ class AdnicRequestBuilder
     ) {}
 
     /**
+     * Get length of Emirates ID value based on its data type (string length or array count).
+     */
+    private function getEmiratesIdLength(mixed $value): int
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        return match (true) {
+            is_string($value) => strlen($value),
+            is_array($value) => count($value),
+            default => 0,
+        };
+    }
+
+    /**
+     * Return Emirates ID string if its length is at least $minLength, otherwise empty string.
+     */
+    private function emiratesIdIfMinLength(mixed $emiratesId, int $minLength): string
+    {
+        $length = $this->getEmiratesIdLength($emiratesId);
+
+        return $length >= $minLength ? (string) $emiratesId : '';
+    }
+
+    /**
+     * Return Emirates ID string if its length is greater than 0 and less than $maxLength, otherwise empty string.
+     */
+    private function emiratesIdIfMaxLengthExclusive(mixed $emiratesId, int $maxLength): string
+    {
+        $length = $this->getEmiratesIdLength($emiratesId);
+
+        return $length > 0 && $length < $maxLength ? (string) $emiratesId : '';
+    }
+
+    /**
      * Build payload for issue policy API
      *
      * @param  mixed  $quote
@@ -39,7 +75,7 @@ class AdnicRequestBuilder
         $sponsorCategory = $healthUmafQuestionCollection->where('question_code', 'sponsorCategory')->first()['answer_text'] ?? null;
         $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()['answer_text'] ?? null;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()['answer_text'] ?? null;
-        //$visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
+        // $visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
         $visaType = AdnicEnum::VISA_TYPE_EXISTING_VISA_HOLDER;
         $customerClassification = AdnicEnum::CUSTOMER_CLASSIFICATION_NATURAL_PERSONS; // FIX Value
         $memberCategory = $sponsorCategory; // Member Category is same as Sponsor Category
@@ -80,8 +116,8 @@ class AdnicRequestBuilder
                 'QuestionnarieInfo' => (array) $insuredMember->QuestionnarieInfo,
                 'PregnantStatus' => $currentlyPregnant ?? AdnicEnum::NO,
                 'PreviouslyCovered' => $previouslyCovered ?? AdnicEnum::NO,
-                'EmiratesId' => $emiratesId && count($emiratesId) >=  15 ? $emiratesId : '',
-                'EidApplicationNo' => $emiratesId && count($emiratesId) <  15 ? $emiratesId : '',
+                'EmiratesId' => $this->emiratesIdIfMinLength($emiratesId, 15),
+                'EidApplicationNo' => $this->emiratesIdIfMaxLengthExclusive($emiratesId, 15),
                 'EntryPermitNoOrFileNo' => $visaFileNumber ?? '',
                 'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
                 'MemberCategory' => $memberCategory ?? '',
