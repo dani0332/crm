@@ -19,6 +19,8 @@ class ECB extends EmbeddedProduct
             'EP API Status',
             'EP Sage Status',
             'Certificate Number',
+            'Tax Invoice Number',
+            'Tax Invoice Raised by Buyer Number',
             'Model Year',
             'Make',
             'Model',
@@ -42,6 +44,8 @@ class ECB extends EmbeddedProduct
             $certificate->ep_api_status,
             $certificate->ep_sage_status,
             $certificate->certificate_number,
+            $certificate->tax_invoice_no ?? '',
+            $certificate->tax_invoice_buyer_no ?? '',
             $certificate->model_year,
             $certificate->make,
             $certificate->model,
@@ -57,8 +61,7 @@ class ECB extends EmbeddedProduct
             'quoteRequest.carMake',
             'quoteRequest.carModel',
             'quoteRequest.customer',
-            'quoteRequest.customer.customerInsured',
-            'quoteRequest.customer.customerInsured.insured',
+            'quoteRequest.latestInsured',
             'quoteRequest.quoteStatus',
             'quoteRequest.quoteRequestEntityMapping',
             'paymentStatus',
@@ -83,6 +86,8 @@ class ECB extends EmbeddedProduct
         $item->model = $quoteObject?->carModel?->text ?? '';
         $item->chassis_number = $quoteObject?->carQuoteRequestDetail?->chassis_number ?? '';
         $item->excess_amount = $quoteObject?->carQuoteRequestDetail?->excess.'/-';
+        $item->tax_invoice_no = $item->tax_invoice_no ?? '';
+        $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
 
         return $item;
     }

@@ -2,10 +2,8 @@
 
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
-use App\Models\ApplicationStorage;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
-use Mockery;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -138,10 +136,6 @@ beforeEach(function () {
         }
     };
     $connection->setQueryGrammar($grammar);
-});
-
-afterEach(function () {
-    Mockery::close();
 });
 
 /**
@@ -459,12 +453,12 @@ test('car quotes index returns only active advisors', function () {
 });
 
 test('savings quotes index returns only active advisors', function () {
-    // Mock the CAPI HTTP request for savings lookups
-    Http::fake([
-        '*' => Http::response([
+    // Mock the Capi facade for savings lookups
+    $mockCapi = Mockery::mock('alias:App\Facades\Capi');
+    $mockCapi->shouldReceive('request')
+        ->andReturn((object) [
             'savingsInvestmentType' => [],
-        ], 200),
-    ]);
+        ]);
 
     $teamId = seedRolesAndTeams();
     $admin = TestDataSeeder::createUserWithRole(RolesEnum::Admin);

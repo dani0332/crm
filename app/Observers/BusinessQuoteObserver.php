@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
@@ -161,6 +162,24 @@ class BusinessQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                // Determine the correct quote type based on business type of insurance
+                $quoteTypeId = QuoteTypeId::Business;
+                if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                    $quoteTypeId = QuoteTypeId::GroupMedical;
+                }
+                QuotePolicyBooked::dispatch($businessQuote->uuid, $quoteTypeId);
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - dispatch QuotePolicyBooked event failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
         }
 
         if (

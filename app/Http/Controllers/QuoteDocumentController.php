@@ -76,7 +76,7 @@ class QuoteDocumentController extends Controller
     public function show($id)
     {
         $document = $this->quoteDocumentService->getQuoteDocumentUrl($id);
-        $disk = Storage::disk('azureIM');
+        $disk = Storage::disk('azureIMPrivate');
 
         if ($disk->exists($document->doc_url)) {
             $contents = $disk->get($document->doc_url);
@@ -161,6 +161,7 @@ class QuoteDocumentController extends Controller
         return redirect()->back()->with('success', 'Document Uploaded Successfully');
     }
 
+    // TODO: This function is not used anywhere.
     public function sendPolicyDocument($quoteType, $quoteUuId)
     {
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
@@ -239,6 +240,7 @@ class QuoteDocumentController extends Controller
         }
     }
 
+    // TODO: This function is not used anywhere.
     public function getQuoteUploadedDocuments($quoteType, $quoteUuId)
     {
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
@@ -319,10 +321,15 @@ class QuoteDocumentController extends Controller
      */
     public function downloadProformaPaymentRequest(QuoteDocument $quoteDocument)
     {
-        $disk = Storage::disk('azureIM');
+        $documentUrl = $this->quoteDocumentService->getDocumentUrl($quoteDocument->doc_url);
+        if ($documentUrl) {
+            $contents = file_get_contents($documentUrl);
 
-        if ($disk->exists($quoteDocument->doc_url)) {
-            $contents = $disk->get($quoteDocument->doc_url);
+            if ($contents === false) {
+                return response()->json([
+                    'error' => 'Failed to retrieve file content',
+                ], 500);
+            }
 
             return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
         } else {
@@ -361,7 +368,7 @@ class QuoteDocumentController extends Controller
             return response()->json(['message' => 'No documents provided.'], 400);
         }
 
-        $disk = Storage::disk('azureIM');
+        $disk = Storage::disk('azureIMPrivate');
         $zipFileName = "{$request->quote['first_name']} {$request->quote['last_name']}_{$request->quote['code']}.zip";
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new ZipArchive;
@@ -407,11 +414,6 @@ class QuoteDocumentController extends Controller
         }
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
-    }
-
-    public function getS3TempUrl(Request $request)
-    {
-        return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
     }
 
     private function updateAccuracyMatrixOnDeletion(QuoteDocument $document): void
@@ -475,5 +477,16 @@ class QuoteDocumentController extends Controller
             'BusinessQuote' => QuoteTypes::GROUP_MEDICAL, // Group Medical quotes use BusinessQuote
             default => null,
         };
+    }
+
+    public function getTempUrl(Request $request)
+    {
+        $tempUrl = $this->quoteDocumentService->getDocumentUrl($request->filePath);
+
+        if ($tempUrl) {
+            return response()->json(['url' => $tempUrl], 200);
+        } else {
+            return response()->json(['url' => null], 404);
+        }
     }
 }

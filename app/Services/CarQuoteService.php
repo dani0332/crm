@@ -138,6 +138,8 @@ class CarQuoteService extends BaseService
             // Lead source fields from CreateLeadModal
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
+            'driverEidNumber' => $request->driver_emirates_id_number ?? null,
+            'driverGender' => $request->driver_gender ?? null,
         ];
 
         LoggerService::info('saveQuote '.print_r([
@@ -240,6 +242,31 @@ class CarQuoteService extends BaseService
                 $entityMapping->delete();
                 if ($entityMappingCount == 1) {
                     $entityRecord->delete();
+                }
+            }
+        }
+
+        if (Auth::user()->can(PermissionsEnum::COMPANY_PRIVATE_CAR_DRIVER_UPDATES)) {
+            if (
+                $registrationType == CarRegistrationType::COMPANY &&
+                $vehicleUse == CarVehicleUse::PRIVATE
+            ) {
+
+                $carQuote->vehicleDriverDetail()->updateOrCreate(
+                    ['quoteable_type' => CarQuote::class, 'quoteable_id' => $carQuote->id],
+                    [
+                        'driver_eid_number' => $request->driver_emirates_id_number ?? null,
+                        'driver_gender' => $request->driver_gender ?? null,
+                    ]
+                );
+
+            } else {
+                $vehicleDriverDetail = $carQuote->vehicleDriverDetail;
+                if ($vehicleDriverDetail) {
+                    $vehicleDriverDetail->update([
+                        'driver_eid_number' => null,
+                        'driver_gender' => null,
+                    ]);
                 }
             }
         }
@@ -529,6 +556,8 @@ class CarQuoteService extends BaseService
                 'insured.last_name as insured_last_name',
                 'insured_kyc.id as insured_kyc_id',
                 DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
+                'insured.id_type as insured_id_type',
+                'insured.id_number as insured_id_number',
                 DB::raw('insured_kyc.id_expiry_date as emirates_id_expiry_date'),
                 'c.receive_marketing_updates',
                 'qrem.entity_id',
@@ -588,6 +617,8 @@ class CarQuoteService extends BaseService
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'cqr.is_branch_applicable',
+                'vdd.driver_eid_number',
+                'vdd.driver_gender',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -633,7 +664,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Car]);
+                $insuredCustomerMapping->where('ic.is_active', '=', true);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
@@ -643,6 +674,10 @@ class CarQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'cqr.branch_id')
+            ->leftJoin('vehicle_driver_details as vdd', function ($join) {
+                $join->on('vdd.quoteable_id', '=', 'cqr.id')
+                    ->where('vdd.quoteable_type', '=', CarQuote::class);
+            })
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
             ->first();
@@ -1289,7 +1324,11 @@ class CarQuoteService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            if (strpos($contents, 'Genesis') !== false) {
+                LoggerService::warning('FN: getQuotePlans KEN Genesis Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            } else {
+                LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            }
 
             if (isset($response->message)) {
                 $responseBodyAsString = $response->message;

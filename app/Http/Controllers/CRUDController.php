@@ -495,6 +495,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
+            $emirates = Emirate::getOptions('id', 'text', true);
 
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
@@ -502,6 +503,7 @@ class CRUDController extends Controller
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
                 'subSources' => $subSources,
+                'emirates' => $emirates,
                 'leadSourceParams' => [
                     'type' => $request->input('type'),
                     'subSource' => $request->input('subSourceId'),
@@ -860,7 +862,7 @@ class CRUDController extends Controller
                 } else {
                     $documentQuoteTypeId = QuoteTypeId::Car;
                 }
-                @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId);
+                @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId, null, null, null, $quote);
                 $quoteDocuments = array_values($quoteDocuments->toArray());
                 $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
                 $storageUrl = storageUrl();
@@ -1060,7 +1062,6 @@ class CRUDController extends Controller
             if ($this->genericModel->modelType == quoteTypeCode::Home) {
                 $nationalities = Nationality::getActiveNationalities();
                 $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-                $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
                 $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
                 $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
@@ -1124,7 +1125,6 @@ class CRUDController extends Controller
                     'allowedDuplicateLOB' => $allowedDuplicateLOB,
                     'leadStatuses' => array_values($leadStatuses->toArray()),
                     'advisors' => $advisors,
-                    'cdnPath' => $cdnPath,
                     'domainPath' => $domainPath,
                     'activities' => $activities,
                     'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -1199,8 +1199,6 @@ class CRUDController extends Controller
 
                     return $quoteDocument;
                 });
-
-                $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
 
                 $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
@@ -1281,7 +1279,6 @@ class CRUDController extends Controller
                     'teams' => $teams,
                     'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
                     'documentTypes' => $documentTypes,
-                    'cdnPath' => $cdnPath,
                     'domainPath' => $domainPath,
                     'activities' => $activities,
                     'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -1453,6 +1450,8 @@ class CRUDController extends Controller
                 $record->company_contact_name = $record->first_name.' '.$record->last_name;
             }
 
+            $emirates = Emirate::getOptions('id', 'text', true);
+
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -1466,6 +1465,7 @@ class CRUDController extends Controller
                 'ecbExcludedCarMakeCodes' => EpEcbExcludeVehicleEnum::CAR_MAKE_CODES,
                 'ecbExcludedCarModelCodes' => EpEcbExcludeVehicleEnum::CAR_MODEL_CODES,
                 'subSources' => $subSources,
+                'emirates' => $emirates,
             ]);
         }
 

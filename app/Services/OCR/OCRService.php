@@ -3,7 +3,6 @@
 namespace App\Services\OCR;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\OCRSourceEnum;
@@ -11,7 +10,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Jobs\OCR\PopulateDocumentData;
-use App\Models\BusinessQuote;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
@@ -90,12 +88,17 @@ class OCRService
 
         $refId = $this->getRefId($quote);
 
+        $docTypeCode = $docType->value;
+        if ($docType === OCRDocumentTypeEnum::DRIVER_EMIRATES_ID) {
+            $docTypeCode = OCRDocumentTypeEnum::ID_CARD->value;
+        }
+
         $requestData = [
             'ref_id' => $refId,
             'uuid' => $quote->uuid,
             'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,
-            'doc_type' => $docType->value,
+            'doc_type' => $docTypeCode,
             'provider_code' => $providerCode,
             'image' => false,
         ];
@@ -228,7 +231,8 @@ class OCRService
         float $startTime,
         float $apiCallStartTime,
         object $data,
-        bool $isSendUpdateEligibleForOCR = false
+        bool $isSendUpdateEligibleForOCR,
+        int $memberDetailId
     ): ?bool {
         $apiCallEndTime = microtime(true);
         $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
@@ -245,7 +249,8 @@ class OCRService
             $documentCategory,
             $isSendUpdateEligibleForOCR,
             $quoteType,
-            $documentType->code
+            $documentType->code,
+            $memberDetailId
         );
 
         $isQuoteStatusTransectionApproved = $quote->quote_status_id == QuoteStatusEnum::TransactionApproved;
@@ -371,7 +376,8 @@ class OCRService
         string $fileMimeType,
         int $userId,
         bool $isEcom,
-        bool $isSendUpdateEligibleForOCR
+        bool $isSendUpdateEligibleForOCR,
+        int $memberDetailId
     ): ?bool {
         // Record start time for OCR processing
         $startTime = microtime(true);
@@ -470,7 +476,8 @@ class OCRService
                     $startTime,
                     $apiCallStartTime,
                     $data,
-                    $isSendUpdateEligibleForOCR
+                    $isSendUpdateEligibleForOCR,
+                    $memberDetailId
                 );
             } else {
                 $result = $this->handleProcessingFailure(
@@ -506,14 +513,15 @@ class OCRService
         $quote,
         string $filePathAzure,
         string $fileMimeType,
+        int $memberDetailId = 0,
         ?string $quoteTypeParam = null,
-        bool $isSendUpdateEligibleForOCR = false,
+        bool $isSendUpdateEligibleForOCR = false
     ): void {
 
         // early return if Customer OCR Journey is not supported on prod
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
         $isOCRCustomerJourneyEnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED, useCache: true) == '1';
-        if (! $isOCRCustomerJourneyEnabled && in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE])) {
+        if (! $isOCRCustomerJourneyEnabled && in_array($docType, [OCRDocumentTypeEnum::ID_CARD, OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE, OCRDocumentTypeEnum::DRIVING_LICENSE, OCRDocumentTypeEnum::DRIVER_EMIRATES_ID])) {
             LoggerService::info(self::class.' - OCR Customer Journey is not supported for now', [
                 'docType' => $docType,
                 'isOCRCustomerJourneyEnabled' => $isOCRCustomerJourneyEnabled,
@@ -595,7 +603,8 @@ class OCRService
                 $fileMimeType,
                 $userId ?? 0,
                 $isEcom,
-                $isSendUpdateEligibleForOCR
+                $isSendUpdateEligibleForOCR,
+                $memberDetailId
             );
         } else {
             LoggerService::warning('OCR Dispatch - Missing required parameters - Quote UUID: '.$quote->uuid);
@@ -629,34 +638,6 @@ class OCRService
 
         // For all other cases, use the normal mapping
         return QuoteTypes::getName($quote->quote_type_id);
-    }
-
-    public function isGroupMedicalBusiness($quote)
-    {
-        try {
-            // Handle direct BusinessQuote instances
-            if ($quote instanceof BusinessQuote) {
-                return $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
-            }
-
-            // Handle SendUpdateLog instances
-            if ($quote instanceof SendUpdateLog && $quote->quote_type_id == QuoteTypes::getId(QuoteTypes::BUSINESS)) {
-                $actualQuote = BusinessQuote::where('uuid', $quote->quote_uuid)->first();
-
-                return $actualQuote && $actualQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            LoggerService::error('Error checking Group Medical business type', [
-                'error' => $e->getMessage(),
-                'quote_type' => get_class($quote),
-                'quote_id' => $quote->id ?? 'N/A',
-                'quote_uuid' => $quote->uuid ?? 'N/A',
-            ]);
-
-            return false;
-        }
     }
 
     public function getEligibleProviders(): array
