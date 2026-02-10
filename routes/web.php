@@ -24,6 +24,7 @@ use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DocsController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -142,6 +143,9 @@ Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@ha
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
     Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
+
+    Route::get('docs', [DocsController::class, 'show'])->name('docs.index');
+    Route::get('docs/{path}', [DocsController::class, 'show'])->where('path', '.*')->name('docs.show');
 
     Route::get('leadsearch', function () {
         return redirect('home');
