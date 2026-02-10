@@ -672,7 +672,7 @@ class ReportService extends BaseService
             ->select(
                 'users.id as advisor_id',
                 'users.name as advisor_name',
-                'quote_status_id',
+                'personal_quotes.quote_status_id',
                 DB::raw('COUNT(DISTINCT personal_quotes.code) as total_leads'),
                 DB::raw('SUM('.$premiumColumn.') as total_premium'),
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
@@ -703,13 +703,10 @@ class ReportService extends BaseService
             });
         }
         if (isset($request->userIds)) {
-            $query->whereIn('advisor_id', $request->userIds);
+            $query->whereIn('personal_quotes.advisor_id', $request->userIds);
         }
         if (isset($request->statusId)) {
-            $query->whereIn('quote_status_id', $request->statusId);
-        }
-        if (! empty($request->registration_type) && $request->registration_type != 'All') {
-            $query->where('registration_type', $request->registration_type);
+            $query->whereIn('personal_quotes.quote_status_id', $request->statusId);
         }
 
         if (! empty($request->vehicle_use) && $request->vehicle_use != 'All') {
