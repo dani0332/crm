@@ -414,6 +414,7 @@ trait OcrUtils
         return match (true) {
             $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
             $quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
+            $quote instanceof BusinessQuote => (int) QuoteTypes::BUSINESS->id(),
             default => $quote->quote_type_id,
         };
     }

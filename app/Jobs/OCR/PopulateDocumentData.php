@@ -165,6 +165,9 @@ class PopulateDocumentData implements ShouldQueue
             'is_ocr_customer_journey_quotetype_enabled' => $isOCRCustomerJourneyQuoteTypeEnabled,
             'will_run' => $willRun,
             'decision' => $willRun ? 'Job will execute' : 'Job will be skipped',
+            'quote_type_id' => $this->quoteType->id(),
+            'quote_type_name' => $this->quoteType->value,
+            'ref_id' => $this->quote->code,
         ]);
 
         // Create unique lock key based on quote ID, document type ID, and document path to prevent duplicate processing
