@@ -101,7 +101,8 @@ const validateTeams = () => {
 const generateTeamsToPost = () => {
   return teamsForm.teams.map(team => {
     return {
-      id: team.id,
+      team_id: team.id,
+      team_name: team.name,
       min: parseFloat(team.min_price),
       max: parseFloat(team.max_price),
     };
