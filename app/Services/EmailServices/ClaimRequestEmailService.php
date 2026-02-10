@@ -197,7 +197,7 @@ class ClaimRequestEmailService extends BaseService
 
         $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Request';
         if ($claimRequest->quote_type_id == QuoteTypeId::Health) {
-            $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Reimbursement (Health)';
+            $subject = $claimRequest->code.' - '.$claimRequest->full_name.' - '.$claimRequest->quoteType?->text.' - Claim Reimbursement';
         }
 
         return (object) [
