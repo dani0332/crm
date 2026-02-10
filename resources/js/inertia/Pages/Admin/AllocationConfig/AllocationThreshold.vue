@@ -36,13 +36,12 @@ const validateTeams = () => {
 
   for (let i = 0; i < teams.length; i++) {
     // Check min value against 1 and max value
-    if (teams[i].min_price < 1 || (
-      teams[i].min_price > teams[i].max_price
-    )) {
+    if (teams[i].min_price < 1 || teams[i].min_price > teams[i].max_price) {
       notification.error({
         title: {
           team: teams[i].name,
-          error: 'Minimum value cannot be less than 1 and must be less than max value',
+          error:
+            'Minimum value cannot be less than 1 and must be less than max value',
         },
         position: 'top',
       });
@@ -51,7 +50,7 @@ const validateTeams = () => {
     }
 
     // Chcek sequence (as per business requirement)
-    if ( i != 0 && teams[i].min_price !== teams[i - 1].max_price + 1) {
+    if (i != 0 && teams[i].min_price !== teams[i - 1].max_price + 1) {
       notification.error({
         title: {
           team: teams[i].name,
