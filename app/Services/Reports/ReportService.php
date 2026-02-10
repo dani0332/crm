@@ -666,82 +666,80 @@ class ReportService extends BaseService
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $dataCollection = collect();
-        foreach ($allowedLOBs as $details) {
-            $premiumColumn = $details['table'].'.premium';
+        $premiumColumn = 'personal_quotes.premium';
 
-            $query = DB::table($details['table'])
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    'quote_status_id',
-                    DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
-                    DB::raw('SUM('.$premiumColumn.') as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days"),
-                    DB::raw('DATE_FORMAT(MIN('.$details['table'].'.created_at), "%d-%m-%Y") as created_at_start'),
-                    DB::raw('DATE_FORMAT(MAX('.$details['table'].'.created_at), "%d-%m-%Y") as created_at_end')
-                )
-                ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
-                ->join('users', 'users.id', $details['table'].'.advisor_id')
-                ->when($details['quoteTypeId'] !== null, function ($query) use ($details) {
-                    return $query->where($details['table'].'.quote_type_id', $details['quoteTypeId']);
-                });
-            $query->where(function ($query) use ($thirtyDaysAgo) {
-                $query->where(function ($q) use ($thirtyDaysAgo) {
-                    $q->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                        ->where('py.authorized_at', '>=', $thirtyDaysAgo);
-                });
+        $query = DB::table('personal_quotes')
+            ->select(
+                'users.id as advisor_id',
+                'users.name as advisor_name',
+                'quote_status_id',
+                DB::raw('COUNT(DISTINCT personal_quotes.code) as total_leads'),
+                DB::raw('SUM('.$premiumColumn.') as total_premium'),
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days"),
+                DB::raw('DATE_FORMAT(MIN(personal_quotes.created_at), "%d-%m-%Y") as created_at_start'),
+                DB::raw('DATE_FORMAT(MAX(personal_quotes.created_at), "%d-%m-%Y") as created_at_end')
+            )
+            ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+            ->join('users', 'users.id', 'personal_quotes.advisor_id')
+            ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId) {
+                return $query->where('personal_quotes.quote_type_id', $quoteTypeId);
             });
-            $query->where($details['table'].'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
-            if ($user->isAdvisor()) {
-                $query->where($details['table'].'.advisor_id', $user->id);
-            } else {
-                $query->join('user_team', 'user_team.user_id', 'users.id')
-                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->whereIn('teams.name', $userTeams);
-            }
-            if (isset($request->userIds)) {
-                $query->whereIn('advisor_id', $request->userIds);
-            }
-            if (isset($request->statusId)) {
-                $query->whereIn('quote_status_id', $request->statusId);
-            }
-            if (! empty($request->registration_type) && $request->registration_type != 'All') {
-                $query->where('registration_type', $request->registration_type);
-            }
-
-            if (! empty($request->vehicle_use) && $request->vehicle_use != 'All') {
-                $query->where('vehicle_use', $request->vehicle_use);
-            }
-
-            if (isset($request->expireDate)) {
-                $date = Carbon::parse($request->expireDate)->startOfDay();
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $date);
-            }
-
-            if (isset($request->todayDate)) {
-                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 1);
-            }
-
-            if (isset($request->tomorrowDate)) {
-                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 2);
-            }
-
-            if (isset($request->thisWeek)) {
-                $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
-                $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
-            }
-
-            if (isset($request->customDate)) {
-                $startDate = Carbon::parse($request->customDate[0])->startOfDay();
-                $endDate = Carbon::parse($request->customDate[1])->endOfDay();
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
-            }
-
-            $dataCollection = $dataCollection->merge($query->groupBy('users.id')
-                ->orderBy('total_leads', 'desc')->get());
+        $query->where(function ($query) use ($thirtyDaysAgo) {
+            $query->where(function ($q) use ($thirtyDaysAgo) {
+                $q->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('py.authorized_at', '>=', $thirtyDaysAgo);
+            });
+        });
+        $query->where('personal_quotes.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+        if ($user->isAdvisor()) {
+            $query->where('personal_quotes.advisor_id', $user->id);
+        } else {
+            $query->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->whereIn('teams.name', $userTeams);
         }
+        if (isset($request->userIds)) {
+            $query->whereIn('advisor_id', $request->userIds);
+        }
+        if (isset($request->statusId)) {
+            $query->whereIn('quote_status_id', $request->statusId);
+        }
+        if (! empty($request->registration_type) && $request->registration_type != 'All') {
+            $query->where('registration_type', $request->registration_type);
+        }
+
+        if (! empty($request->vehicle_use) && $request->vehicle_use != 'All') {
+            $query->where('vehicle_use', $request->vehicle_use);
+        }
+
+        if (isset($request->expireDate)) {
+            $date = Carbon::parse($request->expireDate)->startOfDay();
+            $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $date);
+        }
+
+        if (isset($request->todayDate)) {
+            $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 1);
+        }
+
+        if (isset($request->tomorrowDate)) {
+            $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 2);
+        }
+
+        if (isset($request->thisWeek)) {
+            $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
+            $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
+            $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
+        }
+
+        if (isset($request->customDate)) {
+            $startDate = Carbon::parse($request->customDate[0])->startOfDay();
+            $endDate = Carbon::parse($request->customDate[1])->endOfDay();
+            $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
+        }
+
+        $dataCollection = $dataCollection->merge($query->groupBy('users.id')
+            ->orderBy('total_leads', 'desc')->get());
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [
                 'advisor_id' => $group->first()->advisor_id,
