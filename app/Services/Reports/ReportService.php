@@ -765,17 +765,14 @@ class ReportService extends BaseService
 
         $paginatedData = array_slice($result, ($currentPage - 1) * $perPage, $perPage);
 
-            'current_page' => $currentPage,
-            'per_page' => $perPage,
-            'total' => $total,
-            'last_page' => ceil($total / $perPage),
-            'from' => ($currentPage - 1) * $perPage + 1,
-            'to' => min($currentPage * $perPage, $total),
-            'next_page_url' => $nextPageUrl,
-            'prev_page_url' => $prevPageUrl,
-        ];
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedData,
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
-        return $pagination;
         return $paginator;
     }
 
