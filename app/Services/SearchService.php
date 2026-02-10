@@ -200,7 +200,12 @@ class SearchService extends BaseService
         }
 
         if ($this->isManagerialRole()) {
-            $query->whereIn('personal_quotes.advisor_id', $this->getAdvisorsByManagers());
+            $advisorIds = $this->getAdvisorsByManagers();
+        
+            // Only apply filter if there are subordinates, otherwise allow all
+            if (! empty($advisorIds)) {
+                $query->whereIn('personal_quotes.advisor_id', $advisorIds);
+            }
         }
 
         if ($this->isAdvisorRole()) {
