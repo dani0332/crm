@@ -539,3 +539,73 @@ describe('Rule Relationships', function () {
         expect($rule->quoteType->name)->toBe('CAR'); // 'code as name' in relationship
     });
 });
+
+describe('Rule Type Change - Cleanup', function () {
+    test('deletes rule_detail and rule_lead_sources when changing from lead source to another type', function () {
+        // Create a lead source rule with detail and lead sources
+        $rule = Rule::create([
+            'name' => 'Lead Source to Normal Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+        ]);
+
+        $rule->users()->attach([$this->testUser1->id, $this->testUser2->id]);
+
+        DB::table('rule_details')->insert([
+            'rule_id' => $rule->id,
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'test_campaign',
+            'utm_medium' => 'cpc',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('rule_lead_sources')->insert([
+            [
+                'rule_id' => $rule->id,
+                'lead_source_id' => $this->leadSource->id,
+                'user_id' => $this->testUser1->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'rule_id' => $rule->id,
+                'lead_source_id' => $this->leadSource->id,
+                'user_id' => $this->testUser2->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        // Verify data exists before update
+        $this->assertDatabaseHas('rule_details', ['rule_id' => $rule->id]);
+        expect(DB::table('rule_lead_sources')->where('rule_id', $rule->id)->count())->toBe(2);
+
+        // Change rule type from lead source to car make and model
+        $updateData = [
+            'name' => 'Lead Source to Normal Rule',
+            'rule_type' => $this->carMakeModelRuleType->id, // Change to normal type
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+        ];
+
+        $response = $this->put(route('rule.update', $rule->id), $updateData);
+
+        $response->assertRedirect();
+
+        // Verify rule_detail was deleted
+        $this->assertDatabaseMissing('rule_details', ['rule_id' => $rule->id]);
+
+        // Verify all rule_lead_sources were deleted
+        expect(DB::table('rule_lead_sources')->where('rule_id', $rule->id)->count())->toBe(0);
+
+        // Verify rule was updated
+        $this->assertDatabaseHas('rules', [
+            'id' => $rule->id,
+            'rule_type' => $this->carMakeModelRuleType->id,
+        ]);
+    });
+});

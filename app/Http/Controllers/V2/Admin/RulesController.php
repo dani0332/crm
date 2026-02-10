@@ -145,6 +145,7 @@ class RulesController extends Controller
     public function update(RuleRequest $request, $id)
     {
         $rule = Rule::findOrFail($id);
+
         $rule->update($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
         // Update or create rule detail if lead_source_id is provided
@@ -173,7 +174,9 @@ class RulesController extends Controller
                 );
             }
         } else {
+            // If changing from lead source to another type, clean up related data
             // If lead_source_id is not provided, remove all rule_lead_sources using relationship
+            $rule->ruleDetail()->delete();
             $rule->leadSources()->delete();
         }
 
