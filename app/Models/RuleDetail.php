@@ -18,6 +18,11 @@ class RuleDetail extends Model implements AuditableContract
         return $this->belongsTo(Rule::class);
     }
 
+    public function leadSource()
+    {
+        return $this->belongsTo(LeadSource::class, 'lead_source_id');
+    }
+
     /**
      * attributes those are mass assignable.
      *

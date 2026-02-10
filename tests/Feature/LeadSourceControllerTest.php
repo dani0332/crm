@@ -2,11 +2,10 @@
 
 use App\Models\LeadSource;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
+use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
+    TestSchemaCreator::createRulesSchema();
     // Create and authenticate a user for testing
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
@@ -36,12 +35,12 @@ test('can create a new lead source with valid data', function () {
             ],
         ]);
 
-    // Assert the lead source was created in the database
+    // Assert the lead source was created in the database (use 1 for booleans in database queries)
     $this->assertDatabaseHas('lead_sources', [
         'name' => 'Test Lead Source',
         'code' => 'TEST_CODE',
-        'is_active' => true,
-        'is_applicable_for_rules' => true,
+        'is_active' => 1,
+        'is_applicable_for_rules' => 1,
     ]);
 });
 
@@ -106,8 +105,8 @@ test('can create lead source without code', function () {
     $this->assertDatabaseHas('lead_sources', [
         'name' => 'Lead Source Without Code',
         'code' => null,
-        'is_active' => true,
-        'is_applicable_for_rules' => true,
+        'is_active' => 1,
+        'is_applicable_for_rules' => 1,
     ]);
 });
 
@@ -150,4 +149,51 @@ test('validates code does not exceed 255 characters when provided', function () 
 
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['code']);
+});
+
+test('can create lead source with only name and all defaults are applied', function () {
+    // Send minimal payload with only name
+    $leadSourceData = [
+        'name' => 'Minimal Lead Source',
+    ];
+
+    $response = $this->postJson(route('lead-source.store'), $leadSourceData);
+
+    $response->assertStatus(201)
+        ->assertJson([
+            'success' => true,
+            'message' => 'Lead source created successfully.',
+        ])
+        ->assertJsonStructure([
+            'data' => [
+                'id',
+                'name',
+                'code',
+                'is_active',
+                'is_applicable_for_rules',
+            ],
+        ])
+        ->assertJsonFragment([
+            'name' => 'Minimal Lead Source',
+            'code' => null,
+            'is_active' => true,
+            'is_applicable_for_rules' => true,
+        ]);
+
+    // Verify in database (use 1 for booleans in database queries)
+    $this->assertDatabaseHas('lead_sources', [
+        'name' => 'Minimal Lead Source',
+        'code' => null,
+        'is_active' => 1,
+        'is_applicable_for_rules' => 1,
+    ]);
+
+    // Verify using model
+    $leadSource = LeadSource::where('name', 'Minimal Lead Source')->first();
+
+    expect($leadSource)->not->toBeNull();
+    expect($leadSource->name)->toBe('Minimal Lead Source');
+    expect($leadSource->code)->toBeNull();
+    expect($leadSource->is_active)->toBeTrue();
+    expect($leadSource->is_applicable_for_rules)->toBeTrue();
 });

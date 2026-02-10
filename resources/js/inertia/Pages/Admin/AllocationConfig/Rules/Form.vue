@@ -22,7 +22,7 @@ const ruleForm = useForm({
   is_active: props.rule?.is_active ? true : false,
   rule_users: props.rule?.rule_users.map(x => x.id) ?? [],
   rule_type: props.rule?.rule_type.id ?? null,
-  quote_type_id: props.rule?.quote_type?.id.toString() ?? '',
+  quote_type_id: props.rule?.quote_type?.id ?? null,
   lead_source_id: props.rule?.rule_detail?.lead_source_id ?? null,
   utm_source: props.rule?.rule_detail?.utm_source ?? null,
   utm_campaign: props.rule?.rule_detail?.utm_campaign ?? null,
@@ -204,7 +204,7 @@ function onSubmit(isValid) {
     <div v-if="isLeadSourceRuleType" class="grid sm:grid-cols-2 gap-6 mt-6">
       <div class="sm:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">
-          Lead Source URL
+          Lead Source URL <span class="text-red-600">*</span>
         </label>
         <div class="flex gap-3 items-start">
           <div class="flex-1">
@@ -214,6 +214,8 @@ function onSubmit(isValid) {
               single
               placeholder="Select Lead Source URL"
               :has-error="!!ruleForm.errors.lead_source_id"
+              required
+              :rules="[isRequired]"
             />
             <p v-if="ruleForm.errors.lead_source_id" class="mt-1 text-sm text-red-600">
               {{ ruleForm.errors.lead_source_id }}

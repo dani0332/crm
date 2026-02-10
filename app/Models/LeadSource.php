@@ -20,6 +20,10 @@ class LeadSource extends Model implements AuditableContract
         'is_active',
         'is_applicable_for_rules',
     ];
+    protected $casts = [
+        'is_active' => 'boolean',
+        'is_applicable_for_rules' => 'boolean',
+    ];
 
     public function ruleDetails()
     {

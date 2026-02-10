@@ -83,6 +83,16 @@ class RulesController extends Controller
                 'utm_campaign' => $request->utm_campaign,
                 'utm_medium' => $request->utm_medium,
             ]);
+
+            // Create rule_lead_sources records for each user using batch insert
+            if ($request->filled('rule_users')) {
+                $rule->leadSources()->createMany(
+                    collect($request->rule_users)->map(fn ($userId) => [
+                        'lead_source_id' => $request->lead_source_id,
+                        'user_id' => $userId,
+                    ])->toArray()
+                );
+            }
         }
 
         // Attaching users
@@ -100,7 +110,7 @@ class RulesController extends Controller
      */
     public function show($id)
     {
-        $rule = Rule::with('ruleType')->with(['ruleUsers',  'quoteType'])->findOrFail($id);
+        $rule = Rule::with(['ruleType', 'ruleUsers', 'quoteType', 'ruleDetail.leadSource'])->findOrFail($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [
             'rule' => $rule,
@@ -148,6 +158,23 @@ class RulesController extends Controller
                     'utm_medium' => $request->utm_medium,
                 ]
             );
+
+            // Sync rule_lead_sources records using relationship
+            if ($request->filled('rule_users')) {
+                // Delete existing rule_lead_sources for this rule
+                $rule->leadSources()->delete();
+
+                // Batch create new rule_lead_sources records
+                $rule->leadSources()->createMany(
+                    collect($request->rule_users)->map(fn ($userId) => [
+                        'lead_source_id' => $request->lead_source_id,
+                        'user_id' => $userId,
+                    ])->toArray()
+                );
+            }
+        } else {
+            // If lead_source_id is not provided, remove all rule_lead_sources using relationship
+            $rule->leadSources()->delete();
         }
 
         // Sync users

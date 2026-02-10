@@ -12,8 +12,6 @@ const { isRequired } = useRules();
 
 const leadSourceForm = useForm({
   name: '',
-  code: '',
-  is_active: true,
 });
 
 const isModalOpen = computed({
@@ -29,8 +27,6 @@ const onSubmit = isValid => {
   axios
     .post(route('lead-source.store'), {
       name: leadSourceForm.name,
-      code: leadSourceForm.code,
-      is_active: leadSourceForm.is_active,
     })
     .then(response => {
       const newLeadSource = response.data.data;
@@ -77,8 +73,6 @@ const onCancel = () => {
 
 const resetForm = () => {
   leadSourceForm.name = '';
-  leadSourceForm.code = '';
-  leadSourceForm.is_active = true;
   leadSourceForm.processing = false;
   leadSourceForm.clearErrors();
 };
@@ -108,23 +102,11 @@ watch(isModalOpen, newValue => {
       <div class="grid gap-4">
         <x-input
           v-model="leadSourceForm.name"
-          label="Lead Source Name"
-          placeholder="Enter lead source name"
+          label="Lead Source Url"
+          placeholder="Enter lead source Url"
           :error="leadSourceForm.errors.name"
           :rules="[isRequired]"
           required
-        />
-
-        <x-input
-          v-model="leadSourceForm.code"
-          label="Code (Optional)"
-          placeholder="Enter code"
-          :error="leadSourceForm.errors.code"
-        />
-
-        <x-checkbox
-          v-model="leadSourceForm.is_active"
-          label="Is Active"
         />
       </div>
     </x-form>

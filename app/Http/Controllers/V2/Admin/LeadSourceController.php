@@ -18,9 +18,9 @@ class LeadSourceController extends Controller
     {
         $leadSource = LeadSource::create([
             'name' => $request->name,
-            'code' => $request->code,
-            'is_active' => $request->boolean('is_active', true),
-            'is_applicable_for_rules' => true,
+            'code' => $request->code ?? null, // Accept code from request (can be null)
+            'is_active' => true, // Always set to true
+            'is_applicable_for_rules' => true, // Always set to true
         ]);
 
         return response()->json([

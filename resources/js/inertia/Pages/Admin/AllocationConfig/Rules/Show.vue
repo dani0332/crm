@@ -4,6 +4,9 @@ const props = defineProps({
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
+
+// Check if rule type is "lead source" (id = 1)
+const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id === 1);
 </script>
 <template>
   <Head title="Rule Detail" />
@@ -41,6 +44,29 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
           <dt class="font-medium">Quote Type</dt>
           <dd>{{ rule.quote_type.name ?? 'N/A' }}</dd>
         </div>
+
+        <!-- Lead Source Details (only for Lead Source rule type) -->
+        <template v-if="isLeadSourceRuleType">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Lead Source</dt>
+            <dd>{{ rule.rule_detail?.lead_source?.name ?? 'N/A' }}</dd>
+          </div>
+
+          <div v-if="rule.rule_detail?.utm_source" class="grid sm:grid-cols-2">
+            <dt class="font-medium">UTM Source</dt>
+            <dd>{{ rule.rule_detail.utm_source }}</dd>
+          </div>
+
+          <div v-if="rule.rule_detail?.utm_campaign" class="grid sm:grid-cols-2">
+            <dt class="font-medium">UTM Campaign</dt>
+            <dd>{{ rule.rule_detail.utm_campaign }}</dd>
+          </div>
+
+          <div v-if="rule.rule_detail?.utm_medium" class="grid sm:grid-cols-2">
+            <dt class="font-medium">UTM Medium</dt>
+            <dd>{{ rule.rule_detail.utm_medium }}</dd>
+          </div>
+        </template>
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Rule Users</dt>
