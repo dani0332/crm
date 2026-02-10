@@ -67,7 +67,7 @@ function onReset() {
 }
 const quoteTypesOptions = computed(() => {
   return props.defaultFilters.quoteTypes.map(method => ({
-    value: method.text,
+    value: method.id,
     label: method.text,
   }));
 });
