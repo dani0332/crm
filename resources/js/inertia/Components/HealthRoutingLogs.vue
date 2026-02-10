@@ -26,9 +26,9 @@ const routingLogs = reactive({
   data: null,
   table: [
     { text: 'User', value: 'user.name' },
-    ...(props.type == 'CONFIGURATION' ? 
-    [{ text: 'Team Category', value: 'team_category' },
-    ] : []),
+    ...(props.type == 'CONFIGURATION'
+      ? [{ text: 'Team Category', value: 'team_category' }]
+      : []),
     { text: 'Log Data', value: 'log_data' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Action', value: 'action' },
@@ -110,10 +110,11 @@ const formattedProviders = computed(() => {
 });
 
 watch(
-    () => props.teamCategory,
-    () => {
+  () => props.teamCategory,
+  () => {
     onLoadLogData();
-    });
+  },
+);
 </script>
 
 <template>
@@ -121,7 +122,9 @@ watch(
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex items-center gap-2">
-          <h3 class="font-semibold text-primary-800 text-lg">Health Routing Logs</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Health Routing Logs
+          </h3>
           <!-- Refresh Icon - Only visible after logs are loaded -->
           <button
             v-if="routingLogs.data !== null"
@@ -209,7 +212,7 @@ watch(
               {{ JSON.stringify(log_data) }}
             </template>
             <template #item-action="item">
-              <div style="width: 60px;">
+              <div style="width: 60px">
                 <x-button
                   size="xs"
                   color="primary"
@@ -230,7 +233,7 @@ watch(
     <x-modal
       v-model="modals.log"
       size="lg"
-      :title="`Health Routing Log Details${ selectedLog.type == 'ROUTING' ? ': ' + selectedLog.uuid : '' }`"
+      :title="`Health Routing Log Details${selectedLog.type == 'ROUTING' ? ': ' + selectedLog.uuid : ''}`"
       show-close
       backdrop
     >
@@ -240,7 +243,10 @@ watch(
             <dt class="font-medium">User:</dt>
             <dd>{{ selectedLog.user.name }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2" v-if="selectedLog.type == 'CONFIGURATION'">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="selectedLog.type == 'CONFIGURATION'"
+          >
             <dt class="font-medium">Team Category:</dt>
             <dd>{{ selectedLog.team_category }}</dd>
           </div>
@@ -248,15 +254,17 @@ watch(
             <dt class="font-medium">Created At:</dt>
             <dd>{{ new Date(selectedLog.created_at).toLocaleString() }}</dd>
           </div>
-        </dl> 
+        </dl>
         <x-divider class="my-5" />
 
         <!-- Log Data -->
         <div>
           <dl class="">
             <dt class="font-medium mb-2">Log Data:</dt>
-            <div class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded">
-              <pre class="whitespace-pre-wrap">{{selectedLog.log_data}}</pre>
+            <div
+              class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
+            >
+              <pre class="whitespace-pre-wrap">{{ selectedLog.log_data }}</pre>
             </div>
           </dl>
         </div>

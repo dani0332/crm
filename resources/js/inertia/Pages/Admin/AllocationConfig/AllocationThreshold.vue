@@ -7,13 +7,14 @@ const props = defineProps({
 });
 
 const notification = useToast();
-const tabs = reactive([{
-    label: "AUH",
-    postfix: "(Branch)",
+const tabs = reactive([
+  {
+    label: 'AUH',
+    postfix: '(Branch)',
   },
   {
-    label: "Non AUH",
-    postfix: "(HQ)",
+    label: 'Non AUH',
+    postfix: '(HQ)',
   },
 ]);
 const activeTab = ref(0);
@@ -109,7 +110,7 @@ const generateTeamsToPost = () => {
   });
 };
 
-const loadTeams = (index) => {
+const loadTeams = index => {
   activeTab.value = index;
   loading.value = true;
 
@@ -128,7 +129,7 @@ const loadTeams = (index) => {
     })
     .finally(() => {
       loading.value = false;
-    })
+    });
 };
 
 const updateTeams = () => {
@@ -140,7 +141,7 @@ const updateTeams = () => {
     axios
       .post('/update-team-allocation-threshold', {
         category: tabs[activeTab.value].label,
-        teams: teams
+        teams: teams,
       })
       .then(response => {
         notification.success({
@@ -184,7 +185,7 @@ onMounted(() => {
         loading ? 'opacity-50 cursor-not-allowed' : '',
         activeTab === index
           ? 'border-b-2 border-primary text-primary'
-          : 'text-gray-500 hover:text-gray-700'
+          : 'text-gray-500 hover:text-gray-700',
       ]"
     >
       {{ tab.label }} {{ tab.postfix }}
@@ -195,7 +196,9 @@ onMounted(() => {
   <div class="min-h-[150px] mb-4">
     <!-- Loader -->
     <div v-if="loading" class="flex justify-center items-center py-10">
-      <span class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></span>
+      <span
+        class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"
+      ></span>
     </div>
 
     <!-- Content -->
@@ -212,7 +215,8 @@ onMounted(() => {
                 label="Min Price"
               />
               <p class="text-xs -mt-4">
-                Minimum annual premium (AED) required for this {{ tabs[activeTab].label }} tier to apply.
+                Minimum annual premium (AED) required for this
+                {{ tabs[activeTab].label }} tier to apply.
               </p>
             </div>
             <x-input
@@ -234,7 +238,7 @@ onMounted(() => {
   </div>
 
   <HealthRoutingLogs
-      type="CONFIGURATION"
-      :teamCategory="tabs[activeTab].label"
+    type="CONFIGURATION"
+    :teamCategory="tabs[activeTab].label"
   />
 </template>
