@@ -20,8 +20,7 @@ class EmbeddedTransactionService extends BaseService
      */
     public function __construct(
         protected EmbeddedTransactionRepository $embeddedTransactionRepo,
-        protected BirdService $birdService,
-        protected EmailStatusService $emailStatusService
+        protected BirdService $birdService
     ) {
         parent::__construct();
     }

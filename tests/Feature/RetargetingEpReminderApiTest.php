@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\QuoteTypeId;
-use App\Services\EmailStatusService;
 use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
