@@ -479,6 +479,7 @@ const isVehicleUseDisabled = computed(() => {
       current: props.reportData.current_page,
       from: props.reportData.from,
       to: props.reportData.to,
+      total: props.reportData.total,
     }"
   />
 </template>
