@@ -508,6 +508,12 @@ class RenewalsUploadService
 
         $leadValidationErrors = collect();
         $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where('quote_id', $quote->id)->where([
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'email_sent' => true,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])->exists() && $isGenesisLead['status'];
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
             if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
@@ -520,7 +526,7 @@ class RenewalsUploadService
             }
 
             if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-                $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isGenesisLead);
+                $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isGenesisLead, $isRenewalHistorical);
 
                 if (is_int($planResponse) && $planResponse == 200) {
                     LoggerService::info($logPrefix.' plan created successfully', extra: [
@@ -542,13 +548,6 @@ class RenewalsUploadService
                     return false;
                 }
             }
-
-            $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where('quote_id', $quote->id)->where([
-                'status' => RenewalProcessStatuses::PLANS_FETCHED,
-                'type' => RenewalsUploadType::UPDATE_LEADS,
-                'email_sent' => true,
-                'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-            ])->exists() && $isGenesisLead['status'];
 
             $plansResponse = $this->getPlans($quote->uuid, $isRenewalHistorical);
             if ($plansResponse === true) {
@@ -1684,7 +1683,7 @@ class RenewalsUploadService
      *
      * @return void
      */
-    public function createPlan($data, $quote, $createdById, $isGenesisLead)
+    public function createPlan($data, $quote, $createdById, $isGenesisLead, $isRenewalHistorical)
     {
         $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
         LoggerService::info($logPrefix.' Create Plan Started');
@@ -1715,7 +1714,7 @@ class RenewalsUploadService
                 ', type: '.($data['plan_type'] ?? 'N/A');
         }
 
-        $planData = $this->preparePlanData($quote, $createdById);
+        $planData = $this->preparePlanData($quote, $createdById, $isRenewalHistorical);
         $plan = $this->preparePlan($data, $carPlan, $isGenesisLead, $provider, $quote);
 
         $plan['addons'] = $this->buildPlanAddons($data, $carPlan, $logPrefix);
@@ -1744,11 +1743,12 @@ class RenewalsUploadService
         }])->first();
     }
 
-    private function preparePlanData($quote, $createdById)
+    private function preparePlanData($quote, $createdById, $isRenewalHistorical)
     {
         return [
             'quoteUID' => $quote->uuid,
             'update' => false,
+            'isRenewalHistorical' => $isRenewalHistorical,
             'url' => strval(request()->current_url),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
