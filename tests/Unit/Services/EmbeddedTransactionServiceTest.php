@@ -191,8 +191,6 @@ describe('getRetargetingCarEpReminderData', function () {
             expect($json['data']['emailWorkflowData']['epShortCode'])->toBe(EmbeddedProductEnum::MDX);
             expect($json['data']['emailWorkflowData']['vehicleMake'])->toBe($quote->carMake?->text);
             expect($json['data']['emailWorkflowData']['vehicleModel'])->toBe($quote->carModel?->text);
-            // expect($json['data']['emailWorkflowData']['customerId'])->toBe($quote->customer_id);
-            // expect($json['data']['emailWorkflowData']['displayName'])->toBe('InsuranceMarket.ae');
         });
 
         test('Success with missing any optional field', function (array $overrides, ?string $expectedAdvisorEmail, bool $expectBuyNowUrlHasPlanOrProvider) {

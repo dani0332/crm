@@ -145,8 +145,6 @@ class EmbeddedTransactionService extends BaseService
                 'epShortCode' => $epShortCode,
                 'vehicleMake' => $carMake,
                 'vehicleModel' => $carModel,
-                // 'customerId' => $quote->customer_id,
-                // 'displayName' => 'InsuranceMarket.ae',
             ],
         ];
 
