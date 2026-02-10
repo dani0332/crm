@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 
 class AllocationThresholdController extends Controller
 {
-    public function __construct(protected HealthTeamRoutingLogService $healthTeamRoutingLogService)
+    public function __construct()
     {
         $this->middleware(['permission:'.PermissionsEnum::TeamThresholdView], ['only' => ['index', 'updateAllocation']]);
     }
