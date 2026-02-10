@@ -11,7 +11,6 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\DocumentType;
 use App\Models\HealthQuote;
-use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
@@ -531,24 +530,4 @@ trait OcrUtils
         })?->code ?? null;
     }
 
-    protected function getNationalityId(?string $nationality): ?int
-    {
-        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
-        if (empty($nationality)) {
-            return null;
-        }
-
-        $query = Nationality::where('text', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->orWhere('code', $nationality);
-
-        return $query->value('id');
-    }
-
-    public function getNationalityById($nationalityId): ?string
-    {
-        $nationalityRecord = Nationality::find($nationalityId);
-
-        return $nationalityRecord?->text;
-    }
 }

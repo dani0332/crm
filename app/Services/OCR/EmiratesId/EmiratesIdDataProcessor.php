@@ -409,8 +409,8 @@ class EmiratesIdDataProcessor
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $this->quote->id,
             ])
-            ->latest('updated_at')
-            ->first();
+                ->latest('updated_at')
+                ->first();
 
             if (! $existingLink) {
                 CustomerInsured::create([
@@ -420,7 +420,7 @@ class EmiratesIdDataProcessor
                     'quote_request_id' => $this->quote->id,
                     'created_at' => now(),
                     'updated_at' => now(),
-                    'is_active' => 1, 
+                    'is_active' => 1,
                 ]);
 
                 LoggerService::info('CustomerInsured relationship created');

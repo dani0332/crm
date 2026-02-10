@@ -11,12 +11,13 @@ use App\Models\CarQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
+use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
 class DriverEmiratesIdDataProcessor
 {
-    use OcrUtils;
+    use GenericQueriesAllLobs, OcrUtils;
 
     private DriverEmiratesIdExtractor $driverEmiratesIdExtractor;
     private array $extractedData = [];

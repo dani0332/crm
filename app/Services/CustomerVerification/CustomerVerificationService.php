@@ -24,6 +24,7 @@ use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -31,7 +32,7 @@ use Illuminate\Support\Str;
 
 class CustomerVerificationService
 {
-    use OcrUtils;
+    use GenericQueriesAllLobs, OcrUtils;
 
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
@@ -320,7 +321,7 @@ class CustomerVerificationService
                 ],
                 'dob' => [
                     'value' => array_key_exists('date_of_birth', $customerVerifiedData)
-                    ? $this->formatDateToDisplay($customerVerifiedData['date_of_birth'])
+                    ? $this->formatDate($customerVerifiedData['date_of_birth'])
                     : '',
                     'error' => isset($customerVerifiedData['date_of_birth'])
                     ? $this->verifyWithWebForm(Carbon::parse($customerVerifiedData['date_of_birth'])->format('d-m-Y'), $record->dob)
@@ -374,7 +375,8 @@ class CustomerVerificationService
     {
         match ($quoteType) {
             QuoteTypes::CAR,
-            QuoteTypes::HEALTH => $this->processEmiratesIdVerificationData($quote, $ocrData, $documentType),
+            QuoteTypes::PERSONAL,
+            QuoteTypes::HEALTH => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType, $quoteType->value),
             // Add other quote types here as needed
             default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
         };
