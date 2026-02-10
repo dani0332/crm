@@ -218,8 +218,11 @@ class EmbeddedProductController extends Controller
 
     public function force(Request $request)
     {
+        // Determine storage disk based on is_policy_wordings
+        $storageDisk = $request->boolean('is_policy_wordings') ? 'azureIM' : 'azureIMPrivate';
+
         // Generate a temporary URL for the file
-        $documentUrl = app(QuoteDocumentService::class)->getDocumentUrl($request->path);
+        $documentUrl = app(QuoteDocumentService::class)->getDocumentUrl($request->path, $storageDisk);
 
         // Check if the file exists
         if ($documentUrl === null) {

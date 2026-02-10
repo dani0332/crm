@@ -541,25 +541,15 @@ class CarQuote extends BaseModel
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Car);
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->active();
     }
 
-    public function insured()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // Foreign key on customer_insured
-            'id',               // Foreign key on insured
-            'id',               // Local key on car_quote_requests
-            'insured_id'        // Local key on customer_insured
-        )->where('quote_type_id', QuoteTypeId::Car);
-    }
-
-    // Get the latest/most recent insured record for this quote
+    // Reminder::Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -569,8 +559,9 @@ class CarQuote extends BaseModel
             'id', // insured.id
             'id', // car_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
-            ->latest('customer_insured.updated_at');
+        )
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Car)
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()

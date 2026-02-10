@@ -66,6 +66,17 @@ class EmiratesIdDataProcessor
                     throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');
                 }
 
+                if ($insured->customer_type !== CustomerTypeEnum::Individual) {
+                    LoggerService::info('Skipping Emirates ID data processing for non-individual insured record', extra: [
+                        'insured_id' => $insured->id,
+                        'insured_customer_type' => $insured->customer_type,
+                    ]);
+
+                    DB::rollBack();
+
+                    return false;
+                }
+
                 $insuredUpdated = $this->updateInsuredTable($insured);
                 $kycUpdated = $this->updateInsuredKycTable($insured);
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
@@ -393,24 +404,21 @@ class EmiratesIdDataProcessor
         try {
             $quoteTypeId = $this->getQuoteTypeId($this->quote);
 
-            $existingLink = CustomerInsured::where([
-                'customer_id' => $this->quote->customer_id,
-                'insured_id' => $insured->id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $this->quote->id,
-            ])
-                ->latest('updated_at')
-                ->first();
-
-            if (! $existingLink) {
-                CustomerInsured::create([
+            $existingLink = CustomerInsured::active()
+                ->where([
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $this->quote->id,
-                    'is_active' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                ])
+                ->first();
+
+            if (! $existingLink) {
+                CustomerInsured::createOrUpdateActive([
+                    'customer_id' => $this->quote->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $this->quote->id,
                 ]);
 
                 LoggerService::info('CustomerInsured relationship created');
