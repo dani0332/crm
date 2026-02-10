@@ -17,7 +17,11 @@ class AllocationThresholdController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['permission:'.PermissionsEnum::TeamThresholdView], ['only' => ['index', 'updateAllocation']]);
+        $this->middleware(['permission:'.PermissionsEnum::TeamThresholdView], ['only' => [
+            'index',
+            'updateAllocation',
+            'getTeams',
+        ]]);
     }
 
     /**
