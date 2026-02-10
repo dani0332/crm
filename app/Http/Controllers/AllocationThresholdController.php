@@ -11,6 +11,7 @@ use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use App\Services\HealthTeamRouting\HealthTeamRoutingLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AllocationThresholdController extends Controller
 {
@@ -72,7 +73,7 @@ class AllocationThresholdController extends Controller
         $logData = [];
         $teams = $request->teams;
 
-        if ($teams) {
+        DB::transaction(function () use ($teams, $request, &$logData) {
             foreach ($teams as $team) {
                 Team::where('id', $team['team_id'])
                     ->update([
@@ -84,14 +85,16 @@ class AllocationThresholdController extends Controller
                 $logData[] = $team;
             }
 
-            // Add config logs
-            HealthTeamRoutingLogService::log(
-                HealthRoutingLogTypeEnum::CONFIGURATION,
-                $logData,
-                null,
-                null,
-                TeamCategoryEnum::from($request->category));
-        }
+            if ($logData !== []) {
+                HealthTeamRoutingLogService::log(
+                    HealthRoutingLogTypeEnum::CONFIGURATION,
+                    $logData,
+                    null,
+                    null,
+                    TeamCategoryEnum::tryFrom($request->category)
+                );
+            }
+        });
 
         return response()->json(['message' => 'Allocation Threshold updated successfully']);
     }
