@@ -74,18 +74,14 @@ class AllocationThresholdController extends Controller
 
         if ($teams) {
             foreach ($teams as $team) {
-                Team::where('id', $team['id'])
+                Team::where('id', $team['team_id'])
                     ->update([
                         'min_price' => $team['min'],
                         'max_price' => $team['max'],
                         'allocation_threshold_enabled' => true,
                     ]);
 
-                // Log data
-                $team = ['team_id' => $team['id']] + array_diff_key($team, ['id' => true]);
-                $logData[] = array_merge($team, [
-                    'team_name' => Team::find($team['team_id'])->name,
-                ]);
+                $logData[] = $team;
             }
 
             // Add config logs
