@@ -1885,6 +1885,8 @@ if (! function_exists('getAllowedQuoteTypeIds')) {
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
             QuoteTypes::SAVINGS,
+            QuoteTypes::DEVICE,
+            QuoteTypes::CYBER,
         ];
 
         $allowedIds = [];
