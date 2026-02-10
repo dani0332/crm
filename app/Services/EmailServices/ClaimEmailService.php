@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use App\Enums\QuoteTypes;
 
 class ClaimEmailService extends BaseService
 {
@@ -31,7 +32,7 @@ class ClaimEmailService extends BaseService
             'customerName' => $claim->first_name.' '.$claim->last_name,
             'quoteUID' => $claim->uuid,
             'refID' => $claim->code,
-            'quoteType' => null,
+            'quoteType' => QuoteTypes::getName($claim->quote_type_id)->value ?? null,
             'advisor' => $advisor,
             'source' => $claim->source,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
