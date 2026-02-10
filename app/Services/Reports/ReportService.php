@@ -662,6 +662,7 @@ class ReportService extends BaseService
         $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
+        $quoteTypeId = $request->quoteTypeId;
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $dataCollection = collect();
