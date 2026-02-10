@@ -116,13 +116,13 @@ class AdnicDocumentHandler
                 'insurerDocName' => 'Emirates ID',
                 'uploaded' => false,
             ],
-            DocumentTypeCode::HEA_EID_FRONT => [
+            DocumentTypeCode::HEA_EID_FRONT => [ // TODO:: Need to check this with BA and than implement this
                 'code' => DocumentTypeCode::HEA_EID_FRONT,
                 'insurerDocCode' => '4',
                 'insurerDocName' => 'Emirates ID Front',
                 'uploaded' => false,
             ],
-            DocumentTypeCode::HEA_EID_BACK => [
+            DocumentTypeCode::HEA_EID_BACK => [ // TODO:: Need to check this with BA and than implement this
                 'code' => DocumentTypeCode::HEA_EID_BACK,
                 'insurerDocCode' => '5',
                 'insurerDocName' => 'Emirates ID Back',

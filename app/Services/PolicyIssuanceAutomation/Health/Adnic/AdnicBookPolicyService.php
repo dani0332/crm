@@ -33,16 +33,14 @@ class AdnicBookPolicyService
 
         $response = [
             'policyIssuance' => $policyIssuance,
-            'isEditPolicyDetailsDisabled' => true,
-            'isEditBookingDetailsDisabled' => true,
+            'isEditPolicyDetailsDisabled' => true, 
             'message' => 'All steps are locked',
             'insurer_api_status' => $quote->insurer_api_status,
         ];
 
         // Early exit (first return)
         if ($throughAutomation) {
-            $response['isEditPolicyDetailsDisabled'] = false;
-            $response['isEditBookingDetailsDisabled'] = false;
+            $response['isEditPolicyDetailsDisabled'] = false; 
             $response['message'] = AdnicEnum::ALL_STEPS_ARE_EDITABLE;
 
             return $response;
@@ -55,16 +53,13 @@ class AdnicBookPolicyService
 
         if ($shouldHandlePolicyIssuanceLogic) {
             if (! $policyIssuance?->completed_step || $policyIssuance?->completed_step === AdnicEnum::STEP_UPLOAD_DOCUMENTS) {
-                $response['isEditPolicyDetailsDisabled'] = false;
-                $response['isEditBookingDetailsDisabled'] = false;
+                $response['isEditPolicyDetailsDisabled'] = false; 
                 $response['message'] = AdnicEnum::ALL_STEPS_ARE_EDITABLE;
             } elseif ($policyIssuance?->completed_step === AdnicEnum::STEP_ISSUE_POLICY) {
-                $response['isEditPolicyDetailsDisabled'] = false;
-                $response['isEditBookingDetailsDisabled'] = false;
+                $response['isEditPolicyDetailsDisabled'] = false; 
                 $response['message'] = 'Upload Documents and Update Booking Details are editable';
             } elseif ($policyIssuance?->completed_step === AdnicEnum::STEP_UPLOAD_POLICY_DOCS) {
-                $response['isEditPolicyDetailsDisabled'] = false;
-                $response['isEditBookingDetailsDisabled'] = false;
+                $response['isEditPolicyDetailsDisabled'] = false; 
                 $response['message'] = 'Booking Details is editable';
             }
 
