@@ -53,28 +53,6 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
 
         LoggerService::info('Savings OCA email job started');
 
-        // Idempotency check: Verify email hasn't already been sent
-        $lead = PersonalQuote::where('uuid', $this->quoteUID)
-            ->where('quote_type_id', QuoteTypeId::Savings)
-            ->first();
-
-        if (! $lead) {
-            LoggerService::warning('Savings OCA email job - Lead not found', [
-                'quote_uuid' => $this->quoteUID,
-            ]);
-
-            return;
-        }
-
-        if ($lead->isNonAdvisorEmailSent()) {
-            LoggerService::info('Savings OCA email job - Email already sent, skipping duplicate execution', [
-                'quote_uuid' => $this->quoteUID,
-                'non_advisor_email_sent_at' => $lead->non_advisor_email_sent_at,
-            ]);
-
-            return;
-        }
-
         app(SavingsEmailService::class)->sendOCAEmail($this->quoteUID, $this->data);
 
         LoggerService::info('Savings OCA email sent');

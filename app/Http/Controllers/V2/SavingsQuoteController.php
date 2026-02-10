@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsPlanUpdateRequest;
@@ -12,6 +14,7 @@ use App\Http\Requests\SavingsQuoteRequest;
 use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\LostReasonRepository;
+use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\Quotes\SavingsQuoteService;
@@ -204,11 +207,15 @@ class SavingsQuoteController extends Controller
                 'plan_ids' => $request->plan_ids ?? [],
             ]);
 
-            // Check if email already sent to prevent duplicates
-            if ($quote->isNonAdvisorEmailSent()) {
-                LoggerService::info('SavingsQuoteController - sendOCAEmail already sent', [
+            $isFlowExecuted = app(BirdService::class)->isFollowupExecuted(
+                $quoteUuId,
+                QuoteTypes::SAVINGS->id(),
+                QuoteFlowType::SAVINGS_OCA_EMAIL->value
+            );
+
+            if ($isFlowExecuted) {
+                LoggerService::info('SavingsQuoteController - sendOCAEmail flow already executed', [
                     'quote_uuid' => $quoteUuId,
-                    'non_advisor_email_sent_at' => $quote->non_advisor_email_sent_at,
                 ]);
 
                 return response()->json([

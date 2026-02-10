@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Savings;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
+use App\Models\QuoteFlowDetails;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 
@@ -45,6 +47,19 @@ class SavingsEmailService
             return null;
         }
 
+        // Check if OCA email flow already executed to prevent duplicates
+        $isFlowExecuted = app(BirdService::class)->isFollowupExecuted(
+            $lead->uuid,
+            QuoteTypeId::Savings,
+            QuoteFlowType::SAVINGS_OCA_EMAIL->value
+        );
+
+        if ($isFlowExecuted) {
+            LoggerService::info("$logPrefix OCA email flow already executed for quote: {$lead->uuid}");
+
+            return null;
+        }
+
         // Map data for bird service
         $emailData = $this->mapOCAEmailData($lead, $data);
 
@@ -60,6 +75,11 @@ class SavingsEmailService
             $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
 
             if ($response && $response->status_code == 200) {
+                // Create quote flow details to track the email flow
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                }
+
                 if ($lead->quote_status_id == QuoteStatusEnum::NewLead) {
 
                     $lead->quote_status_id = QuoteStatusEnum::Quoted;
@@ -143,5 +163,43 @@ class SavingsEmailService
             'uuid' => $quoteUID,
             'quote_type_id' => QuoteTypeId::Savings,
         ])->with('advisor')->first();
+    }
+
+    /**
+     * Create quote flow details for tracking email campaigns
+     */
+    private function createQuoteFlowDetails(PersonalQuote $lead, $response): void
+    {
+        try {
+            $runId = '';
+            if (isset($response->headers['Run-Id'])) {
+                $runId = is_array($response->headers['Run-Id'])
+                    ? collect($response->headers['Run-Id'])->first()
+                    : $response->headers['Run-Id'];
+            } elseif (isset($response->headers['run-id'])) {
+                $runId = is_array($response->headers['run-id'])
+                    ? collect($response->headers['run-id'])->first()
+                    : $response->headers['run-id'];
+            }
+
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => QuoteTypeId::Savings,
+                    'flow_type' => QuoteFlowType::SAVINGS_OCA_EMAIL->value,
+                    'flow_id' => $runId,
+                    'started_at' => now(),
+                ]);
+                LoggerService::info("Savings OCA email flow details created for quote: {$lead->uuid} | Run-Id: {$runId}");
+            } else {
+                LoggerService::warning("Savings OCA email Run-Id not found in response headers for quote: {$lead->uuid}");
+            }
+        } catch (\Throwable $th) {
+            LoggerService::error("Error creating quote flow details for Savings OCA email - Quote: {$lead->uuid}", [
+                'error' => $th->getMessage(),
+                'file' => $th->getFile(),
+                'line' => $th->getLine(),
+            ], $th);
+        }
     }
 }
