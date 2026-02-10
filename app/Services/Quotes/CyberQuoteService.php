@@ -54,7 +54,9 @@ class CyberQuoteService extends BaseQuoteService
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
-            ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
+            ->when(request()->filled('created_at_start') || request()->filled('created_at_end'), function ($q) {
+                $q->filterByCreatedAt(request('created_at_start'), request('created_at_end'));
+            })
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByPaymentDueDates('payment_due_date')
