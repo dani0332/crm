@@ -660,8 +660,7 @@ class ReportService extends BaseService
         $user = auth()->user();
         $userTeams = $user->getUserTeams($user->id);
         $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
-        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
-        $expiryDays = $authorizedDays->value;
+        $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
         $lobTable = [
             quoteTypeCode::Car => ['table' => 'car_quote_request', 'quoteTypeId' => null],
