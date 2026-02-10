@@ -174,7 +174,7 @@ it('updates GBP team allocation threshold with min 30k and max 10 million', func
     $response = $this->postJson('/update-team-allocation-threshold', [
         'teams' => [
             [
-                'id' => $this->gbpTeam,
+                'team_id' => $this->gbpTeam,
                 'min' => $minPrice,
                 'max' => $maxPrice,
             ],
@@ -200,7 +200,7 @@ it('updates GBP team allocation threshold and verifies it appears in index', fun
     $this->postJson('/update-team-allocation-threshold', [
         'teams' => [
             [
-                'id' => $this->gbpTeam,
+                'team_id' => $this->gbpTeam,
                 'min' => $minPrice,
                 'max' => $maxPrice,
             ],

@@ -18,12 +18,12 @@ class AllocationThresholdTest extends TestCase
             'category' => TeamCategoryEnum::AUH->value,
             'teams' => [
                 [
-                    'id' => $teams[0]->id,
+                    'team_id' => $teams[0]->id,
                     'min' => 100,
                     'max' => 500,
                 ],
                 [
-                    'id' => $teams[1]->id,
+                    'team_id' => $teams[1]->id,
                     'min' => 200,
                     'max' => 600,
                 ],
