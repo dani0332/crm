@@ -8,8 +8,6 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
-use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
@@ -149,42 +147,11 @@ describe('getRetargetingCarEpReminderData', function () {
         ]);
     });
 
-    // describe('return 400', function () {
-    //     test('when template ID is missing or empty', function (bool|string $templateReturn) {
-    //         $mockData = getRetargetingCarEpReminderDataMock();
-
-    //         $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData, $templateReturn) {
-    //             $mock->shouldReceive('getRetargetingCarEpReminderData')
-    //                 ->once()
-    //                 ->with($this->quoteId, $this->embeddedTransactionCode)
-    //                 ->andReturn($mockData);
-    //             $mock->shouldReceive('getEpRetargetingReminderEmailTemplateId')
-    //                 ->once()
-    //                 ->with(EmbeddedProductEnum::MDX)
-    //                 ->andReturn($templateReturn);
-    //         });
-
-    //         $service = app(EmbeddedTransactionService::class);
-    //         $response = $service->getRetargetingCarEpReminderData($this->quoteId, $this->embeddedTransactionCode);
-
-    //         expect($response->getStatusCode())->toBe(Response::HTTP_BAD_REQUEST);
-    //         $json = $response->getData(true);
-    //         expect($json['message'])->toBe('Template / Email Workflow URL not found');
-    //         expect($json['status'])->toBe(Response::HTTP_BAD_REQUEST);
-    //     })->with([false, '']);
-    // });
-
     describe('return 200', function () {
 
         test('successfully returns data', function () {
 
             TestSchemaCreator::createMinimalSchema();
-            ApplicationStorage::forceCreate([
-                'key_name' => ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL,
-                'value' => 'https://example.com/bird-car-ep-reminder-email-workflow',
-                'is_active' => 1,
-            ]);
-
             $data = RetargetingEpReminderTestDataHelper::setupTestData();
 
             $quoteId = $data['quoteId'];
@@ -204,10 +171,6 @@ describe('getRetargetingCarEpReminderData', function () {
                     ->once()
                     ->with($quoteId, $embeddedTransactionCode)
                     ->andReturn($mockData);
-                // $mock->shouldReceive('getEpRetargetingReminderEmailTemplateId')
-                //     ->once()
-                //     ->with(EmbeddedProductEnum::MDX)
-                //     ->andReturn('templateId-1');
             });
 
             $service = app(EmbeddedTransactionService::class);
@@ -228,32 +191,19 @@ describe('getRetargetingCarEpReminderData', function () {
             expect($json['data']['emailWorkflowData']['epShortCode'])->toBe(EmbeddedProductEnum::MDX);
             expect($json['data']['emailWorkflowData']['vehicleMake'])->toBe($quote->carMake?->text);
             expect($json['data']['emailWorkflowData']['vehicleModel'])->toBe($quote->carModel?->text);
-            // expect($json['data']['emailWorkflowData']['templateId'])->toBe('templateId-1');
             // expect($json['data']['emailWorkflowData']['customerId'])->toBe($quote->customer_id);
             // expect($json['data']['emailWorkflowData']['displayName'])->toBe('InsuranceMarket.ae');
-            // expect($json['data']['emailWorkflowData']['birdCarEpReminderEmailWorkflowUrl'])->toBe('https://example.com/bird-car-ep-reminder-email-workflow');
-            // expect($json['data']['emailWorkflowData']['retargetingEpReminderCallbackUrl'])->toContain('retargeting-ep-reminder-callback');
         });
 
         test('Success with missing any optional field', function (array $overrides, ?string $expectedAdvisorEmail, bool $expectBuyNowUrlHasPlanOrProvider) {
 
             TestSchemaCreator::createMinimalSchema();
-            ApplicationStorage::forceCreate([
-                'key_name' => ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL,
-                'value' => 'https://example.com/bird-car-ep-reminder-email-workflow',
-                'is_active' => 1,
-            ]);
-
             $mockData = getRetargetingCarEpReminderDataMock($overrides);
 
             $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData) {
                 $mock->shouldReceive('getRetargetingCarEpReminderData')
                     ->once()
                     ->andReturn($mockData);
-                // $mock->shouldReceive('getEpRetargetingReminderEmailTemplateId')
-                //     ->once()
-                //     ->with(EmbeddedProductEnum::MDX)
-                //     ->andReturn('templateId-1');
             });
 
             $service = app(EmbeddedTransactionService::class);
@@ -276,66 +226,6 @@ describe('getRetargetingCarEpReminderData', function () {
             'plan provider missing' => [['plan_insurance_provider' => null], 'advisor@example.com', true],
             'plan provider code empty' => [['plan_provider_code' => ''], 'advisor@example.com', true],
         ]);
-    });
-});
-
-describe('retargetingCarEpReminderCallback', function () {
-    describe('return 404', function () {
-        test('when EmailStatusService reports lead not found', function () {
-            $request = RetargetingEpReminderCallbackRequest::create('/api/retargeting-ep-reminder-callback', 'POST', [
-                'uuid' => 'unknown-uuid',
-                'quoteTypeId' => 1,
-                'quoteId' => 999,
-                'templateId' => 'tpl-1',
-                'message_id' => 'msg-1',
-                'customerId' => 1,
-                'customer_email' => 'user@example.com',
-                'subject' => 'Reminder',
-            ]);
-            $request->setContainer(app());
-
-            $this->mock(EmailStatusService::class, function ($mock) {
-                $mock->shouldReceive('addBirdEmailStatus')
-                    ->once()
-                    ->andReturn((object) ['message' => 'lead not found', 'status' => false]);
-            });
-
-            $service = app(EmbeddedTransactionService::class);
-            $response = $service->retargetingCarEpReminderCallback($request);
-
-            expect($response->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
-            $json = $response->getData(true);
-            expect($json['message'])->toBe('lead not found');
-        });
-    });
-
-    describe('return 200', function () {
-        test('when EmailStatusService adds email status successfully', function () {
-            $request = RetargetingEpReminderCallbackRequest::create('/api/retargeting-ep-reminder-callback', 'POST', [
-                'uuid' => $this->quoteUuid,
-                'quoteTypeId' => QuoteTypeId::Car,
-                'quoteId' => $this->quoteId,
-                'templateId' => 'templateId-1',
-                'message_id' => 'msg-1',
-                'customerId' => 1,
-                'customer_email' => 'user@example.com',
-                'subject' => 'Reminder',
-            ]);
-            $request->setContainer(app());
-
-            $this->mock(EmailStatusService::class, function ($mock) {
-                $mock->shouldReceive('addBirdEmailStatus')
-                    ->once()
-                    ->andReturn((object) ['message' => 'Email event logged successfully', 'status' => true]);
-            });
-
-            $service = app(EmbeddedTransactionService::class);
-            $response = $service->retargetingCarEpReminderCallback($request);
-
-            expect($response->getStatusCode())->toBe(Response::HTTP_OK);
-            $json = $response->getData(true);
-            expect($json['message'])->toBe('Email event logged successfully');
-        });
     });
 });
 

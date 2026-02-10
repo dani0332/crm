@@ -26,31 +26,6 @@ describe('EmbeddedTransactionRepository', function () {
         });
     });
 
-    describe('getEpRetargetingReminderEmailTemplateId', function () {
-        test('returns false for invalid short code', function () {
-            expect($this->repository->getEpRetargetingReminderEmailTemplateId('INVALID_SHORT_CODE'))->toBeFalse();
-        });
-
-        test('returns false when template id is not in application storage', function () {
-            expect($this->repository->getEpRetargetingReminderEmailTemplateId(EmbeddedProductEnum::MDX))->toBeFalse();
-        });
-
-        test('returns template id when template exists in application storage', function (string $shortCode, string $storageKey, string $templateValue) {
-            ApplicationStorage::forceCreate([
-                'key_name' => $storageKey,
-                'value' => $templateValue,
-                'is_active' => 1,
-            ]);
-
-            $result = $this->repository->getEpRetargetingReminderEmailTemplateId($shortCode);
-
-            expect($result)->toBe($templateValue);
-        })->with([
-            [EmbeddedProductEnum::MDX, ApplicationStorageEnums::CAR_EP_REMINDER_MDX_EMAIL_TEMPLATE, 'template-123'],
-            [EmbeddedProductEnum::ECB, ApplicationStorageEnums::CAR_EP_REMINDER_ECB_EMAIL_TEMPLATE, 'template-456'],
-        ]);
-    });
-
     describe('getDraftEpTransactions', function () {
         test('returns empty collection when ep short codes array is empty', function () {
             $data = RetargetingEpReminderTestDataHelper::setupRepositoryTestData();

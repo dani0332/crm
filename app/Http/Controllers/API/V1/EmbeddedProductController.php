@@ -6,7 +6,6 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\GetRetargetingEpReminderRequest;
-use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Jobs\AddressReminderJob;
 use App\Jobs\EP\SendEPJob;
@@ -52,10 +51,5 @@ class EmbeddedProductController extends Controller
     {
         return $this->embeddedTransactionService
             ->getRetargetingCarEpReminderData($request->quoteId, $request->embeddedTransactionCode);
-    }
-
-    public function retargetingEpReminderCallback(RetargetingEpReminderCallbackRequest $request): JsonResponse
-    {
-        return $this->embeddedTransactionService->retargetingCarEpReminderCallback($request);
     }
 }

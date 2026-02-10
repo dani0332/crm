@@ -22,7 +22,6 @@ class CoreSchema
         $this->ensureInsuranceProviderTables();
         $this->ensureQuoteTables();
         $this->ensureEmbeddedProductTables();
-        $this->ensureEmailStatusTable();
         $this->ensurePaymentTables();
         $this->ensureDocumentTables();
         $this->ensurePolicyIssuanceTables();
@@ -676,28 +675,6 @@ class CoreSchema
                 $table->softDeletes();
             },
         ]);
-    }
-
-    /**
-     * Email status table used by EmailStatusService (e.g. retargeting-ep-reminder-callback,
-     * addBirdEmailStatus) and related flows.
-     */
-    private function ensureEmailStatusTable(): void
-    {
-        SchemaUtils::ensureTable('email_status', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('quote_type_id')->nullable();
-            $table->unsignedBigInteger('quote_id')->nullable();
-            $table->string('email_address')->nullable();
-            $table->string('msg_id')->nullable();
-            $table->string('reason')->nullable();
-            $table->string('email_status')->nullable();
-            $table->string('email_subject')->nullable();
-            $table->string('template_id')->nullable();
-            $table->unsignedBigInteger('customer_id')->nullable();
-            $table->boolean('customer_replied')->default(false);
-            $table->timestamps();
-        });
     }
 
     private function ensureApplicationStorageTable(): void

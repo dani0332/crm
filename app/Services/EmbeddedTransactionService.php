@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Http\Requests\Api\RetargetingEpReminderCallbackRequest;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
@@ -35,7 +34,6 @@ class EmbeddedTransactionService extends BaseService
     {
         return match ($appStorageKeyName) {
             ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL => getAppStorageValueByKey($appStorageKeyName, useCache: true, cacheTime: 120),
-            ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL => getAppStorageValueByKey($appStorageKeyName, useCache: true, cacheTime: 120),
             ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER => getAppStorageValueByKey($appStorageKeyName),
             default => false,
         };
@@ -121,15 +119,6 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
-        // $templateId = $this->embeddedTransactionRepo->getEpRetargetingReminderEmailTemplateId($epShortCode);
-        // $birdCarEpReminderEmailWorkflowUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL);
-
-        // if (empty($templateId) || empty($birdCarEpReminderEmailWorkflowUrl)) {
-        //     LoggerService::info('getRetargetingCarEpReminderData: Template / Email Workflow URL not found', extra: ['templateId' => $templateId, 'birdReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl]);
-
-        //     return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Template / Email Workflow URL not found');
-        // }
-
         $buyNowUrlQueryParams = [];
         if (! empty($quote->plan?->id ?? null)) {
             $buyNowUrlQueryParams['planId'] = $quote->plan?->id;
@@ -156,24 +145,11 @@ class EmbeddedTransactionService extends BaseService
                 'epShortCode' => $epShortCode,
                 'vehicleMake' => $carMake,
                 'vehicleModel' => $carModel,
-                // 'templateId' => $templateId,
                 // 'customerId' => $quote->customer_id,
                 // 'displayName' => 'InsuranceMarket.ae',
-                // 'birdCarEpReminderEmailWorkflowUrl' => $birdCarEpReminderEmailWorkflowUrl,
-                // 'retargetingEpReminderCallbackUrl' => route('retargeting-ep-reminder-callback'),
             ],
         ];
 
         return apiResponse($data, Response::HTTP_OK, 'Retargeting EP Reminder data');
-    }
-
-    public function retargetingCarEpReminderCallback(RetargetingEpReminderCallbackRequest $request)
-    {
-        $response = $this->emailStatusService->addBirdEmailStatus($request);
-        if ($response->status) {
-            return apiResponse(null, Response::HTTP_OK, $response->message);
-        }
-
-        return apiResponse(null, Response::HTTP_NOT_FOUND, $response->message);
     }
 }

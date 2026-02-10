@@ -1271,35 +1271,5 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_CAR_EP_REMINDER_EMAIL_WORKFLOW_URL],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/67192fa7-96e9-4d8e-af16-672a9511f65f/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CAR_EP_REMINDER_MDX_EMAIL_TEMPLATE],
-            [
-                'value' => '3c9b3e97-0bc4-49b6-bbe2-66fa589865c5',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CAR_EP_REMINDER_ECB_EMAIL_TEMPLATE],
-            [
-                'value' => '6eab549d-7663-418e-8a4c-ed123b7d839d',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
     }
 }

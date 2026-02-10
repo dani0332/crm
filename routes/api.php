@@ -88,7 +88,6 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
 
     Route::get('/get-retargeting-ep-reminder', [EmbeddedProductController::class, 'getRetargetingEpReminderData'])->name('get.retargeting-ep-reminder');
-    Route::post('/retargeting-ep-reminder-callback', [EmbeddedProductController::class, 'retargetingEpReminderCallback'])->name('retargeting-ep-reminder-callback');
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
