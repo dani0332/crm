@@ -15,7 +15,6 @@ class HealthRoutingLog extends Model
         'logged_by',
         'log_data',
     ];
-    protected $appends = ['logged_by_name'];
     protected $casts = [
         'log_data' => 'array',
     ];
@@ -28,10 +27,5 @@ class HealthRoutingLog extends Model
     public function getCreatedAtAttribute($value): string
     {
         return \Carbon\Carbon::parse($value)->format('m/d/Y H:i:s');
-    }
-
-    public function getLoggedByNameAttribute($value): string
-    {
-        return $this->user?->name ?? 'N/A';
     }
 }

@@ -32,7 +32,6 @@ class HealthTeamRoutingLogService
             ]);
         } catch (\Exception $e) {
             LoggerService::error('HealthTeamRoutingLogService: log function error', ['error' => $e->getMessage()]);
-            throw $e;
         }
     }
 }

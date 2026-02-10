@@ -237,7 +237,8 @@ class AuditableController extends Controller
     public function loadHealthRoutingLogs(Request $request)
     {
         try {
-            $logs = HealthRoutingLog::where('type', $request->type)
+            $logs = HealthRoutingLog::with('user')
+                ->where('type', $request->type)
                 ->when($request->team_category, function ($query) use ($request) {
                     $query->where('team_category', $request->team_category);
                 })

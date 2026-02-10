@@ -25,7 +25,7 @@ const routingLogs = reactive({
   loading: false,
   data: null,
   table: [
-    { text: 'User', value: 'logged_by_name' },
+    { text: 'User', value: 'user.name' },
     ...(props.type == 'CONFIGURATION' ? 
     [{ text: 'Team Category', value: 'team_category' },
     ] : []),
@@ -238,7 +238,7 @@ watch(
         <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">User:</dt>
-            <dd>{{ selectedLog.logged_by_name }}</dd>
+            <dd>{{ selectedLog.user.name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2" v-if="selectedLog.type == 'CONFIGURATION'">
             <dt class="font-medium">Team Category:</dt>
