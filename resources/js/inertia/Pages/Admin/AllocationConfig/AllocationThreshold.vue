@@ -26,77 +26,55 @@ const teamsForm = useForm({
 
 let minErrorTeam = ref('');
 const validateTeams = () => {
-  let valid = true;
-  let teams = teamsForm.teams.map(x => {
+  let teams = teamsForm.teams.map(team => {
     return {
-      ...x,
-      min_price: parseFloat(x.min_price || 0),
-      max_price: parseFloat(x.max_price || 0),
+      ...team,
+      min_price: parseFloat(team.min_price || 0),
+      max_price: parseFloat(team.max_price || 0),
     };
   });
 
   for (let i = 0; i < teams.length; i++) {
-    const minPriceValue = parseFloat(
-      teams[i] && teams[i].min_price == '' ? 0 : teams[i].min_price,
-    );
-    const maxPriceValue = parseFloat(
-      teams[i + 1] && teams[i + 1].max_price == ''
-        ? 0
-        : teams[i + 1]?.max_price,
-    );
-    if (i == 0) {
-      if (teams[i].min_price < 0) {
-        notification.error({
-          title: {
-            team: teams[i].name,
-            error: 'Minimum value cannot be less than zero',
-          },
-          position: 'top',
-        });
-        valid = false;
-        break;
-      }
-      if (teams[i].max_price < 2) {
-        notification.error({
-          title: {
-            team: teams[i].name,
-            error: 'Max value cannot be 1',
-          },
-          position: 'top',
-        });
-        valid = false;
-        break;
-      }
-    }
-    if (i == 2 || i == 4) {
-      var lastMaxValue = parseFloat(
-        teams[i - 1].max_price == '' ? 0 : teams[i - 1].max_price,
-      );
+    // Check min value
+    if (teams[i].min_price < 1) {
+      notification.error({
+        title: {
+          team: teams[i].name,
+          error: 'Minimum value cannot be less than 1',
+        },
+        position: 'top',
+      });
 
-      if (minPriceValue <= lastMaxValue || minPriceValue > lastMaxValue + 1) {
-        minErrorTeam = teams[i].name;
-        notification.error({
-          title: teams[i].name,
-          message:
-            'Invalid min range configuration. Please review the values for other teams.',
-          position: 'top',
-        });
-        valid = false;
-        break;
-      }
-      if (maxPriceValue < 2 || maxPriceValue <= minPriceValue) {
-        notification.error({
-          title: teams[i].name,
-          message:
-            'Invalid max range configuration. Please review the values for other teams.',
-          position: 'top',
-        });
-        valid = false;
-        break;
-      }
+      return false;
+    }
+
+    // Check min value is less than max value
+    if (teams[i].min_price > teams[i].max_price) {
+      notification.error({
+        title: {
+          team: teams[i].name,
+          error: 'Minimum value cannot be greater than maximum',
+        },
+        position: 'top',
+      });
+
+      return false;
+    }
+
+    // Chcek sequence
+    if ( i != 0 && teams[i].min_price !== teams[i - 1].max_price + 1) {
+      notification.error({
+        title: {
+          team: teams[i].name,
+          error: 'Tier start values must increase sequentially and must not overlap or skip ranges',
+        },
+        position: 'top',
+      });
+      return false;
     }
   }
-  return valid;
+
+  return true;
 };
 
 const generateTeamsToPost = () => {
