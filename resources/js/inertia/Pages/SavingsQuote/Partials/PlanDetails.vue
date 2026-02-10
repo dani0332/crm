@@ -979,9 +979,20 @@ watch(
                     <span class="text-sm text-gray-700 w-64">{{
                       item.text
                     }}</span>
-                    <span class="text-sm text-primary-600">{{
-                      item.value
-                    }}</span>
+                    <div class="flex flex-col">
+                      <template v-if="item.valueArr && item.valueArr.length > 0">
+                        <div
+                          v-for="(value, index) in item.valueArr"
+                          :key="index"
+                          class="text-sm text-primary-600"
+                        >
+                          {{ value }}
+                        </div>
+                      </template>
+                      <span v-else class="text-sm text-primary-600">{{
+                        item.value
+                      }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
