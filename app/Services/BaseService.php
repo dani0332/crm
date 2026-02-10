@@ -509,11 +509,11 @@ class BaseService
             $lead->saveQuietly();
 
             LogAllocation::dispatch($lead, $quoteType);
-            
+
             if (! $lead->isSuppressIntroEmail() && $sendAdvisorAssignedEmail) {
                 if ($lead instanceof PersonalQuote && $lead->isSavings()) {
                     SendSavingsOCAEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(1));
-                    LoggerService::info(self::class." - OCA email sent to customer for savings quote {$lead->uuid} (self-assigned)");
+                    LoggerService::info(self::class." - OCA email job dispatched for savings quote {$lead->uuid} (self-assigned)");
                 } else {
                     app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lead, $quoteType->value);
                 }

@@ -80,6 +80,14 @@ class SavingsEmailService
                     $this->createQuoteFlowDetails($lead, $response);
                 }
 
+                // Mark non-advisor email as sent after successful email delivery (only if no advisor is present)
+                if (! $lead->advisor_id || ! $lead->advisor) {
+                    $lead->touch('non_advisor_email_sent_at');
+                    LoggerService::info("$logPrefix Non-advisor email timestamp set for quote: {$lead->uuid} (no advisor present)");
+                } else {
+                    LoggerService::info("$logPrefix Email sent for quote: {$lead->uuid} (advisor present: {$lead->advisor_id})");
+                }
+
                 if ($lead->quote_status_id == QuoteStatusEnum::NewLead) {
 
                     $lead->quote_status_id = QuoteStatusEnum::Quoted;

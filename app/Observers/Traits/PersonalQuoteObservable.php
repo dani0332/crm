@@ -110,7 +110,7 @@ trait PersonalQuoteObservable
 
             if (empty($oldAdvisorId) && ! $personalQuote->isNonAdvisorEmailSent()) {
                 SendSavingsOCAEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
-                LoggerService::info(self::class." - OCA email sent to customer for savings quote {$personalQuote->uuid} (first assignment)");
+                LoggerService::info(self::class." - OCA email job dispatched for savings quote {$personalQuote->uuid} (first assignment)");
             } else {
                 LoggerService::info(self::class." - Sending reassignment email for savings quote {$personalQuote->uuid} (reassignment from advisor {$oldAdvisorId})");
                 app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(

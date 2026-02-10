@@ -19,7 +19,6 @@ use App\Services\NationalityAllocationService;
 use App\Services\RuleService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
-use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -313,10 +312,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             //     $this->quoteType->value,
             //     isNonAdvisorEmail: true,
             // );
+            LoggerService::info(self::class.' - Non Advisor Email job dispatched');
         }
-
-        $this->lead->touch('non_advisor_email_sent_at');
-        LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
     protected function getAdvisorsByEmailsOrIds(int $onlineStatus, array $roles, ?array $emails = null, ?array $advisorIds = null)
