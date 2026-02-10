@@ -2,20 +2,24 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
-use App\Http\Controllers\Controller;
 use App\Enums\QuoteStatusEnum;
-use App\Services\QuoteDocumentService;
 use App\Enums\QuoteTypes;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\DeviceQuoteRequest;
 use App\Models\InsuranceProviderPlan;
 use App\Services\AMLService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\Quotes\DeviceQuoteService;
+use App\Traits\CentralTrait;
 
 class DeviceQuoteController extends Controller
 {
+    use CentralTrait;
+
     public function __construct(
         private DeviceQuoteService $deviceQuoteService,
         private QuoteDocumentService $quoteDocumentService
@@ -34,11 +38,13 @@ class DeviceQuoteController extends Controller
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
         $paymentStatuses = app(LookupService::class)->getPaymentStatuses();
         $query = $this->deviceQuoteService->getData();
+   
         $totalCount = count(request()->all()) > 1 || $this->deviceQuoteService->hasOtherFilters() ? $query->count() :
                     $this->deviceQuoteService->getData(forExport: true, getTotalCount: true);
         $data = $query->simplePaginate(10)->withQueryString();
-        $deviceCoverages = $this->deviceQuoteService->getDeviceCoverages();
 
+        $deviceCoverages = $this->deviceQuoteService->getDeviceCoverages();
+     
         return inertia('DeviceQuote/Index', [
             'quotes' => $data,
             'quoteStatuses' => $quoteStatuses,
@@ -49,6 +55,8 @@ class DeviceQuoteController extends Controller
             'paymentStatuses' => $paymentStatuses,
             'devicePlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::DEVICE->id())->select(['id', 'code', 'text'])->get(),
             'deviceCoverages' => $deviceCoverages,
+            'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+            'renewalBatches' => $this->deviceQuoteService->getRenewalBatches(),
         ]);
     }
 
@@ -86,10 +94,13 @@ class DeviceQuoteController extends Controller
     public function show($uuid)
     {
         $data = $this->deviceQuoteService->getShowData($uuid);
+        $planURL = $this->getEcomQuoteLink(QuoteTypes::DEVICE, $uuid);
+
         return inertia('DeviceQuote/Show', array_merge($data,
-        [
-            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
-        ]));
+            [
+                'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+                'planURL' => $planURL,
+            ]));
     }
 
 }

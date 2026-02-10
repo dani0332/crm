@@ -99,27 +99,48 @@ class EmailExportService
         $emailConfig = $this->getEmailConfiguration($subject);
         $emailParams = $this->buildEmailParameters($attachmentFilePath, $requestParams);
 
-        Mail::send(
-            ['html' => 'ExportCSVMail'],
-            $emailParams,
-            function ($message) use ($emailConfig, $recipientEmail, $ccRecipients, $attachmentFilePath) {
-                $message->to($recipientEmail);
+        try {
+            Mail::send(
+                ['html' => 'ExportCSVMail'],
+                $emailParams,
+                function ($message) use ($emailConfig, $recipientEmail, $ccRecipients, $attachmentFilePath) {
+                    $message->to($recipientEmail);
 
-                if (! empty($ccRecipients)) {
-                    $message->cc($ccRecipients);
+                    if (! empty($ccRecipients)) {
+                        $message->cc($ccRecipients);
+                    }
+
+                    $message->subject($emailConfig['subject']);
+                    $message->from($emailConfig['fromEmail'], $emailConfig['fromName']);
+
+                    // Attach file with appropriate MIME type
+                    $mimeType = $this->getMimeType($attachmentFilePath);
+                    $message->attach($attachmentFilePath, [
+                        'as' => basename($attachmentFilePath),
+                        'mime' => $mimeType,
+                    ]);
                 }
+            );
 
-                $message->subject($emailConfig['subject']);
-                $message->from($emailConfig['fromEmail'], $emailConfig['fromName']);
+            // Log successful email send
+            \Illuminate\Support\Facades\Log::info('Export email sent successfully', [
+                'recipient' => $recipientEmail,
+                'subject' => $emailConfig['subject'],
+                'file' => basename($attachmentFilePath),
+            ]);
+        } catch (\Throwable $e) {
+            // Log email sending failure
+            \Illuminate\Support\Facades\Log::error('Failed to send export email', [
+                'recipient' => $recipientEmail,
+                'subject' => $emailConfig['subject'],
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
 
-                // Attach file with appropriate MIME type
-                $mimeType = $this->getMimeType($attachmentFilePath);
-                $message->attach($attachmentFilePath, [
-                    'as' => basename($attachmentFilePath),
-                    'mime' => $mimeType,
-                ]);
-            }
-        );
+            // Re-throw exception so job can handle it properly
+            throw new \Exception("Failed to send email to {$recipientEmail}: {$e->getMessage()}", 0, $e);
+        }
     }
 
     /**
@@ -143,13 +164,12 @@ class EmailExportService
     {
         $emailEnv = config('constants.APP_ENV');
 
+        $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+        $fromName = config('constants.MAIL_FROM_NAME');
+
         if ($emailEnv === EnvEnum::PRODUCTION) {
-            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML', config('constants.MAIL_FROM_ADDRESS'));
-            $fromName = config('constants.MAIL_FROM_NAME_AML', config('constants.MAIL_FROM_NAME'));
             $finalSubject = $subject;
         } else {
-            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
-            $fromName = config('constants.MAIL_FROM_NAME');
             $finalSubject = $emailEnv.' - '.$subject;
         }
 

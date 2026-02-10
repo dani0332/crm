@@ -24,7 +24,6 @@ const props = defineProps({
   memberRelations: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
-  storageUrl: String,
   insuranceProviders: Object,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
@@ -51,7 +50,7 @@ const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
 const leadSource = page.props.leadSource;
-
+const genericRequestEnum = page.props.genericRequestEnum;
 let countDays = ref(useDaysSinceStale(props.quote?.stale_at));
 
 const can = permission => useCan(permission);
@@ -176,7 +175,12 @@ const onLeadStatus = () => {
       },
       onSuccess: response => {
         countDays.value = useDaysSinceStale(response.props.quote?.stale_at);
-        router.reload({ only: ['quote'] });
+        // Optimized partial reload: only reload quote data, preserve state and scroll
+        router.reload({
+          only: ['quote'],
+          preserveState: true,
+          preserveScroll: true,
+        });
       },
     },
   );
@@ -254,8 +258,10 @@ const customerProfileForm = useForm({
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
-    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
-    null,
+    page.props.quote?.latest_insured?.id_type ===
+    genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote?.latest_insured?.id_number
+      : null,
   company_name:
     page.props.quote.company_name ??
     page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
@@ -325,8 +331,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -353,7 +359,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -363,7 +369,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -403,13 +409,16 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     page.props.quote.business_type_of_insurance_id,
   );
 
+// Optimized watcher: use computed for stable reference, reducing reactivity overhead
+const quoteStatusId = computed(() => page.props.quote?.quote_status_id);
 watch(
-  () => page.props.quote.quote_status_id,
+  quoteStatusId,
   (newValue, oldValue) => {
-    if (newValue !== oldValue) {
+    if (newValue !== oldValue && newValue !== undefined) {
       leadStatusForm.leadStatus = newValue;
     }
   },
+  { immediate: false, flush: 'post' },
 );
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
@@ -1277,6 +1286,7 @@ function handleOcrNotification(event) {
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail
@@ -1416,7 +1426,6 @@ function handleOcrNotification(event) {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
@@ -1440,7 +1449,6 @@ function handleOcrNotification(event) {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"

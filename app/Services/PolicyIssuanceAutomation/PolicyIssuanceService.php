@@ -10,7 +10,6 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\TeamNameEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
@@ -57,6 +56,12 @@ class PolicyIssuanceService
 
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+        LoggerService::info('Policy Issuance Allowed Automations Check', extra: [
+            'quote_type' => $quoteType,
+            'insurance_provider' => $insuranceProvider?->code ?? 'N/A',
+            'registration_type' => $quote?->registration_type ?? 'N/A',
+        ]);
 
         if (! $insuranceProvider) {
             return false;
@@ -152,6 +157,33 @@ class PolicyIssuanceService
         }
 
         return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote, $throughAutomation));
+    }
+
+    /**
+     * Returns false incase of automation is enabled and policy issuance is not failed
+     * Returns true incase of automation is disabled or policy issuance is failed
+     *
+     * @param  mixed  $quote
+     * @param  mixed  $quoteType
+     * @return bool
+     */
+    public function shouldValidateBranch($quote, $quoteType)
+    {
+        $payment = $quote?->payments()?->mainLeadPayment()?->first();
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        $insuranceProviderAutomation = $this->init($quoteType, $insuranceProvider?->code);
+        if ($insuranceProviderAutomation?->isPolicyIssuanceAutomationEnabled() == true) {
+
+            $policyIssuance = $quote?->policyIssuance;
+            /* If policy issuance is failed, then we need to check the branch because it will be manually booked */
+            if ($policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS) {
+                return true;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     private function processPolicyIssuanceRecords($policyIssuanceAutomationStatus)
@@ -341,7 +373,7 @@ class PolicyIssuanceService
         ]);
 
         $statusAPIFailed = null;
-        if ($quoteType === QuoteTypes::CAR->value) {
+        if ($quoteType === QuoteTypes::CAR->value && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
@@ -378,23 +410,13 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
         ]);
 
-        /* $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-        if (! $advisorId) {
-            $response = QuoteTypes::getName($quoteType)->allocate($uuid, $unassistedTeamId);
-            if ($response && $response['advisorId']) {
-                $advisorId = $response['advisorId'];
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
-                    'advisorId' => $advisorId,
-                ]);
-            }
-        }
+        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
 
-        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
-            'advisorId' => $advisorId,
-        ]); */
-
-        if ($quoteType === QuoteTypes::CAR->value) {
-            // For other quote types, we need to dispatch respective failure email job
+        if (
+            $quoteType === QuoteTypes::CAR->value &&
+            (! empty($statusAPIFailed) && ! empty($processInvolved)) &&
+            ! $isPolicyBooked
+        ) {
             $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
 
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob', extra: [
@@ -420,7 +442,7 @@ class PolicyIssuanceService
                 'quote status id' => QuoteStatusEnum::PolicyBooked,
             ]);
 
-            if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            if ($isPolicyBooked) {
                 // Here we need to dispatch document email
                 $data = new \stdClass;
                 $data->model_type = $quoteType;
@@ -440,6 +462,7 @@ class PolicyIssuanceService
             PolicyIssuanceEnum::PIA_OCR_PROCESSING_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_OCR_PROCESSING_API_FAILED,
             PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED,
             PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED_STATUS_ID => PolicyIssuanceEnum::PIA_PREVIOUS_POLICY_EXPIRED,
+            PolicyIssuanceEnum::PIA_LEGACY_NON_API_STATUS_ID => PolicyIssuanceEnum::PIA_LEGACY_NON_API,
         ];
 
         if ($onlyKeys) {
@@ -447,5 +470,89 @@ class PolicyIssuanceService
         }
 
         return $status !== null ? ($statuses[$status] ?? null) : $statuses;
+    }
+
+    /**
+     * Toggle policy issuance automation for a quote
+     *
+     * @param  object  $requestData  The quote object
+     * @param  int  $quoteTypeId  The quote type ID
+     * @param  bool  $enabled  Whether to enable or disable automation
+     * @return array Response array with success status, message, and data
+     */
+    public function togglePolicyIssuanceAutomation($requestData, int $quoteTypeId, bool $enabled): array
+    {
+        $response = ['success' => false, 'message' => 'Unable to toggle policy issuance automation, Please try again later.', 'status_code' => 500];
+        $quoteType = QuoteTypes::getName($requestData->quote_type_id)->value;
+        $quote = $this->getQuoteObjectBy($quoteType, $requestData->quote_uuid, 'uuid');
+
+        if (! $quote) {
+            $response['message'] = 'Quote not found';
+            $response['status_code'] = 404;
+
+            return $response;
+        }
+
+        LoggerService::info('Toggle Policy Issuance Automation for Lead', extra: [
+            'quote_uuid' => $quote->uuid,
+            'quote_type_id' => $quoteTypeId,
+            'enabled' => $enabled,
+        ]);
+
+        $insuranceProvider = $quote?->plan?->insuranceProvider;
+        if (! $insuranceProvider) {
+            $response['message'] = 'Insurance provider not found';
+            $response['status_code'] = 404;
+
+            return $response;
+        }
+
+        $isPolicyAutomationEnabled = false;
+        if ($quoteTypeId == QuoteTypeId::Car && $insuranceProvider) {
+            $policyIssuanceService = $this->init($quoteType, $insuranceProvider->code);
+            $isPolicyAutomationEnabled = $policyIssuanceService?->isPolicyIssuanceAutomationEnabled();
+        }
+
+        if (! $isPolicyAutomationEnabled) {
+            $response['message'] = 'Policy automation is not enabled for this insurer';
+            $response['status_code'] = 400;
+
+            return $response;
+        }
+
+        $insurerApiStatus = PolicyIssuanceEnum::PIA_LEGACY_NON_API_STATUS_ID;
+        $isExistingApiStatusLegacyNon = $quote->insurer_api_status_id == PolicyIssuanceEnum::PIA_LEGACY_NON_API_STATUS_ID;
+        if ($enabled && $isExistingApiStatusLegacyNon) {
+            $insurerApiStatus = null;
+        }
+
+        $quoteData = [
+            'policy_issuance_automation_enabled' => $enabled,
+        ];
+
+        if (empty($quote->insurer_api_status_id) || $isExistingApiStatusLegacyNon) {
+            $quoteData['insurer_api_status_id'] = $insurerApiStatus;
+        }
+
+        // Update the policy_issuance_automation_enabled field
+        $quote->update($quoteData);
+
+        LoggerService::info('Policy issuance automation toggled successfully for quote', extra: [
+            'quote_uuid' => $quote->uuid,
+            'quote_code' => $quote->code,
+            'enabled' => $enabled,
+            'user_id' => auth()->id(),
+        ]);
+
+        return [
+            'success' => true,
+            'message' => $enabled
+                ? 'Policy issuance automation enabled successfully'
+                : 'Policy issuance automation disabled successfully',
+            'data' => [
+                'policy_issuance_automation_enabled' => $quote->policy_issuance_automation_enabled,
+            ],
+            'status_code' => 200,
+        ];
     }
 }

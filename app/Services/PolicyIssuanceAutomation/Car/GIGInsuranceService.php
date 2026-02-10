@@ -140,10 +140,12 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     {
         LoggerService::startQuoteLogging($quote);
 
-        if ($this->isPolicyIssuanceAutomationEnabled()) {
+        $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+        if ($this->isPolicyIssuanceAutomationEnabled() && $isQuotePolicyIssuanceAutomationEnabled) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - AXA Car Automation is disabled');
+            $errorMessage = ! $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Quote Policy Issuance Automation is disabled' : 'GIG Car Automation is disabled';
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
         }
 
         return $this->policyIssuance;
@@ -160,10 +162,12 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id.' started');
 
         try {
-            if (! $this->isPolicyIssuanceAutomationEnabled()) {
-                LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - GIG Car Automation is disabled');
-                $response['error'] = 'GIG Car Automation is disabled';
-                $response['message'] = 'GIG Car Automation is disabled';
+            $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+            if (! $this->isPolicyIssuanceAutomationEnabled() || ! $isQuotePolicyIssuanceAutomationEnabled) {
+                $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'GIG Car Automation is disabled' : 'GIG Car Quote Policy Issuance Automation is disabled';
+                LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' - '.$errorMessage);
+                $response['error'] = $errorMessage;
+                $response['message'] = $errorMessage;
 
                 return $response;
             }
@@ -324,7 +328,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             $documentTypeFailedCount = 0;
 
             foreach ($documentsForThisType as $quoteDocument) {
-                $documentFile = Storage::disk('azureIM')->get($quoteDocument->doc_url);
+                $documentFile = Storage::disk('azureIMPrivate')->get($quoteDocument->doc_url);
                 $docFileBase64 = base64_encode($documentFile);
                 // Create payload with guaranteed field order for GIG API
                 $payload = [];
@@ -847,7 +851,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
 
-        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,

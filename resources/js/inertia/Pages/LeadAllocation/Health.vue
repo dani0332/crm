@@ -37,6 +37,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  totalUnassignedLeadsCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
@@ -47,6 +51,7 @@ const params = useUrlSearchParams('history');
 const rolesEnum = page.props.rolesEnum;
 
 const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
+const autoRefresh = ref(true);
 const leadData = ref([
   {
     id: 0,
@@ -56,7 +61,6 @@ const leadData = ref([
     reset: false,
     BlMaxcap: 0,
     BlCapEdit: false,
-    BlAllocationStatus: false,
   },
 ]);
 
@@ -355,9 +359,10 @@ onMounted(() => {
       id: item.id,
       userId: item.userId,
       cap: item.max_capacity,
-
       capEdit: false,
       status: item.is_available,
+      BlMaxcap: item.BLMaxCapacity,
+      BlCapEdit: false,
     };
   });
 });
@@ -428,6 +433,52 @@ const onSubmit = isValid => {
     });
   }
 };
+
+// Real-time polling for unassigned leads count
+async function fetchData() {
+  await router.reload({
+    replace: true,
+    preserveScroll: true,
+    preserveState: true,
+  });
+}
+
+const { pause, resume } = useTimeoutPoll(fetchData, 90000);
+
+watch(
+  () => autoRefresh.value,
+  () => {
+    if (autoRefresh.value) {
+      resume();
+    } else {
+      pause();
+    }
+  },
+  {
+    immediate: true,
+  },
+);
+
+// Watch for changes in props.data to update leadData
+watch(
+  () => props.data,
+  newData => {
+    if (newData && newData.length > 0) {
+      leadData.value = newData.map(item => {
+        return {
+          id: item.id,
+          userId: item.userId,
+          cap: item.max_capacity,
+          capEdit: false,
+          status: item.is_available,
+          BlMaxcap: item.BLMaxCapacity,
+          BlCapEdit: false,
+        };
+      });
+    }
+  },
+  { deep: true },
+);
 </script>
 <template>
   <Head title="Health Lead Allocation" />
@@ -440,6 +491,15 @@ const onSubmit = isValid => {
         size="lg"
         @update:model-value="toggleOption($event, 1)"
       />
+    </div>
+    <div
+      class="flex gap-1"
+      v-if="
+        hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+      "
+    >
+      <h2 class="text-lg font-semibold">Auto Refresh :</h2>
+      <x-toggle v-model="autoRefresh" color="emerald" size="lg" />
     </div>
   </div>
   <x-divider class="my-4" />
@@ -460,9 +520,13 @@ const onSubmit = isValid => {
       <h3>Total Advisors</h3>
       <p>{{ unAvailableUsers + availableUsers ?? 0 }}</p>
     </div>
+    <div class="labox border-red-500">
+      <h3>Total Unassigned Leads</h3>
+      <p>{{ totalUnassignedLeadsCount ?? 0 }}</p>
+    </div>
   </div>
   <div class="mt-5 mb-5">
-    <h2 class="text-lg font-semibold">Unassigned Leads Count</h2>
+    <h2 class="text-lg font-semibold">Cap Changes</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 w-full gap-5">
       <TransitionGroup name="fade">
         <div v-if="isCapChanged" class="col-span-2">

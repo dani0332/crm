@@ -46,10 +46,10 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -161,6 +161,8 @@ class HealthQuoteService extends BaseService
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
+            'insured.id_type as insured_id_type',
+            'insured.id_number as insured_id_number',
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -219,6 +221,11 @@ class HealthQuoteService extends BaseService
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
             'sso.description as sub_source_option_description',
+            'ub.branch_id as advisor_primary_branch_id',
+            'b.name as lead_branch_name',
+            'b.id as lead_branch_id',
+            'is_quote_locked',
+            'is_branch_applicable',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -251,11 +258,17 @@ class HealthQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Health]);
+                $insuredCustomerMapping->where('ic.is_active', '=', true);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id');
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'hqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'hqr.branch_id');
     }
 
     public function getEntity($id)
@@ -359,17 +372,23 @@ class HealthQuoteService extends BaseService
             'isPecMarked' => $request->pec == 1,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
+            $dataArr['advisorId'] = Auth::user()->id;
 
             if (Auth::user()->hasAnyRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
                 $dataArr['supportUserId'] = Auth::user()->id;
-            } else {
-                $dataArr['advisorId'] = Auth::user()->id;
             }
         }
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
 
         if (isset($response->quoteUID)) {
+
+            LoggerService::info('Health saveHealthQuote - after CAPI request - advisorId and supportUserId:', [
+                'advisorId' => $dataArr['advisorId'] ?? null,
+                'supportUserId' => $dataArr['supportUserId'] ?? null,
+                'quoteUID' => $response->quoteUID ?? null,
+            ]);
+
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
             $subTeam = null;
             if (auth()->user()->subTeam) {
@@ -390,6 +409,15 @@ class HealthQuoteService extends BaseService
         $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
         return $query;
+    }
+
+    public function postProcessHealthQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $quote->emirate_of_your_visa_id));
+
+            return $quote;
+        });
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -434,6 +462,10 @@ class HealthQuoteService extends BaseService
     public function updateHealthQuote(Request $request, $id)
     {
         $healthQuote = HealthQuote::where('uuid', $id)->first();
+        if ($healthQuote?->is_quote_locked) {
+            return redirect('quote/health/'.$id)->with('error', 'Edits are not permitted once the lead has reached Transaction Approved status');
+        }
+
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;
@@ -1761,7 +1793,7 @@ class HealthQuoteService extends BaseService
         }
 
         if (! empty($updatedLeadIds)) {
-            $supportUserName = \App\Models\User::find($supportUserId)->name;
+            $supportUserName = \App\Models\User::findOrFail($supportUserId)->name;
 
             return $modelType.' Leads has been Assigned To '.$supportUserName;
         }

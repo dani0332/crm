@@ -8,11 +8,15 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeShortCode;
+use App\Enums\RenewalProcessStatuses;
+use App\Enums\RenewalsUploadType;
 use App\Events\QuoteEmailUpdated;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +24,7 @@ use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
 {
-    use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
     protected $table = 'car_quote_request';
     protected $casts = [
@@ -527,30 +531,25 @@ class CarQuote extends BaseModel
         return $this->is_renewal_tier_email_sent == 1;
     }
 
+    public function isQuotePolicyIssuanceAutomationEnabled()
+    {
+        return $this->policy_issuance_automation_enabled == 1;
+    }
+
     public function isProvider($code)
     {
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Car);
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->active();
     }
 
-    public function insured()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // Foreign key on customer_insured
-            'id',               // Foreign key on insured
-            'id',               // Local key on car_quote_requests
-            'insured_id'        // Local key on customer_insured
-        )->where('quote_type_id', QuoteTypeId::Car);
-    }
-
-    // Get the latest/most recent insured record for this quote
+    // Reminder::Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -560,8 +559,9 @@ class CarQuote extends BaseModel
             'id', // insured.id
             'id', // car_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
-            ->latest('customer_insured.updated_at');
+        )
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Car)
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
@@ -629,4 +629,28 @@ class CarQuote extends BaseModel
             ->with('payments');
     }
 
+    public function branch()
+    {
+        return $this->hasOne(Branch::class, 'id', 'branch_id');
+    }
+
+    public function branchOverride()
+    {
+        return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+
+    public function latestUpdateRenewalQuoteProcess()
+    {
+        return $this->hasOne(RenewalQuoteProcess::class, 'quote_id', 'id')
+            ->where('type', RenewalsUploadType::UPDATE_LEADS)
+            ->where('status', RenewalProcessStatuses::PLANS_FETCHED)
+            ->where('email_sent', 1)
+            ->where('quote_type', QuoteTypeShortCode::CAR)
+            ->latest('created_at');
+    }
+
+    public function hasCarValue()
+    {
+        return ! empty($this->car_value) && $this->car_value > 0;
+    }
 }

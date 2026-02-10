@@ -6,6 +6,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
@@ -153,6 +154,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->activeUser()
             ->when($this->skipRuleUsers, function ($q) {
                 $ruleUserIds = app(RuleService::class)->getRuleUserIds($this->quoteType);
+                $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
                 $q->whereNotIn('users.id', $ruleUserIds);
             })
             ->orderBy('la.last_allocated', 'asc');
@@ -283,6 +285,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             return;
         }
 
+        $excludedAdvisorIds = $this->finalizeExcludedAdvisorIds($excludedAdvisorIds);
+
         $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
 
@@ -318,5 +322,20 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->when(! is_null($advisorIds), fn ($q) => $q->whereIn('users.id', $advisorIds))
             ->logRawSql()
             ->first();
+    }
+    protected function finalizeExcludedAdvisorIds(?array $excludedAdvisorIds): array
+    {
+        if (empty($excludedAdvisorIds)) {
+            return [];
+        }
+
+        $superAdvisorIds = User::whereHas('permissions', function ($query) {
+            $query->where('name', PermissionsEnum::NONRULE_LEADALLOCATION);
+        })->pluck('id')->toArray();
+
+        $excludedAdvisorIds = array_diff($excludedAdvisorIds, $superAdvisorIds);
+        $excludedAdvisorIds = array_values($excludedAdvisorIds);
+
+        return $excludedAdvisorIds;
     }
 }

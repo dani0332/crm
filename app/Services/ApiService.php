@@ -521,7 +521,7 @@ class ApiService
             if (app(BirdService::class)->isFollowupExecuted($quoteUuid, QuoteTypes::CAR->id(), QuoteFlowType::CAR_MISSING_DOC_REMINDER->value)) {
                 LoggerService::info(self::class.': Missing docs reminder already executed');
 
-                return ['success' => false, 'message' => 'Missing docs reminder already executed'];
+                return ['success' => true, 'message' => 'Missing docs reminder already executed'];
             }
             $quote = CarQuote::where('uuid', $quoteUuid)->first();
             LoggerService::startQuoteLogging($quoteUuid);
@@ -595,6 +595,42 @@ class ApiService
                 'message' => 'Verify missing docs failed: '.$e->getMessage(),
                 'isDocumentMissing' => null,
                 'missingDocuments' => null,
+            ];
+        }
+    }
+
+    public function stpAdvisorNotification($request)
+    {
+        try {
+            $quoteType = QuoteTypes::getName($request->quoteTypeId);
+            if (! $quoteType) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid quote type ID',
+                ];
+            }
+            switch ($quoteType) {
+                case QuoteTypes::HEALTH:
+                    $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
+                    if (! $lead) {
+                        return [
+                            'success' => false,
+                            'message' => 'Lead not found',
+                        ];
+                    }
+                    $result = app(HealthEmailService::class)->sendSTPAdvisorNotification($lead, $request->apiFailed);
+
+                    return $result;
+                default:
+                    return [
+                        'success' => false,
+                        'message' => 'Invalid quote type!',
+                    ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'STP Advisor notification failed: '.$e->getMessage(),
             ];
         }
     }

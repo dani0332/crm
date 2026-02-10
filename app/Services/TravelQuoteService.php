@@ -151,6 +151,8 @@ class TravelQuoteService extends BaseService
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
+            'insured.id_type as insured_id_type',
+            'insured.id_number as insured_id_number',
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -200,6 +202,10 @@ class TravelQuoteService extends BaseService
             'ss.description as sub_source_description',
             'sso.text as sub_source_option_text',
             'sso.description as sub_source_option_description',
+            'ub.branch_id as advisor_primary_branch_id',
+            'b.name as lead_branch_name',
+            'b.id as lead_branch_id',
+            'tqr.is_branch_applicable',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -226,13 +232,19 @@ class TravelQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Travel]);
+                $insuredCustomerMapping->where('ic.is_active', '=', true);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
             ->leftJoin('lookups as ss', 'ss.id', '=', 'tqr.sub_source_id')
-            ->leftJoin('lookups as sso', 'sso.id', '=', 'tqr.sub_source_options_id');
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'tqr.sub_source_options_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'tqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'tqr.branch_id');
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
@@ -436,6 +448,15 @@ class TravelQuoteService extends BaseService
 
         return $query;
 
+    }
+
+    public function postProcessTravelQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel));
+
+            return $quote;
+        });
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -1088,6 +1109,17 @@ class TravelQuoteService extends BaseService
                     $duplicateDestination->quote_id = $duplicateLead->id;
                     $duplicateDestination->uuid = $duplicateLead->uuid;
                     $duplicateDestination->save();
+                });
+            }
+
+            // duplicate customer acceptance logs
+            $customerAcceptanceLogs = $leadModal->customerAcceptanceLogs()->get();
+            if ($customerAcceptanceLogs->count() > 0) {
+                LoggerService::info("Duplicating {$customerAcceptanceLogs->count()} customer acceptance logs for lead {$duplicateLead->code}");
+                $customerAcceptanceLogs->each(function ($customerAcceptanceLog) use ($duplicateLead) {
+                    $duplicateCustomerAcceptanceLog = $customerAcceptanceLog->replicate();
+                    $duplicateCustomerAcceptanceLog->quote_uuid = $duplicateLead->uuid;
+                    $duplicateCustomerAcceptanceLog->save();
                 });
             }
 

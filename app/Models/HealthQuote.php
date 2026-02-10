@@ -14,6 +14,7 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +26,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
     protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'has_pec_tag'];
     protected $table = 'health_quote_request';
@@ -168,12 +169,22 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
+    public function vehicleDriverDetail()
+    {
+        return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
+    }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function members()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
+    public function activeMembers()
+    {
+        return $this->members()->whereNull('deleted_at');
     }
 
     public function plan()
@@ -303,6 +314,7 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
+    // Reminder:: this relation is being used for currently insured customer
     public function insured()
     {
         return $this->belongsTo(Customer::class, 'currently_insured_id');
@@ -353,25 +365,15 @@ class HealthQuote extends Model implements AuditableContract
         }
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Health);
+            ->where('quote_type_id', QuoteTypeId::Health)
+            ->active();
     }
 
-    public function insuredDetails()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // Foreign key on customer_insured
-            'id',               // Foreign key on insured
-            'id',               // Local key on health_quote_requests
-            'insured_id'        // Local key on customer_insured
-        )->where('quote_type_id', QuoteTypeId::Health);
-    }
-
-    // Get the latest/most recent insured record for this quote
+    // Reminder::Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -381,8 +383,9 @@ class HealthQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // health_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
-            ->latest('customer_insured.updated_at');
+        )
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Health)
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
@@ -394,12 +397,10 @@ class HealthQuote extends Model implements AuditableContract
     /******************************* Quote Status Logs Related Methods Below *******************************/
     /**
      * Get all quote status logs for this model
-     *
-     * @return MorphMany
      */
     public function quoteStatusLogs(): HasMany
     {
-        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
+        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id')->where('quote_type_id', QuoteTypeId::Health);
     }
 
     /**
@@ -553,5 +554,10 @@ class HealthQuote extends Model implements AuditableContract
     public function subSourceOption()
     {
         return $this->belongsTo(Lookup::class, 'sub_source_options_id');
+    }
+
+    public function branch()
+    {
+        return $this->hasOne(Branch::class, 'id', 'branch_id');
     }
 }

@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
+use App\Models\QuoteType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RuleRequest extends FormRequest
 {
@@ -26,6 +30,7 @@ class RuleRequest extends FormRequest
             'rule_type' => 'required',
             'is_active' => 'boolean',
             'rule_users' => 'required|array',
+            'quote_type_id' => ['required', 'integer', Rule::exists(QuoteType::class, 'id')],
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
@@ -42,7 +43,7 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->uuid);
+        LoggerService::startQuoteLogging($this->uuid, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
 
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {
@@ -123,7 +124,7 @@ class WatermarkDocumentsJob implements ShouldQueue
     {
         try {
             // For local storage
-            if (Storage::disk('azureIM')->exists($path)) {
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
                 return true;
             }
 

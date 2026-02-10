@@ -120,7 +120,9 @@ function onSubmit(isValid) {
       </h2>
       <div>
         <Link :href="route('device-quotes-list')">
-          <x-button size="sm" color="#ff5e00"> Device Quotes List </x-button>
+          <x-button size="sm" color="#ff5e00">
+            Smartphone Quotes List
+          </x-button>
         </Link>
       </div>
     </div>

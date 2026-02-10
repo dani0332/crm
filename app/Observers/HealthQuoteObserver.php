@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
@@ -21,6 +22,7 @@ use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
@@ -55,7 +57,7 @@ class HealthQuoteObserver
         ) {
             // Trigger the event for transaction approval
             HealthTransactionApproved::dispatch($healthQuote);
-            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
+            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at, 'is_quote_locked' => true];
         }
 
         if (isset($dirty['advisor_id'])) {
@@ -109,8 +111,6 @@ class HealthQuoteObserver
             $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
         }
 
-        $this->syncQuote($healthQuote, $dirty);
-
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
                 $this->updatePersonalQuote($healthQuote->uuid, QuoteTypeId::Health, $dirty);
@@ -120,7 +120,23 @@ class HealthQuoteObserver
                     'uuid' => $healthQuote->uuid,
                 ]);
             }
+
+            try {
+                HealthQuote::withoutEvents(function () use ($healthQuote, &$dirty) {
+                    $branch = app(BranchAssignmentService::class)->getBranch($healthQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Health, $healthQuote->emirate_of_your_visa_id);
+                    $healthQuote->update([
+                        'branch_id' => $branch?->id,
+                    ]);
+                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                });
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - save branch data failed', [
+                    'uuid' => $healthQuote->uuid,
+                ], exception: $e);
+            }
         }
+
+        $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
             info("Quote status changed to {$healthQuote->quote_status_id} | Ref-ID: {$healthQuote->uuid} | Time: ".now());
@@ -136,7 +152,24 @@ class HealthQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicyBooked])
+        ) {
             event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($healthQuote->uuid, QuoteTypeId::Health);
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $healthQuote->uuid]);
+            }
         }
 
         if (
@@ -146,11 +179,18 @@ class HealthQuoteObserver
             SendPolicyIssueWhatsappMessageJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH->id())->onQueue('insly');
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
-            event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
         }
 
         if (isset($dirty['quote_status_id'])) {
             app(SLAService::class)->meetSLAOnStatusUpdate($healthQuote);
+        }
+
+        if (isset($dirty['aml_status'])) {
+            app(SLAService::class)->meetSLAOnAMLStatusUpdate($healthQuote);
+        }
+
+        if (isset($dirty['kyc_decision'])) {
+            app(SLAService::class)->meetSLAOnKYCStatusUpdate($healthQuote);
         }
     }
 }

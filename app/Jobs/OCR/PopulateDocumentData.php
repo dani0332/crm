@@ -15,6 +15,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\Skip;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class PopulateDocumentData implements ShouldQueue
 {
@@ -37,6 +38,7 @@ class PopulateDocumentData implements ShouldQueue
         protected int $userId,
         bool $isEcom = false,
         protected bool $isSendUpdateEligibleForOCR = false,
+        protected int $memberDetailId = 0,
     ) {
         $this->isEcom = $isEcom;
         $this->onQueue('shared');
@@ -74,6 +76,7 @@ class PopulateDocumentData implements ShouldQueue
                 $this->userId,
                 $this->isEcom,
                 $this->isSendUpdateEligibleForOCR,
+                $this->memberDetailId,
             );
 
             if ($isSuccess === null) {
@@ -138,15 +141,18 @@ class PopulateDocumentData implements ShouldQueue
 
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
         $isOCRCustomerJourneyEnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED, useCache: true) == '1';
+        $isOCRCustomerJourneyQuoteTypeEnabled = $this->isOCRCustomerJourneyQuoteTypeEnabled();
 
         $isCustomerJourneyDoc = in_array($docType, [
             OCRDocumentTypeEnum::ID_CARD,
+            OCRDocumentTypeEnum::DRIVER_EMIRATES_ID,
             OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE,
             OCRDocumentTypeEnum::DRIVING_LICENSE,
+            OCRDocumentTypeEnum::PASSPORT,
         ]);
 
         $isOCRDocEnabled = OCRDocumentTypeEnum::isOCREnabled($this->documentType, $this->quoteType);
-        $willRun = $isOCREnabled && $isOCRDocEnabled && (! $isCustomerJourneyDoc || $isOCRCustomerJourneyEnabled);
+        $willRun = $isOCREnabled && $isOCRDocEnabled && $isOCRCustomerJourneyQuoteTypeEnabled && (! $isCustomerJourneyDoc || $isOCRCustomerJourneyEnabled);
 
         LoggerService::info(self::class.'::middleware - OCR Job Middleware Check', [
             'quote_type' => $this->quoteType->value,
@@ -156,13 +162,30 @@ class PopulateDocumentData implements ShouldQueue
             'is_ocr_doc_enabled' => $isOCRDocEnabled,
             'is_customer_journey_doc' => $isCustomerJourneyDoc,
             'is_customer_journey_enabled' => $isOCRCustomerJourneyEnabled,
+            'is_ocr_customer_journey_quotetype_enabled' => $isOCRCustomerJourneyQuoteTypeEnabled,
             'will_run' => $willRun,
             'decision' => $willRun ? 'Job will execute' : 'Job will be skipped',
         ]);
 
+        // Create unique lock key based on quote ID, document type ID, and document path to prevent duplicate processing
+        $lockKey = 'ocr-populate-'.$this->quote->id.'-'.$this->documentType->id.'-'.md5($this->documentPath);
+
         return [
             Skip::unless(fn () => $willRun),
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease()
+                ->expireAfter($this->timeout), // Lock expires after timeout seconds
         ];
+    }
+
+    private function isOCRCustomerJourneyQuoteTypeEnabled()
+    {
+        switch ($this->quoteType) {
+            case QuoteTypes::HEALTH:
+                return getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED, useCache: true) == '1';
+            default:
+                return true;
+        }
     }
 
     public function failed(\Throwable $exception)
