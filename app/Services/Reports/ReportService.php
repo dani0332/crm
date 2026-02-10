@@ -694,9 +694,12 @@ class ReportService extends BaseService
         if ($user->isAdvisor()) {
             $query->where('personal_quotes.advisor_id', $user->id);
         } else {
-            $query->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->whereIn('teams.id', $userTeams);
+            $query->whereExists(function ($subQuery) use ($userTeams) {
+                $subQuery->select(DB::raw(1))
+                    ->from('user_team')
+                    ->whereColumn('user_team.user_id', 'personal_quotes.advisor_id')
+                    ->whereIn('user_team.team_id', $userTeams);
+            });
         }
         if (isset($request->userIds)) {
             $query->whereIn('advisor_id', $request->userIds);
