@@ -205,6 +205,9 @@ watch(
             <template #item-created_at="{ created_at }">
               {{ new Date(created_at).toLocaleString() }}
             </template>
+            <template #item-log_data="{ log_data }">
+              {{ JSON.stringify(log_data) }}
+            </template>
             <template #item-action="item">
               <div style="width: 60px;">
                 <x-button
@@ -253,7 +256,7 @@ watch(
           <dl class="">
             <dt class="font-medium mb-2">Log Data:</dt>
             <div class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded">
-              <pre class="whitespace-pre-wrap">{{JSON.parse(selectedLog.log_data)}}</pre>
+              <pre class="whitespace-pre-wrap">{{selectedLog.log_data}}</pre>
             </div>
           </dl>
         </div>

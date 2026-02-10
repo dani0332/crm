@@ -34,9 +34,6 @@ const validateTeams = () => {
     };
   });
 
-  console.log(teams.length);
-  return false;
-
   for (let i = 0; i < teams.length; i++) {
     const minPriceValue = parseFloat(
       teams[i] && teams[i].min_price == '' ? 0 : teams[i].min_price,

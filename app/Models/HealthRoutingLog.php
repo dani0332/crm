@@ -16,6 +16,9 @@ class HealthRoutingLog extends Model
         'log_data',
     ];
     protected $appends = ['logged_by_name'];
+    protected $casts = [
+        'log_data' => 'array',
+    ];
 
     public function user(): BelongsTo
     {

@@ -27,7 +27,7 @@ class HealthTeamRoutingLogService
                 'uuid' => $uuid,
                 'type' => $type->value,
                 'team_category' => $teamCategory?->value,
-                'log_data' => json_encode($logData),
+                'log_data' => $logData,
                 'logged_by' => $loggedBy,
             ]);
         } catch (\Exception $e) {
