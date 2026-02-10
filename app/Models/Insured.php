@@ -33,11 +33,6 @@ class Insured extends Model implements AuditableContract
         });
     }
 
-    public function entity()
-    {
-        return $this->hasOne(Entity::class, 'id', 'entity_id');
-    }
-
     /**
      * Normalize Emirates ID before creating a new model instance
      */

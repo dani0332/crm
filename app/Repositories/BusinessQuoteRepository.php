@@ -52,7 +52,6 @@ class BusinessQuoteRepository extends BaseRepository
             'businessTypeOfInsurance',
             'subSource',
             'branch:id,name',
-            'latestInsured.entity',
         ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
@@ -97,7 +96,6 @@ class BusinessQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($queryWhere)
     {
-        $quoteTypeId = QuoteTypes::BUSINESS->id();
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
@@ -108,11 +106,8 @@ class BusinessQuoteRepository extends BaseRepository
                 'customer',
                 'transactionType',
                 'insuranceProviderDetails',
-                'latestInsured' => function ($q) use ($quoteTypeId) {
-                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
-                },
+                'latestInsured',
                 'latestInsured.insuredKyc:id,insured_id',
-                'latestInsured.entity',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
