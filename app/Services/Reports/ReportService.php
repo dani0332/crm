@@ -14,7 +14,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadSource;
@@ -31,7 +30,6 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ReportService extends BaseService
 {
@@ -662,7 +660,8 @@ class ReportService extends BaseService
             : $user->getUserTeamIds();
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
-        $quoteTypeId = $request->quoteTypeId;
+        $quoteTypeId = $request->quoteTypeId ?: null;
+        $allowedQuoteTypeIds = getAllowedQuoteTypeIds($user, $quoteTypeId);
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $dataCollection = collect();
@@ -682,9 +681,7 @@ class ReportService extends BaseService
             )
             ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
-            ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId) {
-                return $query->where('personal_quotes.quote_type_id', $quoteTypeId);
-            });
+            ->whereIn('personal_quotes.quote_type_id', $allowedQuoteTypeIds);
         $query->where(function ($query) use ($thirtyDaysAgo) {
             $query->where(function ($q) use ($thirtyDaysAgo) {
                 $q->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)

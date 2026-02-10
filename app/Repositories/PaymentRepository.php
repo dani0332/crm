@@ -13,6 +13,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\SendFTCEmailJob;
@@ -25,6 +26,7 @@ use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PaymentLinkService;
+use App\Services\Reports\ReportService;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -1151,15 +1153,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $isManager = $user->hasAnyRole(getManagerRoles());
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
+        // Get allowed quote type IDs based on user roles using ReportService
+        $allowedQuoteTypeIds = getAllowedQuoteTypeIds($user);
+
         return Payment::query()
-            ->whereHas('personalQuote', function ($query) use ($isManager, $userTeamIds, $user) {
+            ->whereHas('personalQuote', function ($query) use ($isManager, $userTeamIds, $user, $allowedQuoteTypeIds) {
                 $query->when($isManager, function ($q) use ($userTeamIds) {
                     $q->whereHas('advisor.teams', function ($teamQuery) use ($userTeamIds) {
                         $teamQuery->whereIn('teams.id', $userTeamIds);
                     });
                 }, function ($q) use ($user) {
                     $q->where('advisor_id', $user->id);
-                });
+                })
+                    ->whereIn('quote_type_id', $allowedQuoteTypeIds);
             })
             ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->where('authorized_at', '>=', $thirtyDaysAgo)
