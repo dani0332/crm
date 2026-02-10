@@ -55,7 +55,8 @@ const validateTeams = () => {
       notification.error({
         title: {
           team: teams[i].name,
-          error: 'Tier start values must increase sequentially and must not overlap or skip ranges',
+          error:
+            'Tier start values must increase sequentially and must not overlap or skip ranges',
         },
         position: 'top',
       });
