@@ -655,7 +655,7 @@ class ReportService extends BaseService
     public function getPaymentAuthorisedSummary($request)
     {
         $user = auth()->user();
-        
+
         // Validate and sanitize team filter
         $userOwnTeamIds = $user->getUserTeamIds();
         if (! empty($request->selectedTeams)) {
@@ -669,7 +669,7 @@ class ReportService extends BaseService
         } else {
             $userTeams = $userOwnTeamIds;
         }
-        
+
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
         $quoteTypeId = $request->quoteTypeId ?: null;
