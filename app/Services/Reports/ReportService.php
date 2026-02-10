@@ -655,9 +655,21 @@ class ReportService extends BaseService
     public function getPaymentAuthorisedSummary($request)
     {
         $user = auth()->user();
-        $userTeams = ! empty($request->selectedTeams)
-            ? (is_array($request->selectedTeams) ? $request->selectedTeams : [$request->selectedTeams])
-            : $user->getUserTeamIds();
+        
+        // Validate and sanitize team filter
+        $userOwnTeamIds = $user->getUserTeamIds();
+        if (! empty($request->selectedTeams)) {
+            $requestedTeams = is_array($request->selectedTeams) ? $request->selectedTeams : [$request->selectedTeams];
+            // Only allow teams that the user actually belongs to
+            $userTeams = array_intersect($requestedTeams, $userOwnTeamIds);
+            // If no valid teams after intersection, fall back to all user's teams
+            if (empty($userTeams)) {
+                $userTeams = $userOwnTeamIds;
+            }
+        } else {
+            $userTeams = $userOwnTeamIds;
+        }
+        
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
         $quoteTypeId = $request->quoteTypeId ?: null;
