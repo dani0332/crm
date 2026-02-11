@@ -141,6 +141,15 @@ class NgiInsuranceService implements PolicyIssuanceInterface
                 $customer = $quote->customer ?? null;
                 $deviceQuote = $quote->deviceQuote ?? null;
                 $latestInsured = $quote?->latestInsured ?? null;
+
+                LoggerService::info('NGI Smartphone Automation Related models loaded', extra: [
+                    'process_id' => $process->id,
+                    'quote' => $quote->toArray(),
+                    'customer' => $customer?->toArray(),
+                    'deviceQuote' => $deviceQuote?->toArray(),
+                    'latestInsured' => $latestInsured?->toArray(),
+                ]);
+
                 $validationResult = $this->validationService->validateRequiredData($quote, $customer, $deviceQuote, $latestInsured);
 
                 if ($validationResult['status']) {
