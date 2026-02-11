@@ -30,6 +30,7 @@ use App\Models\PetQuoteRequestDetail;
 use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
+use App\Models\User;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
@@ -72,8 +73,6 @@ enum QuoteTypes: string
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
     case CAR_CAT_A = 'CAR_CAT_A';
-    case DEVICE = 'Device';
-    case CYBER = 'Cyber';
 
     public function id(): string
     {
@@ -322,6 +321,71 @@ enum QuoteTypes: string
             self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             default => [],
         };
+    }
+
+    /**
+     * Get the primary LOB types used for role-based filtering and reporting.
+     *
+     * @return array<self>
+     */
+    public static function primaryTypes(): array
+    {
+        return [
+            self::CAR,
+            self::HOME,
+            self::HEALTH,
+            self::LIFE,
+            self::BUSINESS,
+            self::BIKE,
+            self::YACHT,
+            self::TRAVEL,
+            self::PET,
+            self::CYCLE,
+            self::JETSKI,
+            self::SAVINGS,
+            self::DEVICE,
+            self::CYBER,
+        ];
+    }
+
+    /**
+     * Check if a user has role-based or permission-based access to this quote type.
+     */
+    public function userHasAccess(User $user): bool
+    {
+        $userRoles = $user->getRoleNames()->toArray();
+
+        if (in_array(RolesEnum::Admin, $userRoles)) {
+            return true;
+        }
+
+        $hasRole = in_array($this->name.'_ADVISOR', $userRoles)
+            || in_array($this->name.'_MANAGER', $userRoles);
+
+        if ($hasRole) {
+            return true;
+        }
+
+        return $user->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($this);
+    }
+
+    /**
+     * Get allowed quote type IDs based on user roles and selected LOB filter.
+     *
+     * @return array<int>
+     */
+    public static function allowedIdsForUser(User $user, ?int $quoteTypeId = null): array
+    {
+        if ($quoteTypeId !== null) {
+            return [$quoteTypeId];
+        }
+
+        return collect(self::primaryTypes())
+            ->filter(fn (self $quoteType) => $quoteType->userHasAccess($user))
+            ->map(fn (self $quoteType) => self::getId($quoteType))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     /**

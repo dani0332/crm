@@ -1152,8 +1152,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $isManager = $user->hasAnyRole(getManagerRoles());
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        // Get allowed quote type IDs based on user roles using ReportService
-        $allowedQuoteTypeIds = getAllowedQuoteTypeIds($user);
+        $allowedQuoteTypeIds = QuoteTypes::allowedIdsForUser($user);
 
         return Payment::query()
             ->whereHas('personalQuote', function ($query) use ($isManager, $userTeamIds, $user, $allowedQuoteTypeIds) {

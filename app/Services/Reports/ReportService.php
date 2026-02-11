@@ -672,9 +672,8 @@ class ReportService extends BaseService
 
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
-        /** @var QuoteTypes|null $quoteType */
-        $quoteType = $request->quoteTypeId ? QuoteTypes::getName($request->quoteTypeId) : null;
-        $allowedQuoteTypeIds = getAllowedQuoteTypeIds($user, $quoteType);
+        $quoteTypeId = $request->quoteTypeId ? (int) $request->quoteTypeId : null;
+        $allowedQuoteTypeIds = QuoteTypes::allowedIdsForUser($user, $quoteTypeId);
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $dataCollection = collect();
