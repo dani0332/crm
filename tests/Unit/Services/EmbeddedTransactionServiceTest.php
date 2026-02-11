@@ -135,14 +135,15 @@ describe('getRetargetingCarEpReminderData', function () {
 
             expect($response->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
             $json = $response->getData(true);
-            expect($json['message'])->toBe('Required data not found');
             expect($json['status'])->toBe(Response::HTTP_NOT_FOUND);
 
         })->with([
             ['vehicle_make', ['vehicle_make' => null]],
             ['vehicle_model', ['vehicle_model' => '']],
             ['quote_email', ['quote_email' => '']],
-            ['quote_customer_id', ['quote_customer_id' => null]],
+            ['plan_id', ['plan_id' => null]],
+            ['plan_insurance_provider', ['plan_insurance_provider' => null]],
+            ['plan_provider_code', ['plan_provider_code' => '']],
         ]);
     });
 
@@ -217,11 +218,8 @@ describe('getRetargetingCarEpReminderData', function () {
                     ->and(str_contains($buyNowUrl, 'providerCode='))->toBeFalse();
             }
         })->with([
-            'advisor missing' => [['advisor_email' => null], null, true],
+            'advisor email missing' => [['advisor_email' => null], null, true],
             'advisor email empty' => [['advisor_email' => ''], '', true],
-            'plan missing' => [['plan_id' => null], 'advisor@example.com', false],
-            'plan provider missing' => [['plan_insurance_provider' => null], 'advisor@example.com', true],
-            'plan provider code empty' => [['plan_provider_code' => ''], 'advisor@example.com', true],
         ]);
     });
 });

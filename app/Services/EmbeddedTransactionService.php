@@ -112,24 +112,23 @@ class EmbeddedTransactionService extends BaseService
         $carMake = $quote->carMake?->text ?? null;
         $carModel = $quote->carModel?->text ?? null;
         $epShortCode = $embeddedTransaction->product?->embeddedProduct?->short_code ?? null;
+        $planId = $quote->plan?->id ?? null;
+        $providerCode = $quote->plan?->insuranceProvider?->code ?? null;
+
         if (empty($carMake) || empty($carModel) || empty($epShortCode) || empty($quote->email)) {
             LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quote]);
-
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
         }
 
-        $buyNowUrlQueryParams = [];
-        if (! empty($quote->plan?->id ?? null)) {
-            $buyNowUrlQueryParams['planId'] = $quote->plan?->id;
-        }
-        $providerCode = $quote->plan?->insuranceProvider?->code ?? null;
-        if (! empty($providerCode)) {
-            $buyNowUrlQueryParams['providerCode'] = $providerCode;
+        if (empty($planId) || empty($providerCode)) {
+            LoggerService::info('getRetargetingCarEpReminderData: planId or providerCode not found', extra: ['planId' => $planId, 'providerCode' => $providerCode]);
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'PlanId or ProviderCode not found');
         }
 
         $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid
             .'/payment/?'.http_build_query([
-                ...$buyNowUrlQueryParams,
+                'planId' => $planId,
+                'providerCode' => $providerCode,
                 'selectEpShortCode' => $epShortCode,
             ]);
 
