@@ -1094,7 +1094,7 @@ class RenewalBatchReportService extends BaseService
     protected function getCachedInsuranceProviders()
     {
         return Cache::remember('active_insurance_providers_collection', now()->addDay(), function () {
-            return InsuranceProvider::active()
+            return InsuranceProvider::where('is_active', 1)
                 ->select('id', 'text')
                 ->orderBy('text')
                 ->get();
