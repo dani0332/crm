@@ -69,6 +69,7 @@ const props = defineProps({
   quoteType: String,
   quoteTypeCodeEnum: Object,
   isLifePlanDetailsEnabled: Boolean,
+  sendUpdate: Object,
 });
 
 const totalPriceFormat = computed(() => {
@@ -103,9 +104,11 @@ const isLifeQuoteFrequencyReadonly = computed(() => {
 });
 
 // Computed property to check if frequency should be readonly/disabled for savings quotes
+// Only for Savings quotes, not for send update
 const isSavingsQuoteFrequencyReadonly = computed(() => {
   return (
-    props.quoteType === props.quoteTypeCodeEnum.SAVINGS
+    props.quoteType === props.quoteTypeCodeEnum.SAVINGS &&
+    !props.sendUpdate
   );
 });
 
