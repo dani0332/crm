@@ -57,6 +57,7 @@ class CarAllocation implements Allocation
             return Pipeline::send($allocationRequest)->through($pipes)->thenReturn();
 
         } catch (Exception $e) {
+            dd($e);
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }
     }
@@ -66,7 +67,7 @@ class CarAllocation implements Allocation
         $basePipes = [
             FetchLeadPipe::class,
             VerifyLeadPreChecksPipe::class,
-            VerifyAlreadyInProgressAllocationPipe::class,
+            // VerifyAlreadyInProgressAllocationPipe::class,
             EvaluateTierPipe::class,
         ];
 

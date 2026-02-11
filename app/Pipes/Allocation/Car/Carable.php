@@ -97,23 +97,70 @@ trait Carable
 
             return $this->getRulesForVehicleUse($lead);
         } else {
+            $ruleId = $this->findLeadSourceRuleId($lead);
+
             $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
                 ->join('rules', 'rules.id', 'rule_details.rule_id')
                 ->join('rule_users', 'rule_users.rule_id', 'rules.id')
                 ->join('users', 'users.id', 'rule_users.user_id')
-                ->where('lead_sources.name', $lead->source)
-                ->where('rules.is_active', 1)
-                ->where('lead_sources.is_applicable_for_rules', 1)
                 ->groupBy('rule_details.lead_source_id')
+                ->where('rules.id', $ruleId)
                 ->select(
                     'lead_sources.name AS leadSourceName',
                     'lead_sources.id AS leadSourceId',
                     DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-                );
-            LoggerService::info(self::class.'- Lead is not registered as a company, applying  rules for lead');
+                )->get();
 
-            return $records->get();
+            return $records;
         }
+    }
+
+    private function findLeadSourceRuleId($lead)
+    {
+        $rules = Rule::select('rules.id', 'rules.name', 'lead_sources.name as leadSourceName', 'rule_details.utm_campaign')
+                ->join('rule_details', 'rule_details.rule_id', 'rules.id')
+                ->join('lead_sources', 'lead_sources.id', 'rule_details.lead_source_id')
+                ->where('lead_sources.is_applicable_for_rules', 1)
+                ->where('rules.is_active', 1)
+                ->where('lead_sources.name', $lead->source)
+                ->where('quote_type_id', QuoteTypes::CAR->id())
+                ->get();
+
+        if($rules->isEmpty()) {
+            return null;
+        }
+
+        $hasUtmCampaignRule = $rules->filter(fn($rule) => !empty($rule->utm_campaign))->isNotEmpty();
+
+        /**
+         * if there is no utm campaign rule, then return rule id without utm campaign
+         * so lead can pick that rule which doesn't have utm campaign and just lead source
+         */
+        if(!$hasUtmCampaignRule) {
+            return $rules->first()->id;
+        }
+
+        $utmCampaign = $lead->carQuoteRequestDetail->utm_campaign;
+
+        /**
+         * if utm campaign is empty for the lead, then return rule id without utm campaign
+         * so lead can pick that rule which doesn't have utm campaign and just lead source
+         */
+        if(empty($utmCampaign)) {
+            return $rules->filter(fn($rule) => empty($rule->utm_campaign))->first()?->id ?? null;
+        }
+
+        /**
+         * if utm campaign is not empty for the lead, then return rule id with utm campaign
+         * so lead can pick that rule which has utm campaign along with lead source
+         */
+        $campaignRule = $rules->where('utm_campaign', $utmCampaign)->first();
+
+        if(!$campaignRule) {
+            return null;
+        }
+
+        return $campaignRule->id;
     }
 
     private function getCommercialRule()
