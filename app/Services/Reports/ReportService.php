@@ -679,27 +679,51 @@ class ReportService extends BaseService
         $dataCollection = collect();
         $premiumColumn = 'personal_quotes.premium';
 
+        // Build payment join conditions based on filters
+        $paymentJoinConditions = function ($join) use ($request, $expiryDays, $thirtyDaysAgo) {
+            $join->on('py.code', '=', 'personal_quotes.code')
+                ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+                ->where('py.authorized_at', '>=', $thirtyDaysAgo);
+
+            if (isset($request->expireDate)) {
+                $date = Carbon::parse($request->expireDate)->startOfDay();
+                $join->whereRaw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY) <= ?', [$date]);
+            }
+
+            if (isset($request->todayDate)) {
+                $join->whereRaw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) = 1");
+            }
+
+            if (isset($request->tomorrowDate)) {
+                $join->whereRaw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) = 2");
+            }
+
+            if (isset($request->thisWeek)) {
+                $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
+                $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
+                $join->whereRaw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY) BETWEEN ? AND ?', [$startOfWeek, $endOfWeek]);
+            }
+
+            if (isset($request->customDate)) {
+                $startDate = Carbon::parse($request->customDate[0])->startOfDay();
+                $endDate = Carbon::parse($request->customDate[1])->endOfDay();
+                $join->whereRaw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY) BETWEEN ? AND ?', [$startDate, $endDate]);
+            }
+        };
+
         $query = DB::table('personal_quotes')
             ->select(
                 'users.id as advisor_id',
                 'users.name as advisor_name',
-                'personal_quotes.quote_status_id',
                 DB::raw('COUNT(DISTINCT personal_quotes.code) as total_leads'),
-                DB::raw('SUM('.$premiumColumn.') as total_premium'),
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days"),
+                DB::raw('SUM(DISTINCT '.$premiumColumn.') as total_premium'),
                 DB::raw('DATE_FORMAT(MIN(personal_quotes.created_at), "%d-%m-%Y") as created_at_start'),
                 DB::raw('DATE_FORMAT(MAX(personal_quotes.created_at), "%d-%m-%Y") as created_at_end')
             )
-            ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+            ->leftJoin('payments as py', $paymentJoinConditions)
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->whereIn('personal_quotes.quote_type_id', $allowedQuoteTypeIds);
-        $query->where(function ($query) use ($thirtyDaysAgo) {
-            $query->where(function ($q) use ($thirtyDaysAgo) {
-                $q->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                    ->where('py.authorized_at', '>=', $thirtyDaysAgo);
-            });
-        });
+        $query->whereNotNull('py.code');
         $query->where('personal_quotes.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
         if ($user->isAdvisor()) {
             $query->where('personal_quotes.advisor_id', $user->id);
@@ -734,31 +758,6 @@ class ReportService extends BaseService
                     $query->where('cqr.vehicle_use', $request->vehicle_use);
                 }
             }
-        }
-
-        if (isset($request->expireDate)) {
-            $date = Carbon::parse($request->expireDate)->startOfDay();
-            $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $date);
-        }
-
-        if (isset($request->todayDate)) {
-            $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 1);
-        }
-
-        if (isset($request->tomorrowDate)) {
-            $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 2);
-        }
-
-        if (isset($request->thisWeek)) {
-            $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
-            $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
-            $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
-        }
-
-        if (isset($request->customDate)) {
-            $startDate = Carbon::parse($request->customDate[0])->startOfDay();
-            $endDate = Carbon::parse($request->customDate[1])->endOfDay();
-            $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
         }
 
         $dataCollection = $dataCollection->merge($query->groupBy('users.id')
