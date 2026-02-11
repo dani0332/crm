@@ -566,14 +566,13 @@ $filePathAzure = 'documents/' . ucwords($quoteType) . '/' . $fileNameAzure;
                     • <strong>Main Lead:</strong> quote_documentable_type = Quote Model (e.g., HealthQuote, TravelQuote)<br>
                     • <strong>Send Update:</strong> quote_documentable_type = SendUpdateLog<br>
                     • <strong>quote_documentable_id:</strong> References either quote.id or send_update_log.id<br><br>
-                    
                     This allows versioning to be scoped correctly:
-                    <ul style="margin-top: 10px; padding-left: 20px;">
-                        <li>Main lead versions belong to quote</li>
-                        <li>Each send update tracks its own proforma versions independently</li>
-                        <li>Querying documents()->where() returns version count for correct scope</li>
-                    </ul>
                 </p>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li>Main lead versions belong to quote</li>
+                    <li>Each send update tracks its own proforma versions independently</li>
+                    <li>Querying documents()->where() returns version count for correct scope</li>
+                </ul>
             </div>
         </section>
 

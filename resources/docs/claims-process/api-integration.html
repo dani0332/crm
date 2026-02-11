@@ -518,7 +518,7 @@ public function searchActivePolicies(
         throw $e;
     }
 }
-            </code>
+            </div>
 
             <div class="auth-section">
                 <h4>🔐 Internal System Security</h4>
@@ -603,7 +603,7 @@ public function createClaim(array $claimData): array
         throw $e;
     }
 }
-            </code>
+            </div>
 
             <div class="auth-section">
                 <h4>🔐 CPAPI Authentication</h4>
@@ -691,7 +691,7 @@ public function optimizeMessageWithAI(string $message, string $claimUuid): array
         ];
     }
 }
-            </code>
+            </div>
 
             <div class="response-example">
                 <h4>📤 AI Response Structure</h4>
@@ -772,7 +772,7 @@ public function optimizeMessageWithAI(string $message, string $claimUuid): array
    - Fallback to original message if AI service fails
    - Background processing for non-critical optimizations
    - Comprehensive logging for debugging and monitoring
-            </code>
+            </div>
         </div>
 
         <div class="content-section">
@@ -833,7 +833,7 @@ public function checkRateLimit(string $userId, string $endpoint): bool
     Cache::put($key, $attempts + 1, now()->addMinute());
     return true;
 }
-            </code>
+            </div>
         </div>
 
         <div class="content-section">
@@ -898,7 +898,7 @@ private function checkPerformanceAlerts(string $endpoint, float $responseTime, b
         event(new ApiPerformanceAlert($endpoint, $recentErrorRate, 'high_error_rate'));
     }
 }
-            </code>
+            </div>
         </div>
 
         <div class="footer">
