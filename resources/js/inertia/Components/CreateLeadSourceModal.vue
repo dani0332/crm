@@ -30,14 +30,14 @@ const onSubmit = isValid => {
     })
     .then(response => {
       const newLeadSource = response.data.data;
-      
+
       // Emit the created event with the new lead source data
       emit('created', newLeadSource);
-      
+
       // Reset form and close modal
       resetForm();
       isModalOpen.value = false;
-      
+
       // Show success notification
       const notifications = useNotifications();
       notifications.addNotification({
@@ -48,7 +48,7 @@ const onSubmit = isValid => {
     })
     .catch(error => {
       leadSourceForm.processing = false;
-      
+
       // Handle validation errors
       if (error.response && error.response.data && error.response.data.errors) {
         Object.keys(error.response.data.errors).forEach(key => {
@@ -60,7 +60,8 @@ const onSubmit = isValid => {
         notifications.addNotification({
           type: 'error',
           title: 'Error',
-          message: error.response?.data?.message || 'Failed to create lead source.',
+          message:
+            error.response?.data?.message || 'Failed to create lead source.',
         });
       }
     });
@@ -94,11 +95,7 @@ watch(isModalOpen, newValue => {
     backdrop
     persistent
   >
-    <x-form
-      id="createLeadSourceForm"
-      @submit="onSubmit"
-      :auto-focus="false"
-    >
+    <x-form id="createLeadSourceForm" @submit="onSubmit" :auto-focus="false">
       <div class="grid gap-4">
         <x-input
           v-model="leadSourceForm.name"
