@@ -78,6 +78,11 @@ class RulesController extends Controller
 
         // Create rule detail if lead_source_id is provided
         if ($request->filled('lead_source_id')) {
+            // Ensure lead source is applicable for rules
+            LeadSource::where('id', $request->lead_source_id)
+                ->where('is_applicable_for_rules', false)
+                ->update(['is_applicable_for_rules' => true]);
+
             $rule->ruleDetail()->create([
                 'lead_source_id' => $request->lead_source_id,
                 'utm_source' => $request->utm_source,
@@ -151,6 +156,11 @@ class RulesController extends Controller
 
         // Update or create rule detail if lead_source_id is provided
         if ($request->filled('lead_source_id') && $request->get('rule_type')==self::LEAD_SOURCE_RULE_TYPE_ID) {
+
+                // Ensure lead source is applicable for rules
+                LeadSource::where('id', $request->lead_source_id)
+                    ->where('is_applicable_for_rules', false)
+                    ->update(['is_applicable_for_rules' => true]);
 
                 $rule->ruleDetail()->updateOrCreate(
                     ['rule_id' => $rule->id],

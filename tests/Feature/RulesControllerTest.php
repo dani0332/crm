@@ -187,6 +187,41 @@ describe('Rule Creation - Lead Source Rule Type', function () {
         expect($ruleLeadSourcesCount)->toBe(2);
     });
 
+    test('automatically sets is_applicable_for_rules to true when creating rule with non-applicable lead source', function () {
+        // Create a lead source with is_applicable_for_rules set to false
+        $nonApplicableLeadSource = DB::table('lead_sources')->insertGetId([
+            'name' => 'Non-Applicable Lead Source',
+            'code' => 'non-applicable',
+            'is_active' => true,
+            'is_applicable_for_rules' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $ruleData = [
+            'name' => 'Test Auto-Applicable Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+            'lead_source_id' => $nonApplicableLeadSource,
+            'utm_source' => 'google',
+            'utm_campaign' => 'test_campaign',
+            'utm_medium' => 'cpc',
+        ];
+
+        $response = $this->post(route('rule.store'), $ruleData);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('message', 'Rule is created successfully.');
+
+        // Assert lead source is now applicable for rules
+        $this->assertDatabaseHas('lead_sources', [
+            'id' => $nonApplicableLeadSource,
+            'is_applicable_for_rules' => true,
+        ]);
+    });
+
     test('requires lead_source_id when rule type is lead source', function () {
         $ruleData = [
             'name' => 'Test Lead Source Rule Without Lead Source',
@@ -380,6 +415,62 @@ describe('Rule Update - Lead Source Rule Type', function () {
         // Verify only one rule_lead_sources record exists
         $ruleLeadSourcesCount = RuleLeadSource::where('rule_id', $rule->id)->count();
         expect($ruleLeadSourcesCount)->toBe(1);
+    });
+
+    test('automatically sets is_applicable_for_rules to true when updating rule with non-applicable lead source', function () {
+        // Create a lead source with is_applicable_for_rules set to false
+        $nonApplicableLeadSource = DB::table('lead_sources')->insertGetId([
+            'name' => 'Non-Applicable Lead Source 2',
+            'code' => 'non-applicable-2',
+            'is_active' => true,
+            'is_applicable_for_rules' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Create initial rule with different lead source
+        $rule = Rule::create([
+            'name' => 'Original Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+        ]);
+
+        $rule->users()->attach([$this->testUser1->id]);
+
+        DB::table('rule_details')->insert([
+            'rule_id' => $rule->id,
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'twitter',
+            'utm_campaign' => 'test',
+            'utm_medium' => 'social',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Update the rule to use the non-applicable lead source
+        $updateData = [
+            'name' => 'Updated Rule with Non-Applicable Lead Source',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+            'lead_source_id' => $nonApplicableLeadSource,
+            'utm_source' => 'facebook',
+            'utm_campaign' => 'update_test',
+            'utm_medium' => 'cpc',
+        ];
+
+        $response = $this->put(route('rule.update', $rule->id), $updateData);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('message', 'Rule is updated successfully.');
+
+        // Assert lead source is now applicable for rules
+        $this->assertDatabaseHas('lead_sources', [
+            'id' => $nonApplicableLeadSource,
+            'is_applicable_for_rules' => true,
+        ]);
     });
 
     test('updates rule_lead_sources when users are changed', function () {
