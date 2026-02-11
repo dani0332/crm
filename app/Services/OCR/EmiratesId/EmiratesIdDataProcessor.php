@@ -403,7 +403,7 @@ class EmiratesIdDataProcessor
         try {
             $quoteTypeId = $this->getQuoteTypeId($this->quote);
 
-            $existingLink = CustomerInsured::where([
+            $existingLink = CustomerInsured::active()->where([
                 'customer_id' => $this->quote->customer_id,
                 'insured_id' => $insured->id,
                 'quote_type_id' => $quoteTypeId,
