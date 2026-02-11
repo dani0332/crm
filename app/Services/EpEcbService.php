@@ -7,6 +7,7 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Exceptions\EpEcbException;
@@ -1093,10 +1094,23 @@ class EpEcbService extends EpBookingService
             && $this->quote?->vehicle_use == CarVehicleUse::PRIVATE
             && $latestInsuredData?->customer_type == CustomerTypeEnum::Entity;
 
-        $customerIdType = $proceedWithTradeLicense ? 'TL' : 'EID';
-        $customerIdNo = $customerIdType == 'TL'
-            ? $latestInsuredData?->trade_license_no
-            : ($latestInsuredData?->id_type == 'emiratesId' ? formatEmiratesIdNumber($latestInsuredData?->id_number ?? '') : '');
+        $customerIdType = $proceedWithTradeLicense ? GenericRequestEnum::TRADE_LICENSE_SHORT_CODE : GenericRequestEnum::EMIRATES_ID_SHORT_CODE;
+
+        LoggerService::info('getCustomerTypeInfo - Insured Data', extra: [
+            'customerIdType' => $customerIdType,
+            'latestInsuredIdType' => $latestInsuredData?->id_type,
+            'latestInsuredIdNumber' => $latestInsuredData?->id_number,
+        ]);
+
+        if ($customerIdType == GenericRequestEnum::TRADE_LICENSE_SHORT_CODE) {
+            $customerIdNo = $latestInsuredData?->id_type === GenericRequestEnum::TRADE_LICENSE
+                ? $latestInsuredData?->id_number
+                : '';
+        } else {
+            $customerIdNo = $latestInsuredData?->id_type == GenericRequestEnum::EMIRATES_ID
+                ? formatEmiratesIdNumber($latestInsuredData?->id_number ?? '')
+                : '';
+        }
 
         return [
             'customer_id_type' => $customerIdType,

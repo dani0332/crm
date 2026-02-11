@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Mapping & Apply Prepayment - Sage Integration</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <a href="/docs/booking-process/index.html">Booking Process</a>
+        <span>></span>
+        <span>Payment Mapping & Apply Prepayment</span>
+      </div>
+
+      <div class="header">
+        <h1>🔗 Payment Mapping & Apply Prepayment</h1>
+        <p>
+          Comprehensive guide to payment receipt-to-invoice mapping and
+          prepayment application in Sage 300
+        </p>
+      </div>
+
+      <div class="content-section">
+        <h2>🎯 Overview</h2>
+        <p>
+          The Payment Mapping & Apply Prepayment process manages the critical
+          third step of Sage integration: linking previously created payment
+          receipts to newly generated invoices. This process ensures proper
+          financial reconciliation by applying prepayments to outstanding
+          invoice balances in both AR and AP modules.
+        </p>
+
+        <div class="highlight">
+          <h4>💡 Core Payment Mapping Operations</h4>
+          <p>
+            Automatic Receipt-to-Invoice Mapping for upfront payments, Split
+            Payment Application for installment-based policies, AR/AP Prepayment
+            Processing for customer and vendor payments, and systematic balance
+            reconciliation through Sage 300 payment application workflow with
+            comprehensive error handling and recovery mechanisms.
+          </p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🔧 Function Types in This Documentation</h4>
+            <ul>
+              <li>
+                <strong style="color: #9b59b6"
+                  >Sage API Service Methods:</strong
+                >
+                Handle actual API calls to Sage 300
+              </li>
+              <li>
+                <strong style="color: #27ae60">Payload Factory Methods:</strong>
+                Generate API request structures
+              </li>
+              <li>
+                <strong>Location:</strong> SageApiService.php &
+                SagePayloadFactory.php
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🗄️ Database Dependencies</h4>
+            <ul>
+              <li>
+                <strong>Receipt References:</strong>
+                payment_splits.sage_reciept_id
+              </li>
+              <li>
+                <strong>Invoice Numbers:</strong> payments.tax_invoice_number
+              </li>
+              <li>
+                <strong>Mapping Logs:</strong> sage_api_logs table for all
+                operations
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📋 Payment Mapping Types</h2>
+
+        <div class="mapping-types">
+          <div class="mapping-type">
+            <span class="icon">🔗</span>
+            <h4>Upfront Payment Mapping</h4>
+            <p>
+              Direct one-to-one mapping between single prepayment receipt and
+              invoice for upfront payment policies. Complete balance settlement.
+            </p>
+          </div>
+
+          <div class="mapping-type">
+            <span class="icon">📊</span>
+            <h4>Split Payment Mapping</h4>
+            <p>
+              Partial payment application for installment-based policies. Maps
+              individual installment receipts to corresponding invoice portions.
+            </p>
+          </div>
+
+          <div class="mapping-type">
+            <span class="icon">🔄</span>
+            <h4>AR/AP Cross-Mapping</h4>
+            <p>
+              Coordinated mapping for both customer receipts (AR) and vendor
+              payments (AP) to ensure complete financial reconciliation.
+            </p>
+          </div>
+
+          <div class="mapping-type">
+            <span class="icon">⚖️</span>
+            <h4>Balance Reconciliation</h4>
+            <p>
+              Automatic balance adjustment and validation to ensure invoice
+              balances match applied payment amounts in Sage 300.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔄 Payment Mapping Workflow</h2>
+
+        <div class="process-flow">
+          <div class="process-step">
+            <div class="step-number">1</div>
+            <h4>Validation Check</h4>
+            <p>Verify receipt and invoice existence before mapping</p>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">2</div>
+            <h4>Payment Application</h4>
+            <p>Apply prepayment receipts to outstanding invoices</p>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">3</div>
+            <h4>Balance Reconciliation</h4>
+            <p>Validate payment amounts match invoice balances</p>
+          </div>
+        </div>
+
+        <div class="mapping-flow">
+          <h4>📊 Payment Mapping Process Flow</h4>
+          <div class="flow-steps">
+            <div class="flow-step">
+              <strong>RECEIPT CREATED</strong>
+              <div>Prepayment Available</div>
+            </div>
+            <div class="flow-step">
+              <strong>INVOICE GENERATED</strong>
+              <div>Outstanding Balance</div>
+            </div>
+            <div class="flow-step">
+              <strong>MAPPING APPLIED</strong>
+              <div>Balance Reduced</div>
+            </div>
+            <div class="flow-step">
+              <strong>RECONCILED</strong>
+              <div>Process Complete</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📦 Payment Mapping Scenarios</h2>
+        <p>
+          The system handles payment-to-invoice mapping across three main
+          scenarios, each with specific workflows:
+        </p>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🏠 Main Lead Payment Mapping</h4>
+            <ul>
+              <li>
+                <strong>AR Mapping:</strong> Customer receipts to customer
+                invoices
+              </li>
+              <li>
+                <strong>AP Mapping:</strong> Vendor payments to vendor invoices
+                (if insurer direct payment)
+              </li>
+              <li>
+                <strong>Modes:</strong> Upfront, Split Payments,
+                Non-Split/Non-Upfront
+              </li>
+              <li>
+                <strong>Special Cases:</strong> Zero price policies (credit
+                approval), historic data skip logic
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🔗 Embedded Product Payment Mapping</h4>
+            <ul>
+              <li>
+                <strong>AR Only:</strong> EP customer receipts to EP invoices
+              </li>
+              <li>
+                <strong>AP Mapping:</strong> Currently disabled (commented out
+                in implementation)
+              </li>
+              <li>
+                <strong>Simplicity:</strong> Always upfront payments, no split
+                schedules
+              </li>
+              <li>
+                <strong>Method:</strong> applyPaymentARInvoices() in
+                SageApiEmbeddedProductService
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📝 Send Update Payment Mapping</h4>
+            <ul>
+              <li>
+                <strong>Context:</strong> Endorsement-related payment
+                adjustments
+              </li>
+              <li>
+                <strong>Scenarios:</strong> Additional payments for increased
+                premium
+              </li>
+              <li>
+                <strong>Mapping:</strong> New prepayment receipts to adjustment
+                invoices
+              </li>
+              <li>
+                <strong>Complexity:</strong> May involve reversals and
+                corrections
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <h4>⚠️ Important: skipApplyPrepaymentsForSpecificLeads()</h4>
+          <p>
+            <strong>Historic Data Compatibility:</strong> The system includes
+            logic to skip prepayment application for specific leads to maintain
+            compatibility with data created before M2 launch. This is temporary
+            code that checks specific criteria and returns early if the quote
+            falls under skippable conditions. See line 666 in
+            applyPaymentARInvoices() implementation.
+          </p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>💰 Zero Price Policy Handling</h4>
+            <ul>
+              <li><strong>Condition:</strong> payment.total_price == 0</li>
+              <li>
+                <strong>Action:</strong> Skip prepayment application entirely
+              </li>
+              <li><strong>Reason:</strong> No actual payment to map</li>
+              <li>
+                <strong>Requirement:</strong> Must use CreditApproval payment
+                method
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📊 Payment Frequency Logic</h4>
+            <ul>
+              <li>
+                <strong>UPFRONT:</strong> Single payment mapping
+                (applyUpfrontPaymentARInvoices)
+              </li>
+              <li>
+                <strong>SPLIT_PAYMENTS:</strong> Multiple installment mappings
+                (applySplitPaymentARInvoices)
+              </li>
+              <li>
+                <strong>Other:</strong> Non-split/non-upfront handling
+                (applyNonSplitNonUpfrontPaymentARInvoices)
+              </li>
+              <li>
+                <strong>Status Check:</strong> Payment must be PAID or CAPTURED
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>💰 Upfront Payment Application</h2>
+        <p>
+          <strong>Payment Frequency:</strong> PaymentFrequency::UPFRONT |
+          <strong>Context:</strong> Single payment to single invoice mapping
+        </p>
+
+        <h3>📋 Characteristics</h3>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>💳 Payment Structure</h4>
+            <ul>
+              <li>Single prepayment receipt already created</li>
+              <li>Full invoice amount paid at once</li>
+              <li>Payment status: PAID or CAPTURED</li>
+              <li>Immediate full settlement</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📄 Application Process</h4>
+            <ul>
+              <li>Create AR receipt batch with invoice reference</li>
+              <li>Apply full receipt amount to invoice</li>
+              <li>Mark invoice as paid/settled</li>
+              <li>No partial payments or schedules</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🔄 Workflow Steps</h4>
+            <ul>
+              <li>Step 13: Create payment receipt application batch</li>
+              <li>Step 14: Ready to post receipt batch</li>
+              <li>Step 15: Post receipt batch to GL</li>
+              <li>Invoice fully reconciled after posting</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>✅ Validation</h4>
+            <ul>
+              <li>Payment status must be PAID</li>
+              <li>Total price cannot be zero (unless CreditApproval)</li>
+              <li>Receipt ID must exist in payment_splits</li>
+              <li>Invoice must be posted before application</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <h4>💡 Key Points for Upfront Payment Application</h4>
+          <p>
+            <strong>One-to-One Mapping:</strong> Single prepayment receipt
+            applied to single invoice<br />
+            <strong>Full Settlement:</strong> Invoice balance becomes zero after
+            application<br />
+            <strong>Simple Process:</strong> No complex split tracking or
+            partial applications<br />
+            <strong>Immediate Reconciliation:</strong> Payment and invoice
+            reconciled in one step
+          </p>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📅 Split Payment Application</h2>
+        <p>
+          <strong>Payment Frequency:</strong> PaymentFrequency::SPLIT_PAYMENTS |
+          <strong>Context:</strong> Multiple installment payments to invoice
+          with schedules
+        </p>
+
+        <h3>📋 Characteristics</h3>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>💳 Payment Structure</h4>
+            <ul>
+              <li>Multiple installment receipts</li>
+              <li>First payment typically paid upfront</li>
+              <li>Future payments matched to invoice schedules</li>
+              <li>Each payment tracked separately</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📄 Application Process</h4>
+            <ul>
+              <li>Apply only PAID/CAPTURED split receipts</li>
+              <li>Match payments to PaymentSchedules in invoice</li>
+              <li>Partial invoice settlement</li>
+              <li>Track remaining balance per schedule</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🔄 Workflow Complexity</h4>
+            <ul>
+              <li>Iterate through paid payment splits</li>
+              <li>Create receipt application for each</li>
+              <li>Update payment schedule status</li>
+              <li>Track remaining installments</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>⚖️ Balance Tracking</h4>
+            <ul>
+              <li>Invoice total vs paid amounts</li>
+              <li>Schedule-by-schedule reconciliation</li>
+              <li>Outstanding balance per installment</li>
+              <li>Future payment obligations</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <h4>💡 Key Points for Split Payment Application</h4>
+          <p>
+            <strong>Partial Applications:</strong> Apply only paid installments,
+            leave future ones pending<br />
+            <strong>Schedule Matching:</strong> Each payment maps to specific
+            PaymentSchedule entry<br />
+            <strong>Incremental Settlement:</strong> Invoice balance reduces
+            with each installment payment<br />
+            <strong>Status Tracking:</strong> Each split status tracked
+            individually in payment_splits table
+          </p>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔄 Non-Split/Non-Upfront Payment Application</h2>
+        <p>
+          <strong>Payment Frequency:</strong> Other (Not UPFRONT, Not
+          SPLIT_PAYMENTS) | <strong>Context:</strong> Custom payment
+          arrangements
+        </p>
+
+        <h3>📋 Characteristics</h3>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>💳 Payment Structure</h4>
+            <ul>
+              <li>Neither standard upfront nor split</li>
+              <li>First payment must be PAID/CAPTURED</li>
+              <li>Flexible payment arrangement</li>
+              <li>Edge case handling</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📄 Application Logic</h4>
+            <ul>
+              <li>Similar to split payment processing</li>
+              <li>Apply first payment if available</li>
+              <li>Custom payment schedule handling</li>
+              <li>Flexible reconciliation rules</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>⚠️ Use Cases</h4>
+            <ul>
+              <li>Custom financing arrangements</li>
+              <li>Deferred payment scenarios</li>
+              <li>Migration data compatibility</li>
+              <li>Special payment terms</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>✅ Validation</h4>
+            <ul>
+              <li>First payment PAID or CAPTURED check</li>
+              <li>Custom payment validation rules</li>
+              <li>Receipt existence verification</li>
+              <li>Invoice posting status check</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <h4>💡 Key Points for Non-Split/Non-Upfront Application</h4>
+          <p>
+            <strong>Flexibility Required:</strong> Handles payment scenarios not
+            covered by standard types<br />
+            <strong>First Payment Focus:</strong> Must have at least first
+            payment paid before processing<br />
+            <strong>Custom Logic:</strong> May use custom rules based on
+            specific payment arrangement<br />
+            <strong>Migration Support:</strong> Ensures compatibility with
+            historic/imported data
+          </p>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🛠️ Core Payment Mapping Functions</h2>
+        <p>
+          <strong>📍 Function Type:</strong> These are
+          <span style="color: #9b59b6; font-weight: bold"
+            >Sage API Service Methods</span
+          >
+          that orchestrate payment mapping processes.
+        </p>
+
+        <h3>🔗 applyPaymentARInvoices() - API Service Method</h3>
+        <p>
+          Main orchestrator function in <strong>SageApiService</strong> that
+          applies AR prepayment receipts to AR invoices based on payment
+          frequency.
+        </p>
+
+        <div class="code-block">
+          <pre>
+public function applyPaymentARInvoices($sageRequestDataArray)
+{
+    $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+    $isTotalPriceZero = $payment->total_price == 0;
+
+    /* Start: Temporary code for historic data to allow book policy after m2 launch */
+    $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
+    if ($isQuoteFallUnderSkippableCriteria['status']) {
+        return $isQuoteFallUnderSkippableCriteria;
+    }
+
+    /* applyPaymentARInvoices */
+    $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
+
+    if ($isTransactionPaidAndFrequencyUpfront && !$isTotalPriceZero) {
+        return $this->applyUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+    } elseif ($isTotalPriceZero) {
+        LoggerService::info('########## applyUpfrontPaymentARInvoices skipped for : '.$quote->code.' due to zero price ##########');
+    }
+
+    $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
+
+    if ($isFrequencySplitAndFirstChildPaymentPaid) {
+        return $this->applySplitPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+    }
+
+    $isFrequencyUpfrontOrSplit = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+    $isFirstPaymentPaidOrCaptured = in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+
+    if (!$isFrequencyUpfrontOrSplit && $isFirstPaymentPaidOrCaptured) {
+        return $this->applyNonSplitNonUpfrontPaymentARInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+    }
+
+    $returnMessage['status'] = true;
+    $returnMessage['message'] = 'Apply Prepayment completed';
+
+    return $returnMessage;
+}</pre
+          >
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔧 Individual Payment Mapping Methods</h2>
+        <p>
+          <strong>📍 Function Type:</strong> These are
+          <span style="color: #9b59b6; font-weight: bold"
+            >Sage API Service Methods</span
+          >
+          that handle specific payment mapping scenarios.
+        </p>
+
+        <h3>🔗 applyUpfrontPaymentARInvoices() - API Service Method</h3>
+        <p>
+          Applies upfront prepayment receipts to AR invoices in
+          <strong>SageApiService</strong> for complete balance settlement.
+        </p>
+
+        <div class="code-block">
+          <pre>
+private function applyUpfrontPaymentARInvoices($sageRequestDataArray)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+    $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+    LoggerService::info('########## Start applyPaymentARInvoices for : '.$quote->code.' ##########');
+
+    $totalSteps = 15;
+    $currentStep = 13;
+    $isLiveApiCallStep13 = true;
+
+    // Check if payment application already completed
+    if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
+        LoggerService::info('SAGE API : createPaymentReceiptOneInvoice Sent Already for '.$quote->code);
+        $isLiveApiCallStep13 = false;
+        $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
+    } else {
+        LoggerService::info('SAGE API : Send createPaymentReceiptOneInvoice for '.$quote->code);
+
+        // Create payment receipt mapping payload
+        $payLoadOptions = SagePayloadFactory::createPaymentReceiptOneInvoice(
+            $quote,
+            $sageRequest->customerId,
+            $payment,
+            $paymentSplits
+        );
+
+        $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+        $postedResponse = json_decode($resp, true);
+
+        // Log the API call
+        if ($isLiveApiCallStep13) {
+            $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+        }
+    }
+
+    // Process Ready to Post and Post operations
+    if (!empty($postedResponse['BatchNumber'])) {
+        // Ready to Post step
+        $currentStep = 14;
+        $readyToPostPayload = SagePayloadFactory::readyToPostReceiptAr($postedResponse['BatchNumber']);
+        $readyToPostResponse = $this->postToSage300($readyToPostPayload['endPoint'], $readyToPostPayload['payload'], 'PATCH');
+
+        // Post to GL step
+        $currentStep = 15;
+        $postPayload = SagePayloadFactory::aRPostReceiptsPayment($postedResponse['BatchNumber']);
+        $finalResponse = $this->postToSage300($postPayload['endPoint'], $postPayload['payload']);
+
+        LoggerService::info('########## End applyPaymentARInvoices for : '.$quote->code.' ##########');
+        $returnMessage['status'] = true;
+        $returnMessage['message'] = 'Prepayments applied on sage';
+    }
+
+    return $returnMessage;
+}</pre
+          >
+        </div>
+
+        <h3>📊 applySplitPaymentARInvoices() - API Service Method</h3>
+        <p>
+          Applies split payment receipts to AR invoices in
+          <strong>SageApiService</strong> for installment-based payment mapping.
+        </p>
+
+        <div class="code-block">
+          <pre>
+private function applySplitPaymentARInvoices($sageRequestDataArray)
+{
+    [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+    $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+
+    LoggerService::info('########## Start arSplitPrepaymentPayload for : '.$quote->code.' ##########');
+    $totalSteps = 15;
+    $currentStep = 13;
+
+    // Get paid payment splits only
+    $paidPaymentSplits = $paymentSplits->whereIn('payment_status_id', [
+        PaymentStatusEnum::PAID,
+        PaymentStatusEnum::CAPTURED
+    ]);
+
+    // Check if split payment receipts already applied
+    if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
+        LoggerService::info('SAGE API : arSplitPrepaymentPayload Sent Already for '.$quote->code);
+        $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
+    } else {
+        LoggerService::info('SAGE API : Send arSplitPrepaymentPayload for '.$quote->code);
+
+        // Create split payment receipt mapping payload
+        $payLoadOptions = SagePayloadFactory::arSplitPrepaymentPayload(
+            $quote,
+            $sageRequest->customerId,
+            $payment,
+            $paidPaymentSplits
+        );
+
+        $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+        $postedResponse = json_decode($resp, true);
+
+        $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS);
+    }
+
+    // Process Ready to Post and Post operations for split payments
+    if (!empty($postedResponse['BatchNumber'])) {
+        // Ready to Post step
+        $readyToPostPayload = SagePayloadFactory::readyToPostReceiptAr($postedResponse['BatchNumber']);
+        $readyToPostResponse = $this->postToSage300($readyToPostPayload['endPoint'], $readyToPostPayload['payload'], 'PATCH');
+
+        // Post to GL step
+        $postPayload = SagePayloadFactory::aRPostReceiptsPayment($postedResponse['BatchNumber']);
+        $finalResponse = $this->postToSage300($postPayload['endPoint'], $postPayload['payload']);
+
+        $returnMessage['status'] = true;
+        $returnMessage['message'] = 'Split Payment Prepayments applied on sage';
+    }
+
+    return $returnMessage;
+}</pre
+          >
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🏭 Payload Factory Methods</h2>
+        <p>
+          <strong>📍 Function Type:</strong> These are
+          <span style="color: #27ae60; font-weight: bold"
+            >Payload Factory Methods</span
+          >
+          that generate Sage 300 API request structures for payment mapping.
+        </p>
+
+        <h3>🔗 createPaymentReceiptOneInvoice() - Payload Factory Method</h3>
+        <p>
+          Static method in <strong>SagePayloadFactory</strong> that creates the
+          payment receipt mapping payload for upfront payments.
+        </p>
+
+        <div class="code-block">
+          <pre>
+public static function createPaymentReceiptOneInvoice($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+{
+    $entryType = SageEnum::SCT_STRAIGHT;
+
+    $payLoad = [
+        'BatchRecordType' => 'CA',  // AR Receipt Batch
+        'BankCode' => SageEnum::BANK_CODE_INS,
+        'ReceiptsAdjustments' => [
+            [
+                'BatchType' => 'CA',
+                'CustomerNumber' => $sage_customer_number,
+                'BankCode' => SageEnum::BANK_CODE_INS,
+                'ReceiptTransactionType' => 'Receipt',  // Payment application type
+                'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAR(
+                    $quote,
+                    $sage_customer_number,
+                    $payment,
+                    $splitPayments,
+                    $isPosAllSplitPayment
+                ),
+            ],
+        ],
+    ];
+
+    return [
+        'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+        'payload' => $payLoad,
+        'sage_request_type' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
+        'entry_type' => $entryType,
+    ];
+}</pre
+          >
+        </div>
+
+        <h3>📊 arSplitPrepaymentPayload() - Payload Factory Method</h3>
+        <p>
+          Static method in <strong>SagePayloadFactory</strong> that creates
+          payment mapping payload for split payment installments.
+        </p>
+
+        <div class="code-block">
+          <pre>
+public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+{
+    $entryType = SageEnum::SCT_STRAIGHT;
+
+    $payLoad = [
+        'BatchRecordType' => 'CA',
+        'BankCode' => SageEnum::BANK_CODE_INS,
+        'ReceiptsAdjustments' => [
+            [
+                'BatchType' => 'CA',
+                'CustomerNumber' => $sage_customer_number,
+                'BankCode' => SageEnum::BANK_CODE_INS,
+                'ReceiptTransactionType' => 'Receipt',
+                'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustmentsForAR(
+                    $quote,
+                    $sage_customer_number,
+                    $payment,
+                    $splitPayments,
+                    $isPosAllSplitPayment
+                ),
+            ],
+        ],
+    ];
+
+    return [
+        'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+        'payload' => $payLoad,
+        'sage_request_type' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
+        'entry_type' => $entryType,
+    ];
+}</pre
+          >
+        </div>
+
+        <h3>
+          🔗 createAppliedReceiptsAdjustmentsForAR() - Payload Factory Method
+        </h3>
+        <p>
+          Helper method that creates the applied receipts adjustments array for
+          AR payment mapping.
+        </p>
+
+        <div class="code-block">
+          <pre>
+private static function createAppliedReceiptsAdjustmentsForAR($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+{
+    $appliedReceiptsAdjustments = [];
+
+    foreach ($splitPayments as $index => $item) {
+        // Skip if payment split doesn't have sage receipt ID
+        if (empty($item->sage_reciept_id)) {
+            continue;
+        }
+
+        // Create receipt application entry
+        $receiptData = self::createReceiptDataForAR($item, $sage_customer_number, $payment, $index + 1);
+        $appliedReceiptsAdjustments[] = $receiptData;
+
+        // Create prepayment application entry
+        $prePaymentData = self::createPrePaymentDataForAR($item, $sage_customer_number, $payment);
+        $appliedReceiptsAdjustments[] = $prePaymentData;
+    }
+
+    return $appliedReceiptsAdjustments;
+}</pre
+          >
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🗄️ Database Tables & Columns</h2>
+
+        <h3>📊 Primary Tables for Payment Mapping</h3>
+
+        <h4>1. payment_splits Table</h4>
+        <p>
+          Individual payment installments with receipt references for mapping.
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Type</th>
+                <th>Purpose</th>
+                <th>Usage in Payment Mapping</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>sage_reciept_id</td>
+                <td>VARCHAR(100) NULLABLE</td>
+                <td>AR receipt document number</td>
+                <td>Required for payment mapping - links receipt to invoice</td>
+              </tr>
+              <tr>
+                <td>sage_ap_payment_receipt_id</td>
+                <td>VARCHAR(100) NULLABLE</td>
+                <td>AP payment document number</td>
+                <td>Used for AP payment mapping processes</td>
+              </tr>
+              <tr>
+                <td>payment_status_id</td>
+                <td>INT</td>
+                <td>Split payment status</td>
+                <td>Must be PAID/CAPTURED for mapping eligibility</td>
+              </tr>
+              <tr>
+                <td>payment_amount</td>
+                <td>DECIMAL(15,2)</td>
+                <td>Amount for this installment</td>
+                <td>Used in CustomerReceiptAmount for mapping</td>
+              </tr>
+              <tr>
+                <td>collection_amount</td>
+                <td>DECIMAL(15,2)</td>
+                <td>Actually collected amount</td>
+                <td>Used when different from payment_amount</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>2. payments Table</h4>
+        <p>Main payment information for mapping coordination.</p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Type</th>
+                <th>Purpose</th>
+                <th>Usage in Payment Mapping</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>tax_invoice_number</td>
+                <td>VARCHAR(255)</td>
+                <td>Invoice document number</td>
+                <td>Target invoice for payment application</td>
+              </tr>
+              <tr>
+                <td>frequency</td>
+                <td>ENUM</td>
+                <td>Payment frequency type</td>
+                <td>Determines mapping strategy (UPFRONT vs SPLIT_PAYMENTS)</td>
+              </tr>
+              <tr>
+                <td>total_price</td>
+                <td>DECIMAL(15,2)</td>
+                <td>Total payment amount</td>
+                <td>Validation for complete payment mapping</td>
+              </tr>
+              <tr>
+                <td>discount_value</td>
+                <td>DECIMAL(15,2)</td>
+                <td>Applied discount amount</td>
+                <td>Included in first installment mapping</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📊 Payment Mapping API Endpoints</h2>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Purpose</th>
+                <th>Payload Factory Method</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Apply Payment</td>
+                <td><span class="method-badge post">POST</span></td>
+                <td>
+                  <span class="api-endpoint"
+                    >AR/ARReceiptAndAdjustmentBatches</span
+                  >
+                </td>
+                <td>Apply receipt to invoice (OPEN status)</td>
+                <td>createPaymentReceiptOneInvoice()</td>
+              </tr>
+              <tr>
+                <td>Ready to Post</td>
+                <td><span class="method-badge patch">PATCH</span></td>
+                <td>
+                  <span class="api-endpoint"
+                    >AR/ARReceiptAndAdjustmentBatches</span
+                  >
+                </td>
+                <td>Mark payment application ready</td>
+                <td>readyToPostReceiptAr()</td>
+              </tr>
+              <tr>
+                <td>Post to GL</td>
+                <td><span class="method-badge post">POST</span></td>
+                <td>
+                  <span class="api-endpoint"
+                    >AR/ARPostReceiptsAndAdjustments</span
+                  >
+                </td>
+                <td>Post payment application to GL</td>
+                <td>aRPostReceiptsPayment()</td>
+              </tr>
+              <tr>
+                <td>Split Payment</td>
+                <td><span class="method-badge post">POST</span></td>
+                <td>
+                  <span class="api-endpoint"
+                    >AR/ARReceiptAndAdjustmentBatches</span
+                  >
+                </td>
+                <td>Apply multiple installment receipts</td>
+                <td>arSplitPrepaymentPayload()</td>
+              </tr>
+              <tr>
+                <td>AP Payment</td>
+                <td><span class="method-badge post">POST</span></td>
+                <td>
+                  <span class="api-endpoint"
+                    >AP/APPaymentAndAdjustmentBatches</span
+                  >
+                </td>
+                <td>Apply AP payments to invoices</td>
+                <td>createUpfrontApplyPaymentAPInvoice()</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔧 Integration Points & Dependencies</h2>
+
+        <h3>📞 Called From</h3>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>BookPolicyOnSageJob</h4>
+            <ul>
+              <li>Main policy booking orchestrator</li>
+              <li>Calls after AR/AP invoice creation</li>
+              <li>Final step in booking process</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>PostPrepaymentToSageJob</h4>
+            <ul>
+              <li>Handles delayed payment mapping</li>
+              <li>Processes split payment installments</li>
+              <li>Manages payment schedule updates</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>🏗️ Dependencies</h3>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>Prerequisites</h4>
+            <ul>
+              <li>Payment receipts must exist (sage_reciept_id)</li>
+              <li>Invoices must be created and posted</li>
+              <li>Payment status must be PAID/CAPTURED</li>
+              <li>Customer must exist in Sage 300</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>Services & Models</h4>
+            <ul>
+              <li>SagePayloadFactory</li>
+              <li>LoggerService</li>
+              <li>Payment & PaymentSplits models</li>
+              <li>SageApiLog for audit trail</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong>Payment Mapping & Apply Prepayment Documentation</strong> -
+          Sage Integration
+        </p>
+        <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+      </div>
+    </div>
+  </body>
+</html>
