@@ -116,6 +116,7 @@ const filters = reactive({
   page: 1,
   registration_type: '',
   vehicle_use: '',
+  currently_insured_with: [],
 });
 
 function onSubmit(isValid) {
@@ -144,6 +145,11 @@ function onSubmit(isValid) {
         }),
         ...(payLoad.teams && {
           teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
+        }),
+        ...(payLoad.currently_insured_with && {
+          currently_insured_with: Array.isArray(payLoad.currently_insured_with)
+            ? payLoad.currently_insured_with
+            : [payLoad.currently_insured_with],
         }),
       },
       preserveState: false,
@@ -197,7 +203,12 @@ function setQueryStringFilters() {
       if (!filters[baseKey]) {
         filters[baseKey] = [];
       }
-      filters[baseKey][match[2]] = value;
+      // Parse as integer for ID-based filters
+      if (baseKey === 'currently_insured_with') {
+        filters[baseKey][match[2]] = parseInt(value);
+      } else {
+        filters[baseKey][match[2]] = value;
+      }
     } else {
       filters[key] = value;
     }
@@ -595,6 +606,10 @@ const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
 
+const insuranceProviderOptions = computed(() => {
+  return page.props.filterOptions.insuranceProviders || [];
+});
+
 watch(
   () => filters.registration_type,
   newValue => {
@@ -663,6 +678,29 @@ watch(
           placeholder="Select any option"
           :options="vehicleUseOptions"
         />
+        <x-field label="Currently Insured With">
+          <x-select
+            v-model="filters.currently_insured_with"
+            name="currently_insured_with"
+            placeholder="Select Insurance Provider"
+            :options="insuranceProviderOptions"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.currently_insured_with = insuranceProviderOptions.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.currently_insured_with = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
         <x-select
           v-if="
             hasAnyRole([
