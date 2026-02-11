@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
 use App\Services\SukoonMedexService;
 use App\Traits\SendsEpFailureEmail;
@@ -48,7 +49,7 @@ class SukoonMedexPurchaseFlowJob implements ShouldQueue
      */
     public function handle(): void
     {
-        LoggerService::startQuoteLogging($this->quoteObject);
+        LoggerService::startQuoteLogging($this->quoteObject->code, LoggerFeatureEnum::EP_PROCESS_PURCHASE_FLOW);
         try {
 
             LoggerService::info($this->logPrefix, extra: $this->logExtra);
