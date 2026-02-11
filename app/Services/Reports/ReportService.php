@@ -712,57 +712,76 @@ class ReportService extends BaseService
             }
         };
 
-        $query = DB::table('personal_quotes')
+        // Build a subquery that gets unique quotes with their premiums
+        // This avoids the duplication issue when a quote has multiple payments
+        $uniqueQuotesSubquery = DB::table('personal_quotes')
             ->select(
-                'users.id as advisor_id',
-                'users.name as advisor_name',
-                DB::raw('COUNT(DISTINCT personal_quotes.code) as total_leads'),
-                DB::raw('SUM(DISTINCT '.$premiumColumn.') as total_premium'),
-                DB::raw('DATE_FORMAT(MIN(personal_quotes.created_at), "%d-%m-%Y") as created_at_start'),
-                DB::raw('DATE_FORMAT(MAX(personal_quotes.created_at), "%d-%m-%Y") as created_at_end')
+                'personal_quotes.code',
+                'personal_quotes.advisor_id',
+                'personal_quotes.created_at',
+                DB::raw('MAX('.$premiumColumn.') as premium')
             )
             ->leftJoin('payments as py', $paymentJoinConditions)
-            ->join('users', 'users.id', 'personal_quotes.advisor_id')
-            ->whereIn('personal_quotes.quote_type_id', $allowedQuoteTypeIds);
-        $query->whereNotNull('py.code');
-        $query->where('personal_quotes.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+            ->whereNotNull('py.code')
+            ->whereIn('personal_quotes.quote_type_id', $allowedQuoteTypeIds)
+            ->where('personal_quotes.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+
+        // Apply user/team filters
         if ($user->isAdvisor()) {
-            $query->where('personal_quotes.advisor_id', $user->id);
+            $uniqueQuotesSubquery->where('personal_quotes.advisor_id', $user->id);
         } else {
-            $query->whereExists(function ($subQuery) use ($userTeams) {
+            $uniqueQuotesSubquery->whereExists(function ($subQuery) use ($userTeams) {
                 $subQuery->select(DB::raw(1))
                     ->from('user_team')
                     ->whereColumn('user_team.user_id', 'personal_quotes.advisor_id')
                     ->whereIn('user_team.team_id', $userTeams);
             });
         }
+
         if (isset($request->userIds)) {
-            $query->whereIn('personal_quotes.advisor_id', $request->userIds);
-        }
-        if (isset($request->statusId)) {
-            $query->whereIn('personal_quotes.quote_status_id', $request->statusId);
+            $uniqueQuotesSubquery->whereIn('personal_quotes.advisor_id', $request->userIds);
         }
 
-        // Car-specific filters - need to join car_quote_request
+        if (isset($request->statusId)) {
+            $uniqueQuotesSubquery->whereIn('personal_quotes.quote_status_id', $request->statusId);
+        }
+
+        // Car-specific filters
         if ($quoteType === QuoteTypes::CAR) {
             $hasRegistrationType = ! empty($request->registration_type) && $request->registration_type !== 'All';
             $hasVehicleUse = ! empty($request->vehicle_use) && $request->vehicle_use !== 'All';
 
             if ($hasRegistrationType || $hasVehicleUse) {
-                $query->join('car_quote_request as cqr', 'cqr.code', '=', 'personal_quotes.code');
+                $uniqueQuotesSubquery->join('car_quote_request as cqr', 'cqr.code', '=', 'personal_quotes.code');
 
                 if ($hasRegistrationType) {
-                    $query->where('cqr.registration_type', $request->registration_type);
+                    $uniqueQuotesSubquery->where('cqr.registration_type', $request->registration_type);
                 }
 
                 if ($hasVehicleUse) {
-                    $query->where('cqr.vehicle_use', $request->vehicle_use);
+                    $uniqueQuotesSubquery->where('cqr.vehicle_use', $request->vehicle_use);
                 }
             }
         }
 
-        $dataCollection = $dataCollection->merge($query->groupBy('users.id')
-            ->orderBy('total_leads', 'desc')->get());
+        $uniqueQuotesSubquery->groupBy('personal_quotes.code', 'personal_quotes.advisor_id', 'personal_quotes.created_at');
+
+        // Main query aggregates the unique quotes by advisor
+        $query = DB::table(DB::raw('('.$uniqueQuotesSubquery->toSql().') as unique_quotes'))
+            ->mergeBindings($uniqueQuotesSubquery)
+            ->select(
+                'users.id as advisor_id',
+                'users.name as advisor_name',
+                DB::raw('COUNT(DISTINCT unique_quotes.code) as total_leads'),
+                DB::raw('SUM(unique_quotes.premium) as total_premium'),
+                DB::raw('DATE_FORMAT(MIN(unique_quotes.created_at), "%d-%m-%Y") as created_at_start'),
+                DB::raw('DATE_FORMAT(MAX(unique_quotes.created_at), "%d-%m-%Y") as created_at_end')
+            )
+            ->join('users', 'users.id', '=', 'unique_quotes.advisor_id')
+            ->groupBy('users.id', 'users.name')
+            ->orderBy('total_leads', 'desc');
+
+        $dataCollection = $dataCollection->merge($query->get());
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [
                 'advisor_id' => $group->first()->advisor_id,
