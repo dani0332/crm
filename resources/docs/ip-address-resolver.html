@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IP Address Resolver - Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <span>IP Address Resolver</span>
+      </nav>
+
+      <!-- Header -->
+      <header class="header">
+        <h1>🌐 IP Address Resolver</h1>
+        <p>
+          Custom IP address resolution from request headers for accurate audit
+          logging behind proxies
+        </p>
+      </header>
+
+      <!-- Overview -->
+      <section class="content-section">
+        <h2>❓ What is the IP Address Resolver?</h2>
+        <p>
+          The application runs behind Nginx (and other proxies) in Docker and
+          production environments. Without custom handling, audit logs would
+          record the proxy/server IP instead of the real client IP. The
+          <strong>IpAddressResolver</strong> resolves the client IP from
+          forwarded headers and is used by
+          <strong>OwenIt\Auditing</strong> (Laravel Audit) so that audit records
+          store the correct user IP.
+        </p>
+
+        <div class="highlight">
+          <h4>💡 Why This Matters</h4>
+          <p>
+            <strong>Audit trail accuracy:</strong> Compliance and security
+            reviews require knowing which IP addresses performed actions. With a
+            single proxy (e.g. Nginx), <code>X-Real-IP</code> or
+            <code>X-Forwarded-For</code> carry the real client IP; the resolver
+            reads these headers in a defined order and validates IPs to avoid
+            spoofing before returning a value. Laravel's
+            <code>Request::ip()</code> is used as fallback and respects the
+            TrustProxies middleware.
+          </p>
+        </div>
+      </section>
+
+      <!-- Resolution Order -->
+      <section class="content-section">
+        <h2>🔄 IP Resolution Order</h2>
+        <p>
+          The resolver checks sources in the following order. The first valid
+          public IP is returned.
+        </p>
+
+        <div class="process-flow">
+          <div class="process-step">
+            <div class="step-number">1</div>
+            <h4>X-Real-IP</h4>
+            <p>
+              Single header, most reliable when one proxy (e.g. Nginx) sits in
+              front of the app.
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="step-number">2</div>
+            <h4>X-Forwarded-For</h4>
+            <p>
+              May contain multiple IPs (client, proxy1, proxy2). First valid
+              public IP in the chain is used.
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="step-number">3</div>
+            <h4>Request::ip()</h4>
+            <p>
+              Laravel's default, which respects TrustProxies middleware and
+              REMOTE_ADDR.
+            </p>
+          </div>
+        </div>
+
+        <h3>Security: IP Validation</h3>
+        <div class="highlight">
+          <h4>🔒 Public IPs Only</h4>
+          <p>
+            For <code>X-Real-IP</code> and <code>X-Forwarded-For</code>, the
+            resolver uses
+            <code
+              >filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE |
+              FILTER_FLAG_NO_RES_RANGE)</code
+            >
+            so that only valid, non-private, non-reserved addresses are accepted
+            from headers. This reduces the risk of clients spoofing private IPs.
+            If no valid public IP is found in headers, the code falls back to
+            <code>$request->ip()</code>, which is already trusted by the
+            framework after TrustProxies runs.
+          </p>
+        </div>
+      </section>
+
+      <!-- Components -->
+      <section class="content-section">
+        <h2>🛠️ Components</h2>
+
+        <h3>1. IpAddressResolver (app/Resolvers/IpAddressResolver.php)</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📌 Purpose</h4>
+            <ul>
+              <li>
+                Implements <code>OwenIt\Auditing\Contracts\Resolver</code>
+              </li>
+              <li>
+                Used by Laravel Audit as the <code>ip_address</code> resolver
+              </li>
+              <li>Returns a string IP for the current request</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h4>🔑 Logic</h4>
+            <ul>
+              <li>
+                Reads <code>X-Real-IP</code> first; returns if valid public IP
+              </li>
+              <li>
+                Else parses <code>X-Forwarded-For</code> (comma-separated),
+                returns first valid public IP
+              </li>
+              <li>Else returns <code>Request::instance()->ip()</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code-block" data-lang="php">
+          // Simplified resolution logic $request = Request::instance(); if
+          ($realIp = $request->header('X-Real-IP')) { if (filter_var($realIp,
+          FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE |
+          FILTER_FLAG_NO_RES_RANGE)) { return $realIp; } } if ($forwardedFor =
+          $request->header('X-Forwarded-For')) { $ips = array_map('trim',
+          explode(',', $forwardedFor)); foreach ($ips as $ip) { if
+          (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE |
+          FILTER_FLAG_NO_RES_RANGE)) { return $ip; } } } return $request->ip();
+        </div>
+
+        <h3>2. Audit Configuration (config/audit.php)</h3>
+        <p>
+          The audit package is configured to use the custom resolver for the
+          <code>ip_address</code> field:
+        </p>
+        <div class="code-block" data-lang="php">
+          'resolver' => [ 'user' =>
+          OwenIt\Auditing\Resolvers\UserResolver::class, 'ip_address' =>
+          App\Resolvers\IpAddressResolver::class, 'user_agent' =>
+          OwenIt\Auditing\Resolvers\UserAgentResolver::class, 'url' =>
+          OwenIt\Auditing\Resolvers\UrlResolver::class, ],
+        </div>
+
+        <h3>
+          3. TrustProxies Middleware (app/Http/Middleware/TrustProxies.php)
+        </h3>
+        <p>
+          Laravel must trust the proxy IPs so that
+          <code>Request::ip()</code> and header handling work correctly. The
+          following proxies/CIDRs are configured:
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Proxy / CIDR</th>
+                <th>Environment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>127.0.0.1</code></td>
+                <td>Localhost</td>
+              </tr>
+              <tr>
+                <td><code>172.16.0.0/12</code></td>
+                <td>Docker default bridge network</td>
+              </tr>
+              <tr>
+                <td><code>10.0.0.0/8</code></td>
+                <td>Private network range</td>
+              </tr>
+              <tr>
+                <td><code>192.168.0.0/16</code></td>
+                <td>Private network range</td>
+              </tr>
+              <tr>
+                <td><code>172.19.0.0/16</code></td>
+                <td>UAT Server</td>
+              </tr>
+              <tr>
+                <td><code>172.27.0.0/16</code></td>
+                <td>Test Server</td>
+              </tr>
+              <tr>
+                <td><code>172.20.0.0/16</code></td>
+                <td>Staging Server 1</td>
+              </tr>
+              <tr>
+                <td><code>172.22.0.0/16</code></td>
+                <td>Staging Server 2</td>
+              </tr>
+              <tr>
+                <td><code>172.18.0.0/16</code></td>
+                <td>PROD Server</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>4. Nginx Configuration</h3>
+        <p>
+          Nginx must pass the client IP and scheme to PHP-FPM so the application
+          and resolver see the correct values. The following FastCGI params are
+          set in <code>docker/nginx.conf</code>,
+          <code>docker/stg_nginx.conf</code>, and
+          <code>docker/uat_nginx.conf</code>:
+        </p>
+        <div class="code-block" data-lang="nginx">
+          # Set real IP headers for proper IP forwarding fastcgi_param
+          HTTP_X_REAL_IP $remote_addr; fastcgi_param HTTP_X_FORWARDED_FOR
+          $proxy_add_x_forwarded_for; fastcgi_param HTTP_X_FORWARDED_PROTO
+          $scheme; fastcgi_param REMOTE_ADDR $remote_addr;
+        </div>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📌 Headers Passed</h4>
+            <ul>
+              <li>
+                <strong>X-Real-IP:</strong> Nginx
+                <code>$remote_addr</code> (client IP as seen by Nginx)
+              </li>
+              <li>
+                <strong>X-Forwarded-For:</strong> Nginx
+                <code>$proxy_add_x_forwarded_for</code> (append to existing
+                chain if any)
+              </li>
+              <li>
+                <strong>X-Forwarded-Proto:</strong>
+                <code>$scheme</code> (http/https)
+              </li>
+              <li>
+                <strong>REMOTE_ADDR:</strong> <code>$remote_addr</code> (for
+                Laravel request)
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <!-- Summary -->
+      <section class="content-section">
+        <h2>✅ Summary</h2>
+        <ul class="features">
+          <li>
+            <strong>Audit:</strong> Custom
+            <code>App\Resolvers\IpAddressResolver</code> prioritises
+            <code>X-Real-IP</code>, then <code>X-Forwarded-For</code> (first
+            valid public IP), then <code>Request::ip()</code>.
+          </li>
+          <li>
+            <strong>Config:</strong> <code>config/audit.php</code> uses the
+            custom resolver for the <code>ip_address</code> resolver key.
+          </li>
+          <li>
+            <strong>Proxies:</strong> <code>TrustProxies</code> middleware
+            defines trusted proxies/CIDRs for local, Docker, UAT, Test, Staging,
+            and Prod.
+          </li>
+          <li>
+            <strong>Nginx:</strong> Docker Nginx configs pass
+            <code>X-Real-IP</code>, <code>X-Forwarded-For</code>,
+            <code>X-Forwarded-Proto</code>, and <code>REMOTE_ADDR</code> to
+            PHP-FPM.
+          </li>
+        </ul>
+      </section>
+
+      <div class="footer">
+        <p><strong>IP Address Resolver Documentation</strong></p>
+        <p>Part of the Afia Brokerage LLC Technical Documentation · PR #9021</p>
+      </div>
+    </div>
+  </body>
+</html>

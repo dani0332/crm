@@ -7,7 +7,6 @@ defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
-  storageUrl: String,
   expanded: {
     type: Boolean,
     required: false,
@@ -232,31 +231,6 @@ onMounted(() => {
   window.addEventListener('document-notification', handleDocumentNotification);
 });
 
-const getS3TempUrl = async docURL => {
-  try {
-    NProgress.start();
-    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
-      docURL,
-    });
-    NProgress.done();
-    // Check if the request was successful and the response contains the URL
-    if (response.status === 200 && response.data.url) {
-      // Open the URL in a new tab
-      window.open(response.data.url, '_blank');
-    } else {
-      notification.error({
-        title: response.data.error,
-        position: 'top',
-      });
-    }
-  } catch (error) {
-    notification.error({
-      title: error,
-      position: 'top',
-    });
-    console.error('An error occurred:', error);
-  }
-};
 const documentVerificationStatus = ref(page.props.quote.documents_verified);
 
 const handleDocumentNotification = event => {
@@ -553,20 +527,13 @@ const signedMedicalApplicationDocs = computed(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  v-if="hasAnyRole([rolesEnum.BetaUser])"
-                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
-                >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                </a>
-                <a
-                  v-else
-                  :href="
-                    storageUrl +
-                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
+                  @click.prevent="
+                    openTempUrl(
+                      quoteDocument.watermarked_doc_url ||
+                        quoteDocument.doc_url,
+                    )
                   "
-                  target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
@@ -581,9 +548,10 @@ const signedMedicalApplicationDocs = computed(() => {
                 <a
                   v-for="doc in signedMedicalApplicationDocs"
                   :key="doc.id"
-                  :href="storageUrl + (doc.watermarked_doc_url || doc.doc_url)"
-                  target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  @click.prevent="
+                    openTempUrl(doc.watermarked_doc_url || doc.doc_url)
+                  "
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ doc.original_name || doc.doc_name }}
                 </a>

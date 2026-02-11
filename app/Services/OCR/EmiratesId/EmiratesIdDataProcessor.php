@@ -7,12 +7,9 @@ namespace App\Services\OCR\EmiratesId;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\KycSourceOfIncomeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypes;
 use App\Exceptions\OCR\OcrProcessingException;
-use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\CustomerMembers;
-use App\Models\HealthQuote;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
@@ -67,6 +64,17 @@ class EmiratesIdDataProcessor
                 $insured = $this->getOrCreateInsuredRecord();
                 if (! $insured) {
                     throw new OcrProcessingException('Failed to get or create Insured record for Emirates ID processing');
+                }
+
+                if ($insured->customer_type !== CustomerTypeEnum::Individual) {
+                    LoggerService::info('Skipping Emirates ID data processing for non-individual insured record', extra: [
+                        'insured_id' => $insured->id,
+                        'insured_customer_type' => $insured->customer_type,
+                    ]);
+
+                    DB::rollBack();
+
+                    return false;
                 }
 
                 $insuredUpdated = $this->updateInsuredTable($insured);
@@ -394,26 +402,23 @@ class EmiratesIdDataProcessor
         }
 
         try {
-            $quoteTypeId = $this->getQuoteTypeId();
+            $quoteTypeId = $this->getQuoteTypeId($this->quote);
 
-            $existingLink = CustomerInsured::where([
-                'customer_id' => $this->quote->customer_id,
-                'insured_id' => $insured->id,
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $this->quote->id,
-            ])
-                ->latest('updated_at')
-                ->first();
-
-            if (! $existingLink) {
-                CustomerInsured::create([
+            $existingLink = CustomerInsured::active()
+                ->where([
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $this->quote->id,
-                    'is_active' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                ])
+                ->first();
+
+            if (! $existingLink) {
+                CustomerInsured::createOrUpdateActive([
+                    'customer_id' => $this->quote->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $this->quote->id,
                 ]);
 
                 LoggerService::info('CustomerInsured relationship created');
@@ -423,14 +428,6 @@ class EmiratesIdDataProcessor
         } catch (Exception $e) {
             LoggerService::error('Failed to create CustomerInsured relationship - Quote UUID: '.$this->quote->uuid, exception: $e);
         }
-    }
-    private function getQuoteTypeId(): int
-    {
-        return match (true) {
-            $this->quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
-            $this->quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
-            default => $this->quote->quote_type_id,
-        };
     }
 
     public function getProcessingSummary(): array

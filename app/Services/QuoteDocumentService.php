@@ -192,13 +192,15 @@ class QuoteDocumentService extends BaseService
         LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
 
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
+            LoggerService::warning('Invalid document type code provided '.$data['document_type_code']);
+
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
+        LoggerService::info("Watermark qualification check: {$isWaterMarkQualifyDoc}");
         try {
-
             if (data_get($data, 'is_base_64', 0) == 1) {
                 $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
@@ -288,6 +290,7 @@ class QuoteDocumentService extends BaseService
                 $docUuid = uniqid().rand(1, 100);
             }
 
+            LoggerService::info('Creating quote document record in database');
             $quoteDocument = $quote->documents()->create([
                 'doc_name' => 'original_'.$docName,
                 'original_name' => $originalName,
@@ -315,12 +318,15 @@ class QuoteDocumentService extends BaseService
             $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
+                LoggerService::info('Dispatching WatermarkDocumentsJob');
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
                     $data['quote_uuid'],
                     $documentType->id
                 )->afterCommit();
             }
+
+            LoggerService::info('Document uploaded successfully');
 
             return $quoteDocument;
         } catch (\Exception $exception) {
@@ -908,25 +914,6 @@ class QuoteDocumentService extends BaseService
         ];
     }
 
-    /**
-     * Generate a temporary URL for a document stored in a specified storage disk.
-     *
-     * @param  string  $fileName  The name of the file for which to generate the temporary URL.
-     * @param  string  $storageDisk  The storage disk where the file is located. Default is 'azureIM'.
-     * @param  int  $expiryTimeInMinutes  The expiry time for the temporary URL in minutes. Default is 20 minutes.
-     * @return \Illuminate\Http\JsonResponse JSON response containing the temporary URL or an error message.
-     */
-    public function getDocumentTempURL($fileName, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 20)
-    {
-        $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
-
-        if ($url) {
-            return response()->json(['url' => $url]);
-        } else {
-            return response()->json(['error' => 'File does not exist on server']);
-        }
-    }
-
     public function watermarkWordDocs($file, $docName, $uuid, $documentType)
     {
         if (! file_exists(storage_path('/temp'))) {
@@ -1193,6 +1180,7 @@ class QuoteDocumentService extends BaseService
      */
     private function updateBorLogReference($borReference, $quoteDocument)
     {
+        LoggerService::info('Updating Bor log reference with uploaded document time and status');
         $borLog = BorLog::where('bor_reference', $borReference)->first();
         if ($borLog) {
             $borLog->update([

@@ -96,8 +96,6 @@ class SukoonMedexService
             $this->quotePolicy = $transaction->quote_policy ?? null;
             $this->certificateNumber = $transaction->certificate_number ?? null;
 
-            LoggerService::startQuoteLogging($this->currentQuote);
-
             if (! in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
                 throw new EpEcbException('Only (Car / Bike) LOB are eligible');
             }
@@ -212,6 +210,7 @@ class SukoonMedexService
             }
 
         } catch (Throwable $e) {
+            LoggerService::info("{$this->logPrefix} processPurchaseFlow failed", extra: ['exception' => $e->getMessage()]);
             throw $e;
         }
     }
@@ -763,6 +762,7 @@ class SukoonMedexService
      * @param  mixed  $quote  The quote object.
      * @return array The prepared user details.
      */
+    // Reminder:: this function is used for Bike and Car quotes - already back tracked in the code
     private function prepareUserDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
@@ -806,7 +806,7 @@ class SukoonMedexService
             'mobile' => '+9710502732524',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
-            'emirate' => $emirate->text ?? '',
+            'emirate' => $emirate?->text ?? '',
             'emirates_id_number' => $emirateIdNumber,
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',

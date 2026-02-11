@@ -73,7 +73,8 @@ class NotificationService extends BaseService
         // event(new PaymentNotifications($model, $url, $quoteTypeCode));
 
         // Broadcast authorised payment count update if this is a PersonalQuote with authorised payment
-        $this->broadcastAuthorisedPaymentCountIfNeeded($model);
+        // Temporarily commented out - event broadcasting disabled
+        // $this->broadcastAuthorisedPaymentCountIfNeeded($model);
 
         LoggerService::info('Payment Status Update - Completed successfully', extra: [
             'quote_uuid' => $model->uuid,
@@ -234,7 +235,8 @@ class NotificationService extends BaseService
             }
 
             $count = $paymentRepository->getAuthorisePaymentCount($user);
-            event(new AuthorisedPaymentCountUpdated($userId, $count));
+            // Temporarily commented out - event broadcasting disabled
+            // event(new AuthorisedPaymentCountUpdated($userId, $count));
         }
 
         LoggerService::info('Authorised Payment Count - Completed', extra: [
