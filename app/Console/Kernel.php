@@ -174,6 +174,11 @@ class Kernel extends ConsoleKernel
             default: fn ($event) => $event->timezone('Asia/Dubai')->everyThreeMinutes()->onOneServer()->withoutOverlapping(4),
             environments: [
                 'test' => fn ($event) => $event->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4),
+                'uat' => function ($event) {
+                    $environment = app()->environment();
+                    LoggerService::info("policy-issuance-automation:run skipped on {$environment}");
+                    return $event->skip(fn () => true);
+                },
             ]
         );
         $schedule->command('aml-screening-automation:run')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();

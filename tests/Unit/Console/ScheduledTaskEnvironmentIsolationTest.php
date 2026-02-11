@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Console;
 
+use App\Console\Kernel;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
+use ReflectionMethod;
+use ReflectionProperty;
 use Tests\TestCase;
 
 /**
@@ -237,6 +241,48 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
                 $event->mutex ?? null,
                 'Task should have overlap prevention configured'
             );
+        }
+    }
+
+    public function test_policy_issuance_command_skips_on_uat(): void
+    {
+        $originalEnv = app()['env'];
+        $originalConfigEnv = Config::get('app.env');
+
+        app()['env'] = 'uat';
+        Config::set('app.env', 'uat');
+
+        try {
+            $expectedMessage = 'policy-issuance-automation:run skipped on '.app()->environment();
+
+            Log::shouldReceive('info')
+                ->once()
+                ->with($expectedMessage, []);
+
+            $kernel = app(Kernel::class);
+            $schedule = new Schedule;
+
+            $scheduleMethod = new ReflectionMethod($kernel, 'schedule');
+            $scheduleMethod->setAccessible(true);
+            $scheduleMethod->invoke($kernel, $schedule);
+
+            $events = collect($schedule->events())->filter(function (Event $event) {
+                return str_contains($event->command ?? '', 'policy-issuance-automation:run');
+            });
+
+            $this->assertNotEmpty($events, 'policy-issuance-automation:run should be scheduled for UAT');
+
+            /** @var Event $event */
+            $event = $events->first();
+
+            $rejectsProperty = new ReflectionProperty(Event::class, 'rejects');
+            $rejectsProperty->setAccessible(true);
+            $rejects = $rejectsProperty->getValue($event);
+
+            $this->assertNotEmpty($rejects, 'UAT scheduling should add a skip callback for the policy issuance command');
+        } finally {
+            app()['env'] = $originalEnv;
+            Config::set('app.env', $originalConfigEnv);
         }
     }
 }
