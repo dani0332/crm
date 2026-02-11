@@ -83,6 +83,9 @@ const isEmptyField = ref(false);
 
 const { isRequired, maxPrice, minPrice } = useRules();
 
+const isRequiredAllowZero = v =>
+  (v !== null && v !== undefined && v !== '') || 'This field is required';
+
 const addPlanForm = useForm({
   quote_uuid: page.props.quote.uuid,
   is_disabled: false,
@@ -357,7 +360,7 @@ const calculatePlan = () => {
       <div class="w-full md:w-1/2">
         <x-select
           v-model="addPlanForm.payment_term"
-          :rules="[isRequired]"
+          :rules="[isRequiredAllowZero]"
           :options="filteredPaymentTermOptions"
           placeholder="Select Payment Terms"
           required

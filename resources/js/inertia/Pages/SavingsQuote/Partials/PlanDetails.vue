@@ -980,18 +980,21 @@ watch(
                       item.text
                     }}</span>
                     <div class="flex flex-col">
-                      <template v-if="item.valueArr && item.valueArr.length > 0">
+                      <template
+                        v-if="item.valueArr && item.valueArr.length > 0"
+                      >
                         <div
                           v-for="(value, index) in item.valueArr"
                           :key="index"
                           class="text-sm text-primary-600"
                         >
-                          {{ value }}
+                          {{ value.subType }} - {{ value.value }}
                         </div>
                       </template>
-                      <span v-else class="text-sm text-primary-600">{{
-                        item.value
-                      }}</span>
+                      <span v-else class="text-sm text-primary-600">
+                        {{ item.subType ? item.subType + ' - ' : '' }}
+                        {{ item.value }}
+                      </span>
                     </div>
                   </div>
                 </div>
