@@ -563,7 +563,7 @@ class ClaimsService extends BaseService
         $carFields = ['car_make', 'car_model', 'model_year', 'plate_number'];
         $healthFields = ['service_type_id', 'request_reference_number'];
 
-        if ($quoteTypeId === QuoteTypeId::Car) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             // Clear health-related fields for car quotes
             foreach ($healthFields as $field) {
                 $detailData[$field] = null;
