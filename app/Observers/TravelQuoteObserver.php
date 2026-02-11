@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
@@ -166,6 +167,17 @@ class TravelQuoteObserver
                 EmbeddedProductRepository::capturePayment($travelQuote->id, quoteTypeCode::Travel);
             } catch (Exception $e) {
                 LoggerService::error('TravelQuoteObserver - capture embedded products failed', [], $e, ['ref_id' => $travelQuote->uuid]);
+            }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($travelQuote->uuid, QuoteTypeId::Travel);
+            } catch (Exception $e) {
+                LoggerService::error('TravelQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $travelQuote->uuid]);
             }
         }
 

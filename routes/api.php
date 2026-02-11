@@ -79,6 +79,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     });
 
     Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
+    Route::post('/stp-advisor-notification', [ApiController::class, 'stpAdvisorNotification']);
 
     Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
         ->name('pc-customer-assignment');
@@ -86,6 +87,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/tag-pc-qualified', [ApiController::class, 'tagPrivateClients']);
 
     Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
+    Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);

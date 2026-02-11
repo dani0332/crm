@@ -57,6 +57,36 @@
     </div>
     
     <div class="category-section">
+        <h2>Sage 300 ERP Integration</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Permission Value</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="permission-value">view-sage-api-logs</span></td>
+                    <td>Allows users to view Sage 300 API integration logs for troubleshooting.</td>
+                </tr>
+                <tr>
+                    <td><span class="permission-value">SAGE_PROCESS_ISSUE_MANAGEMENT</span></td>
+                    <td>Allows users to view, monitor, and troubleshoot failed Sage 300 booking processes. Provides access to the failed processes management interface with detailed error logs, payment information, and CSV export capabilities.</td>
+                </tr>
+                <tr>
+                    <td><span class="permission-value">sage-booking-create</span></td>
+                    <td>Allows users to initiate policy booking to Sage 300 ERP system.</td>
+                </tr>
+                <tr>
+                    <td><span class="permission-value">sage-booking-retry</span></td>
+                    <td>Allows users to retry failed Sage 300 booking processes after resolving errors.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="category-section">
         <h2>External Systems</h2>
         <table>
             <thead>

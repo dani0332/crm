@@ -31,6 +31,10 @@ enum OCRDocumentTypeEnum: string
             'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
             'EID_CAR' => self::ID_CARD,
             DocumentTypeCode::DEVICE_SMARTPHONE_EMIRATES_ID => self::ID_CARD,
+            'CYB_EID' => self::ID_CARD,
+            'MEEID' => self::ID_CARD,
+            'MEPP' => self::PASSPORT,
+            'MEV' => self::VISA,
             'DRIVER_EID' => self::DRIVER_EMIRATES_ID,
             'PS' => self::POLICY_SCHEDULE,
             'GH_PS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Group Health Policy Schedule
@@ -77,6 +81,11 @@ enum OCRDocumentTypeEnum: string
             ],
             QuoteTypes::DEVICE => [
                 self::ID_CARD,
+            ],
+            QuoteTypes::HEALTH => [
+                self::ID_CARD,
+                self::PASSPORT,
+                self::VISA,
             ],
             default => [],
         };

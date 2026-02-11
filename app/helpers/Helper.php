@@ -552,6 +552,23 @@ if (! function_exists('checkPersonalQuotes')) {
     }
 }
 
+if (! function_exists('getPersonalQuoteTypeIds')) {
+    function getPersonalQuoteTypeIds()
+    {
+        return [
+            QuoteTypeId::Home,
+            QuoteTypeId::Life,
+            QuoteTypeId::Bike,
+            QuoteTypeId::Yacht,
+            QuoteTypeId::Pet,
+            QuoteTypeId::Cycle,
+            QuoteTypeId::Jetski,
+            QuoteTypeId::Savings,
+            QuoteTypeId::Device,
+        ];
+    }
+}
+
 if (! function_exists('getBase64FileInfo')) {
     function getBase64FileInfo($base64File)
     {
@@ -802,11 +819,7 @@ if (! function_exists('checkAuthUserRole')) {
             return false;
         }
 
-        if (Auth::user()->hasAnyRole(getManagerRoles())) {
-            return true;
-        } else {
-            return false;
-        }
+        return Auth::user()->hasAnyRole(getManagerRoles());
     }
 }
 

@@ -1156,19 +1156,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return DB::table('payments')
             ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
             ->where(function ($query) use ($thirtyDaysAgo) {
                 $query->where(function ($q) use ($thirtyDaysAgo) {
                     $q->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
                         ->where('payments.authorized_at', '>=', $thirtyDaysAgo);
-                })->orWhere(function ($q) use ($thirtyDaysAgo) {
-                    $q->where('payments.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
-                        ->where('payments.payment_status_id', PaymentStatusEnum::NEW)
-                        ->where('payments.collection_date', '>=', $thirtyDaysAgo);
                 });
             })
             ->when($isManager, function ($query) use ($userTeamIds) {
-                $query->whereIn('user_team.team_id', $userTeamIds);
+                $query->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
+                    ->whereIn('user_team.team_id', $userTeamIds);
             }, function ($query) use ($user) {
                 $query->where('pq.advisor_id', $user->id);
             })
