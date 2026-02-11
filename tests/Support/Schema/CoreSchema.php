@@ -383,18 +383,6 @@ class CoreSchema
                 $table->timestamp('started_at')->nullable();
                 $table->timestamps();
             },
-            'device_quote' => function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('personal_quote_id');
-                $table->string('imei')->nullable();
-                $table->string('device_make')->nullable();
-                $table->string('device_model')->nullable();
-                $table->string('device_type')->nullable();
-                $table->decimal('device_value', 15, 2)->nullable();
-                $table->string('device_condition')->nullable();
-                $table->string('purchase_date')->nullable();
-                $table->timestamps();
-            },
             'device_quote_request' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('personal_quote_id');

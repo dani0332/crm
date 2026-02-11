@@ -57,11 +57,6 @@ class NgiPolicyIssuanceTestDataBuilder
     {
         $defaults = [
             'imei' => '123456789012345',
-            'device_make' => 'Apple',
-            'device_model' => 'iPhone 15 Pro',
-            'device_type' => 'smartphone',
-            'device_value' => 5000.00,
-            'device_condition' => 'new',
             'purchase_date' => now()->subMonths(1)->format('Y-m-d'),
         ];
 

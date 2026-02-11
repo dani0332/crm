@@ -161,10 +161,6 @@ function buildQuotePrototype(): object
             $this->deviceQuote = (object) [
                 'id' => 1,
                 'imei' => '123456789012345',
-                'device_make' => 'Apple',
-                'device_model' => 'iPhone 15 Pro',
-                'device_type' => 'smartphone',
-                'device_value' => 5000.00,
             ];
 
             $this->latestInsured = (object) [

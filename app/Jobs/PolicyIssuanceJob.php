@@ -107,6 +107,17 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             }
 
         } catch (Throwable $e) {
+            if ($this->isProcessAlreadyCompleted()) {
+                LoggerService::warning('Post-completion exception ignored to preserve result', [
+                    'process_id' => $this->process?->id ?? $this->processId,
+                    'quote_code' => $this->process?->model?->code ?? 'unknown',
+                    'status' => $this->process?->status ?? 'unknown',
+                    'error' => $e->getMessage(),
+                ]);
+
+                return;
+            }
+
             $this->handleException($e);
             $this->fail($e);
         }
@@ -366,5 +377,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         }
 
         return false;
+    }
+
+    private function isProcessAlreadyCompleted(): bool
+    {
+        return $this->process?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
     }
 }

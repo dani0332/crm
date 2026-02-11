@@ -39,11 +39,6 @@ class DeviceQuoteFactory extends Factory
             'quote_status_id' => 1,
             'quote_type_id' => QuoteTypes::DEVICE->value,
             'imei' => $this->faker->numerify('###############'),
-            'device_make' => $this->faker->randomElement(['Apple', 'Samsung', 'Google', 'OnePlus', 'Huawei']),
-            'device_model' => $this->faker->randomElement(['iPhone 15 Pro', 'Galaxy S24', 'Pixel 8', 'OnePlus 12']),
-            'device_type' => 'smartphone',
-            'device_value' => $this->faker->randomFloat(2, 1000, 10000),
-            'device_condition' => $this->faker->randomElement(['new', 'used', 'refurbished']),
             'purchase_date' => now()->subMonths($this->faker->numberBetween(1, 12))->format('Y-m-d'),
             'created_at' => now(),
             'updated_at' => now(),
@@ -145,10 +140,6 @@ class DeviceQuoteFactory extends Factory
                 $this->deviceQuote = (object) [
                     'id' => 1,
                     'imei' => $quote->imei ?? '123456789012345',
-                    'device_make' => $quote->device_make ?? 'Apple',
-                    'device_model' => $quote->device_model ?? 'iPhone 15 Pro',
-                    'device_type' => $quote->device_type ?? 'smartphone',
-                    'device_value' => $quote->device_value ?? 5000.00,
                 ];
 
                 $this->latestInsured = (object) [
