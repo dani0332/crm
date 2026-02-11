@@ -1099,6 +1099,7 @@ class RenewalBatchReportService extends BaseService
                 ->orderBy('text')
                 ->get();
         });
+        
     }
 
     /**
