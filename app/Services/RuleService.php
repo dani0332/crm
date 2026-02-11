@@ -248,11 +248,12 @@ class RuleService extends BaseService
 
         return [];
     }
-    public function getFicRulesUsers()
+    public function getFicRulesUsers(QuoteTypes $quoteType)
     {
         return Rule::join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.is_active', 1)
             ->where('rules.rule_type', RuleTypeEnum::FIC)
+            ->where('rules.quote_type_id', $quoteType->id())
             ->distinct()
             ->pluck('rule_users.user_id')
             ->toArray();

@@ -47,7 +47,7 @@ class LifeAllocation extends BaseAllocation
 
     private function getFicRulesUsers()
     {
-        $usersIds = app(RuleService::class)->getFicRulesUsers();
+        $usersIds = app(RuleService::class)->getFicRulesUsers(QuoteTypes::LIFE);
 
         return User::select('id', 'email')->whereIn('id', $usersIds)->get();
     }
