@@ -150,31 +150,31 @@ class RulesController extends Controller
         $rule->update($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
         // Update or create rule detail if lead_source_id is provided
-        if ($request->filled('lead_source_id') && $request->get('rule_type')==self::LEAD_SOURCE_RULE_TYPE_ID) {
+        if ($request->filled('lead_source_id') && $request->get('rule_type') == self::LEAD_SOURCE_RULE_TYPE_ID) {
 
-                $rule->ruleDetail()->updateOrCreate(
-                    ['rule_id' => $rule->id],
-                    [
+            $rule->ruleDetail()->updateOrCreate(
+                ['rule_id' => $rule->id],
+                [
+                    'lead_source_id' => $request->lead_source_id,
+                    'utm_source' => $request->utm_source,
+                    'utm_campaign' => $request->utm_campaign,
+                    'utm_medium' => $request->utm_medium,
+                ]
+            );
+            // Sync rule_lead_sources records using relationship
+            if ($request->filled('rule_users')) {
+                // Delete existing rule_lead_sources for this rule
+                $rule->leadSources()->delete();
+
+                // Batch create new rule_lead_sources records
+                $rule->leadSources()->createMany(
+                    collect($request->rule_users)->map(fn ($userId) => [
                         'lead_source_id' => $request->lead_source_id,
-                        'utm_source' => $request->utm_source,
-                        'utm_campaign' => $request->utm_campaign,
-                        'utm_medium' => $request->utm_medium,
-                    ]
+                        'user_id' => $userId,
+                    ])->toArray()
                 );
-                // Sync rule_lead_sources records using relationship
-                if ($request->filled('rule_users')) {
-                    // Delete existing rule_lead_sources for this rule
-                    $rule->leadSources()->delete();
-    
-                    // Batch create new rule_lead_sources records
-                    $rule->leadSources()->createMany(
-                        collect($request->rule_users)->map(fn ($userId) => [
-                            'lead_source_id' => $request->lead_source_id,
-                            'user_id' => $userId,
-                        ])->toArray()
-                    );
-                }
-            
+            }
+
         } else {
             $rule->ruleDetail()->delete();
             $rule->leadSources()->delete();
