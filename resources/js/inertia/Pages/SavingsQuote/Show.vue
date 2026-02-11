@@ -142,11 +142,12 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer?.insured_first_name,
-  insured_last_name: page.props.quote?.customer?.insured_last_name,
-  emirates_id_number: page.props.quote?.customer?.emirates_id_number && applyEmiratesNumberMasking(page.props.quote.customer.emirates_id_number),
+  insured_first_name: page.props.quote?.latest_insured?.first_name,
+  insured_last_name: page.props.quote?.latest_insured?.last_name,
+  emirates_id_number: page.props.quote?.latest_insured?.id_number &&
+   applyEmiratesNumberMasking(page.props.quote.latest_insured.id_number),
   emirates_id_expiry_date:
-    page.props.quote?.customer?.emirates_id_expiry_date,
+    page.props.quote?.latest_insured?.insured_kyc?.id_expiry_date,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:

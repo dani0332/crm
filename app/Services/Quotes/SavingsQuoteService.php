@@ -159,7 +159,8 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.tenure',
             'subSource',
             'subSourceOption',
-            'branch:id,name'
+            'latestInsured',
+            'latestInsured.insuredKyc',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -219,7 +220,6 @@ class SavingsQuoteService extends BaseQuoteService
             ");
             })
             ->where('uuid', $uuid)->firstOrFail();
-            //echo '<pre>'; print_r($data->customer); die;
     }
 
     public function update(string $uuid, array $data)

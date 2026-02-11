@@ -314,7 +314,8 @@ class PersonalQuote extends Model implements AuditableContract
             'id',               // Local key on personal_quotes table...
             'insured_id'        // Local key on customer_insured table...
         )
-            ->where('customer_insured.quote_type_id', $this->quote_type_id);
+            ->where('customer_insured.quote_type_id', $this->quote_type_id)
+            ->latest('customer_insured.updated_at');
     }
 
     public function leadHistory()
@@ -425,7 +426,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     // Get all insured records for this quote (multiple AML screenings)
-    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function insured(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
         return $this->hasManyThrough(
             Insured::class,
