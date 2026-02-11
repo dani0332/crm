@@ -14,9 +14,7 @@ const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id === 1);
     <h2 class="text-xl font-semibold">Rule Detail</h2>
     <div class="flex gap-2">
       <Link :href="route('rule.index')">
-        <x-button size="sm" color="#1d83bc" tag="div">
-          Rules List
-        </x-button>
+        <x-button size="sm" color="#1d83bc" tag="div"> Rules List </x-button>
       </Link>
       <Link :href="route('rule.edit', rule.id)">
         <x-button size="sm" tag="div">Edit</x-button>
