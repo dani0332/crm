@@ -82,14 +82,33 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->updateProcessingStatus();
             $this->executeAutomation();
 
-            LoggerService::info('Policy issuance automation completed', [
-                'process_id' => $this->process->id,
-                'quote_code' => $quoteCode,
-                'final_status' => $this->process->fresh()->status,
-            ]);
+            $updatedProcess = $this->process?->fresh();
+
+            if (! $updatedProcess) {
+                return;
+            }
+
+            $this->process = $updatedProcess;
+
+            $finalStatus = $updatedProcess->status;
+
+            if ($finalStatus === PolicyIssuanceEnum::COMPLETED_STATUS) {
+                LoggerService::info('Policy issuance automation completed', [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'final_status' => $finalStatus,
+                ]);
+            } else {
+                LoggerService::info('Policy issuance automation ended with status', [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'final_status' => $finalStatus,
+                ]);
+            }
 
         } catch (Throwable $e) {
             $this->handleException($e);
+            $this->fail($e);
         }
     }
 
@@ -217,6 +236,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'message' => json_encode(['error' => 'Insurance provider not found']),
             ]);
 
+            $this->fail(new \RuntimeException('Insurance provider not found'));
+
             return;
         }
 
@@ -234,6 +255,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'status' => PolicyIssuanceEnum::FAILED_STATUS,
                 'message' => json_encode(['error' => "Automation not found for {$insuranceProvider->text}"]),
             ]);
+
+            $this->fail(new \RuntimeException("Automation not found for {$insuranceProvider->text}"));
 
             return;
         }
@@ -260,6 +283,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'status' => PolicyIssuanceEnum::FAILED_STATUS,
                 'message' => json_encode(['error' => $errorMessage]),
             ]);
+
+            $this->fail(new \RuntimeException($errorMessage));
         } else {
             if (isset($response['documents_pending']) && $response['documents_pending']) {
                 LoggerService::info('Automation: Documents pending (async job dispatched)', [
