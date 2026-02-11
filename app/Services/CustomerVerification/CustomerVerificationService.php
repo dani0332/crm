@@ -321,7 +321,7 @@ class CustomerVerificationService
                 ],
                 'dob' => [
                     'value' => array_key_exists('date_of_birth', $customerVerifiedData)
-                    ? $this->formatDate($customerVerifiedData['date_of_birth'])
+                    ? $this->formatDateToDisplay($customerVerifiedData['date_of_birth'])
                     : '',
                     'error' => isset($customerVerifiedData['date_of_birth'])
                     ? $this->verifyWithWebForm(Carbon::parse($customerVerifiedData['date_of_birth'])->format('d-m-Y'), $record->dob)

@@ -10,12 +10,12 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\DeviceMake;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use App\Services\Logger\LoggerService;
 
 class DeviceQuoteService extends BaseQuoteService
 {
@@ -85,8 +85,8 @@ class DeviceQuoteService extends BaseQuoteService
                     if ($startDate && $endDate) {
                         $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('captured_at', [
-                              Carbon::parse($startDate)->startOfDay(),
-                               Carbon::parse($endDate)->endOfDay(),
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
                             ]);
                         });
                     }
@@ -121,15 +121,14 @@ class DeviceQuoteService extends BaseQuoteService
                     'nationality',
                     'customer',
                     'customer.additionalContactInfo',
-                    'insuranceProvider:id,text,code',
                     'insuranceProviderPlan',
                     'insuranceProvider',
                     'latestInsured',
                     'latestInsured.insuredKyc' => function ($query) {
                         $query->select([
-                            'id',  
+                            'id',
                             'insured_id',        // advisor primary key
-                            'id_expiry_date'
+                            'id_expiry_date',
                         ]);
                     },
                     'payments' => function ($q) {
@@ -316,7 +315,7 @@ class DeviceQuoteService extends BaseQuoteService
 
         // Make API request to save the device quote
         $response = Capi::request('/api/v1/device/create', 'post', $data);
-        if (isset($response->code) && !in_array($response->code, [200, 201], true) || isset($response->status) && !in_array($response->status, [200, 201], true)) {
+        if (isset($response->code) && ! in_array($response->code, [200, 201], true) || isset($response->status) && ! in_array($response->status, [200, 201], true)) {
             return $response->json();
         }
         if (isset($response->uuid) && $response->uuid != '') {

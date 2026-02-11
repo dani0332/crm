@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace App\Services\OCR\DrivingLicense;
 
 use App\Models\CarQuote;
-use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
+use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class DrivingLicenseDataProcessor
 {
-    use OcrUtils;
+    use GenericQueriesAllLobs, OcrUtils;
 
     private DrivingLicenseExtractor $drivingLicenseExtractor;
 
