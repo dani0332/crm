@@ -38,6 +38,7 @@ enum QuoteFlowType: int
     case CAR_MISSING_DOC_REMINDER = 37;
     case DEVICE_UPDATE_POLICY = 38;
     case CAR_AI_ADVISOR_OCB = 39;
+    case DEVICE_NEW_POLICY = 47;
     case HEALTH_STP_ADVISOR_NOTIFICATION = 48;
     case HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 49;
 
@@ -118,6 +119,7 @@ enum QuoteFlowType: int
             37 => QuoteFlowType::CAR_MISSING_DOC_REMINDER,
             38 => QuoteFlowType::DEVICE_UPDATE_POLICY,
             39 => QuoteFlowType::CAR_AI_ADVISOR_OCB,
+            47 => QuoteFlowType::DEVICE_NEW_POLICY,
             48 => QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION,
             49 => QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED,
             40 => QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS,
