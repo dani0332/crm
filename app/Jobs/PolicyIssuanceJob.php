@@ -230,7 +230,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         ]);
     }
 
-    private function executeAutomation(): void
+    private function executeAutomation()
     {
         $quoteType = $this->process?->quote_type;
         $insuranceProvider = $this->process?->insuranceProvider;
@@ -296,6 +296,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             ]);
 
             $this->fail(new \RuntimeException($errorMessage));
+            return;
         } else {
             if (isset($response['documents_pending']) && $response['documents_pending']) {
                 LoggerService::info('Automation: Documents pending (async job dispatched)', [
