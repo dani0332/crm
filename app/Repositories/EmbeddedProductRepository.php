@@ -50,7 +50,6 @@ use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\ECB;
@@ -593,9 +592,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             try {
-                $sukoonMedexService = app(SukoonMedexService::class);
-                $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
-                $sukoonMedexService->processPurchaseFlow();
+                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction);
             } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
