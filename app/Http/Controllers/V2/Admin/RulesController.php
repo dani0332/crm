@@ -155,7 +155,7 @@ class RulesController extends Controller
         $rule->update($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
         // Update or create rule detail if lead_source_id is provided
-        if ($request->filled('lead_source_id') && $request->get('rule_type')==self::LEAD_SOURCE_RULE_TYPE_ID) {
+        if ($request->filled('lead_source_id') && $request->get('rule_type') == self::LEAD_SOURCE_RULE_TYPE_ID) {
 
             // Ensure lead source is applicable for rules
             LeadSource::where('id', $request->lead_source_id)
@@ -184,11 +184,11 @@ class RulesController extends Controller
                     ])->toArray()
                 );
             }
-        
-    } else {
-        $rule->ruleDetail()->delete();
-        $rule->leadSources()->delete();
-    }
+
+        } else {
+            $rule->ruleDetail()->delete();
+            $rule->leadSources()->delete();
+        }
 
         // Sync users
         $response = $rule->users()->sync($request->rule_users);
