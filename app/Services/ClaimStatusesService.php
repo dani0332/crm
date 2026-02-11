@@ -143,6 +143,7 @@ class ClaimStatusesService extends BaseService
         if ($isHealthQuoteType) {
             $subStatusListForClaimClosed = array_merge($subStatusListForClaimClosed, [
                 ClaimsEnum::CLAIM_SUB_STATUS_REQUEST_APPROVED->value,
+                ClaimsEnum::CLAIM_SUB_STATUS_REQUEST_DENIED->value,
                 ClaimsEnum::CLAIM_SUB_STATUS_ANSWERED_AND_CLOSED->value,
             ]);
         }
