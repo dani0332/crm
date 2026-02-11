@@ -150,8 +150,10 @@ trait Carable
          * so lead can pick that rule which doesn't have utm campaign and just lead source
          */
         if (! $hasUtmCampaignRule) {
-            LoggerService::info("There are only Rules without UTM Campaigns having just lead source rules against source {$lead->source} so applying that main rule");
-            return $rules->first()->id;
+            $ruleWithoutUtmCampaign = $rules->first();
+            LoggerService::info("There is only one Rule without UTM Campaigns having just lead source rules against source {$lead->source} so applying that main rule named: {$ruleWithoutUtmCampaign->name}");
+
+            return $ruleWithoutUtmCampaign->id;
         }
 
         $utmCampaign = $lead->carQuoteRequestDetail->utm_campaign;
@@ -161,8 +163,17 @@ trait Carable
          * so lead can pick that rule which doesn't have utm campaign and just lead source
          */
         if (empty($utmCampaign)) {
-            LoggerService::info("UTM Campaign is empty for lead source {$lead->source} so applying rule without UTM Campaign");
-            return $rules->filter(fn ($rule) => empty($rule->utm_campaign))->first()?->id ?? null;
+            $ruleWithoutUtmCampaign = $rules->filter(fn ($rule) => empty($rule->utm_campaign))->first();
+
+            if (! $ruleWithoutUtmCampaign) {
+                LoggerService::info("No rule without UTM Campaign found for lead source '{$lead->source}' so no rule should be applied for this lead");
+
+                return null;
+            }
+
+            LoggerService::info("UTM Campaign is empty for lead source '{$lead->source}' so applying rule without UTM Campaign named: {$ruleWithoutUtmCampaign->name}");
+
+            return $ruleWithoutUtmCampaign->id;
         }
 
         /**
@@ -172,11 +183,12 @@ trait Carable
         $campaignRule = $rules->where('utm_campaign', $utmCampaign)->first();
 
         if (! $campaignRule) {
-            LoggerService::info("No UTM Campaign rule found for lead with campaign {$utmCampaign} and source {$lead->source} so no rule should be applied for this lead");
+            LoggerService::info("No UTM Campaign rule found for lead with campaign '{$utmCampaign}' and source '{$lead->source}' so no rule should be applied for this lead");
+
             return null;
         }
 
-        LoggerService::info("UTM Campaign rule found for lead with campaign {$utmCampaign} and source {$lead->source} so applying that rule");
+        LoggerService::info("UTM Campaign rule found for lead with campaign '{$utmCampaign}' and source '{$lead->source}' so applying that rule named: {$campaignRule->name}");
 
         return $campaignRule->id;
     }
