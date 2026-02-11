@@ -15,6 +15,7 @@ use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
+use App\Models\InsuranceProvider;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
@@ -275,10 +276,7 @@ class RenewalBatchReportService extends BaseService
         }
 
         // Get active insurance providers
-        $insuranceProviders = \App\Models\InsuranceProvider::select('id', 'text')
-            ->where('is_active', true)
-            ->orderBy('text')
-            ->get()
+        $insuranceProviders = $this->getCachedInsuranceProviders()
             ->map(fn ($provider) => ['value' => $provider->id, 'label' => $provider->text])
             ->toArray();
 
@@ -504,10 +502,7 @@ class RenewalBatchReportService extends BaseService
                 ? $filters->currently_insured_with
                 : [$filters->currently_insured_with];
 
-            $insurerNames = \App\Models\InsuranceProvider::whereIn('id', $insurerIds)
-                ->where('is_active', true)
-                ->pluck('text')
-                ->toArray();
+            $insurerNames = $this->getInsuranceProviderNamesByIds($insurerIds);
 
             if (! empty($insurerNames)) {
                 $query->whereIn('car_quote_request.currently_insured_with', $insurerNames);
@@ -1089,6 +1084,33 @@ class RenewalBatchReportService extends BaseService
             $authUserIsAdvisor,
         ];
 
+    }
+
+    /**
+     * Get all active insurance providers with caching
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    protected function getCachedInsuranceProviders()
+    {
+        return Cache::remember('active_insurance_providers_collection', now()->oneDay(), function () {
+            return InsuranceProvider::active()
+                ->select('id', 'text')
+                ->orderBy('text')
+                ->get();
+        });
+    }
+
+    /**
+     * Get insurance provider names by IDs
+     */
+    protected function getInsuranceProviderNamesByIds(array $insurerIds): array
+    {
+        $providers = $this->getCachedInsuranceProviders();
+
+        return $providers->whereIn('id', $insurerIds)
+            ->pluck('text')
+            ->toArray();
     }
 
     public function getAllNonMotorBatches()
