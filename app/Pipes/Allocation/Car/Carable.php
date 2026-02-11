@@ -21,6 +21,14 @@ use Illuminate\Support\Facades\DB;
 
 trait Carable
 {
+    /**
+     * Normalize lead source by trimming special characters
+     */
+    private function normalizeLeadSource(string $source): string
+    {
+        return trim($source, " \t\n\r\0\x0B/?");
+    }
+
     public function getBaseQuery($status, $userIds)
     {
         $excludedUserIds = $this->allocationRequest->get('excludedUserIds') ?? [];
@@ -117,26 +125,31 @@ trait Carable
 
     private function findLeadSourceRuleId($lead)
     {
-        $rules = Rule::select('rules.id', 'rules.name', 'lead_sources.name as leadSourceName', 'rule_details.utm_campaign')
-                ->join('rule_details', 'rule_details.rule_id', 'rules.id')
-                ->join('lead_sources', 'lead_sources.id', 'rule_details.lead_source_id')
-                ->where('lead_sources.is_applicable_for_rules', 1)
-                ->where('rules.is_active', 1)
-                ->where('lead_sources.name', $lead->source)
-                ->where('quote_type_id', QuoteTypes::CAR->id())
-                ->get();
+        $normalizedLeadSource = $this->normalizeLeadSource($lead->source);
 
-        if($rules->isEmpty()) {
+        $rules = Rule::select('rules.id', 'rules.name', 'lead_sources.name as leadSourceName', 'rule_details.utm_campaign')
+            ->join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('lead_sources', 'lead_sources.id', 'rule_details.lead_source_id')
+            ->where('lead_sources.is_applicable_for_rules', 1)
+            ->where('rules.is_active', 1)
+            ->whereRaw(
+                'TRIM(BOTH ? FROM TRIM(BOTH ? FROM TRIM(BOTH ? FROM lead_sources.name))) = ?',
+                ['/', '?', ' ', $normalizedLeadSource]
+            )
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->get();
+
+        if ($rules->isEmpty()) {
             return null;
         }
 
-        $hasUtmCampaignRule = $rules->filter(fn($rule) => !empty($rule->utm_campaign))->isNotEmpty();
+        $hasUtmCampaignRule = $rules->filter(fn ($rule) => ! empty($rule->utm_campaign))->isNotEmpty();
 
         /**
          * if there is no utm campaign rule, then return rule id without utm campaign
          * so lead can pick that rule which doesn't have utm campaign and just lead source
          */
-        if(!$hasUtmCampaignRule) {
+        if (! $hasUtmCampaignRule) {
             return $rules->first()->id;
         }
 
@@ -146,8 +159,8 @@ trait Carable
          * if utm campaign is empty for the lead, then return rule id without utm campaign
          * so lead can pick that rule which doesn't have utm campaign and just lead source
          */
-        if(empty($utmCampaign)) {
-            return $rules->filter(fn($rule) => empty($rule->utm_campaign))->first()?->id ?? null;
+        if (empty($utmCampaign)) {
+            return $rules->filter(fn ($rule) => empty($rule->utm_campaign))->first()?->id ?? null;
         }
 
         /**
@@ -156,7 +169,7 @@ trait Carable
          */
         $campaignRule = $rules->where('utm_campaign', $utmCampaign)->first();
 
-        if(!$campaignRule) {
+        if (! $campaignRule) {
             return null;
         }
 
