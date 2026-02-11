@@ -50,7 +50,6 @@ use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\ECB;
@@ -580,9 +579,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             try {
-                $sukoonMedexService = app(SukoonMedexService::class);
-                $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
-                $sukoonMedexService->processPurchaseFlow();
+                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction);
             } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
@@ -690,7 +687,7 @@ class EmbeddedProductRepository extends BaseRepository
                 foreach ($documents as $item) {
                     $path = $item->path;
                     if (! empty($path)) {
-                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIMPrivate');
+                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIM');
                         if ($pwDoc && ! $isAlfredProtect) {
                             $fileInfo = new finfo(FILEINFO_MIME_TYPE);
                             $file = file_get_contents($pwDoc);
