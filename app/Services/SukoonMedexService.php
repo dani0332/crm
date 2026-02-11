@@ -763,6 +763,7 @@ class SukoonMedexService
      * @param  mixed  $quote  The quote object.
      * @return array The prepared user details.
      */
+    // Reminder:: this function is used for Bike and Car quotes - already back tracked in the code
     private function prepareUserDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
@@ -806,7 +807,7 @@ class SukoonMedexService
             'mobile' => '+9710502732524',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
-            'emirate' => $emirate->text ?? '',
+            'emirate' => $emirate?->text ?? '',
             'emirates_id_number' => $emirateIdNumber,
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',
