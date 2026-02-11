@@ -69,14 +69,6 @@ class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(NgiGetPolicyDocumentsService $service): void
     {
-        // TEMP DISABLED FOR TESTING
-        // if (! ServerEnvironmentGuard::isAllowed([EnvEnum::TEST, EnvEnum::DEVELOPMENT])) {
-        //     LoggerService::info('Policy issuance job skipped by environment guard', [
-        //         'process_id' => $this->processId,
-        //         'environment' => app()->environment(),
-        //     ]);
-        //     return;
-        // }
         $service->execute($this->processId, $this->attempts(), $this->tries);
     }
 
