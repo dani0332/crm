@@ -2687,6 +2687,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :quoteType="quoteType"
       :quoteTypeCodeEnum="quoteTypeCodeEnum"
       :isLifePlanDetailsEnabled="isLifePlanDetailsEnabled"
+      :sendUpdate="sendUpdate"
       @handle-collection-type-change="handleCollectionTypeChange"
       @handle-frequency-change="handleFrequencyChange"
       @calculate-payment-breakup="calculatePaymentBreakup"
