@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
 use App\Services\SukoonMedexService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,6 +34,8 @@ class SyncSukoonDocumentsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        LoggerService::startQuoteLogging($this->quote->code, LoggerFeatureEnum::EP_PROCESS_SYNC_DOCUMENT);
+
         $sukoonMedexService = app(SukoonMedexService::class);
         $sukoonMedexService->initiatePurchaseFlow($this->quote, $this->quoteTypeId, $this->transaction);
         $sukoonMedexService->syncAndProcessSukoonDocuments();
