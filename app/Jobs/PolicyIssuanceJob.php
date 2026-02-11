@@ -49,13 +49,14 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function handle(): void
     {
-        if (! ServerEnvironmentGuard::isAllowed([EnvEnum::TEST, EnvEnum::DEVELOPMENT])) {
-            LoggerService::info('Policy issuance job skipped by environment guard', [
-                'process_id' => $this->processId,
-                'environment' => app()->environment(),
-            ]);
-            return;
-        }
+        // TEMP DISABLED FOR TESTING
+        // if (! ServerEnvironmentGuard::isAllowed([EnvEnum::TEST, EnvEnum::DEVELOPMENT])) {
+        //     LoggerService::info('Policy issuance job skipped by environment guard', [
+        //         'process_id' => $this->processId,
+        //         'environment' => app()->environment(),
+        //     ]);
+        //     return;
+        // }
 
         try {
             $this->loadProcess();
