@@ -48,7 +48,7 @@ const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id === 1);
         <!-- Lead Source Details (only for Lead Source rule type) -->
         <template v-if="isLeadSourceRuleType">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Lead Source</dt>
+            <dt class="font-medium">Lead Source URl</dt>
             <dd>{{ rule.rule_detail?.lead_source?.name ?? 'N/A' }}</dd>
           </div>
 
