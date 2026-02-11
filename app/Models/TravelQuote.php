@@ -371,25 +371,15 @@ class TravelQuote extends Model implements AuditableContract
         return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Travel);
+            ->where('quote_type_id', QuoteTypeId::Travel)
+            ->active();
     }
 
-    public function insured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id, relation between travel_quote and customer_insured
-            'id', // insured.id
-            'id', // travel_quote_request.id
-            'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Travel);
-    }
-
-    // Get the latest/most recent insured record for this quote
+    // Reminder::Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -399,8 +389,9 @@ class TravelQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // travel_quote_request.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Travel)
-            ->latest('customer_insured.updated_at');
+        )
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Travel)
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()

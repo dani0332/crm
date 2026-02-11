@@ -71,6 +71,10 @@ final class WorkflowTypeEnum extends Enum
     public const SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL = 'send_ep_ecb_policy_documents_email';
     public const CAR_EP_RETARGETING_REMINDER = 'car_ep_retargeting_reminder';
 
+    // Health STP Advisor Notification
+    public const HEALTH_STP_ADVISOR_NOTIFICATION = 'health_stp_advisor_notification';
+    public const HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 'health_stp_advisor_notification_api_failed';
+
     // Misreport Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
     public const SEND_FAILED_ILA_EMAILS = 'send_failed_ila_emails';
