@@ -1861,11 +1861,13 @@ if (! function_exists('getManagerRoles')) {
  * Get allowed quote type IDs based on user roles and selected LOB filter.
  */
 if (! function_exists('getAllowedQuoteTypeIds')) {
-    function getAllowedQuoteTypeIds($user, $quoteTypeId = null): array
+    function getAllowedQuoteTypeIds($user, ?QuoteTypes $quoteType = null): array
     {
         // If a specific LOB is selected, return only that ID
-        if ($quoteTypeId !== null) {
-            return [(int) $quoteTypeId];
+        if ($quoteType !== null) {
+            $id = QuoteTypes::getId($quoteType);
+
+            return $id ? [$id] : [];
         }
 
         // Otherwise, filter by user's role-based LOB permissions

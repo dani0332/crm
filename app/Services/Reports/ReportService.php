@@ -672,8 +672,9 @@ class ReportService extends BaseService
 
         $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
 
-        $quoteTypeId = $request->quoteTypeId ?: null;
-        $allowedQuoteTypeIds = getAllowedQuoteTypeIds($user, $quoteTypeId);
+        /** @var QuoteTypes|null $quoteType */
+        $quoteType = $request->quoteTypeId ? QuoteTypes::getName($request->quoteTypeId) : null;
+        $allowedQuoteTypeIds = getAllowedQuoteTypeIds($user, $quoteType);
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $dataCollection = collect();
@@ -743,7 +744,7 @@ class ReportService extends BaseService
         }
 
         // Car-specific filters - need to join car_quote_request
-        if ($quoteTypeId == QuoteTypeId::Car) {
+        if ($quoteType === QuoteTypes::CAR) {
             $hasRegistrationType = ! empty($request->registration_type) && $request->registration_type !== 'All';
             $hasVehicleUse = ! empty($request->vehicle_use) && $request->vehicle_use !== 'All';
 
