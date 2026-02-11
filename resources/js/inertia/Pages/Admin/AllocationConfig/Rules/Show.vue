@@ -15,7 +15,7 @@ const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id === 1);
     <div class="flex gap-2">
       <Link :href="route('rule.index')">
         <x-button size="sm" color="#1d83bc" tag="div">
-          Rules Detail List
+          Rules List
         </x-button>
       </Link>
       <Link :href="route('rule.edit', rule.id)">
@@ -48,14 +48,14 @@ const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id === 1);
         <!-- Lead Source Details (only for Lead Source rule type) -->
         <template v-if="isLeadSourceRuleType">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Lead Source URl</dt>
+            <dt class="font-medium">Lead Source</dt>
             <dd>{{ rule.rule_detail?.lead_source?.name ?? 'N/A' }}</dd>
           </div>
 
-          <div v-if="rule.rule_detail?.utm_source" class="grid sm:grid-cols-2">
+          <!-- <div v-if="rule.rule_detail?.utm_source" class="grid sm:grid-cols-2">
             <dt class="font-medium">UTM Source</dt>
             <dd>{{ rule.rule_detail.utm_source }}</dd>
-          </div>
+          </div> -->
 
           <div
             v-if="rule.rule_detail?.utm_campaign"
@@ -65,10 +65,10 @@ const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id === 1);
             <dd>{{ rule.rule_detail.utm_campaign }}</dd>
           </div>
 
-          <div v-if="rule.rule_detail?.utm_medium" class="grid sm:grid-cols-2">
+          <!-- <div v-if="rule.rule_detail?.utm_medium" class="grid sm:grid-cols-2">
             <dt class="font-medium">UTM Medium</dt>
             <dd>{{ rule.rule_detail.utm_medium }}</dd>
-          </div>
+          </div> -->
         </template>
 
         <div class="grid sm:grid-cols-2">

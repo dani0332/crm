@@ -69,10 +69,12 @@ class RuleRequest extends FormRequest
 
         $query = RuleDetail::query()
             ->join('lead_sources', 'rule_details.lead_source_id', '=', 'lead_sources.id')
+            ->join('rules', 'rule_details.rule_id', '=', 'rules.id')
             ->where('lead_sources.name', $leadSource->name)
-            ->where('rule_details.utm_source', $this->utm_source)
             ->where('rule_details.utm_campaign', $this->utm_campaign)
-            ->where('rule_details.utm_medium', $this->utm_medium);
+            ->where('rules.name', $this->name)
+            ->where('rules.rule_type', $this->rule_type)
+            ->where('rules.quote_type_id', $this->quote_type_id);
 
         // Exclude current rule when updating (resource route parameter is 'rule')
         if ($this->route()->hasParameter('rule')) {
@@ -80,7 +82,7 @@ class RuleRequest extends FormRequest
         }
 
         if ($query->exists()) {
-            $fail('The combination of Lead Source URL, UTM Source, UTM Campaign, and UTM Medium already exists.');
+            $fail('The combination of Quote Type,Lead Source, UTM Campaign,Rule Name and Rule Type already exists.');
         }
     }
 
@@ -90,7 +92,7 @@ class RuleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'lead_source_id.required_if' => 'The Lead Source URL field is required when rule type is Lead Source.',
+            'lead_source_id.required_if' => 'The Lead Source field is required when rule type is Lead Source.',
         ];
     }
 }

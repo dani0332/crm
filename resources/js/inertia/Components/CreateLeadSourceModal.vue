@@ -99,8 +99,8 @@ watch(isModalOpen, newValue => {
       <div class="grid gap-4">
         <x-input
           v-model="leadSourceForm.name"
-          label="Lead Source Url"
-          placeholder="Enter lead source Url"
+          label="Lead Source"
+          placeholder="Enter lead source"
           :error="leadSourceForm.errors.name"
           :rules="[isRequired]"
           required

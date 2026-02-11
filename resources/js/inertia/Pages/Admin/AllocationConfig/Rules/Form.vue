@@ -204,7 +204,7 @@ function onSubmit(isValid) {
     <div v-if="isLeadSourceRuleType" class="grid sm:grid-cols-2 gap-6 mt-6">
       <div class="sm:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">
-          Lead Source URL <span class="text-red-600">*</span>
+          Lead Source <span class="text-red-600">*</span>
         </label>
         <div class="flex gap-3 items-start">
           <div class="flex-1">
@@ -212,7 +212,7 @@ function onSubmit(isValid) {
               v-model="ruleForm.lead_source_id"
               :options="leadSourcesOptionsLocal"
               single
-              placeholder="Select Lead Source URL"
+              placeholder="Select Lead Source"
               :has-error="!!ruleForm.errors.lead_source_id"
               required
               :rules="[isRequired]"
@@ -235,13 +235,13 @@ function onSubmit(isValid) {
         </div>
       </div>
 
-      <x-input
+      <!-- <x-input
         label="UTM Source"
         v-model="ruleForm.utm_source"
         class="w-full"
         :error="ruleForm.errors.utm_source"
         placeholder="e.g., google, facebook, newsletter"
-      />
+      /> -->
 
       <x-input
         label="UTM Campaign"
@@ -251,13 +251,13 @@ function onSubmit(isValid) {
         placeholder="e.g., summer_sale, product_launch"
       />
 
-      <x-input
+      <!-- <x-input
         label="UTM Medium"
         v-model="ruleForm.utm_medium"
         class="w-full"
         :error="ruleForm.errors.utm_medium"
         placeholder="e.g., cpc, email, social"
-      />
+      /> -->
     </div>
 
     <!-- Rule Users -->
