@@ -13,6 +13,7 @@ use Carbon\Carbon;
 
 class RulesController extends Controller
 {
+    private const LEAD_SOURCE_RULE_TYPE_ID = 1;
     /**
      * Display a listing of the resource.
      */
@@ -149,33 +150,32 @@ class RulesController extends Controller
         $rule->update($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
         // Update or create rule detail if lead_source_id is provided
-        if ($request->filled('lead_source_id')) {
-            $rule->ruleDetail()->updateOrCreate(
-                ['rule_id' => $rule->id],
-                [
-                    'lead_source_id' => $request->lead_source_id,
-                    'utm_source' => $request->utm_source,
-                    'utm_campaign' => $request->utm_campaign,
-                    'utm_medium' => $request->utm_medium,
-                ]
-            );
+        if ($request->filled('lead_source_id') && $request->get('rule_type')==self::LEAD_SOURCE_RULE_TYPE_ID) {
 
-            // Sync rule_lead_sources records using relationship
-            if ($request->filled('rule_users')) {
-                // Delete existing rule_lead_sources for this rule
-                $rule->leadSources()->delete();
-
-                // Batch create new rule_lead_sources records
-                $rule->leadSources()->createMany(
-                    collect($request->rule_users)->map(fn ($userId) => [
+                $rule->ruleDetail()->updateOrCreate(
+                    ['rule_id' => $rule->id],
+                    [
                         'lead_source_id' => $request->lead_source_id,
-                        'user_id' => $userId,
-                    ])->toArray()
+                        'utm_source' => $request->utm_source,
+                        'utm_campaign' => $request->utm_campaign,
+                        'utm_medium' => $request->utm_medium,
+                    ]
                 );
-            }
+                // Sync rule_lead_sources records using relationship
+                if ($request->filled('rule_users')) {
+                    // Delete existing rule_lead_sources for this rule
+                    $rule->leadSources()->delete();
+    
+                    // Batch create new rule_lead_sources records
+                    $rule->leadSources()->createMany(
+                        collect($request->rule_users)->map(fn ($userId) => [
+                            'lead_source_id' => $request->lead_source_id,
+                            'user_id' => $userId,
+                        ])->toArray()
+                    );
+                }
+            
         } else {
-            // If changing from lead source to another type, clean up related data
-            // If lead_source_id is not provided, remove all rule_lead_sources using relationship
             $rule->ruleDetail()->delete();
             $rule->leadSources()->delete();
         }

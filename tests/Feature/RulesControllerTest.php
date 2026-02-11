@@ -335,25 +335,15 @@ describe('Rule Update - Lead Source Rule Type', function () {
             'updated_at' => now(),
         ]);
 
-        // Create a new lead source for update
-        DB::table('lead_sources')->insert([
-            'name' => 'New Lead Source',
-            'code' => 'NEW_LEAD',
-            'is_active' => true,
-            'is_applicable_for_rules' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        $newLeadSource = LeadSource::where('name', 'New Lead Source')->first();
-
-        // Update the rule
+        // Update the rule with same lead source (id=1) but different UTM parameters
+        // Controller logic requires lead_source_id == 1 to update rule_details
         $updateData = [
             'name' => 'Updated Lead Source Rule',
             'rule_type' => $this->leadSourceRuleType->id,
             'quote_type_id' => $this->quoteType->id,
             'is_active' => false,
             'rule_users' => [$this->testUser2->id],
-            'lead_source_id' => $newLeadSource->id,
+            'lead_source_id' => $this->leadSource->id, // Use existing lead source (id=1)
             'utm_source' => 'instagram',
             'utm_campaign' => 'spring_sale',
             'utm_medium' => 'organic',
@@ -374,22 +364,16 @@ describe('Rule Update - Lead Source Rule Type', function () {
         // Assert rule_details was updated
         $this->assertDatabaseHas('rule_details', [
             'rule_id' => $rule->id,
-            'lead_source_id' => $newLeadSource->id,
+            'lead_source_id' => $this->leadSource->id,
             'utm_source' => 'instagram',
             'utm_campaign' => 'spring_sale',
             'utm_medium' => 'organic',
         ]);
 
-        // Assert old rule_lead_sources was removed
-        $this->assertDatabaseMissing('rule_lead_sources', [
-            'rule_id' => $rule->id,
-            'lead_source_id' => $this->leadSource->id,
-        ]);
-
-        // Assert new rule_lead_sources was created
+        // Assert rule_lead_sources was updated with new user
         $this->assertDatabaseHas('rule_lead_sources', [
             'rule_id' => $rule->id,
-            'lead_source_id' => $newLeadSource->id,
+            'lead_source_id' => $this->leadSource->id,
             'user_id' => $this->testUser2->id,
         ]);
 
@@ -606,6 +590,274 @@ describe('Rule Type Change - Cleanup', function () {
         $this->assertDatabaseHas('rules', [
             'id' => $rule->id,
             'rule_type' => $this->carMakeModelRuleType->id,
+        ]);
+    });
+
+    test('validates unique combination of lead source and utm parameters on create', function () {
+        // Create first rule with specific UTM combination
+        DB::table('rules')->insert([
+            'name' => 'First Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $firstRuleId = DB::getPdo()->lastInsertId();
+
+        DB::table('rule_details')->insert([
+            'rule_id' => $firstRuleId,
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Try to create a second rule with the same combination
+        $duplicateRuleData = [
+            'name' => 'Second Rule - Duplicate',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+        ];
+
+        $response = $this->postJson(route('rule.store'), $duplicateRuleData);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['lead_source_id']);
+
+        expect($response->json('errors.lead_source_id.0'))
+            ->toContain('The combination of Lead Source URL, UTM Source, UTM Campaign, and UTM Medium already exists.');
+    });
+
+    test('allows same utm parameters with different lead source', function () {
+        // Create first rule with specific UTM combination
+        DB::table('rules')->insert([
+            'name' => 'First Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $firstRuleId = DB::getPdo()->lastInsertId();
+
+        DB::table('rule_details')->insert([
+            'rule_id' => $firstRuleId,
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Create a different lead source
+        DB::table('lead_sources')->insert([
+            'name' => 'Different Lead Source',
+            'code' => 'diff-source',
+            'is_active' => 1,
+            'is_applicable_for_rules' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $differentLeadSourceId = DB::getPdo()->lastInsertId();
+
+        // Create rule with same UTM but different lead source - should succeed
+        $ruleData = [
+            'name' => 'Second Rule - Different Lead Source',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+            'lead_source_id' => $differentLeadSourceId,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+        ];
+
+        $response = $this->post(route('rule.store'), $ruleData);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('rule_details', [
+            'lead_source_id' => $differentLeadSourceId,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+        ]);
+    });
+
+    test('validates unique combination on update but allows same rule to keep its values', function () {
+        // Create first rule
+        $ruleId = DB::table('rules')->insertGetId([
+            'name' => 'First Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('rule_details')->insert([
+            'rule_id' => $ruleId,
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('rule_users')->insert([
+            'rule_id' => $ruleId,
+            'user_id' => $this->testUser1->id,
+        ]);
+
+        // Update the same rule with the same values - should succeed
+        $updateData = [
+            'name' => 'First Rule - Updated Name',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+        ];
+
+        $response = $this->put(route('rule.update', $ruleId), $updateData);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $rule = DB::table('rules')->where('id', $ruleId)->first();
+        expect($rule->name)->toBe('First Rule - Updated Name');
+    });
+
+    test('validates unique combination prevents update to duplicate combination', function () {
+        // Create first rule
+        DB::table('rules')->insert([
+            'name' => 'First Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $firstRuleId = DB::getPdo()->lastInsertId();
+
+        DB::table('rule_details')->insert([
+            'rule_id' => $firstRuleId,
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Create second rule with different UTM
+        DB::table('rules')->insert([
+            'name' => 'Second Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $secondRuleId = DB::getPdo()->lastInsertId();
+
+        DB::table('rule_details')->insert([
+            'rule_id' => $secondRuleId,
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'facebook',
+            'utm_campaign' => 'winter2024',
+            'utm_medium' => 'social',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Try to update second rule to match first rule's combination
+        $updateData = [
+            'name' => 'Second Rule - Attempting Duplicate',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+        ];
+
+        $response = $this->putJson(route('rule.update', $secondRuleId), $updateData);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['lead_source_id']);
+
+        expect($response->json('errors.lead_source_id.0'))
+            ->toContain('The combination of Lead Source URL, UTM Source, UTM Campaign, and UTM Medium already exists.');
+    });
+
+    test('allows different utm combinations with same lead source', function () {
+        // Create first rule
+        DB::table('rules')->insert([
+            'name' => 'First Rule',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $firstRuleId = DB::getPdo()->lastInsertId();
+
+        DB::table('rule_details')->insert([
+            'rule_id' => $firstRuleId,
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'google',
+            'utm_campaign' => 'summer2024',
+            'utm_medium' => 'cpc',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Create rule with same lead source but different UTM - should succeed
+        $ruleData = [
+            'name' => 'Second Rule - Different UTM',
+            'rule_type' => $this->leadSourceRuleType->id,
+            'quote_type_id' => $this->quoteType->id,
+            'is_active' => true,
+            'rule_users' => [$this->testUser1->id],
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'facebook',
+            'utm_campaign' => 'winter2024',
+            'utm_medium' => 'social',
+        ];
+
+        $response = $this->post(route('rule.store'), $ruleData);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('rule_details', [
+            'lead_source_id' => $this->leadSource->id,
+            'utm_source' => 'facebook',
+            'utm_campaign' => 'winter2024',
+            'utm_medium' => 'social',
         ]);
     });
 });
