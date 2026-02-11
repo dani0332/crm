@@ -57,7 +57,10 @@ const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id === 1);
             <dd>{{ rule.rule_detail.utm_source }}</dd>
           </div>
 
-          <div v-if="rule.rule_detail?.utm_campaign" class="grid sm:grid-cols-2">
+          <div
+            v-if="rule.rule_detail?.utm_campaign"
+            class="grid sm:grid-cols-2"
+          >
             <dt class="font-medium">UTM Campaign</dt>
             <dd>{{ rule.rule_detail.utm_campaign }}</dd>
           </div>

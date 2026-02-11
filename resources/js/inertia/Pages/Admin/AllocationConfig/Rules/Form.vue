@@ -84,7 +84,7 @@ const leadSourcesOptionsLocal = computed(() => {
 });
 
 // Handle new lead source creation
-const handleLeadSourceCreated = (newLeadSource) => {
+const handleLeadSourceCreated = newLeadSource => {
   // Add to local lead sources list
   localLeadSources.value.push(newLeadSource);
 
@@ -217,7 +217,10 @@ function onSubmit(isValid) {
               required
               :rules="[isRequired]"
             />
-            <p v-if="ruleForm.errors.lead_source_id" class="mt-1 text-sm text-red-600">
+            <p
+              v-if="ruleForm.errors.lead_source_id"
+              class="mt-1 text-sm text-red-600"
+            >
               {{ ruleForm.errors.lead_source_id }}
             </p>
           </div>
