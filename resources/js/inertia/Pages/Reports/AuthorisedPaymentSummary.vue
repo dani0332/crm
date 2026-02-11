@@ -17,6 +17,7 @@ const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
+const quoteTypeEnum = page.props.quoteTypes;
 
 // const { isRequired } = useRules();
 
@@ -177,6 +178,16 @@ function showCustomDate() {
   filters.expireDate = '';
   filters.thisWeek = [];
 }
+
+// Convert quoteTypeEnum array to a mapping object for easy lookup
+const quoteTypeMapping = computed(() => {
+  const mapping = {};
+  quoteTypeEnum.forEach(qt => {
+    mapping[qt.id] = qt.name;
+  });
+  return mapping;
+});
+
 function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
   let url = '';
 
@@ -186,19 +197,7 @@ function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
       position: 'top',
     });
   } else {
-    const quoteTypeMapping = {
-      [quoteTypeIdEnum.Car]: 'car',
-      [quoteTypeIdEnum.Health]: 'health',
-      [quoteTypeIdEnum.Business]: 'business',
-      [quoteTypeIdEnum.Bike]: 'bike',
-      [quoteTypeIdEnum.Life]: 'life',
-      [quoteTypeIdEnum.Pet]: 'pet',
-      [quoteTypeIdEnum.Jetski]: 'jetski',
-      [quoteTypeIdEnum.Yacht]: 'yacht',
-      [quoteTypeIdEnum.Travel]: 'travel',
-      [quoteTypeIdEnum.Cycle]: 'cycle',
-      [quoteTypeIdEnum.Home]: 'home',
-    };
+    const formattedQuoteType = quoteTypeMapping.value[filters.quoteTypeId]?.toLowerCase();
 
     const personalQuoteTypes = new Set([
       quoteTypeIdEnum.Home,
@@ -209,8 +208,6 @@ function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
       quoteTypeIdEnum.Pet,
       quoteTypeIdEnum.Yacht,
     ]);
-
-    const formattedQuoteType = quoteTypeMapping[filters.quoteTypeId];
 
     const quoteStatusParams = quote_status_id
       .map(id => `quote_status_id[]=${id}`)
