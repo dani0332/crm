@@ -4,277 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sage Integration - Booking Process Documentation</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .breadcrumb {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 15px 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .breadcrumb a {
-            color: #fff;
-            text-decoration: none;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-
-        .breadcrumb a:hover {
-            opacity: 1;
-        }
-
-        .breadcrumb span {
-            color: #fff;
-            margin: 0 10px;
-        }
-
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .header h1 {
-            color: #2c3e50;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .header p {
-            color: #7f8c8d;
-            font-size: 1.2em;
-            margin-bottom: 20px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            background: #27ae60;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 25px;
-            font-size: 0.9em;
-            font-weight: 600;
-        }
-
-        .documentation-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
-        }
-
-        .doc-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .doc-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
-        }
-
-        .doc-card h3 {
-            color: #2c3e50;
-            font-size: 1.8em;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .doc-card .icon {
-            font-size: 1.3em;
-        }
-
-        .doc-card p {
-            color: #7f8c8d;
-            margin-bottom: 20px;
-            line-height: 1.7;
-        }
-
-        .doc-card .features {
-            list-style: none;
-            margin-bottom: 25px;
-        }
-
-        .doc-card .features li {
-            color: #555;
-            margin-bottom: 10px;
-            padding-left: 25px;
-            position: relative;
-            font-weight: 500;
-        }
-
-        .doc-card .features li:before {
-            content: "▶";
-            position: absolute;
-            left: 0;
-            color: #3498db;
-            font-weight: bold;
-        }
-
-        .doc-link {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            font-size: 1.1em;
-        }
-
-        .doc-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .overview-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .overview-section h2 {
-            color: #2c3e50;
-            font-size: 2em;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .process-flow {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 30px 0;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .process-step {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            text-align: center;
-            min-width: 150px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            position: relative;
-        }
-
-        .process-step:not(:last-child):after {
-            content: "→";
-            position: absolute;
-            right: -25px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.5em;
-            color: #fff;
-        }
-
-        .tech-specs {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            margin-top: 25px;
-        }
-
-        .tech-specs h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-        }
-
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .tech-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #3498db;
-        }
-
-        .tech-item strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 50px;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            .header h1 {
-                font-size: 2em;
-            }
-
-            .documentation-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .process-flow {
-                flex-direction: column;
-            }
-
-            .process-step:not(:last-child):after {
-                content: "↓";
-                right: 50%;
-                top: 100%;
-                transform: translateX(50%);
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/docs/booking-process/styles.css">
 </head>
 <body>
     <div class="container">
@@ -400,7 +130,7 @@
             </div>
 
             <div class="highlight" style="margin-top: 20px; background: linear-gradient(135deg, #27ae60, #229954); padding: 20px; border-radius: 10px; color: white;">
-                <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated October 2024</h4>
+                <h4 style="margin-bottom: 10px;">✅ Documentation Status - Updated February 2025</h4>
                 <p style="margin: 0;">
                     <strong>All documentation has been updated to reflect actual implementation:</strong><br>
                     • Embedded Product booking for MDX (Driver Cover), RDX (Rider Medical Cover), and ECB (Excess Cashback) documented with product-specific differentiation<br>
@@ -437,7 +167,11 @@
                     </div>
                     <div class="tech-item">
                         <strong>Job Queue</strong>
-                        BookPolicyOnSageJob
+                        BookPolicyOnSageJob, SendUpdateSageJob, PostPrepaymentToSageJob, BookEmbeddedProductOnSageJob (insly queue)
+                    </div>
+                    <div class="tech-item">
+                        <strong>Scheduling</strong>
+                        scheduleSageProcesses(): one process per insurer (groupBy), Cache lock, optional timeout retry
                     </div>
                     <div class="tech-item">
                         <strong>Authentication</strong>
@@ -817,7 +551,7 @@
                     <li>Entry type determination (SCT_STRAIGHT, SCT_REVERSAL, SCT_CORRECTION)</li>
                     <li>Status tracking: quote_status_id vs send_update_logs.status</li>
                     <li>Payment differentiation: send_update_log_id NULL vs NOT NULL</li>
-                    <li>BookPolicyOnSageJob and BookEndorsementOnSageJob orchestration</li>
+                    <li>BookPolicyOnSageJob and SendUpdateSageJob orchestration</li>
                     <li>Database tables: quotes, send_update_logs, payments, sage_processes</li>
                     <li>Integration with customer creation, receipts, invoices, and payment application</li>
                 </ul>
@@ -851,6 +585,65 @@
                     <li>Note: AP receipt creation currently disabled for EP</li>
                 </ul>
                 <a href="/docs/booking-process/embedded-product-booking.html" class="doc-link">View Embedded Product Booking →</a>
+            </div>
+
+            <!-- 8. Payment Proforma -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">📄</span>
+                    8. Proforma Payment Request
+                </h3>
+                <p>
+                    <strong>What it does:</strong> Generates preliminary invoice documents (proforma) sent to customers to request payment before 
+                    the actual policy invoice is issued. It serves as a payment requisition tool that helps track payment progress.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> Customer wants to pay later instead of upfront. We select "Proforma Payment Request" 
+                    as payment method, generate a PDF showing AED 2,500 due, and send it to the customer. When they're ready to pay, 
+                    they use this document to initiate payment.
+                </p>
+                <ul class="features">
+                    <li>Payment requisition before formal invoice issuance</li>
+                    <li>PDF generation with comprehensive payment breakdown</li>
+                    <li>Support for main leads and send updates (endorsements)</li>
+                    <li>Version tracking for multiple document generations</li>
+                    <li>Upfront and split payment scenarios</li>
+                    <li>Broker vs insurer collection type handling</li>
+                    <li>Discount application and zero-price policy support</li>
+                    <li>Secure document storage and delivery via S3</li>
+                    <li>Permission-based access control</li>
+                </ul>
+                <a href="/docs/booking-process/payment-proforma.html" class="doc-link">View Payment Proforma Documentation →</a>
+            </div>
+
+            <!-- 9. Sage Failed Processes -->
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🔍</span>
+                    9. Sage Failed Processes Management
+                </h3>
+                <p>
+                    <strong>What it does:</strong> Provides a comprehensive interface to monitor, troubleshoot, and resolve policy bookings 
+                    or endorsements that encountered errors during Sage 300 integration. Critical for maintaining financial accuracy.
+                </p>
+                <p style="font-size: 0.95em; color: #666; margin-top: 10px;">
+                    <strong>Real-world example:</strong> A car insurance policy was sold and customer paid AED 3,000, but the Sage booking 
+                    failed at the "Create AR Invoice" step due to a duplicate customer error. The policy appears in the failed processes list 
+                    where admins can see the exact error, fix the customer record in Sage, and retry the booking.
+                </p>
+                <ul class="features">
+                    <li>Comprehensive failed process listing with detailed filtering</li>
+                    <li>Multi-dimensional filters: provider, quote type, date range, main lead vs send update</li>
+                    <li>Complete payment and commission breakdown for each failure</li>
+                    <li>Extracted IMCRM-friendly error messages from Sage responses</li>
+                    <li>One-click copy functionality for error details and API endpoints</li>
+                    <li>CSV export with all filters applied for reporting</li>
+                    <li>Optimized query performance with eager loading and read replicas</li>
+                    <li>Permission-based access via SAGE_PROCESS_ISSUE_MANAGEMENT</li>
+                    <li>Clickable links to quote/send update detail pages</li>
+                    <li>Comprehensive troubleshooting guide with common error scenarios</li>
+                </ul>
+                <a href="/docs/booking-process/sage-failed-processes.html" class="doc-link">View Sage Failed Processes Documentation →</a>
             </div>
         </div>
 
