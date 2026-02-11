@@ -63,10 +63,10 @@ describe('prepareAdditionalData', function () {
         expect($result['plan_option'])->toBe('medex-personal_non_commercial_vehicles');
     });
 
-    test('returns personal_sports_mc plan for car with motorcycle vehicle type', function () {
+    test('returns personal_sports_mc plan for car with motorcycle/bike vehicle types', function (int $vehicleTypeId) {
         $method = setServiceProperties($this->service, [
             'quoteTypeId' => QuoteTypeId::Car,
-            'currentQuote' => (object) ['vehicle_type_id' => VehicleTypeEnum::MOTOR_CYCLE->value],
+            'currentQuote' => (object) ['vehicle_type_id' => $vehicleTypeId],
             'productSlug' => 'sukoon',
             'paymentPlan' => 'monthly',
             'amountDisclaimerText' => 'Bike renewal',
@@ -76,7 +76,11 @@ describe('prepareAdditionalData', function () {
         $result = $method->invoke($this->service);
 
         expect($result['plan_option'])->toBe('sukoon-personal_sports_mc');
-    });
+    })->with([
+        'MOTOR_CYCLE' => VehicleTypeEnum::MOTOR_CYCLE->value,
+        'BIKE' => VehicleTypeEnum::BIKE->value,
+        'MOTOR_CYCLES' => VehicleTypeEnum::MOTOR_CYCLES->value,
+    ]);
 
     test('returns null plan_option for unsupported quote types', function () {
         $method = setServiceProperties($this->service, [

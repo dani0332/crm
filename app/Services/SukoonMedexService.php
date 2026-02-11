@@ -979,8 +979,13 @@ class SukoonMedexService
     private function prepareAdditionalData()
     {
         // Check if this should use the bike/sports MC plan
-        $useBikePlan = $this->quoteTypeId === QuoteTypeId::Bike || 
-                       ($this->quoteTypeId === QuoteTypeId::Car && $this->currentQuote?->vehicle_type_id == VehicleTypeEnum::MOTOR_CYCLE->value);
+        $bikeVehicleTypes = [
+            VehicleTypeEnum::MOTOR_CYCLE->value,
+            VehicleTypeEnum::BIKE->value,
+            VehicleTypeEnum::MOTOR_CYCLES->value,
+        ];
+        $useBikePlan = $this->quoteTypeId === QuoteTypeId::Bike ||
+                        ($this->quoteTypeId === QuoteTypeId::Car && in_array($this->currentQuote?->vehicle_type_id, $bikeVehicleTypes));
 
         $planOption = match (true) {
             $useBikePlan => "{$this->productSlug}-personal_sports_mc",
