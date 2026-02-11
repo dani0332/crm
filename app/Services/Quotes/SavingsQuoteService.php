@@ -159,12 +159,7 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.tenure',
             'subSource',
             'subSourceOption',
-            'branch:id,name',
-            'customer',
-            'customer.insured' => function ($q) {
-                $q->select('insured.id', 'first_name', 'last_name', 'id_number')
-                ->with('insuredKyc:id,insured_id,id_expiry_date');
-            },
+            'branch:id,name'
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -224,6 +219,7 @@ class SavingsQuoteService extends BaseQuoteService
             ");
             })
             ->where('uuid', $uuid)->firstOrFail();
+            //echo '<pre>'; print_r($data->customer); die;
     }
 
     public function update(string $uuid, array $data)
