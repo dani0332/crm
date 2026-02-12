@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 const props = defineProps({
   requests: Object,
   filters: Object,
+  users: Array,
 });
 
 const page = usePage();
@@ -157,12 +158,14 @@ const capitalizeFirstLetter = string => {
 
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <x-input
-        label="User ID"
+      <x-select
+        label="User"
         v-model="filters.user_id"
+        :options="props.users"
         class="w-full"
-        type="number"
-        placeholder="Search by User ID"
+        filterable
+        placeholder="Search and select user"
+        clearable
       />
       <x-select
         label="Line of Business"

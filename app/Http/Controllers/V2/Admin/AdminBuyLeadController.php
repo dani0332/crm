@@ -8,6 +8,7 @@ use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BuyLeads\AdminBuyLeadIndexRequest;
 use App\Models\BuyLeadRequest;
+use App\Models\User;
 use App\Services\BuyLeads\BuyLeadService;
 use Illuminate\Http\JsonResponse;
 
@@ -28,6 +29,16 @@ class AdminBuyLeadController extends Controller
 
         $data['requests'] = $this->buyLeadService->getAllRequestsForAdmin($filters);
         $data['filters'] = $filters;
+
+        // Get users who have created buy lead requests
+        $data['users'] = User::whereHas('buyLeadRequests')
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($user) => [
+                'label' => "$user->name ({$user->email})",
+                'value' => $user->id,
+            ]);
 
         return inertia('Admin/BuyLeadRequests/Index', $data);
     }
