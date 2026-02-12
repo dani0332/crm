@@ -121,19 +121,24 @@ class BuyLeadRequest extends Model
     /**
      * Scope to filter requests by their computed "expired" status.
      * A request is expired if:
-     * 1. status = 'expired', OR
+     * 1. status = 'expired' AND not computed-completed, OR
      * 2. expires_at is in the past AND not completed
      */
     public function scopeComputedExpired($q)
     {
         $q->where(function ($q) {
-            $q->where('status', 'expired')
-                ->orWhere(function ($q) {
-                    $q->whereNotNull('expires_at')
-                        ->where('expires_at', '<', now())
-                        ->whereColumn('allocated_count', '<', 'requested_count')
-                        ->where('status', '!=', 'completed');
-                });
+            $q->where(function ($q) {
+                // status = 'expired' but exclude computed-completed records
+                $q->where('status', 'expired')
+                    ->whereColumn('allocated_count', '<', 'requested_count')
+                    ->where('status', '!=', 'completed');
+            })->orWhere(function ($q) {
+                // expires_at in the past and not completed
+                $q->whereNotNull('expires_at')
+                    ->where('expires_at', '<', now())
+                    ->whereColumn('allocated_count', '<', 'requested_count')
+                    ->where('status', '!=', 'completed');
+            });
         });
     }
 
