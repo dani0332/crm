@@ -197,7 +197,8 @@ function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
       position: 'top',
     });
   } else {
-    const formattedQuoteType = quoteTypeMapping.value[filters.quoteTypeId]?.toLowerCase();
+    const formattedQuoteType =
+      quoteTypeMapping.value[filters.quoteTypeId]?.toLowerCase();
 
     const personalQuoteTypes = new Set([
       quoteTypeIdEnum.Home,
