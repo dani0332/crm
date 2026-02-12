@@ -358,7 +358,7 @@ class CoreSchema
                 $table->string('previous_quote_policy_number')->nullable();
                 $table->date('previous_policy_expiry_date')->nullable();
                 $table->date('policy_expiry_date')->nullable();
-                $table->date('policy_booking_date')->nullable();                
+                $table->date('policy_booking_date')->nullable();
                 $table->boolean('is_ecommerce')->default(0);
                 $table->decimal('car_value', 15, 2)->nullable();
                 $table->unsignedBigInteger('car_make_id')->nullable();
@@ -671,6 +671,7 @@ class CoreSchema
                 $table->boolean('is_selected')->default(false);
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->string('policy_status')->nullable();
+                $table->boolean('is_active')->default(1);
                 $table->timestamps();
                 $table->softDeletes();
             },

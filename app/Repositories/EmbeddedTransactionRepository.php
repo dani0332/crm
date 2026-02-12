@@ -2,14 +2,12 @@
 
 namespace App\Repositories;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
-use App\Services\Logger\LoggerService;
 use Illuminate\Support\Collection;
 
 class EmbeddedTransactionRepository extends BaseRepository
@@ -66,6 +64,7 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->where('code', $embeddedTransactionCode)
             ->where('quote_request_id', $carQuoteRequestId)
             ->where('quote_request_type', CarQuote::class)
+            ->where('is_active', true)
             ->where('payment_status_id', PaymentStatusEnum::DRAFT)
             ->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', QuoteStatusEnum::PolicyBooked))
             ->whereHas('product.embeddedProduct', fn ($q) => $q->whereIn('short_code', EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS))

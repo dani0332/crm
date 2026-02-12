@@ -2,12 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
@@ -72,6 +70,21 @@ describe('EmbeddedTransactionRepository', function () {
             expect($this->repository->getRetargetingCarEpReminderData($data->notBookedTransaction->quote_request_id, $data->notBookedTransaction->code))->toBeNull();
             expect($this->repository->getRetargetingCarEpReminderData($data->notAllowedEpTransaction->quote_request_id, $data->notAllowedEpTransaction->code))->toBeNull();
             expect($this->repository->getRetargetingCarEpReminderData($data->notDraftTransaction->quote_request_id, $data->notDraftTransaction->code))->toBeNull();
+        });
+
+        test('returns only active transaction, inactive transaction does not proceed', function () {
+            $data = RetargetingEpReminderTestDataHelper::setupRepositoryTestData();
+
+            $activeResult = $this->repository->getRetargetingCarEpReminderData($data->carQuotePolicyBooked->id, $data->validTransaction->code);
+            expect($activeResult)->not->toBeNull()
+                ->and($activeResult->id)->toBe($data->validTransaction->id);
+
+            $inactiveTransaction = EmbeddedTransaction::factory()
+                ->forCarQuote($data->carQuotePolicyBooked)
+                ->forProduct($data->validTransaction->product_id)
+                ->create(['code' => 'ET-INACTIVE', 'is_active' => false]);
+
+            expect($this->repository->getRetargetingCarEpReminderData($data->carQuotePolicyBooked->id, $inactiveTransaction->code))->toBeNull();
         });
     });
 });
