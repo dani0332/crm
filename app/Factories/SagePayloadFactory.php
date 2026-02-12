@@ -100,7 +100,7 @@ class SagePayloadFactory
                     'VendorNumber' => $request->sageVenderId, // use vender api to create vender in sage
                     'DocumentNumber' => $request->insurerPremiumNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'CurrencyCode' => 'AED', // alway will be AED discussed with denber
                     'DueDate' => $invoicePaymentSchedulesDueDate,
                     'AsOfDate' => $invoicePaymentSchedulesDueDate,
@@ -181,7 +181,7 @@ class SagePayloadFactory
                     'VendorNumber' => $request->sageVenderId, // use vender api to create vender in sage
                     'DocumentNumber' => $request->insurerPremiumNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'CurrencyCode' => 'AED', // alway will be AED discussed with denber
                     'DueDate' => $invoicePaymentSchedulesDueDate,
                     'AsOfDate' => $invoicePaymentSchedulesDueDate,
@@ -261,7 +261,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
+                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'CurrencyCode' => 'AED',
                     'DueDate' => $invoicePaymentSchedulesDueDate,
                     'AsOfDate' => $invoicePaymentSchedulesDueDate,
@@ -291,7 +291,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->sageInsurerCustomerId,
                     'DocumentNumber' => $request->insurerCommissionNumber,
                     'InvoiceDescription' => $commissionDescription,
-                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
+                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'CurrencyCode' => 'AED',
                     'DueDate' => $invoicePaymentSchedulesDueDate,
                     'AsOfDate' => $invoicePaymentSchedulesDueDate,
@@ -395,7 +395,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
+                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'CurrencyCode' => 'AED',
                     'DueDate' => $invoicePaymentSchedulesDueDate,
                     'AsOfDate' => $invoicePaymentSchedulesDueDate,
@@ -404,7 +404,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
-                    // 'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
@@ -423,7 +423,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->sageInsurerCustomerId,
                     'DocumentNumber' => $request->insurerCommissionNumber,
                     'InvoiceDescription' => $commissionDescription,
-                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
+                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'CurrencyCode' => 'AED',
                     'DueDate' => $invoicePaymentSchedulesDueDate,
                     'AsOfDate' => $invoicePaymentSchedulesDueDate,
@@ -1716,7 +1716,7 @@ class SagePayloadFactory
 
         $reversePayLoad->Invoices[$invoiceIndex]->DocumentNumber = $reversePayLoad->Invoices[$invoiceIndex]->DocumentNumber.'-REV';
         $reversePayLoad->Invoices[$invoiceIndex]->InvoiceDescription = $reversePayLoad->Invoices[$invoiceIndex]->InvoiceDescription.' - REVERSAL';
-        $reversePayLoad->Invoices[$invoiceIndex]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+        $reversePayLoad->Invoices[$invoiceIndex]->DocumentDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
         $reversePayLoad->Invoices[$invoiceIndex]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
         $reversePayLoad->Invoices[$invoiceIndex]->DueDate = $invoicePaymentSchedulesDueDate;
         $reversePayLoad->Invoices[$invoiceIndex]->AsOfDate = $invoicePaymentSchedulesDueDate;
@@ -1734,7 +1734,7 @@ class SagePayloadFactory
 
         $reversePayLoad->Invoices[$invoiceIndex]->DocumentNumber = $reversePayLoad->Invoices[$invoiceIndex]->DocumentNumber.'-REV';
         $reversePayLoad->Invoices[$invoiceIndex]->InvoiceDescription = $reversePayLoad->Invoices[$invoiceIndex]->InvoiceDescription.' - REVERSAL';
-        $reversePayLoad->Invoices[$invoiceIndex]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+        $reversePayLoad->Invoices[$invoiceIndex]->DocumentDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
         $reversePayLoad->Invoices[$invoiceIndex]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
         $reversePayLoad->Invoices[$invoiceIndex]->DueDate = $invoicePaymentSchedulesDueDate;
         $reversePayLoad->Invoices[$invoiceIndex]->AsOfDate = $invoicePaymentSchedulesDueDate;
