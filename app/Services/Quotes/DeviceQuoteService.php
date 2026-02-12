@@ -344,7 +344,7 @@ class DeviceQuoteService extends BaseQuoteService
     {
         $toEmail = $this->getDeviceFailureEmailTo();
 
-        LoggerService::info('AutomationFailedService - Device/NGI Booking failure, sending to Production Approval Team', extra: [
+        LoggerService::info('Device/NGI Booking failure, sending to Production Approval Team', extra: [
             'recipientEmail' => $toEmail,
         ]);
 
@@ -360,7 +360,7 @@ class DeviceQuoteService extends BaseQuoteService
     {
         $fallbackEmail = $this->getDeviceFailureEmailTo();
 
-        LoggerService::info('AutomationFailedService - Device/NGI no advisor assigned, sending to fallback', extra: [
+        LoggerService::info('Device/NGI no advisor assigned, sending to fallback', extra: [
             'fallbackEmail' => $fallbackEmail,
         ]);
 
