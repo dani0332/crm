@@ -125,8 +125,7 @@ const expireRequest = async () => {
     });
   } catch (error) {
     notification.error({
-      title:
-        error.response?.data?.message || 'Failed to expire request',
+      title: error.response?.data?.message || 'Failed to expire request',
       position: 'top',
     });
   } finally {
@@ -237,7 +236,9 @@ onMounted(() => {
 
     <template #item-user.name="item">
       <div class="flex flex-col py-1">
-        <span class="font-medium text-gray-900">{{ item.user?.name || 'N/A' }}</span>
+        <span class="font-medium text-gray-900">{{
+          item.user?.name || 'N/A'
+        }}</span>
         <span class="text-xs text-gray-500 mt-0.5">
           {{ item.user?.email || 'No email' }}
         </span>
@@ -246,7 +247,11 @@ onMounted(() => {
 
     <template #item-quote_type.code="item">
       <x-tag color="primary" size="sm">
-        {{ item.source === 'REVIVAL' ? 'Car Revival' : item.quote_type?.code || 'N/A' }}
+        {{
+          item.source === 'REVIVAL'
+            ? 'Car Revival'
+            : item.quote_type?.code || 'N/A'
+        }}
       </x-tag>
     </template>
 
@@ -255,8 +260,17 @@ onMounted(() => {
         <x-tag color="info" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
           {{ item.department?.name || 'N/A' }}
         </x-tag>
-        <x-tag :color="getTypeColor(item.request_type)" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
-          {{ item.request_type ? item.request_type.charAt(0).toUpperCase() + item.request_type.slice(1).toLowerCase() : 'N/A' }}
+        <x-tag
+          :color="getTypeColor(item.request_type)"
+          size="sm"
+          class="!text-[10px] !px-1.5 !py-0.5"
+        >
+          {{
+            item.request_type
+              ? item.request_type.charAt(0).toUpperCase() +
+                item.request_type.slice(1).toLowerCase()
+              : 'N/A'
+          }}
         </x-tag>
         <x-tag color="secondary" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
           {{ item.segment_label || 'N/A' }}
@@ -287,7 +301,11 @@ onMounted(() => {
     </template>
 
     <template #item-status="{ status }">
-      <x-tag :color="getStatusColor(status)" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
+      <x-tag
+        :color="getStatusColor(status)"
+        size="sm"
+        class="!text-[10px] !px-1.5 !py-0.5"
+      >
         {{ status?.toUpperCase() || 'N/A' }}
       </x-tag>
     </template>
@@ -339,11 +357,15 @@ onMounted(() => {
         </div>
         <div class="flex justify-between items-center">
           <span class="font-medium text-gray-700">LOB:</span>
-          <span class="text-gray-900">{{ selectedRequest.quote_type?.code }}</span>
+          <span class="text-gray-900">{{
+            selectedRequest.quote_type?.code
+          }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="font-medium text-gray-700">Requested Count:</span>
-          <span class="text-gray-900 font-semibold">{{ selectedRequest.requested_count }}</span>
+          <span class="text-gray-900 font-semibold">{{
+            selectedRequest.requested_count
+          }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="font-medium text-gray-700">Status:</span>
@@ -354,8 +376,9 @@ onMounted(() => {
       </div>
       <div class="bg-red-50 border border-red-200 rounded-lg p-3">
         <p class="text-sm text-red-700">
-          <strong>Warning:</strong> This action will set the request status to expired and set the expiry
-          date to now. The user will no longer receive leads from this request.
+          <strong>Warning:</strong> This action will set the request status to
+          expired and set the expiry date to now. The user will no longer
+          receive leads from this request.
         </p>
       </div>
     </div>
