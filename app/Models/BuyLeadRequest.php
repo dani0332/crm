@@ -14,7 +14,6 @@ class BuyLeadRequest extends Model
     use Filterable;
 
     protected $appends = ['segment_label', 'status_label', 'is_expired', 'is_completed', 'can_be_expired'];
-
     protected $fillable = [
         'quote_type_id',
         'user_id',
@@ -46,12 +45,12 @@ class BuyLeadRequest extends Model
     public function statusLabel(): Attribute
     {
         return Attribute::make(
-            get: function() {
-                if($this->is_completed) {
+            get: function () {
+                if ($this->is_completed) {
                     return 'completed';
                 }
 
-                if($this->is_expired) {
+                if ($this->is_expired) {
                     return 'expired';
                 }
 
@@ -150,16 +149,16 @@ class BuyLeadRequest extends Model
     public function isExpired(): Attribute
     {
         return Attribute::make(
-            get: function() {
-                if($this->is_completed) {
+            get: function () {
+                if ($this->is_completed) {
                     return false;
                 }
 
-                if($this->status === 'expired') {
+                if ($this->status === 'expired') {
                     return true;
                 }
 
-                if(!empty($this->expires_at) && $this->expires_at < now()) {
+                if (! empty($this->expires_at) && $this->expires_at < now()) {
                     return true;
                 }
 
@@ -178,9 +177,9 @@ class BuyLeadRequest extends Model
     public function canBeExpired(): Attribute
     {
         return Attribute::make(
-            get: function() {
-                return !$this->is_completed &&
-                        !$this->is_expired &&
+            get: function () {
+                return ! $this->is_completed &&
+                        ! $this->is_expired &&
                         ($this->status === 'active' || $this->status === 'processing');
             }
         );
