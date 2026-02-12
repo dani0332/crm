@@ -255,7 +255,16 @@ class BuyLeadService
         }
 
         if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $status = $filters['status'];
+
+            if ($status === 'completed') {
+                $query->computedCompleted();
+            } elseif ($status === 'expired') {
+                $query->computedExpired();
+            } else {
+                // For 'active' and 'processing' statuses
+                $query->computedActiveStatus($status);
+            }
         }
 
         if (! empty($filters['request_type'])) {

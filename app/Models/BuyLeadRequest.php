@@ -104,6 +104,54 @@ class BuyLeadRequest extends Model
         $q->whereColumn('requested_count', '>', 'allocated_count');
     }
 
+    /**
+     * Scope to filter requests by their computed "completed" status.
+     * A request is completed if:
+     * 1. status = 'completed', OR
+     * 2. allocated_count >= requested_count (regardless of raw status)
+     */
+    public function scopeComputedCompleted($q)
+    {
+        $q->where(function ($q) {
+            $q->where('status', 'completed')
+                ->orWhereColumn('allocated_count', '>=', 'requested_count');
+        });
+    }
+
+    /**
+     * Scope to filter requests by their computed "expired" status.
+     * A request is expired if:
+     * 1. status = 'expired', OR
+     * 2. expires_at is in the past AND not completed
+     */
+    public function scopeComputedExpired($q)
+    {
+        $q->where(function ($q) {
+            $q->where('status', 'expired')
+                ->orWhere(function ($q) {
+                    $q->whereNotNull('expires_at')
+                        ->where('expires_at', '<', now())
+                        ->whereColumn('allocated_count', '<', 'requested_count')
+                        ->where('status', '!=', 'completed');
+                });
+        });
+    }
+
+    /**
+     * Scope to filter requests by their computed "active" or "processing" status.
+     * Only includes requests that are NOT completed and NOT expired.
+     */
+    public function scopeComputedActiveStatus($q, string $status)
+    {
+        $q->where('status', $status)
+            ->whereColumn('allocated_count', '<', 'requested_count') // Not completed by allocation
+            ->where(function ($q) {
+                // Not expired by date
+                $q->whereNull('expires_at')
+                    ->orWhere('expires_at', '>=', now());
+            });
+    }
+
     public function scopeIsValue($q)
     {
         $q->where('request_type', 'value');
