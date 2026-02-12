@@ -41,8 +41,8 @@ const tableHeader = reactive([
 ]);
 
 const lobOptions = computed(() => [
-  { label: 'Car', value: 'CAR' },
-  { label: 'Health', value: 'HEALTH' },
+  { label: 'Car', value: 'Car' },
+  { label: 'Health', value: 'Health' },
   { label: 'Car Revival', value: 'CAR_CAT_A' },
 ]);
 
@@ -269,10 +269,7 @@ const capitalizeFirstLetter = string => {
     <template #item-requested_count="item">
       <div class="flex flex-col py-1">
         <span class="text-xs text-gray-900 font-medium">
-          Requested: {{ item.requested_count }}
-        </span>
-        <span class="text-xs text-green-600 mt-0.5 font-medium">
-          Allocated: {{ item.allocated_count }}
+          {{ item.allocated_count }} / {{ item.requested_count }}
         </span>
       </div>
     </template>
@@ -280,10 +277,7 @@ const capitalizeFirstLetter = string => {
     <template #item-cost_per_lead="item">
       <div class="flex flex-col py-1">
         <span class="text-xs text-gray-900 font-medium">
-          Per Lead: {{ Math.round(item.cost_per_lead) }} AED
-        </span>
-        <span class="text-xs text-gray-500 mt-0.5">
-          Total: {{ calculateTotalCost(item) }} AED
+          {{ calculateTotalCost(item) }} AED
         </span>
       </div>
     </template>

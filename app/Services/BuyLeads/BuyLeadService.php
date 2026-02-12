@@ -235,7 +235,23 @@ class BuyLeadService
 
         if (! empty($filters['quote_type'])) {
             $quoteType = QuoteTypes::from($filters['quote_type']);
-            $query->where('quote_type_id', $quoteType->id());
+
+            $isCarRevival = $quoteType->value === QuoteTypes::CAR_CAT_A->value;
+            $baseQuoteType = $isCarRevival ? QuoteTypes::CAR : $quoteType;
+
+            $query->where('quote_type_id', $baseQuoteType->id());
+
+            if ($isCarRevival) {
+                // Filter for Car Revival: source must be REVIVAL
+                $query->where('source', LeadSourceEnum::REVIVAL);
+            } elseif ($quoteType === QuoteTypes::CAR) {
+                // Filter for regular Car: source must NOT be REVIVAL
+                $query->where(function ($q) {
+                    $q->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source')
+                        ->orWhere('source', '');
+                });
+            }
         }
 
         if (! empty($filters['status'])) {
