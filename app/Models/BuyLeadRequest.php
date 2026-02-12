@@ -6,11 +6,14 @@ use App\Enums\BuyLeadSegment;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Traits\Filterable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class BuyLeadRequest extends Model
 {
     use Filterable;
+
+    protected $appends = ['segment_label', 'status_label'];
 
     protected $fillable = [
         'quote_type_id',
@@ -31,8 +34,27 @@ class BuyLeadRequest extends Model
         'cost_per_lead' => 'float',
         'expires_at' => 'datetime',
         'segment' => BuyLeadSegment::class,
-        'source' => LeadSourceEnum::class,
     ];
+
+    public function segmentLabel(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->segment->label(),
+        );
+    }
+
+    public function statusLabel(): Attribute
+    {
+        return Attribute::make(
+            get: function() {
+                if($this->isExpired()) {
+                    return 'expired';
+                }
+
+                return $this->status;
+            },
+        );
+    }
 
     public function scopeIsSIC($query)
     {
@@ -57,6 +79,11 @@ class BuyLeadRequest extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function scopeNotExpired($q)
@@ -114,6 +141,19 @@ class BuyLeadRequest extends Model
     public function scopeNonCatA($query)
     {
         $query->whereNull('source');
+    }
+
+    public function isExpired()
+    {
+        return $this->status === 'expired' || $this->expires_at < now();
+    }
+
+    public function expire()
+    {
+        return $this->update([
+            'status' => 'expired',
+            'expires_at' => now(),
+        ]);
     }
 
     public static function getRequestedUserIds(QuoteTypes $quoteType, bool $isSIC, bool $isValue): array

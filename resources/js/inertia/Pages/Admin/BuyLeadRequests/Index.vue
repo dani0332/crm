@@ -34,7 +34,7 @@ const tableHeader = reactive([
   { text: 'Count', value: 'requested_count', width: 100 },
   { text: 'Cost', value: 'cost_per_lead', width: 120 },
   { text: 'Details', value: 'department.name', width: 140 },
-  { text: 'Status', value: 'status', width: 100 },
+  { text: 'Status', value: 'status_label', width: 100 },
   { text: 'Requested At', value: 'created_at', width: 150 },
   { text: 'Actions', value: 'actions', width: 100 },
 ]);
@@ -286,9 +286,9 @@ onMounted(() => {
       </div>
     </template>
 
-    <template #item-status="{ status }">
-      <x-tag :color="getStatusColor(status)" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
-        {{ status?.toUpperCase() || 'N/A' }}
+    <template #item-status_label="{ status_label }">
+      <x-tag :color="getStatusColor(status_label)" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
+        {{ status_label?.toUpperCase() || 'N/A' }}
       </x-tag>
     </template>
 
