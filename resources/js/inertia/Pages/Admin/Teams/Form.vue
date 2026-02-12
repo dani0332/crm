@@ -46,6 +46,14 @@ const computedParent = computed(() => {
   else return [];
 });
 
+const showCategorySelect = computed(() => {
+  const parent = computedParent.value.find(
+    option => option.value === teamForm.parent_team_id
+  )
+
+  return teamForm.type === 2 && parent?.label === 'Health'
+})
+
 watch(
   () => teamForm.type,
   () => {
@@ -165,7 +173,7 @@ onMounted(() => setInitialState());
         class="w-full"
       ></x-select>
       <x-select
-        v-if="teamForm.type == 2"
+        v-if="showCategorySelect"
         v-model="teamForm.category"
         :rules="teamForm.type == 2 ? [isRequired] : []"
         class="w-full"
