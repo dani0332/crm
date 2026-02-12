@@ -12,11 +12,12 @@ const notification = useToast();
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 
 const filters = reactive({
-  user_id: '',
-  quote_type: '',
-  status: '',
-  request_type: '',
-  date: null,
+  user_id: props.filters?.user_id || '',
+  quote_type: props.filters?.quote_type || '',
+  status: props.filters?.status || '',
+  request_type: props.filters?.request_type || '',
+  segment: props.filters?.segment || '',
+  date: props.filters?.date || null,
   page: 1,
 });
 
@@ -87,16 +88,6 @@ const onSubmit = isValid => {
   }
 };
 
-function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
-    } else {
-      filters[key] = params[key];
-    }
-  }
-}
-
 const showExpireModal = request => {
   selectedRequest.value = request;
   expireModal.value = true;
@@ -151,9 +142,10 @@ const calculateTotalCost = request => {
   return Math.round(request.requested_count * request.cost_per_lead);
 };
 
-onMounted(() => {
-  setQueryStringFilters();
-});
+const capitalizeFirstLetter = string => {
+  if (!string) return '';
+  return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+};
 </script>
 
 <template>
@@ -253,7 +245,7 @@ onMounted(() => {
 
     <template #item-department.name="item">
       <div class="flex flex-wrap gap-1 py-1">
-        <x-tag color="info" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
+        <x-tag color="primary" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
           {{ item.department?.name || 'N/A' }}
         </x-tag>
         <x-tag
