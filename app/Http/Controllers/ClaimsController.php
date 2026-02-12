@@ -18,7 +18,6 @@ use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\ClaimRequest;
-use App\Services\ClaimDocumentService;
 use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
 use App\Services\CustomerService;
@@ -35,19 +34,16 @@ class ClaimsController extends Controller
     protected $cdnPath;
     protected $claimEcomTrackingURL;
     protected ClaimsService $claimsService;
-    protected ClaimDocumentService $claimDocumentService;
     protected ClaimStatusesService $claimsStatusesService;
     protected CustomerService $customerService;
 
     public function __construct(
         ClaimsService $claimsService,
         ClaimStatusesService $claimsStatusesService,
-        ClaimDocumentService $claimDocumentService,
         CustomerService $customerService,
     ) {
         $this->claimsService = $claimsService;
         $this->claimsStatusesService = $claimsStatusesService;
-        $this->claimDocumentService = $claimDocumentService;
         $this->customerService = $customerService;
         $this->cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $this->claimEcomTrackingURL = config('constants.CLAIM_ECOM_TRACKING_URL').'/';

@@ -9,9 +9,6 @@ use App\Http\Requests\ClaimGetS3TempUrlRequest;
 use App\Models\ClaimRequest;
 use App\Models\QuoteDocument;
 use App\Services\ClaimDocumentService;
-use App\Services\ClaimsService;
-use App\Services\ClaimStatusesService;
-use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Exception;
@@ -21,24 +18,15 @@ use Illuminate\Support\Facades\Auth;
 class ClaimDocumentsController extends Controller
 {
     protected $cdnPath;
-    protected ClaimsService $claimsService;
     protected ClaimDocumentService $claimDocumentService;
-    protected ClaimStatusesService $claimsStatusesService;
     protected QuoteDocumentService $quoteDocumentService;
-    protected CustomerService $customerService;
 
     public function __construct(
-        ClaimsService $claimsService,
-        ClaimStatusesService $claimsStatusesService,
         ClaimDocumentService $claimDocumentService,
         QuoteDocumentService $quoteDocumentService,
-        CustomerService $customerService,
     ) {
-        $this->claimsService = $claimsService;
-        $this->claimsStatusesService = $claimsStatusesService;
         $this->claimDocumentService = $claimDocumentService;
         $this->quoteDocumentService = $quoteDocumentService;
-        $this->customerService = $customerService;
         $this->cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_UPLOAD], ['only' => ['storeDocument']]);
