@@ -883,14 +883,13 @@ class ClaimsService extends BaseService
 
         $claimRequestDetails = $claimRequest->claimRequestDetails;
 
-        $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
+        $isCarOrBikeLOB = $claimRequest->isCarOrBikeLOB();
 
         $isRequiredFieldsFilled = false;
 
-        if ($isCarQuoteType) {
+        if ($isCarOrBikeLOB) {
             $isRequiredFieldsFilled = $claimRequestDetails?->plate_number && $claimRequestDetails?->car_make && $claimRequestDetails?->car_model && $claimRequestDetails?->model_year;
         } else {
-
             $isRequiredFieldsFilled = $claimRequest?->policy_number && $claimRequest?->incident_date;
         }
 
