@@ -272,9 +272,16 @@ class BuyLeadService
         }
 
         if (! empty($filters['date']) && is_array($filters['date']) && count($filters['date']) === 2) {
-            $startDate = Carbon::parse($filters['date'][0])->startOfDay();
-            $endDate = Carbon::parse($filters['date'][1])->endOfDay();
-            $query->whereBetween('buy_lead_requests.created_at', [$startDate, $endDate]);
+            $startDate = $filters['date'][0] !== null ? Carbon::parse($filters['date'][0])->startOfDay() : null;
+            $endDate = $filters['date'][1] !== null ? Carbon::parse($filters['date'][1])->endOfDay() : null;
+
+            if ($startDate !== null && $endDate !== null) {
+                $query->whereBetween('buy_lead_requests.created_at', [$startDate, $endDate]);
+            } elseif ($startDate !== null) {
+                $query->where('buy_lead_requests.created_at', '>=', $startDate);
+            } elseif ($endDate !== null) {
+                $query->where('buy_lead_requests.created_at', '<=', $endDate);
+            }
         }
 
         return $query->latest('buy_lead_requests.created_at')
