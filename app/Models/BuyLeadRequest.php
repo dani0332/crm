@@ -38,7 +38,7 @@ class BuyLeadRequest extends Model
     public function segmentLabel(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->segment->label(),
+            get: fn () => $this->segment?->label(),
         );
     }
 
