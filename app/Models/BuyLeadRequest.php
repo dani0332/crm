@@ -233,7 +233,7 @@ class BuyLeadRequest extends Model
             get: function () {
                 return ! $this->is_completed &&
                         ! $this->is_expired &&
-                        ($this->status === 'active' || $this->status === 'processing');
+                        $this->status === 'active';
             }
         );
     }
