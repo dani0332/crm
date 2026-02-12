@@ -238,6 +238,10 @@ class RuleService extends BaseService
 
     public function getEmailsByLeadSource($leadSource, $quoteTypeId)
     {
+        if(empty($leadSource)) {
+            return [];
+        }
+
         $rules = app(RuleService::class)->getUsersByLeadSourceRules($leadSource, $quoteTypeId);
         if (count($rules) > 0) {
             $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
