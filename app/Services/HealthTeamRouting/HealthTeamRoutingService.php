@@ -67,7 +67,8 @@ class HealthTeamRoutingService
                 'validation_error',
                 [
                     'premium' => null,
-                    'category' => TeamCategoryEnum::AUH->value,
+                    'lead_id' => $lead->id,
+                    'lead_uuid' => $lead->uuid,
                 ],
                 $lead
             );
