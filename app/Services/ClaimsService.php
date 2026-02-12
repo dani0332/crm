@@ -913,26 +913,28 @@ class ClaimsService extends BaseService
 
     public function sendNotification(ClaimRequest $claimRequest, $request)
     {
-        $claimRequest->claim_sub_status_id = $request->claim_sub_status_id;
-        $subStatus = ClaimStatus::find($request->claim_sub_status_id);
-        $targetStatus = $this->claimsStatusesService->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
-        if ($targetStatus) {
-            $claimRequest->claim_status_id = ClaimStatus::byText($targetStatus)
-                ->byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
-                ->active()
-                ->first()?->id;
-        }
+        return DB::transaction(function () use ($claimRequest, $request) {
+            $claimRequest->claim_sub_status_id = $request->claim_sub_status_id;
+            $subStatus = ClaimStatus::find($request->claim_sub_status_id);
+            $targetStatus = $this->claimsStatusesService->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
+            if ($targetStatus) {
+                $claimRequest->claim_status_id = ClaimStatus::byText($targetStatus)
+                    ->byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
+                    ->active()
+                    ->first()?->id;
+            }
 
-        $claimRequest->save();
+            $claimRequest->save();
 
-        $claimActivity = ClaimActivity::createForClaim(
-            $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
-            $request->customer_message, $request->ai_optimized_message
-        );
+            $claimActivity = ClaimActivity::createForClaim(
+                $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
+                $request->customer_message, $request->ai_optimized_message
+            );
 
-        SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->ai_optimized_message);
+            SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->ai_optimized_message);
 
-        return $claimActivity;
+            return $claimActivity;
+        });
     }
 
     /**
