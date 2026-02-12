@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Proforma Payment Request - Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <span>Proforma Payment Request</span>
+      </nav>
+
+      <!-- Header -->
+      <header class="header">
+        <h1>📄 Proforma Payment Request</h1>
+        <p>
+          Generate and manage proforma payment request documents for policy
+          payments
+        </p>
+        <span class="status-badge">✓ Active Feature</span>
+      </header>
+
+      <!-- Overview Section -->
+      <section class="content-section">
+        <h2>❓ What is a Proforma Payment Request?</h2>
+        <p>
+          A Proforma Payment Request is a preliminary invoice document sent to
+          customers to request payment before the actual policy invoice is
+          issued. It serves as a payment requisition tool that helps track
+          payment progress and provides customers with detailed payment
+          information.
+        </p>
+
+        <div class="highlight">
+          <h4>💡 Key Characteristics</h4>
+          <p>
+            <strong>Payment Structure:</strong><br />
+            • Always created with <strong>UPFRONT</strong> payment frequency<br />
+            • Contains exactly <strong>ONE (1) payment split</strong><br />
+            • Single full-amount payment expected<br />
+            • Not used for installment or progressive payment plans<br /><br />
+
+            <strong>Proforma vs Regular Invoice:</strong> Unlike a standard tax
+            invoice, a proforma payment request is sent BEFORE payment is
+            collected. It's an effective method for:<br /><br />
+            ✓ Initiating payment requisitions from customers<br />
+            ✓ Tracking payment progress before policy finalization<br />
+            ✓ Providing payment details without issuing formal tax invoice<br />
+            ✓ Supporting upfront payment collection workflows
+          </p>
+        </div>
+      </section>
+
+      <!-- Process Flow -->
+      <section class="content-section">
+        <h2>🔄 Proforma Payment Request Workflow</h2>
+        <p>
+          The proforma payment request follows a structured workflow from
+          creation to customer delivery.
+        </p>
+
+        <div class="process-flow">
+          <div class="process-step">
+            <div class="step-number">1</div>
+            <h4>Select Payment Method</h4>
+            <p>
+              User selects "Proforma Payment Request" (PPR) as payment method
+            </p>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">2</div>
+            <h4>Generate PDF</h4>
+            <p>System creates proforma invoice PDF with payment details</p>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">3</div>
+            <h4>Store Document</h4>
+            <p>PDF saved to quote_documents table with version tracking</p>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">4</div>
+            <h4>Customer Delivery</h4>
+            <p>Document sent to customer for payment initiation</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Document Structure -->
+      <section class="content-section">
+        <h2>📋 Proforma Document Structure</h2>
+        <p>
+          The proforma payment request PDF contains comprehensive payment and
+          policy information structured in a professional invoice format.
+        </p>
+
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📌 Header Information</h4>
+            <ul>
+              <li>Company logo (InsuranceMarket.ae branding)</li>
+              <li>"Proforma Payment Request" title</li>
+              <li>Document reference code (payment.code)</li>
+              <li>Generation date (collection_date formatted)</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>👤 Customer Details</h4>
+            <ul>
+              <li>Customer name (insured or company)</li>
+              <li>Customer address (quote or entity address)</li>
+              <li>Customer reference ID (quote code)</li>
+              <li>Entity/company info (for business quotes)</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>💰 Payment Breakdown Table</h4>
+            <ul>
+              <li>
+                <strong>Payment #:</strong> Always "1" (single upfront payment)
+              </li>
+              <li><strong>Due Date:</strong> collection_date from payment</li>
+              <li>
+                <strong>Description:</strong> Quote type + insurance provider
+              </li>
+              <li><strong>Amount:</strong> Subtotal before VAT</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📝 Payment Summary</h4>
+            <ul>
+              <li><strong>Subtotal:</strong> price_vat_applicable</li>
+              <li><strong>VAT:</strong> price_vat (calculated amount)</li>
+              <li><strong>Discount:</strong> Only if discount_value > 0</li>
+              <li><strong>Total Due:</strong> total_amount (final amount)</li>
+              <li><strong>Remarks:</strong> payment.notes field</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Special Data Sources</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>🔄 Main Lead Data</h4>
+            <ul>
+              <li>Uses quote model directly</li>
+              <li>For Car: actual_premium from car_quote_request_details</li>
+              <li>For others: price_vat_applicable from payment</li>
+              <li>Entity info from quoteRequestEntityMapping</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📤 Send Update Data</h4>
+            <ul>
+              <li>Uses payment linked to send_update_log</li>
+              <li>Always uses price_vat_applicable from payment</li>
+              <li>References sendUpdateLog for versioning</li>
+              <li>No entity mapping for send updates</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Payment Instructions Section</h3>
+        <div class="highlight">
+          <h4>💳 Broker Collection (BROKER collection_type)</h4>
+          <p>
+            When collection_type = 'BROKER', payment details section is
+            displayed:<br /><br />
+            <strong>Bank Details:</strong><br />
+            • Bank Name: EMIRATES NBD<br />
+            • Account Holder: AFIA INSURANCE BROKERAGE SERVICES LLC<br />
+            • Account Number: 1011170518302<br />
+            • IBAN: AE650260001011170518302<br />
+            • SWIFT Code: EBILAEAD<br /><br />
+
+            <strong>Note:</strong> If collection_type = 'INSURER', bank details
+            section is NOT displayed
+          </p>
+        </div>
+
+        <h3>Footer Information</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📄 Disclaimer</h4>
+            <ul>
+              <li>States document is for premium collection only</li>
+              <li>Not a formal Tax Invoice per FTA regulations</li>
+              <li>Instructions to obtain official tax invoice</li>
+              <li>References insurance provider name</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>ℹ️ Company Information</h4>
+            <ul>
+              <li>InsuranceMarket.ae trademark notice</li>
+              <li>Physical address and contact details</li>
+              <li>UAE Central Bank Registration #85</li>
+              <li>Insurance advisor name and photo</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Technical Implementation -->
+      <section class="content-section">
+        <h2>🛠️ Technical Implementation</h2>
+
+        <h3>Core Components</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Location</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>QuoteDocumentController</strong></td>
+                <td>app/Http/Controllers/QuoteDocumentController.php</td>
+                <td>Handles proforma creation and download requests</td>
+              </tr>
+              <tr>
+                <td><strong>ExportDocumentService</strong></td>
+                <td>app/Services/ExportDocumentService.php</td>
+                <td>Business logic for proforma PDF generation</td>
+              </tr>
+              <tr>
+                <td><strong>Proforma Blade Template</strong></td>
+                <td>resources/views/pdf/proforma-invoice.blade.php</td>
+                <td>PDF layout and styling template</td>
+              </tr>
+              <tr>
+                <td><strong>ProformaPaymentRequestResource</strong></td>
+                <td>app/Http/Resources/ProformaPaymentRequestResource.php</td>
+                <td>API response formatting</td>
+              </tr>
+              <tr>
+                <td><strong>PaymentRepository</strong></td>
+                <td>app/Repositories/PaymentRepository.php</td>
+                <td>Payment method validation and queries</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Database Schema</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>🗄️ Primary Tables</h4>
+            <ul>
+              <li>
+                <strong>payments:</strong> Stores payment records with
+                payment_methods_code = 'PPR'
+              </li>
+              <li>
+                <strong>payment_splits:</strong> Contains exactly 1 split record
+                per proforma payment
+              </li>
+              <li>
+                <strong>quote_documents:</strong> Stores generated proforma PDFs
+                with document_type_text
+              </li>
+              <li>
+                <strong>document_types:</strong> Contains 'Proforma Payment
+                Request' document type
+              </li>
+              <li>
+                <strong>payment_methods:</strong> Defines 'PPR' payment method
+                enum
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🔑 Key Fields (payments table)</h4>
+            <ul>
+              <li>
+                <strong>code:</strong> Unique payment reference (links payment &
+                splits)
+              </li>
+              <li><strong>payment_methods_code:</strong> 'PPR' enum value</li>
+              <li>
+                <strong>payment_frequency:</strong> Always 'UPFRONT' for
+                proforma
+              </li>
+              <li><strong>price_vat_applicable:</strong> Amount before VAT</li>
+              <li><strong>price_vat:</strong> VAT amount</li>
+              <li><strong>total_amount:</strong> Final total (used in PDF)</li>
+              <li>
+                <strong>collection_date:</strong> Due date shown on proforma
+              </li>
+              <li><strong>collection_type:</strong> 'BROKER' or 'INSURER'</li>
+              <li><strong>notes:</strong> Remarks displayed on PDF</li>
+              <li>
+                <strong>send_update_log_id:</strong> NULL for main lead, set for
+                send updates
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Document Storage (quote_documents table)</h3>
+        <div class="code-block" data-lang="php">
+          // Document record created in quote_documents $document =
+          $docmentableTypeEntry->documents()->create([ 'doc_name' => $docName,
+          // Unique name with uniqid prefix 'original_name' => $originalName, //
+          User-friendly filename with version 'doc_url' => $filePathAzure, //
+          Azure blob storage path 'doc_mime_type' => 'application/pdf',
+          'document_type_code' => 'PPR', // DocumentTypeCode::PPR
+          'document_type_text' => 'Proforma Payment Request', 'doc_uuid' =>
+          $this->helperService->generateUUID(), 'created_by_id' => auth()->id(),
+          // Polymorphic fields automatically set: // quote_documentable_type =>
+          Quote model or SendUpdateLog // quote_documentable_id => quote.id or
+          send_update_log.id ]);
+        </div>
+
+        <h3>Azure Blob Storage Structure</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📁 Storage Organization</h4>
+            <ul>
+              <li><strong>Disk:</strong> azureIMPrivate (private container)</li>
+              <li><strong>Base Path:</strong> documents/{QuoteType}/</li>
+              <li>
+                <strong>Example Car:</strong>
+                documents/Car/60a1b2c3_uuid-123_filename.pdf
+              </li>
+              <li>
+                <strong>Example Health:</strong>
+                documents/Health/60a1b2c3_uuid-456_filename.pdf
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🔐 Access Control</h4>
+            <ul>
+              <li>Stored in private Azure container</li>
+              <li>Not publicly accessible via direct URL</li>
+              <li>Downloaded via controller with permission check</li>
+              <li>Uses Azure SAS tokens for secure access</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>API Endpoints</h3>
+        <div class="code-block" data-lang="php">
+          // Create Proforma Payment Request GET
+          /quotes/{quoteType}/{quote}/proforma-payment-request
+          ?paymentCode={code} // Optional for Send Update scenarios Controller:
+          QuoteDocumentController@createProformaPaymentRequest Permission:
+          proforma-create Returns: JSON with proforma_request resource //
+          Download Proforma Payment Request GET
+          /proforma-payment-request/{quote_document}/download Controller:
+          QuoteDocumentController@downloadProformaPaymentRequest Permission:
+          proforma-create Returns: PDF file with appropriate headers
+        </div>
+      </section>
+
+      <!-- Usage Scenarios -->
+      <section class="content-section">
+        <h2>🎯 Usage Scenarios</h2>
+
+        <h3>1. Main Lead (New Policy)</h3>
+        <div class="highlight">
+          <h4>📝 Standard New Policy Flow</h4>
+          <p>
+            When creating a new policy with proforma payment request method:<br /><br />
+            <strong>Step 1:</strong> Select payment method = "Proforma Payment
+            Request" during quote creation<br />
+            <strong>Step 2:</strong> System creates payment record with
+            payment_methods_code = 'PPR'<br />
+            <strong>Step 3:</strong> Click "Create Proforma" button to generate
+            PDF<br />
+            <strong>Step 4:</strong> PDF stored in quote_documents with version
+            number<br />
+            <strong>Step 5:</strong> Download and send to customer for payment
+            initiation
+          </p>
+        </div>
+
+        <h3>2. Send Update (Endorsements)</h3>
+        <div class="highlight">
+          <h4>📝 Policy Amendment Flow</h4>
+          <p>
+            When policy changes require additional payment:<br /><br />
+            <strong>Step 1:</strong> Create send_update_log entry for policy
+            changes<br />
+            <strong>Step 2:</strong> Payment record linked to send_update_log
+            via send_update_log_id<br />
+            <strong>Step 3:</strong> Pass paymentCode parameter when generating
+            proforma<br />
+            <strong>Step 4:</strong> Version number increments for each send
+            update proforma<br />
+            <strong>Step 5:</strong> Separate proforma tracking per endorsement
+          </p>
+        </div>
+
+        <h3>3. Payment Frequency Configuration</h3>
+        <div class="highlight">
+          <h4>💳 Upfront Payment with Single Split</h4>
+          <p>
+            <strong>Important:</strong> Proforma Payment Request is
+            <strong>ALWAYS</strong> created with upfront payment frequency and
+            contains only <strong>ONE (1) split payment</strong>.<br /><br />
+
+            <strong>Configuration:</strong><br />
+            • payment_frequency = 'UPFRONT'<br />
+            • payment_splits table contains exactly 1 record<br />
+            • Single proforma PDF generated for full amount<br />
+            • Payment collected in one transaction<br /><br />
+
+            <strong>Why Single Split?</strong><br />
+            Proforma payment requests are preliminary invoices sent
+            <em>before</em> payment is collected. The system creates one payment
+            split record to track the single upfront payment transaction,
+            maintaining consistency with the payment processing architecture.
+          </p>
+        </div>
+
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📊 Payment Structure</h4>
+            <ul>
+              <li>
+                <strong>1 Payment Record:</strong> payment_methods_code = 'PPR'
+              </li>
+              <li>
+                <strong>1 Payment Split:</strong> Single entry in payment_splits
+              </li>
+              <li>
+                <strong>1 Proforma PDF:</strong> Generated for full amount
+              </li>
+              <li>
+                <strong>UPFRONT Frequency:</strong> Full payment expected
+                immediately
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🚫 Not Used For</h4>
+            <ul>
+              <li>Installment payments (monthly/quarterly)</li>
+              <li>Multiple split payment scenarios</li>
+              <li>Deferred payment schedules</li>
+              <li>Progressive payment plans</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Permissions & Security -->
+      <section class="content-section">
+        <h2>🔐 Permissions & Security</h2>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Permission</th>
+                <th>Code</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Create Proforma</strong></td>
+                <td><code>proforma-create</code></td>
+                <td>Allows users to create and download proforma PDFs</td>
+              </tr>
+              <tr>
+                <td><strong>Add Proforma Payment Request</strong></td>
+                <td><code>proforma-payment-request-add</code></td>
+                <td>
+                  Allows users to add PPR as payment method dropdown option
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight">
+          <h4>⚠️ Important Security Notes</h4>
+          <p>
+            • Both endpoints require user authentication via Laravel Sanctum<br />
+            • Permission checks enforced at controller level via middleware<br />
+            • File access validated through QuoteDocument model relationship<br />
+            • S3 pre-signed URLs used for secure document delivery
+          </p>
+        </div>
+      </section>
+
+      <!-- Technical Constraints -->
+      <section class="content-section">
+        <h2>⚙️ Technical Constraints & Important Notes</h2>
+
+        <div class="highlight">
+          <h4>🔒 Critical Payment Configuration</h4>
+          <p>
+            <strong>UPFRONT Frequency Requirement:</strong><br />
+            Proforma Payment Requests are
+            <strong>strictly configured</strong> with the following
+            constraints:<br /><br />
+
+            ✓ <strong>payment_frequency MUST BE 'UPFRONT'</strong><br />
+            ✓ <strong>payment_splits table CONTAINS EXACTLY 1 RECORD</strong
+            ><br />
+            ✓ Single full-amount payment expected<br />
+            ✓ No installment or split payment support<br /><br />
+
+            <strong>Why This Matters:</strong><br />
+            This architectural decision ensures that proforma payment requests
+            represent a single, complete payment transaction. The system creates
+            one payment split record to maintain consistency with the payment
+            processing architecture, even though the payment is upfront.
+          </p>
+        </div>
+
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>✅ Allowed Scenarios</h4>
+            <ul>
+              <li>Single upfront payment for full policy amount</li>
+              <li>One-time payment before policy issuance</li>
+              <li>Full payment collection in single transaction</li>
+              <li>Send update additional payments (also upfront)</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>❌ Not Supported</h4>
+            <ul>
+              <li>Monthly installment payments</li>
+              <li>Quarterly split payments</li>
+              <li>Multiple payment splits per proforma</li>
+              <li>Progressive payment schedules</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code-block" data-lang="sql">
+          -- Verify Proforma Payment Structure SELECT p.id, p.code,
+          p.payment_methods_code, p.payment_frequency, p.total_price,
+          COUNT(ps.id) as split_count FROM payments p LEFT JOIN payment_splits
+          ps ON ps.code = p.code WHERE p.payment_methods_code = 'PPR' GROUP BY
+          p.id; -- Expected Result: -- payment_methods_code: 'PPR' --
+          payment_frequency: 'UPFRONT' -- split_count: 1
+        </div>
+      </section>
+
+      <!-- Version Tracking -->
+      <section class="content-section">
+        <h2>📊 Version Tracking</h2>
+        <p>
+          Proforma payment requests support automatic version tracking for
+          multiple document generations. Each time a proforma is regenerated,
+          the version number increments.
+        </p>
+
+        <div class="code-block" data-lang="php">
+          // Version Calculation Logic (from ExportDocumentService.php) if
+          ($isRequestFromSendUpdateLogPage) { // For Send Updates: Count
+          versions per send_update_log $proformaPaymentRequestVersion =
+          $sendUpdateLog->documents() ->where(['document_type_text' =>
+          DocumentTypeEnum::ProformaPaymentRequest]) ->count();
+          $docmentableTypeEntry = $sendUpdateLog; // Polymorphic relationship }
+          else { // For Main Lead: Count versions per quote
+          $proformaPaymentRequestVersion = $quote->documents()
+          ->where(['document_type_text' =>
+          DocumentTypeEnum::ProformaPaymentRequest]) ->count();
+          $docmentableTypeEntry = $quote; // Polymorphic relationship } //
+          Version number added to filename $pdfName = 'InsuranceMarket.ae™
+          Proforma Payment Request for ' . $quote->first_name . ' ' .
+          $quote->last_name . '-' . $proformaPaymentRequest->code . '(' .
+          ($proformaPaymentRequestVersion + 1) . ')' . '.pdf'; // Storage path
+          structure $fileNameAzure = uniqid() . '_' .
+          $docmentableTypeEntry->uuid . '_' . $docName; $filePathAzure =
+          'documents/' . ucwords($quoteType) . '/' . $fileNameAzure; // Example:
+          documents/Car/60a1b2c3_car-uuid-123_InsuranceMarket.ae™ProformaPaymentRequest...pdf
+        </div>
+
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📌 Version Scenarios</h4>
+            <ul>
+              <li>First generation: Version (1)</li>
+              <li>Regenerated for corrections: Version (2)</li>
+              <li>Send Update #1: Separate Version (1)</li>
+              <li>Each send update has independent versioning</li>
+              <li>Version count starts at 0, displays as (count + 1)</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🗂️ Version Storage</h4>
+            <ul>
+              <li>All versions stored in quote_documents table</li>
+              <li>Historic versions remain accessible via doc_url</li>
+              <li>Latest version determined by created_at DESC</li>
+              <li>Audit trail maintained for compliance</li>
+              <li>Stored in Azure Blob Storage (azureIMPrivate disk)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Polymorphic Relationship</h3>
+        <div class="highlight">
+          <h4>💡 Document Ownership</h4>
+          <p>
+            <strong>Quote Documents uses polymorphic relationship:</strong
+            ><br /><br />
+            • <strong>Main Lead:</strong> quote_documentable_type = Quote Model
+            (e.g., HealthQuote, TravelQuote)<br />
+            • <strong>Send Update:</strong> quote_documentable_type =
+            SendUpdateLog<br />
+            • <strong>quote_documentable_id:</strong> References either quote.id
+            or send_update_log.id<br /><br />
+            This allows versioning to be scoped correctly:
+          </p>
+          <ul style="margin-top: 10px; padding-left: 20px">
+            <li>Main lead versions belong to quote</li>
+            <li>
+              Each send update tracks its own proforma versions independently
+            </li>
+            <li>
+              Querying documents()->where() returns version count for correct
+              scope
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Special Cases -->
+      <section class="content-section">
+        <h2>⚙️ Special Cases & Edge Scenarios</h2>
+
+        <h3>1. Zero Price Policies</h3>
+        <div class="highlight">
+          <h4>🆓 Free Policy Handling</h4>
+          <p>
+            When total_price = 0:<br />
+            • Proforma still generated for documentation<br />
+            • Shows AED 0.00 amounts in all fields<br />
+            • Requires CreditApproval payment method instead of PPR<br />
+            • No actual payment collection needed
+          </p>
+        </div>
+
+        <h3>2. Discount Application</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>💸 Discount Display</h4>
+            <ul>
+              <li>discount_value field shown as negative</li>
+              <li>Subtracted from total in PDF</li>
+              <li>Properly formatted with currency</li>
+              <li>Only displayed if discount > 0</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🧮 Calculation Logic</h4>
+            <ul>
+              <li>Subtotal = price_vat_applicable</li>
+              <li>VAT = price_vat</li>
+              <li>Discount = discount_value (negative)</li>
+              <li>Total = total_price (post-discount)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>3. Broker vs Insurer Collection</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Collection Type</th>
+                <th>Behavior</th>
+                <th>Payment Instructions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>BROKER</strong></td>
+                <td>Payment collected by brokerage</td>
+                <td>Bank details shown in proforma footer</td>
+              </tr>
+              <tr>
+                <td><strong>INSURER</strong></td>
+                <td>Payment collected by insurance provider</td>
+                <td>
+                  Bank details section NOT displayed (payment handled by
+                  insurer)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Troubleshooting -->
+      <section class="content-section">
+        <h2>🔧 Troubleshooting</h2>
+
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>❌ Common Errors</h4>
+            <ul>
+              <li>
+                <strong>"Proforma Payment Request not found":</strong> Payment
+                with PPR method doesn't exist
+              </li>
+              <li>
+                <strong>Permission denied:</strong> User lacks proforma-create
+                permission
+              </li>
+              <li>
+                <strong>File not found:</strong> Document deleted or S3 access
+                issue
+              </li>
+              <li>
+                <strong>Invalid payment frequency:</strong> Payment not
+                configured as UPFRONT
+              </li>
+              <li>
+                <strong>Multiple splits detected:</strong> More than 1 payment
+                split exists (data integrity issue)
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>✅ Resolution Steps</h4>
+            <ul>
+              <li>Verify payment method = 'PPR' in payments table</li>
+              <li>Confirm payment_frequency = 'UPFRONT'</li>
+              <li>Check exactly 1 payment split exists for the payment</li>
+              <li>Validate user has correct permissions assigned</li>
+              <li>Confirm quote_documents entry exists with correct type</li>
+              <li>Validate S3 bucket configuration and credentials</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <h4>🐛 Debug Checklist</h4>
+          <p>
+            <strong>If proforma generation fails:</strong><br />
+            1. Check logs: storage/logs/laravel.log for exceptions<br />
+            2. Verify payment record: SELECT * FROM payments WHERE code =
+            'XXX'<br />
+            3. Confirm payment method: payment_methods_code SHOULD BE 'PPR'<br />
+            4. Verify payment frequency: payment_frequency MUST BE 'UPFRONT'<br />
+            5. Check payment splits: SELECT COUNT(*) FROM payment_splits WHERE
+            code = 'XXX' (should return 1)<br />
+            6. Test PDF generation: Run createProformaPaymentRequestPdf()
+            directly<br />
+            7. Check blade template: Ensure proforma-invoice.blade.php is
+            error-free
+          </p>
+        </div>
+      </section>
+
+      <!-- Best Practices -->
+      <section class="content-section">
+        <h2>✨ Best Practices</h2>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <strong>1. Verify Payment Configuration</strong><br />
+            Always ensure payment_frequency = 'UPFRONT' and exactly 1 payment
+            split exists
+          </div>
+          <div class="feature-item">
+            <strong>2. Version Management</strong><br />
+            Generate new version when payment details change
+          </div>
+          <div class="feature-item">
+            <strong>3. Customer Communication</strong><br />
+            Send proforma immediately after generation
+          </div>
+          <div class="feature-item">
+            <strong>4. Payment Tracking</strong><br />
+            Update payment status when customer pays
+          </div>
+          <div class="feature-item">
+            <strong>5. Document Retention</strong><br />
+            Keep all versions for audit compliance
+          </div>
+          <div class="feature-item">
+            <strong>6. Clear Instructions</strong><br />
+            Include payment method and deadline in proforma
+          </div>
+          <div class="feature-item">
+            <strong>7. Data Validation</strong><br />
+            Validate payment structure before PDF generation
+          </div>
+          <div class="feature-item">
+            <strong>8. Error Handling</strong><br />
+            Log all errors with context for debugging
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        <p><strong>Proforma Payment Request Documentation</strong></p>
+        <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+      </div>
+    </div>
+  </body>
+</html>
