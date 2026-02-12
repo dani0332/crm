@@ -74,7 +74,7 @@ class HealthTeamRoutingService
             );
             LoggerService::warning('Premium missing for AUH lead', ['lead_id' => $lead->id]);
 
-            return null;
+            return $teamName;
         }
 
         $isAUHLead = $lead->isAUHLead() || $lead->isAUHLead(false);
