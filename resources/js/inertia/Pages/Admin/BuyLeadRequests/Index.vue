@@ -33,7 +33,7 @@ const tableHeader = reactive([
   { text: 'User', value: 'user.name', width: 200 },
   { text: 'LOB', value: 'quote_type.code', width: 100 },
   { text: 'Count', value: 'requested_count', width: 100 },
-  { text: 'Cost', value: 'cost_per_lead', width: 120 },
+  { text: 'Total Cost', value: 'cost_per_lead', width: 120 },
   { text: 'Details', value: 'department.name', width: 140 },
   { text: 'Status', value: 'status_label', width: 100 },
   { text: 'Requested At', value: 'created_at', width: 150 },
