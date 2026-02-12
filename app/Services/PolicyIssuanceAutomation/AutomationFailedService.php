@@ -85,7 +85,7 @@ class AutomationFailedService
      *
      * @return array{email: string, name: string}|null
      */
-    private function determineDeviceNgiRecipient($quote, string $processInvolved): ?array
+    public function determineDeviceNgiRecipient($quote, string $processInvolved): ?array
     {
         $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
 

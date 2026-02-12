@@ -168,4 +168,16 @@ final class PolicyIssuanceEnum extends Enum
 
         return $status ? $statuses[$status] : '';
     }
+
+    public static function mapProcessTextForAutomationFailureNotification(string $processInvolved): string
+    {
+        return match ($processInvolved) {
+            self::PROCESS_INVOLVED_ISSUE_POLICY => 'Policy Issuance API failed',
+            self::PROCESS_INVOLVED_UPLOAD_DOCUMENTS => 'Document Upload API failed',
+            self::PROCESS_INVOLVED_BOOK_POLICY => 'Booking API failed',
+            self::PROCESS_INVOLVED_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM => 'Document Retrieval API failed',
+            self::PROCESS_INVOLVED_PAYMENT_CAPTURE => 'Payment Capture API failed',
+            default => 'Automation process failed',
+        };
+    }
 }

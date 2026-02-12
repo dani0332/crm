@@ -2,11 +2,14 @@
 
 namespace App\Jobs;
 
-use App\DTO\AutomationFailedEmailDataRequest;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\EnvEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\UserNameEnum;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
-use App\Services\PolicyIssuanceAutomation\AutomationFailedService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -22,29 +25,39 @@ class AutomationFailedJob implements ShouldQueue
 
     public int $timeout = 100;
     public int $tries = 3;
-    private string $insurerName = '';
+    private $quoteId;
+    private $quoteTypeId;
+    private $actionRequired;
     private $recipientEmail;
     private $recipientName;
+    private $statusAPIFailed;
+    private $processInvolved;
+    private $workflowType;
+    private $userToSendEmail;
+    private $appEnv;
+    private $insuranceProvider;
+    private $insurerName = '';
 
-    public function __construct(
-        private $quoteId,
-        private $quoteTypeId,
-        private $actionRequired,
-        private $statusAPIFailed,
-        private $processInvolved,
-        private $workflowType,
-        private $userToSendEmail = null
-    ) {
+    public function __construct($quoteId, $quoteTypeId, $actionRequired, $statusAPIFailed, $processInvolved, $workflowType, $sendTo = null)
+    {
         LoggerService::info('job:AutomationFailedJob - Initializing job', extra: [
             'quoteId' => $quoteId,
             'quoteTypeId' => $quoteTypeId,
         ]);
+        $this->quoteId = $quoteId;
+        $this->quoteTypeId = $quoteTypeId;
+        $this->actionRequired = $actionRequired;
+        $this->processInvolved = $processInvolved;
+        $this->statusAPIFailed = $statusAPIFailed;
+        $this->workflowType = $workflowType;
+        $this->userToSendEmail = $sendTo;
+        $this->appEnv = config('constants.APP_ENV');
     }
 
     /**
      * Execute the job.
      */
-    public function handle(AutomationFailedService $service)
+    public function handle()
     {
         $quoteType = QuoteTypes::getName($this->quoteTypeId)->value;
         $quote = $this->getQuoteObject($quoteType, $this->quoteId);
@@ -66,47 +79,55 @@ class AutomationFailedJob implements ShouldQueue
         ]);
 
         $payment = $quote->payments()->mainLeadPayment()->first();
-        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        $this->insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        $this->insurerName = InsuranceProvidersEnum::getTextByCode($this->insuranceProvider?->code);
 
-        // Set up the service with insurance provider
-        $service->setInsuranceProvider($insuranceProvider);
-        $this->insurerName = $service->getInsurerName();
+        if ($this->userToSendEmail == UserNameEnum::PA_USER) {
+            $this->recipientEmail = $quote?->kycDocumentUser?->createdBy?->email;
+            $this->recipientName = $quote?->kycDocumentUser?->createdBy?->name;
+        } else {
+            if ($quote?->advisor) {
+                $this->recipientEmail = $quote->advisor->email;
+                $this->recipientName = $quote->advisor->name;
+            } else {
+                LoggerService::info('job:AutomationFailedJob - No advisor assigned, stopping job - Insurer: '.$this->insurerName);
 
-        // Check if this is a Device/NGI quote for FRD-specific logic
-        $isDeviceNgi = $service->isDeviceNgiQuote($this->quoteTypeId, $quoteType);
-
-        // Determine recipient based on LOB/Provider
-        $recipient = $service->determineRecipient($quote, $isDeviceNgi, $this->processInvolved, $this->userToSendEmail);
-        if (! $recipient) {
-            return;
+                return;
+            }
         }
-        $recipientEmail = $recipient['email'];
-        $recipientName = $recipient['name'];
 
-        // Build CC emails with LOB/Provider-specific logic
-        $cc = $service->buildCcEmails($quote, $isDeviceNgi, $this->processInvolved);
+        $cc = $this->getLobCcEmails($quoteType, $quote);
 
-        if (! $recipientEmail || ! $recipientName) {
+        $notificationContext = $this->addLobViseDataForMail($quoteType, $quote, $cc);
+
+        $ccEmails = $notificationContext['cc'] ?? [];
+        $this->recipientEmail = $notificationContext['recipientEmail'];
+        $this->recipientName = $notificationContext['recipientName'];
+        $this->processInvolved = $notificationContext['processInvolved'];
+
+        if (! $this->recipientEmail || ! $this->recipientName) {
             LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Insurer: '.$this->insurerName);
 
             return;
         }
 
-        // Build email data request DTO
-        $emailDataRequest = new AutomationFailedEmailDataRequest(
-            cc: $cc,
-            ccEmails: $this->extractCcEmails($cc),
-            isDeviceNgi: $isDeviceNgi,
-            actionRequired: $this->actionRequired,
-            recipientEmail: $recipientEmail,
-            recipientName: $recipientName,
-            statusAPIFailed: $this->statusAPIFailed,
-            processInvolved: $this->processInvolved,
-            workflowType: $this->workflowType
-        );
+        $escalationLink = $this->getLobEscalationLink($quoteType);
 
-        // Build email data with LOB-specific fields
-        $emailData = $service->buildEmailData($quote, $emailDataRequest);
+        $emailData = (object) [
+            'actionRequired' => $this->actionRequired,
+            'recipientEmail' => $this->recipientEmail,
+            'recipientName' => $this->recipientName,
+            'imcrmReferenceNumber' => $quote->code,
+            'escalationLink' => $escalationLink,
+            'refId' => $quote->code,
+            'imcrmLink' => $quote->getCrmQuoteLink(),
+            'insurerApiStatus' => $this->statusAPIFailed,
+            'insurerName' => $this->insuranceProvider?->text ?? '',
+            'processInvolved' => $this->processInvolved,
+            'cc' => $cc,
+            'ccEmails' => $ccEmails,
+            'workflowType' => $this->workflowType,
+        ];
 
         $response = app(CentralService::class)->sendAutomationEmail($quote, $emailData, $this->quoteTypeId, $this->workflowType);
         LoggerService::info('job:AutomationFailedJob - Job Response ', extra: ['emailData' => json_encode($response)]);
@@ -114,7 +135,7 @@ class AutomationFailedJob implements ShouldQueue
         if ($response == 200) {
             LoggerService::info('job:AutomationFailedJob - email sent successfully - Insurer: '.$this->insurerName);
         } else {
-            LoggerService::error('job:AutomationFailedJob - Job failed - Insurer: '.$this->insurerName, extra: [
+            LoggerService::info('job:AutomationFailedJob - Job failed - Insurer: '.$this->insurerName, extra: [
                 'response' => json_encode($response),
             ]);
         }
@@ -134,32 +155,55 @@ class AutomationFailedJob implements ShouldQueue
         return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
     }
 
-    private function extractCcEmails(mixed $cc): array
+    private function getLobEscalationLink($quoteType)
     {
-        if (! is_array($cc)) {
-            return [];
+        switch ($quoteType) {
+            case QuoteTypes::DEVICE->value:
+                return getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_ESCALATION_LINK, '');
+            default:
+                return '';
         }
-
-        $ccEmailSources = [
-            $cc['ccEmails'] ?? null,
-            $cc['cc'] ?? null,
-            $cc['notificationContext']['cc'] ?? null,
-        ];
-
-        $normalizedEmails = [];
-
-        foreach ($ccEmailSources as $source) {
-            if (is_array($source)) {
-                $normalizedEmails = $source;
-                break;
-            }
-
-            if (is_string($source) && trim($source) !== '') {
-                $normalizedEmails = array_map('trim', explode(',', $source));
-                break;
-            }
-        }
-
-        return $normalizedEmails;
     }
+
+    private function addLobViseDataForMail($quoteType, $quote, $cc)
+    {
+        switch ($quoteType) {
+            case QuoteTypes::DEVICE->value:
+                return app(DeviceQuoteService::class)
+                    ->determineDeviceNgiRecipient(
+                        $quote,
+                        $this->processInvolved,
+                        $cc
+                    );
+            default:
+                return [
+                    'recipientEmail' => $this->recipientEmail,
+                    'recipientName' => $this->recipientName,
+                    'processInvolved' => $this->processInvolved,
+                ];
+        }
+
+    }
+
+    private function getLobCcEmails($quoteType, $quote)
+    {
+        $cc = [];
+        $cc['approvalemail'] = null;
+        $cc['prodemail'] = null;
+        $cc['advisoremail'] = null;
+        if (in_array($this->appEnv, [EnvEnum::PRODUCTION, EnvEnum::STAGING])) {
+            $approvalEmail = getAppStorageValueByKey(ApplicationStorageEnums::APPROVAL_PRODUCTION_EMAIL);
+            $prodEmail = getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL);
+            $cc['approvalemail'] = $approvalEmail;
+            $cc['prodemail'] = $prodEmail;
+            $cc['advisoremail'] = $quote?->advisor?->email ?? '';
+        }
+        switch ($quoteType) {
+            case QuoteTypes::DEVICE->value:
+                return app(DeviceQuoteService::class)->buildDeviceCcPayload($quote, $this->processInvolved, $cc);
+            default:
+                return $cc;
+        }
+    }
+
 }

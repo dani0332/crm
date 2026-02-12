@@ -1241,20 +1241,24 @@ class ApplicationStorageSeeder extends Seeder
     private function seedDeviceFailureEmailSettings()
     {
 
+        $deviceFailureEmailsTo = config('app.env') === 'production' ? 'production.approval.team@insurancemarket.ae' : 'production.approval.team@yopmail.com,device-smartphone-ngi-failure-email@yopmail.com';
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO],
             [
                 'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO,
-                'value' => 'production.approval.team@insurancemarket.ae', // TODO:: NGI:: need to take it from Rucha
+                'value' => $deviceFailureEmailsTo,
                 'is_active' => 1,
             ],
         );
+
+        $deviceFailureEmailsCc = config('app.env') === 'production' ? 'dt.system.notifications@insurancemarket.ae,sandeep.sharma@insurancemarket.ae,rucha.keluskar@myalfred.com,digital.transformation.support@myalfred.com' : 'production.approval.team@yopmail.com,device-smartphone-ngi-failure-email@yopmail.com';
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC],
             [
                 'key_name' => ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC,
-                'value' => 'dt.system.notifications@insurancemarket.ae,sandeep.sharma@insurancemarket.ae,rucha.keluskar@myalfred.com,digital.transformation.support@myalfred.com', // TODO:: NGI:: need to take it from Rucha
+                'value' => $deviceFailureEmailsCc,
                 'is_active' => 1,
             ],
         );
