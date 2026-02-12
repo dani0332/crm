@@ -56,6 +56,24 @@ class HealthTeamRoutingService
                 $lead
             );
             LoggerService::warning('Emirate of visa missing for lead', ['lead_id' => $lead->id]);
+
+            return $teamName;
+        }
+
+        // Validate premium data
+        if (empty($lead->price_starting_from)) {
+            $this->logStep(
+                'Premium missing, cannot determine AUH tier',
+                'validation_error',
+                [
+                    'premium' => null,
+                    'category' => TeamCategoryEnum::AUH->value,
+                ],
+                $lead
+            );
+            LoggerService::warning('Premium missing for AUH lead', ['lead_id' => $lead->id]);
+
+            return null;
         }
 
         $isAUHLead = $lead->isAUHLead() || $lead->isAUHLead(false);
@@ -125,22 +143,6 @@ class HealthTeamRoutingService
             $lead
         );
         LoggerService::info('Starting AUH tier-based team routing', ['premium' => $lead->price_starting_from]);
-
-        // Validate premium data
-        if (empty($lead->price_starting_from)) {
-            $this->logStep(
-                'Premium missing, cannot determine AUH tier',
-                'validation_error',
-                [
-                    'premium' => null,
-                    'category' => TeamCategoryEnum::AUH->value,
-                ],
-                $lead
-            );
-            LoggerService::warning('Premium missing for AUH lead', ['lead_id' => $lead->id]);
-
-            return null;
-        }
 
         // Check if priceStartingFrom is greater than or equal to GBP team's min price
         $gbpMinPrice = $this->getGbpTeamMinPrice();
