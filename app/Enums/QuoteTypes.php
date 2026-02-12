@@ -357,10 +357,19 @@ enum QuoteTypes: string
             return true;
         }
 
-        $hasRole = in_array($this->name.'_ADVISOR', $userRoles)
-            || in_array($this->name.'_MANAGER', $userRoles);
+        // Use advisorRoles() to get the correct role mappings instead of string concatenation
+        $quoteTypeRoles = $this->advisorRoles();
+        foreach ($quoteTypeRoles as $role) {
+            if (in_array($role, $userRoles)) {
+                return true;
+            }
+        }
 
-        if ($hasRole) {
+        // Also check for manager roles using string concatenation as fallback
+        // This handles manager roles that may not be in advisorRoles()
+        $hasManagerRole = in_array($this->name.'_MANAGER', $userRoles);
+
+        if ($hasManagerRole) {
             return true;
         }
 

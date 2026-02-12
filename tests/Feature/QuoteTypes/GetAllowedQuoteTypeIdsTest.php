@@ -82,6 +82,41 @@ it('returns quote type ids for user with multiple advisor roles', function () {
         ->toContain(QuoteTypes::getId(QuoteTypes::TRAVEL));
 });
 
+it('correctly checks access using advisorRoles method instead of string concatenation', function () {
+    // Test that HEALTH advisor role is properly recognized
+    // HEALTH has multiple advisor roles: HealthAdvisor, EBPAdvisor, RMAdvisor
+    $healthAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::HealthAdvisor);
+    expect(QuoteTypes::HEALTH->userHasAccess($healthAdvisor))->toBeTrue();
+
+    $ebpAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::EBPAdvisor);
+    expect(QuoteTypes::HEALTH->userHasAccess($ebpAdvisor))->toBeTrue();
+
+    $rmAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::RMAdvisor);
+    expect(QuoteTypes::HEALTH->userHasAccess($rmAdvisor))->toBeTrue();
+
+    // Test CAR_REVIVAL advisor role (uses CarRevivalAdvisor, not CAR_REVIVAL_ADVISOR)
+    $carRevivalAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarRevivalAdvisor);
+    expect(QuoteTypes::CAR_REVIVAL->userHasAccess($carRevivalAdvisor))->toBeTrue();
+
+    // Test BUSINESS quote type (maps to multiple advisor roles)
+    $corplineAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CorpLineAdvisor);
+    expect(QuoteTypes::BUSINESS->userHasAccess($corplineAdvisor))->toBeTrue();
+
+    $gmAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::GMAdvisor);
+    expect(QuoteTypes::BUSINESS->userHasAccess($gmAdvisor))->toBeTrue();
+});
+
+it('correctly checks manager roles for quote type access', function () {
+    $carManager = TestDataSeeder::createUserWithRole(RolesEnum::CarManager);
+    expect(QuoteTypes::CAR->userHasAccess($carManager))->toBeTrue();
+
+    $healthManager = TestDataSeeder::createUserWithRole(RolesEnum::HealthManager);
+    expect(QuoteTypes::HEALTH->userHasAccess($healthManager))->toBeTrue();
+
+    $homeManager = TestDataSeeder::createUserWithRole(RolesEnum::HomeManager);
+    expect(QuoteTypes::HOME->userHasAccess($homeManager))->toBeTrue();
+});
+
 it('returns correct primary types from the enum', function () {
     $primaryTypes = QuoteTypes::primaryTypes();
 
