@@ -42,6 +42,7 @@ use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
+use App\Models\QuoteType;
 use App\Models\SageProcess;
 use App\Models\SavingsQuote;
 use App\Models\SendUpdateLog;
@@ -1355,6 +1356,11 @@ class SendUpdateLogService
             $notes = $sendUpdateLog?->notes ?? '';
         }
 
+        if($quoteTypeId == QuoteTypeId::Cyber){
+            $documents[] = [
+                'doc_url' => ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : ''
+            ];
+        }
         $emailData = (object) [
             'customerName' => $quote->first_name.' '.$quote->last_name,
             'reason' => $notes ?? '',
