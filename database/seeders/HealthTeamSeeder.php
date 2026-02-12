@@ -26,17 +26,21 @@ class HealthTeamSeeder extends Seeder
         $healthTeam = Team::where('name', 'Health')->first();
 
         if ($healthTeam) {
-            Team::firstOrCreate([
-                'name' => 'PEC',
-                'code' => 'PEC',
-                'type' => TeamTypeEnum::TEAM,
-                'is_active' => 1,
-                'parent_team_id' => $healthTeam->id,
-                'category' => TeamCategoryEnum::NON_AUH,
-                'allocation_threshold_enabled' => true,
-                'min_price' => 1,
-                'max_price' => 2,
-            ]);
+            Team::firstOrCreate(
+                [
+                    'name' => TeamNameEnum::PEC,
+                    'type' => TeamTypeEnum::TEAM,
+                    'parent_team_id' => $healthTeam->id,
+                ],
+                [
+                    'code' => 'PEC',
+                    'is_active' => 1,
+                    'category' => TeamCategoryEnum::NON_AUH,
+                    'allocation_threshold_enabled' => true,
+                    'min_price' => 1,
+                    'max_price' => 2,
+                ]
+            );
         }
     }
 
@@ -45,17 +49,21 @@ class HealthTeamSeeder extends Seeder
         $healthTeam = Team::where('name', 'Health')->first();
 
         if ($healthTeam) {
-            Team::firstOrCreate([
-                'name' => 'AUH',
-                'code' => 'AUH',
-                'type' => TeamTypeEnum::TEAM,
-                'is_active' => 1,
-                'parent_team_id' => $healthTeam->id,
-                'category' => TeamCategoryEnum::AUH,
-                'allocation_threshold_enabled' => true,
-                'min_price' => 1,
-                'max_price' => 7000,
-            ]);
+            Team::firstOrCreate(
+                [
+                    'name' => TeamNameEnum::AUH,
+                    'type' => TeamTypeEnum::TEAM,
+                    'parent_team_id' => $healthTeam->id,
+                ],
+                [
+                    'code' => 'AUH',
+                    'is_active' => 1,
+                    'category' => TeamCategoryEnum::AUH,
+                    'allocation_threshold_enabled' => true,
+                    'min_price' => 1,
+                    'max_price' => 7000,
+                ]
+            );
         }
     }
 
