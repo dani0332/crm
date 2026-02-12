@@ -4,8 +4,25 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use Tests\Helpers\TestDataSeeder;
 
-it('returns only the specified quote type id when quoteTypeId is provided', function () {
-    $user = TestDataSeeder::createUser();
+it('returns only the specified quote type id when quoteTypeId is provided and user has access', function () {
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::HealthAdvisor);
+
+    $result = QuoteTypes::allowedIdsForUser($user, 3);
+
+    expect($result)->toBe([3]);
+});
+
+it('returns empty array when quoteTypeId is provided but user lacks access', function () {
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor);
+
+    // User only has CAR_ADVISOR role, attempting to access HEALTH (id=3)
+    $result = QuoteTypes::allowedIdsForUser($user, 3);
+
+    expect($result)->toBe([]);
+});
+
+it('returns the specified quote type id when admin requests specific quote type', function () {
+    $user = TestDataSeeder::createAdminUser();
 
     $result = QuoteTypes::allowedIdsForUser($user, 3);
 
@@ -68,12 +85,11 @@ it('returns quote type ids for user with multiple advisor roles', function () {
 it('returns correct primary types from the enum', function () {
     $primaryTypes = QuoteTypes::primaryTypes();
 
-    expect($primaryTypes)->toHaveCount(14)
+    expect($primaryTypes)->toHaveCount(12)
         ->and($primaryTypes)->toContain(QuoteTypes::CAR)
         ->and($primaryTypes)->toContain(QuoteTypes::HOME)
         ->and($primaryTypes)->toContain(QuoteTypes::HEALTH)
-        ->and($primaryTypes)->toContain(QuoteTypes::CYBER)
-        ->and($primaryTypes)->toContain(QuoteTypes::DEVICE)
+        ->and($primaryTypes)->toContain(QuoteTypes::SAVINGS)
         ->and($primaryTypes)->not->toContain(QuoteTypes::AMT)
         ->and($primaryTypes)->not->toContain(QuoteTypes::PERSONAL)
         ->and($primaryTypes)->not->toContain(QuoteTypes::GROUP_MEDICAL)

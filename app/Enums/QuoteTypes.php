@@ -343,8 +343,6 @@ enum QuoteTypes: string
             self::CYCLE,
             self::JETSKI,
             self::SAVINGS,
-            self::DEVICE,
-            self::CYBER,
         ];
     }
 
@@ -376,16 +374,24 @@ enum QuoteTypes: string
      */
     public static function allowedIdsForUser(User $user, ?int $quoteTypeId = null): array
     {
-        if ($quoteTypeId !== null) {
-            return [$quoteTypeId];
-        }
-
-        return collect(self::primaryTypes())
+        $allowedIds = collect(self::primaryTypes())
             ->filter(fn (self $quoteType) => $quoteType->userHasAccess($user))
             ->map(fn (self $quoteType) => self::getId($quoteType))
             ->filter()
             ->values()
             ->all();
+
+        if ($quoteTypeId !== null) {
+            // Only return the requested quote type ID if the user has access to it
+            if (in_array($quoteTypeId, $allowedIds, true)) {
+                return [$quoteTypeId];
+            }
+
+            // User attempted to access unauthorized quote type
+            return [];
+        }
+
+        return $allowedIds;
     }
 
     /**
