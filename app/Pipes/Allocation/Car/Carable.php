@@ -132,6 +132,7 @@ trait Carable
             ->join('lead_sources', 'lead_sources.id', 'rule_details.lead_source_id')
             ->where('lead_sources.is_applicable_for_rules', 1)
             ->where('rules.is_active', 1)
+            ->where('rules.rule_type', RuleTypeEnum::LEAD_SOURCE)
             ->whereRaw(
                 'TRIM(BOTH ? FROM TRIM(BOTH ? FROM TRIM(BOTH ? FROM lead_sources.name))) = ?',
                 ['/', '?', ' ', $normalizedLeadSource]
