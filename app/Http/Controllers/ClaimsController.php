@@ -50,7 +50,8 @@ class ClaimsController extends Controller
 
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index', 'searchPolicies']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails', 'updateClaimStatus', 'updateComplaintStatus', 'updateNextFollowUp', 'makeAdditionalContactPrimary', 'optimizeMessage', 'sendNotification']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails', 'updateComplaintStatus', 'updateNextFollowUp', 'makeAdditionalContactPrimary', 'optimizeMessage', 'sendNotification']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIMS_STATUS_UPDATE], ['only' => ['updateClaimStatus']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_EXPORT_DATA], ['only' => ['export']]);
     }
