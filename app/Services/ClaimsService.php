@@ -698,7 +698,7 @@ class ClaimsService extends BaseService
         $claimRequest->update($claimRequestData);
 
         if ($isClaimDeclineReasonUpdated) {
-            $this->claimsStatusesService->markClaimAsClosed($claimRequest);
+            $this->claimsStatusesService->markClaimAsDenied($claimRequest);
         }
 
         $this->logClaimMainTableUpdate($claimRequest, $claimRequestData);

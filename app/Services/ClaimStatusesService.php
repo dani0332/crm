@@ -192,6 +192,64 @@ class ClaimStatusesService extends BaseService
         }
     }
 
+    public function markClaimAsDenied(ClaimRequest $claimRequest): void
+    {
+        try {
+            $claimStatusDenied = $this->findClaimSubStatus(
+                ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_DENIED->value,
+                $claimRequest->quote_type_id
+            );
+
+            if (! $claimStatusDenied) {
+                LoggerService::warning(' Could not find "Claim denied" status - Claim UUID: '.$claimRequest->uuid, extra: [
+                    'claim_request_id' => $claimRequest->id,
+                    'claim_uuid' => $claimRequest->uuid,
+                    'quote_type_id' => $claimRequest->quote_type_id,
+                    'updated_by' => Auth::id(),
+                ]);
+
+                return;
+            }
+
+            $claimStatusClosed = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_CLOSED->value)
+                ->active()
+                ->first();
+
+            if (! $claimStatusClosed) {
+                LoggerService::warning(' Could not find "Closed" status - Claim UUID: '.$claimRequest->uuid, extra: [
+                    'claim_request_id' => $claimRequest->id,
+                    'claim_uuid' => $claimRequest->uuid,
+                    'updated_by' => Auth::id(),
+                ]);
+
+                return;
+            }
+
+            $claimRequest->claim_sub_status_id = $claimStatusDenied->id;
+            $claimRequest->claim_status_id = $claimStatusClosed->id;
+            $claimRequest->saveQuietly();
+
+            LoggerService::info(' Claim marked as denied and closed - Claim UUID: '.$claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_sub_status_id' => $claimStatusDenied->id,
+                'claim_status_id' => $claimStatusClosed->id,
+                'quote_type_id' => $claimRequest->quote_type_id,
+                'updated_by' => Auth::id(),
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error(' Error marking claim as denied - Claim UUID: '.$claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'updated_by' => Auth::id(),
+            ]);
+
+            throw $e;
+        }
+    }
+
     /**
      * Update claim status and sub status
      */
@@ -389,5 +447,17 @@ class ClaimStatusesService extends BaseService
             ->toArray();
 
         return $audits;
+    }
+
+    /**
+     * Find a claim sub-status by text and quote type
+     */
+    private function findClaimSubStatus(string $statusText, int $quoteTypeId): ?ClaimStatus
+    {
+        return ClaimStatus::byText($statusText)
+            ->byQuoteType($quoteTypeId)
+            ->active()
+            ->byStatusType(ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
+            ->first();
     }
 }
