@@ -13,7 +13,7 @@ class BuyLeadRequest extends Model
 {
     use Filterable;
 
-    protected $appends = ['segment_label', 'status_label'];
+    protected $appends = ['segment_label', 'status_label', 'is_expired', 'is_completed', 'can_be_expired'];
 
     protected $fillable = [
         'quote_type_id',
@@ -47,7 +47,11 @@ class BuyLeadRequest extends Model
     {
         return Attribute::make(
             get: function() {
-                if($this->isExpired()) {
+                if($this->is_completed) {
+                    return 'completed';
+                }
+
+                if($this->is_expired) {
                     return 'expired';
                 }
 
@@ -143,9 +147,43 @@ class BuyLeadRequest extends Model
         $query->whereNull('source');
     }
 
-    public function isExpired()
+    public function isExpired(): Attribute
     {
-        return $this->status === 'expired' || $this->expires_at < now();
+        return Attribute::make(
+            get: function() {
+                if($this->is_completed) {
+                    return false;
+                }
+
+                if($this->status === 'expired') {
+                    return true;
+                }
+
+                if(!empty($this->expires_at) && $this->expires_at < now()) {
+                    return true;
+                }
+
+                return false;
+            }
+        );
+    }
+
+    public function isCompleted(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->status === 'completed' || $this->allocated_count >= $this->requested_count,
+        );
+    }
+
+    public function canBeExpired(): Attribute
+    {
+        return Attribute::make(
+            get: function() {
+                return !$this->is_completed &&
+                        !$this->is_expired &&
+                        ($this->status === 'active' || $this->status === 'processing');
+            }
+        );
     }
 
     public function expire()

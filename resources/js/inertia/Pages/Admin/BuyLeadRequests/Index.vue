@@ -134,10 +134,6 @@ const expireRequest = async () => {
   }
 };
 
-const canExpire = request => {
-  return request.status === 'active' || request.status === 'processing';
-};
-
 const getStatusColor = status => {
   const colors = {
     active: 'success',
@@ -300,7 +296,7 @@ onMounted(() => {
 
     <template #item-actions="item">
       <x-button
-        v-if="canExpire(item)"
+        v-if="item.can_be_expired"
         size="xs"
         color="error"
         @click.prevent="showExpireModal(item)"
@@ -342,13 +338,13 @@ onMounted(() => {
           <span class="text-gray-900">{{ selectedRequest.quote_type?.code }}</span>
         </div>
         <div class="flex justify-between items-center">
-          <span class="font-medium text-gray-700">Requested Count:</span>
-          <span class="text-gray-900 font-semibold">{{ selectedRequest.requested_count }}</span>
+          <span class="font-medium text-gray-700">Count (Allocated/Requested):</span>
+          <span class="text-gray-900 font-semibold">{{ selectedRequest.allocated_count }} / {{ selectedRequest.requested_count }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="font-medium text-gray-700">Status:</span>
-          <x-tag :color="getStatusColor(selectedRequest.status)" size="sm">
-            {{ selectedRequest.status?.toUpperCase() }}
+          <x-tag :color="getStatusColor(selectedRequest.status_label)" size="sm">
+            {{ selectedRequest.status_label?.toUpperCase() }}
           </x-tag>
         </div>
       </div>
