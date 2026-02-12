@@ -82,6 +82,7 @@ class InboundEmailsHookService extends BaseService
                     QuoteTypes::CAR => $this->handleCar($lead),
                     QuoteTypes::TRAVEL => $this->handleTravel($lead),
                     QuoteTypes::HEALTH => $this->handleHealth($lead),
+                    QuoteTypes::SAVINGS => $this->handleSavings($lead),
                     default => apiResponse([], Response::HTTP_UNPROCESSABLE_ENTITY, "Unhandled quote type: {$quoteType->value}")
                 };
             }
@@ -167,6 +168,25 @@ class InboundEmailsHookService extends BaseService
 
             return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
         }
+    }
+
+    private function handleSavings(PersonalQuote $lead)
+    {
+        LoggerService::info(self::class." - handleSavings: Going to Assign Advisor to uuid: {$lead->uuid}");
+
+        if ($lead->advisor_id) {
+            LoggerService::info(self::class." - handleSavings: Lead already has an advisor assigned: {$lead->uuid} - Advisor ID: {$lead->advisor_id}");
+
+            return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
+        }
+
+        LoggerService::info(self::class." - handleSavings: Allocation Process Executing for lead: {$lead->uuid}");
+
+        $response = QuoteTypes::SAVINGS->allocate($lead->uuid);
+        $assignedAdvisorId = $response['advisorId'] ?? '';
+        LoggerService::info(self::class." - handleSavings: Allocation Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+
+        return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
 
     public function handleBirdWebhook($request)
