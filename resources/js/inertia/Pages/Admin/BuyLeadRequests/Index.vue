@@ -297,7 +297,11 @@ onMounted(() => {
     </template>
 
     <template #item-status_label="{ status_label }">
-      <x-tag :color="getStatusColor(status_label)" size="sm" class="!text-[10px] !px-1.5 !py-0.5">
+      <x-tag
+        :color="getStatusColor(status_label)"
+        size="sm"
+        class="!text-[10px] !px-1.5 !py-0.5"
+      >
         {{ status_label?.toUpperCase() || 'N/A' }}
       </x-tag>
     </template>
@@ -354,12 +358,20 @@ onMounted(() => {
           }}</span>
         </div>
         <div class="flex justify-between items-center">
-          <span class="font-medium text-gray-700">Count (Allocated/Requested):</span>
-          <span class="text-gray-900 font-semibold">{{ selectedRequest.allocated_count }} / {{ selectedRequest.requested_count }}</span>
+          <span class="font-medium text-gray-700"
+            >Count (Allocated/Requested):</span
+          >
+          <span class="text-gray-900 font-semibold"
+            >{{ selectedRequest.allocated_count }} /
+            {{ selectedRequest.requested_count }}</span
+          >
         </div>
         <div class="flex justify-between items-center">
           <span class="font-medium text-gray-700">Status:</span>
-          <x-tag :color="getStatusColor(selectedRequest.status_label)" size="sm">
+          <x-tag
+            :color="getStatusColor(selectedRequest.status_label)"
+            size="sm"
+          >
             {{ selectedRequest.status_label?.toUpperCase() }}
           </x-tag>
         </div>
