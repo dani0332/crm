@@ -60,23 +60,6 @@ class HealthTeamRoutingService
             return $teamName;
         }
 
-        // Validate premium data
-        if (empty($lead->price_starting_from)) {
-            $this->logStep(
-                'Premium missing, cannot determine AUH tier',
-                'validation_error',
-                [
-                    'premium' => null,
-                    'lead_id' => $lead->id,
-                    'lead_uuid' => $lead->uuid,
-                ],
-                $lead
-            );
-            LoggerService::warning('Premium missing for AUH lead', ['lead_id' => $lead->id]);
-
-            return $teamName;
-        }
-
         $isAUHLead = $lead->isAUHLead() || $lead->isAUHLead(false);
 
         if ($isAUHLead) {
@@ -144,6 +127,24 @@ class HealthTeamRoutingService
             $lead
         );
         LoggerService::info('Starting AUH tier-based team routing', ['premium' => $lead->price_starting_from]);
+
+        // Validate premium data
+        if (empty($lead->price_starting_from)) {
+            $this->logStep(
+                'Premium missing, cannot determine AUH tier',
+                'validation_error',
+                [
+                    'premium' => null,
+                    'lead_id' => $lead->id,
+                    'lead_uuid' => $lead->uuid,
+                    'category' => TeamCategoryEnum::AUH->value,
+                ],
+                $lead
+            );
+            LoggerService::warning('Premium missing for AUH lead', ['lead_id' => $lead->id]);
+
+            return '';
+        }
 
         // Check if priceStartingFrom is greater than or equal to GBP team's min price
         $gbpMinPrice = $this->getGbpTeamMinPrice();
@@ -236,7 +237,7 @@ class HealthTeamRoutingService
         ]);
 
         $gbpMinPrice = $this->getGbpTeamMinPrice();
-        if ($gbpMinPrice !== null && $lead->price_starting_from >= $gbpMinPrice) {
+        if ($gbpMinPrice !== null && ! empty($lead->price_starting_from) && $lead->price_starting_from >= $gbpMinPrice) {
             $this->logStep(
                 'Price starting from is greater than or equal to GBP min price, assigning to GBP team',
                 'gbp_assignment',
