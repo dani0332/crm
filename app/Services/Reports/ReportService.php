@@ -746,7 +746,7 @@ class ReportService extends BaseService
         }
 
         // Car-specific filters
-        if ($quoteType === QuoteTypes::CAR) {
+        if ($quoteTypeId === QuoteTypes::getId(QuoteTypes::CAR)) {
             $hasRegistrationType = ! empty($request->registration_type) && $request->registration_type !== 'All';
             $hasVehicleUse = ! empty($request->vehicle_use) && $request->vehicle_use !== 'All';
 
