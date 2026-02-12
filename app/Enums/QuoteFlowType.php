@@ -77,6 +77,7 @@ enum QuoteFlowType: int
             QuoteFlowType::CAR_AUTOMATION_FAILED => 'car_automation_failed',
             QuoteFlowType::CAR_MISSING_DOC_REMINDER => 'car_missing_doc_reminder',
             QuoteFlowType::DEVICE_UPDATE_POLICY => 'device_update_policy',
+            QuoteFlowType::DEVICE_NEW_POLICY => 'device_new_policy',
             QuoteFlowType::CAR_AI_ADVISOR_OCB => 'car_ai_advisor_ocb',
             QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION => 'health_stp_advisor_notification',
             QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED => 'health_stp_advisor_notification_api_failed',
