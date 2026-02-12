@@ -28,10 +28,6 @@ class PermissionSeeder extends Seeder
                 'name' => PermissionsEnum::NONRULE_LEADALLOCATION,
                 'guard_name' => 'web',
             ],
-            [
-                'name' => PermissionsEnum::BUY_LEADS_ADMIN,
-                'guard_name' => 'web',
-            ],
         ];
 
         foreach ($permissions as $permission) {
