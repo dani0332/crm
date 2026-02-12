@@ -222,4 +222,39 @@ class BuyLeadService
         return BuyLeadConfigurationNationality::where('quote_type', $quoteType)->pluck('nationality_id')->toArray();
     }
 
+    public function getAllRequestsForAdmin(array $filters = [])
+    {
+        $query = BuyLeadRequest::query()
+            ->with(['user:id,name,email,employee_code', 'quoteType:id,code', 'department:id,name'])
+            ->select('buy_lead_requests.*');
+
+        // Apply filters
+        if (! empty($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
+
+        if (! empty($filters['quote_type'])) {
+            $quoteType = QuoteTypes::from($filters['quote_type']);
+            $query->where('quote_type_id', $quoteType->id());
+        }
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['request_type'])) {
+            $query->where('request_type', $filters['request_type']);
+        }
+
+        if (! empty($filters['date']) && is_array($filters['date']) && count($filters['date']) === 2) {
+            $startDate = Carbon::parse($filters['date'][0])->startOfDay();
+            $endDate = Carbon::parse($filters['date'][1])->endOfDay();
+            $query->whereBetween('buy_lead_requests.created_at', [$startDate, $endDate]);
+        }
+
+        return $query->latest('buy_lead_requests.created_at')
+            ->simplePaginate(20)
+            ->withQueryString();
+    }
+
 }
