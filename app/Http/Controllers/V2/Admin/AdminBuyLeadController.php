@@ -30,7 +30,6 @@ class AdminBuyLeadController extends Controller
         $data['requests'] = $this->buyLeadService->getAllRequestsForAdmin($filters);
         $data['filters'] = $filters;
 
-        // Get users who have created buy lead requests
         $data['users'] = User::whereHas('buyLeadRequests')
             ->select('id', 'name', 'email')
             ->orderBy('name')
@@ -48,10 +47,9 @@ class AdminBuyLeadController extends Controller
      */
     public function expire(BuyLeadRequest $buyLeadRequest): JsonResponse
     {
-        // Only allow expiring active or processing requests
-        if (! in_array($buyLeadRequest->status, ['active', 'processing'])) {
+        if (! $buyLeadRequest->can_be_expired) {
             return response()->json([
-                'message' => 'Only active or processing requests can be expired.',
+                'message' => 'This request cannot be expired, it is already completed or expired.',
             ], 422);
         }
 
