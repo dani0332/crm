@@ -41,7 +41,6 @@ class SchemaUtils
             });
         }
     }
-
     public static function ensureColumns(array $definitions): void
     {
         foreach ($definitions as $table => $columns) {
