@@ -320,19 +320,21 @@ class DeviceQuoteService extends BaseQuoteService
      *
      * @return array{email: string, name: string}|null
      */
-    public function determineDeviceNgiRecipient($quote, string $processInvolved, $cc): ?array
+    public function determineDeviceNgiRecipient($quote, string $processInvolved): ?array
     {
         $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
-
+        $payload = [];
         if ($isBookingFailure) {
-            return $this->getProductionApprovalTeamRecipient($processInvolved, $cc);
+            $payload = $this->getProductionApprovalTeamRecipient();
+        }elseif ($quote?->advisor) {
+            $payload = ['recipientEmail' => $quote->advisor->email, 'recipientName' => $quote->advisor->name];
+        }else{
+            $payload = $this->getDeviceNgiFallbackRecipient();
         }
-
-        if ($quote?->advisor) {
-            return ['recipientEmail' => $quote->advisor->email, 'recipientName' => $quote->advisor->name, 'processInvolved' => $processInvolved, 'cc' => $cc];
-        }
-
-        return $this->getDeviceNgiFallbackRecipient($processInvolved, $cc);
+        $ccEmails = $this->parseCommaSeparatedEmails(
+            getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC)
+        );
+        return array_merge($payload, ['cc' => $ccEmails, 'processInvolved' => $processInvolved]);
     }
 
     /**
@@ -340,7 +342,7 @@ class DeviceQuoteService extends BaseQuoteService
      *
      * @return array{email: string, name: string}
      */
-    private function getProductionApprovalTeamRecipient($processInvolved, $cc): array
+    private function getProductionApprovalTeamRecipient(): array
     {
         $toEmail = $this->getDeviceFailureEmailTo();
 
@@ -348,7 +350,7 @@ class DeviceQuoteService extends BaseQuoteService
             'recipientEmail' => $toEmail,
         ]);
 
-        return ['recipientEmail' => $toEmail, 'recipientName' => 'Production Approval Team', 'processInvolved' => $processInvolved, 'cc' => $cc];
+        return ['recipientEmail' => $toEmail, 'recipientName' => 'Production Approval Team'];
     }
 
     /**
@@ -356,7 +358,7 @@ class DeviceQuoteService extends BaseQuoteService
      *
      * @return array{email: string, name: string}
      */
-    private function getDeviceNgiFallbackRecipient($processInvolved, $cc): array
+    private function getDeviceNgiFallbackRecipient(): array
     {
         $fallbackEmail = $this->getDeviceFailureEmailTo();
 
@@ -364,7 +366,7 @@ class DeviceQuoteService extends BaseQuoteService
             'fallbackEmail' => $fallbackEmail,
         ]);
 
-        return ['recipientEmail' => $fallbackEmail, 'recipientName' => 'Device Support Team', 'processInvolved' => $processInvolved, 'cc' => $cc];
+        return ['recipientEmail' => $fallbackEmail, 'recipientName' => 'Device Support Team'];
     }
 
     /**
@@ -374,56 +376,6 @@ class DeviceQuoteService extends BaseQuoteService
     {
         return getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_TO)
             ?: 'production.approval.team@insurancemarket.ae';
-    }
-
-    private function getDeviceDistributionEmails(): array
-    {
-        $configured = getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL, useCache: true);
-
-        if (empty($configured)) {
-            return [];
-        }
-
-        $emails = array_map('trim', explode(',', $configured));
-        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
-
-        return ! empty($emails) ? array_values($emails) : [];
-    }
-
-    private function getPaContactDetails(): array
-    {
-        if (! app()->environment('production')) {
-            return [getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_CAPTURE_FAILURE_EMAIL), 'Production Approval Team'];
-        }
-
-        return [getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_CAPTURE_FAILURE_EMAIL, useCache: true), 'Production Approval Team'];
-    }
-
-    /**
-     * Assemble Device/NGI CC payload with normalized email list.
-     *
-     * @return array{approvalemail: string|null, prodemail: string|null, advisoremail: string|null, ccEmails: array}
-     */
-    public function buildDeviceCcPayload($quote, string $processInvolved, $cc = []): array
-    {
-        $ccEmails = $this->parseCommaSeparatedEmails(
-            getAppStorageValueByKey(ApplicationStorageEnums::DEVICE_FAILURE_EMAIL_CC)
-        );
-        if (! empty($cc['approvalemail'])) {
-            $ccEmails[] = $cc['approvalemail'];
-        }
-        $payload = [
-            'approvalemail' => ! empty($ccEmails) ? implode(',', $ccEmails) : null,
-            'prodemail' => getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL),
-            'advisoremail' => null,
-            'ccEmails' => $ccEmails,
-        ];
-
-        if ($processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY && $quote?->advisor?->email) {
-            $payload['advisoremail'] = $quote->advisor->email;
-        }
-
-        return $payload;
     }
 
     private function parseCommaSeparatedEmails(?string $value): array

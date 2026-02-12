@@ -96,7 +96,17 @@ class AutomationFailedJob implements ShouldQueue
             }
         }
 
-        $cc = $this->getLobCcEmails($quoteType, $quote);
+        $cc = [];
+        $cc['approvalemail'] = null;
+        $cc['prodemail'] = null;
+        $cc['advisoremail'] = null;
+        if (in_array($this->appEnv, [EnvEnum::PRODUCTION, EnvEnum::STAGING])) {
+            $approvalEmail = getAppStorageValueByKey(ApplicationStorageEnums::APPROVAL_PRODUCTION_EMAIL);
+            $prodEmail = getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL);
+            $cc['approvalemail'] = $approvalEmail;
+            $cc['prodemail'] = $prodEmail;
+            $cc['advisoremail'] = $quote?->advisor?->email ?? '';
+        }
 
         $notificationContext = $this->addLobViseDataForMail($quoteType, $quote, $cc);
 
@@ -172,8 +182,7 @@ class AutomationFailedJob implements ShouldQueue
                 return app(DeviceQuoteService::class)
                     ->determineDeviceNgiRecipient(
                         $quote,
-                        $this->processInvolved,
-                        $cc
+                        $this->processInvolved
                     );
             default:
                 return [
@@ -183,27 +192,6 @@ class AutomationFailedJob implements ShouldQueue
                 ];
         }
 
-    }
-
-    private function getLobCcEmails($quoteType, $quote)
-    {
-        $cc = [];
-        $cc['approvalemail'] = null;
-        $cc['prodemail'] = null;
-        $cc['advisoremail'] = null;
-        if (in_array($this->appEnv, [EnvEnum::PRODUCTION, EnvEnum::STAGING])) {
-            $approvalEmail = getAppStorageValueByKey(ApplicationStorageEnums::APPROVAL_PRODUCTION_EMAIL);
-            $prodEmail = getAppStorageValueByKey(ApplicationStorageEnums::PRODUCTION_APPROVAL_EMAIL);
-            $cc['approvalemail'] = $approvalEmail;
-            $cc['prodemail'] = $prodEmail;
-            $cc['advisoremail'] = $quote?->advisor?->email ?? '';
-        }
-        switch ($quoteType) {
-            case QuoteTypes::DEVICE->value:
-                return app(DeviceQuoteService::class)->buildDeviceCcPayload($quote, $this->processInvolved, $cc);
-            default:
-                return $cc;
-        }
     }
 
 }

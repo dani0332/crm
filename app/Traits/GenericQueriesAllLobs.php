@@ -283,15 +283,22 @@ trait GenericQueriesAllLobs
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
+
+        $computedQuoteType = $quoteType;
+        if (QuoteTypes::DEVICE->value == $quoteType) {
+            // for device we wan't to show relevant type in invoice description like smartphone, tablet, laptop, etc.
+            $computedQuoteType = $record?->device_type ?? $quoteType ?? '';
+        }
+
         if ($payment) {
-            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
+            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $computedQuoteType, $record);
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $isAbuDhabiBranch = $this->isAbuDhabiBranch($quoteType, $record);
 
         $bookPolicyDetails = [];
-        $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
+        $bookPolicyDetails['lineOfBusiness'] = ucfirst($computedQuoteType);
         $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
         $bookPolicyDetails['invoiceDescription'] = $invoiceDescription;
         $bookPolicyDetails['bookButton'] = false;
