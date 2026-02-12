@@ -1359,7 +1359,8 @@ class SendUpdateLogService
         if($quoteTypeId == QuoteTypeId::Cyber){
             $documents[] = [
                 'doc_url' => ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '',
-                'document_type_text' => 'Policy Wording',
+                'document_type_text' => 'InsuranceMarket.ae™ Policy Wording.pdf',
+                'isPolicyWording' => true,
             ];
         }
         $emailData = (object) [
