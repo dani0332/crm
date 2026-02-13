@@ -3,46 +3,38 @@
 namespace App\Services\AML;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Services\Logger\LoggerService;
 
 class AMLInsuredService
 {
-    public function getInsuredDetails(?string $customerType, ?string $idType, ?string $idNumber, ?string $tradeLicense): array
+    public function getInsuredDetails(?string $customerType, ?string $idType, ?string $idNumber): array
     {
         LoggerService::info('Get Insured Details', extra: [
             'customer_type' => $customerType ?? null,
             'id_type' => $idType ?? null,
             'id_number' => $idNumber ?? null,
-            'trade_license' => $tradeLicense ?? null,
         ]);
 
         // Determine if entity or individual
-        $isEntity = $this->determineIfEntity($customerType, $tradeLicense);
+        $isEntity = $this->determineIfEntity($customerType, $idType, $idNumber);
         $resolvedCustomerType = $isEntity ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
 
         // Search for insured
-        $insuredDetails = $this->searchInsured(
-            $resolvedCustomerType,
-            $isEntity,
-            $idType,
-            $idNumber,
-            $tradeLicense
-        );
+        $insuredDetails = $this->searchInsured($resolvedCustomerType, $idType, $idNumber);
 
         // Prepare response
-        $status = (bool) $insuredDetails;
-        $message = $this->getResponseMessage($resolvedCustomerType, $status);
+        $message = $this->getResponseMessage($resolvedCustomerType, $insuredDetails !== null); // TODO:: need to verify if empty collection
 
         return [
-            'status' => $status,
             'response' => $insuredDetails,
             'message' => $message,
         ];
     }
 
-    private function determineIfEntity(?string $customerType, ?string $tradeLicense): bool
+    private function determineIfEntity(?string $customerType, ?string $idType, ?string $idNumber): bool
     {
         // Check if explicitly set as entity
         if ($customerType == CustomerTypeEnum::Entity) {
@@ -53,39 +45,30 @@ class AMLInsuredService
             return true;
         }
 
-        // If customer type is empty or null, check if trade license is provided
+        // If customer type is empty or null, check if id_type is tradeLicense
         if (empty($customerType) || is_null($customerType) || $customerType == 'null') {
             LoggerService::info('Customer type is empty or null', extra: [
                 'customer_type' => $customerType ?? null,
-                'trade_license' => $tradeLicense ?? null,
+                'id_type' => $idType ?? null,
+                'id_number' => $idNumber ?? null,
             ]);
 
-            return ! empty($tradeLicense);
+            return $idType === GenericRequestEnum::TRADE_LICENSE && ! empty($idNumber);
         }
 
         return false;
     }
 
-    private function searchInsured(
-        string $customerType,
-        bool $isEntity,
-        ?string $idType,
-        ?string $idNumber,
-        ?string $tradeLicense
-    ): ?Insured {
+    private function searchInsured(string $customerType, ?string $idType, ?string $idNumber): ?Insured
+    {
         return Insured::with('insuredKyc')
             ->where('customer_type', $customerType)
-            ->when($isEntity, function ($query) use ($tradeLicense) {
-                $query->where('trade_license_no', $tradeLicense);
+            ->where('id_type', $idType)
+            ->when($idType == GenericRequestEnum::EMIRATES_ID, function ($query) use ($idNumber) {
+                $query->emiratesIdNumber($idNumber);
             })
-            ->when(! $isEntity, function ($query) use ($idType, $idNumber) {
-                $query->where('id_type', $idType)
-                    ->when($idType == 'emiratesId', function ($query) use ($idNumber) {
-                        $query->emiratesIdNumber($idNumber);
-                    })
-                    ->when($idType != 'emiratesId', function ($query) use ($idNumber) {
-                        $query->where('id_number', $idNumber);
-                    });
+            ->when($idType != GenericRequestEnum::EMIRATES_ID, function ($query) use ($idNumber) {
+                $query->where('id_number', $idNumber);
             })
             ->first();
     }
@@ -120,13 +103,10 @@ class AMLInsuredService
             return null;
         }
 
-        $customerInsured = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId,
-            'customer_id' => $customerId,
-        ])
+        $customerInsured = CustomerInsured::active()
+            ->forQuote($quoteTypeId, $quoteRequestId)
+            ->where('customer_id', $customerId)
             ->with(['customer', 'insured', 'insured.insuredKyc'])
-            ->latest('updated_at')
             ->first();
 
         if (! $customerInsured) {
