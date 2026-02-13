@@ -43,6 +43,17 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
         $this->seedBirdWorkflowUrls();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
@@ -75,7 +86,6 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedLegacyPolicyKeys();
         $this->seedBranchData();
         $this->seedOcrUtilEnabled();
-        $this->seedRetargetingCarEpReminder();
         $this->seedCarOcbEmailTemplatesUpdate();
         $this->seedOCRCustomerJourneyHealthEnabled();
     }
@@ -263,9 +273,9 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL],
+            ['key_name' => ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f25be3f7-9382-426d-aa90-9f9aaa1825dd/invoke-sync',
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/07d270c5-5121-441c-b048-9e4b1e2478f1/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1257,29 +1267,6 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE],
             [
                 'value' => 778,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-    }
-    
-    private function seedRetargetingCarEpReminder()
-    {
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER],
-            [
-                'value' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/08c1d960-bcf7-4f5f-bc9a-eb3e0a9450dd/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

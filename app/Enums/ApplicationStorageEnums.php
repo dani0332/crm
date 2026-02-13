@@ -305,8 +305,10 @@ final class ApplicationStorageEnums extends Enum
     /* OCR Customer Journey Flag */
     public const OCR_CUSTOMER_JOURNEY_ENABLED = 'OCR_CUSTOMER_JOURNEY_ENABLED';
 
+    /* Bird EP Workflow URL */
+    public const BIRD_EP_WORKFLOW_URL = 'BIRD_EP_WORKFLOW_URL';
+
     /* EP ECB Policy Configuration */
-    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
     public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';
     public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';
     public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE';
@@ -314,7 +316,6 @@ final class ApplicationStorageEnums extends Enum
 
     /* CAR EP (MDX / ECB) Retargeting Reminder */
     public const ENABLE_CAR_EP_RETARGETING_REMINDER = 'ENABLE_CAR_EP_RETARGETING_REMINDER';
-    public const BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL = 'BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL';
 
     // EP Failure Notification Email
     public const EP_FAILURE_EMAIL_FROM = 'EP_FAILURE_EMAIL_FROM';

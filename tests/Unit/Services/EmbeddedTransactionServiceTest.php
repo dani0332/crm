@@ -293,7 +293,7 @@ describe('retargetEpReminder', function () {
 
             $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
             $service->shouldReceive('getAppStorageValueByKey')
-                ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
+                ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
                 ->andReturn($workflowUrl);
 
             $quote = Mockery::mock(CarQuote::class)->makePartial();
@@ -339,7 +339,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
 
         $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
         $service->shouldReceive('getAppStorageValueByKey')
-            ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
+            ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
             ->andReturn($workflowUrl);
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
@@ -381,7 +381,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
 
         $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
         $service->shouldReceive('getAppStorageValueByKey')
-            ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
+            ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
             ->andReturn($workflowUrl);
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
@@ -425,7 +425,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
         $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
         $service->shouldReceive('getAppStorageValueByKey')
-            ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
+            ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
             ->andReturn('');
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
@@ -454,7 +454,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
 
         $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
         $service->shouldReceive('getAppStorageValueByKey')
-            ->with(ApplicationStorageEnums::BIRD_CAR_EP_RETARGETING_REMINDER_WORKFLOW_URL)
+            ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
             ->andReturn($workflowUrl);
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
