@@ -36,7 +36,7 @@ class AMLQueryService
 
         $quoteRequestTable = $this->determineQuoteRequestTable($quoteType, $request);
         $dataAml = $this->buildBaseQuery($quoteRequestTable, $request, $quoteType->id);
-        $dataAml = $this->applyFilters($dataAml, $quoteRequestTable, $request, $quoteType->id);
+        $dataAml = $this->applyFilters($dataAml, $quoteRequestTable, $request);
         $dataAml = $dataAml->orderBy($quoteRequestTable.'.created_at', 'desc');
 
         return $dataAml->simplePaginate(10)->withQueryString();

@@ -110,8 +110,7 @@ class AMLController extends Controller
         $result = $amlInsuredService->getInsuredDetails(
             $request->customer_type,
             $request->id_type,
-            $request->id_number,
-            $request->trade_license
+            $request->id_number
         );
 
         return response()->json($result);
