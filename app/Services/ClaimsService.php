@@ -34,7 +34,6 @@ class ClaimsService extends BaseService
 
     protected ClaimStatusesService $claimsStatusesService;
     protected $searchPrefix = 'claims.';
-    protected $query;
     protected $claimListQuery;
     protected $perPage = 15;
 
@@ -92,7 +91,14 @@ class ClaimsService extends BaseService
             ])
             ->orderBy('created_at', 'desc');
 
-        $this->query = ClaimRequest::select([
+    }
+
+    /**
+     * Build and return a fresh detailed claim query with all relationships
+     */
+    protected function buildDetailedClaimQuery()
+    {
+        return ClaimRequest::select([
             'id',
             'uuid',
             'code',
@@ -168,7 +174,7 @@ class ClaimsService extends BaseService
      */
     public function getClaimsDataForExport($requestParams = [])
     {
-        $query = $this->query;
+        $query = $this->buildDetailedClaimQuery();
 
         // Apply filters if provided using the same filtering logic as regular claims listing
         if (! empty($requestParams)) {
@@ -330,7 +336,7 @@ class ClaimsService extends BaseService
      */
     public function getClaimById($uuid)
     {
-        return $this->query->where('uuid', $uuid)->first();
+        return $this->buildDetailedClaimQuery()->where('uuid', $uuid)->first();
     }
 
     /**
