@@ -165,6 +165,10 @@ class ClaimsController extends Controller
             // Load claim request with all relationships
             $claimRequest = $this->claimsService->getClaimById($uuid);
 
+            if (! $claimRequest) {
+                return redirect()->route('claims.index')->with('error', 'Claim not found.');
+            }
+
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
@@ -205,6 +209,10 @@ class ClaimsController extends Controller
         try {
             // Load claim request with relationships
             $claimRequest = $this->claimsService->getClaimById($uuid);
+
+            if (! $claimRequest) {
+                return redirect()->route('claims.index')->with('error', 'Claim not found.');
+            }
 
             // Get dropdown data for the form
             $dropdownData = $this->claimsService->getDropdownData();

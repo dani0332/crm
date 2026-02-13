@@ -331,7 +331,6 @@ class ClaimsService extends BaseService
     public function getClaimById($uuid)
     {
         return $this->query->where('uuid', $uuid)->first();
-
     }
 
     /**
