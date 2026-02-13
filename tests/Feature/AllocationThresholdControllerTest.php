@@ -23,6 +23,7 @@ beforeEach(function () {
     // Create all teams that should be included in the allocation threshold
     $this->ebpTeam = $db->table('teams')->insertGetId([
         'name' => quoteTypeCode::EBP,
+        'code' => quoteTypeCode::EBP,
         'type' => TeamTypeEnum::TEAM,
         'is_active' => 1,
         'min_price' => 0,
@@ -35,6 +36,7 @@ beforeEach(function () {
 
     $this->rmSpeedTeam = $db->table('teams')->insertGetId([
         'name' => quoteTypeCode::RM_SPEED,
+        'code' => quoteTypeCode::RM_SPEED,
         'type' => TeamTypeEnum::TEAM,
         'is_active' => 1,
         'min_price' => 1001,
@@ -47,6 +49,7 @@ beforeEach(function () {
 
     $this->rmNbTeam = $db->table('teams')->insertGetId([
         'name' => quoteTypeCode::RM_NB,
+        'code' => quoteTypeCode::RM_NB,
         'type' => TeamTypeEnum::TEAM,
         'is_active' => 1,
         'min_price' => 2001,
@@ -59,6 +62,7 @@ beforeEach(function () {
 
     $this->pcpTeam = $db->table('teams')->insertGetId([
         'name' => TeamNameEnum::PCP,
+        'code' => TeamNameEnum::PCP,
         'type' => TeamTypeEnum::TEAM,
         'is_active' => 1,
         'min_price' => 3001,
@@ -71,6 +75,7 @@ beforeEach(function () {
 
     $this->gbpTeam = $db->table('teams')->insertGetId([
         'name' => TeamNameEnum::GBP,
+        'code' => TeamNameEnum::GBP,
         'type' => TeamTypeEnum::TEAM,
         'is_active' => 1,
         'min_price' => 4001,
@@ -84,6 +89,7 @@ beforeEach(function () {
     // Create a team that should NOT be included (different type)
     $this->excludedTeam = $db->table('teams')->insertGetId([
         'name' => 'Excluded Team',
+        'code' => 'Excluded Team',
         'type' => TeamTypeEnum::PRODUCT,
         'is_active' => 1,
         'parent_team_id' => null,
