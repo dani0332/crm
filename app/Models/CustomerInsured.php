@@ -44,31 +44,31 @@ class CustomerInsured extends Model
      *
      * @param  array  $conditions  Must include quote_type_id and quote_request_id
      * @param  array  $attributes  Additional attributes to set
+     * @param  bool  $skipTransaction  Skip transaction wrapper if already within a transaction
      */
-    public static function createOrUpdateActive(array $conditions, array $attributes = []): self
+    public static function createOrUpdateActive(array $conditions, array $attributes = [], bool $skipTransaction = false): self
     {
         // Validate required fields
         if (! isset($conditions['quote_type_id']) || ! isset($conditions['quote_request_id'])) {
             throw new \InvalidArgumentException('quote_type_id and quote_request_id are required');
         }
 
-        return DB::transaction(function () use ($conditions, $attributes) {
-            // Deactivate all existing records for this quote with row-level locking
-            // This prevents race conditions where concurrent requests could both
-            // deactivate records and then both create new active records
+        $operation = function () use ($conditions, $attributes) {
+            // Deactivate all existing records for this quote with a single update query
+            // This is faster and holds locks for shorter duration than iterating
             static::forQuote(
                 $conditions['quote_type_id'],
                 $conditions['quote_request_id']
-            )->lockForUpdate()->get()->each(function ($record) {
-                $record->update(['is_active' => false]);
-            });
+            )->lockForUpdate()->update(['is_active' => false]);
 
             // Create or update the active record
             return static::updateOrCreate($conditions, array_merge($attributes, [
                 'is_active' => true,
                 'updated_at' => now(),
             ]));
-        });
+        };
+
+        return $skipTransaction ? $operation() : DB::transaction($operation);
     }
 
     public function customer()
