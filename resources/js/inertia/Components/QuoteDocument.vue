@@ -231,13 +231,20 @@ onUnmounted(() => {
 });
 
 const issuanceDocDisableToolTip = ref('');
-const isPolicyLocked = (quoteStatusId) => {
-  return [quoteStatusEnum.PolicyBooked, quoteStatusEnum.POLICY_BOOKING_QUEUED, quoteStatusEnum.POLICY_BOOKING_FAILED].includes(quoteStatusId);
+const isPolicyLocked = quoteStatusId => {
+  return [
+    quoteStatusEnum.PolicyBooked,
+    quoteStatusEnum.POLICY_BOOKING_QUEUED,
+    quoteStatusEnum.POLICY_BOOKING_FAILED,
+  ].includes(quoteStatusId);
 };
 
-const isIssuingDocumentsTabDisabled = (key) => {
+const isIssuingDocumentsTabDisabled = key => {
   let quoteStatusId = page.props.quote.quote_status_id;
-  if (key === documentTypeEnum.ISSUING_DOCUMENTS && isPolicyLocked(quoteStatusId)) {
+  if (
+    key === documentTypeEnum.ISSUING_DOCUMENTS &&
+    isPolicyLocked(quoteStatusId)
+  ) {
     let status = '';
     if (quoteStatusId === quoteStatusEnum.PolicyBooked) {
       status = 'booked';
@@ -423,8 +430,9 @@ const { openTempUrl } = useDocumentTempUrl();
           :key="index"
           :disabled="
             (key === documentTypeEnum.ISSUING_DOCUMENTS &&
-            !quote.insurance_provider_id &&
-            !quote.plan_id) || isIssuingDocumentsTabDisabled(key)
+              !quote.insurance_provider_id &&
+              !quote.plan_id) ||
+            isIssuingDocumentsTabDisabled(key)
           "
         >
           <template #tab v-if="isIssuingDocumentsTabDisabled(key)">
