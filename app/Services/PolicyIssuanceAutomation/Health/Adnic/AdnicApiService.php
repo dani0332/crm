@@ -19,7 +19,6 @@ class AdnicApiService
         private AdnicResponseHandler $responseHandler,
         private AdnicDocumentHandler $documentHandler,
         private AdnicQuoteUpdaterService $quoteUpdater,
-        private AdnicValidationService $validationService,
     ) {}
 
     /**
@@ -89,7 +88,6 @@ class AdnicApiService
      */
     public function uploadDocuments($quote, $process, $healthInsurerRequestResponse): array
     {
-
         $healthInsurerRequest = json_decode($healthInsurerRequestResponse->request);
         $healthInsurerResponse = json_decode($healthInsurerRequestResponse->response);
 
