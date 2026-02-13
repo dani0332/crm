@@ -199,7 +199,7 @@ class AMLEntityService
     {
         // Find old structure entity by id_number (trade license)
         $oldStructureEntity = Entity::where('trade_license_no', $insured->id_number)->first();
-        
+
         // Check if entity exists
         if (! $oldStructureEntity) {
             LoggerService::warning('Entity not found for trade license', extra: [
