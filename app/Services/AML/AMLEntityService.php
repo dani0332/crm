@@ -125,15 +125,15 @@ class AMLEntityService
                     'quote_request_id' => $quoteRequestId,
                 ]);
             });
-        } 
-        
+        }
+
         if (! $isCustomerInsuredAssociationUpdated) {
             LoggerService::info('Customer Insured not found against orphaned record');
             $existingQuoteMapping = CustomerInsured::active()->forQuote($quoteTypeId, $quoteRequestId)
                 ->where('customer_id', $customerId)
                 ->lockForUpdate()
                 ->first();
-                
+
             DB::transaction(function () use ($existingQuoteMapping, $customerId, $insuredId, $quoteTypeId, $quoteRequestId, &$isCustomerInsuredAssociationUpdated) {
                 if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insuredId) {
                     $isCustomerInsuredAssociationUpdated = true;
