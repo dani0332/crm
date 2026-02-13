@@ -1664,23 +1664,6 @@ if (! function_exists('isVatApplied')) {
     }
 }
 
-if (! function_exists('getTeamId')) {
-    /**
-     * Get the ID of a team by its name.
-     */
-    function getTeamId(string $teamName): int
-    {
-        try {
-            $team = Team::where('name', $teamName)->first();
-
-            return optional($team)->id ?? 0;
-        } catch (Exception $e) {
-            Log::error("Error retrieving team ID for team name: {$teamName}", ['exception' => $e]);
-
-            return 0;
-        }
-    }
-}
 
 if (! function_exists('isLeadSic')) {
     function isLeadSic(string $uuid): bool
