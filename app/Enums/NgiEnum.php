@@ -24,4 +24,5 @@ class NgiEnum
     public const MAX_RETRY_ATTEMPTS = 3;
     public const RETRY_DELAY_MINUTES = 5;
     public const DOCUMENT_FETCH_DELAY_MINUTES = 3;
+    public const FAILURE_EMAIL_DEFAULT_PREFIXMESSAGE = 'Failed because you use dedicated failure email %s for %s. ';
 }

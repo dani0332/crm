@@ -48,6 +48,7 @@ class NgiStepExecutor
                 PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY
             );
             $createPolicyResponse['status'] = false;
+
             return $createPolicyResponse;
         }
 
@@ -132,9 +133,11 @@ class NgiStepExecutor
             );
             $triggerBookPolicyResponse['status'] = false;
             if ($isBookPolicyFailureEmail) {
-                $triggerBookPolicyResponse['error'] = 'Failed because you use dedicated failure email '. $quote->email . ' for book policy.';
-                $triggerBookPolicyResponse['message'] = $triggerBookPolicyResponse['error'];
+                $failureEmailErrorMessage = ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIXMESSAGE, $quote->email, 'book policy');
+                $triggerBookPolicyResponse['error'] .= $failureEmailErrorMessage;
+                $triggerBookPolicyResponse['message'] .= $failureEmailErrorMessage;
             }
+
             return $triggerBookPolicyResponse;
         }
 
