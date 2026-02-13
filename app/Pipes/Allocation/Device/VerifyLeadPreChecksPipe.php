@@ -17,20 +17,21 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         LoggerService::info(self::class . ' - Starting pre-checks for Device lead');
 
         $this->setRequest($request);
-
-        $isVerified = $this->verifyPreChecks();
-
+        $isVerified = $this->verifyFetchLeadPreChecks();
+        if(!$isVerified){
+            $isVerified = $this->verifyPreChecks();
+        }
         if (! $isVerified) {
             LoggerService::info(self::class . ' - Device lead does not meet pre-check criteria');
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
+        }else{
+            LoggerService::info(self::class . ' - Device lead pre-checks passed', extra: [
+                'leadUuid' => $this->lead->uuid,
+                'leadId' => $this->lead->id,
+            ]);
+            return $next($request);
         }
 
-        LoggerService::info(self::class . ' - Device lead pre-checks passed', extra: [
-            'leadUuid' => $this->lead->uuid,
-            'leadId' => $this->lead->id,
-        ]);
-
-        return $next($request);
     }
 
     private function verifyPreChecks(): bool
@@ -52,7 +53,8 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         $isSIC = $lead->isSIC(QuoteTypes::DEVICE);
 
         $isAdvisorRequested = $lead->deviceQuote && isset($lead->deviceQuote->sic_advisor_requested) && (bool) $lead->deviceQuote->sic_advisor_requested;
-
+        $isCHSAdvisor = $this->allocationRequest->get('isCHSAdvisor', false);
+     
         $continueAssignment = false;
 
         // Check base conditions first
@@ -78,5 +80,37 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         }
 
         return $continueAssignment;
+    }
+
+    private function verifyFetchLeadPreChecks(): bool
+    {
+        $lead = $this->lead;
+
+        if (! $lead) {
+            LoggerService::info(self::class . ' - Lead not found, skipping assignment');
+            return false;
+        }
+        $isAutomationEnabled = (new PolicyIssuanceService)->init(QuoteTypes::DEVICE->value, $lead->insurer_code)?->isPolicyIssuanceAutomationEnabled()  ?? true;
+      
+        LoggerService::info(self::class." - verifyFetchLeadPreChecks: isAutomationEnabled: {$isAutomationEnabled} - isPaid: {$lead->isPaid()}");
+        if ($isAutomationEnabled && $lead->isPaid()) {
+            return $this->handleAutomationStatus();
+        }
+        return $isAutomationEnabled;
+    }
+
+    private function handleAutomationStatus(): bool
+    {
+        $allowAllocation = false;
+
+        if ($this->lead->isAutomationCompleted()) {
+            $this->allocationRequest->set('isCHSAdvisor', true);
+            LoggerService::info(self::class.':fetchLead - it is Device and automation is completed so proceed with allocation');
+            $allowAllocation = true;
+        } else {
+            LoggerService::info(self::class.':fetchLead - it is Device and automation is not yet completed, skipping allocation');
+        }
+
+        return $allowAllocation;
     }
 }

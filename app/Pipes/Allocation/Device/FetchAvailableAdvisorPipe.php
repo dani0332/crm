@@ -24,6 +24,27 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         LoggerService::info(self::class.' - Smart Phone lead with SIC request - Fetching advisor using hardcoded email list');
 
         $advisor = $this->findAvailableAdvisor(teamId: null);
+        if ($this->allocationRequest->get('isCHSAdvisor')) {
+            LoggerService::info(self::class.' - CHS Advisor is required for Cyber lead');
+
+            $advisor = $this->findAvailableAdvisor(teamId: null);
+
+            if (! $advisor) {
+                LoggerService::warning(self::class.' - CHS Advisor not found');
+                $this->allocationRequest->markAsFailed();
+                $this->throw('CHS Advisor not found', self::NOT_FOUND);
+            }
+
+            LoggerService::info(self::class.' - CHS Advisor found successfully', extra: [
+                'advisorId' => $advisor->id,
+                'advisorName' => $advisor->name,
+                'advisorEmail' => $advisor->email,
+            ]);
+
+            $this->allocationRequest->setAdvisor($advisor);
+
+            return $next($request);
+        }
 
         if (! $advisor) {
             LoggerService::info(self::class.' - No Smart Phone advisor available for allocation');
@@ -48,9 +69,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         if ($this->allocationRequest->get('isCHSAdvisor')) {
             LoggerService::info(self::class.' - CHS Advisor is required');
-
-            // return User::select('users.id as user_id')->chs()->first(); // Production CHS advisors
-
             // remove this when going to production and use the production CHS advisor
             $happinessUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::SMART_PHONE_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true);
 
