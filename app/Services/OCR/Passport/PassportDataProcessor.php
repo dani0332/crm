@@ -55,9 +55,6 @@ class PassportDataProcessor
 
     private function addOrUpdatePassportNumber(): void
     {
-        info("this->extractedData['passport_country'] ".$this->extractedData['passport_country']);
-        info("this->extractedData['passport_expiry_date'] ".$this->extractedData['passport_expiry_date']);
-
         PassportVisaDetail::updateOrCreate(
             [
                 'quoteable_type' => get_class($this->quote),
