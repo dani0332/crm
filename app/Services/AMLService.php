@@ -1839,10 +1839,9 @@ class AMLService
                 // Update the existing orphaned record instead of deleting and creating new
                 $isCustomerInsuredAssociationUpdated = true;
 
-                // Deactivate existing records for this quote first with row-level locking
-                // This prevents race conditions where concurrent requests could create multiple active records
+                // Deactivate existing records for this quote first
+                // MySQL UPDATE queries inherently acquire exclusive row locks, ensuring atomic deactivation.
                 CustomerInsured::forQuote($quoteTypeId, $quote->id)
-                    ->lockForUpdate()
                     ->update(['is_active' => false]);
 
                 // Activate the orphaned record directly
