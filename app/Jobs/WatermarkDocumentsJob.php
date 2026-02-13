@@ -138,7 +138,9 @@ class WatermarkDocumentsJob implements ShouldQueue
     {
         try {
             // For Azure private storage paths
-            return Storage::disk('azureIMPrivate')->exists($path);
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
+                return true;
+            }
 
             // For remote URLs
             if (filter_var($path, FILTER_VALIDATE_URL)) {
@@ -173,6 +175,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
             return false;
         }
+        return false;
     }
 
     public function middleware()
