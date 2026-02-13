@@ -67,8 +67,9 @@ describe('NgiInsuranceService Policy Issuance', function () {
         $quote->id = 1;
         $quote->plan_id = 1001;
         $quote->code = 'DEV-VALID-0001';
+        $quote->uuid = 'test-uuid-ngi-validation';
         $quote->insurer_quote_number = 'NGI-Q-1234';
-        $quote->customer = (object) [
+        $customer = (object) [
             'id' => 1,
             'emirates_id_number' => '784-1234-12345678-1',
             'first_name' => 'Jane',
@@ -76,15 +77,21 @@ describe('NgiInsuranceService Policy Issuance', function () {
             'email' => 'jane.doe@example.com',
             'mobile_no' => '+971501000000',
         ];
-        $quote->deviceQuote = (object) [
+        $deviceQuote = (object) [
+            'id' => 1,
             'imei' => '123456789012345',
         ];
-        $quote->latestInsured = (object) [
+        $latestInsured = (object) [
+            'id' => 1,
             'id_type' => 'emiratesId',
             'id_number' => '784-1234-12345678-1',
         ];
+        $quote->setRelation('customer', $customer);
+        $quote->setRelation('deviceQuote', $deviceQuote);
+        $quote->setRelation('latestInsured', $latestInsured);
 
-        $process = new class ($quote) {
+        $process = new class($quote)
+        {
             public int $id = 1;
             public string $status = PolicyIssuanceEnum::PENDING_STATUS;
             public ?string $completed_step = null;
@@ -104,9 +111,7 @@ describe('NgiInsuranceService Policy Issuance', function () {
                 return true;
             }
 
-            public function refresh(): void
-            {
-            }
+            public function refresh(): void {}
         };
 
         $validationService = Mockery::mock(NgiValidationService::class);
@@ -144,12 +149,11 @@ describe('NgiInsuranceService Policy Issuance', function () {
         $responseHandler = Mockery::mock(NgiResponseHandler::class);
         $responseHandler->shouldIgnoreMissing();
 
-        $ngiService = new NgiInsuranceService(
-            $stepExecutor,
-            $validationService,
-            $bookPolicyService,
-            $responseHandler
-        );
+        $ngiService = Mockery::mock(
+            NgiInsuranceService::class,
+            [$stepExecutor, $validationService, $bookPolicyService, $responseHandler]
+        )->makePartial();
+        $ngiService->shouldReceive('isPolicyIssuanceAutomationEnabled')->andReturn(true);
 
         $response = $ngiService->executeSteps($process);
 
