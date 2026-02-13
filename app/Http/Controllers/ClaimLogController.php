@@ -6,20 +6,15 @@ use App\Enums\PermissionsEnum;
 use App\Models\ClaimRequest;
 use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
-use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
-use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class ClaimLogController extends Controller
 {
-    protected $cdnPath;
     protected ClaimsService $claimsService;
     protected ClaimStatusesService $claimsStatusesService;
-    protected QuoteDocumentService $quoteDocumentService;
-    protected CustomerService $customerService;
 
     public function __construct(
         ClaimsService $claimsService,
