@@ -127,6 +127,7 @@ class ClaimsService extends BaseService
             'approved_cash_loss_amount',
             'claim_decline_reason',
             'created_at',
+            'updated_at',
         ])
             ->with([
                 'customerBankAccounts',
