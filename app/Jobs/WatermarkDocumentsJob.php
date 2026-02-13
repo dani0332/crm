@@ -67,9 +67,10 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         try {
             // Check if the source file exists
-            $sourcePath = (string)($quoteDocument->doc_url ?? '');
+            $sourcePath = (string) ($quoteDocument->doc_url ?? '');
             if ($sourcePath === '') {
                 LoggerService::error('Source file path is empty');
+
                 return;
             }
 
@@ -86,7 +87,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
             $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
 
-            LoggerService::info("Watermark starting for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}",[
+            LoggerService::info("Watermark starting for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}", [
                 'doc_name' => $docName,
                 'fileMimeType' => $fileMimeType,
                 'documentType' => $documentType->code,
@@ -145,6 +146,7 @@ class WatermarkDocumentsJob implements ShouldQueue
             // For remote URLs
             if (filter_var($path, FILTER_VALIDATE_URL)) {
                 $headers = get_headers($path);
+
                 return $headers && strpos($headers[0], '200') !== false;
             }
 
