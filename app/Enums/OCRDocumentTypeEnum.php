@@ -48,6 +48,10 @@ enum OCRDocumentTypeEnum: string
     {
         $documentType = self::getDocumentType($documentType);
 
+        if (! $documentType) {
+            return false;
+        }
+
         return $documentType?->isEnabled($quoteType);
     }
 
