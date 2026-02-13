@@ -100,7 +100,7 @@ class QuotesDocumentRequest extends FormRequest
             in_array($quoteStatusId, [
                 QuoteStatusEnum::PolicyBooked,
                 QuoteStatusEnum::POLICY_BOOKING_QUEUED,
-                QuoteStatusEnum::POLICY_BOOKING_FAILED
+                QuoteStatusEnum::POLICY_BOOKING_FAILED,
             ])
         ) {
             if ($quoteStatusId == QuoteStatusEnum::PolicyBooked) {
