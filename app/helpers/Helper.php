@@ -848,19 +848,19 @@ if (! function_exists('apiResponse')) {
             'status' => $statusCode,
         ], $statusCode);
     }
+}
 
-    if (! function_exists('generateQuoteMemberCode')) {
-        function generateQuoteMemberCode($customerType, $customerEntityID)
-        {
-            $quoteMemberCount = CustomerMembers::where([
-                'customer_type' => $customerType,
-                'customer_entity_id' => $customerEntityID,
-            ])->count();
+if (! function_exists('generateQuoteMemberCode')) {
+    function generateQuoteMemberCode($customerType, $customerEntityID)
+    {
+        $quoteMemberCount = CustomerMembers::where([
+            'customer_type' => $customerType,
+            'customer_entity_id' => $customerEntityID,
+        ])->count();
 
-            return ($customerType == CustomerTypeEnum::Individual) ?
-                CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
-                CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
-        }
+        return ($customerType == CustomerTypeEnum::Individual) ?
+            CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
+            CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
     }
 }
 
@@ -1664,7 +1664,6 @@ if (! function_exists('isVatApplied')) {
     }
 }
 
-
 if (! function_exists('isLeadSic')) {
     function isLeadSic(string $uuid): bool
     {
@@ -1797,6 +1796,7 @@ if (! function_exists('userHasProduct')) {
 
         return Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->active()->whereAny(['name', 'code'], $product)->exists();
     }
+}
 
 if (! function_exists('convertFromCamelCase')) {
     function convertFromCamelCase($string): string
