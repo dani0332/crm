@@ -3,6 +3,7 @@
 namespace App\Services\AML;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CustomerInsured;
@@ -14,6 +15,7 @@ use App\Repositories\CarQuoteRepository;
 use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\DB;
 
 class AMLEntityService
 {
@@ -27,7 +29,8 @@ class AMLEntityService
     {
         return Insured::where([
             'customer_type' => CustomerTypeEnum::Entity,
-            'trade_license_no' => $tradeLicense,
+            'id_type' => GenericRequestEnum::TRADE_LICENSE,
+            'id_number' => $tradeLicense,
         ])->first();
     }
 
@@ -58,69 +61,126 @@ class AMLEntityService
             ];
         }
 
-        // Update insured in personal quote (new structure)
-        $this->amlService->updateInsuredInPersonalQuote($quoteTypeId, $quoteObject, $insured);
+        return DB::transaction(function () use ($quoteTypeId, $quoteRequestId, $quoteObject, $insured, $triggeredFrom) {
+            // Update insured in personal quote (new structure)
+            $this->amlService->updateInsuredInPersonalQuote($quoteTypeId, $quoteObject, $insured);
 
-        // Link customer to insured
-        $this->linkCustomerInsured($quoteTypeId, $quoteRequestId, $quoteObject->customer_id, $insured->id);
+            // Link customer to insured
+            $this->linkCustomerInsured($quoteTypeId, $quoteRequestId, $quoteObject->customer_id, $insured->id);
 
-        // Handle legacy structure migration
-        $entity = $this->handleLegacyEntityStructure(
-            $quoteTypeId,
-            $quoteRequestId,
-            $insured,
-            $triggeredFrom
-        );
+            // Handle legacy structure migration
+            $entity = $this->handleLegacyEntityStructure(
+                $quoteTypeId,
+                $quoteRequestId,
+                $insured,
+                $triggeredFrom
+            );
 
-        // Update car quote if applicable
-        if ($quoteTypeId == QuoteTypeId::Car) {
-            LoggerService::info('Updating car quote company details');
-            $this->updateCarQuoteCompanyDetails($quoteRequestId, $entity);
-        }
+            // Update car quote if applicable
+            if ($quoteTypeId == QuoteTypeId::Car) {
+                LoggerService::info('Updating car quote company details');
+                $this->updateCarQuoteCompanyDetails($quoteRequestId, $entity);
+            }
 
-        return [
-            'status' => true,
-            'response' => $entity,
-            'message' => 'Entity Linked Successfully',
-        ];
+            return [
+                'status' => true,
+                'response' => $entity,
+                'message' => 'Entity Linked Successfully',
+            ];
+        });
     }
 
     private function linkCustomerInsured(int $quoteTypeId, int $quoteRequestId, int $customerId, int $insuredId): void
     {
-        $customerInsured = CustomerInsured::where('customer_id', $customerId)
+        $isCustomerInsuredAssociationUpdated = false;
+        $orphanedRecord = CustomerInsured::where('customer_id', $customerId)
             ->where('insured_id', $insuredId)
             ->whereNull('quote_type_id')
             ->whereNull('quote_request_id')
+            ->lockForUpdate()
             ->first();
 
-        if ($customerInsured) {
+        if ($orphanedRecord) {
             LoggerService::info('Customer Insured found against orphaned record');
-            $customerInsured->update([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-                'updated_at' => now(),
-            ]);
-        } else {
-            LoggerService::info('Customer Insured not found against orphaned record, creating new one');
-            CustomerInsured::updateOrCreate([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-            ], [
-                'customer_id' => $customerId,
-                'insured_id' => $insuredId,
-                'updated_at' => now(),
-            ]);
+            DB::transaction(function () use ($orphanedRecord, $quoteTypeId, $quoteRequestId, $customerId, $insuredId, &$isCustomerInsuredAssociationUpdated) {
+
+                $isCustomerInsuredAssociationUpdated = true;
+                CustomerInsured::forQuote($quoteTypeId, $quoteRequestId)
+                    ->lockForUpdate()->get()->each(function ($record) {
+                        $record->update(['is_active' => false]);
+                    });
+
+                $orphanedRecord->update([
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quoteRequestId,
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ]);
+
+                LoggerService::info('Updated orphaned customer_insured record', extra: [
+                    'customer_insured_id' => $orphanedRecord->id,
+                    'customer_id' => $customerId,
+                    'insured_id' => $insuredId,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quoteRequestId,
+                ]);
+            });
+        } 
+        
+        if (! $isCustomerInsuredAssociationUpdated) {
+            LoggerService::info('Customer Insured not found against orphaned record');
+            $existingQuoteMapping = CustomerInsured::active()->forQuote($quoteTypeId, $quoteRequestId)
+                ->where('customer_id', $customerId)
+                ->lockForUpdate()
+                ->first();
+                
+            DB::transaction(function () use ($existingQuoteMapping, $customerId, $insuredId, $quoteTypeId, $quoteRequestId, &$isCustomerInsuredAssociationUpdated) {
+                if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insuredId) {
+                    $isCustomerInsuredAssociationUpdated = true;
+
+                    CustomerInsured::createOrUpdateActive([
+                        'customer_id' => $customerId,
+                        'insured_id' => $insuredId,
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_request_id' => $quoteRequestId,
+                    ]);
+
+                    LoggerService::info('Insured association changed for quote', extra: [
+                        'old_insured_id' => $existingQuoteMapping->insured_id,
+                        'new_insured_id' => $insuredId,
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_request_id' => $quoteRequestId,
+                    ]);
+                } elseif (! $existingQuoteMapping) {
+                    // This is a completely new quote-insured association
+                    $isCustomerInsuredAssociationUpdated = true;
+
+                    CustomerInsured::createOrUpdateActive([
+                        'customer_id' => $customerId,
+                        'insured_id' => $insuredId,
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_request_id' => $quoteRequestId,
+                    ]);
+
+                    LoggerService::info('New insured association created for quote', extra: [
+                        'insured_id' => $insuredId,
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_request_id' => $quoteRequestId,
+                    ]);
+                }
+            });
         }
     }
 
     /**
      * Handle legacy entity structure migration
      * Reminder:: Remove when new structure is completely mapped
+     * TODO:: Seems error here there is no entity created need to double check (although this function only handle legacy data because when we link we just linked not create, we created through AML so need to check in AML screening could we create entity or not)
      */
     private function handleLegacyEntityStructure(int $quoteTypeId, int $quoteRequestId, Insured $insured, ?string $triggeredFrom): Entity
     {
-        // Find old structure entity
-        $oldStructureEntity = Entity::where('trade_license_no', $insured->trade_license_no)->first();
+        // Find old structure entity by id_number (trade license)
+        $oldStructureEntity = Entity::where('trade_license_no', $insured->id_number)->first();
         $existingEntityMapping = QuoteRequestEntityMapping::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
