@@ -201,7 +201,7 @@ const getInitalAmountForLifeLOB = () => {
 };
 
 const getInitalAmountForSavingsLOB = () => {
-  if (props.quoteRequest?.savings_quote?.currency?.code === 'AED') {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
     return (
       props.quoteRequest.premium *
       props.quoteRequest?.savings_quote?.payment_term
@@ -458,7 +458,7 @@ const addPaymentModal = async () => {
 
   // Check exchange rate for Savings LOB - must be checked before plan selection
   if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
-    const savingsCurrency = props.quoteRequest?.savings_quote?.currency?.code;
+    const savingsCurrency = props.quoteRequest?.quote_customer_plan?.plan?.currency;
     if (
       savingsCurrency &&
       savingsCurrency !== 'AED' &&
@@ -468,7 +468,7 @@ const addPaymentModal = async () => {
         title: 'Please lock the exchange rate first',
         position: 'top',
       });
-      return;
+      return;  
     }
   }
 
