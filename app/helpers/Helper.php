@@ -1600,6 +1600,52 @@ if (! function_exists('getCourierQuote')) {
     }
 }
 
+if (! function_exists('getTeamId')) {
+    /**
+     * Get the ID of a team by its name or code.
+     */
+    function getTeamId(string $teamNameOrCode, $additionalWhere = [], $ignoreActive = false): int
+    {
+        try {
+            $cacheKey = 'getTeamId_'.md5($teamNameOrCode.'|'.json_encode($additionalWhere).'|'.($ignoreActive ? '1' : '0'));
+
+            return Cache::remember($cacheKey, now()->addDay(), function () use ($teamNameOrCode, $additionalWhere, $ignoreActive) {
+                return Team::whereAny(['name', 'code'], $teamNameOrCode)
+                    ->when(! empty($additionalWhere), function ($query) use ($additionalWhere) {
+                        $query->where($additionalWhere);
+                    })
+                    ->when(! $ignoreActive, function ($query) {
+                        $query->active();
+                    })
+                    ->value('id') ?? 0;
+            });
+        } catch (\Exception $e) {
+            Log::error("Error retrieving team ID for team name or code: {$teamNameOrCode}", ['exception' => $e]);
+
+            return 0;
+        }
+    }
+}
+
+if (! function_exists('getTeamIdByTeamType')) {
+    /**
+     * Get the ID of a team by its name or code and team type.
+     */
+    function getTeamIdByTeamType(string $teamNameOrCode): int
+    {
+        return getTeamId($teamNameOrCode, ['type' => TeamTypeEnum::TEAM]);
+    }
+}
+if (! function_exists('getTeamIdByProductType')) {
+    /**
+     * Get the ID of a team by its name or code and team type.
+     */
+    function getTeamIdByProductType(string $teamNameOrCode): int
+    {
+        return getTeamId($teamNameOrCode, ['type' => TeamTypeEnum::PRODUCT]);
+    }
+}
+
 if (! function_exists('isVatApplied')) {
     function isVatApplied($modelType): bool
     {
@@ -1766,9 +1812,8 @@ if (! function_exists('userHasProduct')) {
     {
         $productIds = auth()->user()->products->pluck('id');
 
-        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
+        return Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->active()->whereAny(['name', 'code'], $product)->exists();
     }
-}
 
 if (! function_exists('convertFromCamelCase')) {
     function convertFromCamelCase($string): string

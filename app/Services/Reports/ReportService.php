@@ -744,7 +744,7 @@ class ReportService extends BaseService
             } else {
                 $query->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->whereIn('teams.name', $userTeams);
+                    ->whereIn('teams.code', $userTeams);
             }
             if (isset($request->userIds)) {
                 $query->whereIn('advisor_id', $request->userIds);

@@ -26,7 +26,7 @@ class LeadAllocationDashboardService extends BaseService
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
 
-            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
+            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('code', $quoteType->value)->active()->first();
             $advisorRoles = $quoteType->advisorRoles();
 
             if ($quoteType == QuoteTypes::SAVINGS) {

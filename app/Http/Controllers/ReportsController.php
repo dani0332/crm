@@ -381,7 +381,7 @@ class ReportsController extends Controller
 
     public function fetchTeamsbyType(Request $request)
     {
-        $parentId = Team::where('name', $request->lob)->first()->id;
+        $parentId = getTeamId($request->lob);
         $teams = Team::where('parent_team_id', $parentId)
             ->select('name', 'id')
             ->orderBy('name')
