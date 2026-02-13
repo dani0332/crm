@@ -1839,16 +1839,24 @@ class AMLService
                 // Update the existing orphaned record instead of deleting and creating new
                 $isCustomerInsuredAssociationUpdated = true;
 
-                // Use createOrUpdateActive to handle deactivation and activation atomically
-                // Skip nested transaction since we're already in one
-                CustomerInsured::createOrUpdateActive([
-                    'customer_id' => $request->customer_id,
-                    'insured_id' => $insured->id,
+                // Deactivate existing records for this quote first with row-level locking
+                // This prevents race conditions where concurrent requests could create multiple active records
+                CustomerInsured::forQuote($quoteTypeId, $quote->id)
+                    ->lockForUpdate()
+                    ->update(['is_active' => false]);
+
+                // Activate the orphaned record directly
+                // We must update the orphaned record directly because updateOrCreate would not match it
+                // (the orphaned record has NULL quote fields, so searching by non-null quote fields won't find it)
+                $orphanedRecord->update([
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ], [], true);
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ]);
 
                 LoggerService::info('Updated orphaned customer_insured record', extra: [
+                    'customer_insured_id' => $orphanedRecord->id,
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
