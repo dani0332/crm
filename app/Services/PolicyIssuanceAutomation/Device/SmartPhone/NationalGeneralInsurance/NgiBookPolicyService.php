@@ -24,6 +24,7 @@ class NgiBookPolicyService
     public function __construct(
         private NgiValidationService $validationService,
         private NgiResponseHandler $responseHandler,
+        private NgiQuoteUpdaterService $quoteUpdater,
     ) {}
 
     /**
@@ -91,6 +92,8 @@ class NgiBookPolicyService
                 $createSageProcessResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
                 $policyIssuance
             );
+
+            $this->quoteUpdater->updateQuoteInsurerAndIssuanceStatus($quote, NgiEnum::STEP_BOOK_POLICY, $createSageProcessResponse['status'] ?? false);
 
             if (! $createSageProcessResponse['status']) {
                 LoggerService::error('Sage process creation failed', extra: [

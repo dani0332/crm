@@ -66,12 +66,21 @@ class NgiGetPolicyDocumentsService
         // Step 3: Download documents from provider URLs and store in DB
         $downloadResult = $this->downloadDocuments($quote, $process, $processId, $providerDocumentsApiResponse);
 
+        $isDocumentDownloadFailureEmail = $this->failureEmailService->isDocumentDownloadFailureEmail($quote->email);
+        $isDocumentUploadFailureEmail = $this->failureEmailService->isDocumentUploadFailureEmail($quote->email);
+
         if (! $downloadResult['status']
-            || $this->failureEmailService->isDocumentDownloadFailureEmail($quote->email)
-            || $this->failureEmailService->isDocumentUploadFailureEmail($quote->email)
+            || $isDocumentDownloadFailureEmail
+            || $isDocumentUploadFailureEmail
         ) {
+            $errorMessage = '';
             $defaultErrorMsg = 'Document download from provider or upload to IMCRM failed';
             $errorMessage = $downloadResult['error'] ?? $defaultErrorMsg;
+
+            if ($isDocumentDownloadFailureEmail || $isDocumentUploadFailureEmail) {
+                $errorMessage .= ' Failed because you use dedicated failure email '. $quote->email . ' for document download from provider or upload to IMCRM.';
+            }
+
             throw new NgiException(
                 "{$this->logPrefix} {$errorMessage}",
                 NgiException::DOCUMENT_DOWNLOAD_FAILED,

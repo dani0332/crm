@@ -54,7 +54,8 @@ class NgiServiceProvider extends ServiceProvider
         App::bind(NgiBookPolicyService::class, function ($app) {
             return new NgiBookPolicyService(
                 $app->make(NgiValidationService::class),
-                $app->make(NgiResponseHandler::class)
+                $app->make(NgiResponseHandler::class),
+                $app->make(NgiQuoteUpdaterService::class),
             );
         });
 

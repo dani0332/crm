@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
-use App\Enums\EnvEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\Logger\LoggerService;
-use App\Services\ServerEnvironmentGuard;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -23,7 +21,7 @@ use Throwable;
  * - Initial delay: 3 minutes after policy creation (handled by dispatch delay)
  * - Retry: up to 3 times with 5-minute gaps
  */
-class NgiGetPolicyDocumentsJob implements ShouldBeUnique, ShouldQueue
+class NgiGetPolicyDocumentsJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

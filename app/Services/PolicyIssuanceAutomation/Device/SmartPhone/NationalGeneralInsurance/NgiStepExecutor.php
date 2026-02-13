@@ -34,8 +34,7 @@ class NgiStepExecutor
         ]);
 
         $createPolicyResponse = $this->apiService->createPolicyFromQuote($quote, $process);
-
-        if (! $createPolicyResponse['status'] || $this->failureEmailService->isPolicyIssuanceFailureEmail($quote->email)) {
+        if (! $createPolicyResponse['status']) {
             LoggerService::error('Policy creation failed', extra: [
                 'step' => PolicyIssuanceEnum::PROCESS_INVOLVED_ISSUE_POLICY,
                 'error' => $createPolicyResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
@@ -117,8 +116,8 @@ class NgiStepExecutor
         ]);
 
         $triggerBookPolicyResponse = $this->bookPolicyService->bookPolicy($quote, $process);
-
-        if (! $triggerBookPolicyResponse['status'] || $this->failureEmailService->isBookPolicyFailureEmail($quote->email)) {
+        $isBookPolicyFailureEmail = $this->failureEmailService->isBookPolicyFailureEmail($quote->email);
+        if (! $triggerBookPolicyResponse['status'] || $isBookPolicyFailureEmail) {
             LoggerService::error('Book policy failed', extra: [
                 'step' => NgiEnum::STEP_BOOK_POLICY,
                 'error' => $triggerBookPolicyResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
@@ -132,6 +131,10 @@ class NgiStepExecutor
                 PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY
             );
             $triggerBookPolicyResponse['status'] = false;
+            if ($isBookPolicyFailureEmail) {
+                $triggerBookPolicyResponse['error'] = 'Failed because you use dedicated failure email '. $quote->email . ' for book policy.';
+                $triggerBookPolicyResponse['message'] = $triggerBookPolicyResponse['error'];
+            }
             return $triggerBookPolicyResponse;
         }
 

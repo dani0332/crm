@@ -52,6 +52,8 @@ class NgiApiService
         $httpResponse = Ngi::post($endPoint, $payload, $headers);
         $createPolicyResponse = $this->responseHandler->parseHttpResponse($httpResponse, NgiEnum::RESPONSE_CREATE_POLICY);
 
+        $this->quoteUpdater->updateQuoteInsurerAndIssuanceStatus($quote, NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE, $createPolicyResponse['status'] ?? false);
+
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
             $quote,
             $payload,
@@ -61,8 +63,8 @@ class NgiApiService
             $createPolicyResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
             $process
         );
-
-        if (! $createPolicyResponse['status'] || $this->failureEmailService->isPolicyIssuanceFailureEmail($quote->email)) {
+        $isPolicyIssuanceFailureEmail = $this->failureEmailService->isPolicyIssuanceFailureEmail($quote->email);
+        if (! $createPolicyResponse['status'] || $isPolicyIssuanceFailureEmail) {
             LoggerService::error('CreatePolicyFromQuote API call failed', extra: [
                 'endpoint' => $endPoint,
                 'error' => $createPolicyResponse['error'] ?? NgiEnum::UNKNOWN_ERROR,
@@ -73,6 +75,9 @@ class NgiApiService
             $response['message'] = $createPolicyResponse['message'];
             $response['status'] = false;
 
+            if ($isPolicyIssuanceFailureEmail) {
+                $response['error'] .= ' Failed because you use dedicated failure email '. $quote->email . ' for policy issuance.';
+            }
             return $response;
         }
 
@@ -121,6 +126,8 @@ class NgiApiService
         $httpResponse = Ngi::get($endPoint, $queryParams);
         $policyDocumentsResponse = $this->responseHandler->parseHttpResponse($httpResponse, NgiEnum::RESPONSE_GET_POLICY_DOCUMENTS);
 
+        $this->quoteUpdater->updateQuoteInsurerAndIssuanceStatus($quote, NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, $policyDocumentsResponse['status'] ?? false);
+
         app(PolicyIssuanceService::class)->storePolicyIssuanceLog(
             $quote,
             $queryParams,
@@ -130,8 +137,8 @@ class NgiApiService
             $policyDocumentsResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS,
             $process
         );
-
-        if (! $policyDocumentsResponse['status'] || $this->failureEmailService->isDocumentDownloadFailureEmail($quote->email)) {
+        $isDocumentDownloadFailureEmail = $this->failureEmailService->isDocumentDownloadFailureEmail($quote->email);
+        if (! $policyDocumentsResponse['status'] || $isDocumentDownloadFailureEmail) {
             LoggerService::error('GetPolicyDocuments API call failed', extra: [
                 'endpoint' => $endPoint,
                 'policy_number' => $quote->policy_number,
@@ -143,6 +150,9 @@ class NgiApiService
             $response['message'] = $policyDocumentsResponse['message'];
             $response['status'] = false;
 
+            if ($isDocumentDownloadFailureEmail) {
+                $response['error'] .= ' Failed because you use dedicated failure email '. $quote->email . ' for document download from provider.';
+            }
             return $response;
         }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance;
 
+use App\Enums\NgiEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
@@ -12,6 +14,33 @@ use Carbon\Carbon;
 
 class NgiQuoteUpdaterService
 {
+
+    public function updateQuoteInsurerAndIssuanceStatus($quote, $step, $isSuccess): void
+    {
+
+
+        // Issuance status must be set to success or failed based on the API response
+        $dataToUpdate = [
+            'api_issuance_status_id' => $isSuccess ? PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID : PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID,
+        ];
+
+        // If the API response is not success, then the insurer API status must be set to failed with related step (Policy Document Retrieval)
+        if (!$isSuccess) {
+            $insurerApiStatusId = match ($step) {
+                NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE => PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
+                NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM => PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
+                NgiEnum::STEP_BOOK_POLICY => PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID,
+                default => null,
+            };
+            $dataToUpdate['insurer_api_status_id'] = $insurerApiStatusId;
+        }
+
+        // update quote with the data to update
+        $quote->update($dataToUpdate);
+
+
+    }
+
     /**
      * Update quote from CreatePolicyFromQuote API response
      *
