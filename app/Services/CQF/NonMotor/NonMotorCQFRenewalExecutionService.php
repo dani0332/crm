@@ -12,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\VehicleTypeEnum;
 use App\Jobs\SendFailedNonMotorRenewalsJob;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
@@ -29,11 +30,6 @@ use Illuminate\Support\Sleep;
 
 class NonMotorCQFRenewalExecutionService
 {
-    /**
-     * Vehicle type id in car_quote_request for Bike (FR: bike quote can reside in car_quote_request when vehicle_type_id is Bike).
-     */
-    public const BIKE_VEHICLE_TYPE_ID = 13;
-
     private int $totalQuotesProcessed = 0;
     private int $errorQuotes = 0;
 
@@ -113,7 +109,7 @@ class NonMotorCQFRenewalExecutionService
 
         if ($hasCarBikeQuotes) {
             CarQuote::whereDate('policy_expiry_date', $startDate)
-                ->where('vehicle_type_id', self::BIKE_VEHICLE_TYPE_ID)
+                ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
                 ->whereNotIn('quote_status_id', $paymentAndStatusFilter['quote_status'])
                 ->whereIn('payment_status_id', $paymentAndStatusFilter['payment_status'])
                 ->with(['carMake', 'carModel', 'insuranceProvider', 'advisor', 'vehicle_detail_id'])
@@ -146,7 +142,7 @@ class NonMotorCQFRenewalExecutionService
     protected function hasEligibleBikeQuotesFromCar(Carbon $startDate, array $filter): bool
     {
         return CarQuote::whereDate('policy_expiry_date', $startDate)
-            ->where('vehicle_type_id', self::BIKE_VEHICLE_TYPE_ID)
+            ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
             ->whereNotIn('quote_status_id', $filter['quote_status'])
             ->whereIn('payment_status_id', $filter['payment_status'])
             ->exists();
