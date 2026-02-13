@@ -47,6 +47,8 @@ class DeleteQuoteDocumentRequest extends FormRequest
             // check for quote records if exists
             if (! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
+
+                return;
             }
 
             $metLifeValidator = new MetLifeValidationService;
