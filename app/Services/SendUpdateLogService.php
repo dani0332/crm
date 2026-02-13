@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarVehicleUse;
+use App\Enums\CurrencyEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
@@ -1369,8 +1370,8 @@ class SendUpdateLogService
             'insuredName' => $quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name,
             'insuranceCompany' => $quote?->insuranceProvider?->text ?? '',
             'providerName' => $quote?->insuranceProvider?->text ?? '',
-            'coverage' => isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
-                ? number_format($quote->cyberPlanDetail->coverage)
+            'coverage' => isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote?->cyberPlanDetail?->coverage)
+                ? CurrencyEnum::USD->value.' '.number_format($quote?->cyberPlanDetail?->coverage)
                 : '-',
             'planName' => $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-',
             'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
