@@ -266,6 +266,7 @@ final class ApplicationStorageEnums extends Enum
     public const NEW_LEAD_POOL_BCC = 'NEW_LEAD_POOL_BCC';
     public const OCR_ENABLED = 'OCR_ENABLED';
     public const CAR_INTRO_EMAIL = 'CAR_INTRO_EMAIL';
+    public const OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED = 'OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED';
     public const CAR_CQF_RENEWALS_DAYS_THRESHOLD = 'CAR_CQF_RENEWALS_DAYS_THRESHOLD';
     public const CAR_CQF_RENEWALS_SWITCH = 'CAR_CQF_RENEWALS_SWITCH';
 
@@ -322,6 +323,9 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_METLIFE = 'ENABLE_METLIFE';
     public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
     public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
+
+    // Health STP Advisor Notification
+    public const BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW = 'BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW';
 
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';

@@ -25,7 +25,7 @@ describe('OCRDocumentValidator - Driver EID Validation', function () {
             'driver_eid_number' => '784198512345671',
         ]);
 
-        $validator = new OCRDocumentValidator;
+        $validator = new OCRDocumentValidator($quote->id, CarQuote::class);
         $result = $validator->validateDriverEidFields($quote);
 
         expect($result)->toBeTrue();
@@ -43,7 +43,7 @@ describe('OCRDocumentValidator - Driver EID Validation', function () {
             'driver_first_name' => 'John',
         ]);
 
-        $validator = new OCRDocumentValidator;
+        $validator = new OCRDocumentValidator($quote->id, CarQuote::class);
         $result = $validator->validateDriverEidFields($quote);
 
         expect($result)->toBeFalse();
@@ -57,7 +57,7 @@ describe('OCRDocumentValidator - Driver EID Validation', function () {
             'vehicle_use' => CarVehicleUse::PRIVATE,
         ]);
 
-        $validator = new OCRDocumentValidator;
+        $validator = new OCRDocumentValidator($quote->id, CarQuote::class);
         $result = $validator->validateDriverEidFields($quote);
 
         expect($result)->toBeFalse();
@@ -78,7 +78,7 @@ describe('OCRDocumentValidator - Driver EID Validation', function () {
             'driver_eid_number' => '784198512345671',
         ]);
 
-        $validator = new OCRDocumentValidator;
+        $validator = new OCRDocumentValidator($quote->id, CarQuote::class);
         $result = $validator->validateDriverEidFields($quote);
 
         expect($result)->toBeTrue();
@@ -99,7 +99,7 @@ describe('OCRDocumentValidator - Driver EID Validation', function () {
             'driver_eid_number' => '784198512345671',
         ]);
 
-        $validator = new OCRDocumentValidator;
+        $validator = new OCRDocumentValidator($quote->id, CarQuote::class);
         $result = $validator->validateDriverEidFields($quote);
 
         expect($result)->toBeFalse();
@@ -117,7 +117,7 @@ describe('OCRDocumentValidator - Driver EID Validation', function () {
             'driver_eid_number' => '784198512345671',
         ]);
 
-        $validator = new OCRDocumentValidator;
+        $validator = new OCRDocumentValidator($quote->id, CarQuote::class);
         $result = $validator->validateDriverEidFields($quote);
 
         expect($result)->toBeTrue();

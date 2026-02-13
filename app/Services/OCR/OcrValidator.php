@@ -50,6 +50,9 @@ trait OcrValidator
         InsuranceProviderEnum::DIC->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::CIG->value => [QuoteTypes::GROUP_MEDICAL],
         InsuranceProviderEnum::SI->value => [QuoteTypes::GROUP_MEDICAL],
+
+        // Health only
+        InsuranceProviderEnum::ADNIC->value => [QuoteTypes::HEALTH],
     ];
     private const QUOTE_TYPE_PROVIDER_SKIP_OCR = [
         QuoteTypes::SAVINGS,
