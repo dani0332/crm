@@ -309,7 +309,7 @@ export function useSavingsPlans(options = {})
       }, 0);
   });
 
-  const getRiderDetails = async planId =>
+  const getRiderDetails = async (planId, existingRiders = []) =>
   {
     if (!planId) return;
 
@@ -317,20 +317,38 @@ export function useSavingsPlans(options = {})
     {
       const res = await axios.get(`/personal-quotes/savings/riders/${planId}`);
 
-      ridersData.value = res.data.map(rider => ({
-        id: rider.id,
-        riderId: rider.rider_id,
-        active: 0,
-        price: 0,
-        coverValue: 0,
-        coverValue2: 0,
-        text: rider.rider?.text || 'Rider',
-        code: rider.rider?.code,
-        inputRequired: rider.input_required || false,
-        inputType: rider.input_type || null,
-        coverType: rider.cover_type || null,
-        maxAge: rider.max_age || null,
-      }));
+      const riders = Array.isArray(res.data) ? res.data : [];
+      const planRiders = Array.isArray(existingRiders) ? existingRiders : [];
+
+      ridersData.value = riders.length > 0
+        ? riders.map(rider =>
+        {
+          const existing = planRiders.find(
+            pr => String(pr.riderId) === String(rider.rider_id),
+          );
+
+          return {
+            id: rider.id,
+            riderId: rider.rider_id,
+            active: existing?.active ? 1 : 0,
+            price: existing != null
+              ? Number(existing.price ?? existing.coverValue2 ?? 0) || 0
+              : 0,
+            coverValue: existing != null
+              ? Number(existing.coverValue ?? 0) || 0
+              : 0,
+            coverValue2: existing != null
+              ? Number(existing.coverValue2 ?? existing.price ?? 0) || 0
+              : 0,
+            text: rider.rider?.text || 'Rider',
+            code: rider.rider?.code,
+            inputRequired: rider.input_required || false,
+            inputType: rider.input_type || null,
+            coverType: rider.cover_type || null,
+            maxAge: rider.max_age || null,
+          };
+        })
+        : [];
     } catch (error)
     {
       if (notification)

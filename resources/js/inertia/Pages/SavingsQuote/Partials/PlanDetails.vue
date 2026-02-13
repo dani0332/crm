@@ -48,7 +48,12 @@ const {
   notification,
 });
 
-const previousTotalRiderPrice = ref(0);
+// Total Price = base premium + rider prices (same logic as Life - no mutation of actualPremium)
+const totalPrice = computed(() => {
+  const basePremium = parseFloat(props.planDetails?.actualPremium || 0) || 0;
+  const riderPrice = parseFloat(totalRiderPrice.value || 0) || 0;
+  return basePremium + riderPrice;
+});
 
 // Define tabs for plan details modal
 const planDetailsTabs = ref([
@@ -246,47 +251,17 @@ const modalVisible = computed({
   set: val => emit('update:modelValue', val),
 });
 
-// Update actualPremium when rider prices change - only add/subtract the difference
-watch(
-  () => totalRiderPrice.value,
-  newRiderPrice => {
-    if (props.planDetails) {
-      const currentPremium = parseFloat(props.planDetails.actualPremium || 0);
-      const previousPrice = previousTotalRiderPrice.value || 0;
-      const newPrice = parseFloat(newRiderPrice || 0);
-
-      // Calculate the difference
-      const difference = newPrice - previousPrice;
-
-      // Only update if there's a change
-      if (Math.abs(difference) > 0.01) {
-        // Add/subtract the difference to current actualPremium
-        const updatedPremium = currentPremium + difference;
-        props.planDetails.actualPremium = updatedPremium;
-
-        // Update previous total for next calculation
-        previousTotalRiderPrice.value = newPrice;
-      }
-    }
-  },
-  { immediate: false },
-);
-
 // Watch for modal visibility and planDetails changes to fetch riders
 watch(
   [() => props.modelValue, () => props.planDetails],
   ([newVisible, newPlanDetails]) => {
     if (newVisible && newPlanDetails) {
-      // Initialize previous rider price when modal opens
-      previousTotalRiderPrice.value = 0;
-
       const planId = newPlanDetails.planId || newPlanDetails.id;
+      const existingRiders = newPlanDetails.riders ?? [];
       if (planId) {
-        getRiderDetails(planId);
+        getRiderDetails(planId, existingRiders);
       }
     } else if (!newVisible) {
-      // Reset when modal closes
-      previousTotalRiderPrice.value = 0;
       ridersData.value = [];
     }
   },
@@ -602,17 +577,13 @@ watch(
               <div class="border-t border-gray-200 pt-6 mt-6">
                 <div class="flex justify-between items-end">
                   <div>
-                    <span class="text-sm font-semibold text-gray-800"
+                    <!-- <span class="text-sm font-semibold text-gray-800"
                       >Total Price:</span
                     >
                     <span class="text-sm text-gray-900 ml-2"
                       >{{ planDetails.currency || 'AED' }}:
-                      {{
-                        planDetails.actualPremium
-                          ? parseFloat(planDetails.actualPremium).toFixed(2)
-                          : '0.00'
-                      }}</span
-                    >
+                      {{ totalPrice.toFixed(2) }}</span
+                    > -->
                   </div>
                   <div class="text-right">
                     <div class="text-sm text-gray-600 mb-1">
@@ -763,11 +734,7 @@ watch(
                     >
                     <span class="text-sm text-gray-900 ml-2"
                       >{{ planDetails.currency || 'AED' }}:
-                      {{
-                        planDetails.actualPremium
-                          ? parseFloat(planDetails.actualPremium).toFixed(2)
-                          : '0.00'
-                      }}</span
+                      {{ totalPrice.toFixed(2) }}</span
                     >
                   </div>
                   <div>
