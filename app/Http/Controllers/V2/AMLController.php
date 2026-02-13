@@ -410,7 +410,7 @@ class AMLController extends Controller
             // Exception handling for lock timeout to provide graceful error messages
             try {
                 [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteType->id, $updateQuote, $getLastScreening);
-                
+
                 app(AMLService::class)->updatePAId([
                     'isAutomation' => $isAutomation,
                     'systemUser' => $systemUser,
@@ -428,10 +428,10 @@ class AMLController extends Controller
                         'quote_type_id' => $quoteType->id,
                         'error' => $e->getMessage(),
                     ]);
-                    
+
                     return app(AMLService::class)->handleResponse(false, 'System is busy, please try again', $isAutomation);
                 }
-                
+
                 throw $e;
             }
 
