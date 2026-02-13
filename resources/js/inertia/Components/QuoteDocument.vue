@@ -462,8 +462,8 @@ const { openTempUrl } = useDocumentTempUrl();
                 <a
                   @click.prevent="
                     openTempUrl(
-                      quoteDocument.watermarked_doc_url||
-                        quoteDocument.doc_url                        ,
+                      quoteDocument.watermarked_doc_url ||
+                        quoteDocument.doc_url,
                     )
                   "
                   target="_blank"
