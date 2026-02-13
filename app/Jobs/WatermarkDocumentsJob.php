@@ -177,6 +177,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
             return false;
         }
+
         return false;
     }
 
