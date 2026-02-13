@@ -14,6 +14,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\UnableToCheckExistence;
+use Throwable;
 
 class WatermarkDocumentsJob implements ShouldQueue
 {
@@ -63,20 +65,32 @@ class WatermarkDocumentsJob implements ShouldQueue
             return;
         }
 
-        // Check if the source file exists
-        if (! $this->fileExists($quoteDocument->doc_url)) {
-            LoggerService::error("Source file does not exist: {$quoteDocument->doc_url}");
-
-            return;
-        }
-
         try {
+            // Check if the source file exists
+            $sourcePath = (string)($quoteDocument->doc_url ?? '');
+            if ($sourcePath === '') {
+                LoggerService::error('Source file path is empty');
+                return;
+            }
+
+            if (! $this->fileExists($sourcePath)) {
+                LoggerService::error("Source file does not exist: {$sourcePath}");
+
+                return;
+            }
+
             // Perform watermarking based on file type
             $watermarkService = app()->make(QuoteDocumentService::class);
             $fileMimeType = $quoteDocument->doc_mime_type;
             $docName = str_replace('original_', '', $quoteDocument->doc_name);
 
             $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
+
+            LoggerService::info("Watermark starting for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}",[
+                'doc_name' => $docName,
+                'fileMimeType' => $fileMimeType,
+                'documentType' => $documentType->code,
+            ]);
 
             if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf' || $extension == 'pdf') {
                 $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
@@ -120,24 +134,42 @@ class WatermarkDocumentsJob implements ShouldQueue
     /**
      * Check if a file exists
      */
-    private function fileExists($path)
+    private function fileExists(string $path): bool
     {
         try {
-            // For local storage
-            if (Storage::disk('azureIMPrivate')->exists($path)) {
-                return true;
-            }
+            // For Azure private storage paths
+            return Storage::disk('azureIMPrivate')->exists($path);
 
             // For remote URLs
             if (filter_var($path, FILTER_VALIDATE_URL)) {
                 $headers = get_headers($path);
-
                 return $headers && strpos($headers[0], '200') !== false;
             }
 
-            return false;
-        } catch (\Exception $e) {
-            LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
+        } catch (UnableToCheckExistence $e) {
+            $previous = $e->getPrevious();
+            LoggerService::error(
+                "Unable to check file existence (Azure transient failure): {$path}",
+                [
+                    'previous_exception_class' => $previous ? $previous::class : null,
+                    'previous_exception_message' => $previous?->getMessage(),
+                ],
+                $e
+            );
+
+            // Let the job retry - this is not a "missing file" case.
+            throw $e;
+        } catch (Throwable $e) {
+            $previous = $e->getPrevious();
+            LoggerService::error(
+                "Error checking file existence: {$path}",
+                [
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $previous ? $previous::class : null,
+                    'previous_exception_message' => $previous?->getMessage(),
+                ],
+                $e
+            );
 
             return false;
         }
