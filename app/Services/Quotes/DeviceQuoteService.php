@@ -327,7 +327,7 @@ class DeviceQuoteService extends BaseQuoteService
         if ($isBookingFailure) {
             $payload = $this->getProductionApprovalTeamRecipient();
         }elseif ($quote?->advisor) {
-            $payload = ['recipientEmail' => $quote->advisor->email, 'recipientName' => $quote->advisor->name];
+            $payload = ['recipientEmail' => $quote?->advisor?->email, 'recipientName' => $quote?->advisor?->name];
         }else{
             $payload = $this->getDeviceNgiFallbackRecipient();
         }
