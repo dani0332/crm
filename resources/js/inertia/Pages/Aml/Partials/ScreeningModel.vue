@@ -431,7 +431,9 @@ const searchInsuredDetails = customerType => {
     axios
       .get(url)
       .then(res => {
-        if (res.data.status) {
+        // Check if response exists (if insuredDetails exists, it means status is true)
+        // TODO::Need to verify if response return collection then this should not be true
+        if (res.data.response) {
           clearErrors();
 
           let response = res.data.response;
