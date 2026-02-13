@@ -636,7 +636,7 @@ class CoreSchema
     }
 
     /**
-     * Tables used by EmbeddedTransactionRepository::getRetargetingCarEpReminderData()
+     * Tables used by EmbeddedTransactionRepository::fetchFindEmbededTransactionWithDetails()
      * (car_quote_request is in ensureQuoteTables; car_make, car_model, users, car_plan, insurance_provider exist elsewhere).
      */
     private function ensureEmbeddedProductTables(): void

@@ -6,7 +6,6 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use Illuminate\Support\Collection;
 
@@ -48,9 +47,9 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->get();
     }
 
-    public function getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode)
+    public function fetchFindEmbededTransactionWithDetails(string $embeddedTransactionCode, ?int $quoteStatusId = null, ?int $paymentStatusId = null, ?bool $isActive = null)
     {
-        return EmbeddedTransaction::select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id')
+        return EmbeddedTransaction::select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'is_active', 'payment_status_id', 'product_id')
             ->with(
                 'product:id,embedded_product_id',
                 'product.embeddedProduct:id,short_code',
@@ -62,12 +61,9 @@ class EmbeddedTransactionRepository extends BaseRepository
                 'quoteRequest.plan.insuranceProvider:id,code',
             )
             ->where('code', $embeddedTransactionCode)
-            ->where('quote_request_id', $carQuoteRequestId)
-            ->where('quote_request_type', CarQuote::class)
-            ->where('is_active', true)
-            ->where('payment_status_id', PaymentStatusEnum::DRAFT)
-            ->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', QuoteStatusEnum::PolicyBooked))
-            ->whereHas('product.embeddedProduct', fn ($q) => $q->whereIn('short_code', EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS))
+            ->when(isset($isActive), fn ($q) => $q->where('is_active', $isActive))
+            ->when($paymentStatusId, fn ($q) => $q->where('payment_status_id', $paymentStatusId))
+            ->when($quoteStatusId, fn ($q) => $q->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', $quoteStatusId)))
             ->first();
     }
 }

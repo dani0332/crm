@@ -50,6 +50,6 @@ class EmbeddedProductController extends Controller
     public function getRetargetingEpReminderData(GetRetargetingEpReminderRequest $request): JsonResponse
     {
         return $this->embeddedTransactionService
-            ->getRetargetingCarEpReminderData($request->quoteId, $request->embeddedTransactionCode);
+            ->getEpRetargetingReminderData($request->embeddedTransactionCode);
     }
 }

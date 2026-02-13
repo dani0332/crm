@@ -6,7 +6,6 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
@@ -46,45 +45,76 @@ describe('EmbeddedTransactionRepository', function () {
         });
     });
 
-    describe('getRetargetingCarEpReminderData', function () {
-        test('returns null when no transaction matches code and quote request id', function () {
-            $result = $this->repository->getRetargetingCarEpReminderData(99999, 'NON-EXISTENT-CODE');
+    describe('fetchFindEmbededTransactionWithDetails', function () {
+        $sharedData = null;
 
-            expect($result)->toBeNull();
+        beforeEach(function () use (&$sharedData) {
+            if ($sharedData === null) {
+                $sharedData = RetargetingEpReminderTestDataHelper::setupRepositoryTestData();
+            }
+            $this->data = $sharedData;
         });
 
-        test('returns transaction only when quote is policy booked, embedded-transaction is draft and EP is allowed otherwise returns null', function () {
-            $data = RetargetingEpReminderTestDataHelper::setupRepositoryTestData();
-
-            $validResult = $this->repository->getRetargetingCarEpReminderData($data->carQuotePolicyBooked->id, $data->validTransaction->code);
-            expect($validResult)->not->toBeNull()
-                ->and($validResult->id)->toBe($data->validTransaction->id)
-                ->and($validResult->code)->toBe($data->validTransaction->code)
-                ->and($validResult->quote_request_type)->toBe(CarQuote::class)
-                ->and($validResult->payment_status_id)->toBe(PaymentStatusEnum::DRAFT)
-                ->and($validResult->relationLoaded('quoteRequest'))->toBeTrue()
-                ->and($validResult->quoteRequest->quote_status_id)->toBe(QuoteStatusEnum::PolicyBooked)
-                ->and($validResult->relationLoaded('product'))->toBeTrue()
-                ->and($validResult->product->embeddedProduct->short_code)->toBe(EmbeddedProductEnum::MDX);
-
-            expect($this->repository->getRetargetingCarEpReminderData($data->notBookedTransaction->quote_request_id, $data->notBookedTransaction->code))->toBeNull();
-            expect($this->repository->getRetargetingCarEpReminderData($data->notAllowedEpTransaction->quote_request_id, $data->notAllowedEpTransaction->code))->toBeNull();
-            expect($this->repository->getRetargetingCarEpReminderData($data->notDraftTransaction->quote_request_id, $data->notDraftTransaction->code))->toBeNull();
+        test('returns null when no transaction exists for the given code', function () {
+            expect($this->repository->fetchFindEmbededTransactionWithDetails('NONEXISTENT-CODE'))->toBeNull();
         });
 
-        test('returns only active transaction, inactive transaction does not proceed', function () {
-            $data = RetargetingEpReminderTestDataHelper::setupRepositoryTestData();
+        test('returns transaction with eager-loaded relations when code matches', function () {
+            $data = $this->data;
+            $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID');
+            expect($result)->not->toBeNull()
+                ->and($result->id)->toBe($data->validTransaction->id)
+                ->and($result->code)->toBe('ET-VALID')
+                ->and($result->relationLoaded('product'))->toBeTrue()
+                ->and($result->relationLoaded('quoteRequest'))->toBeTrue();
+            expect($result->product)->not->toBeNull()
+                ->and($result->product->relationLoaded('embeddedProduct'))->toBeTrue();
+            expect($result->quoteRequest)->not->toBeNull()
+                ->and($result->quoteRequest->relationLoaded('carMake'))->toBeTrue()
+                ->and($result->quoteRequest->relationLoaded('carModel'))->toBeTrue()
+                ->and($result->quoteRequest->relationLoaded('advisor'))->toBeTrue()
+                ->and($result->quoteRequest->relationLoaded('plan'))->toBeTrue();
+            expect($result->quoteRequest->plan)->not->toBeNull()
+                ->and($result->quoteRequest->plan->relationLoaded('insuranceProvider'))->toBeTrue();
+        });
 
-            $activeResult = $this->repository->getRetargetingCarEpReminderData($data->carQuotePolicyBooked->id, $data->validTransaction->code);
-            expect($activeResult)->not->toBeNull()
-                ->and($activeResult->id)->toBe($data->validTransaction->id);
+        test('filters', function (string $description, array $filterArgs, bool $expectNull, ?string $assertAttribute, $expectedValue, bool $setTransactionIsActive) {
 
-            $inactiveTransaction = EmbeddedTransaction::factory()
-                ->forCarQuote($data->carQuotePolicyBooked)
-                ->forProduct($data->validTransaction->product_id)
-                ->create(['code' => 'ET-INACTIVE', 'is_active' => false]);
+            [$quoteStatusId, $paymentStatusId, $isActive] = $filterArgs;
 
-            expect($this->repository->getRetargetingCarEpReminderData($data->carQuotePolicyBooked->id, $inactiveTransaction->code))->toBeNull();
+            $data = $this->data;
+            $data->validTransaction->update(['is_active' => $setTransactionIsActive]);
+            $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID', $quoteStatusId, $paymentStatusId, $isActive);
+
+            if ($expectNull) {
+                expect($result)->toBeNull();
+            } else {
+                expect($result)->not->toBeNull()->and($result->id)->toBe($data->validTransaction->id);
+                if ($assertAttribute === 'payment_status_id') {
+                    expect($result->payment_status_id)->toBe($expectedValue);
+                }
+                if ($assertAttribute === 'quote_status_id') {
+                    expect($result->quoteRequest->quote_status_id)->toBe($expectedValue);
+                }
+                if ($assertAttribute === 'is_active') {
+                    expect((bool) $result->is_active)->toBe($expectedValue);
+                }
+            }
+        })->with([
+            ['quote_status_id matches', [QuoteStatusEnum::PolicyBooked, null, null], false, 'quote_status_id', QuoteStatusEnum::PolicyBooked, true],
+            ['quote_status_id does not match', [QuoteStatusEnum::PolicyIssued, null, null], true, null, null, true],
+            ['payment_status_id matches', [null, PaymentStatusEnum::DRAFT, null], false, 'payment_status_id', PaymentStatusEnum::DRAFT, true],
+            ['payment_status_id does not match', [null, PaymentStatusEnum::AUTHORISED, null], true, null, null, true],
+            ['is_active true & transaction active', [null, null, true], false, 'is_active', true, true],
+            ['is_active false & transaction inactive', [null, null, false], false, 'is_active', false, false],
+            ['is_active true & transaction inactive', [null, null, true], true, null, null, false],
+            ['is_active false & transaction active', [null, null, false], true, null, null, true],
+        ]);
+
+        test('returns only selected attributes on the transaction', function () {
+            $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID');
+            expect($result->getAttributes())->toHaveKeys(['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id'])
+                ->and(array_key_exists('policy_status', $result->getAttributes()))->toBeFalse();
         });
     });
 });

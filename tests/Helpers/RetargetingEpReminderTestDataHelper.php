@@ -19,7 +19,7 @@ use App\Models\InsuranceProvider;
 class RetargetingEpReminderTestDataHelper
 {
     /**
-     * Set up test data for repository tests (getDraftEpTransactions, getRetargetingCarEpReminderData).
+     * Set up test data for repository tests (getDraftEpTransactions, fetchFindEmbededTransactionWithDetails).
      * Creates provider, plan, two quotes (policy booked / policy issued), MDX/ECB/COU products and transactions.
      *
      * @return object{carQuotePolicyBooked: CarQuote, carQuotePolicyIssued: CarQuote, validTransaction: EmbeddedTransaction, notBookedTransaction: EmbeddedTransaction, epECBTransaction: EmbeddedTransaction, notAllowedEpTransaction: EmbeddedTransaction, notDraftTransaction: EmbeddedTransaction}

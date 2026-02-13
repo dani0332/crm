@@ -83,7 +83,7 @@ describe('GET /api/get-retargeting-ep-reminder', function () {
             ];
 
             $this->mock(EmbeddedTransactionService::class, function ($mock) use ($payload) {
-                $mock->shouldReceive('getRetargetingCarEpReminderData')
+                $mock->shouldReceive('getEpRetargetingReminderData')
                     ->once()
                     ->andReturn(response()->json([
                         'data' => $payload,

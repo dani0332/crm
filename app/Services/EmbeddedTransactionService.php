@@ -6,11 +6,14 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class EmbeddedTransactionService extends BaseService
@@ -100,9 +103,14 @@ class EmbeddedTransactionService extends BaseService
         return $this->birdService->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
-    public function getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode)
+    public function getEpRetargetingReminderData(string $embeddedTransactionCode): JsonResponse
     {
-        $embeddedTransaction = $this->embeddedTransactionRepo->getRetargetingCarEpReminderData($carQuoteRequestId, $embeddedTransactionCode);
+        $embeddedTransaction = $this->embeddedTransactionRepo->fetchFindEmbededTransactionWithDetails(
+            $embeddedTransactionCode,
+            QuoteStatusEnum::PolicyBooked,
+            PaymentStatusEnum::DRAFT,
+            isActive: true,
+        );
         $quote = $embeddedTransaction?->quoteRequest ?? null;
 
         if (empty($embeddedTransaction) || empty($quote)) {
@@ -115,14 +123,17 @@ class EmbeddedTransactionService extends BaseService
         $planId = $quote->plan?->id ?? null;
         $providerCode = $quote->plan?->insuranceProvider?->code ?? null;
 
-        if (empty($carMake) || empty($carModel) || empty($epShortCode) || empty($quote->email)) {
-            LoggerService::info('getRetargetingCarEpReminderData: Required data not found', extra: ['data' => $quote]);
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Required data not found');
-        }
+        $isEpShortCodeAllowedForReminder = in_array($epShortCode, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS);
+        if (empty($carMake) || empty($carModel) || empty($quote->email) || empty($planId) || empty($providerCode) || ! $isEpShortCodeAllowedForReminder) {
+            LoggerService::info('getEpRetargetingReminderData: Not eligible for reminder', extra: [
+                'vehicleName' => "{$carMake}-{$carModel}",
+                'quote-email' => $quote->email,
+                'epShortCode' => $epShortCode,
+                'providerCode' => $providerCode,
+                'planId' => $planId,
+            ]);
 
-        if (empty($planId) || empty($providerCode)) {
-            LoggerService::info('getRetargetingCarEpReminderData: planId or providerCode not found', extra: ['planId' => $planId, 'providerCode' => $providerCode]);
-            return apiResponse(null, Response::HTTP_NOT_FOUND, 'PlanId or ProviderCode not found');
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Not eligible for reminder');
         }
 
         $buyNowUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$quote->uuid

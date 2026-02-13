@@ -21,7 +21,7 @@ beforeEach(function () {
     $this->quoteUuid = 'RETARGET003';
     $this->quoteCode = 'CAR-RETARGET003';
     $this->quoteId = 3;
-    $this->embeddedTransactionCode = "MDX-CAR-{$this->quoteUuid}";
+    $this->embeddedTransactionCode = 'MDX-CAR-RETARGET003';
 });
 
 afterEach(function () {
@@ -29,12 +29,12 @@ afterEach(function () {
 });
 
 /**
- * Build EmbeddedTransaction-like object as returned by getRetargetingCarEpReminderData repo.
+ * Build EmbeddedTransaction-like object as returned by fetchFindEmbededTransactionWithDetails.
  * Service expects ->quoteRequest (quote), ->product->embeddedProduct->short_code, ->payment_status_id, ->code, ->only().
  *
  * @param  array<string, mixed>  $overrides  Override keys: quote_status_id, payment_status_id, email, uuid, etc. (nested under quoteRequest or top-level)
  */
-function getRetargetingCarEpReminderDataMock(array $overrides = []): object
+function getEpRetargetingReminderDataMock(array $overrides = []): object
 {
     $quoteId = 3;
     $quoteUuid = 'RETARGET003';
@@ -101,18 +101,23 @@ function getRetargetingCarEpReminderDataMock(array $overrides = []): object
     return $embeddedTransaction;
 }
 
-describe('getRetargetingCarEpReminderData', function () {
+describe('getEpRetargetingReminderData', function () {
     describe('return 404', function () {
         test('when repository returns empty data', function () {
             $this->mock(EmbeddedTransactionRepository::class, function ($mock) {
-                $mock->shouldReceive('getRetargetingCarEpReminderData')
+                $mock->shouldReceive('fetchFindEmbededTransactionWithDetails')
                     ->once()
-                    ->with($this->quoteId, $this->embeddedTransactionCode)
+                    ->with(
+                        $this->embeddedTransactionCode,
+                        QuoteStatusEnum::PolicyBooked,
+                        PaymentStatusEnum::DRAFT,
+                        true
+                    )
                     ->andReturn(null);
             });
 
             $service = app(EmbeddedTransactionService::class);
-            $response = $service->getRetargetingCarEpReminderData($this->quoteId, $this->embeddedTransactionCode);
+            $response = $service->getEpRetargetingReminderData($this->embeddedTransactionCode);
 
             expect($response->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
             $json = $response->getData(true);
@@ -120,23 +125,28 @@ describe('getRetargetingCarEpReminderData', function () {
             expect($json['status'])->toBe(Response::HTTP_NOT_FOUND);
         });
 
-        test('when required data is missing', function (string $propertyKey, array $overrides) {
-            $mockData = getRetargetingCarEpReminderDataMock($overrides);
+        test('when required data is missing returns 400 not eligible for reminder', function (string $propertyKey, array $overrides) {
+            $mockData = getEpRetargetingReminderDataMock($overrides);
 
             $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData) {
-                $mock->shouldReceive('getRetargetingCarEpReminderData')
+                $mock->shouldReceive('fetchFindEmbededTransactionWithDetails')
                     ->once()
-                    ->with($this->quoteId, $this->embeddedTransactionCode)
+                    ->with(
+                        $this->embeddedTransactionCode,
+                        QuoteStatusEnum::PolicyBooked,
+                        PaymentStatusEnum::DRAFT,
+                        true
+                    )
                     ->andReturn($mockData);
             });
 
             $service = app(EmbeddedTransactionService::class);
-            $response = $service->getRetargetingCarEpReminderData($this->quoteId, $this->embeddedTransactionCode);
+            $response = $service->getEpRetargetingReminderData($this->embeddedTransactionCode);
 
-            expect($response->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
+            expect($response->getStatusCode())->toBe(Response::HTTP_BAD_REQUEST);
             $json = $response->getData(true);
-            expect($json['status'])->toBe(Response::HTTP_NOT_FOUND);
-
+            expect($json['status'])->toBe(Response::HTTP_BAD_REQUEST);
+            expect($json['message'])->toBe('Not eligible for reminder');
         })->with([
             ['vehicle_make', ['vehicle_make' => null]],
             ['vehicle_model', ['vehicle_model' => '']],
@@ -144,13 +154,12 @@ describe('getRetargetingCarEpReminderData', function () {
             ['plan_id', ['plan_id' => null]],
             ['plan_insurance_provider', ['plan_insurance_provider' => null]],
             ['plan_provider_code', ['plan_provider_code' => '']],
+            ['ep_short_code not in allowed list', ['ep_short_code' => EmbeddedProductEnum::COURIER]],
         ]);
     });
 
     describe('return 200', function () {
-
         test('successfully returns data', function () {
-
             TestSchemaCreator::createMinimalSchema();
             $data = RetargetingEpReminderTestDataHelper::setupTestData();
 
@@ -159,22 +168,27 @@ describe('getRetargetingCarEpReminderData', function () {
             $embeddedTransactionCode = $data['epMDXTransaction']->code;
             $epMDXShortCode = $data['epMDX']->short_code;
 
-            $mockData = getRetargetingCarEpReminderDataMock([
+            $mockData = getEpRetargetingReminderDataMock([
                 'quote_id' => $quoteId,
                 'quote_uuid' => $quoteUuid,
                 'et_code' => $embeddedTransactionCode,
             ]);
             $quote = $mockData->quoteRequest;
 
-            $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData, $quoteId, $embeddedTransactionCode) {
-                $mock->shouldReceive('getRetargetingCarEpReminderData')
+            $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData, $embeddedTransactionCode) {
+                $mock->shouldReceive('fetchFindEmbededTransactionWithDetails')
                     ->once()
-                    ->with($quoteId, $embeddedTransactionCode)
+                    ->with(
+                        $embeddedTransactionCode,
+                        QuoteStatusEnum::PolicyBooked,
+                        PaymentStatusEnum::DRAFT,
+                        true
+                    )
                     ->andReturn($mockData);
             });
 
             $service = app(EmbeddedTransactionService::class);
-            $response = $service->getRetargetingCarEpReminderData($quoteId, $embeddedTransactionCode);
+            $response = $service->getEpRetargetingReminderData($embeddedTransactionCode);
 
             expect($response->getStatusCode())->toBe(Response::HTTP_OK);
             $json = $response->getData(true);
@@ -193,33 +207,34 @@ describe('getRetargetingCarEpReminderData', function () {
             expect($json['data']['emailWorkflowData']['vehicleModel'])->toBe($quote->carModel?->text);
         });
 
-        test('Success with missing any optional field', function (array $overrides, ?string $expectedAdvisorEmail, bool $expectBuyNowUrlHasPlanOrProvider) {
-
+        test('success with missing any optional field', function (array $overrides, ?string $expectedAdvisorEmail) {
             TestSchemaCreator::createMinimalSchema();
-            $mockData = getRetargetingCarEpReminderDataMock($overrides);
+            $mockData = getEpRetargetingReminderDataMock($overrides);
 
             $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData) {
-                $mock->shouldReceive('getRetargetingCarEpReminderData')
+                $mock->shouldReceive('fetchFindEmbededTransactionWithDetails')
                     ->once()
+                    ->with(
+                        $this->embeddedTransactionCode,
+                        QuoteStatusEnum::PolicyBooked,
+                        PaymentStatusEnum::DRAFT,
+                        true
+                    )
                     ->andReturn($mockData);
             });
 
             $service = app(EmbeddedTransactionService::class);
-            $response = $service->getRetargetingCarEpReminderData($this->quoteId, $this->embeddedTransactionCode);
+            $response = $service->getEpRetargetingReminderData($this->embeddedTransactionCode);
 
             expect($response->getStatusCode())->toBe(Response::HTTP_OK);
             $json = $response->getData(true);
             expect($json['data']['emailWorkflowData']['advisorEmail'])->toBe($expectedAdvisorEmail);
             $buyNowUrl = $json['data']['emailWorkflowData']['buyNowUrl'];
-            if ($expectBuyNowUrlHasPlanOrProvider) {
-                expect(str_contains($buyNowUrl, 'planId') || str_contains($buyNowUrl, 'providerCode'))->toBeTrue();
-            } else {
-                expect(str_contains($buyNowUrl, 'planId='))->toBeFalse()
-                    ->and(str_contains($buyNowUrl, 'providerCode='))->toBeFalse();
-            }
+            expect($buyNowUrl)->toContain('planId')
+                ->and($buyNowUrl)->toContain('providerCode');
         })->with([
-            'advisor email missing' => [['advisor_email' => null], null, true],
-            'advisor email empty' => [['advisor_email' => ''], '', true],
+            'advisor email missing' => [['advisor_email' => null], null],
+            'advisor email empty' => [['advisor_email' => ''], ''],
         ]);
     });
 });
