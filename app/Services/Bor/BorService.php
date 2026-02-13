@@ -453,7 +453,7 @@ class BorService
             // Handle previous document deletion if new file is uploaded
             $previousDoc = $borLog->document;
             if ($previousDoc && $previousDoc->doc_url && $file) {
-                \Illuminate\Support\Facades\Storage::disk('azureIM')->delete($previousDoc->doc_url);
+                \Illuminate\Support\Facades\Storage::disk('azureIMPrivate')->delete($previousDoc->doc_url);
                 $previousDoc->delete();
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\PermissionsEnum;
@@ -62,6 +63,10 @@ class QuotesDocumentRequest extends FormRequest
             }
 
             $this->validateLockedQuoteStatus($validator);
+            // Check member detail id with category (quote or member)
+            if (request()->category == DocumentTypeCategory::MEMBER && request()->member_detail_id == 0) {
+                $validator->errors()->add('member_detail_id', 'Member is required for member document');
+            }
 
             $uploadedDocuments = 0;
             $newFilesCount = count(request()->file('files') ?? []);
@@ -113,6 +118,12 @@ class QuotesDocumentRequest extends FormRequest
     protected function validateSendUpdate($validator, &$uploadedDocuments)
     {
         $whereFilter = ['document_type_code' => request()->document_type_code];
+
+        // Apply member detail id if provided (for health, later can work for any other lob)
+        if (request()->member_detail_id) {
+            $whereFilter['member_detail_id'] = request()->member_detail_id;
+        }
+
         $quoteDocuments = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
         $uploadedDocuments = $quoteDocuments?->documents()->where($whereFilter)->count() ?? 0;
 
@@ -130,7 +141,14 @@ class QuotesDocumentRequest extends FormRequest
         }
 
         if (! empty($quote)) {
-            $uploadedDocuments = $quote->documents->where('document_type_code', request()->document_type_code)->count();
+            $uploadedDocuments = $quote->documents()->where('document_type_code', request()->document_type_code);
+
+            // Apply member detail id if provided (for health, later can work for any other lob)
+            if (request()->member_detail_id) {
+                $uploadedDocuments = $uploadedDocuments->where('member_detail_id', request()->member_detail_id);
+            }
+
+            $uploadedDocuments = $uploadedDocuments->count();
         }
     }
 

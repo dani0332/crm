@@ -1,12 +1,12 @@
 <script setup>
 import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 
 defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
-  storageUrl: String,
   expanded: {
     type: Boolean,
     required: false,
@@ -213,31 +213,6 @@ onMounted(() => {
   window.addEventListener('document-notification', handleDocumentNotification);
 });
 
-const getS3TempUrl = async docURL => {
-  try {
-    NProgress.start();
-    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
-      docURL,
-    });
-    NProgress.done();
-    // Check if the request was successful and the response contains the URL
-    if (response.status === 200 && response.data.url) {
-      // Open the URL in a new tab
-      window.open(response.data.url, '_blank');
-    } else {
-      notification.error({
-        title: response.data.error,
-        position: 'top',
-      });
-    }
-  } catch (error) {
-    notification.error({
-      title: error,
-      position: 'top',
-    });
-    console.error('An error occurred:', error);
-  }
-};
 const documentVerificationStatus = ref(page.props.quote.documents_verified);
 
 const handleDocumentNotification = event => {
@@ -279,6 +254,7 @@ const isIssuingDocumentsTabDisabled = (key) => {
 
   return false;
 };
+const { openTempUrl } = useDocumentTempUrl();
 </script>
 
 <template>
@@ -389,18 +365,11 @@ const isIssuingDocumentsTabDisabled = (key) => {
         >
           <template #item-original_name="item">
             <a
-              v-if="hasAnyRole([rolesEnum.BetaUser])"
-              @click.prevent="getS3TempUrl(item.doc_url)"
-              class="text-primary-600 cursor-pointer"
-            >
-              {{ item.original_name }}
-            </a>
-
-            <a
-              v-else
-              :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
               target="_blank"
               class="text-primary-600 cursor-pointer"
+              @click.prevent="
+                openTempUrl(item.watermarked_doc_url || item.doc_url)
+              "
             >
               {{ item.original_name }}
             </a>
@@ -529,20 +498,14 @@ const isIssuingDocumentsTabDisabled = (key) => {
                 :key="quoteDocument.id"
               >
                 <a
-                  v-if="hasAnyRole([rolesEnum.BetaUser])"
-                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
-                >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                </a>
-                <a
-                  v-else
-                  :href="
-                    storageUrl +
-                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
+                  @click.prevent="
+                    openTempUrl(
+                      quoteDocument.doc_url ||
+                        quoteDocument.watermarked_doc_url,
+                    )
                   "
                   target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
