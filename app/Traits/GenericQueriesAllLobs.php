@@ -287,7 +287,7 @@ trait GenericQueriesAllLobs
         $computedQuoteType = $quoteType;
         if (QuoteTypes::DEVICE->value == $quoteType) {
             // for device we wan't to show relevant type in invoice description like smartphone, tablet, laptop, etc.
-            $computedQuoteType = $record?->device_type ?? $quoteType ?? '';
+            $computedQuoteType = $record?->deviceQuote?->device_type ?? $quoteType ?? '';
         }
 
         if ($payment) {
