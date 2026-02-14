@@ -313,41 +313,49 @@ export function useSavingsPlans(options = {})
   {
     if (!planId) return;
 
+    const planRiders = Array.isArray(existingRiders) ? existingRiders : [];
+
+    // If plan already has riders, use that data - no API call needed
+    if (planRiders.length > 0)
+    {
+      ridersData.value = planRiders.map((rider, index) => ({
+        id: rider.id ?? rider.riderId ?? index,
+        riderId: rider.riderId ?? rider.rider_id,
+        active: rider.active ? 1 : 0,
+        price: Number(rider.price ?? rider.coverValue2 ?? 0) || 0,
+        coverValue: Number(rider.coverValue ?? 0) || 0,
+        coverValue2: Number(rider.coverValue2 ?? rider.price ?? 0) || 0,
+        text: rider.text || 'Rider',
+        code: rider.code ?? null,
+        inputRequired: rider.inputRequired ?? rider.input_required ?? false,
+        inputType: rider.inputType ?? rider.input_type ?? null,
+        coverType: rider.coverType ?? rider.cover_type ?? null,
+        maxAge: rider.maxAge ?? rider.max_age ?? null,
+      }));
+      return;
+    }
+
     try
     {
       const res = await axios.get(`/personal-quotes/savings/riders/${planId}`);
 
       const riders = Array.isArray(res.data) ? res.data : [];
-      const planRiders = Array.isArray(existingRiders) ? existingRiders : [];
 
       ridersData.value = riders.length > 0
-        ? riders.map(rider =>
-        {
-          const existing = planRiders.find(
-            pr => String(pr.riderId) === String(rider.rider_id),
-          );
-
-          return {
-            id: rider.id,
-            riderId: rider.rider_id,
-            active: existing?.active ? 1 : 0,
-            price: existing != null
-              ? Number(existing.price ?? existing.coverValue2 ?? 0) || 0
-              : 0,
-            coverValue: existing != null
-              ? Number(existing.coverValue ?? 0) || 0
-              : 0,
-            coverValue2: existing != null
-              ? Number(existing.coverValue2 ?? existing.price ?? 0) || 0
-              : 0,
-            text: rider.rider?.text || 'Rider',
-            code: rider.rider?.code,
-            inputRequired: rider.input_required || false,
-            inputType: rider.input_type || null,
-            coverType: rider.cover_type || null,
-            maxAge: rider.max_age || null,
-          };
-        })
+        ? riders.map(rider => ({
+          id: rider.id,
+          riderId: rider.rider_id,
+          active: 0,
+          price: 0,
+          coverValue: 0,
+          coverValue2: 0,
+          text: rider.rider?.text || 'Rider',
+          code: rider.rider?.code,
+          inputRequired: rider.input_required || false,
+          inputType: rider.input_type || null,
+          coverType: rider.cover_type || null,
+          maxAge: rider.max_age || null,
+        }))
         : [];
     } catch (error)
     {
@@ -366,7 +374,7 @@ export function useSavingsPlans(options = {})
   {
     const ridersToProcess = riders || ridersData.value;
     return ridersToProcess.map(rider => ({
-      riderId: rider.riderId,
+      riderId: rider.riderId || rider.rider_id || rider.id,
       active: rider.active ? true : false,
       price:
         Number(parseFloat(rider.coverValue2 || rider.price || 0).toFixed(2)) ||
@@ -540,6 +548,7 @@ export function useSavingsPlans(options = {})
       ? processRidersForAPI(options.riders)
       : processRidersForAPI(ridersData.value);
 
+    console.log('processedRiders', processedRiders);
     const apiPayload = buildPlanPayload(
       {
         quoteUUID: quoteUuid,

@@ -3,7 +3,6 @@
 namespace App\Services\Quotes;
 
 use App\Enums\CustomerTypeEnum;
-use App\Enums\EnvEnum;
 use App\Enums\GenderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -19,6 +18,7 @@ use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Models\RiderOption;
 use App\Models\SavingsQuote;
 use App\Services\BranchAssignmentService;
 use App\Services\HttpRequestService;
@@ -773,7 +773,7 @@ class SavingsQuoteService extends BaseQuoteService
             'quote_uuid' => $quoteUuId,
             'update' => $savingsPlanData['update'],
             'plans_count' => $savingsPlanData['plans'] ?? [],
-             'url' => strval(request()->url()),
+            'url' => strval(request()->url()),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
             'userId' => strval(Auth::id()),
@@ -829,11 +829,11 @@ class SavingsQuoteService extends BaseQuoteService
      */
     public function getRiders($planId)
     {
-        return \App\Models\RiderOption::where('plan_id', $planId)
+        return RiderOption::where('plan_id', $planId)
+            ->active()
+            ->whereHas('rider', fn ($q) => $q->active())
             ->select('id', 'rider_id', 'plan_id', 'input_required', 'input_type', 'max_age', 'cover_type')
-            ->with(['rider' => function ($query) {
-                $query->select('id', 'text', 'code');
-            }])
+            ->with(['rider' => fn ($q) => $q->select('id', 'text', 'code')->active()])
             ->get();
     }
 
