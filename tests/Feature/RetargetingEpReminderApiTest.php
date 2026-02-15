@@ -1,20 +1,12 @@
 <?php
 
 use App\Enums\QuoteTypeId;
-use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $testData = RetargetingEpReminderTestDataHelper::setupTestData();
-    $this->carQuote = $testData['carQuote'];
-    $this->quoteId = $testData['quoteId'];
-    $this->quoteUuid = $testData['quoteUuid'];
-    $this->quoteCode = $testData['quoteCode'];
-    $this->epMDXTransaction = $testData['epMDXTransaction'];
-
     $this->withoutMiddleware(\App\Http\Middleware\BasicAuth::class);
 });
 
@@ -35,35 +27,53 @@ describe('GET /api/get-ep-workflow-data', function () {
             ]);
         });
 
-        test('quoteTypeId is not Car', function () {
-            $response = $this->getJson(route('get.ep-workflow-data', [
-                'quoteId' => $this->quoteId,
-                'quoteTypeId' => QuoteTypeId::Home,
-                'embeddedTransactionCode' => $this->epMDXTransaction->code,
-            ]));
+        describe('with valid quote and embedded transaction', function () {
+            $validationGroupData = null;
 
-            $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-            $response->assertJsonValidationErrors(['quoteTypeId']);
-        });
+            beforeEach(function () use (&$validationGroupData) {
+                if ($validationGroupData === null) {
+                    $validationGroupData = RetargetingEpReminderTestDataHelper::setupTestData();
+                }
+                $this->data = $validationGroupData;
+            });
 
-        test('quoteId does not exist', function () {
-            $response = $this->getJson(route('get.ep-workflow-data', [
-                'quoteId' => 999999,
-                'quoteTypeId' => QuoteTypeId::Car,
-                'embeddedTransactionCode' => $this->epMDXTransaction->code,
-            ]));
+            test('quoteTypeId is not Car', function () {
+                $data = $this->data;
+                $response = $this->getJson(route('get.ep-workflow-data', [
+                    'quoteId' => $data['quoteId'],
+                    'quoteTypeId' => QuoteTypeId::Home,
+                    'embeddedTransactionCode' => $data['epMDXTransaction']->code,
+                ]));
 
-            $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-            $response->assertJsonValidationErrors(['quoteId']);
+                $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+                $response->assertJsonValidationErrors(['quoteTypeId']);
+            });
+
+            test('quoteId does not exist', function () {
+                $data = $this->data;
+                $response = $this->getJson(route('get.ep-workflow-data', [
+                    'quoteId' => 999999,
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'embeddedTransactionCode' => $data['epMDXTransaction']->code,
+                ]));
+
+                $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+                $response->assertJsonValidationErrors(['quoteId']);
+            });
         });
     });
 
     describe('returns 404 Not Found', function () {
+        beforeEach(function () {
+            $this->data = RetargetingEpReminderTestDataHelper::setupTestData();
+        });
+
         test('due to quote is not booked', function () {
+            $data = $this->data;
             $response = $this->getJson(route('get.ep-workflow-data', [
-                'quoteId' => $this->quoteId,
+                'quoteId' => $data['quoteId'],
                 'quoteTypeId' => QuoteTypeId::Car,
-                'embeddedTransactionCode' => $this->epMDXTransaction->code,
+                'embeddedTransactionCode' => $data['epMDXTransaction']->code,
             ]));
 
             $response->assertStatus(Response::HTTP_NOT_FOUND);
@@ -75,27 +85,21 @@ describe('GET /api/get-ep-workflow-data', function () {
     });
 
     describe('returns 200 OK', function () {
-        test('returns 200 with data when service returns retargeting reminder data', function () {
-            $payload = [
-                'quote' => ['id' => $this->quoteId, 'uuid' => $this->quoteUuid],
-                'embeddedTransaction' => (object) ['code' => $this->epMDXTransaction->code],
-                'emailWorkflowData' => ['templateId' => 'templateId-1', 'buyNowUrl' => 'https://example.com'],
-            ];
+        $successGroupData = null;
 
-            $this->mock(EmbeddedTransactionService::class, function ($mock) use ($payload) {
-                $mock->shouldReceive('getEpRetargetingReminderData')
-                    ->once()
-                    ->andReturn(response()->json([
-                        'data' => $payload,
-                        'message' => 'Retargeting EP Reminder data',
-                        'status' => Response::HTTP_OK,
-                    ], Response::HTTP_OK));
-            });
+        beforeEach(function () use (&$successGroupData) {
+            if ($successGroupData === null) {
+                $successGroupData = RetargetingEpReminderTestDataHelper::setupTestDataForApiSuccess();
+            }
+            $this->data = $successGroupData;
+        });
 
+        test('returns 200 with retargeting reminder data from actual flow', function () {
+            $data = $this->data;
             $response = $this->getJson(route('get.ep-workflow-data', [
-                'quoteId' => $this->quoteId,
+                'quoteId' => $data['quoteId'],
                 'quoteTypeId' => QuoteTypeId::Car,
-                'embeddedTransactionCode' => $this->epMDXTransaction->code,
+                'embeddedTransactionCode' => $data['epMDXTransaction']->code,
             ]));
 
             $response->assertStatus(Response::HTTP_OK);
@@ -103,11 +107,21 @@ describe('GET /api/get-ep-workflow-data', function () {
                 'message' => 'Retargeting EP Reminder data',
                 'status' => Response::HTTP_OK,
             ]);
-            $response->assertJsonPath('data.quote.id', $this->quoteId);
-            $response->assertJsonPath('data.quote.uuid', $this->quoteUuid);
-            $response->assertJsonPath('data.embeddedTransaction.code', $this->epMDXTransaction->code);
-            $response->assertJsonPath('data.emailWorkflowData.templateId', 'templateId-1');
-            $response->assertJsonPath('data.emailWorkflowData.buyNowUrl', 'https://example.com');
+            $response->assertJsonPath('data.quote.id', $data['quoteId']);
+            $response->assertJsonPath('data.quote.uuid', $data['quoteUuid']);
+            $response->assertJsonPath('data.embeddedTransaction.code', $data['epMDXTransaction']->code);
+            $response->assertJsonPath('data.emailWorkflowData.customerEmail', $data['carQuote']->email);
+            $response->assertJsonPath('data.emailWorkflowData.customerName', $data['carQuote']->full_name);
+            $response->assertJsonPath('data.emailWorkflowData.epShortCode', $data['epMDX']->short_code);
+            $response->assertJsonPath('data.emailWorkflowData.vehicleMake', $data['carMake']->text);
+            $response->assertJsonPath('data.emailWorkflowData.vehicleModel', $data['carModel']->text);
+
+            $buyNowUrl = $response->json('data.emailWorkflowData.buyNowUrl');
+            expect($buyNowUrl)->toContain($data['quoteUuid'])
+                ->and($buyNowUrl)->toContain('/payment/')
+                ->and($buyNowUrl)->toContain('planId='.$data['carPlan']->id)
+                ->and($buyNowUrl)->toContain('providerCode='.$data['insuranceProvider']->code)
+                ->and($buyNowUrl)->toContain('selectEpShortCode='.$data['epMDX']->short_code);
         });
     });
 });

@@ -19,12 +19,11 @@ use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
     $this->quoteUuid = 'RETARGET003';
     $this->quoteCode = 'CAR-RETARGET003';
     $this->quoteId = 3;
     $this->embeddedTransactionCode = 'MDX-CAR-RETARGET003';
-
-    TestSchemaCreator::createMinimalSchema();
     $this->dummyBirdEpWorkflowUrl = 'https://test-bird.example/ep-reminder/invoke-sync';
     DB::table('application_storage')->updateOrInsert(
         ['key_name' => ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL],

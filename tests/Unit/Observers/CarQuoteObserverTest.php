@@ -10,22 +10,29 @@ use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
 
+$observerGroupData = null;
+
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $testData = RetargetingEpReminderTestDataHelper::setupTestData();
-    $this->carQuote = $testData['carQuote'];
-    $this->quoteId = $testData['quoteId'];
-    $this->quoteUuid = $testData['quoteUuid'];
-    $this->quoteCode = $testData['quoteCode'];
-    $this->epMDXTransaction = $testData['epMDXTransaction'];
 });
 
 afterEach(function () {
     Mockery::close();
 });
 
-describe('CarQuoteObserver', function () {
-    describe('PolicyBooked – retarget EP reminder', function () {
+describe('CarQuoteObserver', function () use (&$observerGroupData) {
+    describe('PolicyBooked – retarget EP reminder', function () use (&$observerGroupData) {
+        beforeEach(function () use (&$observerGroupData) {
+            if ($observerGroupData === null) {
+                $observerGroupData = RetargetingEpReminderTestDataHelper::setupTestData();
+            }
+            $this->carQuote = $observerGroupData['carQuote'];
+            $this->quoteId = $observerGroupData['quoteId'];
+            $this->quoteUuid = $observerGroupData['quoteUuid'];
+            $this->quoteCode = $observerGroupData['quoteCode'];
+            $this->epMDXTransaction = $observerGroupData['epMDXTransaction'];
+        });
+
         test('retargetEpReminder is called with the lead and QuoteTypeId Car', function () {
             $this->mock(EmbeddedTransactionService::class, function ($mock) {
                 $mock->shouldReceive('isRetargetingEpReminderEnabled')
