@@ -43,7 +43,16 @@ class EmbeddedTransactionService extends BaseService
 
     public function retargetEpReminder(CarQuote $quote, int $quoteTypeId)
     {
-        $epTransactions = $this->embeddedTransactionRepo->getDraftEpTransactions($quote->id, $quoteTypeId, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS);
+        $epTransactions = $this->embeddedTransactionRepo
+            ->fetchFilterEpTransactions(
+                $quote->id,
+                $quoteTypeId,
+                isActive: true,
+                paymentStatusId: PaymentStatusEnum::DRAFT,
+                quoteStatusId: QuoteStatusEnum::PolicyBooked,
+                epShortCode: EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS,
+            );
+
         if ($epTransactions->isEmpty()) {
             LoggerService::info('retargetEpReminder: Record not found', extra: ['quoteId' => $quote->id, 'quoteTypeId' => $quoteTypeId]);
 
@@ -86,9 +95,9 @@ class EmbeddedTransactionService extends BaseService
         }
 
         $getRetargetingEpReminderUrl = route('get.ep-workflow-data', [
-            'quoteId' => $quote->id, 
-            'quoteTypeId' => $quoteTypeId, 
-            'embeddedTransactionCode' => $epTransaction->code
+            'quoteId' => $quote->id,
+            'quoteTypeId' => $quoteTypeId,
+            'embeddedTransactionCode' => $epTransaction->code,
         ]);
 
         $birdEmailData = [
@@ -109,12 +118,13 @@ class EmbeddedTransactionService extends BaseService
 
     public function getEpRetargetingReminderData(string $embeddedTransactionCode): JsonResponse
     {
-        $embeddedTransaction = $this->embeddedTransactionRepo->fetchFindEmbededTransactionWithDetails(
-            $embeddedTransactionCode,
-            QuoteStatusEnum::PolicyBooked,
-            PaymentStatusEnum::DRAFT,
-            isActive: true,
-        );
+        $embeddedTransaction = $this->embeddedTransactionRepo
+            ->fetchFindEmbededTransactionWithDetails(
+                $embeddedTransactionCode,
+                isActive: true,
+                paymentStatusId: PaymentStatusEnum::DRAFT,
+                quoteStatusId: QuoteStatusEnum::PolicyBooked,
+            );
         $quote = $embeddedTransaction?->quoteRequest ?? null;
 
         if (empty($embeddedTransaction) || empty($quote)) {

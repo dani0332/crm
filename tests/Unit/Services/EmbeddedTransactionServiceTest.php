@@ -109,9 +109,9 @@ describe('getEpRetargetingReminderData', function () {
                     ->once()
                     ->with(
                         $this->embeddedTransactionCode,
-                        QuoteStatusEnum::PolicyBooked,
+                        true,
                         PaymentStatusEnum::DRAFT,
-                        true
+                        QuoteStatusEnum::PolicyBooked
                     )
                     ->andReturn(null);
             });
@@ -133,9 +133,9 @@ describe('getEpRetargetingReminderData', function () {
                     ->once()
                     ->with(
                         $this->embeddedTransactionCode,
-                        QuoteStatusEnum::PolicyBooked,
+                        true,
                         PaymentStatusEnum::DRAFT,
-                        true
+                        QuoteStatusEnum::PolicyBooked
                     )
                     ->andReturn($mockData);
             });
@@ -180,9 +180,9 @@ describe('getEpRetargetingReminderData', function () {
                     ->once()
                     ->with(
                         $embeddedTransactionCode,
-                        QuoteStatusEnum::PolicyBooked,
+                        true,
                         PaymentStatusEnum::DRAFT,
-                        true
+                        QuoteStatusEnum::PolicyBooked
                     )
                     ->andReturn($mockData);
             });
@@ -216,9 +216,9 @@ describe('getEpRetargetingReminderData', function () {
                     ->once()
                     ->with(
                         $this->embeddedTransactionCode,
-                        QuoteStatusEnum::PolicyBooked,
+                        true,
                         PaymentStatusEnum::DRAFT,
-                        true
+                        QuoteStatusEnum::PolicyBooked
                     )
                     ->andReturn($mockData);
             });
@@ -243,9 +243,9 @@ describe('retargetEpReminder', function () {
     describe('reminder not triggered', function () {
         test('return empty array due to reminderable et not exists', function () {
             $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-            $repoMock->shouldReceive('getDraftEpTransactions')
+            $repoMock->shouldReceive('fetchFilterEpTransactions')
                 ->once()
-                ->with($this->quoteId, QuoteTypeId::Car, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
+                ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
                 ->andReturn(collect([]));
 
             $quote = Mockery::mock(CarQuote::class)->makePartial();
@@ -270,9 +270,9 @@ describe('retargetEpReminder', function () {
             $epTransactions = collect([$epTransaction1, $epTransaction2, $epTransaction3]);
 
             $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-            $repoMock->shouldReceive('getDraftEpTransactions')
+            $repoMock->shouldReceive('fetchFilterEpTransactions')
                 ->once()
-                ->with($this->quoteId, QuoteTypeId::Car, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
+                ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
                 ->andReturn($epTransactions);
 
             $workflowUrl = 'https://test-bird.example/ep-reminder/invoke-sync';
@@ -324,9 +324,9 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
         $epTransaction->code = 'MDX-'.$this->quoteCode;
 
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $repoMock->shouldReceive('getDraftEpTransactions')
+        $repoMock->shouldReceive('fetchFilterEpTransactions')
             ->once()
-            ->with($this->quoteId, QuoteTypeId::Car, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
+            ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
             ->andReturn(collect([$epTransaction]));
 
         $workflowUrl = 'https://api.bird.com/workspaces/invoke-sync';
@@ -361,9 +361,9 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
         $epTransaction->code = $this->embeddedTransactionCode;
 
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $repoMock->shouldReceive('getDraftEpTransactions')
+        $repoMock->shouldReceive('fetchFilterEpTransactions')
             ->once()
-            ->with($this->quoteId, QuoteTypeId::Car, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
+            ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
             ->andReturn(collect([$epTransaction]));
 
         $workflowUrl = 'https://test-bird.example/invoke-sync';

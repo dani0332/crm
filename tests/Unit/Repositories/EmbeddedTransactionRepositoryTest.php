@@ -23,11 +23,18 @@ describe('EmbeddedTransactionRepository', function () {
         });
     });
 
-    describe('getDraftEpTransactions', function () {
+    describe('fetchFilterEpTransactions', function () {
         test('returns empty collection when ep short codes array is empty', function () {
             $data = RetargetingEpReminderTestDataHelper::setupRepositoryTestData();
 
-            $result = $this->repository->getDraftEpTransactions($data->carQuotePolicyBooked->id, QuoteTypeId::Car, []);
+            $result = $this->repository->fetchFilterEpTransactions(
+                $data->carQuotePolicyBooked->id,
+                QuoteTypeId::Car,
+                null,
+                null,
+                null,
+                []
+            );
 
             expect($result)->toBeInstanceOf(\Illuminate\Support\Collection::class)
                 ->and($result->isEmpty())->toBeTrue();
@@ -36,10 +43,24 @@ describe('EmbeddedTransactionRepository', function () {
         test('returns only allowed-reminder-ep draft transactions those quote-status is policy booked', function () {
             $data = RetargetingEpReminderTestDataHelper::setupRepositoryTestData();
 
-            $firstTestResult = $this->repository->getDraftEpTransactions($data->carQuotePolicyIssued->id, QuoteTypeId::Car, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB]);
+            $firstTestResult = $this->repository->fetchFilterEpTransactions(
+                $data->carQuotePolicyIssued->id,
+                QuoteTypeId::Car,
+                true,
+                PaymentStatusEnum::DRAFT,
+                QuoteStatusEnum::PolicyBooked,
+                [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB]
+            );
             expect($firstTestResult)->toHaveCount(0);
 
-            $secondTestResult = $this->repository->getDraftEpTransactions($data->carQuotePolicyBooked->id, QuoteTypeId::Car, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB]);
+            $secondTestResult = $this->repository->fetchFilterEpTransactions(
+                $data->carQuotePolicyBooked->id,
+                QuoteTypeId::Car,
+                true,
+                PaymentStatusEnum::DRAFT,
+                QuoteStatusEnum::PolicyBooked,
+                [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB]
+            );
             expect($secondTestResult)->toHaveCount(2);
             expect($secondTestResult->pluck('id')->all())->toContain($data->validTransaction->id, $data->epECBTransaction->id);
         });
@@ -84,7 +105,7 @@ describe('EmbeddedTransactionRepository', function () {
 
             $data = $this->data;
             $data->validTransaction->update(['is_active' => $setTransactionIsActive]);
-            $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID', $quoteStatusId, $paymentStatusId, $isActive);
+            $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID', $isActive, $paymentStatusId, $quoteStatusId);
 
             if ($expectNull) {
                 expect($result)->toBeNull();
@@ -113,7 +134,7 @@ describe('EmbeddedTransactionRepository', function () {
 
         test('returns only selected attributes on the transaction', function () {
             $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID');
-            expect($result->getAttributes())->toHaveKeys(['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id'])
+            expect($result->getAttributes())->toHaveKeys(['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'is_active', 'payment_status_id', 'product_id'])
                 ->and(array_key_exists('policy_status', $result->getAttributes()))->toBeFalse();
         });
     });

@@ -168,4 +168,29 @@ class EmbeddedTransaction extends Model
     {
         return $this->sage_status_id ? SageEmbeddedProductEnum::getStatusById($this->sage_status_id) : null;
     }
+
+    public function scopeIsActive($query, bool $isActive)
+    {
+        return $query->where('is_active', $isActive);
+    }
+
+    public function scopeEpShortCode($query, string|array $epShortCode)
+    {
+        return $query
+            ->when(is_string($epShortCode),
+                fn ($q) => $q->whereHas('product.embeddedProduct',
+                    fn ($q) => $q->where('short_code', $epShortCode)
+                )
+            )
+            ->when(is_array($epShortCode),
+                fn ($q) => $q->whereHas('product.embeddedProduct',
+                    fn ($q) => $q->whereIn('short_code', $epShortCode)
+                )
+            );
+    }
+
+    public function scopeQuoteRequestStatusId($query, int $quoteStatusId)
+    {
+        return $query->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', $quoteStatusId));
+    }
 }

@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Models\EmbeddedTransaction;
 use Illuminate\Support\Collection;
 
@@ -37,19 +36,21 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->get();
     }
 
-    public function getDraftEpTransactions($quoteId, $quoteTypeId, $epShortCodes = []): Collection
+    public function fetchFilterEpTransactions($quoteId, $quoteTypeId, ?bool $isActive = null, ?int $paymentStatusId = null, ?int $quoteStatusId = null, string|array|null $epShortCode = null): Collection
     {
         return $this->with('product:id,embedded_product_id', 'product.embeddedProduct:id,short_code')
-            ->select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'payment_status_id', 'product_id', 'policy_status')
-            ->where(['quote_request_id' => $quoteId, 'quote_type_id' => $quoteTypeId, 'payment_status_id' => PaymentStatusEnum::DRAFT])
-            ->whereHas('product.embeddedProduct', fn ($q) => $q->whereIn('short_code', $epShortCodes))
-            ->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', QuoteStatusEnum::PolicyBooked))
+            ->select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'is_active', 'payment_status_id', 'product_id', 'policy_status')
+            ->where(['quote_request_id' => $quoteId, 'quote_type_id' => $quoteTypeId])
+            ->when($isActive !== null, fn ($q) => $q->IsActive($isActive))
+            ->when($paymentStatusId, fn ($q) => $q->where('payment_status_id', $paymentStatusId))
+            ->when($quoteStatusId, fn ($q) => $q->quoteRequestStatusId($quoteStatusId))
+            ->when($epShortCode !== null, fn ($q) => $q->epShortCode($epShortCode))
             ->get();
     }
 
-    public function fetchFindEmbededTransactionWithDetails(string $embeddedTransactionCode, ?int $quoteStatusId = null, ?int $paymentStatusId = null, ?bool $isActive = null)
+    public function fetchFindEmbededTransactionWithDetails(string $embeddedTransactionCode, ?bool $isActive = null, ?int $paymentStatusId = null, ?int $quoteStatusId = null)
     {
-        return EmbeddedTransaction::select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'is_active', 'payment_status_id', 'product_id')
+        return $this->select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'is_active', 'payment_status_id', 'product_id')
             ->with(
                 'product:id,embedded_product_id',
                 'product.embeddedProduct:id,short_code',
@@ -61,9 +62,9 @@ class EmbeddedTransactionRepository extends BaseRepository
                 'quoteRequest.plan.insuranceProvider:id,code',
             )
             ->where('code', $embeddedTransactionCode)
-            ->when(isset($isActive), fn ($q) => $q->where('is_active', $isActive))
+            ->when($isActive !== null, fn ($q) => $q->IsActive($isActive))
             ->when($paymentStatusId, fn ($q) => $q->where('payment_status_id', $paymentStatusId))
-            ->when($quoteStatusId, fn ($q) => $q->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', $quoteStatusId)))
+            ->when($quoteStatusId, fn ($q) => $q->quoteRequestStatusId($quoteStatusId))
             ->first();
     }
 }
