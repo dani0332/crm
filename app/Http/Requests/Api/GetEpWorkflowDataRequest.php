@@ -3,9 +3,10 @@
 namespace App\Http\Requests\Api;
 
 use App\Enums\QuoteTypeId;
+use App\Enums\WorkflowTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
-class GetRetargetingEpReminderRequest extends FormRequest
+class GetEpWorkflowDataRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -85,7 +85,11 @@ class EmbeddedTransactionService extends BaseService
             return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Bird EP Reminder Workflow URL not found'];
         }
 
-        $getRetargetingEpReminderUrl = route('get.retargeting-ep-reminder', ['quoteId' => $quote->id, 'quoteTypeId' => $quoteTypeId, 'embeddedTransactionCode' => $epTransaction->code]);
+        $getRetargetingEpReminderUrl = route('get.ep-workflow-data', [
+            'quoteId' => $quote->id, 
+            'quoteTypeId' => $quoteTypeId, 
+            'embeddedTransactionCode' => $epTransaction->code
+        ]);
 
         $birdEmailData = [
             'quoteId' => $quote->id,

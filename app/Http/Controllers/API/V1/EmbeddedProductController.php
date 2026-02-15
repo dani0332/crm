@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\GetRetargetingEpReminderRequest;
+use App\Http\Requests\Api\GetEpWorkflowDataRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Jobs\AddressReminderJob;
 use App\Jobs\EP\SendEPJob;
@@ -47,7 +47,7 @@ class EmbeddedProductController extends Controller
         return apiResponse(null, Response::HTTP_OK, '');
     }
 
-    public function getRetargetingEpReminderData(GetRetargetingEpReminderRequest $request): JsonResponse
+    public function getEpWorkflowData(GetEpWorkflowDataRequest $request): JsonResponse
     {
         return $this->embeddedTransactionService
             ->getEpRetargetingReminderData($request->embeddedTransactionCode);

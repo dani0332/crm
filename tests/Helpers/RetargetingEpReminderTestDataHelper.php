@@ -83,7 +83,7 @@ class RetargetingEpReminderTestDataHelper
     }
 
     /**
-     * Set up test data for API and observer tests (get-retargeting-ep-reminder, CarQuoteObserver).
+     * Set up test data for API and observer tests (get-ep-workflow-data, CarQuoteObserver).
      * Creates insurance provider, car plan, car quote (PolicyIssued), and one MDX embedded transaction.
      *
      * @return array{

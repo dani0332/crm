@@ -22,10 +22,10 @@ afterEach(function () {
     Mockery::close();
 });
 
-describe('GET /api/get-retargeting-ep-reminder', function () {
+describe('GET /api/get-ep-workflow-data', function () {
     describe('returns 422 Validation', function () {
         test('missing required fields', function () {
-            $response = $this->getJson(route('get.retargeting-ep-reminder', []));
+            $response = $this->getJson(route('get.ep-workflow-data', []));
 
             $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
             $response->assertJsonValidationErrors([
@@ -36,7 +36,7 @@ describe('GET /api/get-retargeting-ep-reminder', function () {
         });
 
         test('quoteTypeId is not Car', function () {
-            $response = $this->getJson(route('get.retargeting-ep-reminder', [
+            $response = $this->getJson(route('get.ep-workflow-data', [
                 'quoteId' => $this->quoteId,
                 'quoteTypeId' => QuoteTypeId::Home,
                 'embeddedTransactionCode' => $this->epMDXTransaction->code,
@@ -47,7 +47,7 @@ describe('GET /api/get-retargeting-ep-reminder', function () {
         });
 
         test('quoteId does not exist', function () {
-            $response = $this->getJson(route('get.retargeting-ep-reminder', [
+            $response = $this->getJson(route('get.ep-workflow-data', [
                 'quoteId' => 999999,
                 'quoteTypeId' => QuoteTypeId::Car,
                 'embeddedTransactionCode' => $this->epMDXTransaction->code,
@@ -60,7 +60,7 @@ describe('GET /api/get-retargeting-ep-reminder', function () {
 
     describe('returns 404 Not Found', function () {
         test('due to quote is not booked', function () {
-            $response = $this->getJson(route('get.retargeting-ep-reminder', [
+            $response = $this->getJson(route('get.ep-workflow-data', [
                 'quoteId' => $this->quoteId,
                 'quoteTypeId' => QuoteTypeId::Car,
                 'embeddedTransactionCode' => $this->epMDXTransaction->code,
@@ -92,7 +92,7 @@ describe('GET /api/get-retargeting-ep-reminder', function () {
                     ], Response::HTTP_OK));
             });
 
-            $response = $this->getJson(route('get.retargeting-ep-reminder', [
+            $response = $this->getJson(route('get.ep-workflow-data', [
                 'quoteId' => $this->quoteId,
                 'quoteTypeId' => QuoteTypeId::Car,
                 'embeddedTransactionCode' => $this->epMDXTransaction->code,
