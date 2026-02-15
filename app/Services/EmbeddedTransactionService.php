@@ -30,15 +30,7 @@ class EmbeddedTransactionService extends BaseService
 
     public function isRetargetingEpReminderEnabled(): bool
     {
-        return (bool) $this->getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER);
-    }
-    public function getAppStorageValueByKey(string $appStorageKeyName): string|bool
-    {
-        return match ($appStorageKeyName) {
-            ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL => getAppStorageValueByKey($appStorageKeyName, useCache: true, cacheTime: 120),
-            ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER => getAppStorageValueByKey($appStorageKeyName),
-            default => false,
-        };
+        return (bool) getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER);
     }
 
     public function retargetEpReminder(CarQuote $quote, int $quoteTypeId)
@@ -89,7 +81,7 @@ class EmbeddedTransactionService extends BaseService
      */
     protected function triggerBirdWorkflowRetargetEpReminder(CarQuote $quote, int $quoteTypeId, EmbeddedTransaction $epTransaction)
     {
-        $birdWorkflowUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL);
+        $birdWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL, useCache: true);
         if (empty($birdWorkflowUrl)) {
             return (object) ['status_code' => Response::HTTP_NOT_FOUND, 'message' => 'Bird EP Reminder Workflow URL not found'];
         }

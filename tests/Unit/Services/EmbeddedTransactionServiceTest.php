@@ -14,6 +14,7 @@ use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\BirdService;
 use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -22,6 +23,13 @@ beforeEach(function () {
     $this->quoteCode = 'CAR-RETARGET003';
     $this->quoteId = 3;
     $this->embeddedTransactionCode = 'MDX-CAR-RETARGET003';
+
+    TestSchemaCreator::createMinimalSchema();
+    $this->dummyBirdEpWorkflowUrl = 'https://test-bird.example/ep-reminder/invoke-sync';
+    DB::table('application_storage')->updateOrInsert(
+        ['key_name' => ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL],
+        ['value' => $this->dummyBirdEpWorkflowUrl, 'created_at' => now(), 'updated_at' => now()]
+    );
 });
 
 afterEach(function () {
@@ -160,7 +168,6 @@ describe('getEpRetargetingReminderData', function () {
 
     describe('return 200', function () {
         test('successfully returns data', function () {
-            TestSchemaCreator::createMinimalSchema();
             $data = RetargetingEpReminderTestDataHelper::setupTestData();
 
             $quoteId = $data['quoteId'];
@@ -208,7 +215,6 @@ describe('getEpRetargetingReminderData', function () {
         });
 
         test('success with missing any optional field', function (array $overrides, ?string $expectedAdvisorEmail) {
-            TestSchemaCreator::createMinimalSchema();
             $mockData = getEpRetargetingReminderDataMock($overrides);
 
             $this->mock(EmbeddedTransactionRepository::class, function ($mock) use ($mockData) {
@@ -275,12 +281,11 @@ describe('retargetEpReminder', function () {
                 ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
                 ->andReturn($epTransactions);
 
-            $workflowUrl = 'https://test-bird.example/ep-reminder/invoke-sync';
             $callCount = 0;
-            $this->mock(BirdService::class, function ($mock) use ($workflowUrl, &$callCount) {
+            $this->mock(BirdService::class, function ($mock) use (&$callCount) {
                 $mock->shouldReceive('triggerWebHookRequest')
                     ->twice()
-                    ->with($workflowUrl, Mockery::type('object'))
+                    ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
                     ->andReturnUsing(function () use (&$callCount) {
                         $callCount++;
                         if ($callCount === 2) {
@@ -291,10 +296,7 @@ describe('retargetEpReminder', function () {
                     });
             });
 
-            $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
-            $service->shouldReceive('getAppStorageValueByKey')
-                ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
-                ->andReturn($workflowUrl);
+            $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
 
             $quote = Mockery::mock(CarQuote::class)->makePartial();
             $quote->id = $this->quoteId;
@@ -329,18 +331,14 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
             ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
             ->andReturn(collect([$epTransaction]));
 
-        $workflowUrl = 'https://api.bird.com/workspaces/invoke-sync';
-        $this->mock(BirdService::class, function ($mock) use ($workflowUrl) {
+        $this->mock(BirdService::class, function ($mock) {
             $mock->shouldReceive('triggerWebHookRequest')
                 ->once()
-                ->with($workflowUrl, Mockery::type('object'))
+                ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
                 ->andReturn((object) ['status_code' => Response::HTTP_NOT_FOUND, 'body' => `{"code":"NotFound","message":"The resource doesn't exist or you don't have access to it."}`]);
         });
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
-        $service->shouldReceive('getAppStorageValueByKey')
-            ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
-            ->andReturn($workflowUrl);
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
@@ -366,12 +364,11 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
             ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
             ->andReturn(collect([$epTransaction]));
 
-        $workflowUrl = 'https://test-bird.example/invoke-sync';
         $capturedData = null;
-        $this->mock(BirdService::class, function ($mock) use ($workflowUrl, &$capturedData) {
+        $this->mock(BirdService::class, function ($mock) use (&$capturedData) {
             $mock->shouldReceive('triggerWebHookRequest')
                 ->once()
-                ->with($workflowUrl, Mockery::on(function ($data) use (&$capturedData) {
+                ->with($this->dummyBirdEpWorkflowUrl, Mockery::on(function ($data) use (&$capturedData) {
                     $capturedData = $data;
 
                     return true;
@@ -379,10 +376,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
                 ->andReturn((object) ['status_code' => Response::HTTP_OK, 'message' => 'OK']);
         });
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
-        $service->shouldReceive('getAppStorageValueByKey')
-            ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
-            ->andReturn($workflowUrl);
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
@@ -422,11 +416,12 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
         $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
         $epTransaction->code = $this->embeddedTransactionCode;
 
+        DB::table('application_storage')
+            ->where('key_name', ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
+            ->update(['value' => '']);
+
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
-        $service->shouldReceive('getAppStorageValueByKey')
-            ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
-            ->andReturn('');
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
@@ -444,18 +439,14 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
         $epTransaction->code = $this->embeddedTransactionCode;
 
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $workflowUrl = 'https://test-bird.example/invoke-sync';
-        $this->mock(BirdService::class, function ($mock) use ($workflowUrl) {
+        $this->mock(BirdService::class, function ($mock) {
             $mock->shouldReceive('triggerWebHookRequest')
                 ->once()
-                ->with($workflowUrl, Mockery::type('object'))
+                ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
                 ->andReturn((object) ['status_code' => Response::HTTP_OK]);
         });
 
-        $service = Mockery::mock(EmbeddedTransactionServiceTestDouble::class, [$repoMock, app(BirdService::class)])->makePartial();
-        $service->shouldReceive('getAppStorageValueByKey')
-            ->with(ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
-            ->andReturn($workflowUrl);
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
