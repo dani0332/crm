@@ -730,6 +730,8 @@ class SavingsQuoteService extends BaseQuoteService
         // Process each plan in the payload
         foreach ($payload['plans'] ?? [] as $plan) {
             $processedPlan = [
+                'actualPremium' => (float) ($plan['actualPremium'] ?? 0),
+                'discountPremium' => (float) ($plan['discountPremium'] ?? 0),
                 'planId' => (int) ($plan['planId'] ?? 0),
                 'isDisabled' => (bool) ($plan['isDisabled'] ?? false),
                 'isManualUpdate' => (bool) ($plan['isManualUpdate'] ?? true),
