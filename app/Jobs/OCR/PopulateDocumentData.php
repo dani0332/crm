@@ -21,9 +21,9 @@ class PopulateDocumentData implements ShouldQueue
 {
     use Batchable, Queueable;
 
-    public $tries = 1;
+    public $tries = 2;
     public $timeout = 100;
-    public $backoff = 300;
+    public $backoff = 3;
     protected bool $isEcom = false;
 
     /**
