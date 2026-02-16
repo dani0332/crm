@@ -1844,9 +1844,6 @@ class AMLService
                 CustomerInsured::forQuote($quoteTypeId, $quote->id)
                     ->update(['is_active' => false]);
 
-                // Activate the orphaned record directly
-                // We must update the orphaned record directly because updateOrCreate would not match it
-                // (the orphaned record has NULL quote fields, so searching by non-null quote fields won't find it)
                 $orphanedRecord->update([
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
@@ -1880,7 +1877,6 @@ class AMLService
                 $isCustomerInsuredAssociationUpdated = true;
 
                 // Use createOrUpdateActive to handle deactivation and update atomically
-                // Skip nested transaction since we're already in one
                 CustomerInsured::createOrUpdateActive([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
@@ -1902,7 +1898,6 @@ class AMLService
                 $isCustomerInsuredAssociationUpdated = true;
 
                 // Use createOrUpdateActive to handle deactivation and creation atomically
-                // Skip nested transaction since we're already in one
                 CustomerInsured::createOrUpdateActive([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,

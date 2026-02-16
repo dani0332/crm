@@ -405,12 +405,8 @@ class AMLController extends Controller
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
 
-            // Process insured data and update PA ID independently
-            // Each sub-function has its own transaction logic, so no outer transaction needed
-            // Exception handling for lock timeout to provide graceful error messages
             try {
                 [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteType->id, $updateQuote, $getLastScreening);
-
                 app(AMLService::class)->updatePAId([
                     'isAutomation' => $isAutomation,
                     'systemUser' => $systemUser,
@@ -421,7 +417,6 @@ class AMLController extends Controller
 
                 LoggerService::info('Completed execution of processInsuredDataForScreening in quoteUpdate');
             } catch (\Illuminate\Database\QueryException $e) {
-                // Handle lock timeout gracefully
                 if ($e->getCode() == '40001' || str_contains($e->getMessage(), 'Lock wait timeout')) {
                     LoggerService::warning('Lock timeout during AML screening process', [
                         'quote_id' => $quoteRequestId,
