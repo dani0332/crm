@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Services\Logger\LoggerService;
+use App\Services\BranchAssignmentService;
+use App\Enums\QuoteTypeId;
 
 class DeviceQuoteService extends BaseQuoteService
 {
@@ -29,12 +31,14 @@ class DeviceQuoteService extends BaseQuoteService
         $query = $this->baseQuery()->with([
             'quoteStatus',
             'advisor',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
             'renewalBatchModel',
             'nationality',
             'insuranceProviderPlan',
+            'branch:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -103,9 +107,23 @@ class DeviceQuoteService extends BaseQuoteService
         return $query->resolveData($paginted, $forExport, $getTotalCount);
     }
 
+    public function postProcessDeviceQuotes($quotes)
+    {
+        $quotes->getCollection()->transform(function ($item) {
+            $item->branch_name = !$item->is_branch_applicable
+                ? 'N/A'
+                : ($item?->branch?->name ?? app(BranchAssignmentService::class)
+                    ->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Device));
+
+            return $item;
+        });
+
+        return $quotes;
+    }
+
     public function getOne(string $uuid, $allDetails = false)
     {
-        return $this->baseQuery()
+        $quote = $this->baseQuery()
             ->with('deviceQuote')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -114,6 +132,8 @@ class DeviceQuoteService extends BaseQuoteService
                 $q->with([
                     'quoteStatus',
                     'advisor',
+                    'advisor.primaryBranch',
+                    'branch:id,name',
                     'paymentStatus',
                     'quoteDetail',
                     'quoteDetail.lostReason',
@@ -160,6 +180,10 @@ class DeviceQuoteService extends BaseQuoteService
             ");
             })
             ->where('uuid', $uuid)->firstOrFail();
+
+        $quote->branch_name = !$quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Device));
+
+        return $quote;
     }
 
     public function getShowData(string $uuid)

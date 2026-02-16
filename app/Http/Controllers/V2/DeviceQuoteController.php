@@ -42,6 +42,7 @@ class DeviceQuoteController extends Controller
         $totalCount = count(request()->all()) > 1 || $this->deviceQuoteService->hasOtherFilters() ? $query->count() :
                     $this->deviceQuoteService->getData(forExport: true, getTotalCount: true);
         $data = $query->simplePaginate(10)->withQueryString();
+        $data = $this->deviceQuoteService->postProcessDeviceQuotes($data);
 
         $deviceCoverages = $this->deviceQuoteService->getDeviceCoverages();
      
