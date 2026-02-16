@@ -6,7 +6,7 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Services\CQF\NonMotor\NonMotorCQFRenewalService;
+use App\Jobs\CQF\ProcessNonMotorCQFOrchestratorJob;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 
@@ -22,9 +22,9 @@ class ProcessNonMotorCQFRenewalLeads extends Command
         $isNonMotorCQFRenewals = getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH);
 
         if ($isNonMotorCQFRenewals) {
-            LoggerService::info('Starting process to retrieve non-motor CQF renewal leads');
-            app(NonMotorCQFRenewalService::class)->processNonMotorCQFRenewalLeads();
-            LoggerService::info('Completed process to retrieve non-motor CQF renewal leads');
+            LoggerService::info('Dispatching non-motor CQF renewal orchestrator job');
+            ProcessNonMotorCQFOrchestratorJob::dispatch();
+            LoggerService::info('Non-motor CQF renewal orchestrator job dispatched');
         } else {
             LoggerService::info('Non-motor CQF renewals switch is disabled');
         }

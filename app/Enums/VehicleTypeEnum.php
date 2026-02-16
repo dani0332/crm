@@ -17,20 +17,20 @@ enum VehicleTypeEnum: string
      * @var array<self, int>
      */
     public const IDS = [
-        self::BIKE => 13,
-        self::SPORTS_BIKE => 26,
-        self::MOTOR_CYCLE => 21,
-        self::MOTORCYCLES => 57,
+        self::BIKE->value => 13,
+        self::SPORTS_BIKE->value => 26,
+        self::MOTOR_CYCLE->value => 21,
+        self::MOTORCYCLES->value => 57,
     ];
 
     /**
      * @var array<self, string>
      */
     public const TEXTS = [
-        self::BIKE => 'BIKE',
-        self::SPORTS_BIKE => 'SPORTS BIKE',
-        self::MOTOR_CYCLE => 'MOTOR CYCLE',
-        self::MOTORCYCLES => 'Motorcycles',
+        self::BIKE->value => 'BIKE',
+        self::SPORTS_BIKE->value => 'SPORTS BIKE',
+        self::MOTOR_CYCLE->value => 'MOTOR CYCLE',
+        self::MOTORCYCLES->value => 'Motorcycles',
     ];
 
     /**
@@ -43,12 +43,12 @@ enum VehicleTypeEnum: string
 
     public function id(): int
     {
-        return self::IDS[$this];
+        return self::IDS[$this->value];
     }
 
     public function text(): string
     {
-        return self::TEXTS[$this];
+        return self::TEXTS[$this->value];
     }
 
     public static function fromId(int $id): ?self
