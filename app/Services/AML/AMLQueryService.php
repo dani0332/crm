@@ -196,11 +196,11 @@ class AMLQueryService
 
     private function determineCustomerTypeFromQuote(int $quoteTypeId, int $quoteRequestId): string
     {
-        if ($quoteTypeId === QuoteTypes::BUSINESS->id()) {
+        if ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
             return CustomerTypeEnum::EntityShort;
         }
 
-        if ($quoteTypeId === QuoteTypes::CAR->id()) {
+        if ($quoteTypeId == QuoteTypes::CAR->id()) {
             return $this->getCarQuoteCustomerType($quoteRequestId);
         }
 
