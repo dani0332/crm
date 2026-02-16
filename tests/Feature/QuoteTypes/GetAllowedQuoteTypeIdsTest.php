@@ -99,11 +99,18 @@ it('correctly checks access using advisorRoles method instead of string concaten
     expect(QuoteTypes::CAR_REVIVAL->userHasAccess($carRevivalAdvisor))->toBeTrue();
 
     // Test BUSINESS quote type (maps to multiple advisor roles)
+    $businessAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::BusinessAdvisor);
+    expect(QuoteTypes::BUSINESS->userHasAccess($businessAdvisor))->toBeTrue();
+
     $corplineAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CorpLineAdvisor);
     expect(QuoteTypes::BUSINESS->userHasAccess($corplineAdvisor))->toBeTrue();
 
     $gmAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::GMAdvisor);
     expect(QuoteTypes::BUSINESS->userHasAccess($gmAdvisor))->toBeTrue();
+
+    // Test JETSKI advisor role
+    $jetskiAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::JetskiAdvisor);
+    expect(QuoteTypes::JETSKI->userHasAccess($jetskiAdvisor))->toBeTrue();
 });
 
 it('correctly checks manager roles for quote type access', function () {
