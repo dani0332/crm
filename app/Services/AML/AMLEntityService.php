@@ -4,6 +4,7 @@ namespace App\Services\AML;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\Kyc;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CustomerInsured;
@@ -16,6 +17,7 @@ use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class AMLEntityService
 {
@@ -61,56 +63,58 @@ class AMLEntityService
             ];
         }
 
-        return DB::transaction(function () use ($quoteTypeId, $quoteRequestId, $quoteObject, $insured, $triggeredFrom) {
-            // Update insured in personal quote (new structure)
-            $this->amlService->updateInsuredInPersonalQuote($quoteTypeId, $quoteObject, $insured);
+        try {
+            return DB::transaction(function () use ($quoteTypeId, $quoteRequestId, $quoteObject, $insured, $triggeredFrom) {
+                // Update insured in personal quote (new structure)
+                $this->amlService->updateInsuredInPersonalQuote($quoteTypeId, $quoteObject, $insured);
 
-            // Link customer to insured
-            $this->linkCustomerInsured($quoteTypeId, $quoteRequestId, $quoteObject->customer_id, $insured->id);
+                // Link customer to insured
+                $this->linkCustomerInsured($quoteTypeId, $quoteRequestId, $quoteObject, $insured->id);
 
-            // Handle legacy structure migration
-            $entity = $this->handleLegacyEntityStructure(
-                $quoteTypeId,
-                $quoteRequestId,
-                $insured,
-                $triggeredFrom
-            );
+                // Handle legacy structure migration
+                $entity = $this->handleLegacyEntityStructure(
+                    $quoteTypeId,
+                    $quoteRequestId,
+                    $insured,
+                    $triggeredFrom
+                );
 
-            // TODO:: need to verify, this code comes from test branch
-            if (! $entity) {
-                LoggerService::info('Entity not found for the provided trade license number', [
-                    'id_type' => $insured->id_type,
-                    'id_number' => $insured->id_number,
-                    'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $quoteRequestId,
-                ]);
+                if (! $entity) {
+                    LoggerService::warning('Entity not found for the provided trade license number', [
+                        'id_type' => $insured->id_type,
+                        'id_number' => $insured->id_number,
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_request_id' => $quoteRequestId,
+                    ]);
 
-                DB::rollBack();
+                    throw new RuntimeException('Entity not found for the provided trade license number');
+                }
+
+                // Update car quote if applicable
+                if ($quoteTypeId == QuoteTypeId::Car) {
+                    LoggerService::info('Updating car quote company details');
+                    $this->updateCarQuoteCompanyDetails($quoteRequestId, $entity);
+                }
 
                 return [
-                    'status' => false,
-                    'response' => null,
-                    'message' => 'Entity not found for the provided trade license number',
+                    'status' => true,
+                    'response' => $entity,
+                    'message' => 'Entity Linked Successfully',
                 ];
-            }
-
-            // Update car quote if applicable
-            if ($quoteTypeId == QuoteTypeId::Car) {
-                LoggerService::info('Updating car quote company details');
-                $this->updateCarQuoteCompanyDetails($quoteRequestId, $entity);
-            }
-
+            });
+        } catch (RuntimeException $e) {
             return [
-                'status' => true,
-                'response' => $entity,
-                'message' => 'Entity Linked Successfully',
+                'status' => false,
+                'response' => null,
+                'message' => $e->getMessage(),
             ];
-        });
+        }
     }
 
-    private function linkCustomerInsured(int $quoteTypeId, int $quoteRequestId, int $customerId, int $insuredId): void
+    private function linkCustomerInsured(int $quoteTypeId, int $quoteRequestId, $quoteObject, int $insuredId): void
     {
         $isCustomerInsuredAssociationUpdated = false;
+        $customerId = $quoteObject->customer_id;
         $orphanedRecord = CustomerInsured::where('customer_id', $customerId)
             ->where('insured_id', $insuredId)
             ->whereNull('quote_type_id')
@@ -152,7 +156,7 @@ class AMLEntityService
                 ->lockForUpdate()
                 ->first();
 
-            DB::transaction(function () use ($existingQuoteMapping, $customerId, $insuredId, $quoteTypeId, $quoteRequestId, &$isCustomerInsuredAssociationUpdated) {
+            DB::transaction(function () use ($existingQuoteMapping, $customerId, $insuredId, $quoteTypeId, $quoteRequestId, $quoteObject, &$isCustomerInsuredAssociationUpdated) {
                 if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insuredId) {
                     $isCustomerInsuredAssociationUpdated = true;
 
@@ -162,6 +166,8 @@ class AMLEntityService
                         'quote_type_id' => $quoteTypeId,
                         'quote_request_id' => $quoteRequestId,
                     ]);
+
+                    $quoteObject->update(['kyc_decision' => Kyc::PENDING]);
 
                     LoggerService::info('Insured association changed for quote', extra: [
                         'old_insured_id' => $existingQuoteMapping->insured_id,
