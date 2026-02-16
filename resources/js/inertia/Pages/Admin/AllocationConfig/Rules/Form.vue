@@ -9,6 +9,7 @@ const props = defineProps({
   rulesTypeList: Object,
   quoteTypes: Object,
   leadSourcesList: Object,
+  ruleTypeEnumLeadSource: String,
 });
 const { isRequired, isNumber } = useRules();
 
@@ -97,7 +98,7 @@ const handleLeadSourceCreated = newLeadSource => {
 
 // Check if the selected rule type is "LEAD SOURCE" (id = 1)
 const isLeadSourceRuleType = computed(() => {
-  return ruleForm.rule_type === 1;
+  return ruleForm.rule_type == props.ruleTypeEnumLeadSource;
 });
 
 const selectedUsers = computed(() => {

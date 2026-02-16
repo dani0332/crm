@@ -65,6 +65,7 @@ class RulesController extends Controller
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
             'quoteTypes' => QuoteType::select('id', 'code as name')->get(),
             'leadSourcesList' => $this->getLeadSourcesList(),
+            'ruleTypeEnumLeadSource'=>RuleTypeEnum::LEAD_SOURCE,
         ]);
     }
 
@@ -120,7 +121,8 @@ class RulesController extends Controller
         $rule = Rule::with(['ruleType', 'ruleUsers', 'quoteType', 'ruleDetail.leadSource'])->findOrFail($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [
-            'rule' => $rule,
+            'rule' => $rule,    
+            'ruleTypeEnumLeadSource'=>RuleTypeEnum::LEAD_SOURCE,
         ]);
     }
 
@@ -136,6 +138,7 @@ class RulesController extends Controller
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
             'quoteTypes' => QuoteType::select('id', 'code as name')->get(),
             'leadSourcesList' => $this->getLeadSourcesList(),
+            'ruleTypeEnumLeadSource'=>RuleTypeEnum::LEAD_SOURCE,
             'rule' => $rule->load([
                 'ruleUsers',
                 'ruleType',

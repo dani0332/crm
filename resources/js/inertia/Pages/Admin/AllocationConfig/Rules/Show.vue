@@ -1,12 +1,13 @@
 <script setup>
 const props = defineProps({
   rule: Object,
+  ruleTypeEnumLeadSource: String,
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
 
 // Check if rule type is "lead source" (id = 1)
-const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id === 1);
+const isLeadSourceRuleType = computed(() => props.rule?.rule_type?.id == props.ruleTypeEnumLeadSource);
 </script>
 <template>
   <Head title="Rule Detail" />
