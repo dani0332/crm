@@ -48,11 +48,11 @@ const computedParent = computed(() => {
 
 const showCategorySelect = computed(() => {
   const parent = computedParent.value.find(
-    option => option.value === teamForm.parent_team_id
-  )
+    option => option.value === teamForm.parent_team_id,
+  );
 
-  return teamForm.type === 2 && parent?.label === 'Health'
-})
+  return teamForm.type === 2 && parent?.label === 'Health';
+});
 
 watch(
   () => teamForm.type,
