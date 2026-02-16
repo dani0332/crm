@@ -574,6 +574,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('fetch-nationalities', [BuyLeadConfigController::class, 'fetchNationalities'])->name('admin.buy-leads.config.fetch-nationalities');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
+            Route::prefix('requests')->middleware('permission:'.PermissionsEnum::BUY_LEADS_ADMIN)->group(function () {
+                Route::get('/', [\App\Http\Controllers\V2\Admin\AdminBuyLeadController::class, 'index'])->name('admin.buy-leads.requests.index');
+                Route::post('/{buyLeadRequest}/expire', [\App\Http\Controllers\V2\Admin\AdminBuyLeadController::class, 'expire'])->name('admin.buy-leads.requests.expire');
+            });
         });
 
         Route::prefix('private-client-config')->group(function () {
@@ -908,6 +912,22 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         $addBtchNuimber->handle();
         echo 'Done';
     });
+
+    // for testing env only.
+    if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
+        Route::get('/run-advisor-payment-notification', function () {
+            if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+                return response()->json(['error' => 'Not authorized'], 403);
+            }
+
+            \Illuminate\Support\Facades\Artisan::call('send-payment-email-to-advisor:cron');
+
+            return response()->json([
+                'message' => 'Advisor payment notification command executed successfully!',
+                'status' => 'completed',
+            ]);
+        });
+    }
 
     // Command to bulk send policy documents
     Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {

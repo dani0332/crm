@@ -461,6 +461,7 @@ class ReportsController extends Controller
             'advisor' => $advisor,
             'fieldDisable' => $fieldDisable,
             'leadStatuses' => $leadStatuses ?? [],
+            'quoteTypeIdEnum' => QuoteTypeId::asArray(),
         ]);
     }
 
