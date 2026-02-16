@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Strategies\EmbeddedProducts\ECB;
+use App\Strategies\EmbeddedProducts\EmbeddedProduct;
 use BenSampo\Enum\Enum;
 
 final class EmbeddedProductEnum extends Enum
@@ -19,7 +21,6 @@ final class EmbeddedProductEnum extends Enum
 
     // used in report for source
     const SRC_CAR_EMBEDDED_PRODUCT = 'CAR_EMBEDDED_PRODUCT';
-
     const CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS = [
         self::MDX,
         self::ECB,
@@ -40,5 +41,13 @@ final class EmbeddedProductEnum extends Enum
             self::MDX,
             self::RDX,
         ];
+    }
+
+    public static function getEpStrategyClass(string $epShortCode): string
+    {
+        return match ($epShortCode) {
+            self::ECB => ECB::class,
+            default => EmbeddedProduct::class,
+        };
     }
 }

@@ -129,14 +129,18 @@ class EmbeddedTransactionService extends BaseService
         $planId = $quote->plan?->id ?? null;
         $providerCode = $quote->plan?->insuranceProvider?->code ?? null;
 
+        $epStrategyClass = EmbeddedProductEnum::getEpStrategyClass($epShortCode);
+        $isEpDisabled = (new $epStrategyClass)->isDisabled($embeddedTransaction);
+
         $isEpShortCodeAllowedForReminder = in_array($epShortCode, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS);
-        if (empty($carMake) || empty($carModel) || empty($quote->email) || empty($planId) || empty($providerCode) || ! $isEpShortCodeAllowedForReminder) {
+        if (empty($quote->email) || empty($planId) || empty($providerCode) || ! $isEpShortCodeAllowedForReminder || $isEpDisabled) {
             LoggerService::info('getEpRetargetingReminderData: Not eligible for reminder', extra: [
                 'vehicleName' => "{$carMake}-{$carModel}",
                 'quote-email' => $quote->email,
                 'epShortCode' => $epShortCode,
                 'providerCode' => $providerCode,
                 'planId' => $planId,
+                'isEpDisabled' => $isEpDisabled,
             ]);
 
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Not eligible for reminder');
