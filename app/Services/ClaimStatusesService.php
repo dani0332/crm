@@ -256,29 +256,30 @@ class ClaimStatusesService extends BaseService
     public function updateClaimStatus($claimRequest, $request)
     {
         try {
-            // Prepare the status update data
-            $statusUpdateData['claim_status_id'] = $request->claim_status_id;
-            $notes = $request->notes;
+            return DB::transaction(function () use ($claimRequest, $request) {
+                // Prepare the status update data
+                $statusUpdateData['claim_status_id'] = $request->claim_status_id;
+                $notes = $request->notes;
 
-            ClaimActivity::createForClaim($claimRequest->id, $claimRequest->uuid, $request->claim_status_id, $notes);
+                ClaimActivity::createForClaim($claimRequest->id, $claimRequest->uuid, $request->claim_status_id, $notes);
 
-            // Update the claim request
-            $claimRequest->update($statusUpdateData);
+                // Update the claim request
+                $claimRequest->update($statusUpdateData);
 
-            LoggerService::info('Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
-                'code' => $claimRequest->code,
-                'updated_fields' => array_keys($statusUpdateData),
-                'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
-                'new_claim_status_id' => $claimRequest->claim_status_id,
-                'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
-                'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
-                'updated_by' => Auth::id(),
-            ]);
+                LoggerService::info('Claim status updated successfully - Claim UUID: '.$claimRequest->uuid, extra: [
+                    'claim_request_id' => $claimRequest->id,
+                    'claim_uuid' => $claimRequest->uuid,
+                    'code' => $claimRequest->code,
+                    'updated_fields' => array_keys($statusUpdateData),
+                    'old_claim_status_id' => $claimRequest->getOriginal('claim_status_id'),
+                    'new_claim_status_id' => $claimRequest->claim_status_id,
+                    'old_claim_sub_status_id' => $claimRequest->getOriginal('claim_sub_status_id'),
+                    'new_claim_sub_status_id' => $claimRequest->claim_sub_status_id,
+                    'updated_by' => Auth::id(),
+                ]);
 
-            return true;
-
+                return true;
+            });
         } catch (\Exception $e) {
             LoggerService::error(' Error updating claim status - Claim UUID: '.$claimRequest->uuid, extra: [
                 'error' => $e->getMessage(),
@@ -371,28 +372,29 @@ class ClaimStatusesService extends BaseService
     public function updateComplaintStatus(ClaimRequest $claim, ?int $complaintStatusId, ?string $complaintDatetime = null, ?string $notes = null): ClaimRequest
     {
         try {
-            // Update the claim with complaint status
-            $claim->updateComplaintStatus($complaintStatusId, $complaintDatetime, $notes);
+            return DB::transaction(function () use ($claim, $complaintStatusId, $complaintDatetime, $notes) {
+                // Update the claim with complaint status
+                $claim->updateComplaintStatus($complaintStatusId, $complaintDatetime, $notes);
 
-            // Check if complaint status has changed to open complaint status
-            $newComplaintStatus = ClaimStatus::active()->find($complaintStatusId);
+                // Check if complaint status has changed to open complaint status
+                $newComplaintStatus = ClaimStatus::active()->find($complaintStatusId);
 
-            $isNewStatusComplaintOpen = $newComplaintStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
+                $isNewStatusComplaintOpen = $newComplaintStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 
-            if ($isNewStatusComplaintOpen) {
-                $this->markClaimAsReOpen($claim);
-            }
+                if ($isNewStatusComplaintOpen) {
+                    $this->markClaimAsReOpen($claim);
+                }
 
-            LoggerService::info(' Complaint status updated successfully', extra: [
-                'claim_id' => $claim->id,
-                'complaint_status_id' => $complaintStatusId,
-                'complaint_datetime' => $complaintDatetime,
-                'is_new_status_complaint_open' => $isNewStatusComplaintOpen,
-                'user_id' => Auth::id(),
-            ]);
+                LoggerService::info(' Complaint status updated successfully', extra: [
+                    'claim_id' => $claim->id,
+                    'complaint_status_id' => $complaintStatusId,
+                    'complaint_datetime' => $complaintDatetime,
+                    'is_new_status_complaint_open' => $isNewStatusComplaintOpen,
+                    'user_id' => Auth::id(),
+                ]);
 
-            return $claim->fresh();
-
+                return $claim->fresh();
+            });
         } catch (\Exception $e) {
             LoggerService::error(' Error updating complaint status', extra: [
                 'error' => $e->getMessage(),

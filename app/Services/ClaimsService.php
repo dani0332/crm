@@ -490,18 +490,20 @@ class ClaimsService extends BaseService
         $claimRequest = $this->getClaimById($uuid);
 
         try {
-            // Update main claim request data
-            $claimRequestData = $this->prepareClaimRequestData($request);
-            $claimRequest->update($claimRequestData);
+            return DB::transaction(function () use ($claimRequest, $request) {
+                // Update main claim request data
+                $claimRequestData = $this->prepareClaimRequestData($request);
+                $claimRequest->update($claimRequestData);
 
-            // Update claim request detail with quote type-specific logic
-            $quoteTypeId = $request->quote_type_id ?? $claimRequest->quote_type_id;
-            $this->updateClaimRequestDetail($claimRequest, $request, $quoteTypeId);
+                // Update claim request detail with quote type-specific logic
+                $quoteTypeId = $request->quote_type_id ?? $claimRequest->quote_type_id;
+                $this->updateClaimRequestDetail($claimRequest, $request, $quoteTypeId);
 
-            // Log successful update
-            $this->logClaimUpdate($claimRequest);
+                // Log successful update
+                $this->logClaimUpdate($claimRequest);
 
-            return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus']);
+                return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus']);
+            });
         } catch (\Exception $e) {
             $this->logClaimUpdateError($uuid, $e, $request);
             throw $e;
@@ -632,13 +634,14 @@ class ClaimsService extends BaseService
     public function updateClaimDetails(ClaimRequest $claimRequest, $request): ClaimRequest
     {
         try {
-            $hasMainTableUpdates = $this->processClaimMainTableUpdates($claimRequest, $request);
-            $hasDetailsTableUpdates = $this->processClaimDetailsTableUpdates($claimRequest, $request);
+            return DB::transaction(function () use ($claimRequest, $request) {
+                $hasMainTableUpdates = $this->processClaimMainTableUpdates($claimRequest, $request);
+                $hasDetailsTableUpdates = $this->processClaimDetailsTableUpdates($claimRequest, $request);
 
-            $this->logClaimDetailsUpdate($claimRequest, $hasMainTableUpdates, $hasDetailsTableUpdates);
+                $this->logClaimDetailsUpdate($claimRequest, $hasMainTableUpdates, $hasDetailsTableUpdates);
 
-            return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus', 'claimType', 'claimRequestType']);
-
+                return $claimRequest->fresh(['claimRequestDetails', 'manager', 'claimStatus', 'claimType', 'claimRequestType']);
+            });
         } catch (\Exception $e) {
             $this->logClaimDetailsUpdateError($claimRequest, $e, $request);
             throw $e;
