@@ -1760,8 +1760,14 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Device) {
-            // TODO:: NGI:: when we have template variables then we can decide what to inject for device
             $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
+            $insuranceProviderCompanyText = $quote?->insuranceProvider?->text ?? '';
+            $insuranceProviderCompanyCode = $quote?->insuranceProvider?->code ?? '';
+            if (!empty($insuranceProviderCompanyText) && !empty($insuranceProviderCompanyCode)) {
+                $emailData->insuranceCompany = $insuranceProviderCompanyText . ' (' . $insuranceProviderCompanyCode . ')';
+            } else {
+                $emailData->insuranceCompany = $insuranceProviderCompanyText;
+            }
         }
 
         $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
