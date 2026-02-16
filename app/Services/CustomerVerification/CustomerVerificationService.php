@@ -395,6 +395,7 @@ class CustomerVerificationService
     private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType, string $quoteType): void
     {
         $verificationData = [];
+        $customerVerificationDetailsUpdated = false;
 
         if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
             $dateOfBirth = $this->extractOcrValue($ocrData, 'dateOfBirth');
@@ -456,6 +457,7 @@ class CustomerVerificationService
     private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
     {
         $verificationData = [];
+        $customerVerificationDetailsUpdated = false;
 
         if ($this->hasOcrKey($ocrData, 'vehicalType')) {
             $verificationData['carMakeAndModel'] = $this->extractOcrValue($ocrData, 'vehicalType');
