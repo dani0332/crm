@@ -679,35 +679,38 @@ class ReportService extends BaseService
         $dataCollection = collect();
         $premiumColumn = 'personal_quotes.premium';
 
+        // Define reusable SQL expression for expiry date calculation
+        $expiryDateExpression = "DATE_ADD(py.authorized_at, INTERVAL {$expiryDays} DAY)";
+
         // Build payment join conditions based on filters
-        $paymentJoinConditions = function ($join) use ($request, $expiryDays, $thirtyDaysAgo) {
+        $paymentJoinConditions = function ($join) use ($request, $expiryDateExpression, $thirtyDaysAgo) {
             $join->on('py.code', '=', 'personal_quotes.code')
                 ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
                 ->where('py.authorized_at', '>=', $thirtyDaysAgo);
 
             if (isset($request->expireDate)) {
                 $date = Carbon::parse($request->expireDate)->startOfDay();
-                $join->whereRaw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY) <= ?', [$date]);
+                $join->whereRaw("{$expiryDateExpression} <= ?", [$date]);
             }
 
             if (isset($request->todayDate)) {
-                $join->whereRaw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) = 1");
+                $join->whereRaw("DATEDIFF({$expiryDateExpression}, NOW()) = 1");
             }
 
             if (isset($request->tomorrowDate)) {
-                $join->whereRaw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) = 2");
+                $join->whereRaw("DATEDIFF({$expiryDateExpression}, NOW()) = 2");
             }
 
             if (isset($request->thisWeek)) {
                 $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
                 $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
-                $join->whereRaw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY) BETWEEN ? AND ?', [$startOfWeek, $endOfWeek]);
+                $join->whereRaw("{$expiryDateExpression} BETWEEN ? AND ?", [$startOfWeek, $endOfWeek]);
             }
 
             if (isset($request->customDate)) {
                 $startDate = Carbon::parse($request->customDate[0])->startOfDay();
                 $endDate = Carbon::parse($request->customDate[1])->endOfDay();
-                $join->whereRaw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY) BETWEEN ? AND ?', [$startDate, $endDate]);
+                $join->whereRaw("{$expiryDateExpression} BETWEEN ? AND ?", [$startDate, $endDate]);
             }
         };
 
