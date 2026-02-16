@@ -463,7 +463,7 @@ class AMLController extends Controller
                     $individualDetails = [
                         'first_name' => $insured->first_name,
                         'last_name' => $insured->last_name,
-                        'dob' => Carbon::parse($insured->dob)->format(config('constants.DATE_FORMAT_ONLY')),
+                        'dob' => $insured->dob ? Carbon::parse($insured->dob)->format(config('constants.DATE_FORMAT_ONLY')) : null,
                         'nationality' => $insured?->nationality->toArray() ?? [],
                         'code' => CustomerTypeEnum::IndividualShort.'-'.$AMLCheckRequest->customer_id, // TODO:: code should be updated with insured id (Required FR for this)
                     ];
