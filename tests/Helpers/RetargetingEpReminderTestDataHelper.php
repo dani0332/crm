@@ -200,6 +200,80 @@ class RetargetingEpReminderTestDataHelper
     }
 
     /**
+     * Build EmbeddedTransaction-like mock as returned by fetchFindEmbededTransactionWithDetails.
+     * Use in unit tests that mock EmbeddedTransactionRepository (no DB). Service expects
+     * ->quoteRequest (quote), ->product->embeddedProduct->short_code, ->payment_status_id, ->code, ->only().
+     *
+     * @param  array<string, mixed>  $overrides  Override keys: quote_id, quote_uuid, quote_status_id, quote_email, vehicle_make, vehicle_model, plan_id, plan_insurance_provider, plan_provider_code, advisor_email, ep_short_code, et_id, et_code, payment_status_id, etc.
+     */
+    public static function getEpRetargetingReminderDataMock(array $overrides = []): object
+    {
+        $quoteId = 3;
+        $quoteUuid = 'RETARGET003';
+        $embeddedTransactionCode = 'MDX-CAR-RETARGET003';
+        $quote = \Mockery::mock(CarQuote::class)->makePartial();
+        $quote->id = $overrides['quote_id'] ?? $quoteId;
+        $quote->uuid = $overrides['quote_uuid'] ?? $quoteUuid;
+        $quote->quote_status_id = $overrides['quote_status_id'] ?? QuoteStatusEnum::PolicyBooked;
+        $quote->policy_booking_date = $overrides['quote_policy_booking_date'] ?? '2025-01-01';
+        $quote->customer_id = array_key_exists('quote_customer_id', $overrides) ? $overrides['quote_customer_id'] : 10;
+        $quote->email = $overrides['quote_email'] ?? 'customer@example.com';
+        $quote->first_name = $overrides['quote_first_name'] ?? 'John';
+        $quote->last_name = $overrides['quote_last_name'] ?? 'Doe';
+        $quote->full_name = ($quote->first_name ?? '').' '.($quote->last_name ?? '');
+        $quote->carMake = ! array_key_exists('vehicle_make', $overrides)
+            ? (object) ['text' => 'Toyota']
+            : ($overrides['vehicle_make'] === null ? null : (object) ['text' => $overrides['vehicle_make']]);
+        $quote->carModel = ! array_key_exists('vehicle_model', $overrides)
+            ? (object) ['text' => 'Camry']
+            : ($overrides['vehicle_model'] === null ? null : (object) ['text' => $overrides['vehicle_model']]);
+        $quote->advisor = ! array_key_exists('advisor_email', $overrides)
+            ? (object) ['email' => 'advisor@example.com']
+            : ($overrides['advisor_email'] === null ? null : (object) ['email' => $overrides['advisor_email']]);
+        $quote->plan = (array_key_exists('plan_id', $overrides) && $overrides['plan_id'] === null)
+            ? null
+            : (object) [
+                'id' => $overrides['plan_id'] ?? 5,
+                'provider_id' => 1,
+                'insuranceProvider' => array_key_exists('plan_insurance_provider', $overrides) && $overrides['plan_insurance_provider'] === null
+                    ? null
+                    : (object) ['code' => array_key_exists('plan_provider_code', $overrides) ? $overrides['plan_provider_code'] : 'PROV01'],
+            ];
+
+        $quote->shouldReceive('only')->andReturnUsing(function (array $keys) use ($quote) {
+            $all = ['id' => $quote->id, 'uuid' => $quote->uuid, 'quote_status_id' => $quote->quote_status_id, 'policy_booking_date' => $quote->policy_booking_date];
+
+            return array_intersect_key($all, array_flip($keys));
+        });
+
+        $embeddedTransaction = \Mockery::mock(EmbeddedTransaction::class)->makePartial();
+        $embeddedTransaction->id = $overrides['et_id'] ?? 1;
+        $embeddedTransaction->code = $overrides['et_code'] ?? $embeddedTransactionCode;
+        $embeddedTransaction->quote_type_id = 1;
+        $embeddedTransaction->quote_request_id = $overrides['quote_id'] ?? $quoteId;
+        $embeddedTransaction->quote_request_type = CarQuote::class;
+        $embeddedTransaction->is_selected = false;
+        $embeddedTransaction->payment_status_id = $overrides['payment_status_id'] ?? PaymentStatusEnum::DRAFT;
+        $embeddedTransaction->product_id = 1;
+        $embeddedTransaction->quoteRequest = $quote;
+        $embeddedTransaction->product = (object) [
+            'embeddedProduct' => (object) ['short_code' => $overrides['ep_short_code'] ?? EmbeddedProductEnum::MDX],
+        ];
+        $embeddedTransaction->shouldReceive('only')->andReturnUsing(fn (array $keys) => [
+            'id' => $embeddedTransaction->id,
+            'code' => $embeddedTransaction->code,
+            'quote_type_id' => $embeddedTransaction->quote_type_id,
+            'quote_request_id' => $embeddedTransaction->quote_request_id,
+            'quote_request_type' => $embeddedTransaction->quote_request_type,
+            'is_selected' => $embeddedTransaction->is_selected,
+            'payment_status_id' => $embeddedTransaction->payment_status_id,
+            'product_id' => $embeddedTransaction->product_id,
+        ]);
+
+        return $embeddedTransaction;
+    }
+
+    /**
      * Create minimal embedded product by short code (no factory create() overhead).
      */
     private static function createMinimalProduct(int $insuranceProviderId, string $shortCode): EmbeddedProduct
