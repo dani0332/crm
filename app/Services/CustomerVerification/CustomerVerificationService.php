@@ -433,7 +433,7 @@ class CustomerVerificationService
 
         try {
             DB::beginTransaction();
-            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            $customerVerificationDetailsUpdated = $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
             DB::commit();
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
@@ -448,7 +448,9 @@ class CustomerVerificationService
         }
 
         // Update customer verification status
-        $this->updateCustomerVerificationStatus($quote);
+        if ($customerVerificationDetailsUpdated) {
+            $this->updateCustomerVerificationStatus($quote);
+        }
     }
 
     private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
@@ -493,7 +495,7 @@ class CustomerVerificationService
 
         try {
             DB::beginTransaction();
-            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            $customerVerificationDetailsUpdated = $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
             DB::commit();
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from RC OCR', extra: [
@@ -508,10 +510,12 @@ class CustomerVerificationService
         }
 
         // Update customer verification status
-        $this->updateCustomerVerificationStatus($quote);
+        if ($customerVerificationDetailsUpdated) {
+            $this->updateCustomerVerificationStatus($quote);
+        }
     }
 
-    private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
+    private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): bool
     {
         $quotableType = get_class($quote);
         $quoteTypeId = $this->getQuoteTypeId($quote);
@@ -543,6 +547,8 @@ class CustomerVerificationService
             'quote_type' => $this->getQuoteType($quote),
             'updated_fields' => array_keys($verificationData),
         ]);
+
+        return true;
     }
 
     private function saveVehicleChassisDetails(Model $quote, array $data): void
