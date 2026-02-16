@@ -42,7 +42,9 @@ class DeviceQuoteService extends BaseQuoteService
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
-            ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
+            ->when(empty(request('booking_date')), function ($query) {
+                $query->filterByCreatedAt(request('created_at_start'), request('created_at_end'));
+            })
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByPaymentDueDates('payment_due_date')
