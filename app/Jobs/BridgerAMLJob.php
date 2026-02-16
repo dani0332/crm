@@ -60,7 +60,7 @@ class BridgerAMLJob implements ShouldQueue
             );
 
         } catch (\Exception $exception) {
-            LoggerService::error('AML Screening Bridger Job failed', exception: $exception);
+            LoggerService::warning('AML Screening Bridger Job failed', exception: $exception);
         }
 
         LoggerService::info('BridgerAMLJob ended');
