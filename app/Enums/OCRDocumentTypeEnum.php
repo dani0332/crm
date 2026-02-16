@@ -35,7 +35,7 @@ enum OCRDocumentTypeEnum: string
             'MEEID' => self::ID_CARD,
             'MEPP' => self::PASSPORT,
             'MEV' => self::VISA,
-            'SAV_PP' => self::PASSPORT,
+            'PP_SAV' => self::PASSPORT,
             'DRIVER_EID' => self::DRIVER_EMIRATES_ID,
 
             'PS' => self::POLICY_SCHEDULE,

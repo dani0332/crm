@@ -141,7 +141,7 @@ class SavingsQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'SAV_PP',
+                'code' => 'PP_SAV',
                 'text' => 'Passport',
                 'description' => '',
                 'is_active' => 1,

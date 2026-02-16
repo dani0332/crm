@@ -474,7 +474,7 @@ class TestDataSeeder
     }
 
     /**
-     * Seed a Savings DocumentType row on sqlite (e.g. `SAV_PP`).
+     * Seed a Savings DocumentType row on sqlite (e.g. `PP_SAV`).
      *
      * This is intentionally general-purpose for Savings. Add/override fields as new Savings OCR docs are introduced.
      *

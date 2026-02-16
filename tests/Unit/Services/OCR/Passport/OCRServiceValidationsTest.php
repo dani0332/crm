@@ -32,7 +32,7 @@ beforeEach(function () {
 
 describe('OCRService validations / gates', function () {
     test('service unavailable: returns false and logs failed', function () {
-        TestDataSeeder::seedSavingsDocumentType('SAV_PP', 'Passport');
+        TestDataSeeder::seedSavingsDocumentType('PP_SAV', 'Passport');
 
         $quoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
             'uuid' => 'X85DUBM9',
@@ -51,7 +51,7 @@ describe('OCRService validations / gates', function () {
         $service = new OCRService($quoteDocumentService, new OcrLogService);
 
         $eloquentQuote = PersonalQuote::on('sqlite')->findOrFail($quoteId);
-        $eloquentDocType = DocumentType::on('sqlite')->where('code', 'SAV_PP')->firstOrFail();
+        $eloquentDocType = DocumentType::on('sqlite')->where('code', 'PP_SAV')->firstOrFail();
 
         $result = $service->process(
             QuoteTypes::SAVINGS,
@@ -79,14 +79,14 @@ describe('OCRService validations / gates', function () {
     });
 
     test('quote status gate: returns null and sends no HTTP requests', function () {
-        TestDataSeeder::seedSavingsDocumentType('SAV_PP', 'Passport');
+        TestDataSeeder::seedSavingsDocumentType('PP_SAV', 'Passport');
 
         $quoteDocumentService = Mockery::mock(QuoteDocumentService::class);
         $quoteDocumentService->shouldNotReceive('getDocumentUrl');
 
         $service = new OCRService($quoteDocumentService, new OcrLogService);
 
-        $documentType = DocumentType::on('sqlite')->where('code', 'SAV_PP')->firstOrFail();
+        $documentType = DocumentType::on('sqlite')->where('code', 'PP_SAV')->firstOrFail();
 
         // NOTE:
         // Use an in-memory runtime Model instance for this test only.
@@ -205,7 +205,7 @@ describe('OCRService validations / gates', function () {
         $service = new OCRService($quoteDocumentService, new OcrLogService);
 
         $eloquentQuote = PersonalQuote::on('sqlite')->findOrFail($quoteId);
-        $eloquentDocType = DocumentType::on('sqlite')->where('code', 'SAV_PP')->firstOrFail();
+        $eloquentDocType = DocumentType::on('sqlite')->where('code', 'PP_SAV')->firstOrFail();
 
         $result = $service->process(
             QuoteTypes::SAVINGS,

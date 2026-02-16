@@ -33,7 +33,7 @@ beforeEach(function () {
 
 describe('OCRService Passport (Savings) flow', function () {
     test('happy flow: logs success, persists response_data, and fills passport_visa_details.passport_number', function () {
-        $documentTypeCode = 'SAV_PP';
+        $documentTypeCode = 'PP_SAV';
         $ocrDocType = OCRDocumentTypeEnum::PASSPORT;
 
         TestDataSeeder::seedSavingsDocumentType($documentTypeCode, 'Passport');
@@ -147,7 +147,7 @@ describe('OCRService Passport (Savings) flow', function () {
     });
 
     test('unhappy flow: logs failed when OCR API returns no usable data', function () {
-        $documentTypeCode = 'SAV_PP';
+        $documentTypeCode = 'PP_SAV';
         TestDataSeeder::seedSavingsDocumentType($documentTypeCode, 'Passport');
 
         $planCode = OcrEligiblePlanCodeEnum::STF_158->value;
