@@ -67,6 +67,14 @@ class WatermarkDocumentsJob implements ShouldQueue
         $sourcePath = $quoteDocument->doc_url;
 
         try {
+            // Check if the source file exists
+            $sourcePath = (string) ($quoteDocument->doc_url ?? '');
+            if ($sourcePath === '') {
+                LoggerService::warning('Source file path is empty');
+
+                return;
+            }
+
             if (! $this->fileExists($sourcePath)) {
                 LoggerService::warning("Source file does not exist: {$sourcePath}");
 
@@ -103,6 +111,7 @@ class WatermarkDocumentsJob implements ShouldQueue
                 LoggerService::info('Watermark job completed');
             }
         } catch (\Exception $e) {
+            cache()->forget("processing_{$this->lockKey}");
             LoggerService::error('Error processing watermark. Error: '.$e->getMessage(), [], $e);
             throw $e; // Re-throw to trigger job retry
         } catch (Throwable $t) {
