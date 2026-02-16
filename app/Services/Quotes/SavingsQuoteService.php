@@ -774,7 +774,7 @@ class SavingsQuoteService extends BaseQuoteService
         LoggerService::info('SavingsQuoteService - processSavingsPlan', [
             'quote_uuid' => $quoteUuId,
             'update' => $savingsPlanData['update'],
-            'plans_count' => $savingsPlanData['plans'] ?? [],
+            'plansData' => $savingsPlanData['plans'] ?? [],
             'url' => strval(request()->url()),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
