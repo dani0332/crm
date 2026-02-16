@@ -2,6 +2,7 @@
 
 namespace App\Pipes\Allocation\Health;
 
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthRoutingLogTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\TeamCategoryEnum;
@@ -29,8 +30,25 @@ class AssignTeamPipe extends BaseAllocationPipe
         $logService = app(HealthTeamRoutingLogService::class);
         $isSIC = $this->lead->isSIC($this->allocationRequest->getQuoteType());
 
-        // If the lead is not SIC, assign the team based on the health team routing
-        if (! $isSIC) {
+        // Priority 1: Check if we should use health plan type for team assignment (regardless of SIC/non-SIC)
+        if ($this->shouldUseHealthPlanType()) {
+            LoggerService::info('Using health plan type for team assignment');
+            $logService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'Using health plan type for team assignment',
+                    'step' => 'health_plan_type_check',
+                    'is_sic' => $isSIC,
+                    'routing_applicable' => true,
+                    'health_plan_type_id' => $this->lead->health_plan_type_id,
+                    'quote_type' => $this->allocationRequest->getQuoteType(),
+                ],
+                $this->lead->id,
+                $this->lead->uuid
+            );
+            $this->updateHealthTeamType();
+        } elseif (! $isSIC) {
+            // Priority 2: If the lead is not SIC, assign the team based on the health team routing
             LoggerService::info('Non-SIC lead detected, health team routing is applicable');
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
@@ -50,6 +68,7 @@ class AssignTeamPipe extends BaseAllocationPipe
                 $this->lead->save();
             }
         } else {
+            // Priority 3: If SIC lead, assign team based on prices
             LoggerService::info('SIC lead detected, health team routing is not applicable. Continuing to assign team based on prices');
             $logService->log(
                 HealthRoutingLogTypeEnum::ROUTING,
@@ -150,5 +169,45 @@ class AssignTeamPipe extends BaseAllocationPipe
         }
 
         return $price;
+    }
+
+    protected function shouldUseHealthPlanType(): bool
+    {
+        $isAUHLead = $this->lead->isAUHLead() || $this->lead->isAUHLead(false);
+        $isPECLead = $this->lead->has_pec_tag;
+
+        // If lead is AUH or PEC, use price-based assignment
+        if ($isAUHLead || $isPECLead) {
+            return false;
+        }
+
+        // If no health plan type ID, use price-based assignment
+        if (! $this->lead->health_plan_type_id) {
+            return false;
+        }
+
+        // Only use health plan type for the 3 mappable categories (ENTRY_LEVEL=1, GOOD=2, BEST=3)
+        // If unmappable (e.g., MULTI_CATEGORIES=4), fall back to price-based assignment
+        $teamNameEnumValue = HealthPlanTypeEnum::toTeamNameEnum($this->lead->health_plan_type_id);
+        if (! $teamNameEnumValue) {
+            LoggerService::info("Health plan type ID '{$this->lead->health_plan_type_id}' cannot be mapped to a team, falling back to price-based assignment");
+
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function updateHealthTeamType()
+    {
+        // This method is only called when shouldUseHealthPlanType() returns true,
+        // which guarantees health_plan_type_id exists and can be mapped to one of the 3 categories
+        $teamNameEnumValue = HealthPlanTypeEnum::toTeamNameEnum($this->lead->health_plan_type_id);
+
+        $this->lead->health_team_type = $teamNameEnumValue;
+        $this->lead->save();
+
+        $healthPlanTypeText = HealthPlanTypeEnum::typeText($this->lead->health_plan_type_id);
+        LoggerService::info("Health team type updated to {$teamNameEnumValue} based on health plan type ID: {$this->lead->health_plan_type_id} ({$healthPlanTypeText})");
     }
 }
