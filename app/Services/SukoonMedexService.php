@@ -96,8 +96,6 @@ class SukoonMedexService
             $this->quotePolicy = $transaction->quote_policy ?? null;
             $this->certificateNumber = $transaction->certificate_number ?? null;
 
-            LoggerService::startQuoteLogging($this->currentQuote);
-
             if (! in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
                 throw new EpEcbException('Only (Car / Bike) LOB are eligible');
             }
@@ -212,6 +210,7 @@ class SukoonMedexService
             }
 
         } catch (Throwable $e) {
+            LoggerService::info("{$this->logPrefix} processPurchaseFlow failed", extra: ['exception' => $e->getMessage()]);
             throw $e;
         }
     }
