@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\ClaimsEnum;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -26,7 +27,7 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
             'complaint_status_id' => [
                 'nullable',
                 'integer',
-                'exists:claim_statuses,id',
+                'exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value,
             ],
             'complaint_datetime' => [
                 'required',

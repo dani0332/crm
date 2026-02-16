@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\ClaimsEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ClaimSearchRequest extends FormRequest
@@ -51,9 +52,9 @@ class ClaimSearchRequest extends FormRequest
             'next_followup_datetime' => 'nullable|date',
 
             // Status and type filters
-            'claim_status_id' => 'nullable|integer|exists:claim_statuses,id',
-            'claim_sub_status_id' => 'nullable|integer|exists:claim_statuses,id',
-            'complaint_status_id' => 'nullable|integer|exists:claim_statuses,id',
+            'claim_status_id' => 'nullable|integer|exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value,
+            'claim_sub_status_id' => 'nullable|integer|exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value,
+            'complaint_status_id' => 'nullable|integer|exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value,
             'claim_request_type_id' => 'nullable|integer|exists:lookups,id',
 
             // Assignment and policy filters
