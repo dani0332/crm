@@ -693,8 +693,8 @@ onMounted(() => {
             <template #item-currency="item">
               <span>{{ item.currency || 'N/A' }}</span>
             </template>
-            <template #item-price="item">
-              <span>{{ item.price || 'N/A' }}</span>
+            <template #item-actualPremium="item">
+              <span>{{ item.totalPrice || item.actualPremium || 'N/A' }}</span>
             </template>
             <template #item-exchangeRate="item">
               <div
@@ -732,7 +732,7 @@ onMounted(() => {
             </template>
             <template #item-priceAed="item">
               <span>{{
-                fmt(toAED(item.actualPremium || item.price || 0, item))
+                fmt(toAED(item.totalPrice || item.actualPremium || 0, item))
               }}</span>
             </template>
             <template #item-investmentFrequency="item">

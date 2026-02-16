@@ -201,7 +201,7 @@ export function useSavingsPlans(options = {})
 
   const calculateTotalAnnualPrice = item =>
   {
-    const price = parseFloat(item.actualPremium || item.price || 0);
+    const price = parseFloat(item.totalPrice || item.actualPremium || 0);
     if (!price) return null;
 
     const paymentTerm = parseInt(item.paymentTerm);
@@ -503,11 +503,11 @@ export function useSavingsPlans(options = {})
           planId: planData.planId || planData.plan_id,
           plan_type: planData.planType || planData.plan_type,
           isDisabled: planData.isDisabled || false,
-          isManualUpdate: planData.isManualUpdate || false,
+          isManualUpdate: isUpdate ? true : false,
           insurerQuoteNo: planData.insurerQuoteNo || '',
           investmentAmount: parseFloat(planData.investmentAmount) || 0,
-          actualPremium: parseFloat(planData.actualPremium) || 0,
-          discountPremium: parseFloat(planData.discountPremium) || 0,
+          actualPremium: parseFloat(planData.actualPremium || planData.investmentAmount) || 0,
+          discountPremium: parseFloat(planData.discountAmount || planData.investmentAmount) || 0,
           currency: planData.currency || 'AED',
           currencyId: planData.currencyId,
           paymentTerm: parseInt(planData.paymentTerm) || 0,
@@ -641,7 +641,7 @@ export function useSavingsPlans(options = {})
             ? formData.is_manual_update
             : true,
         insurerQuoteNo: formData.insurer_quote_no || '',
-        investmentAmount: formData.investment_amount || formData.actual_premium,
+        investmentAmount: formData.investment_amount || formData.actualPremium,
         currency: formData.currency,
         currencyId: formData.currency_id,
         paymentTerm: formData.payment_term,
@@ -883,7 +883,7 @@ export function useSavingsPlans(options = {})
   const getEcomDisplayPrice = item =>
   {
     if (!item) return 0;
-    return parseFloat(item.actualPremium || item.totalPrice || 0);
+    return parseFloat(item.totalPrice || item.actualPremium || 0);
   };
 
   const ecomDetail = computed(() =>
@@ -917,7 +917,7 @@ export function useSavingsPlans(options = {})
           foundPlan.actualPremium || foundPlan.totalPrice || 0,
         ),
         totalPrice: parseFloat(
-          foundPlan.actualPremium || foundPlan.totalPrice || 0,
+          foundPlan.totalPrice || foundPlan.actualPremium || 0,
         ),
         currency: foundPlan.currency || foundPlan.currencyName || 'AED',
         paymentTerm: foundPlan.paymentTerm,

@@ -577,13 +577,13 @@ watch(
               <div class="border-t border-gray-200 pt-6 mt-6">
                 <div class="flex justify-between items-end">
                   <div>
-                    <!-- <span class="text-sm font-semibold text-gray-800"
+                    <span class="text-sm font-semibold text-gray-800"
                       >Total Price:</span
                     >
                     <span class="text-sm text-gray-900 ml-2"
                       >{{ planDetails.currency || 'AED' }}:
                       {{ totalPrice.toFixed(2) }}</span
-                    > -->
+                    >
                   </div>
                   <div class="text-right">
                     <div class="text-sm text-gray-600 mb-1">
