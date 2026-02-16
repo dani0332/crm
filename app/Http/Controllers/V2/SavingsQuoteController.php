@@ -6,7 +6,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsPlanUpdateRequest;
@@ -254,12 +253,11 @@ class SavingsQuoteController extends Controller
     public function savingsPlanManualProcess(Request $request, string $quoteUuId)
     {
         try {
-            $quote = PersonalQuote::where('uuid', $quoteUuId)->firstOrFail();
 
             LoggerService::info('SavingsQuoteController - savingsPlanManualProcess', [
                 'quote_uuid' => $quoteUuId,
                 'update' => $request->update ?? false,
-                'plans_count' => $request->plans ?? [],
+                'plansData' => $request->plans ?? [],
             ]);
 
             // Call the service to process the plan

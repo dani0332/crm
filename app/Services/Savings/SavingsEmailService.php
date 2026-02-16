@@ -75,8 +75,10 @@ class SavingsEmailService
             $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
 
             if ($response && $response->status_code == 200) {
-                // Create quote flow details to track the email flow
-                if (! empty($response->headers['Run-Id'])) {
+                // Create quote flow details to track the email flow (header casing varies by server)
+                $runId = $response->headers['Run-Id'] ?? $response->headers['run-id'] ?? null;
+                $runId = is_array($runId) ? collect($runId)->first() : $runId;
+                if (! empty($runId)) {
                     $this->createQuoteFlowDetails($lead, $response);
                 }
 

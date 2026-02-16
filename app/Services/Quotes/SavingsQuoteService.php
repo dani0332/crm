@@ -720,9 +720,9 @@ class SavingsQuoteService extends BaseQuoteService
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
 
-        // Build the payload for Ken API
+        // Build the payload for Ken API - always use route-validated quoteUuId to prevent IDOR
         $savingsPlanData = [
-            'quoteUID' => $payload['quoteUID'] ?? $quoteUuId,
+            'quoteUID' => $quoteUuId,
             'update' => $payload['update'] ?? false,
             'plans' => [],
         ];
