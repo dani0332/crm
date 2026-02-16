@@ -28,6 +28,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CustomerVerificationService
@@ -431,7 +432,12 @@ class CustomerVerificationService
         }
 
         try {
+            DB::beginTransaction();
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            DB::commit();
+
+            // Update customer verification status
+            $this->updateCustomerVerificationStatus($quote);
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
                 'document_type' => $documentType,
@@ -440,6 +446,8 @@ class CustomerVerificationService
                 'quote_type' => $quoteType,
                 'error' => $e->getMessage(),
             ]);
+
+            DB::rollBack();
         }
     }
 
@@ -484,7 +492,12 @@ class CustomerVerificationService
         }
 
         try {
+            DB::beginTransaction();
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            DB::commit();
+
+            // Update customer verification status
+            $this->updateCustomerVerificationStatus($quote);
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from RC OCR', extra: [
                 'document_type' => $documentType,
@@ -493,6 +506,8 @@ class CustomerVerificationService
                 'quote_type' => QuoteTypes::CAR->value,
                 'error' => $e->getMessage(),
             ]);
+
+            DB::rollBack();
         }
 
     }
@@ -529,10 +544,6 @@ class CustomerVerificationService
             'quote_type' => $this->getQuoteType($quote),
             'updated_fields' => array_keys($verificationData),
         ]);
-
-        // Update customer verification status
-        $this->updateCustomerVerificationStatus($quote);
-
     }
 
     private function saveVehicleChassisDetails(Model $quote, array $data): void
