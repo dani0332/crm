@@ -14,7 +14,6 @@ use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
-use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -415,7 +414,7 @@ class EmiratesIdDataProcessor
                 ->first();
 
             if (! $existingLink) {
-                CustomerInsured::createOrUpdateActive([
+                CustomerInsured::create([
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
