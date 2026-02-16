@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\LeadSource;
 use App\Models\QuoteType;
+use App\Models\LeadSource;
 use App\Models\RuleDetail;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\RuleTypeEnum;
 use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Http\FormRequest;
 
 class RuleRequest extends FormRequest
 {
@@ -38,12 +39,10 @@ class RuleRequest extends FormRequest
                 'integer',
                 Rule::exists(LeadSource::class, 'id'),
                 Rule::requiredIf(function () {
-                    // Rule type 1 is "LEAD SOURCE"
-                    return $this->rule_type == 1;
+                    return $this->rule_type == RuleTypeEnum::LEAD_SOURCE;
                 }),
                 function ($attribute, $value, $fail) {
-                    // Only validate uniqueness if rule_type is Lead Source (1)
-                    if ($this->rule_type != 1 || ! $value) {
+                    if ($this->rule_type != RuleTypeEnum::LEAD_SOURCE || ! $value) {
                         return;
                     }
 
