@@ -14,6 +14,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SukoonMedexEnum;
+use App\Enums\VehicleTypeEnum;
 use App\Exceptions\EpEcbException;
 use App\Jobs\SyncSukoonDocumentsJob;
 use App\Models\ApplicationStorage;
@@ -30,7 +31,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
-use App\Enums\VehicleTypeEnum;
 
 class SukoonMedexService
 {
