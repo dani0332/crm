@@ -538,15 +538,15 @@ trait OcrUtils
         LoggerService::info('Getting nationality ID for nationality: '.$nationality);
 
         $cacheKey = 'customer_verification_nationality_'.md5((string) $nationality);
-        $nationalityModel = cache()->remember($cacheKey, now()->addDay(), function () use ($nationality) {
-            return Nationality::where(function ($query) use ($nationality) {
-                $query->whereAny([
-                    ['text', 'LIKE', $nationality],
-                    ['country_name', 'LIKE', $nationality],
-                    ['code', '=', $nationality],
-                ]);
-            })->first(['id']);
-        });
+        $nationalityModel = cache()->remember(
+            $cacheKey,
+            now()->addDay(),
+            fn () => Nationality::where(function ($query) use ($nationality) {
+                $query->where('text', 'LIKE', '%'.$nationality.'%')
+                    ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+                    ->orWhere('code', $nationality);
+            })->first(['id'])
+        );
 
         return $nationalityModel?->id;
     }
