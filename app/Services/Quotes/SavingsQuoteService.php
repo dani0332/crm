@@ -176,10 +176,6 @@ class SavingsQuoteService extends BaseQuoteService
             'latestInsured.insuredKyc',
             'branch:id,name',
             'customer',
-            'customer.insured' => function ($q) {
-                $q->select('insured.id', 'first_name', 'last_name', 'id_number')
-                    ->with('insuredKyc:id,insured_id,id_expiry_date');
-            },
             'passportVisaDetails',
         ])
             ->when($allDetails, function ($q) {
