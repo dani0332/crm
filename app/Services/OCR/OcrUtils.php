@@ -537,15 +537,15 @@ trait OcrUtils
             return null;
         }
 
-        $cacheKey = 'customer_verification_nationality_id_'.md5((string) $nationality);
-        $query = cache()->remember($cacheKey, now()->addDay(), function () use ($nationality) {
+        $cacheKey = 'customer_verification_nationality_'.md5((string) $nationality);
+        $nationalityModel = cache()->remember($cacheKey, now()->addDay(), function () use ($nationality) {
             return Nationality::whereAny(
                 ['text', 'country_name', 'code'],
                 '=',
                 $nationality
-            );
+            )->first(['id']);
         });
 
-        return $query->value('id');
+        return $nationalityModel?->id;
     }
 }
