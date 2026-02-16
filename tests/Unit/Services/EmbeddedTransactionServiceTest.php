@@ -8,13 +8,13 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\BirdService;
 use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -25,7 +25,7 @@ beforeEach(function () {
     $this->quoteId = 3;
     $this->embeddedTransactionCode = 'MDX-CAR-RETARGET003';
     $this->dummyBirdEpWorkflowUrl = 'https://test-bird.example/ep-reminder/invoke-sync';
-    DB::table('application_storage')->updateOrInsert(
+    ApplicationStorage::updateOrInsert(
         ['key_name' => ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL],
         ['value' => $this->dummyBirdEpWorkflowUrl, 'created_at' => now(), 'updated_at' => now()]
     );
@@ -337,8 +337,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
         $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
         $epTransaction->code = $this->embeddedTransactionCode;
 
-        DB::table('application_storage')
-            ->where('key_name', ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
+        ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL)
             ->update(['value' => '']);
 
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
