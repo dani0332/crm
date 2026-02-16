@@ -39,10 +39,6 @@ class CustomerInsured extends Model
     /**
      * Create or update an active customer-insured record and deactivate previous ones
      * MySQL UPDATE queries inherently acquire exclusive row locks, ensuring atomic deactivation.
-     *
-     * @param  array  $conditions  Must include quote_type_id and quote_request_id
-     * @param  array  $attributes  Additional attributes to set
-     * @param  bool  $skipTransaction  Skip transaction wrapper if already within a transaction
      */
     public static function createOrUpdateActive(array $conditions, array $attributes = [], bool $skipTransaction = false): self
     {
@@ -52,13 +48,11 @@ class CustomerInsured extends Model
         }
 
         $operation = function () use ($conditions, $attributes) {
-            // Deactivate all existing records for this quote with a single update query
             static::forQuote(
                 $conditions['quote_type_id'],
                 $conditions['quote_request_id']
             )->update(['is_active' => false]);
 
-            // Create or update the active record
             return static::updateOrCreate($conditions, array_merge($attributes, [
                 'is_active' => true,
                 'updated_at' => now(),
