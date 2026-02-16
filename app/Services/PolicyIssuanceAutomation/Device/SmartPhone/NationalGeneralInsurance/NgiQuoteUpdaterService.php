@@ -146,12 +146,14 @@ class NgiQuoteUpdaterService
             $updateData['insurer_invoice_date'] = Carbon::parse($policyDocumentsResult->premium_inv_dt)->format('Y-m-d');
         }
 
-        // Invoice numbers with fallback for testing
-        // TODO:: NGI:: premium_inv_no & commision_inv_no are required for book policy while missed from provider in case of missing payment_refrence in issue policy API call
-        $updateData['insurer_tax_number'] = 'P/INV/NN100TS10344'.rand(9999, 99999999).rand(9999, 99999999);
+        // Invoice numbers - direct mapping
+        if (isset($policyDocumentsResult?->premium_inv_no)) {
+            $updateData['insurer_tax_number'] = $policyDocumentsResult?->premium_inv_no ?? '';
+        }
 
-        $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult->commision_inv_no
-            ?? 'INV/NN100TS10344'.rand(9999, 99999999).rand(9999, 99999999);
+        if (isset($policyDocumentsResult?->commision_inv_no)) {
+            $updateData['insurer_commmission_invoice_number'] = $policyDocumentsResult?->commision_inv_no ?? '';
+        }
 
         return $updateData;
     }
