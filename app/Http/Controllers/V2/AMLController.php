@@ -222,8 +222,7 @@ class AMLController extends Controller
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
 
-            // Wrap insured processing and related operations in a single transaction
-            [$shouldApplicableForScreening, $insured, $entityId] = DB::transaction(function () use ($AMLCheckRequest, $quoteType, $updateQuote, $getLastScreening, $processbyUser, $isAutomation, $systemUser, $quoteRequestId) {
+            try {
                 [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteType->id, $updateQuote, $getLastScreening);
                 app(AMLService::class)->updatePAId([
                     'isAutomation' => $isAutomation,
@@ -233,10 +232,20 @@ class AMLController extends Controller
                     'quoteRequestId' => $quoteRequestId,
                 ], $updateQuote);
 
-                LoggerService::info('Completed execution of processInsuredDataForScreening in quoteUpdate transaction');
+                LoggerService::info('Completed execution of processInsuredDataForScreening in quoteUpdate');
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() == '40001' || str_contains($e->getMessage(), 'Lock wait timeout')) {
+                    LoggerService::warning('Lock timeout during AML screening process', [
+                        'quote_id' => $quoteRequestId,
+                        'quote_type_id' => $quoteType->id,
+                        'error' => $e->getMessage(),
+                    ]);
 
-                return [$shouldApplicableForScreening, $insured, $entityId];
-            });
+                    return app(AMLService::class)->handleResponse(false, 'System is busy, please try again', $isAutomation);
+                }
+
+                throw $e;
+            }
 
             session()->put('amlResponseCheck', []);
             $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
@@ -266,7 +275,7 @@ class AMLController extends Controller
                     $individualDetails = [
                         'first_name' => $insured->first_name,
                         'last_name' => $insured->last_name,
-                        'dob' => Carbon::parse($insured->dob)->format(config('constants.DATE_FORMAT_ONLY')),
+                        'dob' => $insured->dob ? Carbon::parse($insured->dob)->format(config('constants.DATE_FORMAT_ONLY')) : null,
                         'nationality' => $insured?->nationality->toArray() ?? [],
                         'code' => CustomerTypeEnum::IndividualShort.'-'.$AMLCheckRequest->customer_id, // TODO:: code should be updated with insured id (Required FR for this)
                     ];
@@ -350,7 +359,7 @@ class AMLController extends Controller
 
     private function updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote)
     {
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+        LoggerService::info('Chassis Number Update Started');
 
         if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
@@ -387,6 +396,8 @@ class AMLController extends Controller
                 $personalQuoteDetailHomeRequest->save();
             }
         }
+
+        LoggerService::info('Chassis Number Update Completed');
     }
 
     private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false)
