@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Enums\RuleTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
 use App\Models\LeadSource;
@@ -13,7 +14,6 @@ use Carbon\Carbon;
 
 class RulesController extends Controller
 {
-    private const LEAD_SOURCE_RULE_TYPE_ID = 1;
     /**
      * Display a listing of the resource.
      */
@@ -52,7 +52,6 @@ class RulesController extends Controller
     {
         return LeadSource::select('id', 'name')
             ->withActive()
-            // ->applicableForRules()
             ->get();
     }
 
@@ -78,13 +77,15 @@ class RulesController extends Controller
 
         // Create rule detail if lead_source_id is provided
         if ($request->filled('lead_source_id')) {
-            // Ensure lead source is applicable for rules
-            LeadSource::where('id', $request->lead_source_id)
-                ->where('is_applicable_for_rules', false)
-                ->update(['is_applicable_for_rules' => true]);
+            $leadSource = LeadSource::find($request->lead_source_id);
+
+            if($leadSource && !$leadSource->is_applicable_for_rules) {
+                // Ensure lead source is applicable for rules
+                $leadSource->update(['is_applicable_for_rules' => true]);
+            }
 
             $rule->ruleDetail()->create([
-                'lead_source_id' => $request->lead_source_id,
+                'lead_source_id' => $leadSource->id,
                 'utm_source' => $request->utm_source,
                 'utm_campaign' => $request->utm_campaign,
                 'utm_medium' => $request->utm_medium,
@@ -155,17 +156,18 @@ class RulesController extends Controller
         $rule->update($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
         // Update or create rule detail if lead_source_id is provided
-        if ($request->filled('lead_source_id') && $request->get('rule_type') == self::LEAD_SOURCE_RULE_TYPE_ID) {
+        if ($request->filled('lead_source_id') && $request->get('rule_type') == RuleTypeEnum::LEAD_SOURCE) {
 
-            // Ensure lead source is applicable for rules
-            LeadSource::where('id', $request->lead_source_id)
-                ->where('is_applicable_for_rules', false)
-                ->update(['is_applicable_for_rules' => true]);
+            $leadSource = LeadSource::find($request->lead_source_id);
+            if($leadSource && !$leadSource->is_applicable_for_rules) {
+                // Ensure lead source is applicable for rules
+                $leadSource->update(['is_applicable_for_rules' => true]);
+            }
 
             $rule->ruleDetail()->updateOrCreate(
                 ['rule_id' => $rule->id],
                 [
-                    'lead_source_id' => $request->lead_source_id,
+                    'lead_source_id' => $leadSource->id,
                     'utm_source' => $request->utm_source,
                     'utm_campaign' => $request->utm_campaign,
                     'utm_medium' => $request->utm_medium,
