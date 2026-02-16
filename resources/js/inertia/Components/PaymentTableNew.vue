@@ -458,7 +458,8 @@ const addPaymentModal = async () => {
 
   // Check exchange rate for Savings LOB - must be checked before plan selection
   if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
-    const savingsCurrency = props.quoteRequest?.quote_customer_plan?.plan?.currency;
+    const savingsCurrency =
+      props.quoteRequest?.quote_customer_plan?.plan?.currency;
     if (
       savingsCurrency &&
       savingsCurrency !== 'AED' &&
@@ -468,7 +469,7 @@ const addPaymentModal = async () => {
         title: 'Please lock the exchange rate first',
         position: 'top',
       });
-      return;  
+      return;
     }
   }
 

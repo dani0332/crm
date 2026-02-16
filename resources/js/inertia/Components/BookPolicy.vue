@@ -254,7 +254,8 @@ let is_lacking_payment = ref(
 );
 
 const isLifeLead = props.quoteType === quoteTypeCodeEnum.Life.toLowerCase();
-const isSavingsLead = props.quoteType?.toLowerCase() === quoteTypeCodeEnum.SAVINGS?.toLowerCase();
+const isSavingsLead =
+  props.quoteType?.toLowerCase() === quoteTypeCodeEnum.SAVINGS?.toLowerCase();
 
 watch(
   () => page.props.bookPolicyDetails.isLackingOfPayment,

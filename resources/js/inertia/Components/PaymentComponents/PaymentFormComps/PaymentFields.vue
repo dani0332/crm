@@ -107,8 +107,7 @@ const isLifeQuoteFrequencyReadonly = computed(() => {
 // Only for Savings quotes, not for send update
 const isSavingsQuoteFrequencyReadonly = computed(() => {
   return (
-    props.quoteType === props.quoteTypeCodeEnum.SAVINGS &&
-    !props.sendUpdate
+    props.quoteType === props.quoteTypeCodeEnum.SAVINGS && !props.sendUpdate
   );
 });
 
@@ -250,7 +249,11 @@ const isMasterPaymentPaid = computed(() => {
           }}
         </span>
         <select
-          v-if="!isFieldReadonly && !isLifeQuoteFrequencyReadonly && !isSavingsQuoteFrequencyReadonly"
+          v-if="
+            !isFieldReadonly &&
+            !isLifeQuoteFrequencyReadonly &&
+            !isSavingsQuoteFrequencyReadonly
+          "
           :class="{
             'custom-select-error': isPaymentFrequencyNotSelected,
           }"
@@ -266,7 +269,10 @@ const isMasterPaymentPaid = computed(() => {
           </template>
         </select>
         <input
-          v-if="!isFieldReadonly && (isLifeQuoteFrequencyReadonly || isSavingsQuoteFrequencyReadonly)"
+          v-if="
+            !isFieldReadonly &&
+            (isLifeQuoteFrequencyReadonly || isSavingsQuoteFrequencyReadonly)
+          "
           class="custom-select cursor-not-allowed bg-gray-100"
           :value="
             frequencyTypes.find(
