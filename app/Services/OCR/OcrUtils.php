@@ -537,9 +537,14 @@ trait OcrUtils
             return null;
         }
 
-        $query = Nationality::where('text', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->orWhere('code', $nationality);
+        $cacheKey = 'customer_verification_nationality_id_'.md5((string) $nationality);
+        $query = cache()->remember($cacheKey, now()->addDay(), function () use ($nationality) {
+            return Nationality::whereAny(
+                ['text', 'country_name', 'code'],
+                '=',
+                $nationality
+            );
+        });
 
         return $query->value('id');
     }
