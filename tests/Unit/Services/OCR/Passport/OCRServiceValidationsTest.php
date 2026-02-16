@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\OcrEligiblePlanCodeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
 use App\Models\OcrLog;
@@ -164,13 +165,31 @@ describe('OCRService validations / gates', function () {
     });
 
     test('missing document URL: returns false and logs failed', function () {
-        TestDataSeeder::seedSavingsDocumentType('SAV_PP', 'Passport');
+        TestDataSeeder::seedSavingsDocumentType('PP_SAV', 'Passport');
+
+        $planCode = OcrEligiblePlanCodeEnum::STF_158->value;
+        DB::connection('sqlite')->table('insurance_provider_plans')->updateOrInsert(
+            ['code' => $planCode],
+            [
+                'provider_id' => null,
+                'sub_type_id' => null,
+                'code' => $planCode,
+                'text' => $planCode,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+        $planId = (int) DB::connection('sqlite')->table('insurance_provider_plans')
+            ->where('code', $planCode)
+            ->value('id');
 
         $quoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
             'uuid' => 'X85DUBM9',
             'code' => 'SAV-X85DUBM9',
             'quote_type_id' => QuoteTypes::SAVINGS->id(),
             'quote_status_id' => 14,
+            'plan_id' => $planId,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -236,6 +255,7 @@ describe('OcrValidator::isProviderEligibleForOcr', function () {
         };
         $quote->payments = collect();
         $quote->setAttribute('uuid', 'TEST-UUID');
+        $quote->setAttribute('quote_type_id', (int) QuoteTypes::CAR->id());
 
         expect($service->isProviderEligibleForOcr(QuoteTypes::CAR, $quote))->toBeFalse();
     });
@@ -255,6 +275,8 @@ describe('OcrValidator::isProviderEligibleForOcr', function () {
                 ],
             ],
         ]);
+
+        $quote->setAttribute('quote_type_id', (int) QuoteTypes::CAR->id());
         $quote->setAttribute('uuid', 'TEST-UUID');
 
         expect($service->isProviderEligibleForOcr(QuoteTypes::CAR, $quote))->toBeTrue();

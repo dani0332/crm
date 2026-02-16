@@ -36,6 +36,8 @@ class OCRSchema
             'passport_visa_details' => function (Blueprint $table) {
                 $table->id();
                 $table->string('passport_number')->nullable();
+                $table->string('passport_country')->nullable();
+                $table->date('passport_expiry_date')->nullable();
                 $table->string('name')->nullable();
                 $table->string('visa_number')->nullable();
                 $table->string('visa_type')->nullable();
@@ -49,6 +51,16 @@ class OCRSchema
                 $table->timestamps();
                 $table->string('visa_file_number')->nullable();
             },
+
+            'insurance_provider_plans' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('provider_id')->nullable();
+                $table->unsignedBigInteger('sub_type_id')->nullable();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
         ]);
     }
 
@@ -56,6 +68,10 @@ class OCRSchema
     {
         SchemaUtils::addColumnIfMissing('document_types', 'category', function (Blueprint $table) {
             $table->string('category')->nullable();
+        });
+
+        SchemaUtils::addColumnIfMissing('personal_quotes', 'plan_id', function (Blueprint $table) {
+            $table->unsignedBigInteger('plan_id')->nullable();
         });
     }
 }
