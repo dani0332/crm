@@ -47,6 +47,7 @@ class AssignTeamPipe extends BaseAllocationPipe
                 $this->lead->uuid
             );
             $this->updateHealthTeamType();
+            $this->lead->refresh();
         } elseif (! $isSIC) {
             // Priority 2: If the lead is not SIC, assign the team based on the health team routing
             LoggerService::info('Non-SIC lead detected, health team routing is applicable');
@@ -176,33 +177,22 @@ class AssignTeamPipe extends BaseAllocationPipe
         $isAUHLead = $this->lead->isAUHLead() || $this->lead->isAUHLead(false);
         $isPECLead = $this->lead->has_pec_tag;
 
-        // If lead is AUH or PEC, use price-based assignment
-        if ($isAUHLead || $isPECLead) {
-            return false;
-        }
-
-        // If no health plan type ID, use price-based assignment
-        if (! $this->lead->health_plan_type_id) {
-            return false;
-        }
-
-        // Only use health plan type for the 3 mappable categories (ENTRY_LEVEL=1, GOOD=2, BEST=3)
-        // If unmappable (e.g., MULTI_CATEGORIES=4), fall back to price-based assignment
-        $teamNameEnumValue = HealthPlanTypeEnum::toTeamNameEnum($this->lead->health_plan_type_id);
-        if (! $teamNameEnumValue) {
-            LoggerService::info("Health plan type ID '{$this->lead->health_plan_type_id}' cannot be mapped to a team, falling back to price-based assignment");
-
-            return false;
-        }
-
-        return true;
+        return ! $isAUHLead && ! $isPECLead;
     }
 
     protected function updateHealthTeamType()
     {
-        // This method is only called when shouldUseHealthPlanType() returns true,
-        // which guarantees health_plan_type_id exists and can be mapped to one of the 3 categories
+        if (! $this->lead->health_plan_type_id) {
+            LoggerService::warning('No health_plan_type_id found on lead');
+            $this->throw('No health plan type ID found', self::NOT_FOUND);
+        }
+
         $teamNameEnumValue = HealthPlanTypeEnum::toTeamNameEnum($this->lead->health_plan_type_id);
+
+        if (! $teamNameEnumValue) {
+            LoggerService::warning("Could not map health plan type ID '{$this->lead->health_plan_type_id}' to TeamNameEnum");
+            $this->throw("Unable to map health plan type ID: {$this->lead->health_plan_type_id}", self::NOT_FOUND);
+        }
 
         $this->lead->health_team_type = $teamNameEnumValue;
         $this->lead->save();
