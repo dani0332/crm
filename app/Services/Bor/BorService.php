@@ -712,7 +712,7 @@ class BorService
                 $iteration++;
 
                 // Use a shorter sleep with connection check
-                for ($i = 0; $i < 3; $i++) {
+                for ($i = 0; $i < 5; $i++) {
                     sleep(1);
                     // Quick connection check during sleep
                     if (connection_aborted()) {
