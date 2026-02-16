@@ -60,12 +60,9 @@
         
         .documentation-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
             gap: 25px;
             margin-top: 30px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
         }
         
         .doc-card {
@@ -213,6 +210,25 @@
                     <li>Comprehensive Audit Trail</li>
                 </ul>
                 <a href="/docs/booking-process/index.html" class="doc-link">Explore Sage Integration →</a>
+            </div>
+
+            <div class="doc-card">
+                <h3>
+                    <span class="icon">🔄</span>
+                    Non-Motor CQF Renewal
+                </h3>
+                <p>
+                    Queue-based processing of CQF renewal leads for non-motor LOBs (Bike, Home, Pet, Travel, Life, Savings, Yacht, Jetski, Cycle).
+                    Covers orchestrator, LOB and quote jobs, pipeline, registry, and eligibility rules.
+                </p>
+                <ul class="features">
+                    <li>Command trigger and configuration (feature switch, threshold)</li>
+                    <li>Job architecture (Orchestrator → LOB batch → Quote jobs → Finalize)</li>
+                    <li>Quote processing pipeline (validation, duplicate check, storage)</li>
+                    <li>Registry and LOB implementations</li>
+                    <li>Eligibility rules and database usage</li>
+                </ul>
+                <a href="/docs/non-motor-cqf-renewal/index.html" class="doc-link">Explore Non-Motor CQF Renewal →</a>
             </div>
         </div>
         
