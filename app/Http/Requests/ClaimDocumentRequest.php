@@ -30,7 +30,7 @@ class ClaimDocumentRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'files' => ['required', 'array'],
+            'files' => ['required', 'array', 'min:1'],
             'files.*' => ['required', 'file'],
             'document_type_code' => [
                 'required',
@@ -82,6 +82,7 @@ class ClaimDocumentRequest extends FormRequest
         return [
             'files.required' => 'At least one document is required.',
             'files.array' => 'Documents must be provided as an array.',
+            'files.min' => 'At least one document must be uploaded.',
             'files.*.required' => 'Each document file is required.',
             'files.*.file' => 'Each document must be a valid file.',
             'document_type_code.required' => 'Document type is required.',
