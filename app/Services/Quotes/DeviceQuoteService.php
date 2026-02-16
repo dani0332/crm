@@ -316,7 +316,7 @@ class DeviceQuoteService extends BaseQuoteService
         // Make API request to save the device quote
         $response = Capi::request('/api/v1/device/create', 'post', $data);
         if (isset($response->code) && ! in_array($response->code, [200, 201], true) || isset($response->status) && ! in_array($response->status, [200, 201], true)) {
-            return $response->json();
+            return $response;
         }
         if (isset($response->uuid) && $response->uuid != '') {
             LoggerService::info(self::class.' - create: Assigning quote to self', extra: [
