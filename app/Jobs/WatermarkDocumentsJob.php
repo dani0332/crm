@@ -176,7 +176,9 @@ class WatermarkDocumentsJob implements ShouldQueue
                 $e
             );
 
-            return false;
+            // Do not convert runtime/storage failures into "missing file".
+            // Let the job fail so it can be retried.
+            throw $e;
         }
 
         return false;
