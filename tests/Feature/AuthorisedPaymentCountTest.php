@@ -20,8 +20,8 @@ beforeEach(function () {
     $this->actingAs($this->user);
 
     // Create an advisor user
-     // Create an advisor user with CarAdvisor role so getAuthorisePaymentCount includes Car quote types
-     $this->advisor = TestDataSeeder::createUserWithRole(\App\Enums\RolesEnum::CarAdvisor, [
+    // Create an advisor user with CarAdvisor role so getAuthorisePaymentCount includes Car quote types
+    $this->advisor = TestDataSeeder::createUserWithRole(\App\Enums\RolesEnum::CarAdvisor, [
         'name' => 'Test Advisor',
         'email' => fake()->unique()->safeEmail(),
     ]);
