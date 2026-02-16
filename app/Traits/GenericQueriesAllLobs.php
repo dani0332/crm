@@ -29,6 +29,9 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
@@ -42,6 +45,7 @@ use App\Services\Reports\RenewalBatchReportService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Model;
 
 trait GenericQueriesAllLobs
 {
@@ -987,5 +991,16 @@ trait GenericQueriesAllLobs
         }
 
         return $return;
+    }
+
+    public function getQuoteTypeId(Model $quote): ?int
+    {
+        return match (true) {
+            $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
+            $quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
+            $quote instanceof PersonalQuote => $quote->quote_type_id,
+            // Add other quote types here as needed
+            default => null,
+        };
     }
 }
