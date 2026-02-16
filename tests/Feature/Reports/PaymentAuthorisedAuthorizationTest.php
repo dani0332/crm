@@ -1,13 +1,21 @@
 <?php
 
+use App\Enums\AuthGuardEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
+use Tests\Helpers\TestSchemaCreator;
 
 /**
  * Tests to verify authorization bypass vulnerability is fixed.
  * Previously, passing quoteTypeId in request would bypass all role checks.
  */
+beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
+});
+
 it('prevents car advisor from accessing health payment data via quoteTypeId parameter', function () {
     $carAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor);
 
@@ -68,9 +76,25 @@ it('prevents travel advisor from accessing bike payment data', function () {
 
 it('allows multi-role advisor to access any of their authorized LOBs', function () {
     $multiRoleAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor);
-    TestDataSeeder::createUserWithRole(RolesEnum::TravelAdvisor, [
-        'id' => $multiRoleAdvisor->id,
-        'email' => $multiRoleAdvisor->email,
+
+    // Assign second role to the same user (do not create a second user)
+    $db = DB::connection('sqlite');
+    $travelRoleId = $db->table('roles')
+        ->where('name', RolesEnum::TravelAdvisor)
+        ->where('guard_name', AuthGuardEnum::Web->value)
+        ->value('id');
+    if (! $travelRoleId) {
+        $travelRoleId = $db->table('roles')->insertGetId([
+            'name' => RolesEnum::TravelAdvisor,
+            'guard_name' => AuthGuardEnum::Web->value,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+    $db->table('model_has_roles')->insertOrIgnore([
+        'role_id' => $travelRoleId,
+        'model_type' => User::class,
+        'model_id' => $multiRoleAdvisor->id,
     ]);
 
     $multiRoleAdvisor = $multiRoleAdvisor->fresh();

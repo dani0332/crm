@@ -707,9 +707,9 @@ describe('Rule Type Change - Cleanup', function () {
             'updated_at' => now(),
         ]);
 
-        // Try to create a second rule with the same combination
+        // Try to create a second rule with the same combination (name is part of uniqueness in RuleRequest)
         $duplicateRuleData = [
-            'name' => 'Second Rule - Duplicate',
+            'name' => 'First Rule',
             'rule_type' => $this->leadSourceRuleType->id,
             'quote_type_id' => $this->quoteType->id,
             'is_active' => true,
@@ -726,7 +726,7 @@ describe('Rule Type Change - Cleanup', function () {
             ->assertJsonValidationErrors(['lead_source_id']);
 
         expect($response->json('errors.lead_source_id.0'))
-            ->toContain('The combination of Lead Source URL, UTM Source, UTM Campaign, and UTM Medium already exists.');
+            ->toContain('The combination of Quote Type,Lead Source, UTM Campaign,Rule Name and Rule Type already exists.');
     });
 
     test('allows same utm parameters with different lead source', function () {
@@ -882,9 +882,9 @@ describe('Rule Type Change - Cleanup', function () {
             'updated_at' => now(),
         ]);
 
-        // Try to update second rule to match first rule's combination
+        // Try to update second rule to match first rule's combination (name is part of uniqueness in RuleRequest)
         $updateData = [
-            'name' => 'Second Rule - Attempting Duplicate',
+            'name' => 'First Rule',
             'rule_type' => $this->leadSourceRuleType->id,
             'quote_type_id' => $this->quoteType->id,
             'is_active' => true,
@@ -901,7 +901,7 @@ describe('Rule Type Change - Cleanup', function () {
             ->assertJsonValidationErrors(['lead_source_id']);
 
         expect($response->json('errors.lead_source_id.0'))
-            ->toContain('The combination of Lead Source URL, UTM Source, UTM Campaign, and UTM Medium already exists.');
+            ->toContain('The combination of Quote Type,Lead Source, UTM Campaign,Rule Name and Rule Type already exists.');
     });
 
     test('allows different utm combinations with same lead source', function () {
