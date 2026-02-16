@@ -66,7 +66,7 @@ class CarAllocation implements Allocation
         $basePipes = [
             FetchLeadPipe::class,
             VerifyLeadPreChecksPipe::class,
-            // VerifyAlreadyInProgressAllocationPipe::class,
+            VerifyAlreadyInProgressAllocationPipe::class,
             EvaluateTierPipe::class,
         ];
 
