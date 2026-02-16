@@ -435,9 +435,6 @@ class CustomerVerificationService
             DB::beginTransaction();
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
             DB::commit();
-
-            // Update customer verification status
-            $this->updateCustomerVerificationStatus($quote);
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
                 'document_type' => $documentType,
@@ -449,6 +446,9 @@ class CustomerVerificationService
 
             DB::rollBack();
         }
+
+        // Update customer verification status
+        $this->updateCustomerVerificationStatus($quote);
     }
 
     private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
@@ -495,9 +495,6 @@ class CustomerVerificationService
             DB::beginTransaction();
             $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
             DB::commit();
-
-            // Update customer verification status
-            $this->updateCustomerVerificationStatus($quote);
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from RC OCR', extra: [
                 'document_type' => $documentType,
@@ -510,6 +507,8 @@ class CustomerVerificationService
             DB::rollBack();
         }
 
+        // Update customer verification status
+        $this->updateCustomerVerificationStatus($quote);
     }
 
     private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
