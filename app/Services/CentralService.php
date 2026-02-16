@@ -1694,7 +1694,7 @@ class CentralService extends BaseService
 
                     $emailData->handBookDocuments = '';
                     if (! empty($policyHandBook)) {
-                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($policyHandBook, 'azureIMPrivate') ?? '';
+                        $emailData->handBookDocuments = config('constants.AZURE_IM_STORAGE_URL').$policyHandBook;
                     }
                 } else {
                     $emailData->handBookDocuments = '';

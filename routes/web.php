@@ -24,6 +24,7 @@ use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DocsController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -141,6 +142,9 @@ Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@ha
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
     Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
+
+    Route::get('docs', [DocsController::class, 'show'])->name('docs.index');
+    Route::get('docs/{path}', [DocsController::class, 'show'])->where('path', '.*')->name('docs.show');
 
     Route::get('leadsearch', function () {
         return redirect('home');
@@ -442,7 +446,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
-    Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/{quoteUuId}/update-validate-documents', [QuoteDocumentController::class, 'validateDocumentsUpdate']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
@@ -570,6 +573,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
                 Route::post('fetch-nationalities', [BuyLeadConfigController::class, 'fetchNationalities'])->name('admin.buy-leads.config.fetch-nationalities');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
+            });
+            Route::prefix('requests')->middleware('permission:'.PermissionsEnum::BUY_LEADS_ADMIN)->group(function () {
+                Route::get('/', [\App\Http\Controllers\V2\Admin\AdminBuyLeadController::class, 'index'])->name('admin.buy-leads.requests.index');
+                Route::post('/{buyLeadRequest}/expire', [\App\Http\Controllers\V2\Admin\AdminBuyLeadController::class, 'expire'])->name('admin.buy-leads.requests.expire');
             });
         });
 
