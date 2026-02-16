@@ -75,21 +75,11 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
         if ($this->has('next_follow_up_date')) {
             $dateValue = $this->input('next_follow_up_date');
 
-            // Debug: Log the incoming date value
-            LoggerService::info('NextFollowUp - Incoming date value:', [
-                'original_value' => $dateValue,
-                'type' => gettype($dateValue),
-            ]);
-
             // If it's a JavaScript Date object string or ISO format, convert it
             if (is_string($dateValue)) {
                 try {
                     $date = new \DateTime($dateValue);
                     $formattedDate = $date->format('Y-m-d H:i:s');
-
-                    LoggerService::info('NextFollowUp - Converted date:', [
-                        'formatted_date' => $formattedDate,
-                    ]);
 
                     $this->merge([
                         'next_follow_up_date' => $formattedDate,
@@ -115,21 +105,11 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
 
                 try {
                     $selectedDate = new \DateTime($dateValue);
-                    $now = new \DateTime;
                     $maxDate = new \DateTime('+15 days');
-
-                    LoggerService::info('NextFollowUp - Custom validation:', [
-                        'selected_date' => $selectedDate->format('Y-m-d H:i:s'),
-                        'current_time' => $now->format('Y-m-d H:i:s'),
-                        'max_date' => $maxDate->format('Y-m-d H:i:s'),
-                        'is_past' => $selectedDate <= $now,
-                        'is_too_far' => $selectedDate > $maxDate,
-                    ]);
 
                     // Check if date is in the past (with a 1-minute buffer to handle processing time)
                     $nowWithBuffer = new \DateTime('-1 minute');
                     if ($selectedDate <= $nowWithBuffer) {
-                        LoggerService::warning('NextFollowUp - Date is in the past');
                         $validator->errors()->add(
                             'next_follow_up_date',
                             'The next follow-up date must be in the future.'
@@ -138,7 +118,6 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
 
                     // Check if date is more than 15 days in the future
                     if ($selectedDate > $maxDate) {
-                        LoggerService::warning('NextFollowUp - Date is too far in the future');
                         $validator->errors()->add(
                             'next_follow_up_date',
                             'The next follow-up date cannot be more than 15 days in the future.'
