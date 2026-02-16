@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Exceptions\AdvisorNotificationFailedException;
+use App\Exceptions\BirdUrlNotFoundException;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -40,7 +42,7 @@ class AdvisorPaymentNotificationJob implements ShouldQueue
         if (! $birdUrl) {
             LoggerService::error('AdvisorPaymentNotificationJob: Bird URL not found');
 
-            throw new \Exception('Bird URL not found for advisor payment notification');
+            throw new BirdUrlNotFoundException();
         }
 
         $response = $birdService->triggerWebHookRequest($birdUrl, $emailData);
@@ -50,7 +52,10 @@ class AdvisorPaymentNotificationJob implements ShouldQueue
                 'response' => json_encode($response),
             ]);
 
-            throw new \Exception('Failed to send advisor payment notification email. Status: '.($response?->status_code ?? 'unknown'));
+            throw new AdvisorNotificationFailedException(
+                'Failed to send advisor payment notification email',
+                $response?->status_code ?? 0
+            );
         }
 
         LoggerService::info('AdvisorPaymentNotificationJob: Email sent successfully');
