@@ -19,8 +19,7 @@ class AMLInsuredService
         ]);
 
         // Determine if entity or individual
-        $isEntity = $this->determineIfEntity($customerType, $idType, $idNumber);
-        $resolvedCustomerType = $isEntity ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+        $resolvedCustomerType = $this->determineIfEntity($customerType, $idType, $idNumber) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
 
         // Search for insured
         $insuredDetails = $this->searchInsured($resolvedCustomerType, $idType, $idNumber);
