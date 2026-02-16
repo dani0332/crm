@@ -367,7 +367,7 @@ enum QuoteTypes: string
         $hasManagerRole = in_array($this->name.'_MANAGER', $userRoles);
 
         // Check VIEW_ALL_REPORTS permission
-        $hasViewAllReportsPermission = $user->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($this);
+        $hasViewAllReportsPermission = $user->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($this, $user);
 
         return $hasAdvisorRole || $hasManagerRole || $hasViewAllReportsPermission;
     }
