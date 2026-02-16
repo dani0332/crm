@@ -79,7 +79,7 @@ class RulesController extends Controller
         if ($request->filled('lead_source_id')) {
             $leadSource = LeadSource::find($request->lead_source_id);
 
-            if($leadSource && !$leadSource->is_applicable_for_rules) {
+            if ($leadSource && ! $leadSource->is_applicable_for_rules) {
                 // Ensure lead source is applicable for rules
                 $leadSource->update(['is_applicable_for_rules' => true]);
             }
@@ -159,7 +159,7 @@ class RulesController extends Controller
         if ($request->filled('lead_source_id') && $request->get('rule_type') == RuleTypeEnum::LEAD_SOURCE) {
 
             $leadSource = LeadSource::find($request->lead_source_id);
-            if($leadSource && !$leadSource->is_applicable_for_rules) {
+            if ($leadSource && ! $leadSource->is_applicable_for_rules) {
                 // Ensure lead source is applicable for rules
                 $leadSource->update(['is_applicable_for_rules' => true]);
             }

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\QuoteType;
-use App\Models\LeadSource;
-use App\Models\RuleDetail;
 use App\Enums\RuleTypeEnum;
-use Illuminate\Validation\Rule;
+use App\Models\LeadSource;
+use App\Models\QuoteType;
+use App\Models\RuleDetail;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RuleRequest extends FormRequest
 {
