@@ -221,20 +221,26 @@ class RetargetingEpReminderTestDataHelper
         $quote->first_name = $overrides['quote_first_name'] ?? 'John';
         $quote->last_name = $overrides['quote_last_name'] ?? 'Doe';
         $quote->full_name = ($quote->first_name ?? '').' '.($quote->last_name ?? '');
-        $quote->carMake = ! array_key_exists('vehicle_make', $overrides)
-            ? (object) ['text' => 'Toyota']
-            : ($overrides['vehicle_make'] === null ? null : (object) ['text' => $overrides['vehicle_make']]);
-        $quote->carModel = ! array_key_exists('vehicle_model', $overrides)
-            ? (object) ['text' => 'Camry']
-            : ($overrides['vehicle_model'] === null ? null : (object) ['text' => $overrides['vehicle_model']]);
+        $makeText = ! array_key_exists('vehicle_make', $overrides) ? 'Toyota' : ($overrides['vehicle_make'] === null ? null : $overrides['vehicle_make']);
+        $modelText = ! array_key_exists('vehicle_model', $overrides) ? 'Camry' : ($overrides['vehicle_model'] === null ? null : $overrides['vehicle_model']);
+        $quote->carMake = $makeText === null ? null : (object) array_filter(array_merge(
+            ['text' => $makeText],
+            array_key_exists('vehicle_make_code', $overrides) ? ['code' => $overrides['vehicle_make_code']] : []
+        ));
+        $quote->carModel = $modelText === null ? null : (object) array_filter(array_merge(
+            ['text' => $modelText],
+            array_key_exists('vehicle_model_code', $overrides) ? ['code' => $overrides['vehicle_model_code']] : []
+        ));
         $quote->advisor = ! array_key_exists('advisor_email', $overrides)
             ? (object) ['email' => 'advisor@example.com']
             : ($overrides['advisor_email'] === null ? null : (object) ['email' => $overrides['advisor_email']]);
+        $planRepairType = $overrides['plan_repair_type'] ?? 'COMP';
         $quote->plan = (array_key_exists('plan_id', $overrides) && $overrides['plan_id'] === null)
             ? null
             : (object) [
                 'id' => $overrides['plan_id'] ?? 5,
                 'provider_id' => 1,
+                'repair_type' => $planRepairType,
                 'insuranceProvider' => array_key_exists('plan_insurance_provider', $overrides) && $overrides['plan_insurance_provider'] === null
                     ? null
                     : (object) ['code' => array_key_exists('plan_provider_code', $overrides) ? $overrides['plan_provider_code'] : 'PROV01'],
@@ -253,6 +259,7 @@ class RetargetingEpReminderTestDataHelper
         $embeddedTransaction->quote_request_id = $overrides['quote_id'] ?? $quoteId;
         $embeddedTransaction->quote_request_type = CarQuote::class;
         $embeddedTransaction->is_selected = false;
+        $embeddedTransaction->is_active = $overrides['et_is_active'] ?? 1;
         $embeddedTransaction->payment_status_id = $overrides['payment_status_id'] ?? PaymentStatusEnum::DRAFT;
         $embeddedTransaction->product_id = 1;
         $embeddedTransaction->quoteRequest = $quote;

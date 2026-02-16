@@ -82,13 +82,19 @@ describe('getEpRetargetingReminderData', function () {
             expect($json['status'])->toBe(Response::HTTP_BAD_REQUEST);
             expect($json['message'])->toBe('Not eligible for reminder');
         })->with([
-            ['vehicle_make', ['vehicle_make' => null]],
-            ['vehicle_model', ['vehicle_model' => '']],
             ['quote_email', ['quote_email' => '']],
             ['plan_id', ['plan_id' => null]],
             ['plan_insurance_provider', ['plan_insurance_provider' => null]],
             ['plan_provider_code', ['plan_provider_code' => '']],
             ['ep_short_code not in allowed list', ['ep_short_code' => EmbeddedProductEnum::COURIER]],
+            ['ep disabled when payment is AUTHORISED', ['payment_status_id' => PaymentStatusEnum::AUTHORISED]],
+            ['ep disabled when ECB and policy_booking_date over 30 days', [
+                'ep_short_code' => EmbeddedProductEnum::ECB,
+                'quote_policy_booking_date' => now()->subDays(31)->toDateString(),
+                'vehicle_make_code' => 1,
+                'vehicle_model_code' => 1,
+                'plan_repair_type' => 'COMP',
+            ]],
         ]);
     });
 

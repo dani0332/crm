@@ -56,7 +56,7 @@ describe('EmbeddedTransactionRepository', function () {
                 true,
                 PaymentStatusEnum::DRAFT,
                 QuoteStatusEnum::PolicyBooked,
-                [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB]
+                EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS
             );
             expect($firstTestResult)->toHaveCount(0);
 
@@ -66,7 +66,7 @@ describe('EmbeddedTransactionRepository', function () {
                 true,
                 PaymentStatusEnum::DRAFT,
                 QuoteStatusEnum::PolicyBooked,
-                [EmbeddedProductEnum::MDX, EmbeddedProductEnum::ECB]
+                EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS
             );
             expect($secondTestResult)->toHaveCount(2);
             expect($secondTestResult->pluck('id')->all())->toContain($data->validTransaction->id, $data->epECBTransaction->id);
