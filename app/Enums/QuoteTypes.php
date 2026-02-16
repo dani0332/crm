@@ -353,27 +353,22 @@ enum QuoteTypes: string
     {
         $userRoles = $user->getRoleNames()->toArray();
 
+        // Check admin access
         if (in_array(RolesEnum::Admin, $userRoles)) {
             return true;
         }
 
-        // Use advisorRoles() to get the correct role mappings instead of string concatenation
+        // Check advisor roles
         $quoteTypeRoles = $this->advisorRoles();
-        foreach ($quoteTypeRoles as $role) {
-            if (in_array($role, $userRoles)) {
-                return true;
-            }
-        }
+        $hasAdvisorRole = ! empty(array_intersect($quoteTypeRoles, $userRoles));
 
-        // Also check for manager roles using string concatenation as fallback
-        // This handles manager roles that may not be in advisorRoles()
+        // Check manager roles
         $hasManagerRole = in_array($this->name.'_MANAGER', $userRoles);
 
-        if ($hasManagerRole) {
-            return true;
-        }
+        // Check VIEW_ALL_REPORTS permission
+        $hasViewAllReportsPermission = $user->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($this);
 
-        return $user->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($this);
+        return $hasAdvisorRole || $hasManagerRole || $hasViewAllReportsPermission;
     }
 
     /**
