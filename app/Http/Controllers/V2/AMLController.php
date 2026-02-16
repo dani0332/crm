@@ -58,7 +58,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 
 class AMLController extends Controller
 {
