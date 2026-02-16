@@ -12,5 +12,9 @@
   ],
   "editor.inlineSuggest.showToolbar": "always",
   "doppler.autocomplete.enable": false,
-  "doppler.hover.enable": true
+  "doppler.hover.enable": true,
+  "sonarlint.connectedMode.project": {
+    "connectionId": "myalfred",
+    "projectKey": "InsuranceMarket-ae_blanka"
+  }
 }
