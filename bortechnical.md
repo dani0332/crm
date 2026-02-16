@@ -45,7 +45,7 @@ The Digital Broker on Record (BOR) feature enables insurance brokers to digitall
 
 ### Technology Stack
 
-- **Backend**: Laravel 10+ with PHP 8.2+
+- **Backend**: Laravel 10+ with PHP 8.4+
 - **Frontend**: Vue.js 3.5+ with Inertia.js
 - **Database**: MySQL with polymorphic relationships
 - **Storage**: Azure Blob Storage for documents

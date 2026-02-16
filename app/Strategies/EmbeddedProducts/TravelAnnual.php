@@ -60,6 +60,7 @@ class TravelAnnual extends EmbeddedProduct
             'travelQuote.quoteStatus',
             'travelQuote.advisor',
             'travelQuote.quoteRequestEntityMapping',
+            'travelQuote.latestInsured',
         )
             ->join('payments', function ($join) {
                 $join->on('embedded_transactions.code', '=', 'payments.code')
@@ -132,11 +133,8 @@ class TravelAnnual extends EmbeddedProduct
             $quoteObject = $item->travelQuote ?? $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
-            $customerInsured = $customer?->customerInsured()
-                ->where('quote_request_id', $item->quote_request_id)
-                ->where('quote_type_id', $item->quote_type_id)
-                ->latest('updated_at')
-                ->first() ?? null;
+
+            $latestInsured = $quoteObject->latestInsured ?? null;
             $advisorName = $quoteObject->advisor->name ?? '';
             $nationality = $quoteObject->customer->nationality->text ?? '';
 
@@ -153,8 +151,8 @@ class TravelAnnual extends EmbeddedProduct
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
-                $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
-                $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
+                $firstName = ($latestInsured?->first_name ?? $customer?->insured_first_name) ?? '';
+                $lastName = ($latestInsured?->last_name ?? $customer?->insured_last_name) ?? '';
             }
 
             $item->id = $item->id;
@@ -173,7 +171,7 @@ class TravelAnnual extends EmbeddedProduct
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
-            $item->emirates_id_number = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
+            $item->emirates_id_number = ($latestInsured?->id_number ?? $customer?->emirates_id_number) ?? '';
 
             return $item;
         });

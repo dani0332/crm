@@ -75,6 +75,8 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedLegacyPolicyKeys();
         $this->seedBranchData();
         $this->seedOcrUtilEnabled();
+        $this->seedCarOcbEmailTemplatesUpdate();
+        $this->seedOCRCustomerJourneyHealthEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -621,6 +623,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::OCR_ENABLED],
             [
                 'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOCRCustomerJourneyHealthEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED],
+            [
+                'value' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1208,6 +1223,39 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::OCR_UTIL_ENABLED],
             [
                 'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCarOcbEmailTemplatesUpdate()
+    {
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE],
+            [
+                'value' => 778,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE],
+            [
+                'value' => 778,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE],
+            [
+                'value' => 778,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

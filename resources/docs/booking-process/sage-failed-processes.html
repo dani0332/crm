@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sage Failed Processes - Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <span>Sage Failed Processes</span>
+      </nav>
+
+      <!-- Header -->
+      <header class="header">
+        <h1>🔍 Sage Failed Processes Management</h1>
+        <p>
+          Monitor, troubleshoot, and resolve failed Sage 300 integration
+          processes
+        </p>
+        <span class="status-badge failed">⚠️ Issue Management</span>
+      </header>
+
+      <!-- Overview Section -->
+      <section class="content-section">
+        <h2>❓ What Are Sage Failed Processes?</h2>
+        <p>
+          Sage Failed Processes are policy bookings or endorsements that
+          encountered errors during integration with Sage 300 ERP system. These
+          failures can occur at various stages of the booking workflow including
+          customer creation, receipt generation, invoice posting, or payment
+          application.
+        </p>
+
+        <div class="highlight">
+          <h4>💡 Why Monitor Failed Processes?</h4>
+          <p>
+            <strong>Critical for Financial Accuracy:</strong> Failed Sage
+            processes mean the policy is sold but not properly recorded in the
+            accounting system, causing:<br /><br />
+            ✓ Missing revenue records in financial reports<br />
+            ✓ Untracked commission payments to sales teams<br />
+            ✓ Incomplete accounts receivable and payable records<br />
+            ✓ Potential compliance and audit issues
+          </p>
+        </div>
+      </section>
+
+      <!-- Access & Permissions -->
+      <section class="content-section">
+        <h2>🔐 Access & Permissions</h2>
+
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📍 Route Access</h4>
+            <ul>
+              <li><strong>URL:</strong> /sage-processes/failed</li>
+              <li><strong>Route Name:</strong> sage-failed-processes.index</li>
+              <li><strong>Method:</strong> GET</li>
+              <li>
+                <strong>Export URL:</strong> /sage-processes/failed/export
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🔑 Required Permission</h4>
+            <ul>
+              <li>
+                <strong>Permission Code:</strong> SAGE_PROCESS_ISSUE_MANAGEMENT
+              </li>
+              <li>Enforced via middleware on both index and export</li>
+              <li>Only users with this permission can view failed processes</li>
+              <li>Permission required for CSV export functionality</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🛡️ Middleware Protection</h4>
+            <ul>
+              <li>SetReadDbConnection middleware applied</li>
+              <li>Reads from read-replica database for performance</li>
+              <li>Reduces load on primary write database</li>
+              <li>Ensures data consistency across replicas</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Process Flow -->
+      <section class="content-section">
+        <h2>🔄 Failed Process Workflow</h2>
+        <p>Understanding how processes fail and how to identify them.</p>
+
+        <div class="process-flow">
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #3498db, #2980b9)"
+          >
+            <div class="step-number">1</div>
+            <h4>Booking Attempt</h4>
+            <p>Policy booking initiated to Sage 300</p>
+          </div>
+
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #e74c3c, #c0392b)"
+          >
+            <div class="step-number">2</div>
+            <h4>Error Occurs</h4>
+            <p>API call to Sage fails at specific step</p>
+          </div>
+
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #f39c12, #d68910)"
+          >
+            <div class="step-number">3</div>
+            <h4>Status Update</h4>
+            <p>sage_processes.status = 'failed'</p>
+          </div>
+
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #9b59b6, #8e44ad)"
+          >
+            <div class="step-number">4</div>
+            <h4>Error Logged</h4>
+            <p>Failed API response stored in sage_api_logs</p>
+          </div>
+
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #27ae60, #229954)"
+          >
+            <div class="step-number">5</div>
+            <h4>Admin Review</h4>
+            <p>Appears in failed processes list for resolution</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- UI Features -->
+      <section class="content-section">
+        <h2>🖥️ User Interface Features</h2>
+
+        <h3>Filter Options</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>🏢 Insurance Provider</h4>
+            <ul>
+              <li>Multi-select dropdown</li>
+              <li>Filterable search</li>
+              <li>Shows only active providers</li>
+              <li>Filters by insurance_provider_id</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📊 Line of Business</h4>
+            <ul>
+              <li>Multi-select quote types</li>
+              <li>Includes: Car, Health, Travel, etc.</li>
+              <li>Special "Send Update" option</li>
+              <li>Supports both direct models and personal quotes</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🎯 Option Filter</h4>
+            <ul>
+              <li><strong>Main Lead:</strong> Initial policy bookings</li>
+              <li><strong>Send Update:</strong> Policy endorsements</li>
+              <li>Single selection only</li>
+              <li>Differentiates booking type</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📅 Date Range</h4>
+            <ul>
+              <li>Created Date Start (date_from)</li>
+              <li>Created Date End (date_to)</li>
+              <li>Filters by sage_processes.created_at</li>
+              <li>Inclusive range search</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Data Table Columns</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Description</th>
+                <th>Data Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Sage Pro. ID</strong></td>
+                <td>Sage process unique identifier</td>
+                <td>sage_processes.id</td>
+              </tr>
+              <tr>
+                <td><strong>REF ID</strong></td>
+                <td>Quote/Lead reference code (clickable link)</td>
+                <td>model.code or model.personal_quote.code</td>
+              </tr>
+              <tr>
+                <td><strong>SU Ref ID</strong></td>
+                <td>Send Update reference (if applicable)</td>
+                <td>send_update_log.code</td>
+              </tr>
+              <tr>
+                <td><strong>Lead Create Date</strong></td>
+                <td>When quote/lead was created</td>
+                <td>model.created_at</td>
+              </tr>
+              <tr>
+                <td><strong>Policy Number</strong></td>
+                <td>Issued policy number from insurer</td>
+                <td>model.policy_number or personal_quote.policy_number</td>
+              </tr>
+              <tr>
+                <td><strong>Price Vat Applicable</strong></td>
+                <td>Amount before VAT (VAT scenarios only)</td>
+                <td>payments.price_vat_applicable</td>
+              </tr>
+              <tr>
+                <td><strong>Price Vat Not Applicable</strong></td>
+                <td>Amount when VAT = 0</td>
+                <td>payments.price_vat_applicable (when price_vat = 0)</td>
+              </tr>
+              <tr>
+                <td><strong>Price Vat</strong></td>
+                <td>VAT amount charged</td>
+                <td>payments.price_vat or model.total_vat_amount</td>
+              </tr>
+              <tr>
+                <td><strong>Discount</strong></td>
+                <td>Discount applied to policy</td>
+                <td>payments.discount_value or model.discount</td>
+              </tr>
+              <tr>
+                <td><strong>Total Price</strong></td>
+                <td>Final amount customer pays</td>
+                <td>payments.total_price or model.price_with_vat</td>
+              </tr>
+              <tr>
+                <td><strong>Commission (VAT applicable)</strong></td>
+                <td>Commission before VAT</td>
+                <td>payments.commission_vat_applicable</td>
+              </tr>
+              <tr>
+                <td><strong>Commission (VAT not applicable)</strong></td>
+                <td>Commission when no VAT on commission</td>
+                <td>payments.commission_vat_not_applicable</td>
+              </tr>
+              <tr>
+                <td><strong>Commission Vat</strong></td>
+                <td>VAT on commission earned</td>
+                <td>payments.commission_vat or model.vat_on_commission</td>
+              </tr>
+              <tr>
+                <td><strong>Total Commission</strong></td>
+                <td>Total commission including VAT</td>
+                <td>payments.commission or model.total_commission</td>
+              </tr>
+              <tr>
+                <td><strong>Payment Date</strong></td>
+                <td>When payment was captured</td>
+                <td>payments.captured_at</td>
+              </tr>
+              <tr>
+                <td><strong>Payment Status</strong></td>
+                <td>Current payment state</td>
+                <td>payment_status.text</td>
+              </tr>
+              <tr>
+                <td><strong>Provider</strong></td>
+                <td>Insurance company name</td>
+                <td>insurance_provider.text</td>
+              </tr>
+              <tr>
+                <td><strong>Invoice Description</strong></td>
+                <td>Custom invoice notes</td>
+                <td>payments.invoice_description</td>
+              </tr>
+              <tr>
+                <td><strong>Insurer Tax Invoice No.</strong></td>
+                <td>Insurer's tax invoice number</td>
+                <td>payments.insurer_tax_number</td>
+              </tr>
+              <tr>
+                <td><strong>Insurer Commission Tax Invoice No.</strong></td>
+                <td>Commission invoice from insurer</td>
+                <td>payments.insurer_commmission_invoice_number</td>
+              </tr>
+              <tr>
+                <td><strong>Lead Status</strong></td>
+                <td>Current quote/send update status</td>
+                <td>quote_status.text or send_update_log.status</td>
+              </tr>
+              <tr>
+                <td><strong>Sage Receipt ID</strong></td>
+                <td>Collected receipt IDs from payment splits</td>
+                <td>payment_splits.sage_reciept_id (comma-separated)</td>
+              </tr>
+              <tr>
+                <td><strong>Sage Proc. Status</strong></td>
+                <td>Process status (always "failed" in this view)</td>
+                <td>sage_processes.status</td>
+              </tr>
+              <tr>
+                <td><strong>Failed Sage API</strong></td>
+                <td>Which Sage endpoint failed (with copy icon)</td>
+                <td>sage_api_logs.sage_end_point</td>
+              </tr>
+              <tr>
+                <td><strong>Failed API Error</strong></td>
+                <td>Full error response from Sage (truncated, with copy)</td>
+                <td>sage_api_logs.response</td>
+              </tr>
+              <tr>
+                <td><strong>Error displayed in IMCRM</strong></td>
+                <td>Extracted user-friendly error message</td>
+                <td>
+                  Parsed from sage_api_logs.response -> error.message.value
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Updated At</strong></td>
+                <td>Last update timestamp</td>
+                <td>sage_processes.updated_at</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Technical Architecture -->
+      <section class="content-section">
+        <h2>🏗️ Technical Architecture</h2>
+
+        <h3>Core Components</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>🎛️ Controller</h4>
+            <ul>
+              <li><strong>Class:</strong> SageProcessesController</li>
+              <li><strong>Location:</strong> app/Http/Controllers/V2/</li>
+              <li><strong>Methods:</strong> index(), export()</li>
+              <li><strong>Validation:</strong> SageProcessesFilterRequest</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>⚙️ Service Layer</h4>
+            <ul>
+              <li><strong>Class:</strong> SageProcessesService</li>
+              <li><strong>Location:</strong> app/Services/</li>
+              <li><strong>Extends:</strong> BaseService</li>
+              <li><strong>Key Method:</strong> getFailedSageProcesses()</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📤 Export Handler</h4>
+            <ul>
+              <li><strong>Class:</strong> SageProcessesExport</li>
+              <li><strong>Location:</strong> app/Exports/</li>
+              <li><strong>Type:</strong> ModernCsvExportable</li>
+              <li><strong>Format:</strong> CSV with timestamp</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🖼️ Frontend</h4>
+            <ul>
+              <li><strong>Component:</strong> Index.vue</li>
+              <li>
+                <strong>Location:</strong>
+                resources/js/inertia/Pages/SageProcesses/
+              </li>
+              <li><strong>Framework:</strong> Vue 3 + Inertia.js</li>
+              <li><strong>Features:</strong> DataTable, filters, export</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Database Query Architecture</h3>
+        <div class="code-block" data-lang="php">
+          // Base Query Construction SageProcess::select('id', 'model_type',
+          'model_id', 'insurance_provider_id', 'request', 'status',
+          'created_at', 'updated_at') ->where('status',
+          SageEnum::SAGE_PROCESS_FAILED_STATUS) ->whereNotIn('model_type',
+          [PaymentSplits::class, EmbeddedTransaction::class]) ->orderBy('id',
+          'desc') // Eager Loading (prevents N+1 queries) ->with([ 'model' =>
+          function ($query) { $query->with([ 'sageApiLogs' => fn ($q) =>
+          $q->where('status', SageEnum::STATUS_FAIL) ->select('id',
+          'section_type', 'section_id', 'sage_end_point', 'response', 'status',
+          'created_at') ->orderBy('created_at', 'asc') ->limit(1), // Only fetch
+          FIRST failed log 'payments' => fn ($q) => $q->select(/* payment
+          columns */) ->with(['paymentSplits', 'paymentStatus']), ]); },
+          'insuranceProvider:id,text', ]) // Model Validation (ensures quote has
+          failed status) ->whereHas('model', function ($q) {
+          $q->whereHas('sageApiLogs', fn ($subQuery) =>
+          $subQuery->where('status', SageEnum::STATUS_FAIL) ); // Check for
+          POLICY_BOOKING_FAILED status if
+          (Schema::hasColumn($modelInstance->getTable(), 'quote_status_id')) {
+          $q->where('quote_status_id', QuoteStatusEnum::POLICY_BOOKING_FAILED);
+          } elseif (Schema::hasColumn($modelInstance->getTable(), 'status')) {
+          $q->where('status', SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED); }
+          });
+        </div>
+      </section>
+
+      <!-- Filter Implementation -->
+      <section class="content-section">
+        <h2>🔍 Filter Implementation Details</h2>
+
+        <h3>1. Insurance Provider Filter</h3>
+        <div class="code-block" data-lang="php">
+          // Multi-select filter (array of IDs) $query->when(
+          $request->insurance_provider_id &&
+          is_array($request->insurance_provider_id) &&
+          count($request->insurance_provider_id) > 0, fn ($q) =>
+          $q->whereIn('insurance_provider_id', $request->insurance_provider_id)
+          );
+        </div>
+
+        <h3>2. Quote Type Filter (Complex Logic)</h3>
+        <div class="code-block" data-lang="php">
+          // Handles both direct models and personal quotes
+          $query->when($request->quote_type_id, function ($q) use ($request) {
+          [$directModelClasses, $personalQuoteTypeIds] =
+          $this->getDirectModelClassesAndPersonalQuoteTypeIds($request);
+          $q->where(function ($subQuery) use ($directModelClasses,
+          $personalQuoteTypeIds) { // Direct models (e.g., HealthQuote,
+          TravelQuote) if (!empty($directModelClasses)) {
+          $subQuery->whereIn('model_type', $directModelClasses); } // Personal
+          quotes (Car, Bike via PersonalQuote model) if
+          (!empty($personalQuoteTypeIds)) { $subQuery->orWhere(function
+          ($personalQuery) use ($personalQuoteTypeIds) {
+          $personalQuery->where('model_type', PersonalQuote::class)
+          ->whereExists(function ($existsQuery) use ($personalQuoteTypeIds) {
+          $existsQuery->select(DB::raw(1)) ->from('personal_quotes')
+          ->whereColumn('personal_quotes.id', 'sage_processes.model_id')
+          ->whereIn('personal_quotes.quote_type_id', $personalQuoteTypeIds); });
+          }); } }); });
+        </div>
+
+        <h3>3. Option Filter (Main Lead vs Send Update)</h3>
+        <div class="code-block" data-lang="php">
+          // Simple model type discrimination $query->when($request->option,
+          function ($q) use ($request) { if ($request->option ===
+          self::OPTION_SEND_UPDATE) { // Only Send Updates
+          $q->where('model_type', $this->sendUpdateModelClass); } elseif
+          ($request->option === self::OPTION_MAIN_LEAD) { // Exclude Send
+          Updates (all other models) $q->where('model_type', '!=',
+          $this->sendUpdateModelClass); } });
+        </div>
+
+        <h3>4. Date Range Filter</h3>
+        <div class="code-block" data-lang="php">
+          // Inclusive date range on created_at $query->when(
+          $request->date_from, fn ($q) => $q->where('created_at', '>=',
+          Carbon::parse($request->date_from)->startOfDay() ) )->when(
+          $request->date_to, fn ($q) => $q->where('created_at', '<=',
+          Carbon::parse($request->date_to)->endOfDay() ) );
+        </div>
+      </section>
+
+      <!-- Data Enrichment -->
+      <section class="content-section">
+        <h2>🎨 Data Enrichment Process</h2>
+        <p>
+          After fetching base data, the service enriches results with additional
+          computed information.
+        </p>
+
+        <h3>1. Collected Sage Receipt IDs</h3>
+        <div class="highlight">
+          <h4>📋 Receipt ID Aggregation</h4>
+          <p>
+            <strong>Purpose:</strong> Collect all sage_reciept_id values from
+            payment_splits<br />
+            <strong>Method:</strong> Flatten payment.paymentSplits and extract
+            IDs<br />
+            <strong>Format:</strong> Comma-separated string (e.g., "R001, R002,
+            R003")<br />
+            <strong>Storage:</strong> Added as virtual attribute to each process
+            item
+          </p>
+        </div>
+
+        <div class="code-block" data-lang="php">
+          // Optimized collection-based aggregation foreach ($items as $item) {
+          $sageReceiptIds = []; if ($item->model && $item->model->payments) {
+          $sageReceiptIds = $item->model->payments ->pluck('paymentSplits')
+          ->flatten() ->pluck('sage_reciept_id') ->filter() ->values()
+          ->toArray(); } $item->collected_sage_receipt_ids =
+          !empty($sageReceiptIds) ? implode(', ', $sageReceiptIds) : null;
+          $item->collected_sage_receipt_ids_array = $sageReceiptIds; }
+        </div>
+
+        <h3>2. IMCRM Error Extraction</h3>
+        <div class="highlight">
+          <h4>🔧 Error Message Parsing</h4>
+          <p>
+            <strong>Purpose:</strong> Extract user-friendly error from Sage API
+            response<br />
+            <strong>Source:</strong> sage_api_logs.response (JSON)<br />
+            <strong>Path:</strong> error.message.value<br />
+            <strong>Handling:</strong> Supports double-encoded JSON strings
+          </p>
+        </div>
+
+        <div class="code-block" data-lang="php">
+          // Safe error extraction with fallbacks $firstFailedLog =
+          $item->model?->sageApiLogs?->first(); if ($firstFailedLog?->response)
+          { try { $responseData =
+          $this->decodeJsonResponse($firstFailedLog->response); // Safely
+          extract nested error message $item->imcrm_error =
+          !empty($responseData['error']['message']['value']) ?
+          $responseData['error']['message']['value'] : null; } catch (\Exception
+          $e) { LoggerService::warning('Could not parse sage API response', [
+          'sage_api_log_id' => $firstFailedLog->id ?? null, ]);
+          $item->imcrm_error = null; } } // Double-encoded JSON handling
+          protected function decodeJsonResponse(string $jsonString): ?array {
+          $decoded = json_decode($jsonString, true); // Check if double-encoded
+          and decode again if (is_string($decoded)) { $decoded =
+          json_decode($decoded, true); } return is_array($decoded) ? $decoded :
+          null; }
+        </div>
+
+        <h3>3. Eager Loading Relationships</h3>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📊 Quote Status Loading</h4>
+            <ul>
+              <li>Groups models by type (class name)</li>
+              <li>Checks schema for quote_status_id column</li>
+              <li>Batch loads quoteStatus in single query per type</li>
+              <li>Prevents N+1 query problem</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📝 Personal Quote Loading</h4>
+            <ul>
+              <li>Groups models by type</li>
+              <li>Checks for personal_quote_id column</li>
+              <li>Loads personalQuote with uuid, code, policy_number</li>
+              <li>Efficient batch loading strategy</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Export Functionality -->
+      <section class="content-section">
+        <h2>📥 CSV Export Functionality</h2>
+
+        <h3>Export Process</h3>
+        <div class="process-flow">
+          <div class="process-step">
+            <div class="step-number">1</div>
+            <h4>User Action</h4>
+            <p>Click "Export" button with current filters</p>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">2</div>
+            <h4>Backend Query</h4>
+            <p>Run same query with $isExport = true (no pagination)</p>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">3</div>
+            <h4>Generate CSV</h4>
+            <p>SageProcessesExport formats data to CSV</p>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">4</div>
+            <h4>Download File</h4>
+            <p>Browser receives CSV with timestamp filename</p>
+          </div>
+        </div>
+
+        <h3>Frontend Implementation</h3>
+        <div class="code-block" data-lang="javascript">
+          // Vue 3 export function async function exportExcel() { try {
+          loader.export = true; const exportURL =
+          route('sage-failed-processes.export'); // Axios request with blob
+          response const response = await axios.get(exportURL, { params: {
+          ...availableFilters }, responseType: 'blob', }); // Create blob and
+          download link const blob = new Blob([response.data], { type:
+          'text/csv' }); const link = document.createElement('a'); link.href =
+          window.URL.createObjectURL(blob); // Generate filename with timestamp
+          const filename = `sage-failed-processes-${new
+          Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+          link.download = filename; // Trigger download
+          document.body.appendChild(link); link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(link.href); notification.success({ title:
+          'Export completed successfully!', position: 'top', }); } catch (error)
+          { notification.error({ title: error.response?.data?.message || 'Export
+          failed. Please try again.', position: 'top', }); } finally {
+          loader.export = false; } }
+        </div>
+
+        <h3>Backend Export Logic</h3>
+        <div class="code-block" data-lang="php">
+          // Controller export method public function
+          export(SageProcessesFilterRequest $request) { try { // Get failed
+          processes with filters (no pagination) $failedProcesses =
+          $this->sageProcessesService ->getFailedSageProcesses($request->safe(),
+          true); // Check if data exists if ($failedProcesses->isEmpty()) {
+          return response()->json([ 'message' => 'No data available to export.',
+          ], 404); } // Generate filename (ModernCsvExportable appends date
+          automatically) $filename = 'sage-failed-processes-' . date('His');
+          return (new
+          SageProcessesExport($failedProcesses))->download($filename); } catch
+          (\Exception $e) { LoggerService::error('Export Error: ' .
+          $e->getMessage(), [ 'trace' => $e->getTraceAsString(), ]); return
+          response()->json([ 'message' => 'Data export failed. Please try
+          again.', ], 500); } }
+        </div>
+      </section>
+
+      <!-- Common Failure Scenarios -->
+      <section class="content-section">
+        <h2>⚠️ Common Failure Scenarios</h2>
+
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>❌ Customer Creation Failed</h4>
+            <ul>
+              <li>
+                <strong>Error:</strong> Customer already exists with different
+                details
+              </li>
+              <li><strong>Sage API:</strong> AR/ARCustomers</li>
+              <li>
+                <strong>Resolution:</strong> Update customer info in Sage or map
+                to existing
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>❌ Receipt Creation Failed</h4>
+            <ul>
+              <li>
+                <strong>Error:</strong> Duplicate receipt ID or invalid GL
+                account
+              </li>
+              <li>
+                <strong>Sage API:</strong> AR/ARReceiptAndAdjustmentBatches
+              </li>
+              <li>
+                <strong>Resolution:</strong> Check sage_reciept_id uniqueness
+                and GL codes
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>❌ Invoice Posting Failed</h4>
+            <ul>
+              <li>
+                <strong>Error:</strong> Invalid invoice number sequence or tax
+                config
+              </li>
+              <li><strong>Sage API:</strong> AR/ARInvoices or AP/APInvoices</li>
+              <li>
+                <strong>Resolution:</strong> Verify invoice numbering and tax
+                setup
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>❌ Payment Application Failed</h4>
+            <ul>
+              <li>
+                <strong>Error:</strong> Receipt already applied or amount
+                mismatch
+              </li>
+              <li><strong>Sage API:</strong> AR/ARApplyReceiptsToInvoices</li>
+              <li>
+                <strong>Resolution:</strong> Check receipt status and invoice
+                balance
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>❌ Connection Timeout</h4>
+            <ul>
+              <li><strong>Error:</strong> Sage 300 API not responding</li>
+              <li><strong>Sage API:</strong> Any endpoint</li>
+              <li>
+                <strong>Resolution:</strong> Check Sage server status and
+                network connectivity
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>❌ Missing Required Fields</h4>
+            <ul>
+              <li><strong>Error:</strong> Required Sage IDs not found</li>
+              <li>
+                <strong>Check:</strong> customerId, sageVenderId,
+                insurerGlLiaiblityAccount
+              </li>
+              <li>
+                <strong>Resolution:</strong> Complete Sage configuration for
+                provider
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Troubleshooting Guide -->
+      <section class="content-section">
+        <h2>🔧 Troubleshooting Guide</h2>
+
+        <h3>Step-by-Step Resolution Process</h3>
+        <div class="process-flow">
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #3498db, #2980b9)"
+          >
+            <div class="step-number">1</div>
+            <h4>Identify Error</h4>
+            <p>Read "Error displayed in IMCRM" column</p>
+          </div>
+
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #9b59b6, #8e44ad)"
+          >
+            <div class="step-number">2</div>
+            <h4>Check Failed API</h4>
+            <p>Identify which Sage endpoint failed</p>
+          </div>
+
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #f39c12, #d68910)"
+          >
+            <div class="step-number">3</div>
+            <h4>Review Full Error</h4>
+            <p>Copy complete error response for analysis</p>
+          </div>
+
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #e74c3c, #c0392b)"
+          >
+            <div class="step-number">4</div>
+            <h4>Fix Root Cause</h4>
+            <p>Update Sage data or policy information</p>
+          </div>
+
+          <div
+            class="process-step"
+            style="background: linear-gradient(135deg, #27ae60, #229954)"
+          >
+            <div class="step-number">5</div>
+            <h4>Retry Booking</h4>
+            <p>Re-initiate Sage booking from policy page</p>
+          </div>
+        </div>
+
+        <h3>Diagnostic Queries</h3>
+        <div class="code-block" data-lang="sql">
+          -- Find specific failed process SELECT * FROM sage_processes WHERE id
+          = 123; -- Check related sage API logs SELECT * FROM sage_api_logs
+          WHERE section_type = 'App\\Models\\HealthQuote' AND section_id = 456
+          AND status = 'fail' ORDER BY created_at DESC; -- Verify payment exists
+          SELECT * FROM payments WHERE code = 'XXXX'; -- Check payment splits
+          for receipt IDs SELECT * FROM payment_splits WHERE code = 'XXXX'; --
+          Confirm quote status SELECT quote_status_id, policy_number FROM
+          personal_quotes WHERE id = 789;
+        </div>
+
+        <h3>Resolution Checklist</h3>
+        <div class="feature-list">
+          <div class="feature-item">
+            <strong>✓ Verify Payment Captured</strong><br />
+            Ensure payment status is "Paid" or "Credit Approval"
+          </div>
+          <div class="feature-item">
+            <strong>✓ Check Sage Configuration</strong><br />
+            Confirm insurance provider has all required Sage IDs
+          </div>
+          <div class="feature-item">
+            <strong>✓ Validate Customer Data</strong><br />
+            Ensure customer details are complete and accurate
+          </div>
+          <div class="feature-item">
+            <strong>✓ Confirm Policy Details</strong><br />
+            Verify policy number and coverage info populated
+          </div>
+          <div class="feature-item">
+            <strong>✓ Test Sage Connectivity</strong><br />
+            Check if Sage 300 API is accessible and responding
+          </div>
+          <div class="feature-item">
+            <strong>✓ Review Error Logs</strong><br />
+            Check Laravel logs for detailed exception traces
+          </div>
+        </div>
+      </section>
+
+      <!-- Performance Considerations -->
+      <section class="content-section">
+        <h2>⚡ Performance Optimizations</h2>
+
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>🎯 Query Optimization</h4>
+            <ul>
+              <li>
+                Read from replica database (SetReadDbConnection middleware)
+              </li>
+              <li>Eager loading prevents N+1 queries</li>
+              <li>Batch relationship loading by model type</li>
+              <li>Limited to first failed API log only</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>🧮 Collection Methods</h4>
+            <ul>
+              <li>Use Laravel collections instead of loops</li>
+              <li>Flatten and filter in single pass</li>
+              <li>Pluck specific columns to reduce memory</li>
+              <li>Filter null values efficiently</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📄 Pagination</h4>
+            <ul>
+              <li>Simple pagination (10 items per page)</li>
+              <li>Reduces memory footprint</li>
+              <li>Faster page load times</li>
+              <li>Filter params appended to pagination URLs</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h4>📤 Export Handling</h4>
+            <ul>
+              <li>ModernCsvExportable trait for large datasets</li>
+              <li>Chunked export processing</li>
+              <li>Streaming response to avoid memory issues</li>
+              <li>Empty data check before export</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Best Practices -->
+      <section class="content-section">
+        <h2>✨ Best Practices</h2>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <strong>1. Regular Monitoring</strong><br />
+            Check failed processes page daily to catch issues early
+          </div>
+          <div class="feature-item">
+            <strong>2. Filter by Date</strong><br />
+            Focus on recent failures first (today or this week)
+          </div>
+          <div class="feature-item">
+            <strong>3. Group by Provider</strong><br />
+            If multiple failures from same provider, check provider config
+          </div>
+          <div class="feature-item">
+            <strong>4. Copy Error Messages</strong><br />
+            Use copy icon to save full error for support tickets
+          </div>
+          <div class="feature-item">
+            <strong>5. Export for Analysis</strong><br />
+            Export filtered data for trend analysis and reporting
+          </div>
+          <div class="feature-item">
+            <strong>6. Document Resolutions</strong><br />
+            Keep notes on common errors and how they were fixed
+          </div>
+          <div class="feature-item">
+            <strong>7. Test After Fixes</strong><br />
+            Always retry booking after resolving root cause
+          </div>
+          <div class="feature-item">
+            <strong>8. Escalate Persistent Issues</strong><br />
+            If same error repeats, escalate to technical team
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        <p><strong>Sage Failed Processes Documentation</strong></p>
+        <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+      </div>
+    </div>
+  </body>
+</html>

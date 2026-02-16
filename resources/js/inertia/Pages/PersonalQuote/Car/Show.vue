@@ -33,7 +33,6 @@ defineProps({
   advisors: Array,
   quoteDocuments: Array,
   documentTypes: Object,
-  cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
@@ -70,7 +69,6 @@ defineProps({
   websiteURL: String,
   docUploadURL: String,
   planURL: String,
-  storageUrl: String,
   insuranceProviders: Array,
   insuranceProvidersByQuoteType: Object,
   advisor: Object,
@@ -152,6 +150,7 @@ const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const leadSource = page.props.leadSourceEnum;
+const genericRequestEnum = page.props.genericRequestEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -1462,7 +1461,10 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
 
   entity_id: page.props.record.entity_id ?? null,
-  trade_license_no: page.props.record.trade_license_no ?? null,
+  trade_license_no:
+    page.props.record.insured_id_type === genericRequestEnum.TRADE_LICENSE
+      ? page.props.record.insured_id_number
+      : null,
   company_name: page.props.record.company_name ?? null,
   company_address: page.props.record.company_address ?? null,
   entity_type_code: page.props.record.entity_type_code ?? 'Parent',
@@ -1517,8 +1519,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -1543,7 +1545,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.record.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -1553,7 +1555,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -1900,6 +1902,8 @@ const handleCancelConfirmationModal = () => {
   modals.showConfirmationModal = false;
   modals.isConfirmed = false; // Reset confirmation flag when user cancels
 };
+
+const { openTempUrl } = useDocumentTempUrl();
 </script>
 
 <template>
@@ -2459,6 +2463,18 @@ const handleCancelConfirmationModal = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                   <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    {{
+                      applyEmiratesNumberMasking(record.driver_eid_number) ?? ''
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ record.driver_gender ?? '' }}</dd>
                 </div>
               </dl>
             </div>
@@ -3275,9 +3291,8 @@ const handleCancelConfirmationModal = () => {
               <template v-for="doc in item.documents" :key="doc">
                 <p class="my-2">
                   <a
-                    class="underline"
-                    target="_blank"
-                    :href="leadDocsStoragePath + doc.path"
+                    class="text-primary-600 cursor-pointer"
+                    @click.prevent="openTempUrl(doc.path)"
                     >Document</a
                   >
                 </p>
@@ -4125,7 +4140,6 @@ const handleCancelConfirmationModal = () => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -4247,7 +4261,6 @@ const handleCancelConfirmationModal = () => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
       @copyUploadURL="copyUploadURL"

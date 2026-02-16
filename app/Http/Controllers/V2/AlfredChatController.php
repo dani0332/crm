@@ -196,6 +196,7 @@ class AlfredChatController extends Controller
             'fileName' => $fileName,
             'ccRecipients' => $request->ccRecipients ?? [],
             'exportTitle' => 'Chat Report',
+            'user_id' => Auth::id(), // Pass user_id for job context
         ]);
 
         // Get the export class

@@ -43,6 +43,8 @@ class EmbeddedProduct
             'EP API Status',
             'EP Sage Status',
             'CERTIFICATE NUMBER',
+            'Tax Invoice Number',
+            'Tax Invoice Raised by Buyer Number',
         ];
     }
 
@@ -65,6 +67,8 @@ class EmbeddedProduct
             $certificate->ep_api_status,
             $certificate->ep_sage_status,
             $certificate->certificate_number,
+            $certificate->tax_invoice_no ?? '',
+            $certificate->tax_invoice_buyer_no ?? '',
         ];
     }
 
@@ -80,11 +84,7 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
-            $customerInsured = $customer?->customerInsured()
-                ->where('quote_request_id', $item->quote_request_id)
-                ->where('quote_type_id', $item->quote_type_id)
-                ->latest('updated_at')
-                ->first() ?? null;
+            $latestInsured = $quoteObject->latestInsured ?? null;
 
             $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
@@ -97,9 +97,9 @@ class EmbeddedProduct
                 $lastName = $quoteObject->last_name ?? '';
                 $emiratesIdNumber = '';
             } else {
-                $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
-                $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
-                $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
+                $firstName = ($latestInsured?->first_name ?? $customer?->insured_first_name) ?? '';
+                $lastName = ($latestInsured?->last_name ?? $customer?->insured_last_name) ?? '';
+                $emiratesIdNumber = ($latestInsured?->id_number ?? $customer?->emirates_id_number) ?? '';
             }
 
             $item->id = $item->id;
@@ -117,6 +117,8 @@ class EmbeddedProduct
                 ? $item->sage_status->value
                 : ($item->sage_status ?? '');
             $item->emirates_id_number = $emiratesIdNumber;
+            $item->tax_invoice_no = $item->tax_invoice_no ?? '';
+            $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
                 $item->sync_status = $item->courier_sync_status_info;
@@ -200,8 +202,7 @@ class EmbeddedProduct
             'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
-            'quoteRequest.customer.customerInsured',
-            'quoteRequest.customer.customerInsured.insured',
+            'quoteRequest.latestInsured',
             'quoteRequest.carMake',
             'quoteRequest.carModel',
             'quoteRequest.quoteStatus',
@@ -274,6 +275,12 @@ class EmbeddedProduct
                 if (! empty($sageStatusIds)) {
                     $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
                 }
+            })
+            ->when(isset($filters['tax_invoice_no']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.tax_invoice_no', 'like', "%{$filters['tax_invoice_no']}%");
+            })
+            ->when(isset($filters['tax_invoice_buyer_no']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.tax_invoice_buyer_no', 'like', "%{$filters['tax_invoice_buyer_no']}%");
             });
 
         $dataset = $this->updateQuery($dataset, $filters);
@@ -374,6 +381,7 @@ class EmbeddedProduct
                 'document_number' => 'Not Applicable',
                 'url' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
                 'path' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+                'is_policy_wordings' => true,
             ]];
         }
         $epDocuments = [];
@@ -391,6 +399,7 @@ class EmbeddedProduct
                         'document_number' => 'Not Applicable',
                         'url' => $pwDoc,
                         'path' => $item->path,
+                        'is_policy_wordings' => true,
                     ];
                 }
             }
@@ -435,6 +444,7 @@ class EmbeddedProduct
                 'document_number' => $documentNumber,
                 'url' => $document->doc_url !== '' ? $websiteURL.$document->doc_url : '',
                 'path' => $document->doc_url,
+                'is_policy_wordings' => false,
             ];
         })->toArray();
 

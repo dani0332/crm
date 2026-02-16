@@ -1573,8 +1573,6 @@ class CentralService extends BaseService
         $emailData->customerEmail = $quote->email;
         $emailData->workflowType = $workflowType;
 
-        $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
         $emailData->planName = '-';
@@ -1673,7 +1671,11 @@ class CentralService extends BaseService
                 $url = $latestDocument['url'] ?? null;
 
                 if ($url) {
-                    $emailData->handBookDocuments = str_contains($url, 'http') ? $url : $storageUrl.$url;
+                    if (str_contains($url, 'http')) {
+                        $emailData->handBookDocuments = $url;
+                    } else {
+                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($url, 'azureIMPrivate') ?? '';
+                    }
                 }
             } else {
                 $policyHandBook = $quoteDocuments->filter(function ($document) {
@@ -1685,12 +1687,18 @@ class CentralService extends BaseService
                         ->where('plan_id', $quote->plan_id)
                         ->first()?->link ?? '';
 
-                    $emailData->handBookDocuments = ! empty($policyHandBook) ? config('constants.AZURE_IM_STORAGE_URL').$policyHandBook : '';
+                    $emailData->handBookDocuments = '';
+                    if (! empty($policyHandBook)) {
+                        $emailData->handBookDocuments = config('constants.AZURE_IM_STORAGE_URL').$policyHandBook;
+                    }
                 } else {
-                    $emailData->handBookDocuments = ! empty($policyHandBook) ? $storageUrl.$policyHandBook : '';
+                    $emailData->handBookDocuments = '';
+                    if (! empty($policyHandBook)) {
+                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($policyHandBook, 'azureIMPrivate') ?? '';
+                    }
                 }
             }
-            $emailData->handBookExt = ! empty($emailData->handBookDocuments) ? pathinfo($emailData->handBookDocuments, PATHINFO_EXTENSION) : '';
+            $emailData->handBookExt = ! empty($emailData->handBookDocuments) ? pathinfo(parse_url($emailData->handBookDocuments, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
         }
 
         if (! empty($quoteDocuments)) {
@@ -1707,10 +1715,14 @@ class CentralService extends BaseService
                 if (empty($emailData->policyCertificate)) {
                     LoggerService::info('Policy Certificate not found.');
                 } else {
-                    $emailData->policyCertificate = $storageUrl.$emailData->policyCertificate;
-                    $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo($emailData->policyCertificate, PATHINFO_EXTENSION) : '';
+                    $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policyCertificate, 'azureIMPrivate') ?? '';
+                    $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo(parse_url($emailData->policyCertificate, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
+
+            // Will be remove, once Sukoon automation deployed on STAGE.
+            // Need to bypass Bird workflow for Sukoon automation.
+            $emailData->isSukoon = (int) false;
 
             // Signed Medical Application form
             if ($quoteTypeId == QuoteTypeId::Health) {
@@ -1721,8 +1733,8 @@ class CentralService extends BaseService
                 if (empty($emailData->signedMedicalApplicationForm)) {
                     LoggerService::info('Signed Medical Application Form not found.');
                 } else {
-                    $emailData->signedMedicalApplicationForm = $storageUrl.$emailData->signedMedicalApplicationForm;
-                    $emailData->medAppExt = ! empty($emailData->signedMedicalApplicationForm) ? pathinfo($emailData->signedMedicalApplicationForm, PATHINFO_EXTENSION) : '';
+                    $emailData->signedMedicalApplicationForm = app(QuoteDocumentService::class)->getDocumentUrl($emailData->signedMedicalApplicationForm, 'azureIMPrivate') ?? '';
+                    $emailData->medAppExt = ! empty($emailData->signedMedicalApplicationForm) ? pathinfo(parse_url($emailData->signedMedicalApplicationForm, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
 
@@ -1742,8 +1754,8 @@ class CentralService extends BaseService
                     LoggerService::info('E-Card not found.');
                     $emailData->eCardExt = '';
                 } else {
-                    $emailData->eCard = $storageUrl.$emailData->eCard;
-                    $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo($emailData->eCard, PATHINFO_EXTENSION) : '';
+                    $emailData->eCard = app(QuoteDocumentService::class)->getDocumentUrl($emailData->eCard, 'azureIMPrivate') ?? '';
+                    $emailData->eCardExt = ! empty($emailData->eCard) ? pathinfo(parse_url($emailData->eCard, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
 
@@ -1759,8 +1771,8 @@ class CentralService extends BaseService
                 if (empty($emailData->networkList)) {
                     LoggerService::info('Network List not found.');
                 } else {
-                    $emailData->networkList = $storageUrl.$emailData->networkList;
-                    $emailData->networkListExt = ! empty($emailData->networkList) ? pathinfo($emailData->networkList, PATHINFO_EXTENSION) : '';
+                    $emailData->networkList = app(QuoteDocumentService::class)->getDocumentUrl($emailData->networkList, 'azureIMPrivate') ?? '';
+                    $emailData->networkListExt = ! empty($emailData->networkList) ? pathinfo(parse_url($emailData->networkList, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
 
@@ -1772,8 +1784,8 @@ class CentralService extends BaseService
                 if (empty($emailData->applicationCopy)) {
                     LoggerService::info('Application Copy not found.');
                 } else {
-                    $emailData->applicationCopy = $storageUrl.$emailData->applicationCopy;
-                    $emailData->appCopyExt = ! empty($emailData->applicationCopy) ? pathinfo($emailData->applicationCopy, PATHINFO_EXTENSION) : '';
+                    $emailData->applicationCopy = app(QuoteDocumentService::class)->getDocumentUrl($emailData->applicationCopy, 'azureIMPrivate') ?? '';
+                    $emailData->appCopyExt = ! empty($emailData->applicationCopy) ? pathinfo(parse_url($emailData->applicationCopy, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
 
@@ -1788,8 +1800,8 @@ class CentralService extends BaseService
             if (empty($emailData->policySchedule)) {
                 LoggerService::info('Policy Schedule not found.');
             } else {
-                $emailData->policySchedule = $storageUrl.$emailData->policySchedule;
-                $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo($emailData->policySchedule, PATHINFO_EXTENSION) : '';
+                $emailData->policySchedule = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policySchedule, 'azureIMPrivate') ?? '';
+                $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo(parse_url($emailData->policySchedule, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
             }
         }
 
