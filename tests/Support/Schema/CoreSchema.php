@@ -176,6 +176,7 @@ class CoreSchema
             'car_model' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
+                $table->string('code')->nullable();
                 $table->string('car_make_code')->nullable();
                 $table->unsignedBigInteger('vehicle_type_id')->nullable();
                 $table->timestamps();
