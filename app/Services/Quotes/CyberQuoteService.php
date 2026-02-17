@@ -458,7 +458,7 @@ class CyberQuoteService extends BaseQuoteService
             return false;
         }
 
-        $customerCyberInfo = DB::table('personal_quotes as pq')
+        return DB::table('personal_quotes as pq')
             ->leftJoin('customer_insured as ci', function ($join) {
                 $join->on('ci.quote_request_id', '=', 'pq.id')
                     ->where('ci.quote_type_id', '=', QuoteTypeId::Cyber);
@@ -480,8 +480,6 @@ class CyberQuoteService extends BaseQuoteService
             ->where('pq.quote_type_id', QuoteTypeId::Cyber)
             ->orderBy('ci.updated_at', 'desc')
             ->first();
-
-        return $customerCyberInfo;
     }
 
     /**
