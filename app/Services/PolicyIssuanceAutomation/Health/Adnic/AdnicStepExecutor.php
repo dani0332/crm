@@ -35,12 +35,12 @@ class AdnicStepExecutor
         $policyIssuanceResponse = $this->apiService->issuePolicy($quote, $process, $quote->insurerGenerateQuoteRequestResponse);
 
         if (! $policyIssuanceResponse['status']) {
-            LoggerService::error('Policy issuance failed', extra: [
+            LoggerService::warning('Policy issuance failed', extra: [
                 'step' => AdnicEnum::STEP_ISSUE_POLICY,
                 'error' => $policyIssuanceResponse['error'] ?? AdnicEnum::UNKNOWN_ERROR,
                 'message' => $policyIssuanceResponse['message'] ?? null,
             ]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::HEALTH->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Policy Creation');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::HEALTH->value, PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'IssuePolicy');
 
             return $policyIssuanceResponse;
         }
@@ -69,13 +69,13 @@ class AdnicStepExecutor
         $uploadDocumentsResponse = $this->apiService->uploadDocuments($quote, $process, $quote->insurerGenerateQuoteRequestResponse);
 
         if (! $uploadDocumentsResponse['status']) {
-            LoggerService::error('Document upload failed', extra: [
+            LoggerService::warning('Document upload failed', extra: [
                 'step' => AdnicEnum::STEP_UPLOAD_DOCUMENTS,
                 'error' => $uploadDocumentsResponse['error'] ?? AdnicEnum::UNKNOWN_ERROR,
                 'message' => $uploadDocumentsResponse['message'] ?? null,
             ]);
 
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::HEALTH->value, PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Document Upload');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::HEALTH->value, PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'UploadDocuments');
 
             return $uploadDocumentsResponse;
         }
@@ -103,12 +103,12 @@ class AdnicStepExecutor
         $uploadPolicyDocumentsToIMCRMResponse = $this->apiService->uploadPolicyDocumentsToIMCRM($quote, $process);
 
         if (! $uploadPolicyDocumentsToIMCRMResponse['status']) {
-            LoggerService::error('Policy document upload to IMCRM failed', extra: [
+            LoggerService::warning('Policy document upload to IMCRM failed', extra: [
                 'step' => AdnicEnum::STEP_UPLOAD_POLICY_DOCS,
                 'error' => $uploadPolicyDocumentsToIMCRMResponse['error'] ?? AdnicEnum::UNKNOWN_ERROR,
                 'message' => $uploadPolicyDocumentsToIMCRMResponse['message'] ?? null,
             ]);
-            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::HEALTH->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'Retrieve Document');
+            app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, QuoteTypes::HEALTH->value, PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID, PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID, 'UploadPolicyDocumentsToIMCRM');
 
             return $uploadPolicyDocumentsToIMCRMResponse;
         }
