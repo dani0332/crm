@@ -340,21 +340,21 @@ class EmiratesIdDataProcessor
 
     private function updatePersonalQuoteInsuredId(Insured $insured): void
     {
-        $personalQuote = PersonalQuote::where('quote_request_id', $this->quote->id)->first();
+        $quoteType = get_class($this->quote);
+        $affectedRow = PersonalQuote::where('uuid', $this->quote->uuid)
+            ->update(['insured_id' => $insured->id]);
 
-        if (! $personalQuote) {
-            LoggerService::warning('Personal quote not found for quote UUID: '.$this->quote->uuid.' so skipping update of insured ID');
-
-            return;
+        if ($affectedRow > 0) {
+            LoggerService::info('Personal quote insured ID updated successfully for quote UUID: '.$this->quote->uuid, [
+                'insured_id' => $insured->id,
+                'quote_type' => $quoteType,
+            ]);
+        } else {
+            LoggerService::warning('Personal quote not found for quote UUID: '.$this->quote->uuid, [
+                'insured_id' => $insured->id,
+                'quote_type' => $quoteType,
+            ]);
         }
-
-        $personalQuote->insured_id = $insured->id;
-        $personalQuote->save();
-
-        LoggerService::info('Personal quote insured ID updated successfully for quote UUID: '.$this->quote->uuid, [
-            'insured_id' => $insured->id,
-            'quote_type' => get_class($this->quote),
-        ]);
     }
 
     private function getNationalityId(?string $nationality): ?int
