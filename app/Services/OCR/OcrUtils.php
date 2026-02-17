@@ -13,6 +13,7 @@ use App\Models\DocumentType;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
+use App\Models\Nationality;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
@@ -56,7 +57,7 @@ trait OcrUtils
 
         try {
             return Carbon::parse($date)->format('Y-m-d');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Failed to format date', exception: $e);
 
             return null;
@@ -531,4 +532,24 @@ trait OcrUtils
         })?->code ?? null;
     }
 
+        protected function getNationalityId(?string $nationality): ?int
+    {
+        if (empty($nationality)) {
+            return null;
+        }
+        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
+
+        $cacheKey = 'customer_verification_nationality_'.md5((string) $nationality);
+        $nationalityModel = cache()->remember(
+            $cacheKey,
+            now()->addDay(),
+            fn () => Nationality::where(function ($query) use ($nationality) {
+                $query->where('text', 'LIKE', '%'.$nationality.'%')
+                    ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+                    ->orWhere('code', $nationality);
+            })->first(['id'])
+        );
+
+        return $nationalityModel?->id;
+    }
 }

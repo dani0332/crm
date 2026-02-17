@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 class DriverEmiratesIdDataProcessor
 {
-    use GenericQueriesAllLobs, OcrUtils;
+    use OcrUtils;
 
     private DriverEmiratesIdExtractor $driverEmiratesIdExtractor;
     private array $extractedData = [];
