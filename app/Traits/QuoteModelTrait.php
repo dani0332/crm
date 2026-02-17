@@ -474,13 +474,11 @@ trait QuoteModelTrait
         $quoteId = $this->uuid ?? $this->id ?? '';
 
         // Generate appropriate link based on quote type
-        $crmQuoteLink = match ($this->quote_type_id) {
+        return match ($this->quote_type_id) {
             QuoteTypeId::Car => "{$baseUrl}/quotes/car/{$quoteId}",           // Car quote type
             QuoteTypeId::Bike => "{$baseUrl}/personal-quotes/bike/{$quoteId}", // Bike quote type
             QuoteTypeId::Cyber => "{$baseUrl}/personal-quotes/cyber/{$quoteId}", // Cyber quote type
             default => 'N/A'
         };
-
-        return $crmQuoteLink;
     }
 }
