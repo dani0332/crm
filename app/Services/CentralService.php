@@ -1828,7 +1828,7 @@ class CentralService extends BaseService
                 ]);
             })->first() ?? null;
 
-            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && $quoteTypeId == QuoteTypeId::Cyber
                 ? $emailData->policySchedule->watermarked_doc_url ?? ''
                 : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
 
