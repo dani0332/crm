@@ -921,7 +921,7 @@ class ClaimsService extends BaseService
 
     public function sendNotification(ClaimRequest $claimRequest, $request)
     {
-        return DB::transaction(function () use ($claimRequest, $request) {
+        $claimActivity = DB::transaction(function () use ($claimRequest, $request) {
             $claimRequest->claim_sub_status_id = $request->claim_sub_status_id;
             $subStatus = ClaimStatus::find($request->claim_sub_status_id);
             $targetStatus = $this->claimsStatusesService->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
@@ -939,10 +939,13 @@ class ClaimsService extends BaseService
                 $request->customer_message, $request->ai_optimized_message
             );
 
-            SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->ai_optimized_message);
-
             return $claimActivity;
         });
+
+        // Dispatch job AFTER transaction commits to ensure data consistency
+        SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->ai_optimized_message);
+
+        return $claimActivity;
     }
 
     /**
