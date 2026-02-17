@@ -381,6 +381,7 @@ class CyberQuoteService extends BaseQuoteService
             return [
                 'recipientEmail' => $recipientEmail,
                 'recipientName' => $recipientName,
+                'escalationLink'=> '',
                 'processInvolved' => $processInvolved,
             ];
         }
@@ -410,10 +411,13 @@ class CyberQuoteService extends BaseQuoteService
             $cc = $distribution;
         }
 
+        $escalationLink = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, '');
+
         return [
             'cc' => $cc,
             'recipientEmail' => $recipientEmail,
             'recipientName' => $recipientName,
+            'escalationLink' => $escalationLink,
             'processInvolved' => PolicyIssuanceEnum::mapProcessTextForAutomationFailureNotification($processInvolved),
         ];
     }

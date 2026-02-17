@@ -120,7 +120,7 @@ class AutomationFailedJob implements ShouldQueue
             return;
         }
 
-        $escalationLink = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, '');
+        $escalationLink = $notificationContext['escalationLink'] ?? '';
 
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
