@@ -25,9 +25,11 @@ class AMLInsuredService
         $insuredDetails = $this->searchInsured($resolvedCustomerType, $idType, $idNumber);
 
         // Prepare response
-        $message = $this->getResponseMessage($resolvedCustomerType, $insuredDetails !== null); // TODO:: need to verify if empty collection
+        $status = $insuredDetails !== null;
+        $message = $this->getResponseMessage($resolvedCustomerType, $status);
 
         return [
+            'status' => $status,
             'response' => $insuredDetails,
             'message' => $message,
         ];
