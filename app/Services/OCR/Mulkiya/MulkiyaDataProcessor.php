@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class MulkiyaDataProcessor
 {
-    use GenericQueriesAllLobs, OcrUtils;
+    use OcrUtils;
 
     private MulkiyaExtractor $mulkiyaExtractor;
 
