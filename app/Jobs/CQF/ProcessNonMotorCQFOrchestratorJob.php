@@ -14,10 +14,13 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Bus;
 
 class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public const BATCH_NAME = 'Non Motor CQF Renewal Batch';
 
     public int $tries = 1;
     public int $timeout = 300;
@@ -32,6 +35,7 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
             'renewalDaysThreshold' => $renewalDaysThreshold,
         ]);
 
+        $lobJobs = [];
         foreach (NonMotorCQFRegistry::supportedLOBs() as $quoteType) {
             if (! $executionService->hasEligibleQuotesForLOB($quoteType, $startDate)) {
                 LoggerService::info(self::class.' - No eligible quotes for LOB', ['quoteType' => $quoteType->value]);
@@ -39,17 +43,31 @@ class ProcessNonMotorCQFOrchestratorJob implements ShouldQueue
                 continue;
             }
 
-            $lead = $executionService->createLeadForLOB($quoteType);
-            ProcessNonMotorCQFLOBJob::dispatch(
+            $totalRecords = $executionService->getEligibleQuoteCountForLOB($quoteType, $startDate);
+            $lead = $executionService->createLeadForLOB($quoteType, $totalRecords);
+            $lobJobs[] = new ProcessNonMotorCQFLOBJob(
                 $lead->id,
                 $quoteType,
                 $startDate->format('Y-m-d'),
                 $renewalDaysThreshold
             );
 
-            LoggerService::info(self::class.' - Dispatched LOB job', [
+            LoggerService::info(self::class.' - Queued LOB job for batch', [
                 'quoteType' => $quoteType->value,
                 'renewalsUploadLeadsId' => $lead->id,
+            ]);
+        }
+
+        if (!empty($lobJobs) && count($lobJobs) > 0) {
+            Bus::batch($lobJobs)
+                ->name(self::BATCH_NAME)
+                ->allowFailures()
+                ->onQueue('default')
+                ->dispatch();
+
+            LoggerService::info(self::class.' - Dispatched batch', [
+                'batchName' => self::BATCH_NAME,
+                'jobCount' => count($lobJobs),
             ]);
         }
 

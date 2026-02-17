@@ -48,6 +48,10 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware(['web', LogMiddleware::class, ActivityLogBatchMiddleware::class])
                 ->namespace($this->namespace)
                 ->group(base_path('routes/web.php'));
+
+            Route::middleware(['web', LogMiddleware::class, ActivityLogBatchMiddleware::class])
+                ->namespace($this->namespace)
+                ->group(base_path('routes/dev-v2.php'));
         });
     }
 

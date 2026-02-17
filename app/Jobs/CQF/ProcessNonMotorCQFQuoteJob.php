@@ -13,18 +13,15 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class ProcessNonMotorCQFChunkJob implements ShouldQueue
+class ProcessNonMotorCQFQuoteJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $timeout = 600;
+    public int $timeout = 120;
 
-    /**
-     * @param  array<int, int>  $quoteIds
-     */
     public function __construct(
-        public array $quoteIds,
+        public int $quoteId,
         public string $source,
         public QuoteTypes $quoteType,
         public int $renewalsUploadLeadsId,
@@ -37,8 +34,8 @@ class ProcessNonMotorCQFChunkJob implements ShouldQueue
             return;
         }
 
-        $executionService->processChunkForJob(
-            $this->quoteIds,
+        $executionService->processQuoteForJob(
+            $this->quoteId,
             $this->source,
             $this->quoteType,
             $this->renewalsUploadLeadsId,

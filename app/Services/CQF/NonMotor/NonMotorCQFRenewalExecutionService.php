@@ -13,7 +13,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\VehicleTypeEnum;
-use App\Jobs\SendFailedNonMotorRenewalsJob;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
@@ -26,16 +25,9 @@ use App\Services\RenewalsUploadService;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Sleep;
 
 class NonMotorCQFRenewalExecutionService
 {
-    private int $totalQuotesProcessed = 0;
-    private int $errorQuotes = 0;
-
-    /** @var array<int, string> */
-    private array $failedPolicyNumbers = [];
-
     public function __construct(
         protected NonMotorCQFRegistry $registry
     ) {}
@@ -48,7 +40,48 @@ class NonMotorCQFRenewalExecutionService
         if (! $this->registry->hasLOB($quoteType)) {
             return false;
         }
-        $filter = [
+        $filter = $this->paymentAndStatusFilter();
+        $quoteTypeId = (int) $quoteType->id();
+        $hasPersonal = $this->hasEligiblePersonalQuotes($startDate, $quoteTypeId, $filter);
+        $hasCarBike = $quoteType === QuoteTypes::BIKE ? $this->hasEligibleBikeQuotesFromCar($startDate, $filter) : false;
+
+        return $hasPersonal || $hasCarBike;
+    }
+
+    /**
+     * Count of eligible quotes for this LOB (personal + car for Bike). Used to set total_records on lead creation.
+     */
+    public function getEligibleQuoteCountForLOB(QuoteTypes $quoteType, Carbon $startDate): int
+    {
+        if (! $this->registry->hasLOB($quoteType)) {
+            return 0;
+        }
+        $filter = $this->paymentAndStatusFilter();
+        $quoteTypeId = (int) $quoteType->id();
+
+        $count = PersonalQuote::whereDate('policy_expiry_date', $startDate)
+            ->where('quote_type_id', $quoteTypeId)
+            ->whereNotIn('quote_status_id', $filter['quote_status'])
+            ->whereIn('payment_status_id', $filter['payment_status'])
+            ->count();
+
+        if ($quoteType === QuoteTypes::BIKE) {
+            $count += CarQuote::whereDate('policy_expiry_date', $startDate)
+                ->whereIn('vehicle_type_id', VehicleTypeEnum::ids())
+                ->whereNotIn('quote_status_id', $filter['quote_status'])
+                ->whereIn('payment_status_id', $filter['payment_status'])
+                ->count();
+        }
+
+        return $count;
+    }
+
+    /**
+     * @return array{quote_status: array<int>, payment_status: array<int>}
+     */
+    protected function paymentAndStatusFilter(): array
+    {
+        return [
             'quote_status' => [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,
@@ -59,13 +92,9 @@ class NonMotorCQFRenewalExecutionService
                 PaymentStatusEnum::PARTIALLY_PAID,
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
+                PaymentStatusEnum::CREDIT_APPROVED,
             ],
         ];
-        $quoteTypeId = (int) $quoteType->id();
-        $hasPersonal = $this->hasEligiblePersonalQuotes($startDate, $quoteTypeId, $filter);
-        $hasCarBike = $quoteType === QuoteTypes::BIKE ? $this->hasEligibleBikeQuotesFromCar($startDate, $filter) : false;
-
-        return $hasPersonal || $hasCarBike;
     }
 
     /**
@@ -93,12 +122,10 @@ class NonMotorCQFRenewalExecutionService
     }
 
     /**
-     * Process a chunk of quotes (job path). Failures are recorded on RenewalQuoteProcess (status BAD_DATA).
-     *
-     * @param  array<int, int>  $quoteIds
+     * Process a single quote (job path). Failures are recorded on RenewalQuoteProcess (status BAD_DATA).
      */
-    public function processChunkForJob(
-        array $quoteIds,
+    public function processQuoteForJob(
+        int $quoteId,
         string $source,
         QuoteTypes $quoteType,
         int $renewalsUploadLeadsId,
@@ -107,25 +134,24 @@ class NonMotorCQFRenewalExecutionService
         $renewalsUploadLeads = RenewalsUploadLeads::findOrFail($renewalsUploadLeadsId);
         $eagerLoad = $this->getEagerLoadRelationsForLOB($quoteType);
 
-        $quotes = $source === 'personal'
-            ? PersonalQuote::whereIn('id', $quoteIds)->with($eagerLoad)->get()
-            : CarQuote::whereIn('id', $quoteIds)->with($eagerLoad)->get();
+        $quote = $source === QuoteTypes::PERSONAL->value
+            ? PersonalQuote::with($eagerLoad)->findOrFail($quoteId)
+            : CarQuote::with($eagerLoad)->findOrFail($quoteId);
 
-        $onFailure = fn() => null;
-        $this->runPipelineForChunk($quotes, $renewalsUploadLeads, $renewalDaysThreshold, $quoteType, $onFailure, false);
+        $onFailure = fn () => null;
+        $this->runPipelineForQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $quoteType, $onFailure);
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Collection<int, PersonalQuote|CarQuote>  $quotes
+     * @param  PersonalQuote|CarQuote  $quote
      * @param  callable(string): void  $onFailure
      */
-    protected function runPipelineForChunk(
-        $quotes,
+    protected function runPipelineForQuote(
+        PersonalQuote|CarQuote $quote,
         RenewalsUploadLeads $renewalsUploadLeads,
         int $renewalDaysThreshold,
         QuoteTypes $quoteType,
-        callable $onFailure,
-        bool $sleepBetweenQuotes
+        callable $onFailure
     ): void {
         $validator = $this->registry->getValidator($quoteType);
         $mapper = $this->registry->getMapper($quoteType);
@@ -137,71 +163,49 @@ class NonMotorCQFRenewalExecutionService
             app(StoragePipe::class),
         ];
 
-        foreach ($quotes as $quote) {
-            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::NON_MOTOR_CQF_RENEWALS);
+        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::NON_MOTOR_CQF_RENEWALS);
 
-            try {
-                if ($sleepBetweenQuotes) {
-                    $this->totalQuotesProcessed++;
-                }
+        try {
+            $context = new CQFRenewalContext(
+                quote: $quote,
+                renewalsUploadLeads: $renewalsUploadLeads,
+                quoteType: $quoteType,
+                renewalDaysThreshold: $renewalDaysThreshold,
+                validator: $validator,
+                mapper: $mapper,
+                storage: $storage
+            );
 
-                $context = new CQFRenewalContext(
-                    quote: $quote,
-                    renewalsUploadLeads: $renewalsUploadLeads,
-                    quoteType: $quoteType,
-                    renewalDaysThreshold: $renewalDaysThreshold,
-                    validator: $validator,
-                    mapper: $mapper,
-                    storage: $storage
-                );
+            $context = app(Pipeline::class)
+                ->send($context)
+                ->through($pipes)
+                ->thenReturn();
 
-                $context = app(Pipeline::class)
-                    ->send($context)
-                    ->through($pipes)
-                    ->thenReturn();
+            if ($context->hasErrors()) {
+                $this->markQuoteAsFailed($quote, $renewalsUploadLeads, $context->validationErrors, $mapper, $onFailure);
 
-                if ($context->hasErrors()) {
-                    $this->markQuoteAsFailed($quote, $renewalsUploadLeads, $context->validationErrors, $mapper, $onFailure);
-
-                    continue;
-                }
-
-                if ($context->newQuote !== null) {
-                    $this->markQuoteAsCompleted($quote, $renewalsUploadLeads);
-                } else {
-                    $this->markQuoteAsFailed($quote, $renewalsUploadLeads, ['storage' => 'Failed to create renewal quote'], $mapper, $onFailure);
-                }
-            } catch (\Throwable $e) {
-                LoggerService::error('Error processing non-motor CQF renewal quote', exception: $e);
-                $this->markQuoteAsFailed($quote, $renewalsUploadLeads, ['exception' => $e->getMessage()], $mapper ?? null, $onFailure);
+                return;
             }
 
-            if ($sleepBetweenQuotes) {
-                Sleep::for(3)->seconds();
+            if ($context->newQuote !== null) {
+                $this->markQuoteAsCompleted($quote, $renewalsUploadLeads);
+            } else {
+                $this->markQuoteAsFailed($quote, $renewalsUploadLeads, ['storage' => 'Failed to create renewal quote'], $mapper, $onFailure);
             }
+        } catch (\Throwable $e) {
+            LoggerService::error('Error processing non-motor CQF renewal quote', exception: $e);
+            $this->markQuoteAsFailed($quote, $renewalsUploadLeads, ['exception' => $e->getMessage()], $mapper ?? null, $onFailure);
         }
     }
 
-    /**
-     * @param  \Illuminate\Database\Eloquent\Collection<int, PersonalQuote|CarQuote>  $quotes
-     */
-    protected function processQuotesChunk($quotes, RenewalsUploadLeads $renewalsUploadLeads, int $renewalDaysThreshold, QuoteTypes $quoteType): void
-    {
-        $onFailure = function (string $policyNumber): void {
-            $this->errorQuotes++;
-            $this->failedPolicyNumbers[] = $policyNumber;
-        };
-        $this->runPipelineForChunk($quotes, $renewalsUploadLeads, $renewalDaysThreshold, $quoteType, $onFailure, true);
-    }
-
-    public function createLeadForLOB(QuoteTypes $quoteType): RenewalsUploadLeads
+    public function createLeadForLOB(QuoteTypes $quoteType, ?int $totalRecords = null): RenewalsUploadLeads
     {
         $shortCode = str_replace('-', '', $quoteType->shortCode());
 
-        return $this->createRenewalsUploadLeads($shortCode);
+        return $this->createRenewalsUploadLeads($shortCode, $totalRecords);
     }
 
-    protected function createRenewalsUploadLeads(string $quoteTypeShortCode): RenewalsUploadLeads
+    protected function createRenewalsUploadLeads(string $quoteTypeShortCode, ?int $totalRecords = null): RenewalsUploadLeads
     {
         $uploadLeadData = [
             'renewal_import_code' => app(RenewalsUploadService::class)->generateRandomString(),
@@ -211,6 +215,7 @@ class NonMotorCQFRenewalExecutionService
             'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,
             'cannot_upload' => 0,
+            'total_records' => $totalRecords ?? 0,
             'is_sic' => 0,
             'created_by_id' => null,
             'renewal_import_type' => RenewalsUploadType::CREATE_LEADS,
@@ -247,9 +252,6 @@ class NonMotorCQFRenewalExecutionService
 
         if ($recordFailure !== null) {
             $recordFailure($quote->policy_number ?? 'unknown');
-        } else {
-            $this->errorQuotes++;
-            $this->failedPolicyNumbers[] = $quote->policy_number ?? 'unknown';
         }
         LoggerService::info(self::class . ' - Renewal quote process not created for quote (validation failed)');
     }
@@ -266,25 +268,6 @@ class NonMotorCQFRenewalExecutionService
             'status' => RenewalProcessStatuses::NEW,
             'type' => RenewalsUploadType::CREATE_LEADS,
         ]);
-    }
-
-    private function finalizeProcessing(RenewalsUploadLeads $renewalsUploadLeads): void
-    {
-        if ($this->totalQuotesProcessed > 0) {
-            $renewalsUploadLeads->status = ProcessStatusCode::COMPLETED;
-            $renewalsUploadLeads->total_records = $this->totalQuotesProcessed;
-            $renewalsUploadLeads->save();
-        } else {
-            $renewalsUploadLeads->is_deleted = 1;
-            $renewalsUploadLeads->save();
-        }
-
-        if ($this->errorQuotes > 0) {
-            SendFailedNonMotorRenewalsJob::dispatch($this->failedPolicyNumbers, $renewalsUploadLeads->id);
-            LoggerService::info(self::class . " - Non-motor CQF renewal leads processing completed with errors: {$this->errorQuotes}");
-        } else {
-            LoggerService::info(self::class . ' - Non-motor CQF renewal leads processing completed');
-        }
     }
 
     /**

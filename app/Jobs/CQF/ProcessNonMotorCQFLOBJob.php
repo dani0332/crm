@@ -12,6 +12,7 @@ use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 use App\Services\Logger\LoggerService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -22,7 +23,7 @@ use Illuminate\Support\Facades\Bus;
 
 class ProcessNonMotorCQFLOBJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
     public int $timeout = 120;
@@ -51,6 +52,11 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         public int $renewalDaysThreshold
     ) {}
 
+    protected function lobBatchName(): string
+    {
+        return 'Non Motor CQF Renewal - ' . $this->quoteType->value;
+    }
+
     public function handle(): void
     {
         if (! app(NonMotorCQFRegistry::class)->hasLOB($this->quoteType)) {
@@ -62,17 +68,17 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         $startDate = Carbon::parse($this->startDate);
         $quoteTypeId = (int) $this->quoteType->id();
         $filter = self::PAYMENT_AND_STATUS_FILTER;
-        $chunkJobs = [];
+        $quoteJobs = [];
 
         $personalQuery = PersonalQuote::whereDate('policy_expiry_date', $startDate)
             ->where('quote_type_id', $quoteTypeId)
             ->whereNotIn('quote_status_id', $filter['quote_status'])
             ->whereIn('payment_status_id', $filter['payment_status']);
 
-        $personalQuery->pluck('id')->chunk(100)->each(function ($ids) use (&$chunkJobs): void {
-            $chunkJobs[] = new ProcessNonMotorCQFChunkJob(
-                $ids->values()->all(),
-                'personal',
+        $personalQuery->pluck('id')->each(function ($quoteId) use (&$quoteJobs): void {
+            $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
+                $quoteId,
+                QuoteTypes::PERSONAL->value,
                 $this->quoteType,
                 $this->renewalsUploadLeadsId,
                 $this->renewalDaysThreshold
@@ -85,11 +91,10 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
                 ->whereNotIn('quote_status_id', $filter['quote_status'])
                 ->whereIn('payment_status_id', $filter['payment_status'])
                 ->pluck('id')
-                ->chunk(100)
-                ->each(function ($ids) use (&$chunkJobs): void {
-                    $chunkJobs[] = new ProcessNonMotorCQFChunkJob(
-                        $ids->values()->all(),
-                        'car',
+                ->each(function ($quoteId) use (&$quoteJobs): void {
+                    $quoteJobs[] = new ProcessNonMotorCQFQuoteJob(
+                        $quoteId,
+                        QuoteTypes::CAR->value,
                         $this->quoteType,
                         $this->renewalsUploadLeadsId,
                         $this->renewalDaysThreshold
@@ -97,8 +102,8 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
                 });
         }
 
-        if (count($chunkJobs) === 0) {
-            LoggerService::info(self::class.' - No quote chunks for LOB', [
+        if (count($quoteJobs) === 0) {
+            LoggerService::info(self::class.' - No quotes for LOB', [
                 'quoteType' => $this->quoteType->value,
                 'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
             ]);
@@ -108,7 +113,9 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         }
 
         $renewalsUploadLeadsId = $this->renewalsUploadLeadsId;
-        Bus::batch($chunkJobs)
+        $batchName = $this->lobBatchName();
+        Bus::batch($quoteJobs)
+            ->name($batchName)
             ->then(function () use ($renewalsUploadLeadsId) {
                 FinalizeNonMotorCQFLOBJob::dispatch($renewalsUploadLeadsId);
             })
@@ -116,10 +123,10 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
             ->onQueue('default')
             ->dispatch();
 
-        LoggerService::info(self::class.' - Dispatched batch for LOB', [
+        LoggerService::info(self::class.' - Dispatched quote batch for LOB', [
             'quoteType' => $this->quoteType->value,
             'renewalsUploadLeadsId' => $this->renewalsUploadLeadsId,
-            'chunkCount' => count($chunkJobs),
+            'quoteJobCount' => count($quoteJobs),
         ]);
     }
 }
