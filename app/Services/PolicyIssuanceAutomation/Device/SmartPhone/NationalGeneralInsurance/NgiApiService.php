@@ -76,7 +76,7 @@ class NgiApiService
             $response['status'] = false;
 
             if ($isPolicyIssuanceFailureEmail) {
-                $failureEmailErrorMessage = ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIXMESSAGE, $quote->email, 'policy issuance');
+                $failureEmailErrorMessage = ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIX_MESSAGE, $quote->email, 'policy issuance');
                 $response['error'] .= $failureEmailErrorMessage;
                 $response['message'] .= $failureEmailErrorMessage;
             }
@@ -152,12 +152,6 @@ class NgiApiService
             $response['error'] = $policyDocumentsResponse['error'];
             $response['message'] = $policyDocumentsResponse['message'];
             $response['status'] = false;
-
-            if ($isDocumentDownloadFailureEmail) {
-                $failureEmailErrorMessage = ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIXMESSAGE, $quote->email, 'document download from provider');
-                $response['error'] .= $failureEmailErrorMessage;
-                $response['message'] .= $failureEmailErrorMessage;
-            }
 
             return $response;
         }

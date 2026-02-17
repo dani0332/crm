@@ -78,7 +78,7 @@ class NgiGetPolicyDocumentsService
             $errorMessage = $downloadResult['error'] ?? $defaultErrorMsg;
 
             if ($isDocumentDownloadFailureEmail || $isDocumentUploadFailureEmail) {
-                $errorMessage .= ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIXMESSAGE, $quote->email, 'document download from provider or upload to IMCRM');
+                $errorMessage .= ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIX_MESSAGE, $quote->email, 'document download from provider or upload to IMCRM');
             }
 
             throw new NgiException(

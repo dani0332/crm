@@ -133,7 +133,7 @@ class NgiStepExecutor
             );
             $triggerBookPolicyResponse['status'] = false;
             if ($isBookPolicyFailureEmail) {
-                $failureEmailErrorMessage = ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIXMESSAGE, $quote->email, 'book policy');
+                $failureEmailErrorMessage = ' '.sprintf(NgiEnum::FAILURE_EMAIL_DEFAULT_PREFIX_MESSAGE, $quote->email, 'book policy');
                 $triggerBookPolicyResponse['error'] .= $failureEmailErrorMessage;
                 $triggerBookPolicyResponse['message'] .= $failureEmailErrorMessage;
             }
