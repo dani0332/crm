@@ -74,6 +74,9 @@ class HealthEmailService extends BaseService
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
             'numberOfMembersCovered' => $workflowType == WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA ? $lead->customerMembers->count() : null,
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'UploadDocuments' => false,
+            'IssuePolicy' => false,
+            'UploadPolicyDocumentsToIMCRM' => false,
         ];
     }
 
@@ -424,10 +427,6 @@ class HealthEmailService extends BaseService
 
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, $isApiFailed ? WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED : WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION);
             if ($automationFailureKey) {
-                $emailData->UploadDocuments = false;
-                $emailData->IssuePolicy = false;
-                $emailData->UploadPolicyDocumentsToIMCRM = false;
-
                 match ($automationFailureKey) {
                     'UploadDocuments' => $emailData->UploadDocuments = true,
                     'IssuePolicy' => $emailData->IssuePolicy = true,
