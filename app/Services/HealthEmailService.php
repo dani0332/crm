@@ -407,7 +407,7 @@ class HealthEmailService extends BaseService
         };
     }
 
-    public function sendSTPAdvisorNotification($lead, $isApiFailed)
+    public function sendSTPAdvisorNotification($lead, $isApiFailed, $automationFailureKey = null)
     {
         try {
             LoggerService::startQuoteLogging(QuoteTypes::HEALTH->refId($lead->uuid));
@@ -423,6 +423,18 @@ class HealthEmailService extends BaseService
             }
 
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, $isApiFailed ? WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED : WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION);
+            if ($automationFailureKey) {
+                $emailData->UploadDocuments = false;
+                $emailData->IssuePolicy = false;
+                $emailData->UploadPolicyDocumentsToIMCRM = false;
+
+                match ($automationFailureKey) {
+                    'UploadDocuments' => $emailData->UploadDocuments = true,
+                    'IssuePolicy' => $emailData->IssuePolicy = true,
+                    'UploadPolicyDocumentsToIMCRM' => $emailData->UploadPolicyDocumentsToIMCRM = true,
+                    default => null,
+                };
+            }
 
             if (! $isApiFailed) {
                 app(PusherNotificationService::class)->sendSTPAdvisorNotification($lead);

@@ -18,6 +18,7 @@ use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
+use App\Services\HealthEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
@@ -443,6 +444,8 @@ class PolicyIssuanceService
                 UserNameEnum::PA_USER
             )->onQueue('policy-issuance-automation');
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
+        } elseif ($quoteType === QuoteTypes::HEALTH->value && ! empty($statusAPIFailed) && ! empty($processInvolved)) {
+            app(HealthEmailService::class)->sendSTPAdvisorNotification($quote, true, $processInvolved);
         }
 
         if ($advisorId) {
