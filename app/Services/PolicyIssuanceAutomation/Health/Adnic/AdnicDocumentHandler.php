@@ -130,7 +130,7 @@ class AdnicDocumentHandler
                 // Find first HEA_EMIRATE_ID_COPY document and modify its insurerDocCode
                 foreach ($documentsArray as $index => $doc) {
                     if ($doc['document_type_code'] === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
-                        $documentsArray[$index]['document_type_code'] = DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM;
+                        $documentsArray[$index]['document_type_code'] = DocumentTypeCode::HEA_INSURED_EMIRATES_ID_APPLICATION;
                         break;
                     }
                 }
@@ -235,12 +235,13 @@ class AdnicDocumentHandler
     {
         return match ($documentType) {
             DocumentTypeCode::HEA_EID => '3', // Emirates ID (Front side & Back side)
+            DocumentTypeCode::HEA_INSURED_EMIRATES_ID_APPLICATION => '2', // Insured Emirates ID Application
             DocumentTypeCode::HEA_VISA => '6', // Visa
             DocumentTypeCode::HEA_PAS => '1', // Passport
             DocumentTypeCode::HEA_EID_FRONT => '4', // Emirates ID Front
             DocumentTypeCode::HEA_EID_BACK => '5', // Emirates ID Back
             DocumentTypeCode::HEA_BIRTH_CERTIFICATE => '11', // Birth Certificate
-            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM => '2', // Medical Application Form
+            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM => '18', // Medical Application Form
             DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE => '17', // Customer Due Diligence
             default => null
         };
