@@ -101,12 +101,6 @@ class AdnicApiService
         $quoteDocumentTypeCodes = $documentsToUpload->keys()->toArray();
         $quoteDocuments = $this->documentHandler->getDocumentByType($quote, $quoteDocumentTypeCodes);
 
-        $isEIDFrontBackUploaded = false;
-        $emiratesIdDocuments = $quoteDocuments->where('document_type_code', DocumentTypeCode::HEA_EID)->count();
-        if ($emiratesIdDocuments > 1) {
-            $isEIDFrontBackUploaded = true;
-        }
-
         $endPoint = '/UploadDocument';
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_DOCUMENTS);
 

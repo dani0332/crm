@@ -33,4 +33,8 @@ class AdnicEnum
     public const INSURER_DOCUMENT_KEY_POLICY_DOCUMENT = 'PolicyDocumentId';
     public const INSURER_DOCUMENT_KEY_COMMISION_NOTE = 'CommisionNoteDocumentId';
     public const INSURER_DOCUMENT_KEY_TAX_INVOICE = 'TaxInvoiceDocumentId';
+    public const EMIRATES_ID_TEXT = 'Emirates ID';
+    public const EMIRATES_ID_CODE = 3;
+    public const INSURED_EMIRATES_ID_APPLICATION_TEXT = 'EID Application Form';
+    public const INSURED_EMIRATES_ID_APPLICATION_CODE = 2;
 }

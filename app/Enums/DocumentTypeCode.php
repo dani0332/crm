@@ -143,11 +143,12 @@ class DocumentTypeCode extends Enum
 
     /* Health Quote */
     const HEA_EID = 'HEAEID'; // Emirates ID
-    const HEA_EID_FRONT = 'HEAEID'; // Emirates ID Front
-    const HEA_EID_BACK = 'HEAEID'; // Emirates ID Back
+    const HEA_EID_FRONT = 'HEAEIDF'; // Emirates ID Front
+    const HEA_EID_BACK = 'HEAEIDB'; // Emirates ID Back
     public const HEA_VISA = 'VISA_Hlth'; // Visa
     public const HEA_PAS = 'HlthPAS'; // Passport
     public const HEA_BIRTH_CERTIFICATE = 'MEBC'; // Birth Certificate
     public const HEA_MEDICAL_APPLICATION_FORM = 'MED_HLTH'; // medical application form
     public const HEA_CUSTOMER_DUE_DILIGENCE = 'OTH_Hlth'; // customer due diligence
+    public const HEA_EMIRATE_ID_COPY = 'MEEID'; // Member's Emirates ID Copy
 }

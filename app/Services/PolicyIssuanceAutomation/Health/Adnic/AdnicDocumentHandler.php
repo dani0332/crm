@@ -7,8 +7,10 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\AdnicEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\HealthUMAFResponse;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use Symfony\Component\HttpKernel\Log\Logger;
 
 class AdnicDocumentHandler
 {
@@ -92,6 +94,51 @@ class AdnicDocumentHandler
             return null;
         }
 
+        // Handle Emirates ID document splitting logic
+        if (in_array(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $documentTypeCodes, true)) {
+            $emirateIdType = $this->modifyEmirateDocument($quote->uuid);
+
+            // Filter only HEA_EMIRATE_ID_COPY documents
+            $emirateIdDocuments = $documents->where('document_type_code', DocumentTypeCode::HEA_EMIRATE_ID_COPY);
+
+            // If type is 3 (Emirates ID) and there are multiple documents with HEA_EMIRATE_ID_COPY
+            if ($emirateIdType === AdnicEnum::EMIRATES_ID_CODE && $emirateIdDocuments->count() > 1) {
+                $documentsArray = $documents->values()->all();
+
+                // Find indices of HEA_EMIRATE_ID_COPY documents
+                $emirateIdIndices = [];
+                foreach ($documentsArray as $index => $doc) {
+                    if ($doc['document_type_code'] === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
+                        $emirateIdIndices[] = $index;
+                    }
+                }
+
+                // Modify first HEA_EMIRATE_ID_COPY document as front
+                if (isset($emirateIdIndices[0])) {
+                    $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EID_FRONT;
+                }
+
+                // Modify second HEA_EMIRATE_ID_COPY document as back
+                if (isset($emirateIdIndices[1])) {
+                    $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
+                }
+
+                return collect($documentsArray);
+            } elseif ($emirateIdType === AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE) {
+                $documentsArray = $documents->values()->all();
+
+                // Find first HEA_EMIRATE_ID_COPY document and modify its insurerDocCode
+                foreach ($documentsArray as $index => $doc) {
+                    if ($doc['document_type_code'] === DocumentTypeCode::HEA_EMIRATE_ID_COPY) {
+                        $documentsArray[$index]['document_type_code'] = DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM;
+                        break;
+                    }
+                }
+
+                return collect($documentsArray);
+            }
+        }
+
         return $documents;
     }
 
@@ -110,22 +157,10 @@ class AdnicDocumentHandler
                 'insurerDocName' => 'Insured Passport',
                 'uploaded' => false,
             ],
-            DocumentTypeCode::HEA_EID => [
-                'code' => DocumentTypeCode::HEA_EID,
+            DocumentTypeCode::HEA_EMIRATE_ID_COPY => [
+                'code' => DocumentTypeCode::HEA_EMIRATE_ID_COPY,
                 'insurerDocCode' => '3',
                 'insurerDocName' => 'Emirates ID',
-                'uploaded' => false,
-            ],
-            DocumentTypeCode::HEA_EID_FRONT => [ // TODO:: Need to check this with BA and than implement this
-                'code' => DocumentTypeCode::HEA_EID_FRONT,
-                'insurerDocCode' => '4',
-                'insurerDocName' => 'Emirates ID Front',
-                'uploaded' => false,
-            ],
-            DocumentTypeCode::HEA_EID_BACK => [ // TODO:: Need to check this with BA and than implement this
-                'code' => DocumentTypeCode::HEA_EID_BACK,
-                'insurerDocCode' => '5',
-                'insurerDocName' => 'Emirates ID Back',
                 'uploaded' => false,
             ],
             DocumentTypeCode::HEA_BIRTH_CERTIFICATE => [
@@ -147,6 +182,26 @@ class AdnicDocumentHandler
                 'uploaded' => false,
             ],
         ]);
+    }
+
+    public function modifyEmirateDocument($quoteUuid)
+    {
+        $umafResponse = HealthUMAFResponse::where('quote_uuid', $quoteUuid)->first();
+        $typeOfEID = collect($umafResponse->answers)->filter(function ($answer) {
+            return $answer['question_code'] == 'typeOfEID';
+        })->values()->first();
+
+        if (! $typeOfEID) {
+            LoggerService::info('Type of EID not found');
+        }
+
+        if ($typeOfEID['answer_text'] == AdnicEnum::EMIRATES_ID_TEXT) {
+            return AdnicEnum::EMIRATES_ID_CODE;
+        } elseif ($typeOfEID['answer_text'] == AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_TEXT) {
+            return AdnicEnum::INSURED_EMIRATES_ID_APPLICATION_CODE;
+        }
+
+        return null;
     }
 
     /**
@@ -185,7 +240,7 @@ class AdnicDocumentHandler
             DocumentTypeCode::HEA_EID_FRONT => '4', // Emirates ID Front
             DocumentTypeCode::HEA_EID_BACK => '5', // Emirates ID Back
             DocumentTypeCode::HEA_BIRTH_CERTIFICATE => '11', // Birth Certificate
-            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM => '18', // Medical Application Form
+            DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM => '2', // Medical Application Form
             DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE => '17', // Customer Due Diligence
             default => null
         };
