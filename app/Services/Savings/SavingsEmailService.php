@@ -82,23 +82,17 @@ class SavingsEmailService
                     $this->createQuoteFlowDetails($lead, $response);
                 }
 
-                // Mark non-advisor email as sent after successful email delivery (only if no advisor is present)
+                $updates = [];
                 if (! $lead->advisor_id || ! $lead->advisor) {
-                    $lead->touch('non_advisor_email_sent_at');
-                    LoggerService::info("$logPrefix Non-advisor email timestamp set for quote: {$lead->uuid} (no advisor present)");
-                } else {
-                    LoggerService::info("$logPrefix Email sent for quote: {$lead->uuid} (advisor present: {$lead->advisor_id})");
+                    $updates['non_advisor_email_sent_at'] = now();
                 }
-
                 if ($lead->quote_status_id == QuoteStatusEnum::NewLead) {
-
-                    $lead->quote_status_id = QuoteStatusEnum::Quoted;
+                    $updates['quote_status_id'] = QuoteStatusEnum::Quoted;
+                }
+                if (! empty($updates)) {
                     PersonalQuote::where('uuid', $lead->uuid)
                         ->where('quote_type_id', QuoteTypeId::Savings)
-                        ->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
-                    $lead->save();
-                } else {
-                    LoggerService::info("sendOCAEmail - Quote status is not new lead for quote: {$lead->uuid}");
+                        ->update($updates);
                 }
             }
 
