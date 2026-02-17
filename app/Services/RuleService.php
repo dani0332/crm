@@ -238,7 +238,7 @@ class RuleService extends BaseService
 
     public function getEmailsByLeadSource($leadSource, $quoteTypeId)
     {
-        if(empty($leadSource)) {
+        if (empty($leadSource)) {
             return [];
         }
 
