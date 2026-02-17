@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Enums\QuoteTypeId;
-use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\Savings\SavingsEmailService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -64,7 +62,7 @@ class SendSavingsOCAEmailJob implements ShouldBeUnique, ShouldQueue
     public function failed(Throwable $exception): void
     {
         LoggerService::startQuoteLogging($this->quoteUID);
-        
+
         $exceptionDetails = [
             'quote_uuid' => $this->quoteUID,
             'exception_class' => get_class($exception),

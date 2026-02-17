@@ -1280,7 +1280,6 @@ class SplitPaymentService
                 ]);
             }
 
-                
             if ($send_update_id > 0 && isset($quoteModel->price_with_vat) && $quoteModel->price_with_vat > 0) {
                 $computedPrice = $quoteModel->price_with_vat;
                 LoggerService::info('SplitPaymentService - Using price_with_vat from send update log for payment code: '.$paymentCode, extra: [
@@ -1288,7 +1287,6 @@ class SplitPaymentService
                 ]);
             }
         }
-        
 
         if ($computedPrice > 0) {
             // For Life and Savings LOBs - no VAT calculation, price_vat_applicable = total_price
