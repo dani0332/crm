@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmbeddedProduct extends Model
 {
-    use SpatieActivityLog, HasFactory, UsesTestConnection;
+    use HasFactory, SpatieActivityLog, UsesTestConnection;
 
     protected $fillable = [
         'insurance_provider_id',
