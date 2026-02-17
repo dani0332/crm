@@ -375,7 +375,7 @@ class CustomerVerificationService
         match ($quoteType) {
             QuoteTypes::CAR,
             QuoteTypes::PERSONAL,
-            QuoteTypes::HEALTH => $this->processCarEmiratesIdVerificationData($quote, $ocrData, $documentType, $quoteType->value),
+            QuoteTypes::HEALTH => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType, $quoteType->value),
             // Add other quote types here as needed
             default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
         };
