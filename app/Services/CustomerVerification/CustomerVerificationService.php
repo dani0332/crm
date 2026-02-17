@@ -33,7 +33,9 @@ use Illuminate\Support\Str;
 
 class CustomerVerificationService
 {
-    use GenericQueriesAllLobs, OcrUtils;
+    use GenericQueriesAllLobs, OcrUtils {
+        OcrUtils::getNationalityId insteadof GenericQueriesAllLobs;
+    }
 
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
