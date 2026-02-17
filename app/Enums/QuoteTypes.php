@@ -331,7 +331,6 @@ enum QuoteTypes: string
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             self::CAR_REVIVAL => [RolesEnum::CarRevivalAdvisor],
-            self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             self::CYBER => [RolesEnum::CyberAdvisor],
             self::BUSINESS => [RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             self::JETSKI => [RolesEnum::JetskiAdvisor],
