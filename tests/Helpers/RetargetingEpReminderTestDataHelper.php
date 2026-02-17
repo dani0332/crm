@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Helpers;
 
+use App\Enums\CarVehicleUse;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -246,6 +247,9 @@ class RetargetingEpReminderTestDataHelper
                     : (object) ['code' => array_key_exists('plan_provider_code', $overrides) ? $overrides['plan_provider_code'] : 'PROV01'],
             ];
 
+        $quote->vehicle_use = array_key_exists('vehicle_use', $overrides) ? $overrides['vehicle_use'] : CarVehicleUse::PRIVATE;
+        $quote->is_modified = array_key_exists('is_modified', $overrides) ? $overrides['is_modified'] : false;
+
         $quote->shouldReceive('only')->andReturnUsing(function (array $keys) use ($quote) {
             $all = ['id' => $quote->id, 'uuid' => $quote->uuid, 'quote_status_id' => $quote->quote_status_id, 'policy_booking_date' => $quote->policy_booking_date];
 
@@ -263,8 +267,9 @@ class RetargetingEpReminderTestDataHelper
         $embeddedTransaction->payment_status_id = $overrides['payment_status_id'] ?? PaymentStatusEnum::DRAFT;
         $embeddedTransaction->product_id = 1;
         $embeddedTransaction->quoteRequest = $quote;
+        $epShortCode = array_key_exists('ep_short_code', $overrides) ? $overrides['ep_short_code'] : EmbeddedProductEnum::MDX;
         $embeddedTransaction->product = (object) [
-            'embeddedProduct' => (object) ['short_code' => $overrides['ep_short_code'] ?? EmbeddedProductEnum::MDX],
+            'embeddedProduct' => (object) ['short_code' => $epShortCode],
         ];
         $embeddedTransaction->shouldReceive('only')->andReturnUsing(fn (array $keys) => [
             'id' => $embeddedTransaction->id,

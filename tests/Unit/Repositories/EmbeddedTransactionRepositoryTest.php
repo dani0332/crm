@@ -113,6 +113,16 @@ describe('EmbeddedTransactionRepository', function () {
                     ->and($result->quoteRequest->relationLoaded('plan'))->toBeTrue();
                 expect($result->quoteRequest->plan)->not->toBeNull()
                     ->and($result->quoteRequest->plan->relationLoaded('insuranceProvider'))->toBeTrue();
+                expect($result->quoteRequest->getAttributes())->toHaveKeys(['vehicle_use', 'is_modified']);
+                if ($result->quoteRequest->carMake !== null) {
+                    expect($result->quoteRequest->carMake->getAttributes())->toHaveKeys(['id', 'text', 'code']);
+                }
+                if ($result->quoteRequest->carModel !== null) {
+                    expect($result->quoteRequest->carModel->getAttributes())->toHaveKeys(['id', 'text', 'code']);
+                }
+                if ($result->quoteRequest->plan !== null) {
+                    expect($result->quoteRequest->plan->getAttributes())->toHaveKeys(['id', 'provider_id', 'repair_type']);
+                }
             });
 
             test('filters', function (string $description, array $filterArgs, bool $expectNull, ?string $assertAttribute, $expectedValue, bool $setTransactionIsActive) {

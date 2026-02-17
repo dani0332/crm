@@ -370,6 +370,7 @@ class CoreSchema
                 $table->string('insurer_quote_number')->nullable();
                 $table->string('registration_type')->nullable();
                 $table->string('vehicle_use')->nullable();
+                $table->boolean('is_modified')->default(false);
                 $table->string('driver_name')->nullable();
                 $table->integer('insurer_api_status_id')->nullable();
                 $table->integer('api_issuance_status_id')->nullable();

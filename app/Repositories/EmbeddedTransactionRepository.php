@@ -54,11 +54,11 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->with(
                 'product:id,embedded_product_id',
                 'product.embeddedProduct:id,short_code',
-                'quoteRequest:id,uuid,quote_status_id,policy_booking_date,customer_id,email,first_name,last_name,car_make_id,car_model_id,advisor_id,plan_id',
-                'quoteRequest.carMake:id,text',
-                'quoteRequest.carModel:id,text',
+                'quoteRequest:id,uuid,quote_status_id,policy_booking_date,customer_id,email,first_name,last_name,car_make_id,car_model_id,advisor_id,plan_id,vehicle_use,is_modified',
+                'quoteRequest.carMake:id,text,code',
+                'quoteRequest.carModel:id,text,code',
                 'quoteRequest.advisor:id,email',
-                'quoteRequest.plan:id,provider_id',
+                'quoteRequest.plan:id,provider_id,repair_type',
                 'quoteRequest.plan.insuranceProvider:id,code',
             )
             ->where(['quote_request_id' => $quoteId, 'quote_type_id' => $quoteTypeId])

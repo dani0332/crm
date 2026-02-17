@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarVehicleUse;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -93,11 +94,27 @@ describe('getEpRetargetingReminderData', function () {
             ['plan_id', ['plan_id' => null]],
             ['plan_insurance_provider', ['plan_insurance_provider' => null]],
             ['plan_provider_code', ['plan_provider_code' => '']],
+            ['ep_short_code null (missing product or short_code)', ['ep_short_code' => null]],
+            ['ep_short_code empty string', ['ep_short_code' => '']],
             ['ep_short_code not in allowed list', ['ep_short_code' => EmbeddedProductEnum::COURIER]],
             ['ep disabled when payment is AUTHORISED', ['payment_status_id' => PaymentStatusEnum::AUTHORISED]],
             ['ep disabled when ECB and policy_booking_date over 30 days', [
                 'ep_short_code' => EmbeddedProductEnum::ECB,
                 'quote_policy_booking_date' => now()->subDays(31)->toDateString(),
+                'vehicle_make_code' => 1,
+                'vehicle_model_code' => 1,
+                'plan_repair_type' => 'COMP',
+            ]],
+            ['ep disabled when ECB and vehicle_use is COMMERCIAL', [
+                'ep_short_code' => EmbeddedProductEnum::ECB,
+                'vehicle_use' => CarVehicleUse::COMMERCIAL,
+                'vehicle_make_code' => 1,
+                'vehicle_model_code' => 1,
+                'plan_repair_type' => 'COMP',
+            ]],
+            ['ep disabled when ECB and is_modified is true', [
+                'ep_short_code' => EmbeddedProductEnum::ECB,
+                'is_modified' => true,
                 'vehicle_make_code' => 1,
                 'vehicle_model_code' => 1,
                 'plan_repair_type' => 'COMP',

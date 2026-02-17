@@ -43,7 +43,7 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-        
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER],
             [
