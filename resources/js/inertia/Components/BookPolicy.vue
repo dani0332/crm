@@ -86,6 +86,8 @@ const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const commissionPercentageExceedsLimit = ref(false);
 const showCommissionPercentageExceedsLimitAlert = ref(false);
+const isParentCancelReissuePen =
+  props.bookPolicyDetails.isParentPolicyCancellationReissuedPending;
 
 const dateToYMD = date => {
   if (date) {
@@ -1815,6 +1817,30 @@ const isDocTypeLoading = docType => {
                     </template>
                   </x-tooltip>
                 </template>
+                <template
+                  v-else-if="
+                    isParentCancelReissuePen &&
+                    can(permissionsEnum.BOOK_POLICY_BUTTON)
+                  "
+                >
+                  <x-tooltip>
+                    <x-button
+                      size="sm"
+                      class="mt-4 mr-2"
+                      color="orange"
+                      disabled
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
+                    <template #tooltip>
+                      <span>
+                        {{
+                          `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
+                        }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </template>
                 <template v-else>
                   <x-button
                     size="sm"
@@ -1943,11 +1969,17 @@ const isDocTypeLoading = docType => {
                   <template
                     v-if="
                       (props.bookPolicyDetails?.bookButton ||
-                        props.bookPolicyDetails?.policyCancelled) &&
+                        props.bookPolicyDetails?.policyCancelled ||
+                        isParentCancelReissuePen) &&
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
-                    <x-tooltip v-if="props.bookPolicyDetails.policyCancelled">
+                    <x-tooltip
+                      v-if="
+                        props.bookPolicyDetails.policyCancelled ||
+                        isParentCancelReissuePen
+                      "
+                    >
                       <x-button
                         size="sm"
                         class="mt-4 mr-2"
@@ -1955,7 +1987,8 @@ const isDocTypeLoading = docType => {
                         :disabled="
                           disableBookPolicyButton ||
                           isAMLNotClearedForTravelQuote ||
-                          disableIfPolicyFailedAndNoBookingFailedEditPermission
+                          disableIfPolicyFailedAndNoBookingFailedEditPermission ||
+                          isParentCancelReissuePen
                         "
                         @click.prevent="confirmSendPolicy"
                       >

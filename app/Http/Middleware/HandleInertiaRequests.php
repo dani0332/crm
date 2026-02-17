@@ -163,6 +163,7 @@ class HandleInertiaRequests extends Middleware
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
             'genericRequestEnum' => GenericRequestEnum::asArray(),
             'collectionTypeEnum' => CollectionTypeEnum::asArray(),
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
         ];
     }
 
@@ -739,6 +740,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_ADMIN),
+                        'Buy Lead Requests',
+                        route('admin.buy-leads.requests.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

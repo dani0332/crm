@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
@@ -32,6 +33,8 @@ use Illuminate\Support\Facades\Log;
 class TravelQuoteObserver
 {
     use PersonalQuoteSyncTrait;
+
+    private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'TravelQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
 
     public function updating(TravelQuote $quote): void
     {
@@ -160,7 +163,15 @@ class TravelQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
-            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+
+            try {
+                event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $travelQuote->uuid,
+                    'quote_status_id' => $travelQuote->quote_status_id,
+                ], exception: $e);
+            }
 
             try {
                 EmbeddedProductRepository::capturePayment($travelQuote->id, quoteTypeCode::Travel);
@@ -171,12 +182,30 @@ class TravelQuoteObserver
 
         if (
             isset($dirty['quote_status_id']) &&
+            $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($travelQuote->uuid, QuoteTypeId::Travel);
+            } catch (Exception $e) {
+                LoggerService::error('TravelQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $travelQuote->uuid]);
+            }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
             $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL->id())->onQueue('insly');
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
-            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            try {
+                event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $travelQuote->uuid,
+                    'quote_status_id' => $travelQuote->quote_status_id,
+                ], exception: $e);
+            }
         }
     }
 
