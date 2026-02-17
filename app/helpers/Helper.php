@@ -1790,9 +1790,15 @@ if (! function_exists('isTapEnabled')) {
 }
 
 if (! function_exists('userHasProduct')) {
-    function userHasProduct($product)
+    function userHasProduct($product, $user = null)
     {
-        $productIds = auth()->user()->products->pluck('id');
+        $user = $user ?? auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $productIds = $user->products->pluck('id');
 
         return Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->active()->whereAny(['name', 'code'], $product)->exists();
     }
