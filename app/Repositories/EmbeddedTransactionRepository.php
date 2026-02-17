@@ -48,7 +48,7 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->get();
     }
 
-    public function fetchFindEmbededTransactionWithDetails(string $embeddedTransactionCode, ?bool $isActive = null, ?int $paymentStatusId = null, ?int $quoteStatusId = null)
+    public function fetchFindEmbededTransactionWithDetails(int $quoteId, int $quoteTypeId, ?string $embeddedTransactionCode = null, string|array|null $epShortCode = null, ?bool $isActive = null, ?int $paymentStatusId = null, ?int $quoteStatusId = null)
     {
         return $this->select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'is_active', 'payment_status_id', 'product_id')
             ->with(
@@ -61,10 +61,12 @@ class EmbeddedTransactionRepository extends BaseRepository
                 'quoteRequest.plan:id,provider_id',
                 'quoteRequest.plan.insuranceProvider:id,code',
             )
-            ->where('code', $embeddedTransactionCode)
+            ->where(['quote_request_id' => $quoteId, 'quote_type_id' => $quoteTypeId])
+            ->when($embeddedTransactionCode !== null, fn ($q) => $q->where('code', $embeddedTransactionCode))
             ->when($isActive !== null, fn ($q) => $q->IsActive($isActive))
             ->when($paymentStatusId, fn ($q) => $q->where('payment_status_id', $paymentStatusId))
             ->when($quoteStatusId, fn ($q) => $q->quoteRequestStatusId($quoteStatusId))
+            ->when($epShortCode !== null, fn ($q) => $q->epShortCode($epShortCode))
             ->first();
     }
 }

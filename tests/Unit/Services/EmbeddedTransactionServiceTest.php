@@ -23,6 +23,7 @@ beforeEach(function () {
     $this->quoteUuid = 'RETARGET003';
     $this->quoteCode = 'CAR-RETARGET003';
     $this->quoteId = 3;
+    $this->quoteTypeId = QuoteTypeId::Car;
     $this->embeddedTransactionCode = 'MDX-CAR-RETARGET003';
     $this->dummyBirdEpWorkflowUrl = 'https://test-bird.example/ep-reminder/invoke-sync';
     ApplicationStorage::updateOrInsert(
@@ -42,7 +43,10 @@ describe('getEpRetargetingReminderData', function () {
                 $mock->shouldReceive('fetchFindEmbededTransactionWithDetails')
                     ->once()
                     ->with(
+                        $this->quoteId,
+                        $this->quoteTypeId,
                         $this->embeddedTransactionCode,
+                        null,
                         true,
                         PaymentStatusEnum::DRAFT,
                         QuoteStatusEnum::PolicyBooked
@@ -51,7 +55,7 @@ describe('getEpRetargetingReminderData', function () {
             });
 
             $service = app(EmbeddedTransactionService::class);
-            $response = $service->getEpRetargetingReminderData($this->embeddedTransactionCode);
+            $response = $service->getEpRetargetingReminderData($this->quoteId, $this->quoteTypeId, $this->embeddedTransactionCode);
 
             expect($response->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
             $json = $response->getData(true);
@@ -66,7 +70,10 @@ describe('getEpRetargetingReminderData', function () {
                 $mock->shouldReceive('fetchFindEmbededTransactionWithDetails')
                     ->once()
                     ->with(
+                        $this->quoteId,
+                        $this->quoteTypeId,
                         $this->embeddedTransactionCode,
+                        null,
                         true,
                         PaymentStatusEnum::DRAFT,
                         QuoteStatusEnum::PolicyBooked
@@ -75,7 +82,7 @@ describe('getEpRetargetingReminderData', function () {
             });
 
             $service = app(EmbeddedTransactionService::class);
-            $response = $service->getEpRetargetingReminderData($this->embeddedTransactionCode);
+            $response = $service->getEpRetargetingReminderData($this->quoteId, $this->quoteTypeId, $this->embeddedTransactionCode);
 
             expect($response->getStatusCode())->toBe(Response::HTTP_BAD_REQUEST);
             $json = $response->getData(true);
@@ -107,7 +114,10 @@ describe('getEpRetargetingReminderData', function () {
                 $mock->shouldReceive('fetchFindEmbededTransactionWithDetails')
                     ->once()
                     ->with(
+                        $this->quoteId,
+                        $this->quoteTypeId,
                         $this->embeddedTransactionCode,
+                        null,
                         true,
                         PaymentStatusEnum::DRAFT,
                         QuoteStatusEnum::PolicyBooked
@@ -116,7 +126,7 @@ describe('getEpRetargetingReminderData', function () {
             });
 
             $service = app(EmbeddedTransactionService::class);
-            $response = $service->getEpRetargetingReminderData($this->embeddedTransactionCode);
+            $response = $service->getEpRetargetingReminderData($this->quoteId, $this->quoteTypeId, $this->embeddedTransactionCode);
 
             expect($response->getStatusCode())->toBe(Response::HTTP_OK);
             $json = $response->getData(true);
@@ -142,7 +152,10 @@ describe('getEpRetargetingReminderData', function () {
                 $mock->shouldReceive('fetchFindEmbededTransactionWithDetails')
                     ->once()
                     ->with(
+                        $this->quoteId,
+                        $this->quoteTypeId,
                         $this->embeddedTransactionCode,
+                        null,
                         true,
                         PaymentStatusEnum::DRAFT,
                         QuoteStatusEnum::PolicyBooked
@@ -151,7 +164,7 @@ describe('getEpRetargetingReminderData', function () {
             });
 
             $service = app(EmbeddedTransactionService::class);
-            $response = $service->getEpRetargetingReminderData($this->embeddedTransactionCode);
+            $response = $service->getEpRetargetingReminderData($this->quoteId, $this->quoteTypeId, $this->embeddedTransactionCode);
 
             expect($response->getStatusCode())->toBe(Response::HTTP_OK);
             $json = $response->getData(true);

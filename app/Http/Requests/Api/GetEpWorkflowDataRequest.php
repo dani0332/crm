@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Api;
 
 use App\Enums\QuoteTypeId;
-use App\Enums\WorkflowTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class GetEpWorkflowDataRequest extends FormRequest
@@ -26,7 +25,7 @@ class GetEpWorkflowDataRequest extends FormRequest
         return [
             'quoteId' => 'required|integer|exists:car_quote_request,id',
             'quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car,
-            'embeddedTransactionCode' => 'required|string',
+            'embeddedTransactionCode' => 'required|string|exists:embedded_transactions,code',
         ];
     }
 
@@ -46,6 +45,7 @@ class GetEpWorkflowDataRequest extends FormRequest
             'quoteTypeId.in' => 'Quote type ID must be Car (1)',
             'embeddedTransactionCode.required' => 'Embedded transaction code is required',
             'embeddedTransactionCode.string' => 'Embedded transaction code must be a string',
+            'embeddedTransactionCode.exists' => 'The selected Embedded transaction code does not exist.',
         ];
     }
 }

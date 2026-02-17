@@ -75,7 +75,11 @@ describe('EmbeddedTransactionRepository', function () {
 
     describe('fetchFindEmbededTransactionWithDetails', function () {
         test('returns null when no transaction exists for the given code', function () {
-            expect($this->repository->fetchFindEmbededTransactionWithDetails('NONEXISTENT-CODE'))->toBeNull();
+            expect($this->repository->fetchFindEmbededTransactionWithDetails(
+                99999,
+                QuoteTypeId::Car,
+                'NONEXISTENT-CODE'
+            ))->toBeNull();
         });
 
         describe('with repository test data', function () {
@@ -90,7 +94,11 @@ describe('EmbeddedTransactionRepository', function () {
 
             test('returns transaction with eager-loaded relations when code matches', function () {
                 $data = $this->data;
-                $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID');
+                $result = $this->repository->fetchFindEmbededTransactionWithDetails(
+                    $data->carQuotePolicyBooked->id,
+                    QuoteTypeId::Car,
+                    'ET-VALID'
+                );
                 expect($result)->not->toBeNull()
                     ->and($result->id)->toBe($data->validTransaction->id)
                     ->and($result->code)->toBe('ET-VALID')
@@ -112,7 +120,15 @@ describe('EmbeddedTransactionRepository', function () {
 
                 $data = $this->data;
                 $data->validTransaction->update(['is_active' => $setTransactionIsActive]);
-                $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID', $isActive, $paymentStatusId, $quoteStatusId);
+                $result = $this->repository->fetchFindEmbededTransactionWithDetails(
+                    $data->carQuotePolicyBooked->id,
+                    QuoteTypeId::Car,
+                    'ET-VALID',
+                    null,
+                    $isActive,
+                    $paymentStatusId,
+                    $quoteStatusId
+                );
 
                 if ($expectNull) {
                     expect($result)->toBeNull();
@@ -140,9 +156,34 @@ describe('EmbeddedTransactionRepository', function () {
             ]);
 
             test('returns only selected attributes on the transaction', function () {
-                $result = $this->repository->fetchFindEmbededTransactionWithDetails('ET-VALID');
+                $data = $this->data;
+                $result = $this->repository->fetchFindEmbededTransactionWithDetails(
+                    $data->carQuotePolicyBooked->id,
+                    QuoteTypeId::Car,
+                    'ET-VALID'
+                );
                 expect($result->getAttributes())->toHaveKeys(['id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'is_active', 'payment_status_id', 'product_id'])
                     ->and(array_key_exists('policy_status', $result->getAttributes()))->toBeFalse();
+            });
+
+            test('returns null when code matches but quoteId does not (quote-bound guard)', function () {
+                $data = $this->data;
+                $result = $this->repository->fetchFindEmbededTransactionWithDetails(
+                    $data->carQuotePolicyIssued->id,
+                    QuoteTypeId::Car,
+                    'ET-VALID'
+                );
+                expect($result)->toBeNull();
+            });
+
+            test('returns null when code matches but quoteTypeId does not', function () {
+                $data = $this->data;
+                $result = $this->repository->fetchFindEmbededTransactionWithDetails(
+                    $data->carQuotePolicyBooked->id,
+                    QuoteTypeId::Home,
+                    'ET-VALID'
+                );
+                expect($result)->toBeNull();
             });
         });
     });

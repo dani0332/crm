@@ -49,7 +49,10 @@ class EmbeddedProductController extends Controller
 
     public function getEpWorkflowData(GetEpWorkflowDataRequest $request): JsonResponse
     {
-        return $this->embeddedTransactionService
-            ->getEpRetargetingReminderData($request->embeddedTransactionCode);
+        return $this->embeddedTransactionService->getEpRetargetingReminderData(
+            (int) $request->quoteId,
+            (int) $request->quoteTypeId,
+            $request->embeddedTransactionCode,
+        );
     }
 }

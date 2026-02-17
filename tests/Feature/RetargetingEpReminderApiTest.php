@@ -82,6 +82,22 @@ describe('GET /api/get-ep-workflow-data', function () {
                 'status' => Response::HTTP_NOT_FOUND,
             ]);
         });
+
+        test('when embeddedTransactionCode belongs to another quote returns 404', function () {
+            $data = RetargetingEpReminderTestDataHelper::setupTestDataForApiSuccess();
+            $otherQuoteData = RetargetingEpReminderTestDataHelper::setupTestData('CAR-OTHER', 'OTHER-UUID');
+            $response = $this->getJson(route('get.ep-workflow-data', [
+                'quoteId' => $data['quoteId'],
+                'quoteTypeId' => QuoteTypeId::Car,
+                'embeddedTransactionCode' => $otherQuoteData['epMDXTransaction']->code,
+            ]));
+
+            $response->assertStatus(Response::HTTP_NOT_FOUND);
+            $response->assertJson([
+                'message' => 'Record not found',
+                'status' => Response::HTTP_NOT_FOUND,
+            ]);
+        });
     });
 
     describe('returns 200 OK', function () {

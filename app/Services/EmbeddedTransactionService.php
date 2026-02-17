@@ -12,7 +12,6 @@ use App\Enums\WorkflowTypeEnum;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedTransactionRepository;
-use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -109,10 +108,12 @@ class EmbeddedTransactionService extends BaseService
         return $this->birdService->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
     }
 
-    public function getEpRetargetingReminderData(string $embeddedTransactionCode): JsonResponse
+    public function getEpRetargetingReminderData(int $quoteId, int $quoteTypeId, string $embeddedTransactionCode): JsonResponse
     {
         $embeddedTransaction = $this->embeddedTransactionRepo
             ->fetchFindEmbededTransactionWithDetails(
+                $quoteId,
+                $quoteTypeId,
                 $embeddedTransactionCode,
                 isActive: true,
                 paymentStatusId: PaymentStatusEnum::DRAFT,
