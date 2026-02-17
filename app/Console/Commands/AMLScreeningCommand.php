@@ -34,11 +34,6 @@ class AMLScreeningCommand extends Command
      */
     protected $description = 'Run AML Screening Automation for Travel and Cyber Quotes';
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     /**
      * Execute the console command.
      */
@@ -51,20 +46,9 @@ class AMLScreeningCommand extends Command
             return;
         }
 
-        $quoteTypeOption = $this->option('quote-type');
-        $quoteTypesToProcess = [];
-
-        if ($quoteTypeOption) {
-            $normalizedQuoteTypeOption = ucfirst(strtolower($quoteTypeOption));
-            $quoteType = QuoteTypes::tryFrom($normalizedQuoteTypeOption);
-            if (! $quoteType || ! in_array($quoteType, [QuoteTypes::TRAVEL, QuoteTypes::CYBER])) {
-                $this->error("Invalid quote type. Must be 'Travel' or 'Cyber'.");
-
-                return;
-            }
-            $quoteTypesToProcess[] = $quoteType;
-        } else {
-            $quoteTypesToProcess = [QuoteTypes::TRAVEL, QuoteTypes::CYBER];
+        $quoteTypesToProcess = $this->resolveQuoteTypes($this->option('quote-type'));
+        if (empty($quoteTypesToProcess)) {
+            return;
         }
 
         foreach ($quoteTypesToProcess as $quoteType) {
@@ -133,5 +117,23 @@ class AMLScreeningCommand extends Command
                 }
             });
         }
+    }
+
+    private function resolveQuoteTypes(?string $quoteTypeOption): array
+    {
+        if (! $quoteTypeOption) {
+            return [QuoteTypes::TRAVEL, QuoteTypes::CYBER];
+        }
+
+        $normalizedQuoteTypeOption = ucfirst(strtolower($quoteTypeOption));
+        $quoteType = QuoteTypes::tryFrom($normalizedQuoteTypeOption);
+
+        if (! $quoteType || ! in_array($quoteType, [QuoteTypes::TRAVEL, QuoteTypes::CYBER], true)) {
+            $this->error("Invalid quote type. Must be 'Travel' or 'Cyber'.");
+
+            return [];
+        }
+
+        return [$quoteType];
     }
 }
