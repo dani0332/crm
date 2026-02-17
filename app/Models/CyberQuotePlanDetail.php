@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class CyberPlan extends BaseMongoModel
+class CyberQuotePlanDetail extends BaseMongoModel
 {
     protected $table = 'cyber-quote-plan-details';
     protected $guarded = [];
