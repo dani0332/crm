@@ -199,5 +199,19 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         $healthPlanTypeText = HealthPlanTypeEnum::typeText($this->lead->health_plan_type_id);
         LoggerService::info("Health team type updated to {$teamNameEnumValue} based on health plan type ID: {$this->lead->health_plan_type_id} ({$healthPlanTypeText})");
+
+        // Database logs for team assignment
+        HealthTeamRoutingLogService::log(HealthRoutingLogTypeEnum::ROUTING, [
+            'message' => "Team successfully assigned {$teamNameEnumValue} based on health plan type ID: {$this->lead->health_plan_type_id}",
+            'step' => 'health_plan_type_check',
+            'routing_applicable' => true,
+            'team_name' => $teamNameEnumValue,
+            'health_plan_type_id' => $this->lead->health_plan_type_id,
+            'quote_type' => $this->allocationRequest->getQuoteType(),
+        ],
+            $this->lead->id,
+            $this->lead->uuid,
+            TeamCategoryEnum::NON_AUH
+        );
     }
 }
