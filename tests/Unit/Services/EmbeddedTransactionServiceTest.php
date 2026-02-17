@@ -12,6 +12,7 @@ use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\BirdService;
 use App\Services\EmbeddedTransactionService;
@@ -209,7 +210,7 @@ describe('retargetEpReminder', function () {
             $quote->id = $this->quoteId;
             $quote->code = $this->quoteCode;
 
-            $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
+            $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
             $result = $service->retargetEpReminder($quote, QuoteTypeId::Car);
             expect($result)->toBeArray();
             expect($result)->toHaveCount(0);
@@ -247,7 +248,7 @@ describe('retargetEpReminder', function () {
                     });
             });
 
-            $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
+            $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
 
             $quote = Mockery::mock(CarQuote::class)->makePartial();
             $quote->id = $this->quoteId;
@@ -289,7 +290,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
                 ->andReturn((object) ['status_code' => Response::HTTP_NOT_FOUND, 'body' => `{"code":"NotFound","message":"The resource doesn't exist or you don't have access to it."}`]);
         });
 
-        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
@@ -327,7 +328,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
                 ->andReturn((object) ['status_code' => Response::HTTP_OK, 'message' => 'OK']);
         });
 
-        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
@@ -371,7 +372,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
             ->update(['value' => '']);
 
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
@@ -396,7 +397,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
                 ->andReturn((object) ['status_code' => Response::HTTP_OK]);
         });
 
-        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
 
         $quote = Mockery::mock(CarQuote::class)->makePartial();
         $quote->id = $this->quoteId;
@@ -412,7 +413,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
 describe('isRetargetingEpReminderEnabled', function () {
     test('return a boolean', function () {
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(BirdService::class));
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
 
         $result = $service->isRetargetingEpReminderEnabled();
 
@@ -422,15 +423,17 @@ describe('isRetargetingEpReminderEnabled', function () {
 
 /**
  * Test double that skips BaseService constructor (getGenericModel) so unit tests
- * can mock only EmbeddedTransactionRepository.
+ * can mock only EmbeddedTransactionRepository (and optionally EmbeddedProductRepository).
  */
 class EmbeddedTransactionServiceTestDouble extends EmbeddedTransactionService
 {
     public function __construct(
         EmbeddedTransactionRepository $repo,
+        EmbeddedProductRepository $embeddedProductRepo,
         BirdService $birdService
     ) {
         $this->embeddedTransactionRepo = $repo;
+        $this->embeddedProductRepo = $embeddedProductRepo;
         $this->birdService = $birdService;
     }
 }

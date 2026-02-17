@@ -11,6 +11,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\CarQuote;
 use App\Models\EmbeddedTransaction;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +24,7 @@ class EmbeddedTransactionService extends BaseService
      */
     public function __construct(
         protected EmbeddedTransactionRepository $embeddedTransactionRepo,
+        protected EmbeddedProductRepository $embeddedProductRepo,
         protected BirdService $birdService
     ) {
         parent::__construct();
@@ -141,8 +143,8 @@ class EmbeddedTransactionService extends BaseService
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Not eligible for reminder');
         }
 
-        $epStrategyClass = EmbeddedProductEnum::getEpStrategyClass($epShortCode);
-        $isEpDisabled = (new $epStrategyClass)->isDisabled($embeddedTransaction);
+        $epStrategy = $this->embeddedProductRepo->createStrategy($epShortCode);
+        $isEpDisabled = $epStrategy->isDisabled($embeddedTransaction);
 
         if (empty($quote->email) || empty($planId) || empty($providerCode) || $isEpDisabled) {
             LoggerService::info('getEpRetargetingReminderData: Not eligible for reminder', extra: [
