@@ -713,12 +713,6 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::BUY_LEADS_ADMIN),
-                        'Buy Lead Requests',
-                        route('admin.buy-leads.requests.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
                         auth()->user()->can(PermissionsEnum::BRANCH_ASSIGNMENTS),
                         'Branch Assignment',
                         url('admin/branch-assignments'),
@@ -752,6 +746,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_ADMIN),
+                        'Buy Lead Requests',
+                        route('admin.buy-leads.requests.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
