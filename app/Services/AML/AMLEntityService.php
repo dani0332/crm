@@ -80,13 +80,6 @@ class AMLEntityService
                 );
 
                 if (! $entity) {
-                    LoggerService::warning('Entity not found for the provided trade license number', [
-                        'id_type' => $insured->id_type,
-                        'id_number' => $insured->id_number,
-                        'quote_type_id' => $quoteTypeId,
-                        'quote_request_id' => $quoteRequestId,
-                    ]);
-
                     throw new RuntimeException('Entity not found for the provided trade license number');
                 }
 
@@ -199,7 +192,6 @@ class AMLEntityService
     /**
      * Handle legacy entity structure migration
      * Reminder:: Remove when new structure is completely mapped
-     * TODO:: Seems error here there is no entity created need to double check (although this function only handle legacy data because when we link we just linked not create, we created through AML so need to check in AML screening could we create entity or not)
      */
     private function handleLegacyEntityStructure(int $quoteTypeId, int $quoteRequestId, Insured $insured, ?string $triggeredFrom): ?Entity
     {
