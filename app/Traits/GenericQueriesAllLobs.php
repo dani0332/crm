@@ -948,7 +948,7 @@ trait GenericQueriesAllLobs
                 'LIKE',
                 "%{$nationality}%"
             )->orWhere('code', $nationality)
-                ->first();
+                ->first(['id']);
         });
 
         return $nationalityRecord?->id;
