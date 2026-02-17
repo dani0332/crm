@@ -2,9 +2,6 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use App\Enums\quoteTypeCode;
-use Carbon\Carbon;
-
 class RDX extends MDX
 {
     protected function getReportRelations()
@@ -14,8 +11,6 @@ class RDX extends MDX
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
             'quoteRequest.latestInsured',
-            'quoteRequest.bikeQuote.bikeMake',
-            'quoteRequest.bikeQuote.bikeModel',
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
@@ -23,22 +18,13 @@ class RDX extends MDX
         ];
     }
 
+    protected function postFilterReportProcessing($dataset)
+    {
+        return $this->loadVehicleRelations($dataset);
+    }
+
     protected function processReportRecord($quoteObject, $item)
     {
-        $item->lob = quoteTypeCode::Bike;
-        $make = $quoteObject->bikeQuote->bikeMake->text ?? '';
-        $model = $quoteObject->bikeQuote->bikeModel->text ?? '';
-        $item->vehicle = $make.' '.$model;
-
-        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-        $item->advisor_name = $quoteObject?->advisor?->name ?? '';
-        $item->dob = isset($quoteObject?->dob) ? Carbon::parse($quoteObject?->dob)->format($dateFormat) : '';
-        $item->nationality = $quoteObject?->customer?->nationality?->text ?? '';
-        $item->policy_issuance_date = $quoteObject?->policy_issuance_date ?? '';
-        $item->age = isset($quoteObject?->dob) ?
-            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())).' Years'
-            : '';
-
-        return $item;
+        return $this->processCarBikeReportRecord($quoteObject, $item);
     }
 }
