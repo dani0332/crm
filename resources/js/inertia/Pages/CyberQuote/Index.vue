@@ -198,7 +198,7 @@ const handleSelectedFilters = selectedFilters => {
 const exportLoader = ref(false);
 const onDataExport = () => {
   // Format dates to YYYY-MM-DD before exporting
-  
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'cyber');
   const payload = {
@@ -217,11 +217,12 @@ const onDataExport = () => {
     })
     .catch(error => {
       exportLoader.value = false;
-      
-      const errorMessage = error?.response?.data?.message || 
-                          error?.response?.data?.errors?.flash?.[0] ||
-                          'Export failed. Please try again.';
-      
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.errors?.flash?.[0] ||
+        'Export failed. Please try again.';
+
       notification.error({
         title: errorMessage,
         position: 'top',
@@ -300,8 +301,8 @@ function setQueryStringFilters() {
     if (integerFields.includes(fieldName)) {
       if (fieldName === 'api_issuance_status_id') {
         // Handle 'blank' as a special case for api_issuance_status_id
-        filters[fieldName] = cleanValues.map(v => 
-          v === 'blank' ? 'blank' : (isNaN(parseInt(v)) ? v : parseInt(v))
+        filters[fieldName] = cleanValues.map(v =>
+          v === 'blank' ? 'blank' : isNaN(parseInt(v)) ? v : parseInt(v),
         );
       } else {
         filters[fieldName] = cleanValues
@@ -435,17 +436,21 @@ const computedCyberCoverages = computed(() => {
 });
 
 const apiIssuanceStatusOptions = computed(() => {
-  return Object.entries(page.props.apiIssuanceStatuses || {}).map(([key, value]) => ({
-    value: key === 'blank' ? 'blank' : parseInt(key),
-    label: value,
-  }));
+  return Object.entries(page.props.apiIssuanceStatuses || {}).map(
+    ([key, value]) => ({
+      value: key === 'blank' ? 'blank' : parseInt(key),
+      label: value,
+    }),
+  );
 });
 
 const insurerApiStatusOptions = computed(() => {
-  return Object.entries(page.props.insurerApiStatuses || {}).map(([key, value]) => ({
-    value: parseInt(key),
-    label: value,
-  }));
+  return Object.entries(page.props.insurerApiStatuses || {}).map(
+    ([key, value]) => ({
+      value: parseInt(key),
+      label: value,
+    }),
+  );
 });
 </script>
 
@@ -879,7 +884,10 @@ const insurerApiStatusOptions = computed(() => {
       </template>
       <template #item-sic_advisor_requested="{ cyber_quote }">
         <div class="text-center">
-          <x-tag size="sm" :color="cyber_quote?.sic_advisor_requested ? 'success' : 'error'">
+          <x-tag
+            size="sm"
+            :color="cyber_quote?.sic_advisor_requested ? 'success' : 'error'"
+          >
             {{ cyber_quote?.sic_advisor_requested ? 'Yes' : 'No' }}
           </x-tag>
         </div>
