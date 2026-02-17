@@ -89,10 +89,6 @@ class AutomationFailedJob implements ShouldQueue
             if ($quote?->advisor) {
                 $this->recipientEmail = $quote->advisor->email;
                 $this->recipientName = $quote->advisor->name;
-            } else {
-                LoggerService::info('job:AutomationFailedJob - No advisor assigned, stopping job - Insurer: '.$this->insurerName);
-
-                return;
             }
         }
 
