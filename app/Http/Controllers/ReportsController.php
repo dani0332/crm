@@ -385,7 +385,7 @@ class ReportsController extends Controller
     public function fetchTeamsbyType(Request $request)
     {   
         $teamName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
-        $parentId = Team::where('name', $teamName)->first()->id;
+        $parentId = getTeamId($teamName);
         $teams = Team::where('parent_team_id', $parentId)
             ->select('name', 'id')
             ->orderBy('name')
