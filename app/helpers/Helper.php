@@ -564,6 +564,7 @@ if (! function_exists('getPersonalQuoteTypeIds')) {
             QuoteTypeId::Cycle,
             QuoteTypeId::Jetski,
             QuoteTypeId::Savings,
+            QuoteTypeId::Device,
         ];
     }
 }
