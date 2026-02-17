@@ -84,16 +84,12 @@ class SendCyberOCBIntroEmailJob implements ShouldQueue
     public function handle(CyberEmailService $cyberEmailService): void
     {
         $lead = PersonalQuote::where('uuid', $this->quoteUuid)->first();
-
-        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_OCB_INTRO_EMAIL);
-
         if (! $lead) {
             LoggerService::info(static::class." - Lead not found for uuid: {$this->quoteUuid}");
-            LoggerService::endLogging();
-
             return;
         }
-
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_OCB_INTRO_EMAIL);
+        
         try {
             $cyberEmailService->sendCyberOCBIntroEmail(
                 $lead,
