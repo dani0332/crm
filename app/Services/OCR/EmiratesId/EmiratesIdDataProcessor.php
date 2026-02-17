@@ -14,6 +14,7 @@ use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -80,6 +81,9 @@ class EmiratesIdDataProcessor
                 $insuredUpdated = $this->updateInsuredTable($insured);
                 $kycUpdated = $this->updateInsuredKycTable($insured);
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
+
+                // Update insured details in personal quote and customer
+                $this->updatePersonalQuoteInsuredId($insured);
             }
 
             // Trigger OCR success validation
@@ -332,6 +336,25 @@ class EmiratesIdDataProcessor
 
             throw $e;
         }
+    }
+
+    private function updatePersonalQuoteInsuredId(Insured $insured): void
+    {
+        $personalQuote = PersonalQuote::where('quote_request_id', $this->quote->id)->first();
+
+        if (! $personalQuote) {
+            LoggerService::warning('Personal quote not found for quote UUID: '.$this->quote->uuid.' so skipping update of insured ID');
+
+            return;
+        }
+
+        $personalQuote->insured_id = $insured->id;
+        $personalQuote->save();
+
+        LoggerService::info('Personal quote insured ID updated successfully for quote UUID: '.$this->quote->uuid, [
+            'insured_id' => $insured->id,
+            'quote_type' => get_class($this->quote),
+        ]);
     }
 
     private function getNationalityId(?string $nationality): ?int
