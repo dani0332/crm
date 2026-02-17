@@ -71,9 +71,11 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         if ($this->allocationRequest->get('isCHSAdvisor')) {
             LoggerService::info(self::class.' - CHS Advisor is required');
 
-            // return User::select('users.id as user_id')->chs()->first(); // Production CHS advisors
+            if (app()->environment('production')) {
+                return User::select('users.id as user_id')->chs()->first();
+            }
 
-            // remove this when going to production and use the production CHS advisor
+            // Non-production environments use test/UAT email from app storage
             $happinessUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true);
 
             return User::select('users.id as user_id')
