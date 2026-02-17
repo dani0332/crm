@@ -1294,6 +1294,15 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS],
+            [
+                'value' => 30,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
         // endregion
     }
 }
