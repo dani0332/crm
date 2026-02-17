@@ -560,4 +560,16 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->hasOne(Branch::class, 'id', 'branch_id');
     }
+
+    /**
+     * ADNIC non-STP flag from MongoDB health-umaf-responses (stp_rating.is_non_stp).
+     */
+    public function hasAdnicNonStpFlag(): bool
+    {
+        $umaf = HealthUMAF::where('quote_uuid', $this->uuid)->first();
+        if (!$umaf || !$umaf?->isADNIC() || !$umaf?->isNonStp()) {
+            return false;
+        }
+        return  $umaf?->isADNIC() && $umaf?->isNonStp() ? true : false;
+    }
 }
