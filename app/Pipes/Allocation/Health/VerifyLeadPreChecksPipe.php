@@ -44,8 +44,8 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         $continueAssignment = true;
         LoggerService::info(self::class."::verifyPreChecks - Lead has PEC tag and price starting from, continuing assignment");
       }
-      elseif ($lead->hasAdnicNonStpFlag()) {
-        LoggerService::info(self::class.'::verifyPreChecks - Lead has ADNIC non-STP flag, continuing assignment');
+      elseif ($lead->hasAdnicPlan()) {
+        LoggerService::info(self::class.'::verifyPreChecks - Lead has ADNIC plan, continuing assignment');
         $continueAssignment = true;
       }
 
