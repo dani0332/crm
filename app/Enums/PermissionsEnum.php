@@ -456,6 +456,7 @@ final class PermissionsEnum extends Enum
     public const NONRULE_LEADALLOCATION = 'nonrule_leadallocation';
     public const SAGE_PROCESS_ISSUE_MANAGEMENT = 'sage-issue-management';
     public const BUY_LEADS_REVIVAL = 'buy-leads-revival';
+    public const BUY_LEADS_ADMIN = 'buy-leads-admin';
     public const BRANCHES = 'branches';
     public const BRANCH_ASSIGNMENTS = 'branch-assignments';
     public const CAR_LEGACY_KYC_SKIP_INSURER_API = 'car-legacy-kyc-skip-insurer-api';

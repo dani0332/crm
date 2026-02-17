@@ -192,13 +192,15 @@ class QuoteDocumentService extends BaseService
         LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
 
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
+            LoggerService::warning('Invalid document type code provided '.$data['document_type_code']);
+
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
+        LoggerService::info("Watermark qualification check: {$isWaterMarkQualifyDoc}");
         try {
-
             if (data_get($data, 'is_base_64', 0) == 1) {
                 $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
@@ -294,6 +296,7 @@ class QuoteDocumentService extends BaseService
                 $docUuid = uniqid().rand(1, 100);
             }
 
+            LoggerService::info('Creating quote document record in database');
             $quoteDocument = $quote->documents()->create([
                 'doc_name' => 'original_'.$docName,
                 'original_name' => $originalName,
@@ -318,15 +321,18 @@ class QuoteDocumentService extends BaseService
             }
 
             LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
+                LoggerService::info('Dispatching WatermarkDocumentsJob');
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
                     $data['quote_uuid'],
                     $documentType->id
                 )->afterCommit();
             }
+
+            LoggerService::info('Document uploaded successfully');
 
             return $quoteDocument;
         } catch (\Exception $exception) {
@@ -399,7 +405,12 @@ class QuoteDocumentService extends BaseService
             // Return documents filtered by document type codes if provided
             // If watermarked_doc_url is not null then we can send watermarked document in email
             // Bor Signature document is not show on document section
-            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with(self::CREATED_BY_RELATION)->latest()->get();
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)
+                ->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)
+                ->with(self::CREATED_BY_RELATION)
+                ->with('memberDetail')
+                ->latest()->get();
+
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Exclude documents that contain "Certificate of Insurance" followed by any text or space
@@ -411,7 +422,9 @@ class QuoteDocumentService extends BaseService
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
-        return $quote ? $quote->documents()->with(self::CREATED_BY_RELATION)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
+        return $quote
+            ? $quote->documents()->with(self::CREATED_BY_RELATION)->with('memberDetail')->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get()
+            : [];
     }
 
     /**
@@ -1174,6 +1187,7 @@ class QuoteDocumentService extends BaseService
      */
     private function updateBorLogReference($borReference, $quoteDocument)
     {
+        LoggerService::info('Updating Bor log reference with uploaded document time and status');
         $borLog = BorLog::where('bor_reference', $borReference)->first();
         if ($borLog) {
             $borLog->update([
@@ -1186,7 +1200,7 @@ class QuoteDocumentService extends BaseService
         }
     }
 
-    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
+    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $memberDetailId)
     {
         LoggerService::info('Dispatching OCR job from API');
 
@@ -1195,7 +1209,7 @@ class QuoteDocumentService extends BaseService
             $quote,
             $filePathAzure,
             $fileMimeType,
+            $memberDetailId,
         );
     }
-
 }

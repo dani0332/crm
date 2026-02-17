@@ -5,6 +5,7 @@ namespace Tests\Helpers;
 use Tests\Support\Schema\CyberSchema;
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\RenewalsSchema;
+use Tests\Support\Schema\RulesSchema;
 
 class TestSchemaCreator
 {
@@ -28,6 +29,13 @@ class TestSchemaCreator
         self::createMinimalSchema();
 
         (new RenewalsSchema)->register();
+    }
+
+    public static function createRulesSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new RulesSchema)->register();
     }
 
 }

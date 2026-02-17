@@ -757,6 +757,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_ADMIN),
+                        'Buy Lead Requests',
+                        route('admin.buy-leads.requests.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::Engineering, RolesEnum::Admin]),
                         'Private Client Config',
                         route('admin.private-client-config.show'),

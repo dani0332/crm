@@ -6,6 +6,8 @@ use App\Enums\QuoteTypes;
 use App\Http\Requests\OcrLogsRequest;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
+use App\Models\HealthInsurerRequestResponse;
+use App\Models\HealthQuote;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -188,6 +190,8 @@ class AuditableController extends Controller
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case CyberQuote::class:
                 return CyberInsurerRequestResponses::with('insuranceProvider')
+            case HealthQuote::class:
+                return HealthInsurerRequestResponse::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');

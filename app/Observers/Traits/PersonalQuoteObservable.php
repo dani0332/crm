@@ -36,6 +36,10 @@ use Illuminate\Support\Facades\Log;
 trait PersonalQuoteObservable
 {
     use QuoteAllocatable;
+
+    private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'PersonalQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
+    private const LOG_BIKE_ADVISOR_UPDATED_FAILED = 'PersonalQuoteObserver - dispatch BikeQuoteAdvisorUpdated event failed';
+
     protected function handleQuoteStatusChange(PersonalQuote $personalQuote): void
     {
         if (checkPersonalQuotes($personalQuote->quoteType?->code)) {
@@ -83,8 +87,15 @@ trait PersonalQuoteObservable
             LoggerService::info(self::class." - HOME_RENEWAL_AUTOMATED_FOLLOWUPS - Dispatched for Home renewal quote: {$personalQuote->uuid}");
         }
 
-        if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicyBooked])) {
-            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
+        if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            try {
+                event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $personalQuote->uuid,
+                    'quote_status_id' => $personalQuote->quote_status_id,
+                ], exception: $e);
+            }
         }
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
@@ -106,7 +117,15 @@ trait PersonalQuoteObservable
         $personalQuote->markLeadAllocationPassed();
 
         if ($personalQuote->isBike()) {
-            event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
+            try {
+                event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_BIKE_ADVISOR_UPDATED_FAILED, [
+                    'uuid' => $personalQuote->uuid,
+                    'old_advisor_id' => $oldAdvisorId,
+                    'new_advisor_id' => $personalQuote->advisor_id,
+                ], exception: $e);
+            }
         }
 
         if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle() || $personalQuote->isSavings()) {

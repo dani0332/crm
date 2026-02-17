@@ -222,11 +222,17 @@ class ConversionAsAtReportService extends BaseService
 
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
-        $startDate = isset($filters->startEndDate) ?
+        $startDate = (isset($filters->startEndDate)
+        && is_array($filters->startEndDate)
+        && ! empty($filters->startEndDate[0])
+        ) ?
             Carbon::parse($filters->startEndDate[0])->startOfDay()->format($dateFormat) :
             Carbon::parse(now())->startOfDay()->format($dateFormat);
 
-        $endDate = isset($filters->startEndDate) ?
+        $endDate = (isset($filters->startEndDate)
+        && is_array($filters->startEndDate)
+        && ! empty($filters->startEndDate[1])
+        ) ?
             Carbon::parse($filters->startEndDate[1])->endOfDay()->format($dateFormat) :
             Carbon::parse(now())->endOfDay()->format($dateFormat);
 

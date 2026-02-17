@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -295,5 +296,10 @@ class Payment extends Model implements Auditable
             PaymentStatusEnum::CAPTURED,
             PaymentStatusEnum::PAYMENT_LINK_REQUESTED,
         ]);
+    }
+
+    public function personalQuote(): BelongsTo
+    {
+        return $this->belongsTo(PersonalQuote::class, 'code', 'code');
     }
 }

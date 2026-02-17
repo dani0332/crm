@@ -56,6 +56,8 @@ trait OcrValidator
 
         // Cyber-only
         InsuranceProviderEnum::AWNI->value => [QuoteTypes::CYBER],
+        // Health only
+        InsuranceProviderEnum::ADNIC->value => [QuoteTypes::HEALTH],
     ];
 
     public function isSupportedProvider(QuoteTypes $quoteType, string $provider): bool
