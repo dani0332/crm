@@ -21,7 +21,7 @@ use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwniInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -48,7 +48,7 @@ class PolicyIssuanceService
                 default => null,
             },
             QuoteTypes::CYBER->value => match ($insurerCode) {
-                InsuranceProvidersEnum::AWNI => app(AwniInsuranceService::class),
+                InsuranceProvidersEnum::AWNI => app(AwnicInsuranceService::class),
                 default => null,
             },
             default => null,

@@ -12,7 +12,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Exception;
 
-class AwniInsuranceService implements PolicyIssuanceInterface
+class AwnicInsuranceService implements PolicyIssuanceInterface
 {
     private array $stepHandlers = [
         AwnicEnum::STEP_ISSUE_POLICY => 'executeIssuePolicyStep',
@@ -115,6 +115,9 @@ class AwniInsuranceService implements PolicyIssuanceInterface
      */
     public function executeSteps($process)
     {
+        $response = ['status' => false, 'error' => null, 'message' => null];
+        $shouldExecute = true;
+
         if (! $this->isPolicyIssuanceAutomationEnabled()) {
             LoggerService::warning('Automation is disabled', extra: [
                 'process_id' => $process->id ?? null,
@@ -122,59 +125,56 @@ class AwniInsuranceService implements PolicyIssuanceInterface
             ]);
             $response['error'] = 'AWNI Cyber Automation is disabled';
             $response['message'] = 'AWNI Cyber Automation is disabled';
-
-            return $response;
+            $shouldExecute = false;
         }
 
-        $response = ['status' => false, 'error' => null, 'message' => null];
+        $quote = $process->model ?? null;
 
-        $quote = $process->model;
-
-        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AWNIC_CYBER_POLICY_AUTOMATION);
-        LoggerService::info('Execution started', extra: [
-            'process_id' => $process->id,
-            'plan_id' => $quote->plan_id,
-            'current_status' => $process->status,
-            'completed_step' => $process->completed_step,
-        ]);
-
-        try {
-            $validationResult = $this->validationService->validateRequiredData($quote);
-            if (! $validationResult['status']) {
-                return $validationResult;
-            }
-
-            $lastCompletedStep = $process->completed_step;
-            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : $this->getAPISteps()[0];
-
-            LoggerService::info('Starting step sequence execution', extra: [
+        if ($shouldExecute && $quote) {
+            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AWNIC_CYBER_POLICY_AUTOMATION);
+            LoggerService::info('Execution started', extra: [
                 'process_id' => $process->id,
-                'last_completed_step' => $lastCompletedStep,
-                'next_step' => $nextStepToBeExecuted,
+                'plan_id' => $quote->plan_id,
+                'current_status' => $process->status,
+                'completed_step' => $process->completed_step,
             ]);
 
-            $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
+            try {
+                $validationResult = $this->validationService->validateRequiredData($quote);
+                if (! $validationResult['status']) {
+                    $response = $validationResult;
+                } else {
+                    $lastCompletedStep = $process->completed_step;
+                    $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : $this->getAPISteps()[0];
 
-            $response['status'] = $executeStepSequence['status'];
-            $response['message'] = $executeStepSequence['message'];
-            $response['error'] = $executeStepSequence['error'];
-        } catch (Exception $e) {
-            $response['error'] = $e->getMessage();
-            LoggerService::error('Exception occurred during execution', extra: [
-                'process_id' => $process->id,
-                'quote_id' => $quote->id,
-                'quote_type' => QuoteTypes::CYBER->value,
-                'quote_code' => $quote->code,
-            ], exception: $e);
+                    LoggerService::info('Starting step sequence execution', extra: [
+                        'process_id' => $process->id,
+                        'last_completed_step' => $lastCompletedStep,
+                        'next_step' => $nextStepToBeExecuted,
+                    ]);
 
-            return $response;
+                    $executeStepSequence = $this->executeStepSequence($quote, $process, $nextStepToBeExecuted);
+
+                    $response['status'] = $executeStepSequence['status'];
+                    $response['message'] = $executeStepSequence['message'];
+                    $response['error'] = $executeStepSequence['error'];
+                }
+            } catch (Exception $e) {
+                $response['error'] = $e->getMessage();
+                LoggerService::error('Exception occurred during execution', extra: [
+                    'process_id' => $process->id ?? null,
+                    'quote_id' => $quote->id ?? null,
+                    'quote_type' => QuoteTypes::CYBER->value,
+                    'quote_code' => $quote->code ?? null,
+                ], exception: $e);
+            }
+
+            LoggerService::info('Execution completed', extra: [
+                'process_id' => $process->id ?? null,
+                'final_status' => $response['status'],
+                'message' => $response['message'],
+            ]);
         }
-
-        LoggerService::info('Execution completed', extra: [
-            'process_id' => $process->id,
-            'final_status' => $response['status'],
-            'message' => $response['message'],
-        ]);
 
         return $response;
     }
@@ -192,6 +192,7 @@ class AwniInsuranceService implements PolicyIssuanceInterface
         $currentStep = $nextStepToBeExecuted;
         $allSteps = $this->getAPISteps();
         $stepsExecuted = [];
+        $finalResponse = null;
 
         while ($currentStep !== null) {
             if (! in_array($currentStep, $allSteps, true)) {
@@ -203,7 +204,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
                     'steps_executed' => $stepsExecuted,
                 ]);
 
-                return $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                $finalResponse = $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                break;
             }
 
             $handler = $this->getStepHandler($currentStep);
@@ -216,7 +218,8 @@ class AwniInsuranceService implements PolicyIssuanceInterface
                     'steps_executed' => $stepsExecuted,
                 ]);
 
-                return $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                $finalResponse = $this->responseHandler->buildStepResponse($currentStep, false, null, $error);
+                break;
             }
 
             LoggerService::info('Executing step', extra: [
@@ -236,25 +239,30 @@ class AwniInsuranceService implements PolicyIssuanceInterface
                     'error' => $response['error'] ?? AwnicEnum::UNKNOWN_ERROR,
                 ]);
 
-                return $response;
+                $finalResponse = $response;
+                break;
             }
 
             $this->updateProcessWithStep($process, $response);
             $currentStep = $this->getNextStep($process->completed_step);
         }
 
-        LoggerService::info('All steps completed successfully', extra: [
-            'process_id' => $process->id,
-            'steps_executed' => $stepsExecuted,
-            'total_steps' => count($stepsExecuted),
-        ]);
+        if (! $finalResponse) {
+            LoggerService::info('All steps completed successfully', extra: [
+                'process_id' => $process->id,
+                'steps_executed' => $stepsExecuted,
+                'total_steps' => count($stepsExecuted),
+            ]);
 
-        return [
-            'status' => true,
-            'message' => 'All policy issuance steps completed successfully',
-            'completed_step' => $currentStep,
-            'error' => null,
-        ];
+            $finalResponse = [
+                'status' => true,
+                'message' => 'All policy issuance steps completed successfully',
+                'completed_step' => $currentStep,
+                'error' => null,
+            ];
+        }
+
+        return $finalResponse;
     }
 
     /**
@@ -265,39 +273,32 @@ class AwniInsuranceService implements PolicyIssuanceInterface
     public function getNextStep($completedStep = null): ?string
     {
         $allSteps = $this->getAPISteps();
+        $nextStep = null;
 
         if (! $completedStep) {
             $nextStep = $allSteps[0];
             LoggerService::info('No previous step, starting from beginning', extra: [
                 'next_step' => $nextStep,
             ]);
-
-            return $nextStep;
+        } else {
+            $completedStepIndex = array_search($completedStep, $allSteps);
+            if ($completedStepIndex === false) {
+                LoggerService::warning('Completed step not found in valid steps', extra: [
+                    'completed_step' => $completedStep,
+                    'valid_steps' => $allSteps,
+                ]);
+            } elseif ($completedStepIndex !== count($allSteps) - 1) {
+                $nextStep = $allSteps[$completedStepIndex + 1];
+                LoggerService::info('Next step determined', extra: [
+                    'completed_step' => $completedStep,
+                    'next_step' => $nextStep,
+                ]);
+            } else {
+                LoggerService::info('All steps completed', extra: [
+                    'last_completed_step' => $completedStep,
+                ]);
+            }
         }
-
-        $completedStepIndex = array_search($completedStep, $allSteps);
-        if ($completedStepIndex === false) {
-            LoggerService::warning('Completed step not found in valid steps', extra: [
-                'completed_step' => $completedStep,
-                'valid_steps' => $allSteps,
-            ]);
-
-            return null;
-        }
-
-        if ($completedStepIndex === count($allSteps) - 1) {
-            LoggerService::info('All steps completed', extra: [
-                'last_completed_step' => $completedStep,
-            ]);
-
-            return null;
-        }
-
-        $nextStep = $allSteps[$completedStepIndex + 1];
-        LoggerService::info('Next step determined', extra: [
-            'completed_step' => $completedStep,
-            'next_step' => $nextStep,
-        ]);
 
         return $nextStep;
     }
