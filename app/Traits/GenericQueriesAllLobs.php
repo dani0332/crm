@@ -941,7 +941,7 @@ trait GenericQueriesAllLobs
             return null;
         }
 
-        $cacheKey = 'customer_verification_nationality_'.md5(strtolower($nationality));
+        $cacheKey = 'customer_verification_nationality_'.md5((string) $nationality);
         $nationalityRecord = cache()->remember($cacheKey, now()->addDay(), function () use ($nationality) {
             return Nationality::whereAny(
                 ['text', 'country_name'],
