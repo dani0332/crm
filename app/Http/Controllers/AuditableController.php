@@ -189,7 +189,7 @@ class AuditableController extends Controller
                 return LifeInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case CyberQuote::class:
-                return CyberInsurerRequestResponses::with('insuranceProvider')
+                return CyberInsurerRequestResponses::with('insuranceProvider');
             case HealthQuote::class:
                 return HealthInsurerRequestResponse::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
