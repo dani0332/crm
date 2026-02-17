@@ -1281,7 +1281,7 @@ class ApplicationStorageSeeder extends Seeder
 
         $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/4f168567-e5fa-4617-9f74-43293e0f6c6c/invoke-sync';
         if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
-            $birdWorkflowUrl = '';
+            $birdWorkflowUrl = 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/bdfeeeee-4101-4d9d-97b2-22f51b82ba26/invoke-sync';
         }
 
         ApplicationStorage::updateOrCreate(
@@ -1294,6 +1294,15 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS],
+            [
+                'value' => 30,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
         // endregion
     }
 }
