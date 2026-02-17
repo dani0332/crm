@@ -34,6 +34,8 @@ class TravelQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'TravelQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
+
     public function updating(TravelQuote $quote): void
     {
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
@@ -161,7 +163,15 @@ class TravelQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
-            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+
+            try {
+                event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $travelQuote->uuid,
+                    'quote_status_id' => $travelQuote->quote_status_id,
+                ], exception: $e);
+            }
 
             try {
                 EmbeddedProductRepository::capturePayment($travelQuote->id, quoteTypeCode::Travel);
@@ -188,7 +198,14 @@ class TravelQuoteObserver
             SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL->id())->onQueue('insly');
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
-            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            try {
+                event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $travelQuote->uuid,
+                    'quote_status_id' => $travelQuote->quote_status_id,
+                ], exception: $e);
+            }
         }
     }
 

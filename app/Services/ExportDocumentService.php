@@ -30,10 +30,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         and later on if we have to change it than have to make it at single place i.e logic for newUI() method in all LOB Models
         */
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
-
-        $quote->load(['customer.latestInsured' => function ($query) use ($quote) {
-            $query->where('quote_request_id', $quote->id);
-        }]);
+        $quote->load('latestInsured');
 
         if (! $quote) {
             return ['error' => 'Quote  not found'];

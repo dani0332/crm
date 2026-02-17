@@ -50,7 +50,6 @@ use App\Services\EpEcbService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SukoonMedexService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\ECB;
@@ -498,7 +497,20 @@ class EmbeddedProductRepository extends BaseRepository
                 } else {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
+
+                    // Load latestInsured with quote_type_id constraint for personal quotes
+                    $isPersonalQuote = checkPersonalQuotes(ucwords($modelType));
+                    if ($isPersonalQuote) {
+                        $quoteObject->load([
+                            'latestInsured' => function ($query) use ($quoteTypeId) {
+                                $query->where('customer_insured.quote_type_id', $quoteTypeId);
+                            },
+                            'embeddedTransactions.product.embeddedProduct',
+                            'customer',
+                        ]);
+                    } else {
+                        $quoteObject->load('latestInsured', 'embeddedTransactions.product.embeddedProduct', 'customer');
+                    }
 
                     if ($callPurchaseFlow) {
                         if (in_array($epShortCode, $sukoonMedexCodes)) {
@@ -580,9 +592,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             try {
-                $sukoonMedexService = app(SukoonMedexService::class);
-                $sukoonMedexService->initiatePurchaseFlow($quoteObject, $quoteTypeId, $transaction);
-                $sukoonMedexService->processPurchaseFlow();
+                SukoonMedexPurchaseFlowJob::dispatch($quoteObject, $quoteTypeId, $transaction);
             } catch (Throwable $e) {
                 return ['success' => false, 'message' => $e->getMessage()];
             }
@@ -661,7 +671,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         if ($isAlfredProtect) {
-            return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
+            return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData, $modelType);
         } elseif ($isSukoonMedex) {
             return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $attachments, $advisorData, $ep, $modelType, $isSalama);
         } elseif ($isECB) {
@@ -690,7 +700,7 @@ class EmbeddedProductRepository extends BaseRepository
                 foreach ($documents as $item) {
                     $path = $item->path;
                     if (! empty($path)) {
-                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIMPrivate');
+                        $pwDoc = $quoteDocumentService->getDocumentUrl($path, 'azureIM');
                         if ($pwDoc && ! $isAlfredProtect) {
                             $fileInfo = new finfo(FILEINFO_MIME_TYPE);
                             $file = file_get_contents($pwDoc);
@@ -769,14 +779,31 @@ class EmbeddedProductRepository extends BaseRepository
         return $transactions->get();
     }
 
-    private function sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData)
+    // Reminder:: it's not being in used on Production - discussed with Jawad
+    private function sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData, $modelType)
     {
         $strategy = $this->createStrategy($short_code, true);
         $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
         $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
 
-        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : ($quoteObject->customer?->latestInsured?->first_name ?? $quoteObject->customer->insured_first_name) ?? '';
-        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : ($quoteObject->customer?->latestInsured?->last_name ?? $quoteObject->customer->insured_first_name) ?? '';
+        $isPersonalQuote = checkPersonalQuotes(ucwords($modelType));
+        if ($isPersonalQuote && ! $quoteObject->relationLoaded('latestInsured')) {
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $quoteObject->load(['latestInsured' => function ($query) use ($quoteTypeId) {
+                $query->where('customer_insured.quote_type_id', $quoteTypeId);
+            }]);
+        }
+
+        if ($quoteObject->quoteRequestEntityMapping) {
+            $firstName = $quoteObject->first_name ?? '';
+            $lastName = $quoteObject->last_name ?? '';
+        } elseif ($quoteObject->latestInsured) {
+            $firstName = $quoteObject->latestInsured->first_name ?? '';
+            $lastName = $quoteObject->latestInsured->last_name ?? '';
+        } else {
+            $firstName = $quoteObject->customer?->insured_first_name ?? '';
+            $lastName = $quoteObject->customer?->insured_last_name ?? '';
+        }
 
         info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
         $emailData = (object) [
