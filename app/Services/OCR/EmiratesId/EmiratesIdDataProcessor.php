@@ -84,6 +84,7 @@ class EmiratesIdDataProcessor
 
                 // Update insured details in personal quote and customer
                 $this->updatePersonalQuoteInsuredId($insured);
+                $this->updateInsuredDataInCustomer($insured);
             }
 
             // Trigger OCR success validation
@@ -351,10 +352,29 @@ class EmiratesIdDataProcessor
             ]);
         } else {
             LoggerService::warning('Personal quote not found for quote UUID: '.$this->quote->uuid, [
-                'insured_id' => $insured->id,
                 'quote_type' => $quoteType,
             ]);
         }
+    }
+
+    private function updateInsuredDataInCustomer(Insured $insured): void
+    {
+        $quoteType = get_class($this->quote);
+        $customer = $this->quote->customer;
+
+        if (! $customer) {
+            LoggerService::warning('Customer record not found for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
+
+            return;
+        }
+
+        $customer->nationality_id = $insured->nationality_id;
+        $customer->dob = $insured->dob;
+        $customer->insured_first_name = $insured->first_name;
+        $customer->insured_last_name = $insured->last_name;
+        $customer->save();
+
+        LoggerService::info('Customer record updated successfully for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
     }
 
     private function getNationalityId(?string $nationality): ?int
