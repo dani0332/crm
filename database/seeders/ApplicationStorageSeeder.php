@@ -47,7 +47,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER],
             [
-                'value' => 1,
+                'value' => env('APP_ENV') === 'production' ? 0 : 1,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -271,19 +271,14 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
-        $birdEpWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/07d270c5-5121-441c-b048-9e4b1e2478f1/invoke-sync';
-        if (env('APP_ENV') === 'production') {
-            $birdEpWorkflowUrl = '';
-        }
-
+        $isProd = env('APP_ENV') === 'production';
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL],
             [
-                'value' => $birdEpWorkflowUrl,
+                'value' => $isProd ? '' : 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/07d270c5-5121-441c-b048-9e4b1e2478f1/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
-                'is_active' => 1,
+                'is_active' => $isProd ? 0 : 1,
             ],
         );
     }
