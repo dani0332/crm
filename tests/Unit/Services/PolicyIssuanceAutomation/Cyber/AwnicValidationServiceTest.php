@@ -37,7 +37,7 @@ it('validates upload documents and download documents helpers', function () {
     ];
 
     $uploadResult = $service->validateUploadDocuments($quote, $documents);
-    $downloadResult = $service->validateDownloadDocuments($quote, ['docA' => '1', 'docB' => '2']);
+    $downloadResult = $service->validateDownloadDocuments(['docA' => '1', 'docB' => '2']);
 
     expect($uploadResult['status'])->toBeTrue()
         ->and($downloadResult['status'])->toBeTrue();

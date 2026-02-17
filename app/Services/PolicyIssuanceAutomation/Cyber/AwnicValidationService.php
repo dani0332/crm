@@ -11,10 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 class AwnicValidationService
 {
-    public function __construct(
-        private AwnicDocumentHandler $documentHandler,
-    ) {}
-
     /**
      * Validate book policy prerequisites
      *
@@ -147,7 +143,7 @@ class AwnicValidationService
         return ['status' => true];
     }
 
-    public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array
+    public function validateDownloadDocuments($docTypeCodeForIMCRM): array
     {
         $missingDocs = array_keys(array_filter($docTypeCodeForIMCRM, fn ($docId) => $docId === null));
         if (! empty($missingDocs)) {

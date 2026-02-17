@@ -199,7 +199,7 @@ class AwnicApiService
         $docTypeCodeForIMCRM = $this->documentHandler->getDocTypeCodeForIMCRM($quote);
 
         // validation added before hitting api to awnic for downloading document
-        $validationResult = $this->validationService->validateDownloadDocuments($quote, $docTypeCodeForIMCRM);
+        $validationResult = $this->validationService->validateDownloadDocuments($docTypeCodeForIMCRM);
         if (! $validationResult['status']) {
             return $validationResult;
         }
