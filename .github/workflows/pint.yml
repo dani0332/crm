@@ -38,6 +38,9 @@ jobs:
       - name: Generate application key
         run: php artisan key:generate || true
 
+      - name: Clear Config Cache
+        run: php artisan config:clear || true
+
       - name: Run Tests
         run: vendor/bin/pest
 

@@ -80,7 +80,7 @@ const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
-
+const genericRequestEnum = page.props.genericRequestEnum;
 const checkedItems = ref([]);
 const { hasAuthorizedSplit } = usePayment();
 const checkCheckedPlans = computed(() => {
@@ -352,10 +352,9 @@ const memberRelationOptions = computed(() => {
 });
 
 const emiratesOptions = computed(() => {
-  return page.props.emirates.map(em => ({
-    value: em.id,
-    label: em.text,
-  }));
+  return (page.props.emirates || [])
+    .map(em => ({ value: em?.value, label: em?.label }))
+    .filter(opt => opt && opt.value != null && opt.label != null);
 });
 
 const travelerForm = useForm({
@@ -1256,7 +1255,10 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
-  trade_license_no: page.props.quote.trade_license_no ?? null,
+  trade_license_no:
+    page.props.quote.insured_id_type === genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote.insured_id_number
+      : null,
   company_name: page.props.quote.company_name ?? null,
   company_address: page.props.quote.company_address ?? null,
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
@@ -1312,8 +1314,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -1338,7 +1340,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -1348,7 +1350,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =

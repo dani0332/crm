@@ -160,7 +160,9 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      documentPath;
+      documentPath +
+      '&is_policy_wordings=' +
+      download.is_policy_wordings;
     save.target = '_blank';
     save.download = download.name;
     save.dispatchEvent(new MouseEvent('click'));
@@ -170,13 +172,23 @@ const downloadFile = download => {
       '//' +
       window.location.host +
       '/embedded-products/download/force?path=' +
-      documentPath; // so that it opens new tab for IE11
+      documentPath +
+      '&is_policy_wordings=' +
+      download.is_policy_wordings;
   }
 
   downloadLoader.value = true;
   setTimeout(() => {
     downloadLoader.value = false;
   }, 1300);
+};
+
+const openFile = file => {
+  const documentPath = file.is_watermarked
+    ? file.watermarked_doc_path
+    : file.path;
+
+  return openTempUrl(documentPath);
 };
 
 const viewDocument = id => {
@@ -909,14 +921,24 @@ const onAddDocumentSubmit = event => {
             <template #item-actions="item">
               <div class="flex flex-row gap-3">
                 <x-button
+                  v-if="!item.is_policy_wordings"
                   size="xs"
                   color="primary"
                   outlined
-                  @click.prevent="openTempUrl(item.path)"
+                  @click.prevent="openFile(item)"
                 >
                   View
                 </x-button>
-
+                <x-button
+                  v-else
+                  size="xs"
+                  color="primary"
+                  outlined
+                  :href="item.url"
+                  target="_blank"
+                >
+                  View
+                </x-button>
                 <x-button
                   size="xs"
                   color="emerald"

@@ -551,6 +551,22 @@ if (! function_exists('checkPersonalQuotes')) {
     }
 }
 
+if (! function_exists('getPersonalQuoteTypeIds')) {
+    function getPersonalQuoteTypeIds()
+    {
+        return [
+            QuoteTypeId::Home,
+            QuoteTypeId::Life,
+            QuoteTypeId::Bike,
+            QuoteTypeId::Yacht,
+            QuoteTypeId::Pet,
+            QuoteTypeId::Cycle,
+            QuoteTypeId::Jetski,
+            QuoteTypeId::Savings,
+        ];
+    }
+}
+
 if (! function_exists('getBase64FileInfo')) {
     function getBase64FileInfo($base64File)
     {
@@ -801,11 +817,7 @@ if (! function_exists('checkAuthUserRole')) {
             return false;
         }
 
-        if (Auth::user()->hasAnyRole(getManagerRoles())) {
-            return true;
-        } else {
-            return false;
-        }
+        return Auth::user()->hasAnyRole(getManagerRoles());
     }
 }
 
@@ -1750,9 +1762,15 @@ if (! function_exists('isTapEnabled')) {
 }
 
 if (! function_exists('userHasProduct')) {
-    function userHasProduct($product)
+    function userHasProduct($product, $user = null)
     {
-        $productIds = auth()->user()->products->pluck('id');
+        $user = $user ?? auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $productIds = $user->products->pluck('id');
 
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }

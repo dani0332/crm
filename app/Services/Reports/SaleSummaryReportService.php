@@ -433,10 +433,16 @@ class SaleSummaryReportService extends ManagementReport
                 $keys = explode('|', $compositeKey);
                 $groupBy = $keys[0];
                 $branch = $keys[1] ?? 'N/A';
+                $department = $group->first()?->department ?? 'N/A';
+                $policyIssuerName = $group->first()?->policy_issuer_name ?? 'N/A';
+                $customerName = $group->first()?->customer_name ?? 'N/A';
 
                 return (object) [
                     $request->groupBy => $groupBy,
+                    'department' => $department,
                     'branch_name' => $branch,
+                    'policy_issuer_name' => $policyIssuerName,
+                    'customer_name' => $customerName,
                     'total_endorsements' => $group->sum('total_endorsements'),
                     'total_endorsement_amount' => $group->sum('total_endorsement_amount'),
                     'commission_vat_applicable' => $group->sum('commission_vat_applicable'),

@@ -87,7 +87,8 @@
       "@php artisan key:generate --ansi"
     ],
     "serve": "composer install && doppler run -- php artisan serve",
-    "pint:fix": "vendor/bin/pint"
+    "pint:fix": "vendor/bin/pint",
+    "test": "vendor/bin/pest"
   },
   "extra": {
     "laravel": {
