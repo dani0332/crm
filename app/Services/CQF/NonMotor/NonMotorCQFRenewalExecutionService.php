@@ -210,7 +210,7 @@ class NonMotorCQFRenewalExecutionService
         $uploadLeadData = [
             'renewal_import_code' => app(RenewalsUploadService::class)->generateRandomString(),
             'quote_type' => $quoteTypeShortCode,
-            'file_name' => 'cqf_renewal_leads_' . uniqid() . '_' . now()->format('Y-m-d_H-i-s') . '.xlsx',
+            'file_name' => 'cqf_renewal_leads_'. $quoteTypeShortCode . '_' . uniqid() . '_' . now()->format('Y-m-d_H-i-s') . '.xlsx',
             'file_path' => null,
             'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,
@@ -281,10 +281,10 @@ class NonMotorCQFRenewalExecutionService
             QuoteTypes::PET => ['petQuote', 'petQuote.petQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::TRAVEL => ['travelQuote', 'travelQuote.travelQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::LIFE => ['lifeQuote', 'lifeQuote.lifeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::SAVINGS => ['savingsQuote', 'savingsQuote.savingsQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::CYCLE => ['cycleQuote', 'cycleQuote.cycleQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::SAVINGS => ['savingsQuote', 'savingsQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::CYCLE => ['cycleQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::YACHT => ['yachtQuote', 'yachtQuote.yachtQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::JETSKI => ['jetskiQuote', 'jetskiQuote.jetskiQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::JETSKI => ['jetskiQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::BUSINESS => ['businessQuote', 'businessQuote.businessQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             default => ['insuranceProvider', 'currentlyInsuredWith', 'advisor'],
         };
