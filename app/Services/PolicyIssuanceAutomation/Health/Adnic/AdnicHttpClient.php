@@ -86,7 +86,7 @@ class AdnicHttpClient
         return Http::timeout($this->apiTimeout)
             ->retry(
                 times: 5,
-                sleepMilliseconds: 10000,
+                sleepMilliseconds: app()->runningUnitTests() ? 1 : 10000,
                 when: function ($exception) {
                     // Retry on connection and timeout exceptions
                     if ($exception instanceof ConnectionException) {

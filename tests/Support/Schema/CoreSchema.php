@@ -184,6 +184,7 @@ class CoreSchema
                 $table->string('code')->nullable();
                 $table->string('text');
                 $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
                 $table->softDeletes();
                 $table->timestamps();
             },

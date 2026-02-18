@@ -230,9 +230,7 @@ class AdnicDocumentHandler
         $data['file_name'] = $originalName;
         $data['document_type_code'] = $documentCode;
 
-        $quoteDocumentService = new QuoteDocumentService;
-
-        return $quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
+        return $this->quoteDocumentService->uploadQuoteDocument($documentContent, $data, $quote);
     }
 
     /**

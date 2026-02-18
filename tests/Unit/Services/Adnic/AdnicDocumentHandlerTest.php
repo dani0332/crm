@@ -18,6 +18,7 @@ use Tests\TestCase;
 class AdnicDocumentHandlerTest extends TestCase
 {
     private AdnicDocumentHandler $handler;
+    private $quoteDocumentServiceMock;
 
     protected function setUp(): void
     {
@@ -26,8 +27,8 @@ class AdnicDocumentHandlerTest extends TestCase
         config(['constants.AZURE_IM_STORAGE_URL' => 'https://test.blob.core.windows.net']);
         config(['constants.AZURE_IM_STORAGE_CONTAINER' => 'container']);
 
-        $quoteDocumentServiceMock = Mockery::mock(QuoteDocumentService::class);
-        $this->handler = new AdnicDocumentHandler($quoteDocumentServiceMock);
+        $this->quoteDocumentServiceMock = Mockery::mock(QuoteDocumentService::class);
+        $this->handler = new AdnicDocumentHandler($this->quoteDocumentServiceMock);
     }
 
     protected function tearDown(): void
@@ -38,7 +39,7 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_get_insurer_doc_code_for_health_returns_correct_codes(): void
     {
-        $this->assertEquals('3', $this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_EID));
+        $this->assertEquals('3', $this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_EMIRATE_ID_COPY));
         $this->assertEquals('6', $this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_VISA));
         $this->assertEquals('1', $this->handler->getInsurerDocCodeForHealth(DocumentTypeCode::HEA_PAS));
     }
@@ -110,11 +111,11 @@ class AdnicDocumentHandlerTest extends TestCase
         $result = $this->handler->getQuoteDocumentTypeCodessToUpload();
 
         $this->assertInstanceOf(Collection::class, $result);
-        $this->assertCount(3, $result);
+        $this->assertCount(6, $result);
 
         $this->assertTrue($result->has(DocumentTypeCode::HEA_VISA));
         $this->assertTrue($result->has(DocumentTypeCode::HEA_PAS));
-        $this->assertTrue($result->has(DocumentTypeCode::HEA_EID));
+        $this->assertTrue($result->has(DocumentTypeCode::HEA_EMIRATE_ID_COPY));
     }
 
     public function test_get_quote_document_type_codess_to_upload_has_correct_structure(): void
@@ -151,9 +152,9 @@ class AdnicDocumentHandlerTest extends TestCase
     {
         $result = $this->handler->getQuoteDocumentTypeCodessToUpload();
 
-        $eidDoc = $result->get(DocumentTypeCode::HEA_EID);
+        $eidDoc = $result->get(DocumentTypeCode::HEA_EMIRATE_ID_COPY);
 
-        $this->assertEquals(DocumentTypeCode::HEA_EID, $eidDoc['code']);
+        $this->assertEquals(DocumentTypeCode::HEA_EMIRATE_ID_COPY, $eidDoc['code']);
         $this->assertEquals('3', $eidDoc['insurerDocCode']);
         $this->assertEquals('Emirates ID', $eidDoc['insurerDocName']);
         $this->assertFalse($eidDoc['uploaded']);
@@ -255,8 +256,7 @@ class AdnicDocumentHandlerTest extends TestCase
         $documentCode = DocumentTypeCode::POLC;
         $originalName = 'policy.pdf';
 
-        $quoteDocumentServiceMock = Mockery::mock('overload:'.QuoteDocumentService::class);
-        $quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
+        $this->quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
             ->once()
             ->with(
                 $documentContent,
@@ -285,8 +285,7 @@ class AdnicDocumentHandlerTest extends TestCase
         $documentContent = base64_encode('sample content');
         $documentCode = DocumentTypeCode::TI;
 
-        $quoteDocumentServiceMock = Mockery::mock('overload:'.QuoteDocumentService::class);
-        $quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
+        $this->quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
             ->once()
             ->with(
                 $documentContent,
@@ -307,8 +306,7 @@ class AdnicDocumentHandlerTest extends TestCase
         $quote = new \stdClass;
         $quote->uuid = 'test-uuid-123';
 
-        $quoteDocumentServiceMock = Mockery::mock('overload:'.QuoteDocumentService::class);
-        $quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
+        $this->quoteDocumentServiceMock->shouldReceive('uploadQuoteDocument')
             ->once()
             ->with(
                 Mockery::any(),
@@ -326,6 +324,10 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_fetch_document_content_returns_error_for_empty_path(): void
     {
+        $this->quoteDocumentServiceMock->shouldReceive('getDocumentUrl')
+            ->with('')
+            ->andReturn('invalid_path_to_trigger_false_read');
+
         $result = $this->handler->fetchDocumentContent('');
 
         $this->assertFalse($result['status']);
@@ -335,7 +337,12 @@ class AdnicDocumentHandlerTest extends TestCase
 
     public function test_fetch_document_content_returns_error_for_non_existent_file(): void
     {
-        $result = $this->handler->fetchDocumentContent('/non/existent/file.pdf');
+        $path = '/non/existent/file.pdf';
+        $this->quoteDocumentServiceMock->shouldReceive('getDocumentUrl')
+            ->with($path)
+            ->andReturn($path);
+
+        $result = $this->handler->fetchDocumentContent($path);
 
         $this->assertFalse($result['status']);
         $this->assertArrayHasKey('message', $result);
