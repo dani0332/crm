@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
 use App\Enums\AdnicEnum;
-use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Facades\AdnicHttpFacade;
@@ -100,6 +99,14 @@ class AdnicApiService
         $documentsToUpload = $this->documentHandler->getQuoteDocumentTypeCodessToUpload();
         $quoteDocumentTypeCodes = $documentsToUpload->keys()->toArray();
         $quoteDocuments = $this->documentHandler->getDocumentByType($quote, $quoteDocumentTypeCodes);
+
+        if (! $quoteDocuments || $quoteDocuments->isEmpty()) {
+            return $this->responseHandler->buildStepResponse(
+                AdnicEnum::STEP_UPLOAD_DOCUMENTS,
+                false,
+                'No documents found to upload. Please upload required documents before proceeding.'
+            );
+        }
 
         $endPoint = '/UploadDocument';
         $response = $this->responseHandler->buildStepResponse(AdnicEnum::STEP_UPLOAD_DOCUMENTS);
