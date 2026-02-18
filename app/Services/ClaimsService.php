@@ -1028,13 +1028,7 @@ class ClaimsService extends BaseService
             'emailCc' => $insuranceProviderContact->email_cc,
         ];
 
-        $response = Ken::request('/trigger-bird-claims-flow', 'post', $emailPayload);
-        if ($response->status() !== 200) {
-            LoggerService::error(' Bird claims flow: failed to trigger', extra: [
-                'claim_request_id' => $claimRequestId,
-                'response' => $response->body(),
-            ]);
-        }
+        Ken::request('/trigger-bird-claims-flow', 'post', $emailPayload);
     }
 
     /**
