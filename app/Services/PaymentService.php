@@ -52,7 +52,7 @@ class PaymentService extends BaseService
         if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
             $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
-            if ($payment->captured_amount < $priceWithVat) {
+            if ($captureAndDiscount < $priceWithVat) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
             } elseif ($priceWithVat <= $captureAndDiscount) {
                 $payment->payment_status_id = PaymentStatusEnum::PAID;
