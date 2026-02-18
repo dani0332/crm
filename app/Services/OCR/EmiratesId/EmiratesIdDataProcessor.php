@@ -373,15 +373,19 @@ class EmiratesIdDataProcessor
                 return;
             }
 
-            $customer->nationality_id = $insured->nationality_id;
-            $customer->dob = $insured->dob;
-            $customer->insured_first_name = $insured->first_name;
-            $customer->insured_last_name = $insured->last_name;
-            $customer->save();
+            $dataToUpdate = $this->getFieldsToUpdate([
+                'nationality_id' => $insured->nationality_id,
+                'dob' => $insured->dob,
+                'insured_first_name' => $insured->first_name,
+                'insured_last_name' => $insured->last_name,
+            ]);
 
-            LoggerService::info('Customer record updated successfully for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
+            if (! empty($dataToUpdate)) {
+                $customer->update($dataToUpdate);
+                LoggerService::info('Customer record updated successfully for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
+            }
         } catch (Exception $e) {
-            LoggerService::error('Failed to update insured details incustomer record', exception: $e);
+            LoggerService::error('Failed to update insured details in customer record', exception: $e);
         }
     }
 
