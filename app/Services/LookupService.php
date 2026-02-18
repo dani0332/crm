@@ -290,12 +290,6 @@ class LookupService extends BaseService
             ->orderBy('text')
             ->get(['id', 'text']);
     }
-    public function getDeviceQuoteLookUpData()
-    {
-        return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
-            return Capi::request('/api/v1-get-all-device-lookups', 'post');
-        });
-    }
     public function getSubSource()
     {
         return CacheManager::remember(CacheKeyEnum::SUB_SOURCES, function () {

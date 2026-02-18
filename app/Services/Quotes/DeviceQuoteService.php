@@ -272,7 +272,7 @@ class DeviceQuoteService extends BaseQuoteService
 
     public function getFormOptions()
     {
-        $lookUpData = app(LookupService::class)->getDeviceQuoteLookUpData();
+        $lookUpData = app(LookupService::class)->getDeviceCoverages();
         $deviceMakes = DeviceMake::with('deviceModels')->get();
 
         return [
