@@ -1,8 +1,16 @@
 <?php
 
+use App\Enums\AuthGuardEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
+use Tests\Helpers\TestSchemaCreator;
+
+beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
+});
 
 it('returns only the specified quote type id when quoteTypeId is provided and user has access', function () {
     $user = TestDataSeeder::createUserWithRole(RolesEnum::HealthAdvisor);
@@ -71,7 +79,26 @@ it('returns empty array for user with no matching roles', function () {
 
 it('returns quote type ids for user with multiple advisor roles', function () {
     $user = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor);
-    TestDataSeeder::createUserWithRole(RolesEnum::TravelAdvisor, ['id' => $user->id, 'email' => $user->email]);
+
+    // Assign second role to the same user
+    $db = DB::connection('sqlite');
+    $travelRoleId = $db->table('roles')
+        ->where('name', RolesEnum::TravelAdvisor)
+        ->where('guard_name', AuthGuardEnum::Web->value)
+        ->value('id');
+    if (! $travelRoleId) {
+        $travelRoleId = $db->table('roles')->insertGetId([
+            'name' => RolesEnum::TravelAdvisor,
+            'guard_name' => AuthGuardEnum::Web->value,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+    $db->table('model_has_roles')->insertOrIgnore([
+        'role_id' => $travelRoleId,
+        'model_type' => User::class,
+        'model_id' => $user->id,
+    ]);
 
     $user = $user->fresh();
 
@@ -85,42 +112,42 @@ it('returns quote type ids for user with multiple advisor roles', function () {
 it('correctly checks access using advisorRoles method instead of string concatenation', function () {
     // Test that HEALTH advisor role is properly recognized
     // HEALTH has multiple advisor roles: HealthAdvisor, EBPAdvisor, RMAdvisor
-    $healthAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::HealthAdvisor);
+    $healthAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::HealthAdvisor, ['email' => 'health@test.com']);
     expect(QuoteTypes::HEALTH->userHasAccess($healthAdvisor))->toBeTrue();
 
-    $ebpAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::EBPAdvisor);
+    $ebpAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::EBPAdvisor, ['email' => 'ebp@test.com']);
     expect(QuoteTypes::HEALTH->userHasAccess($ebpAdvisor))->toBeTrue();
 
-    $rmAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::RMAdvisor);
+    $rmAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::RMAdvisor, ['email' => 'rm@test.com']);
     expect(QuoteTypes::HEALTH->userHasAccess($rmAdvisor))->toBeTrue();
 
     // Test CAR_REVIVAL advisor role (uses CarRevivalAdvisor, not CAR_REVIVAL_ADVISOR)
-    $carRevivalAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarRevivalAdvisor);
+    $carRevivalAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarRevivalAdvisor, ['email' => 'carrevival@test.com']);
     expect(QuoteTypes::CAR_REVIVAL->userHasAccess($carRevivalAdvisor))->toBeTrue();
 
     // Test BUSINESS quote type (maps to multiple advisor roles)
-    $businessAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::BusinessAdvisor);
+    $businessAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::BusinessAdvisor, ['email' => 'business@test.com']);
     expect(QuoteTypes::BUSINESS->userHasAccess($businessAdvisor))->toBeTrue();
 
-    $corplineAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CorpLineAdvisor);
+    $corplineAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CorpLineAdvisor, ['email' => 'corpline@test.com']);
     expect(QuoteTypes::BUSINESS->userHasAccess($corplineAdvisor))->toBeTrue();
 
-    $gmAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::GMAdvisor);
+    $gmAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::GMAdvisor, ['email' => 'gm@test.com']);
     expect(QuoteTypes::BUSINESS->userHasAccess($gmAdvisor))->toBeTrue();
 
     // Test JETSKI advisor role
-    $jetskiAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::JetskiAdvisor);
+    $jetskiAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::JetskiAdvisor, ['email' => 'jetski@test.com']);
     expect(QuoteTypes::JETSKI->userHasAccess($jetskiAdvisor))->toBeTrue();
 });
 
 it('correctly checks manager roles for quote type access', function () {
-    $carManager = TestDataSeeder::createUserWithRole(RolesEnum::CarManager);
+    $carManager = TestDataSeeder::createUserWithRole(RolesEnum::CarManager, ['email' => 'carmanager@test.com']);
     expect(QuoteTypes::CAR->userHasAccess($carManager))->toBeTrue();
 
-    $healthManager = TestDataSeeder::createUserWithRole(RolesEnum::HealthManager);
+    $healthManager = TestDataSeeder::createUserWithRole(RolesEnum::HealthManager, ['email' => 'healthmanager@test.com']);
     expect(QuoteTypes::HEALTH->userHasAccess($healthManager))->toBeTrue();
 
-    $homeManager = TestDataSeeder::createUserWithRole(RolesEnum::HomeManager);
+    $homeManager = TestDataSeeder::createUserWithRole(RolesEnum::HomeManager, ['email' => 'homemanager@test.com']);
     expect(QuoteTypes::HOME->userHasAccess($homeManager))->toBeTrue();
 });
 
