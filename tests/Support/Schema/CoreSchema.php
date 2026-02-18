@@ -1173,7 +1173,7 @@ class CoreSchema
                 $table->string('sage_request_type')->nullable();
                 $table->integer('step')->nullable();
                 $table->timestamps();
-            }, 
+            },
         ]);
     }
 
