@@ -20,9 +20,10 @@ beforeEach(function () {
     $this->actingAs($this->user);
 
     // Create an advisor user
-    $this->advisor = TestDataSeeder::createUser([
+    // Create an advisor user with CarAdvisor role so getAuthorisePaymentCount includes Car quote types
+    $this->advisor = TestDataSeeder::createUserWithRole(\App\Enums\RolesEnum::CarAdvisor, [
         'name' => 'Test Advisor',
-        'email' => 'advisor@test.com',
+        'email' => fake()->unique()->safeEmail(),
     ]);
 
     // Create a team and assign advisor to it (required for count query)
