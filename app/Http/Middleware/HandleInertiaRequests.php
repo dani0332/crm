@@ -731,12 +731,6 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
-                        'Process Tracker',
-                        route('process-tracker.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]),
                         'Allocation Audit',
                         route('admin.allocation-audit.index'),
