@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AwnicEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Http\Controllers\Controller;
@@ -27,7 +28,7 @@ class PolicyIssuanceController extends Controller
             return response()->json(['message' => 'Policy issuance still in processing state cannot start another'], Response::HTTP_BAD_REQUEST);
         }
         $policyIssuance->status = PolicyIssuanceEnum::PENDING_STATUS;
-        if ($request->has('completed_step')) {
+        if ($request->has('completed_step') && !in_array($request->completed_step, [AwnicEnum::STEP_BOOK_POLICY])) {
             $policyIssuance->completed_step = $request->completed_step;
         }
         $policyIssuance->save();
