@@ -93,7 +93,9 @@ const updatePriceWithVat = () => {
   planDetailsForm.price_vat_not_applicable = roundDecimal(
     priceVatNotApplicable,
   );
-  planDetailsForm.total_vat_amount = roundDecimal(priceVatApplicable * vat / 100);
+  planDetailsForm.total_vat_amount = roundDecimal(
+    (priceVatApplicable * vat) / 100,
+  );
 };
 
 const onUpdate = () => {

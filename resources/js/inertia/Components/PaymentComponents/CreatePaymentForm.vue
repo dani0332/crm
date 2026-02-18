@@ -1219,10 +1219,11 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   resetTotalPayments();
   calculatePaymentBreakup();
   isPaymentNoEnabled.value = false;
-  
+
   const isEditMode = paymentMethodsForm.status === 'edit';
-  const shouldPreservePaymentNo = isEditMode && !noPaymentUpdate && oldTotalPayments.value > 0;
-  
+  const shouldPreservePaymentNo =
+    isEditMode && !noPaymentUpdate && oldTotalPayments.value > 0;
+
   if (paymentMethodsForm.frequency === paymentFrequencyEnum.MONTHLY) {
     resetPaymentMethod = true;
     if (!shouldPreservePaymentNo) {

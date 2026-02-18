@@ -357,7 +357,9 @@ const bookingDetailsForm = useForm({
     props.sendUpdateLog?.total_commission ||
     props?.payments[0]?.commission ||
     '',
-  total_vat_amount: can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ? Math.abs(props.sendUpdateLog?.total_vat_amount) : props.sendUpdateLog?.total_vat_amount || '0.00',
+  total_vat_amount: can(permissionsEnum.POLICY_DETAILS_ADD_VAT)
+    ? Math.abs(props.sendUpdateLog?.total_vat_amount)
+    : props.sendUpdateLog?.total_vat_amount || '0.00',
   price_vat_applicable:
     Math.abs(props.sendUpdateLog.price_vat_applicable) || '0.00',
   price_vat_not_applicable:
@@ -424,8 +426,10 @@ const calculatePriceDetailsForATIB = () => {
       Number(bookingDetailsForm.price_vat_not_applicable);
     let total_vat_amount =
       Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
-    bookingDetailsForm.total_vat_amount = can(permissionsEnum.POLICY_DETAILS_ADD_VAT) 
-      ? Number(total_vat_amount) 
+    bookingDetailsForm.total_vat_amount = can(
+      permissionsEnum.POLICY_DETAILS_ADD_VAT,
+    )
+      ? Number(total_vat_amount)
       : convertToNegative(total_vat_amount);
 
     let price_with_vat =
@@ -477,8 +481,10 @@ const calculateCommission = () => {
           Number(bookingDetailsForm.price_vat_not_applicable);
         let total_vat_amount =
           Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
-        bookingDetailsForm.total_vat_amount = can(permissionsEnum.POLICY_DETAILS_ADD_VAT) 
-          ? Number(total_vat_amount) 
+        bookingDetailsForm.total_vat_amount = can(
+          permissionsEnum.POLICY_DETAILS_ADD_VAT,
+        )
+          ? Number(total_vat_amount)
           : convertToNegative(total_vat_amount);
 
         let price_with_vat =
