@@ -30,7 +30,6 @@ test('get steps locking status returns all editable for automation', function ()
     $result = $this->service->getStepsLockingStatus($quote, true);
 
     expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['isEditBookingDetailsDisabled'])->toBeFalse()
         ->and($result['message'])->toBe(AdnicEnum::ALL_STEPS_ARE_EDITABLE);
 });
 
@@ -45,7 +44,6 @@ test('get steps locking status returns all editable when no policy issuance', fu
     $result = $this->service->getStepsLockingStatus($quote, false);
 
     expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['isEditBookingDetailsDisabled'])->toBeFalse()
         ->and($result['message'])->toBe(AdnicEnum::ALL_STEPS_ARE_EDITABLE);
 });
 
@@ -64,7 +62,6 @@ test('get steps locking status returns all editable for failed status with no st
     $result = $this->service->getStepsLockingStatus($quote, false);
 
     expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['isEditBookingDetailsDisabled'])->toBeFalse()
         ->and($result['message'])->toBe(AdnicEnum::ALL_STEPS_ARE_EDITABLE);
 });
 
@@ -83,7 +80,6 @@ test('get steps locking status returns all editable for failed at upload documen
     $result = $this->service->getStepsLockingStatus($quote, false);
 
     expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['isEditBookingDetailsDisabled'])->toBeFalse()
         ->and($result['message'])->toBe(AdnicEnum::ALL_STEPS_ARE_EDITABLE);
 });
 
@@ -102,7 +98,6 @@ test('get steps locking status handles failed at issue policy step', function ()
     $result = $this->service->getStepsLockingStatus($quote, false);
 
     expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['isEditBookingDetailsDisabled'])->toBeFalse()
         ->and($result['message'])->toBe('Upload Documents and Update Booking Details are editable');
 });
 
@@ -121,7 +116,6 @@ test('get steps locking status handles failed at upload policy docs step', funct
     $result = $this->service->getStepsLockingStatus($quote, false);
 
     expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['isEditBookingDetailsDisabled'])->toBeFalse()
         ->and($result['message'])->toBe('Booking Details is editable');
 });
 
@@ -139,8 +133,7 @@ test('get steps locking status handles processing at upload policy docs', functi
 
     $result = $this->service->getStepsLockingStatus($quote, false);
 
-    expect($result['isEditBookingDetailsDisabled'])->toBeFalse()
-        ->and($result['message'])->toBe(AdnicEnum::ALL_STEPS_ARE_EDITABLE);
+    expect($result['isEditPolicyDetailsDisabled'])->toBeTrue();
 });
 
 // CRITICAL TEST: Response structure consistency
@@ -154,7 +147,7 @@ test('get steps locking status always returns consistent structure', function ()
     $result = $this->service->getStepsLockingStatus($quote, false);
 
     expect($result)
-        ->toHaveKeys(['policyIssuance', 'isEditPolicyDetailsDisabled', 'isEditBookingDetailsDisabled', 'message', 'insurer_api_status']);
+        ->toHaveKeys(['policyIssuance', 'isEditPolicyDetailsDisabled', 'message', 'insurer_api_status']);
 });
 
 // CRITICAL TEST: Completed step without failed status
@@ -171,6 +164,5 @@ test('get steps locking status handles completed step with empty status', functi
 
     $result = $this->service->getStepsLockingStatus($quote, false);
 
-    expect($result['isEditPolicyDetailsDisabled'])->toBeFalse()
-        ->and($result['isEditBookingDetailsDisabled'])->toBeFalse();
+    expect($result['isEditPolicyDetailsDisabled'])->toBeFalse();
 });

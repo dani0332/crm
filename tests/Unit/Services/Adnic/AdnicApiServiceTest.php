@@ -7,7 +7,6 @@ use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicDocumentHandler;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicQuoteUpdaterService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicRequestBuilder;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicResponseHandler;
-use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicValidationService;
 use Illuminate\Http\Client\Response;
 
 beforeEach(function () {
@@ -15,14 +14,12 @@ beforeEach(function () {
     $this->responseHandlerMock = Mockery::mock(AdnicResponseHandler::class);
     $this->documentHandlerMock = Mockery::mock(AdnicDocumentHandler::class);
     $this->quoteUpdaterMock = Mockery::mock(AdnicQuoteUpdaterService::class);
-    $this->validationServiceMock = Mockery::mock(AdnicValidationService::class);
 
     $this->service = new AdnicApiService(
         $this->requestBuilderMock,
         $this->responseHandlerMock,
         $this->documentHandlerMock,
-        $this->quoteUpdaterMock,
-        $this->validationServiceMock
+        $this->quoteUpdaterMock
     );
 });
 
@@ -69,13 +66,4 @@ test('api service has quote updater dependency', function () {
     $property->setAccessible(true);
 
     expect($property->getValue($this->service))->toBeInstanceOf(AdnicQuoteUpdaterService::class);
-});
-
-// CRITICAL TEST: Validation service is properly injected
-test('api service has validation service dependency', function () {
-    $reflection = new ReflectionClass($this->service);
-    $property = $reflection->getProperty('validationService');
-    $property->setAccessible(true);
-
-    expect($property->getValue($this->service))->toBeInstanceOf(AdnicValidationService::class);
 });

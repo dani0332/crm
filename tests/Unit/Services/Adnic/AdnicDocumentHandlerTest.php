@@ -26,7 +26,8 @@ class AdnicDocumentHandlerTest extends TestCase
         config(['constants.AZURE_IM_STORAGE_URL' => 'https://test.blob.core.windows.net']);
         config(['constants.AZURE_IM_STORAGE_CONTAINER' => 'container']);
 
-        $this->handler = new AdnicDocumentHandler;
+        $quoteDocumentServiceMock = Mockery::mock(QuoteDocumentService::class);
+        $this->handler = new AdnicDocumentHandler($quoteDocumentServiceMock);
     }
 
     protected function tearDown(): void
