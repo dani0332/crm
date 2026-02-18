@@ -48,8 +48,8 @@ class ClaimsController extends Controller
         $this->cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $this->claimEcomTrackingURL = config('constants.CLAIM_ECOM_TRACKING_URL').'/';
 
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index', 'searchPolicies']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store', 'searchPolicies']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails', 'updateComplaintStatus', 'updateNextFollowUp', 'makeAdditionalContactPrimary', 'optimizeMessage', 'sendNotification']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_STATUS_UPDATE], ['only' => ['updateClaimStatus']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show']]);
