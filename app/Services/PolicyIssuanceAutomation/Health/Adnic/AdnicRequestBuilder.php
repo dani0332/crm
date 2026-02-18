@@ -20,7 +20,7 @@ class AdnicRequestBuilder
     private function getEmiratesIdLength(mixed $value): int
     {
         if ($value === null) {
-            return '';
+            return 0;
         }
 
         return match (true) {
@@ -124,14 +124,14 @@ class AdnicRequestBuilder
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null),
                 'Commission' => AdnicEnum::NO, // Optional Field, set as default value
                 'VisaType' => $visaType ?? '',
-                'City' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
+                'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
                 'Nationality' => AdnicEnum::NATIONALITY_ID_EMIRATES_ID, // Emirates ID is the default nationality
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
-                'WorkLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
-                'ResidenceLocation' => $healthInsurerRequest->SponsorInfo->PreviousVisaEmirate,
+                'WorkLocation' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
+                'ResidenceLocation' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
                 'Industry' => $industry ?? '',
-                'DocumentInfo' => $this->uploadedDocumentsInfo($uploadDocumentsResponse),
+                'DocumentInfo' => $this->uploadedDocumentsInfo($uploadDocumentsResponse, $insuredMember->MemberSeqNo),
                 'PreviousVisaEmirate' => $insuredMember?->PreviousVisaEmirate,
             ];
         }
@@ -228,18 +228,22 @@ class AdnicRequestBuilder
         ];
     }
 
-    private function uploadedDocumentsInfo($uploadDocumentsResponse): array
+    private function uploadedDocumentsInfo($uploadDocumentsResponse, $memberSeqNo): array
     {
         $documentInfo = [];
         foreach ($uploadDocumentsResponse as $document) {
             $response = json_decode($document->response);
 
             $responseData = data_get($response, 'data');
+            $responseMemberSeqNo = data_get($response, 'MemberSeqNo');
 
-            $documentInfo[] = [
-                'DocumentType' => data_get($responseData, 'DocumentInfo.DocumentType'),
-                'DocumentId' => data_get($responseData, 'DocumentInfo.DocumentId'),
-            ];
+            // Only include documents for this specific member
+            if ($responseMemberSeqNo == $memberSeqNo) {
+                $documentInfo[] = [
+                    'DocumentType' => data_get($responseData, 'DocumentInfo.DocumentType'),
+                    'DocumentId' => data_get($responseData, 'DocumentInfo.DocumentId'),
+                ];
+            }
         }
 
         return $documentInfo;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 
-use App\Services\Logger\LoggerService;
 use App\Enums\DocumentTypeCode;
+use App\Services\Logger\LoggerService;
 
 class AdnicValidationService
 {
@@ -82,12 +82,11 @@ class AdnicValidationService
         $mandatoryDocuments = [
             DocumentTypeCode::HEA_MEDICAL_APPLICATION_FORM, // Medical application form
             DocumentTypeCode::HEA_CUSTOMER_DUE_DILIGENCE, // Others (Customer Due Diligence)
-            DocumentTypeCode::HEA_EID, // Emirates ID
+            DocumentTypeCode::HEA_EMIRATE_ID_COPY, // Emirates ID
             DocumentTypeCode::HEA_PAS, // Passport
             DocumentTypeCode::HEA_VISA, // Visa
             DocumentTypeCode::HEA_BIRTH_CERTIFICATE, // Birth Certificate
         ];
-
 
         // Group uploaded documents by type code
         $uploadedDocumentCodes = $quoteDocuments->pluck('document_type_code')->unique()->toArray();
@@ -105,7 +104,7 @@ class AdnicValidationService
             LoggerService::error('Missing mandatory documents for ADNIC policy issuance', extra: [
                 'quote_uuid' => $quote->uuid ?? null,
                 'missing_documents' => $missingDocuments,
-                'uploaded_documents' => $uploadedDocumentCodes
+                'uploaded_documents' => $uploadedDocumentCodes,
             ]);
 
             return [

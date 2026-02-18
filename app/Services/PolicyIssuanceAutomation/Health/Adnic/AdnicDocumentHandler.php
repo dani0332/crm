@@ -10,7 +10,6 @@ use App\Enums\QuoteTypes;
 use App\Models\HealthUMAFResponse;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
-use Symfony\Component\HttpKernel\Log\Logger;
 
 class AdnicDocumentHandler
 {
@@ -118,7 +117,7 @@ class AdnicDocumentHandler
                     if (isset($emirateIdIndices[0])) {
                         $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EID_FRONT;
                     }
-    
+
                     // Modify second HEA_EMIRATE_ID_COPY document as back
                     if (isset($emirateIdIndices[1])) {
                         $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
@@ -199,6 +198,8 @@ class AdnicDocumentHandler
 
         if (! $typeOfEID) {
             LoggerService::info('Type of EID not found');
+
+            return null;
         }
 
         if ($typeOfEID['answer_text'] == AdnicEnum::EMIRATES_ID_TEXT) {
