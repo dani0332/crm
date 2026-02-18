@@ -2107,7 +2107,7 @@ class SageApiEmbeddedProductService
             $payLoad['Invoices'][0]['DocumentDate'] = $bookingDate;
             $payLoad['Invoices'][0]['DueDate'] = $bookingDate;
             $payLoad['Invoices'][0]['AsOfDate'] = $bookingDate;
-            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $bookingDate;
 
             $sageRequestType = SageEnum::EP_SRT_CREATE_AP_PREM_INV_REV;
             $entryType = SageEnum::SCT_REVERSAL;
