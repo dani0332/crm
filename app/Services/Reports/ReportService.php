@@ -674,7 +674,7 @@ class ReportService extends BaseService
             $userTeams = $userOwnTeamIds;
         }
 
-        $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
+        $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS, 1, true);
 
         $quoteTypeId = $request->quoteTypeId ? (int) $request->quoteTypeId : null;
         $allowedQuoteTypeIds = QuoteTypes::allowedIdsForUser($user, $quoteTypeId);

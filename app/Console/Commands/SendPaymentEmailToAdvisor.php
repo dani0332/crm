@@ -42,7 +42,7 @@ class SendPaymentEmailToAdvisor extends Command
             return Command::SUCCESS;
         }
 
-        $authorizedDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
+        $authorizedDays = getAppStorageValueByKey(ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS, 1, true);
 
         $advisorWisePayments = $this->getAdvisorWisePayments($authorizedDays);
 
