@@ -1806,6 +1806,7 @@ class SageApiEmbeddedProductService
         $commissionDescription = 'C.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $createdOn = $sageRequestEmbeddedProduct->createdOn;
         $createdOnDate = Carbon::parse($createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
+        $bookingDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
         $optionalFields = self::createOptionalFields($request, $sageRequestEmbeddedProduct);
 
         $payLoad = [
@@ -1814,16 +1815,16 @@ class SageApiEmbeddedProductService
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'DocumentDate' => $bookingDate,
                     'CurrencyCode' => 'AED',
-                    'DueDate' => $createdOnDate,
-                    'AsOfDate' => $createdOnDate,
+                    'DueDate' => $bookingDate,
+                    'AsOfDate' => $bookingDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'PostingDate' => $bookingDate,
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -1844,15 +1845,15 @@ class SageApiEmbeddedProductService
                     'CustomerNumber' => $sageRequestEmbeddedProduct->sageCustomerNumber,
                     'DocumentNumber' => $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber,
                     'InvoiceDescription' => $commissionDescription,
-                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'DocumentDate' => $bookingDate,
                     'CurrencyCode' => 'AED',
-                    'DueDate' => $createdOnDate,
-                    'AsOfDate' => $createdOnDate,
+                    'DueDate' => $bookingDate,
+                    'AsOfDate' => $bookingDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $commissionTaxClass,
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'PostingDate' => $bookingDate,
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -1880,17 +1881,17 @@ class SageApiEmbeddedProductService
             $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
 
-            $payLoad['Invoices'][0]['DocumentDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['DueDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['AsOfDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['DocumentDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['DueDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['AsOfDate'] = $bookingDate;
             $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
 
             $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][1]['DocumentNumber'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][1]['ApplytoDocument'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber;
-            $payLoad['Invoices'][1]['DocumentDate'] = $createdOnDate;
-            $payLoad['Invoices'][1]['DueDate'] = $createdOnDate;
-            $payLoad['Invoices'][1]['AsOfDate'] = $createdOnDate;
+            $payLoad['Invoices'][1]['DocumentDate'] = $bookingDate;
+            $payLoad['Invoices'][1]['DueDate'] = $bookingDate;
+            $payLoad['Invoices'][1]['AsOfDate'] = $bookingDate;
             $payLoad['Invoices'][1]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
 
             $sageRequestType = SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV_REV;
@@ -2059,6 +2060,7 @@ class SageApiEmbeddedProductService
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $createdOn = $sageRequestEmbeddedProduct->createdOn;
         $createdOnDate = Carbon::parse($createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
+        $bookingDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
 
         $payLoad = [
             'Invoices' => [
@@ -2066,16 +2068,16 @@ class SageApiEmbeddedProductService
                     'VendorNumber' => $sageRequestEmbeddedProduct->sageVendorId, // use vender api to create vender in sage
                     'DocumentNumber' => $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'DocumentDate' => $bookingDate,
                     'CurrencyCode' => 'AED',
-                    'DueDate' => $createdOnDate,
-                    'AsOfDate' => $createdOnDate,
+                    'DueDate' => $bookingDate,
+                    'AsOfDate' => $bookingDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTaxes' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'PostingDate' => $bookingDate, // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
@@ -2102,11 +2104,9 @@ class SageApiEmbeddedProductService
             $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
 
-            $createdOnDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
-
-            $payLoad['Invoices'][0]['DocumentDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['DueDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['AsOfDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['DocumentDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['DueDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['AsOfDate'] = $bookingDate;
             $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
 
             $sageRequestType = SageEnum::EP_SRT_CREATE_AP_PREM_INV_REV;
