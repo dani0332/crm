@@ -3,8 +3,6 @@
 namespace App\Enums;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
-use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
@@ -30,6 +28,7 @@ use App\Models\PetQuoteRequestDetail;
 use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
+use App\Models\User;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
@@ -51,7 +50,7 @@ use Illuminate\Support\Facades\Route;
 
 enum QuoteTypes: string
 {
-    use Enumable, QuoteTypable;
+    use Enumable;
 
     case CAR = 'Car';
     case HOME = 'Home';
@@ -317,9 +316,85 @@ enum QuoteTypes: string
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             self::CAR_REVIVAL => [RolesEnum::CarRevivalAdvisor],
-            self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
+            self::BUSINESS => [RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
+            self::JETSKI => [RolesEnum::JetskiAdvisor],
             default => [],
         };
+    }
+
+    /**
+     * Get the primary LOB types used for role-based filtering and reporting.
+     *
+     * @return array<self>
+     */
+    public static function primaryTypes(): array
+    {
+        return [
+            self::CAR,
+            self::HOME,
+            self::HEALTH,
+            self::LIFE,
+            self::BUSINESS,
+            self::BIKE,
+            self::YACHT,
+            self::TRAVEL,
+            self::PET,
+            self::CYCLE,
+            self::JETSKI,
+            self::SAVINGS,
+        ];
+    }
+
+    /**
+     * Check if a user has role-based or permission-based access to this quote type.
+     */
+    public function userHasAccess(User $user): bool
+    {
+        $userRoles = $user->getRoleNames()->toArray();
+
+        // Check admin access
+        if (in_array(RolesEnum::Admin, $userRoles)) {
+            return true;
+        }
+
+        // Check advisor roles
+        $quoteTypeRoles = $this->advisorRoles();
+        $hasAdvisorRole = ! empty(array_intersect($quoteTypeRoles, $userRoles));
+
+        // Check manager roles
+        $hasManagerRole = in_array($this->name.'_MANAGER', $userRoles);
+
+        // Check VIEW_ALL_REPORTS permission
+        $hasViewAllReportsPermission = $user->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($this, $user);
+
+        return $hasAdvisorRole || $hasManagerRole || $hasViewAllReportsPermission;
+    }
+
+    /**
+     * Get allowed quote type IDs based on user roles and selected LOB filter.
+     *
+     * @return array<int>
+     */
+    public static function allowedIdsForUser(User $user, ?int $quoteTypeId = null): array
+    {
+        $allowedIds = collect(self::primaryTypes())
+            ->filter(fn (self $quoteType) => $quoteType->userHasAccess($user))
+            ->map(fn (self $quoteType) => self::getId($quoteType))
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($quoteTypeId !== null) {
+            // Only return the requested quote type ID if the user has access to it
+            if (in_array($quoteTypeId, $allowedIds, true)) {
+                return [$quoteTypeId];
+            }
+
+            // User attempted to access unauthorized quote type
+            return [];
+        }
+
+        return $allowedIds;
     }
 
     /**
@@ -379,45 +454,6 @@ enum QuoteTypes: string
             default:
                 return PersonalQuote::class;
         }
-    }
-
-    public function trackerProcessTypes()
-    {
-        return match ($this) {
-            self::CAR => [
-                ProcessTrackerTypeEnum::CAR_ALLOCATION,
-            ],
-            self::HOME => [
-                ProcessTrackerTypeEnum::HOME_ALLOCATION,
-            ],
-            self::HEALTH => [
-                ProcessTrackerTypeEnum::HEALTH_ALLOCATION,
-            ],
-            self::LIFE => [
-                ProcessTrackerTypeEnum::LIFE_ALLOCATION,
-            ],
-            self::BUSINESS => [
-                ProcessTrackerTypeEnum::BUSINESS_ALLOCATION,
-            ],
-            self::BIKE => [],
-            self::YACHT => [],
-            self::TRAVEL => [
-                ProcessTrackerTypeEnum::TRAVEL_ALLOCATION,
-            ],
-            self::PET => [
-                ProcessTrackerTypeEnum::PET_ALLOCATION,
-            ],
-            self::CYCLE => [],
-            self::JETSKI => [],
-            self::AMT => [],
-            self::PERSONAL => [],
-            self::GROUP_MEDICAL => [],
-            self::CORPLINE => [],
-            self::CAR_REVIVAL => [],
-            self::CAR_BIKE => [],
-            self::SAVINGS => [],
-            default => [],
-        };
     }
 
     public function getTeams()
