@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\InsuranceProviderContactDepartmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Facades\CustomerPortalApiFacade;
 use App\Facades\InstantWriterAIFacade;
+use App\Facades\Ken;
 use App\Jobs\SendClaimSubStatusUpdateNotificationEmailJob;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\CarMake;
@@ -946,6 +948,93 @@ class ClaimsService extends BaseService
         SendClaimSubStatusUpdateNotificationEmailJob::dispatch($claimRequest->uuid, $request->ai_optimized_message);
 
         return $claimActivity;
+    }
+
+    /**
+     * Trigger Bird claims flow via Ken when claim has manager (e.g. after policy number is set/changed).
+     */
+    public function triggerBirdClaimsFlow(int $claimRequestId): void
+    {
+        $claimRequest = ClaimRequest::with([
+            'manager',
+            'insuranceProvider.contacts',
+            'claim_request_type',
+        ])->find($claimRequestId);
+
+        if (! $claimRequest) {
+            LoggerService::error(' Bird claims flow: claim request not found', extra: [
+                'claim_request_id' => $claimRequestId,
+            ]);
+
+            return;
+        }
+        $canTrigger = true;
+
+        if (! $claimRequest->manager) {
+            LoggerService::info(' Skipping Bird claims flow: claim has no manager', extra: [
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_code' => $claimRequest->code,
+            ]);
+
+            $canTrigger = false;
+        }
+
+        $insuranceProvider = $claimRequest->insuranceProvider;
+        if (! $insuranceProvider) {
+            LoggerService::info(' Skipping Bird claims flow: claim has no insurance provider', extra: [
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_code' => $claimRequest->code,
+            ]);
+
+            $canTrigger = false;
+        }
+
+        $insuranceProviderContact = null;
+        if ($insuranceProvider) {
+            $insuranceProviderContact = $insuranceProvider->contacts
+                ->where('department', InsuranceProviderContactDepartmentEnum::CLAIM->value)
+                ->whereNotNull('emails')
+                ->firstWhere('quote_type_id', $claimRequest->quote_type_id);
+
+            if (! $insuranceProviderContact) {
+                LoggerService::info(' Skipping Bird claims flow: no matching insurance provider contact found', extra: [
+                    'claim_uuid' => $claimRequest->uuid,
+                    'claim_code' => $claimRequest->code,
+                    'quote_type_id' => $claimRequest->quote_type_id,
+                    'department' => InsuranceProviderContactDepartmentEnum::CLAIM->value,
+                ]);
+
+                $canTrigger = false;
+            }
+        }
+
+        if (! $canTrigger) {
+            return;
+        }
+
+        $claimRequestTypeCode = $claimRequest->claim_request_type?->code;
+
+        $emailPayload = [
+            'claimRefId' => $claimRequest->code,
+            'claimRequestTypeCode' => $claimRequestTypeCode,
+            'claimUID' => $claimRequest->uuid,
+            'customerEmail' => $claimRequest->email,
+            'customerMobile' => $claimRequest->mobile_no,
+            'customerName' => $claimRequest->full_name,
+            'isWAConsent' => $claimRequest->whatsapp_consent,
+            'quoteTypeId' => $claimRequest->quote_type_id,
+            'workflowType' => 'CLAIM_UPDATED',
+            'emailTo' => $insuranceProviderContact->emails,
+            'emailCc' => $insuranceProviderContact->email_cc,
+        ];
+
+        $response = Ken::request('/trigger-bird-claims-flow', 'post', $emailPayload);
+        if ($response->status() !== 200) {
+            LoggerService::error(' Bird claims flow: failed to trigger', extra: [
+                'claim_request_id' => $claimRequestId,
+                'response' => $response->body(),
+            ]);
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\UsesTestConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -72,5 +73,10 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     public function genericDocuments()
     {
         return $this->morphMany(GenericDocument::class, 'documentable');
+    }
+
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(InsuranceProviderContact::class, 'insurance_provider_id');
     }
 }
