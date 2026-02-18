@@ -383,7 +383,7 @@ class PolicyIssuanceService
         ]);
 
         $statusAPIFailed = null;
-        if ($quoteType === QuoteTypes::CAR->value && $processInvolved) {
+        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]) && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
         $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
