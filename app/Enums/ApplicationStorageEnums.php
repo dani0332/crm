@@ -363,4 +363,5 @@ final class ApplicationStorageEnums extends Enum
 
     // Health Team Routing
     public const HEALTH_TEAM_ROUTING_ENABLED = 'HEALTH_TEAM_ROUTING_ENABLED';
+    public const ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS = 'ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS';
 }

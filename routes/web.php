@@ -63,8 +63,8 @@ use App\Http\Controllers\UserStatusLogController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\ActivityLogController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
+use App\Http\Controllers\V2\Admin\LeadSourceController;
 use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
-use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
 use App\Http\Controllers\V2\Admin\RulesController;
@@ -563,10 +563,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('/sync-failed-entries', [QuoteSyncController::class, 'addFailedEntriesForSyncing'])->name('admin.quotesync.sync-failed-entries');
         });
 
-        Route::prefix('/process-tracker')->controller(ProcessTrackerController::class)->group(function () {
-            Route::get('/', 'index')->name('process-tracker.index');
-        });
-
         Route::prefix('buy-leads')->group(function () {
             Route::prefix('config')->group(function () {
                 Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
@@ -712,6 +708,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('tiers', TierController::class);
         Route::resource('quadrants', QuadrantController::class);
         Route::resource('rule', RulesController::class);
+        Route::post('lead-sources', [LeadSourceController::class, 'store'])->name('lead-source.store');
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });

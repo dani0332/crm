@@ -356,6 +356,7 @@ class CRUDController extends Controller
                 'canAssignLeadAdvisor' => $canAssignLeadAdvisor,
                 'canAssignClientSupport' => $canAssignClientSupport,
                 'supportUsers' => $supportUsers,
+                'dropdownSource' => $dropdownSource,
             ]);
         }
 
