@@ -778,7 +778,7 @@ const onLeadConfirmed = leadData => {};
 
 const paymentStatusOptions = computed(() => {
   return page.props.dropdownSource.payment_status_id.map(status => ({
-    value: parseInt(status.id),
+    value: Number.parseInt(status.id),
     label: status.text,
   }));
 });
