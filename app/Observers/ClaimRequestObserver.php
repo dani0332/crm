@@ -7,6 +7,7 @@ namespace App\Observers;
 use App\Enums\ClaimsEnum;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
+use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
 use App\Services\EmailServices\ClaimRequestEmailService;
 
@@ -14,16 +15,19 @@ class ClaimRequestObserver
 {
     protected ClaimStatusesService $claimStatusesService;
     protected ClaimRequestEmailService $claimRequestEmailService;
+    protected ClaimsService $claimsService;
 
     /**
      * Create a new observer instance.
      */
     public function __construct(
         ClaimStatusesService $claimStatusesService,
-        ClaimRequestEmailService $claimRequestEmailService
+        ClaimRequestEmailService $claimRequestEmailService,
+        ClaimsService $claimsService
     ) {
         $this->claimStatusesService = $claimStatusesService;
         $this->claimRequestEmailService = $claimRequestEmailService;
+        $this->claimsService = $claimsService;
     }
 
     public function updating(ClaimRequest $claimRequest): void
@@ -77,6 +81,13 @@ class ClaimRequestObserver
                 if (empty($originalApprovedCashLossAmount) && ! empty($newApprovedCashLossAmount)) {
                     $claimStatusCashLossApproved = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED->value)->where('is_active', 1)->first();
                     $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusCashLossApproved);
+                }
+            }
+            if ($claimRequest->isDirty('policy_number')) {
+                $originalPolicyNumber = $claimRequest->getOriginal('policy_number');
+                $newPolicyNumber = $claimRequest->policy_number;
+                if ($originalPolicyNumber != $newPolicyNumber) {
+                    $this->claimsService->triggerBirdClaimsFlow($claimRequest->id);
                 }
             }
         }
