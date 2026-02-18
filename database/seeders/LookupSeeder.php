@@ -517,7 +517,7 @@ class LookupSeeder extends Seeder
             InsuranceProvidersEnum::BUP => ['SUKOON'],
             InsuranceProvidersEnum::CIG => ['NEURON'],
             InsuranceProvidersEnum::DIC => ['MEDNET', 'DUBAICARE'], // DUBAI INSURANCE
-            InsuranceProvidersEnum::ISON_AUH => ['MEDNET'],
+            InsuranceProvidersEnum::ISON => ['MEDNET'],
             InsuranceProvidersEnum::DNIRC => ['AAFIYA', 'NEXTCARE', 'MEDNET'],
             InsuranceProvidersEnum::FID => ['NEXTCARE', 'NAS'],
             InsuranceProvidersEnum::MDG => ['NAS', 'NEXTCARE', 'MEDNET'], // MEDGULF
