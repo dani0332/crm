@@ -188,10 +188,6 @@ const shouldShowPassportFields = computed(() => {
   return passportOcrEligiblePlanCodes.value.includes(selectedInsuranceProviderPlanCode.value);
 });
 
-const passportFieldRules = computed(() => {
-  return shouldShowPassportFields.value ? [isRequired] : [];
-});
-
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -802,7 +798,6 @@ const handlePlanSelected = plan => {
                     <dd>
                       <x-input
                         v-model="customerProfileForm.passport_number"
-                        :rules="passportFieldRules"
                         placeholder="PASSPORT NUMBER"
                         class="w-full"
                         :disabled="!isProfileUpdateAllow"
@@ -815,7 +810,6 @@ const handlePlanSelected = plan => {
                     <dd>
                       <x-input
                         v-model="customerProfileForm.passport_country"
-                        :rules="passportFieldRules"
                         placeholder="PASSPORT COUNTRY"
                         class="w-full"
                         :disabled="!isProfileUpdateAllow"
@@ -828,8 +822,7 @@ const handlePlanSelected = plan => {
                     <dd>
                       <DatePicker
                         v-model="customerProfileForm.passport_expiry_date"
-                        :rules="passportFieldRules"
-                        placeholder="EMIRATES ID EXPIRY DATE"
+                        placeholder="PASSPORT EXPIRY DATE"
                         :disabled="!isProfileUpdateAllow"
                         :min-date="new Date()"
                       />

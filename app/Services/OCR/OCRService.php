@@ -433,18 +433,6 @@ class OCRService
             return false;
         }
 
-
-        /**  Plan validation here
-         *   Savings and passport (this get validated at app/Services/OCR/OCRService.php:421)
-         *          check plans !== abc
-         *
-         *              return false;
-         *
-         *  Q/A
-         *  find Offcical name or code of plan ?
-         *
-         * */
-
         // Send start notification (skip for ecom)
         if (! $isEcom && $this->requiresOcrNotifications($docType)) {
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
