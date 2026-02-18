@@ -102,6 +102,11 @@ const tableHeader = ref([
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
+    text: 'BRANCH',
+    value: 'branch_name',
+    is_active: true,
+  },
+  {
     text: 'CREATED DATE',
     value: 'created_at',
     is_active: true,
@@ -193,7 +198,7 @@ const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'device');
   const payload = {
-    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'device'),
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Device'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
 

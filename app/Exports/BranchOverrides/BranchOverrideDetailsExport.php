@@ -40,6 +40,7 @@ class BranchOverrideDetailsExport implements WithMultipleSheets
             new PersonalQuoteExportSheet('Cycle Quote', QuoteTypes::CYCLE->value),
             new PersonalQuoteExportSheet('Yacht Quote', QuoteTypes::YACHT->value),
             new BusinessQuoteExportSheet,
+            new PersonalQuoteExportSheet('Smartphone Quote', QuoteTypes::DEVICE->value),
         ];
     }
 }
