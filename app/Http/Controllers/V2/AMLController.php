@@ -969,7 +969,7 @@ class AMLController extends Controller
             $quote = $quote->refresh();
 
             $isHealthQuote = $insuredKycRequest->quote_type_id == QuoteTypeId::Health;
-            $isHealthAndSTPCase =  $isHealthQuote && $quote?->isSTPCase();
+            $isHealthAndSTPCase = $isHealthQuote && $quote?->isSTPCase();
             $isAmlAndKycCleared = $quote?->aml_status == AMLStatusCode::AMLScreeningCleared && $quote?->kyc_decision == Kyc::COMPLETE;
             $policyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             $isPolicyAutomationEnabled = $policyAutomation->isPolicyIssuanceAutomationEnabled();

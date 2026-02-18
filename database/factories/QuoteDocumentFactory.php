@@ -116,7 +116,6 @@ class QuoteDocumentFactory extends Factory
         ]);
     }
 
-
     public function emiratesId(): static
     {
         return $this->state(function (array $attributes) {
