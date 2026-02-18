@@ -102,7 +102,7 @@ class AdnicDocumentHandler
             $emirateIdDocuments = $documents->where('document_type_code', DocumentTypeCode::HEA_EMIRATE_ID_COPY);
 
             // If type is 3 (Emirates ID) and there are multiple documents with HEA_EMIRATE_ID_COPY
-            if ($emirateIdType === AdnicEnum::EMIRATES_ID_CODE && $emirateIdDocuments->count() > 1) {
+            if ($emirateIdType === AdnicEnum::EMIRATES_ID_CODE) {
                 $documentsArray = $documents->values()->all();
 
                 // Find indices of HEA_EMIRATE_ID_COPY documents
@@ -119,7 +119,7 @@ class AdnicDocumentHandler
                 }
 
                 // Modify second HEA_EMIRATE_ID_COPY document as back
-                if (isset($emirateIdIndices[1])) {
+                if ($emirateIdDocuments->count() > 1 && isset($emirateIdIndices[1])) {
                     $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
                 }
 
