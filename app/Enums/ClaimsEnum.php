@@ -89,7 +89,7 @@ enum ClaimsEnum: string
     case CLAIM_SUB_STATUS_TOTAL_LOSS_PAYMENT_IN_PROGRESS = 'total loss payment in progress';
     case CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED = 'total loss paid and claim settled';
     case CLAIM_SUB_STATUS_CASH_LOSS_APPROVED = 'cash loss approved';
-    case CLAIM_SUB_STATUS_CASH_LOSS_PAYMENT_IN_PROGRESS = 'cash loss payment in progress';
+    case CLAIM_SUB_STATUS_CASH_LOSS_PAYMENT_IN_PROGRESS = 'cash loss payment inprogress';
     case CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED = 'cash loss paid and claim settled';
 
     // Document Related Statuses
