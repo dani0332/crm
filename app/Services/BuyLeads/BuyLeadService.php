@@ -222,4 +222,71 @@ class BuyLeadService
         return BuyLeadConfigurationNationality::where('quote_type', $quoteType)->pluck('nationality_id')->toArray();
     }
 
+    public function getAllRequestsForAdmin(array $filters = [])
+    {
+        $query = BuyLeadRequest::query()
+            ->with(['user:id,name,email,employee_code', 'quoteType:id,code', 'department:id,name'])
+            ->select('buy_lead_requests.*');
+
+        // Apply filters
+        if (! empty($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
+
+        if (! empty($filters['quote_type'])) {
+            $quoteType = QuoteTypes::from($filters['quote_type']);
+
+            $isCarRevival = $quoteType->value === QuoteTypes::CAR_CAT_A->value;
+            $baseQuoteType = $isCarRevival ? QuoteTypes::CAR : $quoteType;
+
+            $query->where('quote_type_id', $baseQuoteType->id());
+
+            if ($isCarRevival) {
+                // Filter for Car Revival: source must be REVIVAL
+                $query->where('source', LeadSourceEnum::REVIVAL);
+            } elseif ($quoteType === QuoteTypes::CAR) {
+                // Filter for regular Car: source must NOT be REVIVAL
+                $query->where(function ($q) {
+                    $q->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source')
+                        ->orWhere('source', '');
+                });
+            }
+        }
+
+        if (! empty($filters['status'])) {
+            $status = $filters['status'];
+
+            if ($status === 'completed') {
+                $query->computedCompleted();
+            } elseif ($status === 'expired') {
+                $query->computedExpired();
+            } else {
+                // For 'active' and 'processing' statuses
+                $query->computedActiveStatus($status);
+            }
+        }
+
+        if (! empty($filters['request_type'])) {
+            $query->where('request_type', $filters['request_type']);
+        }
+
+        if (! empty($filters['date']) && is_array($filters['date']) && count($filters['date']) === 2) {
+            $startDate = $filters['date'][0] !== null ? Carbon::parse($filters['date'][0])->startOfDay() : null;
+            $endDate = $filters['date'][1] !== null ? Carbon::parse($filters['date'][1])->endOfDay() : null;
+
+            if ($startDate !== null && $endDate !== null) {
+                $query->whereBetween('buy_lead_requests.created_at', [$startDate, $endDate]);
+            } elseif ($startDate !== null) {
+                $query->where('buy_lead_requests.created_at', '>=', $startDate);
+            } elseif ($endDate !== null) {
+                $query->where('buy_lead_requests.created_at', '<=', $endDate);
+            }
+        }
+
+        return $query->latest('buy_lead_requests.created_at')
+            ->simplePaginate(20)
+            ->withQueryString();
+    }
+
 }
