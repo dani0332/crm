@@ -58,6 +58,7 @@ class ClaimsService extends BaseService
             'manager_assigned_date',
             'quote_uuid',
             'quote_type_id',
+            'business_type_of_insurance_id',
             'personal_quote_id',
             'insurance_provider_id',
             'policy_number',
@@ -114,6 +115,7 @@ class ClaimsService extends BaseService
             'manager_assigned_date',
             'quote_uuid',
             'quote_type_id',
+            'business_type_of_insurance_id',
             'personal_quote_id',
             'insurance_provider_id',
             'policy_number',
@@ -380,6 +382,9 @@ class ClaimsService extends BaseService
             ->when($quoteTypeId, function ($query) use ($quoteTypeId) {
                 $query->where('quote_type_id', $quoteTypeId);
             })
+            ->when(! empty($request->business_type_of_insurance_id), function ($query) use ($request) {
+                $query->where('business_type_of_insurance_id', $request->business_type_of_insurance_id);
+            })
             ->whereIn('quote_status_id', [QuoteStatusEnum::PolicyBooked])
             ->when($email || $policyNumber, function ($query) use ($email, $policyNumber) {
                 $query->where(function ($subQuery) use ($email, $policyNumber) {
@@ -441,6 +446,7 @@ class ClaimsService extends BaseService
                 'policyNumber' => $request->policy_number ?? null,
                 'insuranceProviderId' => $request->insurance_provider_id ?? null,
                 'quoteTypeId' => $request->quote_type_id ?? null,
+                'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id ?? null,
                 'source' => $request->source ?? config('constants.SOURCE_NAME', 'IMCRM'),
                 'quoteUID' => $request->selected_quote_uuid ?? null,
                 'claimTypeId' => $request->claim_type_id ?? null,

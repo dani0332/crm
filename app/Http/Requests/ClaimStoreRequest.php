@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteTypes;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Fluent;
 
 class ClaimStoreRequest extends FormRequest
 {
@@ -49,6 +52,11 @@ class ClaimStoreRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:quote_type,id',
+            ],
+            'business_type_of_insurance_id' => [
+                'nullable',
+                'integer',
+                'exists:business_type_of_insurance,id',
             ],
             'claim_type_id' => [
                 'required',
@@ -200,7 +208,23 @@ class ClaimStoreRequest extends FormRequest
             'insurance_provider_id.exists' => 'Selected insurance provider is invalid.',
             'claim_request_type_id.exists' => 'Selected claim request type is invalid.',
             'service_type_id.exists' => 'Selected service type is invalid.',
+            'business_type_of_insurance_id.required' => 'Business Type of Insurance is required for Business line of business.',
+            'business_type_of_insurance_id.exists' => 'The selected business type of insurance is invalid.',
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->sometimes(
+            'business_type_of_insurance_id',
+            'required',
+            function (Fluent $input) {
+                return (int) ($input->quote_type_id ?? 0) === (int) QuoteTypes::BUSINESS->id();
+            }
+        );
     }
 
     /**
@@ -214,6 +238,7 @@ class ClaimStoreRequest extends FormRequest
             'mobile_no' => 'phone number',
             'email' => 'email address',
             'quote_type_id' => 'line of business',
+            'business_type_of_insurance_id' => 'business type of insurance',
             'claim_type_id' => 'claim type',
             'policy_number' => 'policy number',
             'plate_number' => 'plate number',

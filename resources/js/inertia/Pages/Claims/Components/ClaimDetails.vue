@@ -134,7 +134,7 @@ const isHealthLOB = computed(() => {
     page.props.quoteTypeIds?.Health === page.props.claim.quote_type_id;
   let isGroupMedical =
     page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL ===
-    page.props.claim.personal_quote?.business_type_of_insurance_id;
+    page.props.claim?.business_type_of_insurance_id;
   return isHealth || isGroupMedical;
 });
 

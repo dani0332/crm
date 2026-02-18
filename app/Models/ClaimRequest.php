@@ -41,6 +41,7 @@ class ClaimRequest extends Model implements AuditableContract
         'quote_uuid',
         'quote_type_id',
         'personal_quote_id',
+        'business_type_of_insurance_id',
         'insurance_provider_id',
         'policy_number',
         'claim_number',

@@ -16,6 +16,7 @@ const claimForm = useForm({
   email: props.claim?.email || '',
   mobile_no: props.claim?.mobile_no || '',
   quote_type_id: props.claim?.quote_type_id || '',
+  business_type_of_insurance_id: props.claim?.business_type_of_insurance_id || '',
   customer_id: props.claim?.customer_id || '',
   insurance_provider_id: props.claim?.insurance_provider_id || '',
 
@@ -109,6 +110,14 @@ const lineOfBusinessOptions = computed(() => {
     })) || []
   );
 });
+const businessTypeOfInsuranceOptions = computed(() => {
+  return (
+    props.dropdowns?.businessTypeOfInsurance?.map(bt => ({
+      value: bt.id,
+      label: bt.text,
+    })) || []
+  );
+});
 
 const claimTypeOptions = computed(() => {
   return (
@@ -184,20 +193,25 @@ onMounted(() => {
 
 // Check if the selected line of business is Car
 const isCarLOB = computed(() => {
-  const page = usePage();
   return page.props.quoteTypeIds?.Car === claimForm.quote_type_id;
+});
+// IsBusinessLOB
+const isBusinessLOB = computed(() => {
+  return page.props.quoteTypeIds?.Business === claimForm.quote_type_id;
+});
+// is business type of insurance Group Medical
+const isGroupMedical = computed(() => {
+  return page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL === claimForm.business_type_of_insurance_id;
 });
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
-  const page = usePage();
   return page.props.quoteTypeIds?.Health === claimForm.quote_type_id;
 });
 
 // Watch for quote_type_id changes to clear irrelevant fields
 watch(
   () => claimForm.quote_type_id,
-  newQuoteTypeId => {
-    const page = usePage();
+  newQuoteTypeId => { 
     const carQuoteTypeId = page.props.quoteTypeIds?.Car;
     const healthQuoteTypeId = page.props.quoteTypeIds?.Health;
 
@@ -275,6 +289,14 @@ async function searchPolicies(pageNumber = 1) {
     return;
   }
 
+  if (isBusinessLOB.value && !claimForm.business_type_of_insurance_id) {
+    notification.error({
+      title: 'Please select Business Type of Insurance to search policies',
+      position: 'top',
+    });
+    return;
+  }
+
   // Validate email format if email is provided
   if (claimForm.email) {
     const emailValidation = isEmail(claimForm.email);
@@ -300,12 +322,16 @@ async function searchPolicies(pageNumber = 1) {
   policySearch.error = null;
 
   try {
-    const response = await axios.post('/claim/search-policies', {
+    const payload = {
       email: claimForm.email,
       policy_number: claimForm.policy_number,
       quote_type_id: claimForm.quote_type_id,
       page: page,
-    });
+    };
+    if (isBusinessLOB.value && claimForm.business_type_of_insurance_id) {
+      payload.business_type_of_insurance_id = claimForm.business_type_of_insurance_id;
+    }
+    const response = await axios.post('/claim/search-policies', payload);
 
     const policiesData = response.data.policies;
     policySearch.policies = policiesData.data || [];
@@ -392,6 +418,7 @@ function selectPolicy(policy) {
   claimForm.car_model = policy.car_model;
   claimForm.model_year = policy.model_year;
   claimForm.plate_number = policy.plate_number;
+  claimForm.business_type_of_insurance_id = policy.business_type_of_insurance_id;
 }
 
 // Policy not listed function
@@ -662,6 +689,19 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
             required
             :error="claimForm.errors.quote_type_id"
           />
+          <x-select
+            v-if="isBusinessLOB"
+            v-model="claimForm.business_type_of_insurance_id"
+            label="Business Type of Insurance"
+            placeholder="Select Business Type of Insurance"
+            :options="businessTypeOfInsuranceOptions"
+            :rules="isBusinessLOB ? [isRequired] : []"
+            :required="isBusinessLOB"
+            filterable
+            filterPlaceholder="Filter Business Type of Insurance...."
+            clearable
+            :error="claimForm.errors.business_type_of_insurance_id"
+          />
           <x-input
             v-model="claimForm.claim_number"
             type="text"
@@ -682,7 +722,7 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
             filterPlaceholder="Filter Claim Type...."
             :error="claimForm.errors.claim_type_id"
           />
-          <template v-if="isHealthLOB && isEdit">
+          <template v-if="(isHealthLOB ||  isGroupMedical) && isEdit">
             <x-input
               v-model="claimForm.request_reference_number"
               type="text"
