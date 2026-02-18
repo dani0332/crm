@@ -113,14 +113,20 @@ class AdnicDocumentHandler
                     }
                 }
 
-                // Modify first HEA_EMIRATE_ID_COPY document as front
-                if (isset($emirateIdIndices[0])) {
-                    $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EID_FRONT;
-                }
-
-                // Modify second HEA_EMIRATE_ID_COPY document as back
-                if ($emirateIdDocuments->count() > 1 && isset($emirateIdIndices[1])) {
-                    $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
+                if ($emirateIdDocuments->count() > 1) {
+                    // Modify first HEA_EMIRATE_ID_COPY document as front
+                    if (isset($emirateIdIndices[0])) {
+                        $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EID_FRONT;
+                    }
+    
+                    // Modify second HEA_EMIRATE_ID_COPY document as back
+                    if (isset($emirateIdIndices[1])) {
+                        $documentsArray[$emirateIdIndices[1]]['document_type_code'] = DocumentTypeCode::HEA_EID_BACK;
+                    }
+                } else {
+                    if (isset($emirateIdIndices[0])) {
+                        $documentsArray[$emirateIdIndices[0]]['document_type_code'] = DocumentTypeCode::HEA_EMIRATE_ID_COPY;
+                    }
                 }
 
                 return collect($documentsArray);
@@ -234,7 +240,7 @@ class AdnicDocumentHandler
     public function getInsurerDocCodeForHealth(string $documentType): ?string
     {
         return match ($documentType) {
-            DocumentTypeCode::HEA_EID => '3', // Emirates ID (Front side & Back side)
+            DocumentTypeCode::HEA_EMIRATE_ID_COPY => '3', // Emirates ID (Front side & Back side)
             DocumentTypeCode::HEA_INSURED_EMIRATES_ID_APPLICATION => '2', // Insured Emirates ID Application
             DocumentTypeCode::HEA_VISA => '6', // Visa
             DocumentTypeCode::HEA_PAS => '1', // Passport
