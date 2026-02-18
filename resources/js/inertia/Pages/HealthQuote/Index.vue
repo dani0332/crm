@@ -230,6 +230,7 @@ const filters = reactive({
   pec_flag: 'all',
   authorize_date: '',
   captured_date: '',
+  payment_status_id: null,
 });
 
 const canExport = ref(false);
@@ -419,6 +420,7 @@ function setQueryStringFilters() {
     'advisors',
     'renewal_batches',
     'payment_status',
+    'payment_status_id',
     'emirate_of_your_visa_id',
     'sub_source_id',
     'page',
@@ -775,6 +777,13 @@ const insurerAMLStatusOption = computed(() => {
 
 // Handle lead creation from modal
 const onLeadConfirmed = leadData => {};
+
+const paymentStatusOptions = computed(() => {
+  return page.props.dropdownSource.payment_status_id.map(status => ({
+    value: parseInt(status.id),
+    label: status.text,
+  }));
+});
 </script>
 
 <template>
@@ -1107,6 +1116,15 @@ const onLeadConfirmed = leadData => {};
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <x-select
+          v-model="filters.payment_status_id"
+          label="Payment Status"
+          name="payment_status_id"
+          :options="paymentStatusOptions"
+          placeholder="Please select payment status"
+          class="w-full"
+          filterable
         />
         <DatePicker
           v-model="filters.authorize_date"

@@ -128,6 +128,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('sub_team', 'health_team_type', requestParams: $requestParams)
             ->filterIn('quote_status', 'quote_status_id', requestParams: $requestParams)
             ->filterIn('payment_status', 'payment_status_id', requestParams: $requestParams)
+            ->filterBy('payment_status_id', requestParams: $requestParams)
             ->filterIn('renewal_batches', 'renewal_batch_id', requestParams: $requestParams)
             ->filterBy('currently_insured_with', requestParams: $requestParams)
             ->filterBy('is_cold', 'is_cold', 1, requestParams: $requestParams)
