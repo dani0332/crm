@@ -525,11 +525,11 @@ const copyLink = () => {
     });
 };
 
-const formatToDateTime = (dateString) => {
+const formatToDateTime = dateString => {
   if (!dateString) return null;
 
   const match = dateString.match(
-    /(\d{2})-([A-Za-z]{3})-(\d{4})\s(\d{2}):(\d{2})(am|pm)/i
+    /(\d{2})-([A-Za-z]{3})-(\d{4})\s(\d{2}):(\d{2})(am|pm)/i,
   );
 
   if (!match) return null;
@@ -537,8 +537,18 @@ const formatToDateTime = (dateString) => {
   let [, day, monthStr, year, hours, minutes, meridian] = match;
 
   const months = {
-    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+    Jan: 0,
+    Feb: 1,
+    Mar: 2,
+    Apr: 3,
+    May: 4,
+    Jun: 5,
+    Jul: 6,
+    Aug: 7,
+    Sep: 8,
+    Oct: 9,
+    Nov: 10,
+    Dec: 11,
   };
 
   const month = months[monthStr];
@@ -548,16 +558,16 @@ const formatToDateTime = (dateString) => {
   minutes = parseInt(minutes, 10);
 
   // Convert to 24-hour format
-  if (meridian.toLowerCase() === "pm" && hours !== 12) {
+  if (meridian.toLowerCase() === 'pm' && hours !== 12) {
     hours += 12;
   }
-  if (meridian.toLowerCase() === "am" && hours === 12) {
+  if (meridian.toLowerCase() === 'am' && hours === 12) {
     hours = 0;
   }
 
   const date = new Date(year, month, day, hours, minutes, 0);
 
-  const pad = (n) => n.toString().padStart(2, "0");
+  const pad = n => n.toString().padStart(2, '0');
 
   return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 };
@@ -751,7 +761,7 @@ const formatToDateTime = (dateString) => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CREATED DATE </dt>
+                <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ formatToDateTime(quote.created_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
