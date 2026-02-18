@@ -341,54 +341,48 @@ class EmiratesIdDataProcessor
 
     private function updatePersonalQuoteInsuredId(Insured $insured): void
     {
-        $quoteType = get_class($this->quote);
-        $affectedRow = PersonalQuote::where('uuid', $this->quote->uuid)
-            ->update(['insured_id' => $insured->id]);
+        try {
+            $quoteType = get_class($this->quote);
+            $affectedRow = PersonalQuote::where('uuid', $this->quote->uuid)
+                ->update(['insured_id' => $insured->id]);
 
-        if ($affectedRow > 0) {
-            LoggerService::info('Personal quote insured ID updated successfully for quote UUID: '.$this->quote->uuid, [
-                'insured_id' => $insured->id,
-                'quote_type' => $quoteType,
-            ]);
-        } else {
-            LoggerService::warning('Personal quote not found for quote UUID: '.$this->quote->uuid, [
-                'quote_type' => $quoteType,
-            ]);
+            if ($affectedRow > 0) {
+                LoggerService::info('Personal quote insured ID updated successfully for quote UUID: '.$this->quote->uuid, [
+                    'insured_id' => $insured->id,
+                    'quote_type' => $quoteType,
+                ]);
+            } else {
+                LoggerService::warning('Personal quote not found for quote UUID: '.$this->quote->uuid, [
+                    'quote_type' => $quoteType,
+                ]);
+            }
+        } catch (Exception $e) {
+            LoggerService::error('Failed to update personal quote insured ID', exception: $e);
         }
     }
 
     private function updateInsuredDataInCustomer(Insured $insured): void
     {
-        $quoteType = get_class($this->quote);
-        $customer = $this->quote->customer;
+        try {
+            $quoteType = get_class($this->quote);
+            $customer = $this->quote->customer;
 
-        if (! $customer) {
-            LoggerService::warning('Customer record not found for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
+            if (! $customer) {
+                LoggerService::warning('Customer record not found for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
 
-            return;
+                return;
+            }
+
+            $customer->nationality_id = $insured->nationality_id;
+            $customer->dob = $insured->dob;
+            $customer->insured_first_name = $insured->first_name;
+            $customer->insured_last_name = $insured->last_name;
+            $customer->save();
+
+            LoggerService::info('Customer record updated successfully for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
+        } catch (Exception $e) {
+            LoggerService::error('Failed to update insured details incustomer record', exception: $e);
         }
-
-        $customer->nationality_id = $insured->nationality_id;
-        $customer->dob = $insured->dob;
-        $customer->insured_first_name = $insured->first_name;
-        $customer->insured_last_name = $insured->last_name;
-        $customer->save();
-
-        LoggerService::info('Customer record updated successfully for quote UUID: '.$this->quote->uuid, ['quote_type' => $quoteType]);
-    }
-
-    private function getNationalityId(?string $nationality): ?int
-    {
-        if (empty($nationality)) {
-            return null;
-        }
-
-        $nationalityRecord = Nationality::where('text', $nationality)
-            ->orWhere('code', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->first();
-
-        return $nationalityRecord?->id;
     }
 
     private function getNationalityName(?int $nationalityId): ?string
