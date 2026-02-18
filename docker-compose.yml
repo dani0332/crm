@@ -19,7 +19,7 @@ services:
     dns_opt:
       - timeout:2
       - attempts:3
-    dns_search: []  
+    dns_search: []
     volumes:
       - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs
       - .:/var/www/html
