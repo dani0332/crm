@@ -32,7 +32,7 @@ class PassportExtractor
         $this->extractedData = array_merge($this->extractedData, $this->getCleanData([
             'passport_number' => $data['passportNumber'] ?? null,
             'passport_country' => $data['issuingCountry'] ?? null,
-            'passport_expiry_date' => $data['expiryDate'] ?? null,
+            'passport_expiry_date' => $this->formatDate($data['expiryDate'] ?? null),
         ]));
 
         return $this;

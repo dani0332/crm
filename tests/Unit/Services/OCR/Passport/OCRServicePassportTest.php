@@ -87,6 +87,7 @@ describe('OCRService Passport (Savings) flow', function () {
         OcrHttpFakeHelper::fakeHealthOk();
         OcrHttpFakeHelper::fakeProcessDocumentOk([
             'passportNumber' => 'V9202312',
+            'expiryDate' => '2025-01-13T00:00:00Z',
             'fullName' => 'KARUTHEDATH VIGNESH',
             'metadata' => [
                 'ref_id' => 'SAV-X85DUBM9',
@@ -147,7 +148,8 @@ describe('OCRService Passport (Savings) flow', function () {
             ->first();
 
         expect($passportVisaDetail)->not->toBeNull()
-            ->and($passportVisaDetail->passport_number)->toBe('V9202312');
+            ->and($passportVisaDetail->passport_number)->toBe('V9202312')
+            ->and($passportVisaDetail->passport_expiry_date)->toBe('2025-01-13');
     });
 
     test('unhappy flow: logs failed when OCR API returns no usable data', function () {
