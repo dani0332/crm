@@ -119,4 +119,13 @@ enum OCRDocumentTypeEnum: string
         return $result;
     }
 
+    public static function getPlanValidation()
+    {
+        return [
+            QuoteTypes::SAVINGS->value => [
+                self::PASSPORT->value,
+            ],
+        ];
+    }
+
 }

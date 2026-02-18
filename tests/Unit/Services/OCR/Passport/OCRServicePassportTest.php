@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\OCRDocumentTypeEnum;
-use App\Enums\OcrEligiblePlanCodeEnum;
 use App\Enums\OCRSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
@@ -14,6 +14,7 @@ use App\Services\OCR\OcrLogService;
 use App\Services\OCR\OCRService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\Helpers\OcrHttpFakeHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -38,7 +39,10 @@ describe('OCRService Passport (Savings) flow', function () {
 
         TestDataSeeder::seedSavingsDocumentType($documentTypeCode, 'Passport');
 
-        $planCode = OcrEligiblePlanCodeEnum::STF_158->value;
+        $planCode = 'TEST-PLAN-'.Str::upper(Str::random(8));
+        TestDataSeeder::seedApplicationStorage([
+            ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES => $planCode,
+        ]);
         DB::connection('sqlite')->table('insurance_provider_plans')->updateOrInsert(
             ['code' => $planCode],
             [
@@ -150,7 +154,10 @@ describe('OCRService Passport (Savings) flow', function () {
         $documentTypeCode = 'PP_SAV';
         TestDataSeeder::seedSavingsDocumentType($documentTypeCode, 'Passport');
 
-        $planCode = OcrEligiblePlanCodeEnum::STF_158->value;
+        $planCode = 'TEST-PLAN-'.Str::upper(Str::random(8));
+        TestDataSeeder::seedApplicationStorage([
+            ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES => $planCode,
+        ]);
         DB::connection('sqlite')->table('insurance_provider_plans')->updateOrInsert(
             ['code' => $planCode],
             [

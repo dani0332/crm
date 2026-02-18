@@ -2,11 +2,12 @@
 
 namespace App\Services\Quotes;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\OcrEligiblePlanCodeEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
@@ -314,9 +315,21 @@ class SavingsQuoteService extends BaseQuoteService
         $lookUpData = $this->getSavingsQuoteLookUpData();
         $localLookups = $this->getLocalLookups();
 
+        $eligiblePlanCodesRaw = (string) getAppStorageValueByKey(
+            ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES,
+            default: '',
+            useCache: true
+        );
+        $passportEligiblePlanCodes = array_values(array_filter(
+            array_map('trim', explode(',', $eligiblePlanCodesRaw)),
+            static fn (string $code): bool => $code !== ''
+        ));
+
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
-            'ocrEligiblePlanCodes' => OcrEligiblePlanCodeEnum::mapping()[QuoteTypes::SAVINGS->value] ?? [],
+            'ocrEligiblePlanCodes' => [
+                OCRDocumentTypeEnum::PASSPORT->value => $passportEligiblePlanCodes,
+            ],
             'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL'),
             'lookUpData' => $lookUpData,
             'localLookups' => $localLookups,

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\OcrEligiblePlanCodeEnum;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
 use App\Models\OcrLog;
@@ -15,6 +15,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Tests\Helpers\OcrHttpFakeHelper;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -167,7 +168,10 @@ describe('OCRService validations / gates', function () {
     test('missing document URL: returns false and logs failed', function () {
         TestDataSeeder::seedSavingsDocumentType('PP_SAV', 'Passport');
 
-        $planCode = OcrEligiblePlanCodeEnum::STF_158->value;
+        $planCode = 'TEST-PLAN-'.Str::upper(Str::random(8));
+        TestDataSeeder::seedApplicationStorage([
+            ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES => $planCode,
+        ]);
         DB::connection('sqlite')->table('insurance_provider_plans')->updateOrInsert(
             ['code' => $planCode],
             [

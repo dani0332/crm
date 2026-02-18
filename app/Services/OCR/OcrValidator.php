@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\OCR;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
-use App\Enums\OcrEligiblePlanCodeEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
 use Exception;
@@ -141,19 +141,17 @@ trait OcrValidator
             'doc_type' => $docType->value,
         ];
 
-        $quoteTypePlanMapping = OcrEligiblePlanCodeEnum::mapping()[$quoteType->value] ?? null;
+        $quoteTypePlanValidationMapping = OCRDocumentTypeEnum::getPlanValidation()[$quoteType->value] ?? null;
 
         /* If quote type is not present in mapping >> no validation needed */
-        if ($quoteTypePlanMapping === null) {
+        if ($quoteTypePlanValidationMapping === null) {
             LoggerService::info('OCR Plan Eligibility - Accepted (no plan validation mapping for quote type)', $logContext);
 
             return true;
         }
 
-        $eligiblePlanCodes = $quoteTypePlanMapping[$docType->value] ?? null;
-
         /* If doc_type is not present in mapping >> no validation needed */
-        if ($eligiblePlanCodes === null) {
+        if (! in_array($docType->value, $quoteTypePlanValidationMapping, true)) {
             LoggerService::info('OCR Plan Eligibility - Accepted (no plan validation mapping for document type)', $logContext);
 
             return true;
@@ -163,6 +161,27 @@ trait OcrValidator
 
         if (! $planCode) {
             LoggerService::info('OCR Plan Eligibility - Rejected (no plan selected in quote)', $logContext);
+
+            return false;
+        }
+
+        $eligiblePlanCodesRaw = (string) getAppStorageValueByKey(
+            ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES,
+            default: '',
+            useCache: true
+        );
+
+        $eligiblePlanCodes = array_values(array_filter(
+            array_map('trim', explode(',', $eligiblePlanCodesRaw)),
+            static fn (string $code): bool => $code !== ''
+        ));
+
+        if ($eligiblePlanCodes === []) {
+            LoggerService::info('OCR Plan Eligibility - Rejected (no eligible plan codes configured)', array_merge($logContext, [
+                'plan_code' => $planCode,
+                'eligible_plan_codes' => [],
+                'app_storage_key' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES,
+            ]));
 
             return false;
         }
