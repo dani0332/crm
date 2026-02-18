@@ -641,6 +641,7 @@ class HealthQuoteService extends BaseService
             'is_ecommerce' => '|static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'policy_start_date' => 'input|date',
             'plan_type_id' => 'select|title',
+            'payment_status_id' => 'select|title',
         ];
     }
 
