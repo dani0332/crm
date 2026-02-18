@@ -958,7 +958,7 @@ class ClaimsService extends BaseService
         $claimRequest = ClaimRequest::with([
             'manager',
             'insuranceProvider.contacts',
-            'claim_request_type',
+            'claimRequestType',
         ])->find($claimRequestId);
 
         if (! $claimRequest) {
@@ -1012,7 +1012,7 @@ class ClaimsService extends BaseService
             return;
         }
 
-        $claimRequestTypeCode = $claimRequest->claim_request_type?->code;
+        $claimRequestTypeCode = $claimRequest->claimRequestType?->code;
 
         $emailPayload = [
             'claimRefId' => $claimRequest->code,
