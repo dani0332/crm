@@ -1264,11 +1264,9 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
     ) {
       totalPayments.value.splice(0, 1);
     }
-  } else {
+  } else if (!shouldPreservePaymentNo) {
     // Preserve existing payment_no when editing, only set if creating new payment
-    if (!shouldPreservePaymentNo) {
-      paymentMethodsForm.payment_no = '1';
-    }
+    paymentMethodsForm.payment_no = '1';
   }
   calculatePaymentBreakup();
   // readOnlyPayments.value[1]===undefined this condition is missed from incoming (feat/insly-project-central), that's why added.
