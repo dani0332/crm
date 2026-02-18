@@ -354,7 +354,7 @@ class SendUpdateLogRepository extends BaseRepository
 
             $result = $sendUpdate->update($bookingDetails);
             LoggerService::info('Send Update Log Updated successfully');
-            $sendUpdate->save(); 
+            $sendUpdate->save();
             $sendUpdate->refresh();
 
             $payment = Payment::where('send_update_log_id', $data['id'])->first();

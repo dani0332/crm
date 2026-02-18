@@ -43,7 +43,7 @@ class PaymentService extends BaseService
         }
     }
 
-       /**
+    /**
      * This method will set payment status in payment table
      * This method trigger when policy details section update
      */
