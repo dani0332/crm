@@ -83,7 +83,7 @@ class ClaimRequestObserver
                     $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusCashLossApproved);
                 }
             }
-            if ($claimRequest->isDirty('policy_number')) {
+            if ($claimRequest->isDirty('policy_number') && $claimRequest->manager_id && $claimRequest->insurance_provider_id) {
                 $originalPolicyNumber = $claimRequest->getOriginal('policy_number');
                 $newPolicyNumber = $claimRequest->policy_number;
                 if ($originalPolicyNumber != $newPolicyNumber) {
