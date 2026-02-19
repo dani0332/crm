@@ -264,14 +264,13 @@ class AuditableController extends Controller
                 'data' => $logs,
             ]);
         } catch (\Exception $e) {
-
             LoggerService::error('Failed to load Health Routing Logs - ', exception: $e);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load Health Routing Logs',
                 'error' => $e->getMessage(),
-            ]);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -301,6 +300,7 @@ class AuditableController extends Controller
                 'data' => $logs,
             ]);
         } catch (\Exception $e) {
+
             LoggerService::error('Failed to load EP logs - ', exception: $e);
 
             return response()->json([
