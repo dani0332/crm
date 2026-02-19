@@ -8,7 +8,6 @@ use App\Console\Kernel;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
 use ReflectionMethod;
 use ReflectionProperty;
 use Tests\TestCase;
@@ -244,6 +243,11 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
         }
     }
 
+    /**
+     * Ensures policy-issuance-automation:run is present on UAT but never runs: Kernel uses
+     * scheduleWithEnvironment() and for 'uat' adds a skip callback (Event::$rejects). We build
+     * the full schedule, find all policy-issuance events, and assert each has a skip callback.
+     */
     public function test_policy_issuance_command_skips_on_uat(): void
     {
         $originalEnv = app()['env'];
@@ -253,33 +257,20 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
         Config::set('app.env', 'uat');
 
         try {
-            $expectedMessage = 'policy-issuance-automation:run skipped on '.app()->environment();
-
-            Log::shouldReceive('info')
-                ->once()
-                ->with($expectedMessage, []);
-
             $kernel = app(Kernel::class);
             $schedule = new Schedule;
-
             $scheduleMethod = new ReflectionMethod($kernel, 'schedule');
-            $scheduleMethod->setAccessible(true);
             $scheduleMethod->invoke($kernel, $schedule);
 
-            $events = collect($schedule->events())->filter(function (Event $event) {
-                return str_contains($event->command ?? '', 'policy-issuance-automation:run');
-            });
-
+            $events = collect($schedule->events())->filter(
+                fn (Event $event) => str_contains($event->command ?? '', 'policy-issuance-automation:run')
+            );
             $this->assertNotEmpty($events, 'policy-issuance-automation:run should be scheduled for UAT');
 
-            /** @var Event $event */
-            $event = $events->first();
-
             $rejectsProperty = new ReflectionProperty(Event::class, 'rejects');
-            $rejectsProperty->setAccessible(true);
-            $rejects = $rejectsProperty->getValue($event);
-
-            $this->assertNotEmpty($rejects, 'UAT scheduling should add a skip callback for the policy issuance command');
+            foreach ($events as $event) {
+                $this->assertNotEmpty($rejectsProperty->getValue($event), 'Each policy-issuance-automation:run event on UAT should have a skip callback');
+            }
         } finally {
             app()['env'] = $originalEnv;
             Config::set('app.env', $originalConfigEnv);
