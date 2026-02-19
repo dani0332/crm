@@ -127,7 +127,13 @@ enum QuoteTypes: string
 
     public static function getIdFromValue(string $value): ?int
     {
-        $quoteTypeEnum = match (ucfirst($value)) {
+        // Normalize the value - handle "Cyber Insurance" product name
+        $normalizedValue = match (ucfirst(trim($value))) {
+            'Cyber Insurance' => 'Cyber',
+            default => ucfirst(trim($value)),
+        };
+
+        $quoteTypeEnum = match ($normalizedValue) {
             'Car' => QuoteTypes::CAR,
             'Home' => QuoteTypes::HOME,
             'Health' => QuoteTypes::HEALTH,
