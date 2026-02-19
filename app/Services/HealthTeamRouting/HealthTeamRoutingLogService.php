@@ -28,7 +28,7 @@ class HealthTeamRoutingLogService
                 'quote_request_id' => $quoteRequestId,
                 'uuid' => $uuid,
                 'type' => $type->value,
-                'team_category' => $teamCategory?->value,
+                'team_category' => $teamCategory,
                 'log_data' => $logData,
                 'logged_by' => $loggedBy,
                 'source' => $source,

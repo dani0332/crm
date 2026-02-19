@@ -8,7 +8,6 @@ use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\TeamCategoryEnum;
 use App\Mail\HealthAssignmentIssueEmail;
-use App\Models\Team;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\HealthTeamRouting\HealthTeamRoutable;
