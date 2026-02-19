@@ -29,7 +29,7 @@ it('persists provided insurer and api issuance statuses', function () {
         PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY
     );
 
-    $quote->refresh();
+    $quote = $quote->fresh();
 
     expect($quote->insurer_api_status_id)->toBe(PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID)
         ->and($quote->api_issuance_status_id)->toBe(PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
@@ -49,9 +49,8 @@ it('derives api issuance status when automation completes successfully', functio
         QuoteTypes::CYBER->value
     );
 
-    $quote->refresh();
+    $quote = $quote->fresh();
 
     expect($quote->api_issuance_status_id)->toBe(PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID)
         ->and($quote->insurer_api_status_id)->toBeNull();
 });
-

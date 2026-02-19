@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\PolicyIssuanceEnum;
-use App\Models\PolicyIssuance;
 use App\Models\PersonalQuote;
+use App\Models\PolicyIssuance;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicApiService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicBookPolicyService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicStepExecutor;
@@ -31,7 +31,7 @@ it('marks insurer status when issue policy step fails', function () {
     $executor = new AwnicStepExecutor($apiService, Mockery::mock(AwnicBookPolicyService::class));
     $executor->executeIssuePolicyStep($quote, $process);
 
-    $quote->refresh();
+    $quote = $quote->fresh();
 
     expect($quote->insurer_api_status_id)->toBe(PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID)
         ->and($quote->api_issuance_status_id)->toBe(PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID);
@@ -51,7 +51,7 @@ it('marks insurer status when upload documents step fails', function () {
     $executor = new AwnicStepExecutor($apiService, Mockery::mock(AwnicBookPolicyService::class));
     $executor->executeUploadDocumentsStep($quote, $process);
 
-    $quote->refresh();
+    $quote = $quote->fresh();
 
     expect($quote->insurer_api_status_id)->toBe(PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID)
         ->and($quote->api_issuance_status_id)->toBe(PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID);
@@ -71,9 +71,8 @@ it('marks insurer status when uploading policy documents to IMCRM fails', functi
     $executor = new AwnicStepExecutor($apiService, Mockery::mock(AwnicBookPolicyService::class));
     $executor->executeUploadPolicyDocumentsStep($quote, $process);
 
-    $quote->refresh();
+    $quote = $quote->fresh();
 
     expect($quote->insurer_api_status_id)->toBe(PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID)
         ->and($quote->api_issuance_status_id)->toBe(PolicyIssuanceEnum::PIA_POLICY_AUTOMATION_STATUS_NO_ID);
 });
-
