@@ -242,7 +242,7 @@ class ClaimUpdateRequest extends FormRequest
             'business_type_of_insurance_id' => 'business type of insurance',
             'claim_type_id' => 'claim type',
             'policy_number' => 'policy number',
-            'plate_number' => 'plat number',
+            'plate_number' => 'plate number',
             'car_make' => 'vehicle make',
             'car_model' => 'vehicle model',
             'model_year' => 'vehicle year',
