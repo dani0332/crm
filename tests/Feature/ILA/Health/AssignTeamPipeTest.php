@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\EmirateEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -113,7 +114,8 @@ test('assigns team based on health plan type for non-AUH non-PEC lead with ENTRY
 
     $allocationRequest = new AllocationRequest(
         quoteType: QuoteTypes::HEALTH,
-        quoteUUID: $healthQuote->uuid
+        quoteUUID: $healthQuote->uuid,
+        source: HealthRoutingSourceEnum::ROUTING
     );
     $allocationRequest->setLead($healthQuote);
 
@@ -147,7 +149,8 @@ test('assigns team based on health plan type for non-AUH non-PEC lead with GOOD 
 
     $allocationRequest = new AllocationRequest(
         quoteType: QuoteTypes::HEALTH,
-        quoteUUID: $healthQuote->uuid
+        quoteUUID: $healthQuote->uuid,
+        source: HealthRoutingSourceEnum::ROUTING
     );
     $allocationRequest->setLead($healthQuote);
 
@@ -181,7 +184,8 @@ test('assigns team based on health plan type for non-AUH non-PEC lead with BEST 
 
     $allocationRequest = new AllocationRequest(
         quoteType: QuoteTypes::HEALTH,
-        quoteUUID: $healthQuote->uuid
+        quoteUUID: $healthQuote->uuid,
+        source: HealthRoutingSourceEnum::ROUTING
     );
     $allocationRequest->setLead($healthQuote);
 
@@ -244,7 +248,8 @@ test('uses price-based assignment when shouldUseHealthPlanType returns false', f
 
     $allocationRequest = new AllocationRequest(
         quoteType: QuoteTypes::HEALTH,
-        quoteUUID: $healthQuote->uuid
+        quoteUUID: $healthQuote->uuid,
+        source: HealthRoutingSourceEnum::ROUTING
     );
     $allocationRequest->setLead($healthQuote);
 
