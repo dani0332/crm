@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
-use App\Http\Requests\OcrLogsRequest;
-use App\Models\HealthRoutingLog;
+use App\Http\Requests\LogsRequest;
+use App\Models\CyberInsurerRequestResponses;
+use App\Models\CyberQuote;
+use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
 use App\Models\HealthQuote;
+use App\Models\HealthRoutingLog;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
@@ -88,7 +91,7 @@ class AuditableController extends Controller
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        if (empty($quote) || empty($quoteType) || $quoteType !== QuoteTypes::CAR->value) {
+        if (empty($quote) || empty($quoteType) || ($quoteType !== QuoteTypes::CAR->value && $quoteType !== QuoteTypes::CYBER->value)) {
             return response()->json([
                 'success' => false,
                 'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',
@@ -105,6 +108,7 @@ class AuditableController extends Controller
             'success' => true,
             'message' => 'Policy issuance API logs retrieved successfully',
             'data' => $policyIssuanceLogs,
+            'policyIssuance' => $quote->policyIssuance ?? null,
         ]);
     }
 
@@ -186,6 +190,8 @@ class AuditableController extends Controller
             case LifeQuote::class:
                 return LifeInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
+            case CyberQuote::class:
+                return CyberInsurerRequestResponses::with('insuranceProvider');
             case HealthQuote::class:
                 return HealthInsurerRequestResponse::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
@@ -194,7 +200,7 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadOcrLogs(OcrLogsRequest $request)
+    public function loadOcrLogs(LogsRequest $request)
     {
         try {
             $auditableType = $request->input('type');
@@ -258,12 +264,48 @@ class AuditableController extends Controller
                 'data' => $logs,
             ]);
         } catch (\Exception $e) {
+
             LoggerService::error('Failed to load Health Routing Logs - ', exception: $e);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load Health Routing Logs',
                 'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function loadEpLogs(LogsRequest $request)
+    {
+        try {
+            $auditableType = $request->input('type');
+            $auditableId = $request->input('id');
+
+            $logs = EpLog::where('loggable_type', $auditableType)
+                ->where('loggable_id', $auditableId)
+                ->with('embeddedTransaction', 'embeddedTransaction.payment')
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'event' => $log->event,
+                        'product_type' => $log->embeddedTransaction?->code ? substr($log->embeddedTransaction->code, 0, 3) : null,
+                        'captured_at' => $log->embeddedTransaction?->payment?->getRawOriginal('captured_at') ?? null,
+                        'values' => $log->values ?? null,
+                        'created_at' => $log->created_at,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load EP logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load EP logs',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

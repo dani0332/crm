@@ -177,6 +177,7 @@ const policyDetailsForm = useForm({
   policy_sum_assured_currency_id:
     page.props.quote?.life_quote?.policy_sum_assured_currency_id,
   policy_sum_assured: page.props.quote?.life_quote?.policy_sum_assured,
+  quote_code: props.quote.code,
 });
 
 watch(

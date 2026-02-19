@@ -82,6 +82,9 @@ class EmiratesIdDataProcessor
                 $vehicleDriverDetailUpdated = $this->updateVehicleDriverDetail($this->quote);
             }
 
+            // Update insured fields in customer table
+            $this->updateCustomerTableInsuredFields($insured);
+
             // Trigger OCR success validation
             $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
                 'quoteId' => $this->quote->id,
@@ -184,21 +187,23 @@ class EmiratesIdDataProcessor
     private function updateInsuredTable(Insured $insured): bool
     {
         try {
-            $updateData = [];
-
-            if (! empty($this->extractedData['name'])) {
-                $updateData['first_name'] = $this->extractFirstName($this->extractedData['name']);
-                $updateData['last_name'] = $this->extractLastName($this->extractedData['name']);
-            }
-
-            if (! empty($this->extractedData['sex'])) {
-                $updateData['gender'] = $this->formatGender($this->extractedData['sex']);
-            }
-
-            if (! empty($this->extractedData['eid_number'])) {
-                $updateData['id_type'] = 'emiratesId';
-                $updateData['id_number'] = $this->extractedData['eid_number'];
-            }
+            $updateData = [
+                ...(! empty($this->extractedData['name'])
+                  ? ['first_name' => $this->extractFirstName($this->extractedData['name']), 'last_name' => $this->extractLastName($this->extractedData['name'])]
+                  : []),
+                ...(! empty($this->extractedData['sex'])
+                 ? ['gender' => $this->formatGender($this->extractedData['sex'])]
+                 : []),
+                ...(! empty($this->extractedData['eid_number'])
+                 ? ['id_type' => 'emiratesId', 'id_number' => $this->extractedData['eid_number']]
+                 : []),
+                ...(! empty($this->extractedData['nationality'])
+                 ? ['nationality_id' => $this->getNationalityId($this->extractedData['nationality'])]
+                 : []),
+                ...(! empty($this->extractedData['date_of_birth'])
+                 ? ['dob' => $this->extractedData['date_of_birth']]
+                 : []),
+            ];
 
             // Update all fields with OCR data
             $dataToUpdate = $this->getFieldsToUpdate($updateData);
@@ -206,7 +211,7 @@ class EmiratesIdDataProcessor
             if (! empty($dataToUpdate)) {
                 $insured->update($dataToUpdate);
 
-                LoggerService::info('Insured table updated successfully');
+                LoggerService::info('Insured table updated successfully with following data:', json_encode($dataToUpdate));
 
                 return true;
             }
@@ -308,6 +313,29 @@ class EmiratesIdDataProcessor
             LoggerService::error('Failed to update InsuredKyc table', exception: $e);
 
             return false;
+        }
+    }
+
+    private function updateCustomerTableInsuredFields(Insured $insured): void
+    {
+        try {
+            $customer = $this->quote->customer;
+            if (! $customer) {
+                LoggerService::warning('Customer not found for quote UUID: '.$this->quote->uuid);
+
+                return;
+            }
+
+            $customer->update([
+                'insured_first_name' => $insured->first_name,
+                'insured_last_name' => $insured->last_name,
+                'emirates_id_number' => $insured->id_number,
+                'emirates_id_expiry_date' => $insured->insuredKyc?->id_expiry_date,
+            ]);
+
+            LoggerService::info('Customer table insured fields updated successfully');
+        } catch (Exception $e) {
+            LoggerService::error('Failed to update Customer table insured fields', exception: $e);
         }
     }
 
@@ -414,11 +442,14 @@ class EmiratesIdDataProcessor
                 ->first();
 
             if (! $existingLink) {
-                CustomerInsured::createOrUpdateActive([
+                CustomerInsured::create([
                     'customer_id' => $this->quote->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $this->quote->id,
+                    'is_active' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
 
                 LoggerService::info('CustomerInsured relationship created');
