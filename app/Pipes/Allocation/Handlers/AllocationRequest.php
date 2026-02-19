@@ -3,7 +3,6 @@
 namespace App\Pipes\Allocation\Handlers;
 
 use App\Enums\AssignmentTypeEnum;
-use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\QuoteTypes;
 use Illuminate\Support\Collection;
 
@@ -29,7 +28,7 @@ class AllocationRequest
         $this->reAssigFromAdvisorId = ! empty($this->reAssigFromAdvisorId) && $this->reAssigFromAdvisorId != 0 ? $this->reAssigFromAdvisorId : null;
     }
 
-    public function getSource(): HealthRoutingSourceEnum
+    public function getSource()
     {
         return $this->source;
     }
