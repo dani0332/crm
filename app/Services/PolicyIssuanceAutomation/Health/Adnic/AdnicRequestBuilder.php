@@ -107,7 +107,7 @@ class AdnicRequestBuilder
                 'Weight' => $insuredMember->Weight,
                 'MaritalStatus' => $insuredMember->MaritalStatus,
                 'DisclaimerSelected' => $insuredMember->DisclaimerSelected,
-                'Occupation' => $industry && ! empty($industry) ? $industry : AdnicEnum::OCCUPATION_OTHER,
+                'Occupation' =>  ! empty($industry) ? $industry : AdnicEnum::OCCUPATION_OTHER,
                 'LoadingInfo' => [
                     'LoadingType' => AdnicEnum::LOADING_TYPE,
                     'LoadingTypeValue' => AdnicEnum::LOADING_VALUE,
@@ -130,7 +130,7 @@ class AdnicRequestBuilder
                 'UIDNo' => $emiratesId ?? '',
                 'WorkLocation' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
                 'ResidenceLocation' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
-                'Industry' => $industry ?? '',
+                'Industry' =>  ! empty($industry) ? $industry : AdnicEnum::OCCUPATION_OTHER,
                 'DocumentInfo' => $this->uploadedDocumentsInfo($uploadDocumentsResponse, $insuredMember->MemberSeqNo),
                 'PreviousVisaEmirate' => $insuredMember?->PreviousVisaEmirate,
             ];
