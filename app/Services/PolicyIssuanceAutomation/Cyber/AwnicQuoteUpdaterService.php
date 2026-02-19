@@ -22,6 +22,9 @@ class AwnicQuoteUpdaterService
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),
+        ]);
+
+        $quote->cyberQuote()->update([
             'insurer_debit_note_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
             'insurer_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
             'insurer_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,

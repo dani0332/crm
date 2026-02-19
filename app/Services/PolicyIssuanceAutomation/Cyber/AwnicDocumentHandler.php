@@ -151,9 +151,9 @@ class AwnicDocumentHandler
     public function getDocTypeCodeForIMCRM(PersonalQuote $quote): array
     {
         return [
-            DocumentTypeCode::CYB_TI => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::CYB_TIRBB => $quote->insurer_debit_note_doc_id,
-            DocumentTypeCode::CYB_PS => $quote->insurer_policy_doc_id,
+            DocumentTypeCode::CYB_TI => $quote->cyberQuote()?->insurer_tax_invoice_doc_id,
+            DocumentTypeCode::CYB_TIRBB => $quote->cyberQuote()?->insurer_debit_note_doc_id,
+            DocumentTypeCode::CYB_PS => $quote->cyberQuote()?->insurer_policy_doc_id,
         ];
     }
 }
