@@ -26,11 +26,14 @@ class AwnicQuoteUpdaterService
                 'quote_status_date' => now(),
             ]);
 
-            $quote->cyberQuote()->update([
-                'insurer_debit_note_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
-                'insurer_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
-                'insurer_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
-            ]);
+            // Use Eloquent fetch/update for auditing (do NOT bypass models/events)
+            $cyberQuote = $quote->cyberQuote;
+            if ($cyberQuote) {
+                $cyberQuote->insurer_debit_note_doc_id = $issuePolicyResult?->policyInfo?->drcrDocId;
+                $cyberQuote->insurer_tax_invoice_doc_id = $issuePolicyResult?->policyInfo?->taxInvoiceDocId;
+                $cyberQuote->insurer_policy_doc_id = $issuePolicyResult?->policyInfo?->policyDocId;
+                $cyberQuote->save();
+            }
 
             $quote->cyberPlanDetail()->update([
                 'insurerQuoteNo' => $issuePolicyResult?->QuoteRefNo,
