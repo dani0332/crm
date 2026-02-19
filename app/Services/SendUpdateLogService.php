@@ -635,10 +635,15 @@ class SendUpdateLogService
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
+            $computedQuoteType = $quoteType;
+            if ($sendUpdateLog->quote_type_id === QuoteTypeId::Device || $quoteType === quoteTypeCode::Device || QuoteTypes::DEVICE->value == $quoteType) {
+                // for device we wan't to show relevant type in invoice description like smartphone, tablet, laptop, etc.
+                $computedQuoteType = $sendUpdateLog?->personalQuote?->deviceQuote?->device_type ?? $quoteType ?? '';
+            }
             if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $invoiceDescription = $insuranceProvider->code.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
             } else {
-                $invoiceDescription = $insuranceProvider->code.'-'.$quoteType.'-'.$quote->policy_number;
+                $invoiceDescription = $insuranceProvider->code.'-'.$computedQuoteType.'-'.$quote->policy_number;
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {

@@ -244,10 +244,16 @@ class SendUpdateLogController extends Controller
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $realQuote, $sendUpdatePayments[0] ?? null, isTapEnabled(), $sendUpdateLog);
         $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
 
+        $computedQuoteType = $quoteType;
+        // Override LINE OF BUSINESS display for Device quote (quote_type_id 20) with NGI provider
+        if ($sendUpdateLog->quote_type_id === QuoteTypeId::Device || $quoteType === quoteTypeCode::Device || QuoteTypes::DEVICE->value == $quoteType) {
+            $computedQuoteType = $sendUpdateLog?->personalQuote?->deviceQuote?->device_type ?? $quoteType ?? '';
+        }
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
-            'quoteType' => $quoteType,
+            'quoteType' => $computedQuoteType,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $parentText,
             'sendUpdateOptions' => $sendUpdateOptions,

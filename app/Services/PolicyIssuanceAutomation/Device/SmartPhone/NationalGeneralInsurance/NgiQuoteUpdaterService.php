@@ -14,10 +14,8 @@ use Carbon\Carbon;
 
 class NgiQuoteUpdaterService
 {
-
     public function updateQuoteInsurerAndIssuanceStatus($quote, $step, $isSuccess): void
     {
-
 
         // Issuance status must be set to success or failed based on the API response
         $dataToUpdate = [
@@ -25,7 +23,7 @@ class NgiQuoteUpdaterService
         ];
 
         // If the API response is not success, then the insurer API status must be set to failed with related step (Policy Document Retrieval)
-        if (!$isSuccess) {
+        if (! $isSuccess) {
             $insurerApiStatusId = match ($step) {
                 NgiEnum::STEP_CREATE_POLICY_FROM_QUOTE => PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID,
                 NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM => PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID,
@@ -33,11 +31,12 @@ class NgiQuoteUpdaterService
                 default => null,
             };
             $dataToUpdate['insurer_api_status_id'] = $insurerApiStatusId;
+        } elseif ($isSuccess && $step === NgiEnum::STEP_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM) { // this step can call multiple time for each retry and it may success after fails in next retry so if success then set insurer api status to null
+            $dataToUpdate['insurer_api_status_id'] = null;
         }
 
         // update quote with the data to update
         $quote->update($dataToUpdate);
-
 
     }
 
