@@ -43,11 +43,11 @@ class AdnicRequestBuilder
     /**
      * Return Emirates ID string if its length is greater than 0 and less than $maxLength, otherwise empty string.
      */
-    private function emiratesIdIfMaxLengthExclusive(mixed $emiratesId, int $maxLength): string
+    private function emiratesIdIfMaxLengthExclusive(mixed $emiratesId, int $maxLength)
     {
         $length = $this->getEmiratesIdLength($emiratesId);
 
-        return $length > 0 && $length < $maxLength ? (string) $emiratesId : '';
+        return $length > 0 && $length < $maxLength ? (string) $emiratesId : null;
     }
 
     /**
@@ -117,7 +117,7 @@ class AdnicRequestBuilder
                 'PregnantStatus' => $currentlyPregnant ?? AdnicEnum::NO,
                 'PreviouslyCovered' => $previouslyCovered ?? AdnicEnum::NO,
                 'EmiratesId' => $this->emiratesIdIfMinLength($emiratesId, 15),
-                'EidApplicationNo' => $this->emiratesIdIfMaxLengthExclusive($emiratesId, 15),
+                'EidApplicationNo' => $this->emiratesIdIfMaxLengthExclusive($emiratesId, 15) ?? null,
                 'EntryPermitNoOrFileNo' => $visaFileNumber ?? '',
                 'CustomerClassification' => $customerClassification ?? '1', // 1 => Natural persons, 2 => Legal Persons- Corporates // TODO : Need to check this
                 'MemberCategory' => $memberCategory ?? '',
