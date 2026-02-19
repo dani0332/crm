@@ -16,7 +16,8 @@ const claimForm = useForm({
   email: props.claim?.email || '',
   mobile_no: props.claim?.mobile_no || '',
   quote_type_id: props.claim?.quote_type_id || '',
-  business_type_of_insurance_id: props.claim?.business_type_of_insurance_id || '',
+  business_type_of_insurance_id:
+    props.claim?.business_type_of_insurance_id || '',
   customer_id: props.claim?.customer_id || '',
   insurance_provider_id: props.claim?.insurance_provider_id || '',
 
@@ -201,7 +202,10 @@ const isBusinessLOB = computed(() => {
 });
 // is business type of insurance Group Medical
 const isGroupMedical = computed(() => {
-  return page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL === claimForm.business_type_of_insurance_id;
+  return (
+    page.props.quoteBusinessTypeIdEnum?.GROUP_MEDICAL ===
+    claimForm.business_type_of_insurance_id
+  );
 });
 // Check if the selected line of business is Health
 const isHealthLOB = computed(() => {
@@ -211,7 +215,7 @@ const isHealthLOB = computed(() => {
 // Watch for quote_type_id changes to clear irrelevant fields
 watch(
   () => claimForm.quote_type_id,
-  newQuoteTypeId => { 
+  newQuoteTypeId => {
     const carQuoteTypeId = page.props.quoteTypeIds?.Car;
     const healthQuoteTypeId = page.props.quoteTypeIds?.Health;
 
@@ -329,7 +333,8 @@ async function searchPolicies(pageNumber = 1) {
       page: page,
     };
     if (isBusinessLOB.value && claimForm.business_type_of_insurance_id) {
-      payload.business_type_of_insurance_id = claimForm.business_type_of_insurance_id;
+      payload.business_type_of_insurance_id =
+        claimForm.business_type_of_insurance_id;
     }
     const response = await axios.post('/claim/search-policies', payload);
 
@@ -418,7 +423,8 @@ function selectPolicy(policy) {
   claimForm.car_model = policy.car_model;
   claimForm.model_year = policy.model_year;
   claimForm.plate_number = policy.plate_number;
-  claimForm.business_type_of_insurance_id = policy.business_type_of_insurance_id;
+  claimForm.business_type_of_insurance_id =
+    policy.business_type_of_insurance_id;
 }
 
 // Policy not listed function
@@ -722,7 +728,7 @@ watch(approvedCashLossAmount, (newValue, oldValue) => {
             filterPlaceholder="Filter Claim Type...."
             :error="claimForm.errors.claim_type_id"
           />
-          <template v-if="(isHealthLOB ||  isGroupMedical) && isEdit">
+          <template v-if="(isHealthLOB || isGroupMedical) && isEdit">
             <x-input
               v-model="claimForm.request_reference_number"
               type="text"
