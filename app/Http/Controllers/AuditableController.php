@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
-use App\Http\Requests\OcrLogsRequest;
+use App\Http\Requests\LogsRequest;
+use App\Models\EpLog;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
 use App\Models\HealthInsurerRequestResponse;
@@ -198,7 +199,7 @@ class AuditableController extends Controller
         }
     }
 
-    public function loadOcrLogs(OcrLogsRequest $request)
+    public function loadOcrLogs(LogsRequest $request)
     {
         try {
             $auditableType = $request->input('type');
@@ -239,6 +240,42 @@ class AuditableController extends Controller
                 'success' => false,
                 'message' => 'Failed to load OCR logs',
                 'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadEpLogs(LogsRequest $request)
+    {
+        try {
+            $auditableType = $request->input('type');
+            $auditableId = $request->input('id');
+
+            $logs = EpLog::where('loggable_type', $auditableType)
+                ->where('loggable_id', $auditableId)
+                ->with('embeddedTransaction', 'embeddedTransaction.payment')
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'event' => $log->event,
+                        'product_type' => $log->embeddedTransaction?->code ? substr($log->embeddedTransaction->code, 0, 3) : null,
+                        'captured_at' => $log->embeddedTransaction?->payment?->getRawOriginal('captured_at') ?? null,
+                        'values' => $log->values ?? null,
+                        'created_at' => $log->created_at,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+
+            LoggerService::error('Failed to load EP logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load EP logs',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

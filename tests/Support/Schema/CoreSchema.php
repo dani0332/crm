@@ -23,7 +23,9 @@ class CoreSchema
         $this->ensurePaymentTables();
         $this->ensureDocumentTables();
         $this->ensurePolicyIssuanceTables();
+        $this->ensureSendUpdateTables();
         $this->ensureSageTables();
+        $this->ensureEPLogsTables();
     }
 
     private function ensureAuditTables(): void
@@ -1141,6 +1143,22 @@ class CoreSchema
         ]);
     }
 
+    private function ensureSendUpdateTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'send_update_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('quote_uuid')->nullable();
+                $table->unsignedBigInteger('quote_type_id');
+                $table->string('status')->nullable();
+                $table->unsignedBigInteger('category_id')->nullable();
+                $table->unsignedBigInteger('option_id')->nullable();
+                $table->timestamps();
+            },
+        ]);
+    }
+
     private function ensureSageTables(): void
     {
         SchemaUtils::ensureTables([
@@ -1166,6 +1184,22 @@ class CoreSchema
                 $table->string('sage_request_type')->nullable();
                 $table->integer('step')->nullable();
                 $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureEPLogsTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'ep_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('embedded_transaction_id');
+                $table->string('event');
+                $table->text('values')->nullable();
+                $table->morphs('loggable');
+                $table->timestamps();
+
+                $table->index('embedded_transaction_id');
             },
         ]);
     }
