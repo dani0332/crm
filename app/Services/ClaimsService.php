@@ -36,7 +36,6 @@ class ClaimsService extends BaseService
 
     protected ClaimStatusesService $claimsStatusesService;
     protected $searchPrefix = 'claims.';
-    protected $claimListQuery;
     protected $perPage = 15;
 
     public function __construct(ClaimStatusesService $claimsStatusesService)
@@ -44,7 +43,14 @@ class ClaimsService extends BaseService
         parent::__construct();
         $this->claimsStatusesService = $claimsStatusesService;
 
-        $this->claimListQuery = ClaimRequest::select([
+    }
+
+    /**
+     * Build and return a fresh detailed claim query with all relationships
+     */
+    protected function buildDetailedClaimListQuery()
+    {
+        return ClaimRequest::select([
             'id',
             'uuid',
             'code',
@@ -93,7 +99,6 @@ class ClaimsService extends BaseService
                 'manager:id,name',
             ])
             ->orderBy('created_at', 'desc');
-
     }
 
     /**
@@ -166,9 +171,9 @@ class ClaimsService extends BaseService
      */
     public function getClaimsData($request)
     {
-        // Apply filters
+        // Use a fresh list query each call so filters never accumulate (same pattern as buildDetailedClaimQuery)
         $filters = $this->getFilters($request);
-        $query = $this->applyFilters($this->claimListQuery, $filters);
+        $query = $this->applyFilters($this->buildDetailedClaimListQuery(), $filters);
 
         return $query->simplePaginate($this->perPage)->withQueryString();
     }

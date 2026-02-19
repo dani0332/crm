@@ -160,7 +160,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             // Custom validation logic can be added here if needed
-            $quoteTypeId = request()?->quote_type_id;
+            $quoteTypeId = $this->quote_type_id;
             $isCarLob = $quoteTypeId == QuoteTypes::CAR->id();
             $isBikeLob = $quoteTypeId == QuoteTypes::BIKE->id();
             $isHealthLob = $quoteTypeId == QuoteTypes::HEALTH->id();
@@ -205,12 +205,18 @@ class ClaimDetailsUpdateRequest extends FormRequest
         // Add any health-specific validation logic here if needed
         if (! $this->filled('claim_request_type_id')) {
             $validator->errors()->add('claim_request_type_id', 'Claim request type is required.');
+
+            return;
         }
 
-        $claimRequestTypeId = $this->claim_request_type_id;
-        $claimRequestType = Lookup::find($claimRequestTypeId);
-        $isPendingClaimRequestType = $claimRequestType?->code === ClaimsEnum::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE->value;
+        $claimRequestType = Lookup::find($this->claim_request_type_id);
+        if ($claimRequestType === null) {
+            $validator->errors()->add('claim_request_type_id', 'Selected claim request type is invalid.');
 
+            return;
+        }
+
+        $isPendingClaimRequestType = $claimRequestType->code === ClaimsEnum::CLAIM_REQUEST_TYPE_PENDING_APPROVALS_CODE->value;
         if ($isPendingClaimRequestType && ! $this->filled('service_type_id')) {
             $validator->errors()->add('service_type_id', 'Service type is required.');
         }

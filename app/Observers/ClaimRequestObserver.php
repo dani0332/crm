@@ -106,12 +106,12 @@ class ClaimRequestObserver
 
     /**
      * Handle the ClaimRequest "creating" event.
+     * Set initial sub_status on the model only; do not save—the record is not inserted yet.
      */
     public function creating(ClaimRequest $claimRequest): void
     {
-        // If claim number is provided during creation, set status to "Claim registered"
         if (! empty($claimRequest->claim_number)) {
-            $this->claimStatusesService->updateClaimSubStatusToClaimRegistered($claimRequest);
+            $this->claimStatusesService->setClaimSubStatusToClaimRegisteredForCreation($claimRequest);
         }
     }
 

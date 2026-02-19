@@ -70,23 +70,24 @@ class ClaimStatusesService extends BaseService
 
     }
 
+    /**
+     * Set claim_sub_status_id to "Claim registered" (or Car LOB variant) on the model only.
+     * Use during creating() when the record is not yet persisted; the initial INSERT will persist this value.
+     */
+    public function setClaimSubStatusToClaimRegisteredForCreation(ClaimRequest $claimRequest): void
+    {
+        $claimInitiatedStatus = $this->resolveClaimRegisteredStatus($claimRequest->quote_type_id);
+        if ($claimInitiatedStatus) {
+            $claimRequest->claim_sub_status_id = $claimInitiatedStatus->id;
+        }
+    }
+
     public function updateClaimSubStatusToClaimRegistered(ClaimRequest $claimRequest): void
     {
         try {
-            $isCarQuoteType = $claimRequest->quote_type_id == QuoteTypeId::Car;
-            $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED->value;
-            if ($isCarQuoteType) {
-                $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION->value;
-            }
-            // Find the "Claim initiated" status for the specific quote type
-            $claimInitiatedStatus = ClaimStatus::byText($claimRegisterStatusKey)
-                ->byQuoteType($claimRequest->quote_type_id)
-                ->active()
-                ->byStatusType(ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
-                ->first();
+            $claimInitiatedStatus = $this->resolveClaimRegisteredStatus($claimRequest->quote_type_id);
 
             if ($claimInitiatedStatus) {
-                // Update the claim sub status without triggering another observer event
                 $claimRequest->claim_sub_status_id = $claimInitiatedStatus->id;
                 $claimRequest->saveQuietly();
 
@@ -113,6 +114,21 @@ class ClaimStatusesService extends BaseService
                 'trace' => $e->getTraceAsString(),
             ]);
         }
+    }
+
+    private function resolveClaimRegisteredStatus(?int $quoteTypeId): ?ClaimStatus
+    {
+        $isCarQuoteType = $quoteTypeId == QuoteTypeId::Car;
+        $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED->value;
+        if ($isCarQuoteType) {
+            $claimRegisterStatusKey = ClaimsEnum::CLAIM_SUB_STATUS_CLAIM_REGISTERED_AWAITING_INSPECTION->value;
+        }
+
+        return ClaimStatus::byText($claimRegisterStatusKey)
+            ->byQuoteType($quoteTypeId)
+            ->active()
+            ->byStatusType(ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value)
+            ->first();
     }
 
     public function checkSubStatusForClaimClosure(ClaimRequest $claimRequest, $newClaimSubStatusId): bool
