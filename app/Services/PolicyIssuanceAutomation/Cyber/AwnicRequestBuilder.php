@@ -2,7 +2,7 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Cyber;
 
-use App\Enums\AwnicEnum;
+use App\Enums\ApplicationStorageEnums;
 use Carbon\Carbon;
 
 class AwnicRequestBuilder
@@ -24,9 +24,11 @@ class AwnicRequestBuilder
             $emiratesIdNumber = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
         }
 
+        $mobileNo = getAppStorageValueByKey(ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_MOBILE_NO, '');
+
         return [
             'CustName' => trim(($quote->first_name ?? '').' '.($quote->last_name ?? '')),
-            'CustMobile' => AwnicEnum::AWNIC_MOBILE_NO,
+            'CustMobile' => $mobileNo,
             'CustEmail' => $quote->email,
             'CustEID' => str_replace('-', '', $emiratesIdNumber),
             'CustDOB' => $customer?->dob ? strtoupper(Carbon::parse($customer->dob)->format('d-M-Y')) : null,

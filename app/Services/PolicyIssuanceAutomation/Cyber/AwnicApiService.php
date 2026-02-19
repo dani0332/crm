@@ -196,6 +196,7 @@ class AwnicApiService
         $endPoint = '/cyber/downloadDocument';
 
         $uploadedDocumentsToIMCRM = collect();
+        $quote->load('cyberQuote');
         $docTypeCodeForIMCRM = $this->documentHandler->getDocTypeCodeForIMCRM($quote);
 
         // validation added before hitting api to awnic for downloading document

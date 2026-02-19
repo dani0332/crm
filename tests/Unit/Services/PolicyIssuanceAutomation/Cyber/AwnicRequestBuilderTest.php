@@ -1,17 +1,28 @@
 <?php
 
-use App\Enums\AwnicEnum;
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicRequestBuilder;
+use Tests\Helpers\TestSchemaCreator;
+
+beforeEach(function () {
+    TestSchemaCreator::createMinimalSchema();
+    seedAwnicApplicationStorage();
+});
 
 it('builds issue policy payload with required fields', function () {
     config()->set('constants.AWNIC_API_BROKER_NO', '999');
+    $mobileFromStorage = '0500000000';
+    ApplicationStorage::query()
+        ->where('key_name', ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_MOBILE_NO)
+        ->update(['value' => $mobileFromStorage]);
 
     $builder = new AwnicRequestBuilder;
 
     $quote = (object) [
         'first_name' => 'John',
         'last_name' => 'Doe',
-        'mobile_no' => AwnicEnum::AWNIC_MOBILE_NO,
+        'mobile_no' => $mobileFromStorage,
         'email' => 'john@example.com',
         'code' => 'Q-1',
         'latestInsured' => ['id_type' => 'emiratesId', 'id_number' => '784-123-1234567-1'],
@@ -34,7 +45,7 @@ it('builds issue policy payload with required fields', function () {
 
     expect($payload)->toMatchArray([
         'CustName' => 'John Doe',
-        'CustMobile' => AwnicEnum::AWNIC_MOBILE_NO,
+        'CustMobile' => $mobileFromStorage,
         'CustEmail' => 'john@example.com',
         'CustCountryCode' => 'UAE',
         'PlanName' => 'Gold',

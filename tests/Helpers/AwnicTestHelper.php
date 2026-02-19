@@ -23,6 +23,7 @@ if (! function_exists('seedAwnicApplicationStorage')) {
         $entries = [
             ApplicationStorageEnums::ENABLE_AWNI_CYBER_POLICY_ISSUANCE,
             ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_AWNI_CYBER_POLICY_ISSUANCE,
+            ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_MOBILE_NO,
         ];
 
         foreach ($entries as $key) {
