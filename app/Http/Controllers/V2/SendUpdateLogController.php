@@ -38,6 +38,7 @@ use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -172,8 +173,12 @@ class SendUpdateLogController extends Controller
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode, $quoteTypeId);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
-            $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $realQuote = $repository::getBy('uuid', $quote->uuid);
+            if ($quoteType == QuoteTypes::CYBER->value) {
+                $realQuote = app(CyberQuoteService::class)->getOne($quote->uuid);
+            } else {
+                $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+                $realQuote = $repository::getBy('uuid', $quote->uuid);
+            }
         } else {
             $quoteServiceFile = app(getServiceObject($quoteType));
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);

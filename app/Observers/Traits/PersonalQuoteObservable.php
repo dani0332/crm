@@ -13,6 +13,7 @@ use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Jobs\SendAutomatedHomeRenewalFollowup;
 use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
@@ -99,7 +100,8 @@ trait PersonalQuoteObservable
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             $this->handlePolicyIssued($personalQuote);
-            if ($personalQuote->isHome()) {
+            $allowedQuoteTypes = [QuoteTypes::HOME->id(), QuoteTypes::CYBER->id()];
+            if (in_array($personalQuote->quote_type_id, $allowedQuoteTypes)) {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$personalQuote->code.' Policy Issued ');
                 SendPolicyIssueWhatsappMessageJob::dispatch($personalQuote->uuid, $personalQuote->quote_type_id)->onQueue('insly');
             }
@@ -136,6 +138,10 @@ trait PersonalQuoteObservable
                 SendOCAEmailJob::dispatch($personalQuote->uuid, []);
                 LoggerService::info(self::class." - OCA email sent to customer for life quote {$personalQuote->uuid}");
             }
+        }
+        if ($personalQuote->isCyber()) {
+            SendCyberOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+            LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
         }
 
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
