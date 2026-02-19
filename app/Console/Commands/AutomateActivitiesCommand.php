@@ -50,11 +50,6 @@ class AutomateActivitiesCommand extends Command
                 'eligible_for_automate' => false,
                 'quote_type_id' => QuoteTypeId::Car,
             ],
-            HomeQuote::class => [
-                'eligible_for_automate' => true,
-                'quote_type_id' => QuoteTypeId::Home,
-                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::HOME_RENEWALS])->first()->id,
-            ],
             HealthQuote::class => [
                 'eligible_for_automate' => true,
                 'quote_type_id' => QuoteTypeId::Health,
@@ -81,6 +76,7 @@ class AutomateActivitiesCommand extends Command
                     QuoteTypeId::Pet,
                     QuoteTypeId::Cycle,
                     QuoteTypeId::Yacht,
+                    QuoteTypeId::Home,
                 ],
                 'quote_type_details' => [
                     QuoteTypeId::Pet => [
@@ -94,6 +90,10 @@ class AutomateActivitiesCommand extends Command
                     QuoteTypeId::Yacht => [
                         'quote_type_id' => QuoteTypeId::Yacht,
                         'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::YACHT_RENEWALS])->first()->id,
+                    ],
+                    QuoteTypeId::Home => [
+                        'quote_type_id' => QuoteTypeId::Home,
+                        'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::HOME_RENEWALS])->first()->id,
                     ],
                 ],
             ],
