@@ -8,8 +8,7 @@ use App\Console\Kernel;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
-use ReflectionMethod;
-use ReflectionProperty;
+use Mockery;
 use Tests\TestCase;
 
 /**
@@ -244,9 +243,8 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
     }
 
     /**
-     * Ensures policy-issuance-automation:run is present on UAT but never runs: Kernel uses
-     * scheduleWithEnvironment() and for 'uat' adds a skip callback (Event::$rejects). We build
-     * the full schedule, find all policy-issuance events, and assert each has a skip callback.
+     * Ensures policy-issuance-automation:run is skipped on UAT: Kernel uses scheduleWithEnvironment()
+     * and for 'uat' calls $event->skip(fn () => true). We use a mock Event and assert skip() is called.
      */
     public function test_policy_issuance_command_skips_on_uat(): void
     {
@@ -257,20 +255,24 @@ class ScheduledTaskEnvironmentIsolationTest extends TestCase
         Config::set('app.env', 'uat');
 
         try {
-            $kernel = app(Kernel::class);
-            $schedule = new Schedule;
-            $scheduleMethod = new ReflectionMethod($kernel, 'schedule');
-            $scheduleMethod->invoke($kernel, $schedule);
+            $mockEvent = Mockery::mock(Event::class)->makePartial();
+            $mockEvent->shouldReceive('skip')
+                ->once()
+                ->with(Mockery::on(static fn ($arg): bool => $arg instanceof \Closure))
+                ->andReturnSelf();
 
-            $events = collect($schedule->events())->filter(
-                fn (Event $event) => str_contains($event->command ?? '', 'policy-issuance-automation:run')
-            );
-            $this->assertNotEmpty($events, 'policy-issuance-automation:run should be scheduled for UAT');
+            $schedule = Mockery::mock(app(Schedule::class))->makePartial();
+            $schedule->shouldReceive('command')
+                ->with('policy-issuance-automation:run')
+                ->andReturn($mockEvent);
 
-            $rejectsProperty = new ReflectionProperty(Event::class, 'rejects');
-            foreach ($events as $event) {
-                $this->assertNotEmpty($rejectsProperty->getValue($event), 'Each policy-issuance-automation:run event on UAT should have a skip callback');
-            }
+            $kernel = new class(app(), app('events')) extends Kernel {
+                public function schedule($schedule): void
+                {
+                    parent::schedule($schedule);
+                }
+            };
+            $kernel->schedule($schedule);
         } finally {
             app()['env'] = $originalEnv;
             Config::set('app.env', $originalConfigEnv);
