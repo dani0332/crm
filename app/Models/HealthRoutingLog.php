@@ -14,6 +14,7 @@ class HealthRoutingLog extends Model
         'team_category',
         'logged_by',
         'log_data',
+        'source',
     ];
     protected $casts = [
         'log_data' => 'array',

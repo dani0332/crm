@@ -6,6 +6,7 @@ namespace App\Services\HealthTeamRouting;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthRoutingLogTypeEnum;
+use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\TeamCategoryEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\HealthQuote;
@@ -19,7 +20,7 @@ trait HealthTeamRoutable
         return getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED, useCache: true) == ApplicationStorageEnums::ACTIVE;
     }
 
-    private function logStep(string $message, string $step, array $flags, HealthQuote $lead): void
+    private function logStep(string $message, string $step, array $flags, HealthQuote $lead, HealthRoutingSourceEnum $source): void
     {
         $this->healthTeamRoutingLogService->log(
             HealthRoutingLogTypeEnum::ROUTING,
@@ -28,7 +29,9 @@ trait HealthTeamRoutable
                 $flags
             ),
             $lead->id,
-            $lead->uuid
+            $lead->uuid,
+            null,
+            $source
         );
     }
 

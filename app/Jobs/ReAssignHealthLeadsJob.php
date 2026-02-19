@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
@@ -77,7 +78,8 @@ class ReAssignHealthLeadsJob implements ShouldQueue
                 overrideAdvisorId: true,
                 isReassignmentJob: true,
                 reAssigFromAdvisorId: $this->advisorId,
-                assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED
+                assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED,
+                source: HealthRoutingSourceEnum::REASSIGNMENT
             );
 
             try {

@@ -2,6 +2,7 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Pipes\Allocation\Common\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
@@ -28,7 +29,8 @@ class HealthAllocation implements Allocation
             quoteType: QuoteTypes::HEALTH,
             quoteUUID: $this->uuid,
             teamId: $this->teamId,
-            overrideAdvisorId: $this->overrideAdvisorId
+            overrideAdvisorId: $this->overrideAdvisorId,
+            source: HealthRoutingSourceEnum::ROUTING
         );
 
         try {
