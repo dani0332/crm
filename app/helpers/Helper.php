@@ -67,6 +67,28 @@ if (! function_exists('generate_code')) {
     }
 }
 
+if (! function_exists('computedQuoteTypeForDisplay')) {
+    /**
+     * Line of business / invoice display label for quote type.
+     * For Device quotes (quote_type_id 20), uses device_type (e.g. smartphone, tablet) when present.
+     *
+     * @param  int|string  $quoteTypeIdOrCode  Quote type id (e.g. QuoteTypeId::Device) or code (e.g. quoteTypeCode::Device)
+     * @param  string  $quoteTypeFallback  Fallback label (e.g. quote type code)
+     * @param  string|null  $deviceType  Device type from quote when LOB is Device (e.g. smartphone, tablet)
+     */
+    function computedQuoteTypeForDisplay(int|string $quoteTypeIdOrCode, string $quoteTypeFallback, ?string $deviceType = null): string
+    {
+        $isDevice = $quoteTypeIdOrCode === QuoteTypeId::Device
+            || $quoteTypeIdOrCode === quoteTypeCode::Device;
+
+        if ($isDevice) {
+            return $deviceType ?? $quoteTypeFallback ?? '';
+        }
+
+        return $quoteTypeFallback;
+    }
+}
+
 if (! function_exists('vAbort')) {
     /**
      * abort script execution and return errors in validation format with http status 422.
