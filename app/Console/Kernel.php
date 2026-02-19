@@ -209,6 +209,7 @@ class Kernel extends ConsoleKernel
             $schedule,
             'policy-issuance-automation:run',
             default: fn ($event) => $event->timezone('Asia/Dubai')->everyThreeMinutes()->onOneServer()->withoutOverlapping(4),
+            // TODO: check before STAGING
             environments: [
                 'test' => fn ($event) => $event->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4),
                 'development' => fn ($event) => $event->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4),
