@@ -377,7 +377,11 @@ class SageApiService
 
                     $epPayment = $ePTransaction->payments->first();
                     $epPaymentDate = Carbon::parse($epPayment->getAttributes()['captured_at']);
-                    if ($epPaymentDate->diffInDays(Carbon::now()) <= 30) {
+                    $reversalTriggerDate = Carbon::now();
+                    $diffInDays = $epPaymentDate->diffInDays($reversalTriggerDate);
+                    $maxDays = 30;
+
+                    if ($diffInDays <= $maxDays) {
 
                         $quoteSageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->quoteType, $preparedData['payment'], $quote, $preparedData['splitPayments'], [
                             'isEPReversal' => true,
@@ -391,17 +395,27 @@ class SageApiService
                         if (! $embeddedProductSageBookingResponse['status']) {
                             return $embeddedProductSageBookingResponse;
                         }
+
+                        $outcome = "Sage reversal triggered (≤ {$maxDays} days)";
                     } else {
                         LoggerService::info(
                             self::class.' fn: '.__FUNCTION__.' - ################################## Reversal Of EP Booking : not eligible : '.$quote->code.' , EP Transaction Code : '.$ePTransaction->code.' ##################################',
                             extra: [
                                 'code' => $ePTransaction->code,
                                 'captured_at' => $epPaymentDate,
-                                'reversal_trigger_date' => Carbon::now(),
-                                'diff_in_days' => $epPaymentDate->diffInDays(Carbon::now()),
+                                'reversal_trigger_date' => $reversalTriggerDate,
+                                'diff_in_days' => $diffInDays,
                             ]
                         );
+
+                        $outcome = "Sage reversal suppressed (> {$maxDays} days; per insurer agreement).";
                     }
+
+                    $this->createEPLog($preparedData['sendUpdateLog'], $ePTransaction->id, 'reversal', [
+                        'reversal_at' => $reversalTriggerDate,
+                        'diff_in_days' => $diffInDays,
+                        'message' => $outcome,
+                    ]);
                 }
             }
         }
@@ -409,6 +423,15 @@ class SageApiService
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Upfront Endorsement Booking Completed on Sage - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
 
         return ['status' => true, 'message' => 'Straight Forward Endorsement Booking Completed on Sage'];
+    }
+
+    private function createEPLog($sendUpdateLog, $ePTransactionId, $event, $values): void
+    {
+        $sendUpdateLog?->epLogs()?->create([
+            'embedded_transaction_id' => $ePTransactionId,
+            'event' => $event,
+            'values' => json_encode($values),
+        ]);
     }
 
     public function bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog): array
