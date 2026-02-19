@@ -246,14 +246,15 @@ class SendUpdateLogController extends Controller
 
         $computedQuoteType = $quoteType;
         // Override LINE OF BUSINESS display for Device quote (quote_type_id 20) with NGI provider
-        if ($sendUpdateLog->quote_type_id === QuoteTypeId::Device || $quoteType === quoteTypeCode::Device || QuoteTypes::DEVICE->value == $quoteType) {
+        if ($sendUpdateLog->quote_type_id === QuoteTypeId::Device) {
             $computedQuoteType = $sendUpdateLog?->personalQuote?->deviceQuote?->device_type ?? $quoteType ?? '';
         }
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
-            'quoteType' => $computedQuoteType,
+            'quoteType' => $quoteType,
+            'computedQuoteType' => $computedQuoteType,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $parentText,
             'sendUpdateOptions' => $sendUpdateOptions,

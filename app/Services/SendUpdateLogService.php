@@ -636,7 +636,7 @@ class SendUpdateLogService
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
             $computedQuoteType = $quoteType;
-            if ($sendUpdateLog->quote_type_id === QuoteTypeId::Device || $quoteType === quoteTypeCode::Device || QuoteTypes::DEVICE->value == $quoteType) {
+            if ($sendUpdateLog->quote_type_id === QuoteTypeId::Device) {
                 // for device we wan't to show relevant type in invoice description like smartphone, tablet, laptop, etc.
                 $computedQuoteType = $sendUpdateLog?->personalQuote?->deviceQuote?->device_type ?? $quoteType ?? '';
             }

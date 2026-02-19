@@ -88,6 +88,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  computedQuoteType: {
+    type: String,
+    required: false,
+  },
   bookingDetails: {
     type: Array,
     required: true,
@@ -1982,7 +1986,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ quoteType ?? 'N/A' }}</span>
+                  <span>{{ computedQuoteType ?? 'N/A' }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
