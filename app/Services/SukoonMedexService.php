@@ -14,6 +14,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SukoonMedexEnum;
+use App\Enums\VehicleTypeEnum;
 use App\Exceptions\EpEcbException;
 use App\Jobs\SyncSukoonDocumentsJob;
 use App\Models\ApplicationStorage;
@@ -989,9 +990,18 @@ class SukoonMedexService
      */
     private function prepareAdditionalData()
     {
-        $planOption = match ($this->quoteTypeId) {
-            QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
-            QuoteTypeId::Bike => "{$this->productSlug}-personal_sports_mc",
+        // Check if this should use the bike/sports MC plan
+        $bikeVehicleTypes = [
+            VehicleTypeEnum::MOTOR_CYCLE->value,
+            VehicleTypeEnum::BIKE->value,
+            VehicleTypeEnum::MOTOR_CYCLES->value,
+        ];
+        $useBikePlan = $this->quoteTypeId === QuoteTypeId::Bike ||
+                        ($this->quoteTypeId === QuoteTypeId::Car && in_array($this->currentQuote?->vehicle_type_id, $bikeVehicleTypes));
+
+        $planOption = match (true) {
+            $useBikePlan => "{$this->productSlug}-personal_sports_mc",
+            $this->quoteTypeId === QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
             default => null
         };
 
