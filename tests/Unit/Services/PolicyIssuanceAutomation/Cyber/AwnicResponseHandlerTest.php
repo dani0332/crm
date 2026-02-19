@@ -26,4 +26,3 @@ it('flags API errors and returns normalized message', function () {
     expect($result['status'])->toBeFalse()
         ->and($result['error'])->toBe(['ERR']);
 });
-

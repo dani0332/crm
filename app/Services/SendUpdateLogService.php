@@ -43,7 +43,6 @@ use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
-use App\Models\QuoteType;
 use App\Models\SageProcess;
 use App\Models\SavingsQuote;
 use App\Models\SendUpdateLog;
@@ -1330,7 +1329,7 @@ class SendUpdateLogService
         $categoryCode = $sendUpdateLog->category->code;
 
         if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings])) {
-            $docCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE]:[DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+            $docCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', $docCodes)->toArray();
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
@@ -1357,7 +1356,7 @@ class SendUpdateLogService
             $notes = $sendUpdateLog?->notes ?? '';
         }
 
-        if($quoteTypeId == QuoteTypeId::Cyber){
+        if ($quoteTypeId == QuoteTypeId::Cyber) {
             $documents[] = [
                 'doc_url' => ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '',
                 'document_type_text' => 'InsuranceMarket.ae™ Policy Wording.pdf',

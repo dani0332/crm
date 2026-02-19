@@ -156,8 +156,8 @@ class AutomationFailedJob implements ShouldQueue
     public function middleware()
     {
         LoggerService::info('job:AutomationFailedJob - Middleware setup', extra: ['quoteId' => $this->quoteId]);
-        
-        return [(new WithoutOverlapping($this->quoteId . '-automation'))->dontRelease()];
+
+        return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
     }
 
     private function addLobViseDataForMail($quoteType, $quote, $cc)

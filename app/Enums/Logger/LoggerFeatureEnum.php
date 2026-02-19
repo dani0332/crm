@@ -56,7 +56,7 @@ enum LoggerFeatureEnum: string
     case CONVERSION_API = 'conversion-api';
     case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
     case PAYMENT_STATUS_UPDATE = 'payment-status-update';
-    
+
     case CYBER_OCB_INTRO_EMAIL = 'cyber-ocb-intro-email';
     case CYBER_AUTOMATED_FOLLOWUPS = 'cyber-automated-followups';
     case CHECK_DOCUMENT_UPLOAD_AFTER_PAYMENT = 'check-document-upload-after-payment';

@@ -897,5 +897,5 @@ class DocumentTypesSeeder extends Seeder
             );
         }
     }
-    
+
 }

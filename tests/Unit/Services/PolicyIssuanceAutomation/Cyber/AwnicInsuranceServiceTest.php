@@ -2,8 +2,8 @@
 
 use App\Enums\AwnicEnum;
 use App\Models\PersonalQuote;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicBookPolicyService;
+use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicStepExecutor;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicValidationService;
@@ -51,7 +51,7 @@ it('executes all AWNIC steps when validation passes', function () {
         $stepExecutor,
         $validation,
         Mockery::mock(AwnicBookPolicyService::class),
-        new AwnicResponseHandler()
+        new AwnicResponseHandler
     );
 
     $result = $service->executeSteps($process);
@@ -78,7 +78,7 @@ it('stops execution when validation fails', function () {
         $stepExecutor,
         $validation,
         Mockery::mock(AwnicBookPolicyService::class),
-        new AwnicResponseHandler()
+        new AwnicResponseHandler
     );
 
     $result = $service->executeSteps($process);
@@ -109,7 +109,7 @@ it('propagates step failure immediately', function () {
         $stepExecutor,
         $validation,
         Mockery::mock(AwnicBookPolicyService::class),
-        new AwnicResponseHandler()
+        new AwnicResponseHandler
     );
 
     $result = $service->executeSteps($process);
@@ -117,4 +117,3 @@ it('propagates step failure immediately', function () {
     expect($result['status'])->toBeFalse()
         ->and($result['error'])->toBe('API failure');
 });
-

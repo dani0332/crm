@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
 use App\Http\Requests\LogsRequest;
-use App\Models\EpLog;
 use App\Models\CyberInsurerRequestResponses;
 use App\Models\CyberQuote;
+use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
 use App\Models\HealthQuote;
 use App\Models\HomeInsurerRequestResponses;

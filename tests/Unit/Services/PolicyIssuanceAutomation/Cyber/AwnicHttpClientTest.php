@@ -29,4 +29,3 @@ it('performs POST requests using configured base url', function () {
         ->and($response->json('ok'))->toBeTrue()
         ->and($client->getBaseUrl())->toBe('https://awni.test');
 });
-

@@ -3,11 +3,12 @@
 namespace Database\Factories;
 
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use App\Enums\PaymentStatusEnum;
+
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PaymentSplits>
  */
@@ -63,7 +64,6 @@ class PaymentSplitsFactory extends Factory
      * Accepts a Payment object and extracts code.
      *
      * @param  Payment  $payment  The payment to create split for
-     * @return static
      */
     public function forPayment(Payment $payment): static
     {
@@ -77,11 +77,10 @@ class PaymentSplitsFactory extends Factory
      * Accepts a code.
      *
      * @param  string  $code  The code to create split for
-     * @return static
      */
     public function cyberPaymentSplit($code): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'code' => $code,
         ]);
     }

@@ -62,23 +62,26 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         if ($exitReason !== null) {
             LoggerService::info($loggerPrefix.' Exiting job with reason: '.$exitReason);
+
             return;
         }
 
         $customerInfo = $this->getCustomerInfo();
         if (empty($customerInfo)) {
             $this->logAndReturn($loggerPrefix, 'Customer info not found or incomplete');
+
             return;
         }
 
         $checkCustomerInfo = $this->checkCustomerInfoIsComplete($customerInfo);
-        if (!$checkCustomerInfo['status']) {
+        if (! $checkCustomerInfo['status']) {
             $msg = $checkCustomerInfo['message'] ?? 'Customer info incomplete';
             $this->logAndReturn($loggerPrefix, $msg, $msg);
+
             return;
         }
 
-        $idType   = $customerInfo['id_type']   ?? 'passport';
+        $idType = $customerInfo['id_type'] ?? 'passport';
         $idNumber = $customerInfo['id_number'] ?? null;
 
         $amlAutomation = AmlAutomation::updateOrCreate(
@@ -90,7 +93,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $insuredPersonData = app(AMLService::class)->getInsuredPersonDetails($idType, $idNumber);
             LoggerService::info($loggerPrefix.' getInsuredPersonDetails - response: '.($insuredPersonData ? '200' : '404'));
 
-            $customer = !empty($insuredPersonData)
+            $customer = ! empty($insuredPersonData)
                 ? [...$customerInfo, ...(array) $insuredPersonData]
                 : $customerInfo;
 
@@ -134,7 +137,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     /**
      * Helper to log customer info errors and exit.
      */
-    private function logAndReturn(string $loggerPrefix, string $infoMessage, string|null $exitReason = null): void
+    private function logAndReturn(string $loggerPrefix, string $infoMessage, ?string $exitReason = null): void
     {
         LoggerService::info($loggerPrefix.' '.$infoMessage);
         LoggerService::info($loggerPrefix.' Exiting job with reason: '.($exitReason ?? $infoMessage));
@@ -146,7 +149,8 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         if (! $enabled) {
             LoggerService::info($this->className.' is not enabled from cms. Ref-ID: '.$this->quoteRefId);
         }
-        return (bool)$enabled;
+
+        return (bool) $enabled;
     }
 
     private function preconditionsMet(): bool
@@ -168,17 +172,17 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     private function buildAmlRequestData($customer, $idType, $idNumber): array
     {
         return [
-            'is_automation'        => true,
-            'customer_id'          => $customer['customer_id'],
-            'customer_type'        => CustomerTypeEnum::Individual,
-            'quote_type'           => $this->quoteType->value,
-            'screening_id_type'    => $idType,
-            'screening_id_number'  => $idNumber,
-            'insured_first_name'   => $customer['first_name'],
-            'insured_last_name'    => $customer['last_name'],
-            'nationality_id'       => $customer['nationality_id'],
-            'dob'                  => $customer['dob'],
-            'screening_gender'     => $customer['gender'],
+            'is_automation' => true,
+            'customer_id' => $customer['customer_id'],
+            'customer_type' => CustomerTypeEnum::Individual,
+            'quote_type' => $this->quoteType->value,
+            'screening_id_type' => $idType,
+            'screening_id_number' => $idNumber,
+            'insured_first_name' => $customer['first_name'],
+            'insured_last_name' => $customer['last_name'],
+            'nationality_id' => $customer['nationality_id'],
+            'dob' => $customer['dob'],
+            'screening_gender' => $customer['gender'],
         ];
     }
 
@@ -205,7 +209,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $travelQuoteService = app(TravelQuoteService::class);
             $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
 
-            if (!empty($customerTravelInfo['id'])) {
+            if (! empty($customerTravelInfo['id'])) {
                 $customerInfo = [
                     'id' => $customerTravelInfo['id'],
                     'code' => $customerTravelInfo['code'],
@@ -223,7 +227,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $cyberQuoteService = app(CyberQuoteService::class);
             $customerCyberInfo = (array) $cyberQuoteService->getCustomerCyberInfo($this->quoteRequest->id, $this->quoteType->value);
 
-            if (!empty($customerCyberInfo['id'])) {
+            if (! empty($customerCyberInfo['id'])) {
                 $customerInfo = $customerCyberInfo;
             }
         }

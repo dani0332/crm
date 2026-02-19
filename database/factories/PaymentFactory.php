@@ -10,8 +10,8 @@ use App\Models\CarQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class PaymentFactory extends Factory
 {
@@ -45,7 +45,7 @@ class PaymentFactory extends Factory
             'captured_amount' => 0,
         ];
     }
-   
+
     /**
      * Define the model's cyber quote state.
      *
@@ -53,7 +53,7 @@ class PaymentFactory extends Factory
      */
     public function cyberPayment($code, $id)
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'code' => $code,
             'paymentable_id' => $id,
             'paymentable_type' => PersonalQuote::class,

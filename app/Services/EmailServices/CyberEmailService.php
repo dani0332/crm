@@ -74,10 +74,10 @@ class CyberEmailService extends BaseService
 
     private function buildEmailData($lead, $advisor, $workflowType, $previousAdvisor = null)
     {
-        
+
         $isFlowExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::CYBER->id(), QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value);
         $isMinor = ! empty($lead->dob) ? \Carbon\Carbon::parse($lead->dob)->age < 18 : false;
- 
+
         $emailData = [
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'source' => $lead->source,

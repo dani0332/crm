@@ -65,7 +65,7 @@ it('issues policy and updates quote data on success', function () {
 
     $service = new AwnicApiService(
         $requestBuilder,
-        new AwnicResponseHandler(),
+        new AwnicResponseHandler,
         Mockery::mock(AwnicDocumentHandler::class),
         $quoteUpdater,
         Mockery::mock(AwnicValidationService::class)
@@ -102,7 +102,7 @@ it('returns failure when issue policy API responds with error', function () {
 
     $service = new AwnicApiService(
         $requestBuilder,
-        new AwnicResponseHandler(),
+        new AwnicResponseHandler,
         Mockery::mock(AwnicDocumentHandler::class),
         $quoteUpdater,
         Mockery::mock(AwnicValidationService::class)
@@ -137,7 +137,7 @@ it('skips upload documents call when validation fails', function () {
 
     $service = new AwnicApiService(
         Mockery::mock(AwnicRequestBuilder::class),
-        new AwnicResponseHandler(),
+        new AwnicResponseHandler,
         $documentHandler,
         Mockery::mock(AwnicQuoteUpdaterService::class),
         $validation
@@ -177,7 +177,7 @@ it('uploads documents and records policy issuance log', function () {
 
     $service = new AwnicApiService(
         $requestBuilder,
-        new AwnicResponseHandler(),
+        new AwnicResponseHandler,
         $documentHandler,
         Mockery::mock(AwnicQuoteUpdaterService::class),
         $validation
@@ -221,7 +221,7 @@ it('logs failure when document upload API fails', function () {
 
     $service = new AwnicApiService(
         $requestBuilder,
-        new AwnicResponseHandler(),
+        new AwnicResponseHandler,
         $documentHandler,
         Mockery::mock(AwnicQuoteUpdaterService::class),
         $validation
@@ -280,7 +280,7 @@ it('uploads policy documents to IMCRM and records log entries', function () {
 
     $service = new AwnicApiService(
         $requestBuilder,
-        new AwnicResponseHandler(),
+        new AwnicResponseHandler,
         $documentHandler,
         Mockery::mock(AwnicQuoteUpdaterService::class),
         $validation
@@ -322,7 +322,7 @@ it('logs failure when insurer document download fails', function () {
 
     $service = new AwnicApiService(
         $requestBuilder,
-        new AwnicResponseHandler(),
+        new AwnicResponseHandler,
         $documentHandler,
         Mockery::mock(AwnicQuoteUpdaterService::class),
         $validation
@@ -338,4 +338,3 @@ it('logs failure when insurer document download fails', function () {
                 ->exists()
         )->toBeTrue();
 });
-

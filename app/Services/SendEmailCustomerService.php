@@ -1134,6 +1134,7 @@ class SendEmailCustomerService extends BaseService
                             'url' => $document['doc_url'],
                             'name' => $document['document_type_text'],
                         ];
+
                         continue;
                     }
                     $path = ! empty($document['watermarked_doc_url']) ? $document['watermarked_doc_url'] : $document['doc_url'];

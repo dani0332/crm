@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\QuoteTypes;
-use App\Models\PolicyIssuance;
 use App\Models\PersonalQuote;
+use App\Models\PolicyIssuance;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PolicyIssuanceFactory extends Factory
@@ -32,4 +32,3 @@ class PolicyIssuanceFactory extends Factory
         ]);
     }
 }
-
