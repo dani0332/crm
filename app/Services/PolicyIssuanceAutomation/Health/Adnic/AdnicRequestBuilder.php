@@ -107,7 +107,7 @@ class AdnicRequestBuilder
                 'Weight' => $insuredMember->Weight,
                 'MaritalStatus' => $insuredMember->MaritalStatus,
                 'DisclaimerSelected' => $insuredMember->DisclaimerSelected,
-                'Occupation' => $industry ?? AdnicEnum::OCCUPATION_OTHER,
+                'Occupation' => $industry && ! empty($industry) ? $industry : AdnicEnum::OCCUPATION_OTHER,
                 'LoadingInfo' => [
                     'LoadingType' => AdnicEnum::LOADING_TYPE,
                     'LoadingTypeValue' => AdnicEnum::LOADING_VALUE,
