@@ -77,4 +77,5 @@ enum LoggerFeatureEnum: string
     case CLAIM_GOOGLE_REVIEW_EMAIL = 'claim-google-review-email';
     case CLAIM_DOCUMENT_UPLOAD_UTILITY = 'claim-document-upload-utility';
     case CLAIM_SUB_STATUS_CUSTOMER_UPDATE_EMAIL = 'claim-sub-status-customer-update-email';
+    case UPDATE_QUOTE_POLICY = 'update-quote-policy';
 }
