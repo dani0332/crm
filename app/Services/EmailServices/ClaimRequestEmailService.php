@@ -122,8 +122,11 @@ class ClaimRequestEmailService extends BaseService
 
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
+            'claimRefId' => $claimRequest->code ?? '',
+            'quoteType' => $claimRequest->quoteType?->text ?? '',
             'customerName' => $claimRequest->full_name ?? '',
             'customerEmail' => $claimRequest->email ?? '',
+            'customerMobile' => formatMobileNo($claimRequest->mobile_no ?? ''),
             'managerName' => $claimRequest->manager?->name ?? '',
             'managerEmail' => $claimRequest->manager?->email ?? '',
             'managerLandLine' => $claimRequest->manager?->landline_no ?? '',
@@ -131,7 +134,7 @@ class ClaimRequestEmailService extends BaseService
             'managerMobilePhone' => $phoneNumber,
             'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
             'workflowType' => $workflowType,
-            'isWAConsent' => $claimRequest->whatsapp_consent,
+            'isWAConsent' => $claimRequest->whatsapp_consent ? true : false,
         ];
     }
 
@@ -202,8 +205,11 @@ class ClaimRequestEmailService extends BaseService
 
         return (object) [
             'claimUID' => $claimRequest->code ?? '',
+            'claimRefId' => $claimRequest->code ?? '',
+            'quoteType' => $claimRequest->quoteType?->text ?? '',
             'customerName' => $claimRequest->full_name ?? '',
             'customerEmail' => $claimRequest->email ?? '',
+            'customerMobile' => formatMobileNo($claimRequest->mobile_no ?? ''),
             'managerName' => $claimRequest->manager?->name ?? '',
             'managerEmail' => $claimRequest->manager?->email ?? '',
             'managerLandLine' => $claimRequest->manager?->landline_no ?? '',
@@ -212,7 +218,7 @@ class ClaimRequestEmailService extends BaseService
             'managerProfilePhotoPath' => $claimRequest->manager?->profile_photo_path ?? '',
             'workflowType' => $workflowType,
             'message' => $message,
-            'isWAConsent' => $claimRequest->whatsapp_consent,
+            'isWAConsent' => $claimRequest->whatsapp_consent ? true : false,
             'subject' => $subject,
         ];
     }
