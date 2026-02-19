@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\AwnicEnum;
 use App\Models\ApplicationStorage;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicRequestBuilder;
 use Tests\Helpers\TestSchemaCreator;
