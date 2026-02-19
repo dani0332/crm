@@ -110,12 +110,12 @@ class AssignTeamPipe extends BaseAllocationPipe
 
     protected function assignTeamBasedOnPrices()
     {
-        LoggerService::info('Inside assignTeamBasedOnPrices');
+        LoggerService::info('Inside assignTeamBasedOnPrices', ['source' => $this->source]);
 
         $priceStartingFrom = $this->determinePriceStartingFrom();
 
         if ($priceStartingFrom === null) {
-            LoggerService::warning('No team found - price starting from is null');
+            LoggerService::warning('No team found - price starting from is null', ['source' => $this->source]);
             $this->lead->is_error_email_sent = true;
             $this->lead->save();
             Mail::send(new HealthAssignmentIssueEmail($this->lead->code, $priceStartingFrom));
@@ -128,7 +128,7 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         // Check if priceStartingFrom is greater than or equal to GBP team's min price (only for AUH leads)
         if ($isAUHLead) {
-            LoggerService::info('AUH lead detected, checking GBP team min price');
+            LoggerService::info('AUH lead detected, checking GBP team min price', ['source' => $this->source]);
             $gbpMinPrice = $this->getGbpTeamMinPrice();
             if ($gbpMinPrice !== null && $priceStartingFrom >= $gbpMinPrice) {
                 LoggerService::info("Price starting from ({$priceStartingFrom}) is greater than or equal to GBP min price ({$gbpMinPrice}), assigning to GBP team");
@@ -139,7 +139,7 @@ class AssignTeamPipe extends BaseAllocationPipe
             }
             $this->logGbpCheckResult($gbpMinPrice, $priceStartingFrom, 'price-based');
         } else {
-            LoggerService::info('Non-AUH lead detected, assigning team based on price range');
+            LoggerService::info('Non-AUH lead detected, assigning team based on price range', ['source' => $this->source]);
         }
 
         $healthTeam = $this->fetchTeamByPriceAndCategory($priceStartingFrom, $category);
@@ -150,6 +150,7 @@ class AssignTeamPipe extends BaseAllocationPipe
                 'team_name' => $healthTeam->name,
                 'category' => $category->value,
                 'price_starting_from' => $priceStartingFrom,
+                'source' => $this->source,
             ]);
 
             $this->lead->health_team_type = $healthTeam->name;
@@ -157,6 +158,7 @@ class AssignTeamPipe extends BaseAllocationPipe
             LoggerService::warning('No team found for the given price range', [
                 'price_starting_from' => $priceStartingFrom,
                 'category' => $category->value,
+                'source' => $this->source,
             ]);
             $this->lead->is_error_email_sent = true;
             Mail::send(new HealthAssignmentIssueEmail($this->lead->code, $priceStartingFrom));
