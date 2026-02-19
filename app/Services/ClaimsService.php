@@ -963,22 +963,16 @@ class ClaimsService extends BaseService
 
     /**
      * Trigger Bird claims flow via Ken when claim has manager (e.g. after policy number is set/changed).
+     * Accepts the ClaimRequest instance so callers (e.g. observer) can pass the in-memory model before save.
      */
-    public function triggerBirdClaimsFlow(int $claimRequestId): void
+    public function triggerBirdClaimsFlow(ClaimRequest $claimRequest): void
     {
-        $claimRequest = ClaimRequest::with([
+        $claimRequest->loadMissing([
             'manager',
             'insuranceProvider.contacts',
             'claimRequestType',
-        ])->find($claimRequestId);
+        ]);
 
-        if (! $claimRequest) {
-            LoggerService::error(' Bird claims flow: claim request not found', extra: [
-                'claim_request_id' => $claimRequestId,
-            ]);
-
-            return;
-        }
         $canTrigger = true;
 
         if (! $claimRequest->manager) {

@@ -10,6 +10,8 @@ use App\Models\ClaimStatus;
 use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
 use App\Services\EmailServices\ClaimRequestEmailService;
+use App\Services\Logger\LoggerService;
+use Exception;
 
 class ClaimRequestObserver
 {
@@ -87,7 +89,19 @@ class ClaimRequestObserver
                 $originalPolicyNumber = $claimRequest->getOriginal('policy_number');
                 $newPolicyNumber = $claimRequest->policy_number;
                 if ($originalPolicyNumber != $newPolicyNumber) {
-                    $this->claimsService->triggerBirdClaimsFlow($claimRequest->id);
+                    try {
+                        $this->claimsService->triggerBirdClaimsFlow($claimRequest);
+                        LoggerService::info('Bird claims flow triggered for claim', [
+                            'uuid' => $claimRequest->uuid,
+                            'claim_id' => $claimRequest->id,
+                        ]);
+                    } catch (Exception $e) {
+                        LoggerService::warning('ClaimRequestObserver - trigger Bird claims flow failed', [
+                            'error' => $e->getMessage(),
+                            'uuid' => $claimRequest->uuid,
+                            'claim_id' => $claimRequest->id,
+                        ]);
+                    }
                 }
             }
         }
