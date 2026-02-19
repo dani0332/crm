@@ -1400,6 +1400,8 @@ class SplitPaymentService
                     info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     if ($paymentSplit->payment_amount != $payment->total_amount) {
                         $paymentSplit->payment_amount = $payment->total_amount;
+                        $paymentSplit->price_vat_applicable = $payment->price_vat_applicable;
+                        $paymentSplit->price_vat = $payment->price_vat;
                     }
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
@@ -1417,7 +1419,9 @@ class SplitPaymentService
                     $paymentSplit->payment_method = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {
-                    $paymentSplit->save();
+                    PaymentSplits::withoutEvents(function () use ($paymentSplit) {
+                        $paymentSplit->save();
+                    });
                 }
             }
         }
