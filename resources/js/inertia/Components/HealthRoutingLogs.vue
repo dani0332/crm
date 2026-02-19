@@ -29,6 +29,7 @@ const routingLogs = reactive({
     ...(props.type == 'CONFIGURATION'
       ? [{ text: 'Team Category', value: 'team_category' }]
       : []),
+    ...(props.type == 'ROUTING' ? [{ text: 'Source', value: 'source' }] : []),
     { text: 'Log Data', value: 'log_data' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Action', value: 'action' },
@@ -253,6 +254,10 @@ watch(
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Created At:</dt>
             <dd>{{ new Date(selectedLog.created_at).toLocaleString() }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2" v-if="selectedLog.type == 'ROUTING'">
+            <dt class="font-medium">Source:</dt>
+            <dd>{{ selectedLog.source }}</dd>
           </div>
         </dl>
         <x-divider class="my-5" />
