@@ -127,9 +127,9 @@ enum QuoteTypes: string
 
     public static function getIdFromValue(string $value): ?int
     {
-        // Normalize the value - handle "Cyber Insurance" product name
+        // Normalize the value - handle "Cyber Insurance" product name using TeamNameEnum constant
         $normalizedValue = match (ucfirst(trim($value))) {
-            'Cyber Insurance' => 'Cyber',
+            TeamNameEnum::CYBER => QuoteTypes::CYBER->value,
             default => ucfirst(trim($value)),
         };
 
