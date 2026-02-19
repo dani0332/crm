@@ -204,6 +204,32 @@ class Kernel extends ConsoleKernel
             default: fn ($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
             environments: ['staging' => fn ($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
         );
+
+        $this->scheduleWithEnvironment(
+            $schedule,
+            'policy-issuance-automation:run',
+            default: fn ($event) => $event->timezone('Asia/Dubai')->everyThreeMinutes()->onOneServer()->withoutOverlapping(4),
+            // TODO: check before STAGING
+            environments: [
+                'test' => fn ($event) => $event->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4),
+                'development' => fn ($event) => $event->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4),
+                'uat' => function ($event) {
+                    $environment = app()->environment();
+                    LoggerService::info("policy-issuance-automation:run skipped on {$environment}");
+                    return $event->skip(fn () => true);
+                },
+                'dev01' => function ($event) {
+                    $environment = app()->environment();
+                    LoggerService::info("policy-issuance-automation:run skipped on {$environment}");
+                    return $event->skip(fn () => true);
+                },
+                'dev02' => function ($event) {
+                    $environment = app()->environment();
+                    LoggerService::info("policy-issuance-automation:run skipped on {$environment}");
+                    return $event->skip(fn () => true);
+                },
+            ]
+        );
     }
 
     /**
