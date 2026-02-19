@@ -164,6 +164,12 @@ class NonMotorCQFRenewalExecutionService
         ];
 
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::NON_MOTOR_CQF_RENEWALS);
+        LoggerService::info('Processing non-motor CQF renewal quote', [
+            'quoteId' => $quote->id,
+            'quoteType' => $quoteType->value,
+            'renewalsUploadLeadsId' => $renewalsUploadLeads->id,
+            'renewalDaysThreshold' => $renewalDaysThreshold,
+        ]);
 
         try {
             $context = new CQFRenewalContext(
@@ -281,7 +287,7 @@ class NonMotorCQFRenewalExecutionService
             QuoteTypes::PET => ['petQuote', 'petQuote.petQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::TRAVEL => ['travelQuote', 'travelQuote.travelQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::LIFE => ['lifeQuote', 'lifeQuote.lifeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
-            QuoteTypes::SAVINGS => ['savingsQuote', 'savingsQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::SAVINGS => ['savingsQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::CYCLE => ['cycleQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::YACHT => ['yachtQuote', 'yachtQuote.yachtQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::JETSKI => ['jetskiQuote', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
