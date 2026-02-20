@@ -974,6 +974,15 @@ class ClaimsService extends BaseService
         ]);
 
         $canTrigger = true;
+        
+        if (! $claimRequest->isCarOrBikeLOB()) {
+            LoggerService::info(' Skipping Bird claims flow: claim is not a car or bike', extra: [
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_code' => $claimRequest->code,
+            ]);
+            
+            $canTrigger = false;
+        }
 
         if (! $claimRequest->manager) {
             LoggerService::info(' Skipping Bird claims flow: claim has no manager', extra: [
