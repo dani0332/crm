@@ -42,10 +42,10 @@ jobs:
         run: php artisan config:clear || true
 
       - name: Run Tests
-        run: vendor/bin/pest
+        run: composer test --parallel --compact
 
       - name: Run Pint Fix
-        run: composer pint:fix
+        run: composer pint:fix --dirty
       - name: Fetch PR branch only
         run: |
           git fetch origin \
