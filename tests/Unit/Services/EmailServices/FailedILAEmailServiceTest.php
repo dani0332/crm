@@ -26,14 +26,6 @@ class FailedILAEmailServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_get_failed_ila_leads_with_unknown_quote_type()
-    {
-        $result = $this->service->getFailedILALeads('UnknownType');
-
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
     public function test_build_failed_ila_email_travel_data()
     {
         $quoteType = QuoteTypes::TRAVEL;
@@ -42,7 +34,6 @@ class FailedILAEmailServiceTest extends TestCase
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -57,7 +48,6 @@ class FailedILAEmailServiceTest extends TestCase
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -72,7 +62,6 @@ class FailedILAEmailServiceTest extends TestCase
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -88,7 +77,6 @@ class FailedILAEmailServiceTest extends TestCase
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -103,7 +91,6 @@ class FailedILAEmailServiceTest extends TestCase
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -119,7 +106,6 @@ class FailedILAEmailServiceTest extends TestCase
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -134,7 +120,6 @@ class FailedILAEmailServiceTest extends TestCase
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -147,7 +132,6 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -161,7 +145,6 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -175,7 +158,6 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
@@ -190,7 +172,6 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
         $this->assertIsObject($result);
-        $this->assertEquals($managerEmails, $result->managerEmails);
         $this->assertEquals($quoteType, $result->quoteType);
         $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
         $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);

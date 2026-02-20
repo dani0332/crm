@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             QuoteStatusSeeder::class,
             LookupSeeder::class,
             SavingsQuoteDataSeeder::class,
+            CyberQuoteDataSeeder::class,
+            CyberLeadAllocationSeeder::class,
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
@@ -30,7 +32,7 @@ class DatabaseSeeder extends Seeder
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
-            AiAdvisorSeeder::class,
+            // AiAdvisorSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             CarGIGVehicleTransactionDriverDetailsForAMLSeeder::class,
@@ -47,8 +49,10 @@ class DatabaseSeeder extends Seeder
             CarAdditionalDetailsForSukoonSeeder::class,
             QICTokioLookupSeeder::class,
             DocRequiredForPolicySendSeeder::class,
+            SendUpdateSeederForCyber::class,
             BranchSeeder::class,
             BranchOverrideConfigSeeder::class,
+            SetPcpTeamAllocationThresholdDisabledSeeder::class,
         ]);
     }
 }

@@ -8,9 +8,11 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Traits\Logable;
+use App\Traits\SpatieActivityLog;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -27,6 +29,7 @@ class User extends Authenticatable implements AuditableContract
     use Impersonate;
     use Logable;
     use Notifiable;
+    use SpatieActivityLog;
 
     /**
      * The attributes that are mass assignable.
@@ -350,6 +353,14 @@ class User extends Authenticatable implements AuditableContract
     }
 
     /**
+     * Get all buy lead requests created by this user
+     */
+    public function buyLeadRequests(): HasMany
+    {
+        return $this->hasMany(BuyLeadRequest::class);
+    }
+
+    /**
      * @return mixed
      */
     public function scopeActiveUser($query)
@@ -374,7 +385,8 @@ class User extends Authenticatable implements AuditableContract
      */
     public function managers()
     {
-        return $this->belongsToMany(User::class, 'user_manager', 'user_id', 'manager_id')->select(['user_id', 'name', 'email']);
+        return $this->belongsToMany(User::class, 'user_manager', 'user_id', 'manager_id')
+            ->select(['users.id', 'users.name', 'users.email']);
     }
 
     public function sessions()

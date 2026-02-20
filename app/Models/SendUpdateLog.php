@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Traits\SpatieActivityLog;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +14,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
-    use Auditable;
+    use Auditable, HasFactory, SpatieActivityLog;
 
     protected $guarded = [];
     protected $casts = [
@@ -95,5 +97,10 @@ class SendUpdateLog extends Model implements AuditableContract
     public function personalQuote()
     {
         return $this->belongsTo(PersonalQuote::class, 'personal_quote_id', 'id');
+    }
+
+    public function epLogs(): MorphMany
+    {
+        return $this->morphMany(EpLog::class, 'loggable');
     }
 }

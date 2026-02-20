@@ -13,6 +13,7 @@ services:
       - DOPPLER_TOKEN
     ports:
       - '${WEB_PORT}:443'
+
     volumes:
       - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs
       - .:/var/www/html

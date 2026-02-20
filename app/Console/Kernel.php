@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\ActivityLogCleanupCommand;
 use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
@@ -52,6 +53,7 @@ class Kernel extends ConsoleKernel
         PolicyIssuanceDataCleanUpCommand::class,
         PolicyIssuanceMarkFailedCommand::class,
         PolicyBulkSendDocuments::class,
+        ActivityLogCleanupCommand::class,
     ];
 
     /**
@@ -68,6 +70,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-payment-email-to-advisor:cron')->timezone('Asia/Dubai')->dailyAt('12:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('PaymentExpireNotification:cron')
             ->timezone('Asia/Dubai')
@@ -109,11 +112,13 @@ class Kernel extends ConsoleKernel
         $schedule->command('RetryAllocation:cron --quoteType=Pet')->name('retry_allocation:cron:pet')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('RetryAllocation:cron --quoteType=Yacht')->name('retry_allocation:cron:yacht')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('RetryAllocation:cron --quoteType=Savings')->name('retry_allocation:cron:savings')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Cyber')->name('retry_allocation:cron:cyber')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
 
+        $schedule->command('activitylog:cleanup')->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Car')->name('send-failed-ila-leads:cron:car')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Bike')->name('send-failed-ila-leads:cron:bike')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Health')->name('send-failed-ila-leads:cron:health')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();

@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class PermissionSeeder extends Seeder
@@ -43,6 +45,32 @@ class PermissionSeeder extends Seeder
                     'updated_at' => now(),
                 ]
             );
+        }
+
+        $this->addBuyLeadsAdminPermission();
+    }
+
+    private function addBuyLeadsAdminPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::BUY_LEADS_ADMIN,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    info("Permission {$permission->name} assigned to role {$role->name}");
+                } else {
+                    info("Role {$role->name} already has permission {$permission->name}");
+                }
+            }
         }
     }
 }

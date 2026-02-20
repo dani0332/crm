@@ -323,6 +323,7 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
             quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
+            quoteTypeCode::CYBER => ! Auth::user()->hasRole(RolesEnum::CyberAdvisor),
         ];
 
         return [
@@ -416,6 +417,7 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
             quoteTypeCode::SAVINGS => PermissionsEnum::SAVINGS_CONVERSION_REPORT,
+            quoteTypeCode::CYBER => PermissionsEnum::CYBER_CONVERSION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {

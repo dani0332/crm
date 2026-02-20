@@ -122,7 +122,6 @@ class HandleInertiaRequests extends Middleware
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'pusherCluster' => config('constants.VITE_PUSHER_APP_CLUSTER'),
@@ -134,7 +133,7 @@ class HandleInertiaRequests extends Middleware
             'amlStatusEnum' => AMLStatusCode::asArray(),
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
-            'authorisePaymentCount' => Cache::remember("shared_authorisepayment_count_{$authID}", now()->addMinutes(5), fn () => app(PaymentRepository::class)->getAuthorisePaymentCount()),
+            'authorisePaymentCount' => fn () => app(PaymentRepository::class)->getAuthorisePaymentCount(),
             'checkAuthUserRole' => checkAuthUserRole(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => Cache::remember('shared_payment_lookups', now()->addHour(), fn () => app(SplitPaymentService::class)->getPaymentLookups()),
@@ -164,6 +163,7 @@ class HandleInertiaRequests extends Middleware
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
             'genericRequestEnum' => GenericRequestEnum::asArray(),
             'collectionTypeEnum' => CollectionTypeEnum::asArray(),
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
         ];
     }
 
@@ -260,6 +260,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::UtmLeadsSalesReport,
+            PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
                 $section
@@ -328,6 +329,12 @@ class HandleInertiaRequests extends Middleware
                         'Group Medical',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD),
+                        'Cyber',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),
+                        fn ($s) => $s->attributes(['icon' => 'cyber'])
                     );
             });
         }
@@ -451,6 +458,7 @@ class HandleInertiaRequests extends Middleware
                 ->addIf((auth()->user()->can(PermissionsEnum::BikeQuotesList) || (userHasProduct(quoteTypeCode::Bike) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Bike Quotes', route('bike-quotes-list'), fn ($s) => $s->attributes(['icon' => 'bike']))
                 ->addIf((auth()->user()->can(PermissionsEnum::CycleQuotesList) || (userHasProduct(quoteTypeCode::Cycle) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cycle Quotes', route('cycle-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cycle']))
                 ->addIf((auth()->user()->can(PermissionsEnum::YachtQuotesList) || (userHasProduct(quoteTypeCode::Yacht) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Yacht Quotes', route('yacht-quotes-list'), fn ($s) => $s->attributes(['icon' => 'yacht']))
+                ->addIf((auth()->user()->can(PermissionsEnum::CYBER_QUOTES_LIST) || (userHasProduct(quoteTypeCode::CYBER) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cyber Quotes', route('cyber-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cyber']))
                 ->addIf((auth()->user()->can(PermissionsEnum::JetskiQuotesList) || (userHasProduct(quoteTypeCode::Jetski) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Jetski Quotes', route('jetski-quotes-list'), fn ($s) => $s->attributes(['icon' => 'jetski']));
         });
         /* personal quotes section end */
@@ -683,6 +691,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Activity Logs',
+                        route('admin.activity-logs.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::RoleList),
                         'Roles',
                         route('roles.index'),
@@ -725,12 +739,6 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
-                        'Process Tracker',
-                        route('process-tracker.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]),
                         'Allocation Audit',
                         route('admin.allocation-audit.index'),
@@ -740,6 +748,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_ADMIN),
+                        'Buy Lead Requests',
+                        route('admin.buy-leads.requests.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

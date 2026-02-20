@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Services\MetLife\MetLifeValidationService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -50,8 +51,9 @@ class DeleteQuoteDocumentRequest extends FormRequest
 
             $metLifeValidator = new MetLifeValidationService;
 
-            // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled
-            if ($metLifeValidator->shouldValidatePayment(request()->provider_code)) {
+            // Skip payment validation for MetLife (MTL) only if MetLife integration is enabled & also skip for Health quotes
+            if ($metLifeValidator->shouldValidatePayment(request()->provider_code)
+                && strtolower(request()->quoteType) != strtolower(QuoteTypes::HEALTH->value)) {
                 // validate if payment is authorized
                 if (empty($quote->payment) ||
                     ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&

@@ -22,7 +22,6 @@ const props = defineProps({
   memberCategories: Array,
   documentTypes: Object,
   quoteDocuments: Object,
-  storageUrl: String,
   realQuote: Object,
   isNegativeValue: Boolean,
   bookPolicyDetails: Array,
@@ -846,7 +845,6 @@ const cancelOptionsList = computed(() => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="props.storageUrl"
       :send-update="sendUpdateLog"
       :send-update-status-enum="props.sendUpdateStatusEnum"
       :insuranceProviders="props.insuranceProviders"
@@ -879,7 +877,6 @@ const cancelOptionsList = computed(() => {
     <QuoteDocuments
       :document-types="props.documentTypes"
       :quote-documents="props.quoteDocuments || []"
-      :storageUrl="props.storageUrl"
       :quote="props.realQuote"
       :expanded="true"
       :extras="{
@@ -930,6 +927,17 @@ const cancelOptionsList = computed(() => {
     />
 
     <OcrLogs
+      :type="modelClass"
+      :id="$page.props.sendUpdateLog.id"
+      :expanded="true"
+    />
+
+    <EpLogs
+      v-if="
+        props.sendUpdateLog?.category?.code == props.sendUpdateStatusEnum.CI ||
+        (props.sendUpdateLog?.category?.code == props.sendUpdateStatusEnum.EF &&
+          props.sendUpdateLog?.option?.code == props.sendUpdateStatusEnum.MPC)
+      "
       :type="modelClass"
       :id="$page.props.sendUpdateLog.id"
       :expanded="true"

@@ -14,6 +14,8 @@ class CoreSchema
         $this->ensureReferenceTables();
         $this->ensureApplicationStorageTable();
         $this->ensureTeamTables();
+        $this->ensureUserManagementTables();
+        $this->ensureQueueTables();
         $this->ensureLookupTables();
         $this->ensureCustomerTables();
         $this->ensureInsuranceProviderTables();
@@ -21,8 +23,10 @@ class CoreSchema
         $this->ensurePaymentTables();
         $this->ensureDocumentTables();
         $this->ensurePolicyIssuanceTables();
+        $this->ensureSendUpdateTables();
         $this->ensureSageTables();
         $this->ensureCustomerAdditionalContactTables();
+        $this->ensureEPLogsTables();
     }
 
     private function ensureAuditTables(): void
@@ -79,8 +83,20 @@ class CoreSchema
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->string('remember_token')->nullable();
+                $table->tinyInteger('is_active')->default(1);
                 $table->integer('status')->nullable();
                 $table->timestamp('logout_at')->nullable();
+                // User-management columns used in UserController@update and related flows.
+                $table->string('mobile_no')->nullable();
+                $table->string('landline_no')->nullable();
+                $table->string('calendar_link')->nullable();
+                $table->string('phone_calendar_link')->nullable();
+                $table->unsignedBigInteger('department_id')->nullable();
+                $table->unsignedBigInteger('rm_category_id')->nullable();
+                $table->text('additional_team_ids')->nullable();
+                $table->unsignedBigInteger('sub_team_id')->nullable();
+                // Used by CheckLastLoginMiddleware (last_login_check)
+                $table->timestamp('last_login')->nullable();
                 $table->timestamps();
             },
             'roles' => function (Blueprint $table) {
@@ -123,9 +139,32 @@ class CoreSchema
         SchemaUtils::ensureTables([
             'quote_type' => function (Blueprint $table) {
                 $table->id();
-                $table->string('short_code')->unique();
-                $table->string('code');
+                $table->string('code')->nullable();
+                $table->string('short_code')->nullable();
+                $table->string('text')->nullable();
                 $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            },
+            'quote_status' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->boolean('is_deleted')->default(0);
+                $table->string('uuid')->nullable();
+                $table->string('created_by')->nullable();
+                $table->string('updated_by')->nullable();
+                $table->softDeletes();
+                $table->timestamps();
+            },
+            'quote_status_map' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('quote_status_id');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->integer('sort_order')->nullable();
                 $table->timestamps();
             },
             'car_make' => function (Blueprint $table) {
@@ -176,6 +215,16 @@ class CoreSchema
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
+            'life_insurance_tenure' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->boolean('is_deleted')->default(0);
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            },
             'emirates' => function (Blueprint $table) {
                 $table->id();
                 $table->string('code')->nullable();
@@ -195,6 +244,45 @@ class CoreSchema
                 $table->string('text');
                 $table->timestamps();
                 $table->softDeletes();
+            },
+            'health_cover_for' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'health_lead_type' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'salary_band' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            },
+            'member_category' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            },
+            'tiers' => function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->decimal('min_price', 15, 2)->nullable();
+                $table->decimal('max_price', 15, 2)->nullable();
+                $table->decimal('cost_per_lead', 15, 2)->nullable();
+                $table->boolean('can_handle_null_value')->default(0);
+                $table->boolean('can_handle_ecommerce')->default(0);
+                $table->boolean('is_active')->default(1);
+                $table->boolean('can_handle_tpl')->default(0);
+                $table->boolean('is_tpl_renewals')->default(0);
+                $table->timestamps();
             },
         ]);
     }
@@ -219,6 +307,8 @@ class CoreSchema
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->string('insurer_aml_status')->nullable();
                 $table->timestamps();
             },
             'life_quote_request' => function (Blueprint $table) {
@@ -264,6 +354,7 @@ class CoreSchema
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->timestamp('payment_paid_at')->nullable(); // Required for payment approval updates
                 $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->timestamp('aig_flow_executed_at')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->string('previous_quote_policy_number')->nullable();
                 $table->date('previous_policy_expiry_date')->nullable();
@@ -278,11 +369,22 @@ class CoreSchema
                 $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
                 $table->string('insurer_quote_number')->nullable();
                 $table->string('registration_type')->nullable();
+                $table->string('vehicle_use')->nullable();
+                $table->string('driver_name')->nullable();
                 $table->integer('insurer_api_status_id')->nullable();
                 $table->integer('api_issuance_status_id')->nullable();
                 $table->boolean('policy_issuance_automation_enabled')->default(false);
                 $table->timestamps();
                 $table->softDeletes(); // BaseModel uses SoftDeletes trait
+            },
+            'quotes_flow_details' => function (Blueprint $table) {
+                $table->id();
+                $table->string('quote_uuid');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->integer('flow_type')->nullable();
+                $table->string('flow_id');
+                $table->timestamp('started_at')->nullable();
+                $table->timestamps();
             },
             'device_quote' => function (Blueprint $table) {
                 $table->id();
@@ -332,10 +434,211 @@ class CoreSchema
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
                 $table->string('plan_name')->nullable();
+                $table->string('repair_type')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->unsignedBigInteger('provider_id')->nullable();
                 $table->timestamps();
                 $table->softDeletes(); // BaseModel uses SoftDeletes trait
+            },
+            'car_plan_coverage' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->string('value')->nullable();
+                $table->string('value_ar')->nullable();
+                $table->string('type')->nullable();
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->timestamps();
+            },
+            'quote_batches' => function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->date('start_date')->nullable();
+                $table->date('end_date')->nullable();
+                $table->timestamps();
+            },
+            'renewal_batches' => function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->date('start_date')->nullable();
+                $table->date('end_date')->nullable();
+                $table->integer('month')->nullable();
+                $table->integer('year')->nullable();
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->timestamps();
+            },
+            'travel_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->string('uuid')->nullable();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('direction_code')->nullable();
+                $table->string('coverage_code')->nullable();
+                $table->string('policy_number')->nullable();
+                $table->string('source')->nullable();
+                $table->unsignedBigInteger('sub_source_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->unsignedBigInteger('previous_advisor_id')->nullable();
+                $table->unsignedBigInteger('previous_quote_id')->nullable();
+                $table->date('policy_expiry_date')->nullable();
+                $table->string('renewal_batch')->nullable();
+                $table->string('renewal_import_code')->nullable();
+                $table->string('previous_quote_policy_number')->nullable();
+                $table->decimal('previous_quote_policy_premium', 10, 2)->nullable();
+                $table->string('device')->nullable();
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->date('policy_start_date')->nullable();
+                $table->date('policy_issuance_date')->nullable();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->unsignedBigInteger('parent_duplicate_quote_id')->nullable();
+                $table->boolean('is_ecommerce')->default(0);
+                $table->date('policy_booking_date')->nullable();
+                $table->string('insurer_quote_number')->nullable();
+                $table->unsignedBigInteger('policy_issuance_status_id')->nullable();
+                $table->string('policy_issuance_status_other')->nullable();
+                $table->string('sic_advisor_requested')->nullable();
+                $table->string('aml_status')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->string('insurer_aml_status')->nullable();
+                $table->unsignedBigInteger('renewal_batch_id')->nullable();
+                $table->date('previous_policy_expiry_date')->nullable();
+                $table->date('dob')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->timestamp('transaction_approved_at')->nullable();
+                $table->string('assignment_type')->nullable();
+                $table->string('gender')->nullable();
+                $table->decimal('premium', 10, 2)->nullable();
+                $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->unsignedBigInteger('currently_located_in_id')->nullable();
+                $table->unsignedBigInteger('api_issuance_status_id')->nullable();
+                $table->unsignedBigInteger('insurer_api_status_id')->nullable();
+                $table->date('start_date')->nullable();
+                $table->date('end_date')->nullable();
+                $table->integer('days_cover_for')->nullable();
+                $table->string('lead_assignment_trigger')->nullable();
+                $table->unsignedBigInteger('parent_id')->nullable();
+                $table->unsignedBigInteger('branch_id')->nullable();
+                $table->boolean('is_branch_applicable')->default(0);
+                $table->timestamps();
+            },
+            'travel_plan' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->string('code')->nullable();
+                $table->unsignedBigInteger('provider_id')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'health_plan_type' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'health_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->string('uuid')->nullable();
+                $table->string('code')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('source')->nullable();
+                $table->unsignedBigInteger('sub_source_id')->nullable();
+                $table->string('health_team_type')->nullable();
+                $table->decimal('premium', 10, 2)->nullable();
+                $table->string('policy_number')->nullable();
+                $table->unsignedBigInteger('support_user_id')->nullable();
+                $table->unsignedBigInteger('marital_status_id')->nullable();
+                $table->unsignedBigInteger('quote_status_id')->nullable();
+                $table->unsignedBigInteger('advisor_id')->nullable();
+                $table->unsignedBigInteger('previous_advisor_id')->nullable();
+                $table->unsignedBigInteger('lead_type_id')->nullable();
+                $table->unsignedBigInteger('previous_quote_id')->nullable();
+                $table->unsignedBigInteger('salary_band_id')->nullable();
+                $table->unsignedBigInteger('member_category_id')->nullable();
+                $table->date('policy_expiry_date')->nullable();
+                $table->string('renewal_batch')->nullable();
+                $table->string('renewal_import_code')->nullable();
+                $table->string('previous_quote_policy_number')->nullable();
+                $table->decimal('previous_quote_policy_premium', 10, 2)->nullable();
+                $table->string('device')->nullable();
+                $table->unsignedBigInteger('plan_id')->nullable();
+                $table->date('policy_start_date')->nullable();
+                $table->date('policy_issuance_date')->nullable();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->unsignedBigInteger('currently_insured_with_id')->nullable();
+                $table->unsignedBigInteger('parent_duplicate_quote_id')->nullable();
+                $table->boolean('is_ecommerce')->default(0);
+                $table->decimal('price_starting_from', 10, 2)->nullable();
+                $table->date('policy_booking_date')->nullable();
+                $table->string('insurer_quote_number')->nullable();
+                $table->unsignedBigInteger('policy_issuance_status_id')->nullable();
+                $table->string('policy_issuance_status_other')->nullable();
+                $table->timestamp('stale_at')->nullable();
+                $table->string('sic_advisor_requested')->nullable();
+                $table->string('aml_status')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->string('insurer_aml_status')->nullable();
+                $table->unsignedBigInteger('renewal_batch_id')->nullable();
+                $table->date('previous_policy_expiry_date')->nullable();
+                $table->date('dob')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->timestamp('transaction_approved_at')->nullable();
+                $table->string('assignment_type')->nullable();
+                $table->string('gender')->nullable();
+                $table->unsignedBigInteger('emirate_of_your_visa_id')->nullable();
+                $table->timestamp('pec_marked_at')->nullable();
+                $table->unsignedBigInteger('branch_id')->nullable();
+                $table->boolean('is_branch_applicable')->default(0);
+                $table->timestamps();
+            },
+            'health_quote_request_detail' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('health_quote_request_id');
+                $table->timestamp('advisor_assigned_date')->nullable();
+                $table->unsignedBigInteger('lost_reason_id')->nullable();
+                $table->text('notes')->nullable();
+                $table->timestamps();
+            },
+            'lead_allocation' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->integer('auto_assignment_count')->default(0);
+                $table->integer('manual_assignment_count')->default(0);
+                $table->integer('max_capacity')->default(0);
+                $table->timestamps();
+            },
+            'vehicle_driver_details' => function (Blueprint $table) {
+                $table->id();
+                $table->morphs('quoteable'); // Creates quoteable_id and quoteable_type
+                $table->string('driver_eid_number')->nullable();
+                $table->string('driver_first_name')->nullable();
+                $table->string('driver_last_name')->nullable();
+                $table->date('driver_dob')->nullable();
+                $table->string('driver_gender')->nullable();
+                $table->string('driver_license_number')->nullable();
+                $table->string('driver_license_issue_place')->nullable();
+                $table->date('driver_license_issue_date')->nullable();
+                $table->date('driver_license_expiry_date')->nullable();
+                $table->string('vehicle_plate_number')->nullable();
+                $table->string('traffic_code_number')->nullable();
+                $table->string('vehicle_engine_number')->nullable();
+                $table->string('vehicle_color')->nullable();
+                $table->date('first_registration_date')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->string('vehicle_plate_code')->nullable();
+                $table->timestamps();
+            },
+            'cyber_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id')->nullable();
+                $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->unsignedBigInteger('coverage_id')->nullable();
+                $table->timestamps();
             },
         ]);
     }
@@ -358,13 +661,93 @@ class CoreSchema
             'teams' => function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
+                $table->string('code')->nullable();
+                // TeamHierarchyTrait::getAllProducts() relies on these columns.
+                $table->unsignedTinyInteger('type')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->unsignedBigInteger('parent_team_id')->nullable();
+                $table->decimal('min_price', 15, 2)->nullable();
+                $table->decimal('max_price', 15, 2)->nullable();
+                $table->boolean('allocation_threshold_enabled')->default(0);
                 $table->timestamps();
             },
             'user_team' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('user_id');
                 $table->unsignedBigInteger('team_id');
+                $table->unsignedBigInteger('manager_id')->nullable();
                 $table->timestamps();
+            },
+            'user_products' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('product_id');
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureUserManagementTables(): void
+    {
+        SchemaUtils::ensureTables([
+            // Pivot: user_manager (subordinates <-> managers)
+            'user_manager' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('manager_id');
+                $table->timestamps();
+            },
+            // Departments + pivot used by DepartmentService::syncUserDepartments()
+            'departments' => function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'user_departments' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('department_id');
+                $table->timestamps();
+            },
+            // Pivot used by User::businessTypes()->sync()
+            'business_type_of_insurance_user' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('business_type_of_insurance_id');
+                $table->timestamps();
+            },
+            // Used in update() (sync via inserts)
+            'user_products' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('product_id');
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureQueueTables(): void
+    {
+        SchemaUtils::ensureTables([
+            // QUEUE_CONNECTION=database in phpunit.xml expects these to exist.
+            'jobs' => function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->string('queue')->index();
+                $table->longText('payload');
+                $table->unsignedTinyInteger('attempts')->default(0);
+                $table->unsignedInteger('reserved_at')->nullable();
+                $table->unsignedInteger('available_at');
+                $table->unsignedInteger('created_at');
+            },
+            'failed_jobs' => function (Blueprint $table) {
+                $table->id();
+                $table->string('uuid')->unique();
+                $table->text('connection');
+                $table->text('queue');
+                $table->longText('payload');
+                $table->longText('exception');
+                $table->timestamp('failed_at')->useCurrent();
             },
         ]);
     }
@@ -372,6 +755,13 @@ class CoreSchema
     private function ensurePaymentTables(): void
     {
         SchemaUtils::ensureTables([
+            'payment_status' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->string('text_ar')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
             'payments' => function (Blueprint $table) {
                 $table->id();
                 $table->string('code')->nullable();
@@ -515,6 +905,7 @@ class CoreSchema
                 $table->id();
                 $table->string('emirates_id_number')->nullable();
                 $table->date('emirates_id_expiry_date')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
                 $table->date('dob')->nullable();
                 $table->string('code')->nullable();
                 $table->string('first_name')->nullable();
@@ -545,6 +936,63 @@ class CoreSchema
                 $table->string('mobile_no')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
+            },
+            'insured_kyc' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('insured_id');
+                $table->unsignedBigInteger('customer_details_id')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->string('email')->nullable();
+                $table->string('website')->nullable();
+                $table->string('legal_structure')->nullable();
+                $table->string('country_of_corporation')->nullable();
+                $table->string('registered_address')->nullable();
+                $table->string('communication_address')->nullable();
+                $table->string('country_of_residence')->nullable();
+                $table->string('place_of_birth')->nullable();
+                $table->string('residential_status')->nullable();
+                $table->string('residential_address')->nullable();
+                $table->string('id_type')->nullable();
+                $table->string('id_number')->nullable();
+                $table->date('id_issuance_date')->nullable();
+                $table->date('id_expiry_date')->nullable();
+                $table->string('issuance_place')->nullable();
+                $table->string('id_issuance_authority')->nullable();
+                $table->string('source_of_income')->nullable();
+                $table->string('employer_company_name')->nullable();
+                $table->string('job_title')->nullable();
+                $table->string('employment_sector')->nullable();
+                $table->string('position_in_company')->nullable();
+                $table->string('trade_license_no')->nullable();
+                $table->boolean('pep')->nullable();
+                $table->boolean('financial_sanctions')->nullable();
+                $table->boolean('dual_nationality')->nullable();
+                $table->string('customer_tenure')->nullable();
+                $table->string('transaction_volume')->nullable();
+                $table->string('transaction_activities')->nullable();
+                $table->string('transaction_pattern')->nullable();
+                $table->string('premium_tenure')->nullable();
+                $table->string('mode_of_contact')->nullable();
+                $table->string('mode_of_delivery')->nullable();
+                $table->string('risk_score')->nullable();
+                $table->boolean('in_sanction_list')->nullable();
+                $table->boolean('deal_sanction_list')->nullable();
+                $table->boolean('is_operation_high_risk')->nullable();
+                $table->boolean('is_partner')->nullable();
+                $table->boolean('in_adverse_media')->nullable();
+                $table->boolean('is_owner_pep')->nullable();
+                $table->boolean('is_controlling_pep')->nullable();
+                $table->boolean('is_sanction_match')->nullable();
+                $table->boolean('in_fatf')->nullable();
+                $table->string('industry_type')->nullable();
+                $table->string('manager_name')->nullable();
+                $table->string('manager_nationality')->nullable();
+                $table->date('manager_dob')->nullable();
+                $table->string('manager_position')->nullable();
+                $table->boolean('is_owner_high_risk')->nullable();
+                $table->timestamps();
             },
             'customer_insured' => function (Blueprint $table) {
                 $table->id();
@@ -588,9 +1036,24 @@ class CoreSchema
                 $table->string('watermarked_doc_url')->nullable();
                 $table->string('document_category')->nullable();
                 $table->string('insurer_document_link')->nullable();
+                $table->boolean('is_ocr_processed')->default(false);
+                $table->unsignedBigInteger('quote_id')->nullable();
                 $table->morphs('quote_documentable'); // Creates quote_documentable_id and quote_documentable_type
                 $table->timestamps();
                 $table->softDeletes();
+            },
+            'document_types' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->unique();
+                $table->string('text');
+                $table->text('description')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->boolean('receive_from_customer')->default(0);
+                $table->unsignedBigInteger('quote_type_id')->nullable();
+                $table->string('registration_type')->nullable();
+                $table->string('vehicle_use')->nullable();
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
             },
             'generic_document_types' => function (Blueprint $table) {
                 $table->id();
@@ -624,15 +1087,24 @@ class CoreSchema
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text')->nullable();
+                $table->string('text_lms')->nullable();
                 $table->boolean('is_active')->default(1);
+                $table->boolean('is_deleted')->default(0);
                 $table->unsignedBigInteger('payment_gateway_id')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
+            },
+            'insurance_provider_quote_type' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('insurance_provider_id');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->timestamps();
             },
             'business_type_of_insurance' => function (Blueprint $table) {
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text');
+                $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
         ]);
@@ -643,7 +1115,7 @@ class CoreSchema
         SchemaUtils::ensureTables([
             'policy_issuance' => function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('insurance_provider_id');
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
                 $table->string('model_type');
                 $table->unsignedBigInteger('model_id');
                 $table->string('quote_type');
@@ -652,20 +1124,38 @@ class CoreSchema
                 $table->text('message')->nullable();
                 $table->timestamps();
             },
-            'policy_issuance_log' => function (Blueprint $table) {
+            'policy_issuance_logs' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('policy_issuance_id');
+                $table->string('model_type')->nullable();
+                $table->unsignedBigInteger('model_id')->nullable();
                 $table->string('step')->nullable();
                 $table->string('status')->nullable();
-                $table->text('request_payload')->nullable();
-                $table->text('response_payload')->nullable();
-                $table->string('api_url')->nullable();
+                $table->text('payload')->nullable();
+                $table->text('response')->nullable();
+                $table->string('endPoint')->nullable();
                 $table->timestamps();
             },
             'policy_issuance_status' => function (Blueprint $table) {
                 $table->id();
                 $table->string('name')->nullable();
                 $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureSendUpdateTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'send_update_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('quote_uuid')->nullable();
+                $table->unsignedBigInteger('quote_type_id');
+                $table->string('status')->nullable();
+                $table->unsignedBigInteger('category_id')->nullable();
+                $table->unsignedBigInteger('option_id')->nullable();
                 $table->timestamps();
             },
         ]);
@@ -710,6 +1200,22 @@ class CoreSchema
                 $table->string('value')->nullable();
                 $table->boolean('wa_opt_in')->default(0);
                 $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureEPLogsTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'ep_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('embedded_transaction_id');
+                $table->string('event');
+                $table->text('values')->nullable();
+                $table->morphs('loggable');
+                $table->timestamps();
+
+                $table->index('embedded_transaction_id');
             },
         ]);
     }

@@ -26,6 +26,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\DocumentTypeRepository;
@@ -90,7 +91,11 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        if (strtolower($quoteType) === GenericRequestEnum::SEND_UPDATE_AS_QUOTE_TYPE) {
+            $model = $nameSpace.GenericRequestEnum::SEND_UPDATE_LOG;
+        } else {
+            $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        }
 
         if (! class_exists($model)) {
             return false;
@@ -108,7 +113,11 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        if (strtolower($quoteType) === GenericRequestEnum::SEND_UPDATE_AS_QUOTE_TYPE) {
+            $model = $nameSpace.GenericRequestEnum::SEND_UPDATE_LOG;
+        } else {
+            $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        }
 
         if (! class_exists($model)) {
             return false;
@@ -121,13 +130,16 @@ trait GenericQueriesAllLobs
 
     /**
      * @return false|mixed
-     *                     TODO :
      */
     public function getSelectedQuoteObjectBy($quoteType, $id, $column = 'id')
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        if (strtolower($quoteType) === GenericRequestEnum::SEND_UPDATE_AS_QUOTE_TYPE) {
+            $model = $nameSpace.GenericRequestEnum::SEND_UPDATE_LOG;
+        } else {
+            $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        }
 
         if (! class_exists($model)) {
             return false;
@@ -351,6 +363,8 @@ trait GenericQueriesAllLobs
         }
         // Check if this is an Abu Dhabi quote lead
         $bookPolicyDetails['isAbuDhabiBranch'] = $isAbuDhabiBranch;
+
+        $bookPolicyDetails['isParentPolicyCancellationReissuedPending'] = $this->isParentPolicyCancellationReissuedPending($record, $bookPolicyDetails['text']);
 
         return $bookPolicyDetails;
     }
@@ -941,5 +955,37 @@ trait GenericQueriesAllLobs
         $nationalityRecord = Nationality::find($nationalityId);
 
         return $nationalityRecord?->text;
+    }
+
+    /**
+     * Check if the parent policy is created from Cancellation from Inception and Reissuance.
+     * if the policy created via duplicate quote functionality then we don't need to disable CTA.
+     *
+     * @param  object  $record
+     * @param  string  $text
+     * @return bool
+     */
+    public function isParentPolicyCancellationReissuedPending($record, $text)
+    {
+
+        $return = false;
+        if (
+            isset($record->parent_duplicate_quote_id) &&
+            $record->parent_duplicate_quote_id &&
+            str_starts_with($record->code, $record->parent_duplicate_quote_id) && // if pass it means the record is from CIR.
+            $text != SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT
+        ) {
+            $parentQuoteType = explode('-', $record->parent_duplicate_quote_id)[0];
+            $quoteType = QuoteType::where('short_code', strtoupper($parentQuoteType))->value('code') ?? null;
+            if (! $quoteType) {
+                return $return;
+            }
+            $quoteDetail = $this->getQuoteObjectBy(strtolower($quoteType), $record->parent_duplicate_quote_id, 'code');
+            if ($quoteDetail && $quoteDetail->quote_status_id !== QuoteStatusEnum::PolicyCancelledReissued) {
+                $return = true;
+            }
+        }
+
+        return $return;
     }
 }

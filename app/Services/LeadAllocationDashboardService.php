@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\Team;
@@ -26,7 +27,8 @@ class LeadAllocationDashboardService extends BaseService
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
 
-            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
+            $teamName = $this->getTeamName($quoteType);
+            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $teamName)->first();
             $advisorRoles = $quoteType->advisorRoles();
 
             if ($quoteType == QuoteTypes::SAVINGS) {
@@ -104,7 +106,10 @@ class LeadAllocationDashboardService extends BaseService
             ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
                 $q->where('quote_type_id', $quoteType->id());
             })
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->when($quoteType == QuoteTypes::GROUP_MEDICAL, function ($q) {
+                $q->whereNotNull('health_plan_type_id')
+                    ->whereNotNull('number_of_employees');
+            })->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY]);
     }
 
@@ -130,6 +135,14 @@ class LeadAllocationDashboardService extends BaseService
                 $query->where('code', $frequency->value);
             })
             ->count();
+    }
+
+    private function getTeamName(QuoteTypes $quoteType): string
+    {
+        return match ($quoteType) {
+            QuoteTypes::CYBER => TeamNameEnum::CYBER,
+            default => $quoteType->value,
+        };
     }
 
 }

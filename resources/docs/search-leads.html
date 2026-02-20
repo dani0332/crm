@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Leads - Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <span>Search Leads</span>
+      </nav>
+
+      <!-- Header -->
+      <header class="header">
+        <h1>🔍 Search Leads</h1>
+        <p>
+          Cross-LOB search for leads and send-update (endorsement) requests,
+          with role-based data scoping and export
+        </p>
+        <span class="status-badge">✓ Active Feature</span>
+      </header>
+
+      <!-- Overview -->
+      <section class="content-section">
+        <h2>❓ What is Search Leads?</h2>
+        <p>
+          <strong>Search Leads</strong> is a global search that lets authorised
+          users find leads (personal quotes) and send-update (endorsement)
+          requests across all lines of business. Results are filtered by the
+          current user’s role: advisors see only their own leads; managers see
+          leads of advisors in their team; users with the search permission see
+          data according to the same rules. Search runs against the
+          <strong>read replica</strong> (readonly_db middleware) to avoid
+          overloading the primary database.
+        </p>
+        <div class="highlight">
+          <h4>💡 Two Modes</h4>
+          <p>
+            <strong>Lead List:</strong> Searches
+            <code>personal_quotes</code> (main leads). Columns include Ref-ID,
+            Private Client, First/Last Name, Company, Line of Business, Created
+            Date, Policy Expiry, Policy Number, Status.<br />
+            <strong>Send Update List:</strong> Searches
+            <code>send_update_logs</code> (endorsement requests). Same base
+            fields plus SU Ref-ID, Type, Sub type, Notes, Status. Toggle via the
+            "Lead List" / "Send Update List" button; the <code>list</code> query
+            parameter is <code>leads</code> or <code>endorsements</code>.
+          </p>
+        </div>
+      </section>
+
+      <!-- Permissions -->
+      <section class="content-section">
+        <h2>🔐 Permissions</h2>
+        <p>
+          Access to the Search Leads page and export is controlled by the
+          following permissions. The routes themselves do not enforce permission
+          middleware; they rely on the same auth middleware as the rest of the
+          app. The <strong>sidebar "Search" link</strong> is only shown when the
+          user has the required permission, so in practice only users with that
+          permission can reach the page.
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Permission</th>
+                <th>Constant</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Search (page access)</td>
+                <td><code>SEARCH_ALL_LEAD_LOB</code></td>
+                <td>
+                  <strong
+                    >Required to see the "Search" item in the main
+                    navigation.</strong
+                  >
+                  Without it, the user does not get a link to the search-leads
+                  page. Typically named "search-all-lead-lob" in the database.
+                </td>
+              </tr>
+              <tr>
+                <td>Export to Excel</td>
+                <td><code>DATA_EXTRACTION_SEARCH_ALL_LEADS</code></td>
+                <td>
+                  <strong
+                    >Required to see and use the "Export to Excel"
+                    button</strong
+                  >
+                  on the Search page. Export is only available when there are
+                  results. Typically named "data-extraction-search-all-leads".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Both permissions are often assigned together for roles that need full
+          search and export (e.g. in <code>RolePermissionSeeder</code>,
+          <code>searchAcrossLOBsPermissions</code> includes both). A user with
+          only <code>SEARCH_ALL_LEAD_LOB</code> can search and view results but
+          will not see the Export button.
+        </p>
+      </section>
+
+      <!-- Routes & Middleware -->
+      <section class="content-section">
+        <h2>📍 Routes & Middleware</h2>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>Endpoints</h4>
+            <ul>
+              <li>
+                <strong>GET /search-leads</strong> – Renders the Search page
+                (Inertia). Route name: <code>search-leads</code>. Query
+                parameters: all filter fields plus
+                <code>list</code> (leads|endorsements), <code>page</code>,
+                <code>sortBy</code>, <code>sortType</code>.
+              </li>
+              <li>
+                <strong>GET /search-all-export</strong> – Downloads an Excel
+                file of the current search result (same query string as the
+                page). Route name: <code>search-export</code>. Uses
+                <code>ExportSearchLeadsOrEndorsementsRequest</code> for
+                validation.
+              </li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h4>Middleware</h4>
+            <ul>
+              <li>
+                Both routes are inside the <code>readonly_db</code> middleware
+                group (<code>SetReadDbConnection</code>). All queries run
+                against the read replica.
+              </li>
+              <li>
+                No permission middleware is applied on the controller;
+                visibility is via the sidebar (SEARCH_ALL_LEAD_LOB) and Export
+                button (DATA_EXTRACTION_SEARCH_ALL_LEADS).
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Search Behaviour -->
+      <section class="content-section">
+        <h2>⚙️ Search Behaviour</h2>
+        <h3>When Results Are Returned</h3>
+        <p>
+          <code>SearchService::getSearchLeads()</code> returns
+          <strong>no data</strong> when
+          <code>request()->except('list')</code> is empty—i.e. when the only
+          query parameter is <code>list</code> (or there are no query
+          parameters). So the first load of the page (no filters) shows an empty
+          table. The frontend requires
+          <strong>at least one filter</strong> before running a search and shows
+          a validation message: "Please select at least one filter before
+          performing the search."
+        </p>
+        <h3>Authorization (Who Sees What)</h3>
+        <p>
+          After applying filters, the service applies role-based scoping in
+          <code>applyAuthorizationFilters()</code>:
+        </p>
+        <ul>
+          <li>
+            <strong>Advisor role</strong> (e.g. CarAdvisor, HealthAdvisor, …):
+            only leads where <code>personal_quotes.advisor_id</code> = current
+            user id.
+          </li>
+          <li>
+            <strong>Manager role</strong> (e.g. CAR_MANAGER, HEALTH_MANAGER, …):
+            only leads where <code>advisor_id</code> is in the list of advisors
+            under that manager (via
+            <code>TeamHierarchyTrait::getAdvisorsByManagers()</code>).
+          </li>
+          <li>
+            Users who are neither advisor nor manager see no extra restriction
+            (e.g. admin / roles with SEARCH_ALL_LEAD_LOB may see a broader set
+            depending on joins).
+          </li>
+        </ul>
+        <h3>Universal Search Flag</h3>
+        <p>
+          The frontend checks <code>isUniversalSearchEnabled</code> (from
+          Application Storage key <code>ENABLE_UNIVERSAL_SEARCH</code>). If it
+          is disabled and the user does <strong>not</strong> have the
+          <strong>Engineering</strong> role, the frontend blocks submit and
+          shows: "Search is disabled as data migration is not completed yet!".
+          So search can be turned off for most users until migration is
+          complete; only Engineering can still run searches when the flag is
+          off.
+        </p>
+        <h3>Troubleshooting</h3>
+        <ul>
+          <li>
+            <strong>No results / empty table:</strong> Ensure at least one
+            filter is set; if using filters that trigger the date requirement
+            (e.g. quote status, line of business), set date type and date range.
+          </li>
+          <li>
+            <strong>Search blocked:</strong> If "Search is disabled as data
+            migration is not completed yet!" appears, either enable
+            <code>ENABLE_UNIVERSAL_SEARCH</code> in Application Storage or
+            ensure the user has the Engineering role.
+          </li>
+          <li>
+            <strong>Fewer results than expected (advisor/manager):</strong>
+            Advisors see only leads where they are the advisor; managers see
+            only leads of advisors in their team. Users with no advisor/manager
+            role have no extra scope.
+          </li>
+          <li>
+            <strong>Export disabled:</strong> Export button is shown only with
+            <code>DATA_EXTRACTION_SEARCH_ALL_LEADS</code> and when the current
+            result set has at least one row.
+          </li>
+        </ul>
+      </section>
+
+      <!-- Filters -->
+      <section class="content-section">
+        <h2>🔎 Available Filters</h2>
+        <p>
+          All filters are optional, but at least one must be set to run a
+          search. For most filters, if <code>code</code> (Ref-ID) is set, some
+          other filters are skipped (exact Ref-ID search). When certain filters
+          are used (e.g. insured name, quote status, line of business), the
+          frontend and export validation require a
+          <strong>date type</strong> and <strong>date range</strong>.
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>list</code></td>
+                <td>
+                  <code>leads</code> or <code>endorsements</code> (required for
+                  export).
+                </td>
+              </tr>
+              <tr>
+                <td><code>code</code></td>
+                <td>
+                  Ref-ID (exact match on <code>personal_quotes.code</code>).
+                  When set, many other filters are not applied.
+                </td>
+              </tr>
+              <tr>
+                <td><code>insured_name</code></td>
+                <td>
+                  FULLTEXT search on customer <code>insured_first_name</code>,
+                  <code>insured_last_name</code> (join on customer).
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <code>member_first_name</code>, <code>member_last_name</code>
+                </td>
+                <td>
+                  Member name; FULLTEXT on
+                  <code>customer_members.first_name</code>,
+                  <code>last_name</code>. Requires
+                  <code>line_of_business</code> (join depends on LOB).
+                </td>
+              </tr>
+              <tr>
+                <td><code>company_name</code></td>
+                <td>
+                  FULLTEXT on <code>insured.company_name</code> (join on
+                  insured).
+                </td>
+              </tr>
+              <tr>
+                <td><code>policy_number</code></td>
+                <td>
+                  Exact match on <code>personal_quotes.policy_number</code>.
+                </td>
+              </tr>
+              <tr>
+                <td><code>mobile_no</code></td>
+                <td>Exact match on <code>personal_quotes.mobile_no</code>.</td>
+              </tr>
+              <tr>
+                <td><code>email</code></td>
+                <td>Exact match on <code>personal_quotes.email</code>.</td>
+              </tr>
+              <tr>
+                <td><code>su_code</code></td>
+                <td>
+                  Send Update ref (exact match on
+                  <code>send_update_logs.code</code>). For lead list, joins
+                  <code>send_update_logs</code>.
+                </td>
+              </tr>
+              <tr>
+                <td><code>date_type</code> + <code>date_range</code></td>
+                <td>
+                  Date type: created_at, payment_due_date, payment_date,
+                  transaction_approved_at, policy_booking_date,
+                  policy_start_date, policy_expiry_date. Range: [start, end].
+                  Payment dates join payments (and payment_status_log for
+                  payment_date).
+                </td>
+              </tr>
+              <tr>
+                <td><code>quote_status</code></td>
+                <td>Array; <code>personal_quotes.quote_status_id</code> IN.</td>
+              </tr>
+              <tr>
+                <td><code>payment_status</code></td>
+                <td>
+                  Array; joins payments and filters by
+                  <code>payments.payment_status_id</code>.
+                </td>
+              </tr>
+              <tr>
+                <td><code>line_of_business</code></td>
+                <td>Array; <code>personal_quotes.quote_type_id</code> IN.</td>
+              </tr>
+              <tr>
+                <td><code>business_insurance_type</code></td>
+                <td>
+                  Array;
+                  <code>personal_quotes.business_type_of_insurance_id</code> IN.
+                </td>
+              </tr>
+              <tr>
+                <td><code>currently_insured_with</code></td>
+                <td>
+                  Array; <code>personal_quotes.insurance_provider_id</code> IN.
+                </td>
+              </tr>
+              <tr>
+                <td><code>department</code></td>
+                <td>
+                  Array; join users as advisor, filter by
+                  <code>advisor.department_id</code> IN.
+                </td>
+              </tr>
+              <tr>
+                <td><code>advisors</code></td>
+                <td>Array; <code>personal_quotes.advisor_id</code> IN.</td>
+              </tr>
+              <tr>
+                <td><code>support_users</code></td>
+                <td>Array; <code>personal_quotes.support_user_id</code> IN.</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>insurer_tax_invoice_number</code>,
+                  <code>insurer_commission_tax_invoice_number</code>
+                </td>
+                <td>
+                  Tax invoice numbers (payments or send_update_logs depending on
+                  list).
+                </td>
+              </tr>
+              <tr>
+                <td><code>update_status</code></td>
+                <td>
+                  Send Update list only; <code>send_update_logs.status</code> IN
+                  (formatted uppercase with underscores).
+                </td>
+              </tr>
+              <tr>
+                <td><code>send_update_type</code></td>
+                <td>
+                  Send Update list only;
+                  <code>send_update_logs.category_id</code> IN.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Sorting: <code>sortBy</code> (default <code>updated_at</code>) and
+          <code>sortType</code> (default <code>desc</code>) are applied on the
+          base table (<code>personal_quotes</code> or
+          <code>send_update_logs</code>). Pagination: 15 per page,
+          <code>page</code> in query string.
+        </p>
+        <h3>Auto date-range requirement</h3>
+        <p>
+          When any of the following filters are used (without
+          <code>company_name</code>), the frontend and export validation require
+          <strong>date type</strong> and <strong>date range</strong>:
+          insured_name, member_first_name, member_last_name, quote_status,
+          payment_status, line_of_business, business_insurance_type,
+          currently_insured_with, department, advisors, update_status. Otherwise
+          the user sees "Date range is required for the selected filters" and
+          export validation fails with the same message.
+        </p>
+      </section>
+
+      <!-- Export -->
+      <section class="content-section">
+        <h2>📤 Export</h2>
+        <p>
+          The Export button is visible only when the user has
+          <code>DATA_EXTRACTION_SEARCH_ALL_LEADS</code> and there are results.
+          Clicking it opens <code>/search-all-export</code> with the same query
+          string as the current page, which triggers a download of an Excel file
+          (<code>SearchLeadsEndorsementsExport</code>). File name:
+          <code>InsuranceMarket.ae™ Lead List &lt;date&gt;.xlsx</code> or
+          <code>InsuranceMarket.ae™ Send Update List &lt;date&gt;.xlsx</code>.
+        </p>
+        <p>
+          <code>ExportSearchLeadsOrEndorsementsRequest</code> validates:
+          <code>list</code> required; at least one filter (besides
+          list/page/sortBy/sortType) required; when date-type filters are
+          required by the chosen filters, <code>date_type</code> and
+          <code>date_range</code> must be present. Export uses the same
+          <code>getSearchLeads($isEndorsementList, true)</code> so it returns
+          all matching rows (no pagination) with extra columns (e.g. advisor
+          name, support user name, insurance provider, PCP tag, payment total).
+        </p>
+        <p>
+          After building the export data (on the read replica), the controller
+          calls <code>DB::setDefaultConnection('mysql')</code> and
+          <code>CentralService::generateExportLogs()</code> so that export
+          activity is logged on the primary database. The file name date format
+          is <code>config('constants.DATE_DISPLAY_FORMAT')</code>.
+        </p>
+      </section>
+
+      <!-- Implementation Notes -->
+      <section class="content-section">
+        <h2>📂 Implementation Notes</h2>
+        <ul>
+          <li>
+            <strong>Controller:</strong>
+            <code>App\Http\Controllers\V2\SearchController</code> –
+            <code>index()</code> (Inertia Search/Index),
+            <code>searchExport()</code> (Excel download).
+          </li>
+          <li>
+            <strong>Service:</strong>
+            <code
+              >App\Services\SearchService::getSearchLeads($isEndorsementList,
+              $isExport)</code
+            >
+            – builds query from request, applies joins/filters, authorization,
+            sort, then paginate (15) or get all for export.
+          </li>
+          <li>
+            <strong>Frontend:</strong>
+            <code>resources/js/inertia/Pages/Search/Index.vue</code> – filters,
+            Lead vs Send Update toggle, table, export button (permission-gated),
+            URL state via <code>useUrlSearchParams('history')</code>.
+          </li>
+          <li>
+            <strong>Export class:</strong>
+            <code>App\Exports\SearchLeadsEndorsementsExport</code>.
+          </li>
+          <li>
+            Base table: <code>personal_quotes</code> (lead list) or
+            <code>send_update_logs</code> (endorsement list); joins include
+            quote_type, quote_status, customer, business_type_of_insurance, and
+            conditionally insured, payments, users, etc.
+          </li>
+        </ul>
+      </section>
+
+      <!-- Summary -->
+      <section class="content-section">
+        <h2>✅ Summary</h2>
+        <ul class="features">
+          <li>
+            <strong>Search Leads</strong> = global search across leads
+            (personal_quotes) or send-update logs (endorsements), with
+            role-based scoping (advisor / manager) and read-replica usage.
+          </li>
+          <li>
+            <strong>Permissions:</strong> <code>SEARCH_ALL_LEAD_LOB</code> to
+            see the Search nav link and use the page;
+            <code>DATA_EXTRACTION_SEARCH_ALL_LEADS</code> to see and use Export
+            to Excel.
+          </li>
+          <li>
+            <strong>Routes:</strong> GET <code>search-leads</code> (page), GET
+            <code>search-all-export</code> (Excel); both under
+            <code>readonly_db</code> middleware.
+          </li>
+          <li>
+            <strong>Behaviour:</strong> No params ⇒ empty result; at least one
+            filter required (frontend validation); optional Universal Search
+            flag (ENABLE_UNIVERSAL_SEARCH) blocks non-Engineering users when
+            disabled.
+          </li>
+          <li>
+            <strong>Filters:</strong> Ref-ID, insured/member/company name,
+            policy number, contact, dates, statuses, LOB, department, advisors,
+            support users, tax invoice numbers, and (for endorsements) update
+            status and send update type.
+          </li>
+        </ul>
+      </section>
+
+      <div class="footer">
+        <p><strong>Search Leads Documentation</strong></p>
+        <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+      </div>
+    </div>
+  </body>
+</html>

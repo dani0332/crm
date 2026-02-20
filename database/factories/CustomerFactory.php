@@ -1,15 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Database\Factories;
 
 use App\Models\Customer;
+use App\Models\Nationality;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Customer>
- */
 class CustomerFactory extends Factory
 {
     protected $model = Customer::class;
@@ -38,8 +34,9 @@ class CustomerFactory extends Factory
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'email' => $this->faker->unique()->safeEmail(),
-            'mobile_no' => '+971'.$this->faker->numerify('#########'),
+            'mobile_no' => $this->faker->numerify('05########'),
             'dob' => $this->faker->date('Y-m-d', '-25 years'),
+            'nationality_id' => Nationality::factory(),
             'emirates_id_number' => '784-'.$this->faker->numerify('####').'-'.$this->faker->numerify('#######').'-'.$this->faker->randomDigit(),
             'created_at' => now(),
             'updated_at' => now(),

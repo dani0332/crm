@@ -92,9 +92,21 @@ class DocumentTypeCode extends Enum
     const PAYMENT_RECEIPT = 'SPD';
     const DRIVING_LICENSE = 'DL';
     const EMIRATES_ID = 'CEID';
+    const DRIVER_EMIRATES_ID = 'DRIVER_EID';
     const REGISTRATION_CARD_MULKIYA = 'CAR_MULKIY';
     const POLICY_CERTIFICATE = 'CPC';
     const POLICY_SCHEDULE = 'CPS';
+
+    // CYBER document types
+    const CYB_EID = 'CYB_EID';
+    const CYB_KYC = 'CYB_KYC';
+    const CYB_PC = 'CYB_PC';
+    const CYB_PS = 'CYB_PS';
+    const CYB_TI = 'CYB_TI';
+    const CYB_TIRBB = 'CYB_TIRBB';
+    const CYB_CYPDR = 'CYPDR';
+    const CYB_CPD = 'CPD';
+    const CYBER_DISCOUNT_PROOF = 'CYDPDR';
 
     // BAL
     const BAL = 'BAL';

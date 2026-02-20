@@ -453,7 +453,7 @@ class BorService
             // Handle previous document deletion if new file is uploaded
             $previousDoc = $borLog->document;
             if ($previousDoc && $previousDoc->doc_url && $file) {
-                \Illuminate\Support\Facades\Storage::disk('azureIM')->delete($previousDoc->doc_url);
+                \Illuminate\Support\Facades\Storage::disk('azureIMPrivate')->delete($previousDoc->doc_url);
                 $previousDoc->delete();
             }
 
@@ -588,14 +588,14 @@ class BorService
             ini_set('output_buffering', 0);
             ini_set('implicit_flush', 1);
             ini_set('zlib.output_compression', 0);
-            ini_set('max_execution_time', 600); // 10 minutes for SSE
+            ini_set('max_execution_time', 300); // 5 minutes for SSE
             ini_set('memory_limit', '256M');
 
             // Ignore user disconnect to continue processing
             ignore_user_abort(true);
 
             $lastDataHash = null;
-            $maxIterations = 200; // Maximum 10 minutes (200 * 3 seconds)
+            $maxIterations = 60; // Maximum 5 minutes (60 * 5 seconds)
             $iteration = 0;
 
             LoggerService::info('SSE BOR stream started', ['bor_ref_id' => $borRefId]);
@@ -712,7 +712,7 @@ class BorService
                 $iteration++;
 
                 // Use a shorter sleep with connection check
-                for ($i = 0; $i < 3; $i++) {
+                for ($i = 0; $i < 5; $i++) {
                     sleep(1);
                     // Quick connection check during sleep
                     if (connection_aborted()) {

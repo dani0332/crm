@@ -53,6 +53,7 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use PDF;
 
 class LifeQuoteService extends BaseService
@@ -90,15 +91,23 @@ class LifeQuoteService extends BaseService
         });
     }
 
-    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
+    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false, $requestParams = [])
     {
-        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest);
+        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest, $requestParams);
 
-        return ($isExportRequest) ? $query->get() : $query->simplePaginate(15)->withQueryString();
+        return ($isExportRequest) ? $query : $query->simplePaginate(15)->withQueryString();
     }
 
-    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false)
+    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false, $requestParams = [])
     {
+
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)->with([
             'advisor',
@@ -296,9 +305,6 @@ class LifeQuoteService extends BaseService
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
-            'height' => $data['height'],
-            'weight' => $data['weight'],
-            'bmi' => $data['bmi'],
             'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
@@ -313,6 +319,12 @@ class LifeQuoteService extends BaseService
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
             'additionalNotes' => $data['notes'] ?? null,
         ];
+
+        foreach (['height', 'weight', 'bmi'] as $field) {
+            if (isset($data[$field]) && $data[$field] !== null && is_numeric($data[$field])) {
+                $lifeQuote[$field] = $data[$field];
+            }
+        }
 
         LoggerService::info('saveLifeQuote: ', [
             'subSourceId' => $data['sub_source_id'] ?? null,
