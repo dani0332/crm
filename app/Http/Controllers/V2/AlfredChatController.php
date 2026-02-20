@@ -220,11 +220,18 @@ class AlfredChatController extends Controller
 
         $request->validate([
             'report' => 'required|string|in:'.InstantChatReportsEnum::DETAILED_REPORT.','.InstantChatReportsEnum::CONSOLIDATED_REPORT,
+            'recipientEmail' => 'sometimes|email',
+            'recipientName' => 'sometimes|string',
+            'user_id' => 'sometimes|integer',
             'created_at_start' => 'sometimes|date',
             'created_at_end' => 'sometimes|date|after_or_equal:created_at_start',
             'chat_initiated_at' => 'sometimes|array|size:2',
             'chat_initiated_at.0' => 'required_with:chat_initiated_at|date',
             'chat_initiated_at.1' => 'required_with:chat_initiated_at|date',
+            'filters' => 'sometimes|array',
+            'filters.chat_initiated_at' => 'sometimes|array|size:2',
+            'filters.chat_initiated_at.0' => 'required_with:filters.chat_initiated_at|date',
+            'filters.chat_initiated_at.1' => 'required_with:filters.chat_initiated_at|date',
         ]);
 
         try {
@@ -263,21 +270,45 @@ class AlfredChatController extends Controller
 
     private function prepareExportParams(Request $request): array
     {
-        $params = $request->all();
+        // Handle Bird payload structure where filters are nested
+        if ($request->has('filters') && is_array($request->filters)) {
+            // Extract filters from nested structure (Bird payload)
+            $params = $request->filters;
+            
+            // Add report and recipient info from root level
+            $params['report'] = $request->report;
+            $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
+            $params['recipientName'] = $request->recipientName ?? Auth::user()?->name ?? 'User';
+            
+            if ($request->has('user_id')) {
+                $params['user_id'] = $request->user_id;
+            }
+        } else {
+            // Handle direct payload structure (existing format)
+            $params = $request->all();
+            
+            $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
+            $params['recipientName'] = $request->recipientName ?? Auth::user()?->name ?? 'User';
 
-        $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
-        $params['recipientName'] = Auth::user()?->name ?? 'User';
+            if ($request->has('created_at_start') && $request->has('created_at_end')) {
+                $params['chat_initiated_at'] = [
+                    $request->created_at_start,
+                    $request->created_at_end,
+                ];
+            }
 
-        if ($request->has('created_at_start') && $request->has('created_at_end')) {
-            $params['chat_initiated_at'] = [
-                $request->created_at_start,
-                $request->created_at_end,
-            ];
+            if ($request->has('chat_initiated_at') && is_array($request->chat_initiated_at)) {
+                $params['chat_initiated_at'] = $request->chat_initiated_at;
+            }
         }
 
-        if ($request->has('chat_initiated_at') && is_array($request->chat_initiated_at)) {
-            $params['chat_initiated_at'] = $request->chat_initiated_at;
+        // Ensure report is set
+        if (! isset($params['report'])) {
+            $params['report'] = $request->report ?? InstantChatReportsEnum::DETAILED_REPORT;
         }
+
+        // Remove pagination and sorting params that shouldn't be in filters
+        unset($params['page'], $params['per_page'], $params['sortType']);
 
         return $params;
     }
