@@ -1,17 +1,26 @@
-name: Fix Code Style
+name: Code Quality & Build
 
 on:
-  push:
-    paths:
-      - '**/*.php' # Only run when PHP files change
+  pull_request:
+    branches:
+      - develop
+      - main
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  lint:
+  php-lint:
+    name: PHP Tests & Style
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout PR branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Get changed PHP files
         id: changed-files
@@ -53,8 +62,72 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: pint ${{ steps.changed-files.outputs.all_changed_files }}
 
-      - name: Commit linted files
+      - name: Commit Pint fixes
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'chore: apply pint fix'
+
+  build-assets:
+    name: JS/CSS Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: json, dom, curl, libxml, mbstring
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.18.x'
+          cache: 'yarn'
+
+      - name: Install JS dependencies and build
+        run: yarn && yarn lint --fix && yarn vite build && yarn vite build --config vite-worker.config.js
+
+      - name: Create Pull Request for built assets
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+          commit-message: 'chore: build JS/CSS assets'
+          branch: 'auto/build-assets-${{ github.event.pull_request.number }}'
+          base: ${{ github.event.pull_request.head.ref }}
+          title: 'Auto build JS and CSS assets'
+          body: |
+            This PR was automatically created by the Build JS/CSS Assets workflow.
+            It includes lint fixes and production build outputs.
+          delete-branch: true
+          draft: false
+
+      - name: Auto-approve PR
+        if: steps.cpr.outputs.pull-request-number != ''
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+
+      - name: Auto-merge the PR
+        if: steps.cpr.outputs.pull-request-number != ''
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: merge
