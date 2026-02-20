@@ -941,10 +941,15 @@ trait GenericQueriesAllLobs
             return null;
         }
 
-        $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
-            ->orWhere('code', $nationality)
-            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
-            ->first();
+        $cacheKey = 'customer_verification_nationality_'.md5(strtolower($nationality));
+        $nationalityRecord = cache()->remember($cacheKey, now()->addDay(), function () use ($nationality) {
+            return Nationality::whereAny(
+                ['text', 'country_name'],
+                'LIKE',
+                "%{$nationality}%"
+            )->orWhere('code', $nationality)
+                ->first(['id']);
+        });
 
         return $nationalityRecord?->id;
     }

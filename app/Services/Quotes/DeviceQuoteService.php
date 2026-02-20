@@ -6,18 +6,18 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\DeviceMake;
+use App\Services\BranchAssignmentService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use App\Services\Logger\LoggerService;
-use App\Services\BranchAssignmentService;
-use App\Enums\QuoteTypeId;
 
 class DeviceQuoteService extends BaseQuoteService
 {
@@ -91,8 +91,8 @@ class DeviceQuoteService extends BaseQuoteService
                     if ($startDate && $endDate) {
                         $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
                             $paymentQuery->whereBetween('captured_at', [
-                              Carbon::parse($startDate)->startOfDay(),
-                               Carbon::parse($endDate)->endOfDay(),
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
                             ]);
                         });
                     }
@@ -112,7 +112,7 @@ class DeviceQuoteService extends BaseQuoteService
     public function postProcessDeviceQuotes($quotes)
     {
         $quotes->getCollection()->transform(function ($item) {
-            $item->branch_name = !$item->is_branch_applicable
+            $item->branch_name = ! $item->is_branch_applicable
                 ? 'N/A'
                 : ($item?->branch?->name ?? app(BranchAssignmentService::class)
                     ->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Device));
@@ -143,8 +143,16 @@ class DeviceQuoteService extends BaseQuoteService
                     'nationality',
                     'customer',
                     'customer.additionalContactInfo',
-                    'insuranceProvider:id,text,code',
-                    'insuranceProviderPlan.insuranceProvider',
+                    'insuranceProviderPlan',
+                    'insuranceProvider',
+                    'latestInsured',
+                    'latestInsured.insuredKyc' => function ($query) {
+                        $query->select([
+                            'id',
+                            'insured_id',        // advisor primary key
+                            'id_expiry_date',
+                        ]);
+                    },
                     'payments' => function ($q) {
                         $q->with([
                             'paymentStatus',
@@ -183,7 +191,7 @@ class DeviceQuoteService extends BaseQuoteService
             })
             ->where('uuid', $uuid)->firstOrFail();
 
-        $quote->branch_name = !$quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Device));
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Device));
 
         return $quote;
     }
@@ -333,8 +341,8 @@ class DeviceQuoteService extends BaseQuoteService
 
         // Make API request to save the device quote
         $response = Capi::request('/api/v1/device/create', 'post', $data);
-        if (isset($response->code) && !in_array($response->code, [200, 201], true) || isset($response->status) && !in_array($response->status, [200, 201], true)) {
-            return $response->json();
+        if (isset($response->code) && ! in_array($response->code, [200, 201], true) || isset($response->status) && ! in_array($response->status, [200, 201], true)) {
+            return $response;
         }
         if (isset($response->uuid) && $response->uuid != '') {
             LoggerService::info(self::class.' - create: Assigning quote to self', extra: [

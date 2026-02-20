@@ -3,8 +3,6 @@
 namespace App\Enums;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
-use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
@@ -53,7 +51,7 @@ use Illuminate\Support\Facades\Route;
 
 enum QuoteTypes: string
 {
-    use Enumable, QuoteTypable;
+    use Enumable;
 
     case CAR = 'Car';
     case HOME = 'Home';
@@ -466,45 +464,6 @@ enum QuoteTypes: string
             default:
                 return PersonalQuote::class;
         }
-    }
-
-    public function trackerProcessTypes()
-    {
-        return match ($this) {
-            self::CAR => [
-                ProcessTrackerTypeEnum::CAR_ALLOCATION,
-            ],
-            self::HOME => [
-                ProcessTrackerTypeEnum::HOME_ALLOCATION,
-            ],
-            self::HEALTH => [
-                ProcessTrackerTypeEnum::HEALTH_ALLOCATION,
-            ],
-            self::LIFE => [
-                ProcessTrackerTypeEnum::LIFE_ALLOCATION,
-            ],
-            self::BUSINESS => [
-                ProcessTrackerTypeEnum::BUSINESS_ALLOCATION,
-            ],
-            self::BIKE => [],
-            self::YACHT => [],
-            self::TRAVEL => [
-                ProcessTrackerTypeEnum::TRAVEL_ALLOCATION,
-            ],
-            self::PET => [
-                ProcessTrackerTypeEnum::PET_ALLOCATION,
-            ],
-            self::CYCLE => [],
-            self::JETSKI => [],
-            self::AMT => [],
-            self::PERSONAL => [],
-            self::GROUP_MEDICAL => [],
-            self::CORPLINE => [],
-            self::CAR_REVIVAL => [],
-            self::CAR_BIKE => [],
-            self::SAVINGS => [],
-            default => [],
-        };
     }
 
     public function getTeams()

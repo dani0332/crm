@@ -137,7 +137,6 @@ class OCRDocumentValidator
         return $result;
     }
 
-  
     public function validateDriverEidFields(CarQuote $quote): bool
     {
         // Verify driver_eid_number in vehicle_driver_details

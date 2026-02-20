@@ -23,15 +23,19 @@ use App\Models\VehicleDriverDetail;
 use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\OcrUtils;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CustomerVerificationService
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, OcrUtils {
+        OcrUtils::getNationalityId insteadof GenericQueriesAllLobs;
+    }
 
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
@@ -44,7 +48,7 @@ class CustomerVerificationService
 
     public function __construct(
         private CapiService $capiService,
-        private CarQuoteService $carQuoteService
+        private CarQuoteService $carQuoteService,
     ) {}
 
     private function handleUnsupportedQuoteType(QuoteTypes $quoteType): array
@@ -374,7 +378,8 @@ class CustomerVerificationService
     {
         match ($quoteType) {
             QuoteTypes::CAR,
-            QuoteTypes::HEALTH => $this->processEmiratesIdVerificationData($quote, $ocrData, $documentType),
+            QuoteTypes::PERSONAL,
+            QuoteTypes::HEALTH => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType, $quoteType->value),
             // Add other quote types here as needed
             default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
         };
@@ -389,9 +394,10 @@ class CustomerVerificationService
         };
     }
 
-    private function processEmiratesIdVerificationData($quote, array $ocrData, string $documentType): void
+    private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType, string $quoteType): void
     {
         $verificationData = [];
+        $customerVerificationDetailsUpdated = false;
 
         if ($this->hasOcrKey($ocrData, 'dateOfBirth')) {
             $dateOfBirth = $this->extractOcrValue($ocrData, 'dateOfBirth');
@@ -422,28 +428,38 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => $this->getQuoteType($quote),
+                'quote_type' => $quoteType,
             ]);
 
             return;
         }
 
         try {
-            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            DB::beginTransaction();
+            $customerVerificationDetailsUpdated = $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            DB::commit();
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from Emirates ID OCR', extra: [
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => $this->getQuoteType($quote),
+                'quote_type' => $quoteType,
                 'error' => $e->getMessage(),
             ]);
+
+            DB::rollBack();
+        }
+
+        // Update customer verification status
+        if ($customerVerificationDetailsUpdated) {
+            $this->updateCustomerVerificationStatus($quote);
         }
     }
 
     private function processCarMulkiyaVerification($quote, array $ocrData, string $documentType): void
     {
         $verificationData = [];
+        $customerVerificationDetailsUpdated = false;
 
         if ($this->hasOcrKey($ocrData, 'vehicalType')) {
             $verificationData['carMakeAndModel'] = $this->extractOcrValue($ocrData, 'vehicalType');
@@ -482,7 +498,9 @@ class CustomerVerificationService
         }
 
         try {
-            $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            DB::beginTransaction();
+            $customerVerificationDetailsUpdated = $this->saveCustomerVerificationDetails($verificationData, $quote, $documentType);
+            DB::commit();
         } catch (Exception $e) {
             LoggerService::warning('Failed to update customer verification details from RC OCR', extra: [
                 'document_type' => $documentType,
@@ -491,11 +509,17 @@ class CustomerVerificationService
                 'quote_type' => QuoteTypes::CAR->value,
                 'error' => $e->getMessage(),
             ]);
+
+            DB::rollBack();
         }
 
+        // Update customer verification status
+        if ($customerVerificationDetailsUpdated) {
+            $this->updateCustomerVerificationStatus($quote);
+        }
     }
 
-    private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): void
+    private function saveCustomerVerificationDetails(array $verificationData, Model $quote, string $documentType): bool
     {
         $quotableType = get_class($quote);
         $quoteTypeId = $this->getQuoteTypeId($quote);
@@ -528,9 +552,7 @@ class CustomerVerificationService
             'updated_fields' => array_keys($verificationData),
         ]);
 
-        // Update customer verification status
-        $this->updateCustomerVerificationStatus($quote);
-
+        return true;
     }
 
     private function saveVehicleChassisDetails(Model $quote, array $data): void
@@ -585,7 +607,7 @@ class CustomerVerificationService
         };
     }
 
-    private function getQuoteTypeId(Model $quote): ?int
+    /*private function getQuoteTypeId(Model $quote): ?int
     {
         return match (true) {
             $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
@@ -594,7 +616,7 @@ class CustomerVerificationService
             // Add other quote types here as needed
             default => null,
         };
-    }
+    }*/
 
     public function isCustomerVerificationEnabled(): bool
     {
@@ -620,6 +642,7 @@ class CustomerVerificationService
 
         $quoteType = match (true) {
             $quote instanceof CarQuote => QuoteTypes::CAR,
+            $quote instanceof PersonalQuote => QuoteTypes::PERSONAL,
             $quote instanceof HealthQuote => QuoteTypes::HEALTH,
             // Add other quote types here as needed
             default => null,
