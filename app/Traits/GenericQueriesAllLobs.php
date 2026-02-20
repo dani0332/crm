@@ -285,10 +285,11 @@ trait GenericQueriesAllLobs
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
 
+        $deviceType = isset($record->deviceQuote) ? ($record->deviceQuote?->device_type ?? null) : null;
         $computedQuoteType = QuoteTypeId::displayLabel(
             $quoteType,
             $quoteType,
-            $record?->deviceQuote?->device_type
+            $deviceType
         );
 
         if ($payment) {
