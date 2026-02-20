@@ -82,6 +82,9 @@ enum OCRDocumentTypeEnum: string
             QuoteTypes::DEVICE => [
                 self::ID_CARD,
             ],
+            QuoteTypes::CYBER => [
+                self::ID_CARD,
+            ],
             QuoteTypes::HEALTH => [
                 self::ID_CARD,
                 self::PASSPORT,

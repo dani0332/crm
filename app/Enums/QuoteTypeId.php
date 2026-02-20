@@ -28,6 +28,7 @@ final class QuoteTypeId extends Enum
     const Savings = 18;
     const CompanyCar = 15;
     const Device = 20;
+    const Cyber = 19;
 
     public static function getOptions()
     {

@@ -240,4 +240,7 @@ final class WatermarkDocTypesEnum extends Enum
     const DEV_SP_TIRBB = 'DEV_SP_TIRBB';  // Tax Invoice Raised By Buyer
     const DEV_SP_PDR = 'DEV_SP_PDR';      // Payment Receipt
     const DEV_SP_PHB = 'DEV_SP_PHB';      // Policy Handbook
+    const CYB_TIRBB = 'CYB_TIRBB';
+    const CYB_TI = 'CYB_TI';
+    const CYB_PS = 'CYB_PS';
 }

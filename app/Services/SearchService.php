@@ -288,6 +288,7 @@ class SearchService extends BaseService
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
             QuoteTypes::SAVINGS->value,
+            QuoteTypes::CYBER->value,
         ];
 
         // Get manager roles based on quote types
@@ -325,6 +326,7 @@ class SearchService extends BaseService
             RolesEnum::CycleAdvisor,
             RolesEnum::JetskiAdvisor,
             RolesEnum::SavingsAdvisor,
+            RolesEnum::CyberAdvisor,
         ];
 
         // Check if user has any of these roles

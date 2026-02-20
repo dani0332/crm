@@ -205,7 +205,7 @@ class BridgerInsightService
                     }
                 }
             } catch (Exception $exception) {
-                LoggerService::error('Bridger Insight Service - Failed - Ref-ID: '.$quoteDetails->code.' - Error : '.$exception->getMessage());
+                LoggerService::warning('Bridger Insight Service - Failed - Ref-ID: '.$quoteDetails->code.' - Error : '.$exception->getMessage());
             }
         }
     }

@@ -3,9 +3,8 @@
 namespace App\Enums;
 
 use App\Enums\Logger\LoggerFeatureEnum;
-use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
-use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Jobs\SendHomeOCBIntroEmailJob;
@@ -31,6 +30,7 @@ use App\Models\PetQuoteRequestDetail;
 use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
+use App\Models\User;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
@@ -38,6 +38,7 @@ use App\Services\Logger\LoggerService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
+use App\Strategies\Allocations\CyberAllocation;
 use App\Strategies\Allocations\CycleAllocation;
 use App\Strategies\Allocations\GroupMedicalAllocation;
 use App\Strategies\Allocations\HealthAllocation;
@@ -52,7 +53,7 @@ use Illuminate\Support\Facades\Route;
 
 enum QuoteTypes: string
 {
-    use Enumable, QuoteTypable;
+    use Enumable;
 
     case CAR = 'Car';
     case HOME = 'Home';
@@ -73,6 +74,7 @@ enum QuoteTypes: string
     case CAR_BIKE = 'Car_Bike';
     case SAVINGS = 'Savings';
     case DEVICE = 'Device';
+    case CYBER = 'Cyber';
     case CAR_CAT_A = 'CAR_CAT_A';
 
     public function id(): string
@@ -98,6 +100,7 @@ enum QuoteTypes: string
             QuoteTypes::GROUP_MEDICAL => 102,
             QuoteTypes::SAVINGS => 18,
             QuoteTypes::DEVICE => 20,
+            QuoteTypes::CYBER => 19,
             default => null,
         };
     }
@@ -120,6 +123,7 @@ enum QuoteTypes: string
             102 => QuoteTypes::GROUP_MEDICAL,
             18 => QuoteTypes::SAVINGS,
             20 => QuoteTypes::DEVICE,
+            19 => QuoteTypes::CYBER,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
@@ -127,7 +131,13 @@ enum QuoteTypes: string
 
     public static function getIdFromValue(string $value): ?int
     {
-        $quoteTypeEnum = match (ucfirst($value)) {
+        // Normalize the value - handle "Cyber Insurance" product name using TeamNameEnum constant
+        $normalizedValue = match (ucfirst(trim($value))) {
+            TeamNameEnum::CYBER => QuoteTypes::CYBER->value,
+            default => ucfirst(trim($value)),
+        };
+
+        $quoteTypeEnum = match ($normalizedValue) {
             'Car' => QuoteTypes::CAR,
             'Home' => QuoteTypes::HOME,
             'Health' => QuoteTypes::HEALTH,
@@ -143,6 +153,7 @@ enum QuoteTypes: string
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             'Savings' => QuoteTypes::SAVINGS,
             'Device' => QuoteTypes::DEVICE,
+            'Cyber' => QuoteTypes::CYBER,
             default => null,
         };
 
@@ -165,6 +176,7 @@ enum QuoteTypes: string
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             self::SAVINGS => checkPersonalQuotes($this->value) ? new PersonalQuote : new SavingsQuote,
             self::DEVICE => checkPersonalQuotes($this->value) ? new PersonalQuote : new DeviceQuote,
+            self::CYBER => new PersonalQuote,
             default => new PersonalQuote,
         };
     }
@@ -196,6 +208,7 @@ enum QuoteTypes: string
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
             self::HOME => SendHomeOCBIntroEmailJob::class,
+            self::CYBER => SendCyberOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
@@ -206,6 +219,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL'),
             self::TRAVEL => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
+            self::CYBER => config('constants.ECOM_CYBER_INSURANCE_QUOTE_URL'),
             default => null,
         };
     }
@@ -226,6 +240,7 @@ enum QuoteTypes: string
             self::JETSKI => 'JSK-',
             self::SAVINGS => 'SAV-',
             self::DEVICE => 'DEV-',
+            self::CYBER => 'CYB-',
             default => null,
         };
     }
@@ -245,8 +260,8 @@ enum QuoteTypes: string
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
             'SAV' => self::SAVINGS,
-            'SP' => self::DEVICE,
             'DEV' => self::DEVICE,
+            'CYB' => self::CYBER,
         ];
 
         return $codes[$code] ?? null;
@@ -272,6 +287,7 @@ enum QuoteTypes: string
             self::GROUP_MEDICAL => $isPersonalQuote ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
             self::SAVINGS => route('savings-quotes-show', $uuid),
             self::DEVICE => route('device-quotes-show', $uuid),
+            self::CYBER => route('cyber-quotes-show', $uuid),
         };
     }
 
@@ -301,6 +317,7 @@ enum QuoteTypes: string
             self::HOME => new HomeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::SAVINGS => new SavingsAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::CYBER => new CyberAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             default => null,
         };
 
@@ -327,9 +344,86 @@ enum QuoteTypes: string
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
             self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             self::CAR_REVIVAL => [RolesEnum::CarRevivalAdvisor],
-            self::BUSINESS => [RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
+            self::CYBER => [RolesEnum::CyberAdvisor],
+            self::BUSINESS => [RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
+            self::JETSKI => [RolesEnum::JetskiAdvisor],
             default => [],
         };
+    }
+
+    /**
+     * Get the primary LOB types used for role-based filtering and reporting.
+     *
+     * @return array<self>
+     */
+    public static function primaryTypes(): array
+    {
+        return [
+            self::CAR,
+            self::HOME,
+            self::HEALTH,
+            self::LIFE,
+            self::BUSINESS,
+            self::BIKE,
+            self::YACHT,
+            self::TRAVEL,
+            self::PET,
+            self::CYCLE,
+            self::JETSKI,
+            self::SAVINGS,
+        ];
+    }
+
+    /**
+     * Check if a user has role-based or permission-based access to this quote type.
+     */
+    public function userHasAccess(User $user): bool
+    {
+        $userRoles = $user->getRoleNames()->toArray();
+
+        // Check admin access
+        if (in_array(RolesEnum::Admin, $userRoles)) {
+            return true;
+        }
+
+        // Check advisor roles
+        $quoteTypeRoles = $this->advisorRoles();
+        $hasAdvisorRole = ! empty(array_intersect($quoteTypeRoles, $userRoles));
+
+        // Check manager roles
+        $hasManagerRole = in_array($this->name.'_MANAGER', $userRoles);
+
+        // Check VIEW_ALL_REPORTS permission
+        $hasViewAllReportsPermission = $user->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($this, $user);
+
+        return $hasAdvisorRole || $hasManagerRole || $hasViewAllReportsPermission;
+    }
+
+    /**
+     * Get allowed quote type IDs based on user roles and selected LOB filter.
+     *
+     * @return array<int>
+     */
+    public static function allowedIdsForUser(User $user, ?int $quoteTypeId = null): array
+    {
+        $allowedIds = collect(self::primaryTypes())
+            ->filter(fn (self $quoteType) => $quoteType->userHasAccess($user))
+            ->map(fn (self $quoteType) => self::getId($quoteType))
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($quoteTypeId !== null) {
+            // Only return the requested quote type ID if the user has access to it
+            if (in_array($quoteTypeId, $allowedIds, true)) {
+                return [$quoteTypeId];
+            }
+
+            // User attempted to access unauthorized quote type
+            return [];
+        }
+
+        return $allowedIds;
     }
 
     /**
@@ -389,45 +483,6 @@ enum QuoteTypes: string
             default:
                 return PersonalQuote::class;
         }
-    }
-
-    public function trackerProcessTypes()
-    {
-        return match ($this) {
-            self::CAR => [
-                ProcessTrackerTypeEnum::CAR_ALLOCATION,
-            ],
-            self::HOME => [
-                ProcessTrackerTypeEnum::HOME_ALLOCATION,
-            ],
-            self::HEALTH => [
-                ProcessTrackerTypeEnum::HEALTH_ALLOCATION,
-            ],
-            self::LIFE => [
-                ProcessTrackerTypeEnum::LIFE_ALLOCATION,
-            ],
-            self::BUSINESS => [
-                ProcessTrackerTypeEnum::BUSINESS_ALLOCATION,
-            ],
-            self::BIKE => [],
-            self::YACHT => [],
-            self::TRAVEL => [
-                ProcessTrackerTypeEnum::TRAVEL_ALLOCATION,
-            ],
-            self::PET => [
-                ProcessTrackerTypeEnum::PET_ALLOCATION,
-            ],
-            self::CYCLE => [],
-            self::JETSKI => [],
-            self::AMT => [],
-            self::PERSONAL => [],
-            self::GROUP_MEDICAL => [],
-            self::CORPLINE => [],
-            self::CAR_REVIVAL => [],
-            self::CAR_BIKE => [],
-            self::SAVINGS => [],
-            default => [],
-        };
     }
 
     public function getTeams()

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarVehicleUse;
+use App\Enums\CurrencyEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\EmirateEnum;
 use App\Enums\LeadSourceEnum;
@@ -53,6 +54,7 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\DeviceQuoteService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -678,13 +680,14 @@ class SendUpdateLogService
     public function getPayments($quoteId, $quoteUuid, $quoteType)
     {
         LoggerService::info('fn:getPayments - Start - SendUpdateLogService');
-
         if (checkPersonalQuotes($quoteType)) {
-            $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            if ($quoteType == quoteTypeCode::Device) {
+            if ($quoteType == QuoteTypes::CYBER->value) {
+                $quote = app(CyberQuoteService::class)->getOne($quoteUuid);
+            } elseif ($quoteType == quoteTypeCode::Device) {
                 $deviceQuoteService = new DeviceQuoteService;
                 $quote = $deviceQuoteService->getOne($quoteUuid);
             } else {
+                $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
                 $quote = $repository::getBy('uuid', $quoteUuid);
             }
             $payments = $quote?->payments ?? null;
@@ -1339,12 +1342,12 @@ class SendUpdateLogService
         $documents = collect([]);
         $documentTypeCodes = [];
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device])) {
-            $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-            DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+        if(! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device, QuoteTypeId::Cyber])) {
+            $documentTypeCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
         } elseif ($quoteTypeId == QuoteTypeId::Business || $quoteTypeId == QuoteTypeId::Device) {
             $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-            DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
         } elseif ($quoteTypeId == QuoteTypeId::Savings) {
             // For Savings: SEND_UPDATE_POLICY_SCHEDULE is mandatory and at least one receipt type
             $documentTypeCodes = [
@@ -1371,11 +1374,22 @@ class SendUpdateLogService
             $notes = $sendUpdateLog?->notes ?? '';
         }
 
+        if ($quoteTypeId == QuoteTypeId::Cyber) {
+            $documents[] = [
+                'doc_url' => ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '',
+                'document_type_text' => 'InsuranceMarket.ae™ Policy Wording.pdf',
+                'isPolicyWording' => true,
+            ];
+        }
         $emailData = (object) [
             'customerName' => $quote->first_name.' '.$quote->last_name,
             'reason' => $notes ?? '',
             'insuredName' => $quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name,
             'insuranceCompany' => $quote?->insuranceProvider?->text ?? '',
+            'providerName' => $quote?->insuranceProvider?->text ?? '',
+            'coverage' => isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote?->cyberPlanDetail?->coverage)
+                ? CurrencyEnum::USD->value.' '.number_format($quote?->cyberPlanDetail?->coverage)
+                : '-',
             'planName' => $quote?->insuranceProviderPlan?->text ?? $quote?->plan?->text ?? $quote?->carPlan?->text ?? '-',
             'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),

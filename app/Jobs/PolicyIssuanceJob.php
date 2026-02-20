@@ -353,10 +353,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         LoggerService::error('Exception occurred during policy issuance automation', [
             'process_id' => $this->process?->id ?? $this->processId,
             'quote_code' => $quoteCode,
-        ], exception: $e instanceof \Exception ? $e : null, context: [
-            'error_class' => get_class($e),
-            'error_message' => $e->getMessage(),
-            'error_trace' => $e->getTraceAsString(),
+            'exception' => $e,
         ]);
     }
 

@@ -22,6 +22,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -50,6 +51,10 @@ class PolicyIssuanceService
             },
             QuoteTypes::DEVICE->value => match ($insurerCode) {
                 InsuranceProvidersEnum::NGI => app(NgiInsuranceService::class),
+                default => null,
+            },
+            QuoteTypes::CYBER->value => match ($insurerCode) {
+                InsuranceProvidersEnum::AWNI => app(AwnicInsuranceService::class),
                 default => null,
             },
             default => null,
@@ -437,17 +442,17 @@ class PolicyIssuanceService
         ]);
 
         $statusAPIFailed = null;
-        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
+        if (in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) && $processInvolved) {
             $statusAPIFailed = $this->getInsurerAPIStatuses($newInsurerApiStatus);
         }
-        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
-        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType);
+        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus, $quoteType);
         $this->allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed, $processInvolved);
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
 
-    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus)
+    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus, $quoteType)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote Insurer API  Status : '.$newInsurerApiStatus);
         if ($newInsurerApiStatus) {
@@ -455,7 +460,7 @@ class PolicyIssuanceService
         }
     }
 
-    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus)
+    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus, $quoteType)
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$newApiIssuanceStatus);
         if ($newApiIssuanceStatus) {
@@ -463,6 +468,16 @@ class PolicyIssuanceService
         }
     }
 
+    /**
+     * This function is used to allocate a lead to an advisor for failed and passed cases both no just for the failure case
+     *
+     * @param [type] $quoteType
+     * @param [type] $quote
+     * @param [type] $isInsurerApiStatusAlreadyFailed
+     * @param  string  $statusAPIFailed
+     * @param  string  $processInvolved
+     * @return void
+     */
     public function allocateLead($quoteType, $quote, $isInsurerApiStatusAlreadyFailed, $statusAPIFailed = '', $processInvolved = '')
     {
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' allocation of failed lead executed');
@@ -476,8 +491,13 @@ class PolicyIssuanceService
 
         $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
 
+        // Assign advisor to lead for cyber policy issuance automation if not assigned and policy is booked only for cyber
+        if (! $advisorId && $isPolicyBooked && $quoteType == QuoteTypes::CYBER->value) {
+            $this->triggerAdvisorAllocation($quoteType, $quote, $advisorId);
+        }
+
         if (
-            in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::DEVICE->value]) &&
+            in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) &&
             (! empty($statusAPIFailed) && ! empty($processInvolved)) &&
             ! $isPolicyBooked
         ) {
@@ -492,6 +512,7 @@ class PolicyIssuanceService
                 'workflowType' => $workflowType,
                 'recipientUser' => $recipientUser,
             ]);
+
             AutomationFailedJob::dispatch(
                 $quote->id,
                 $jobQuoteTypeId,
@@ -501,6 +522,7 @@ class PolicyIssuanceService
                 $workflowType,
                 $recipientUser
             )->onQueue('policy-issuance-automation');
+
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
         }
 
@@ -520,17 +542,28 @@ class PolicyIssuanceService
             }
         }
     }
-
+    
     private function resolveAutomationFailureRouting(string $quoteType, string $processInvolved): array
     {
         $isDevice = $quoteType === QuoteTypes::DEVICE->value;
+        $isCyber = $quoteType === QuoteTypes::CYBER->value;
 
-        $quoteTypeId = $isDevice ? QuoteTypeId::Device : QuoteTypeId::Car;
-        $workflowType = $isDevice ? WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED : WorkflowTypeEnum::CAR_AUTOMATION_FAILED;
+        // Determine quote type ID based on quote type
+        if ($isDevice) {
+            $quoteTypeId = QuoteTypeId::Device;
+            $workflowType = WorkflowTypeEnum::DEVICE_AUTOMATION_FAILED;
+        } elseif ($isCyber) {
+            $quoteTypeId = QuoteTypeId::Cyber;
+            $workflowType = WorkflowTypeEnum::CYBER_AUTOMATION_FAILED;
+        } else {
+            $quoteTypeId = QuoteTypeId::Car;
+            $workflowType = WorkflowTypeEnum::CAR_AUTOMATION_FAILED;
+        }
+
         $recipientUser = UserNameEnum::PA_USER;
 
-        if ($isDevice && $processInvolved !== PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY) {
-            // For Device non-booking failures we notify the assigned SIC advisor directly.
+        // For Device/Cyber non-booking failures, notify the assigned SIC advisor directly.
+        if (($isDevice || $isCyber) && $processInvolved !== PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY) {
             $recipientUser = null;
         }
 
@@ -540,6 +573,7 @@ class PolicyIssuanceService
     public function getInsurerAPIStatuses($status = null, $onlyKeys = false)
     {
         $statuses = [
+            PolicyIssuanceEnum::PIA_AUTO_CAPTURE_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_AUTO_CAPTURE_FAILED,
             PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_UPLOAD_POLICY_DOCUMENTS_API_FAILED,
             PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_POLICY_ISSUANCE_API_FAILED,
             PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED_STATUS_ID => PolicyIssuanceEnum::PIA_GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM_API_FAILED,
@@ -639,5 +673,25 @@ class PolicyIssuanceService
             ],
             'status_code' => 200,
         ];
+    }
+
+    /**
+     * This function is used to assign an advisor to a lead for  policy issuance automation if not assigned and policy is booked for the given quote type
+     *
+     * @param  string  $quoteType
+     * @param  object  $quote
+     * @param  int  $advisorId
+     * @return void
+     */
+    private function triggerAdvisorAllocation($quoteType, $quote, &$advisorId)
+    {
+        $response = QuoteTypes::from($quoteType)?->allocate($quote->uuid);
+        if ($response && $response['advisorId']) {
+            $advisorId = $response['advisorId'];
+        }
+        LoggerService::info('fn:allocateLead - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation when advisor id is not assigned during policy issuance automation', extra: [
+            'advisorId' => $advisorId,
+            'allocation_response' => $response,
+        ]);
     }
 }

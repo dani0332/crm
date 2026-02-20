@@ -1141,7 +1141,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     }
 
-    public function getAuthorisePaymentCount($user = null, $teamIds = null)
+    public function getAuthorisePaymentCount($user = null, $teamIds = null): int
     {
         $user = $user ?: Auth::user();
         if (! $user) {
@@ -1149,27 +1149,26 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         $userTeamIds = $teamIds ?: $user->getUserTeamIds();
-
         $isManager = $user->hasAnyRole(getManagerRoles());
-
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        return DB::table('payments')
-            ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->where(function ($query) use ($thirtyDaysAgo) {
-                $query->where(function ($q) use ($thirtyDaysAgo) {
-                    $q->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                        ->where('payments.authorized_at', '>=', $thirtyDaysAgo);
-                });
+        $allowedQuoteTypeIds = QuoteTypes::allowedIdsForUser($user);
+
+        return Payment::query()
+            ->whereHas('personalQuote', function ($query) use ($isManager, $userTeamIds, $user, $allowedQuoteTypeIds) {
+                $query->when($isManager, function ($q) use ($userTeamIds) {
+                    $q->whereHas('advisor.teams', function ($teamQuery) use ($userTeamIds) {
+                        $teamQuery->whereIn('teams.id', $userTeamIds);
+                    });
+                }, function ($q) use ($user) {
+                    $q->where('advisor_id', $user->id);
+                })
+                    ->whereIn('quote_type_id', $allowedQuoteTypeIds);
             })
-            ->when($isManager, function ($query) use ($userTeamIds) {
-                $query->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
-                    ->whereIn('user_team.team_id', $userTeamIds);
-            }, function ($query) use ($user) {
-                $query->where('pq.advisor_id', $user->id);
-            })
+            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('authorized_at', '>=', $thirtyDaysAgo)
             ->distinct()
-            ->count('payments.id');
+            ->count('id');
     }
 
     public function fetchMainQuotePayment($quote)

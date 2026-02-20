@@ -13,7 +13,12 @@ export const useAMLKYC = () => {
    */
   const isAmlVerified = (quoteRequest, quoteType, payments) => {
     const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-    let isTravelQuote = quoteType === quoteTypeCodeEnum.Travel;
+    const amlBypassEligibleQuoteTypes = [
+      quoteTypeCodeEnum.Travel,
+      quoteTypeCodeEnum.CYBER,
+    ];
+    let isAmlBypassEligibleQuote =
+      amlBypassEligibleQuoteTypes.includes(quoteType);
     let isGIGInsuranceProvider =
       page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
       page.props?.bookingDetails?.isGIGInsuranceProvider ||
@@ -22,7 +27,7 @@ export const useAMLKYC = () => {
       payments[0]?.payment_methods_code ===
       page.props.paymentMethodsEnum.CreditCard;
 
-    if (isTravelQuote) {
+    if (isAmlBypassEligibleQuote) {
       if (isGIGInsuranceProvider && paymentMethodCC) {
         return (
           quoteRequest.aml_status ===
@@ -48,7 +53,12 @@ export const useAMLKYC = () => {
    */
   const isKycVerified = (quoteRequest, quoteType, payments) => {
     const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-    let isTravelQuote = quoteType === quoteTypeCodeEnum.Travel;
+    const kycBypassEligibleQuoteTypes = [
+      quoteTypeCodeEnum.Travel,
+      quoteTypeCodeEnum.CYBER,
+    ];
+    let isKycBypassEligibleQuote =
+      kycBypassEligibleQuoteTypes.includes(quoteType);
     let isGIGInsuranceProvider =
       page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
       page.props?.bookingDetails?.isGIGInsuranceProvider ||
@@ -57,7 +67,7 @@ export const useAMLKYC = () => {
       payments[0]?.payment_methods_code ===
       page.props.paymentMethodsEnum.CreditCard;
 
-    if (isTravelQuote) {
+    if (isKycBypassEligibleQuote) {
       if (isGIGInsuranceProvider && paymentMethodCC) {
         return quoteRequest.kyc_decision === kycEnums.COMPLETE;
       }
