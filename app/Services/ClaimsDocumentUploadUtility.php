@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\Claim;
-use App\Models\GenericDocument;
+use App\Models\GenericDocumentWaris;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
@@ -37,7 +37,7 @@ use Illuminate\Support\Str;
 class ClaimsDocumentUploadUtility
 {
     private const CLAIMS_FOLDER = 'claims';
-    private const AZURE_PATH_PREFIX = 'documents/claims';
+    private const AZURE_PATH_PREFIX = 'documents/claims_forms';
     private const CLAIM_ID = 1; // documentable_id
     private const CREATED_BY_ID = 1030;
 
@@ -362,11 +362,9 @@ class ClaimsDocumentUploadUtility
             // Sanitize filename: replace spaces, dashes, and special characters with underscores
             $sanitizedName = $this->sanitizeFileName($originalFileName);
 
-            // Generate unique filename for Azure: {timestamp}_{uuid}.{ext}
-            $timestamp = time();
+            // Use same sanitized name for Azure path and DB (filename on server and in DB match)
+            $azurePath = self::AZURE_PATH_PREFIX.'/'.$sanitizedName;
             $uuid = $this->generateUuid();
-            $azureFileName = "{$timestamp}_{$uuid}.{$extension}";
-            $azurePath = self::AZURE_PATH_PREFIX.'/'.$azureFileName;
 
             // Upload to Azure Storage (following QuoteDocumentService pattern)
             $uploaded = Storage::disk('azureIM')->put($azurePath, $fileContent);
@@ -405,7 +403,7 @@ class ClaimsDocumentUploadUtility
             }
 
             // Insert into database
-            GenericDocument::create([
+            GenericDocumentWaris::create([
                 'uuid' => $uuid,
                 'documentable_type' => Claim::class,
                 'documentable_id' => self::CLAIM_ID,
@@ -538,7 +536,7 @@ class ClaimsDocumentUploadUtility
     /**
      * Generate a unique UUID string
      * Format: f669c058f922425c8a8e (similar to the example)
-     * Ensures uniqueness by checking against existing GenericDocument records
+     * Ensures uniqueness by checking against existing GenericDocumentWaris records
      *
      * @return string
      */
@@ -551,7 +549,7 @@ class ClaimsDocumentUploadUtility
         $uuid = substr($uuid, 0, 20); // Limit to ~20 characters like example
 
         // Check for collisions and regenerate until unique (following EmbeddedProductRepository pattern)
-        while (GenericDocument::where('uuid', $uuid)->first()) {
+        while (GenericDocumentWaris::where('uuid', $uuid)->first()) {
             $prefix = uniqid('', true).rand(1, 100);
             $uuid = str_replace('.', '', $prefix);
             $uuid = substr($uuid, 0, 20);
