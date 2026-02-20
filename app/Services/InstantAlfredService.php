@@ -527,10 +527,12 @@ class InstantAlfredService extends BaseService
         ];
 
         if (! empty($request->chat_initiated_at) && is_array($request->chat_initiated_at)) {
+            // Parse dates as UTC dates (not local timezone) to match MongoDB's UTC storage
+            // This ensures "2025-11-30" is treated as "2025-11-30 UTC", not "2025-11-30 Asia/Dubai"
             // @phpstan-ignore-next-line
-            $dateFrom = new UTCDateTime(Carbon::parse($request->chat_initiated_at[0])->startOfDay()->timestamp * 1000);
+            $dateFrom = new UTCDateTime(Carbon::parse($request->chat_initiated_at[0], 'UTC')->startOfDay()->timestamp * 1000);
             // @phpstan-ignore-next-line
-            $dateTo = new UTCDateTime(Carbon::parse($request->chat_initiated_at[1])->endOfDay()->timestamp * 1000);
+            $dateTo = new UTCDateTime(Carbon::parse($request->chat_initiated_at[1], 'UTC')->endOfDay()->timestamp * 1000);
             $matchConditions['created_at'] = ['$gte' => $dateFrom, '$lte' => $dateTo];
         }
 
