@@ -479,7 +479,7 @@ class ClaimsService extends BaseService
 
             if ($responseData['success'] && $isClaimManager) {
                 $claim = $this->getClaimById($responseData['claimUID']);
-                $claim->update(['manager_id' => $user->id]);
+                $claim->update(['manager_id' => $user->id, 'manager_assigned_date' => now()]);
             }
 
             return $responseData;
@@ -540,7 +540,7 @@ class ClaimsService extends BaseService
     protected function prepareClaimRequestData($request): array
     {
         $allowedFields = $this->getAllowedClaimRequestFields();
-        $claimRequestData = collect($request)->only($allowedFields)->filter()->toArray();
+        $claimRequestData = collect($request)->only($allowedFields)->toArray();
 
         // Map incident_story to incident field
         if (isset($claimRequestData['incident_story'])) {
@@ -974,13 +974,13 @@ class ClaimsService extends BaseService
         ]);
 
         $canTrigger = true;
-        
+
         if (! $claimRequest->isCarOrBikeLOB()) {
             LoggerService::info(' Skipping Bird claims flow: claim is not a car or bike', extra: [
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_code' => $claimRequest->code,
             ]);
-            
+
             $canTrigger = false;
         }
 
