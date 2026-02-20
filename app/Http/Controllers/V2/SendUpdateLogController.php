@@ -244,7 +244,7 @@ class SendUpdateLogController extends Controller
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $realQuote, $sendUpdatePayments[0] ?? null, isTapEnabled(), $sendUpdateLog);
         $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
 
-        $computedQuoteType = computedQuoteTypeForDisplay(
+        $computedQuoteType = QuoteTypeId::displayLabel(
             $sendUpdateLog->quote_type_id,
             $quoteType,
             $sendUpdateLog?->personalQuote?->deviceQuote?->device_type

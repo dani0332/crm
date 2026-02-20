@@ -635,7 +635,7 @@ class SendUpdateLogService
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
-            $computedQuoteType = computedQuoteTypeForDisplay(
+            $computedQuoteType = QuoteTypeId::displayLabel(
                 $sendUpdateLog->quote_type_id,
                 $quoteType,
                 $sendUpdateLog?->personalQuote?->deviceQuote?->device_type
