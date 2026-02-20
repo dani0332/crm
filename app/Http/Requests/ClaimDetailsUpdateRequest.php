@@ -233,7 +233,7 @@ class ClaimDetailsUpdateRequest extends FormRequest
         \App\Services\Logger\LoggerService::info('Claim details update validation failed', extra: [
             'errors' => $errors->toArray(),
             'user_id' => Auth::id(),
-            'claim_uuid' => $this->route('uuid'),
+            'claim_uuid' => $this->route('claim')?->uuid,
         ]);
 
         parent::failedValidation($validator);
