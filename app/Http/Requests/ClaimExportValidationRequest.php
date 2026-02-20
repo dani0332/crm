@@ -142,10 +142,9 @@ class ClaimExportValidationRequest extends FormRequest
 
             if ($isEmailExport) {
                 // For email exports, use months-based validation
-                $monthsDiff = $this->calculateMonthsDifference($start, $end);
                 $maxMonths = 3;
 
-                if ($monthsDiff > $maxMonths) {
+                if ($end->gt($start->copy()->addMonths($maxMonths))) {
                     $validator->errors()->add('created_at_end', "Maximum of {$maxMonths} months (created date range) are allowed for email exports.");
                 }
             } else {
@@ -173,24 +172,5 @@ class ClaimExportValidationRequest extends FormRequest
         if ($this->input('exportType') === 'email') {
             // no validation required for email exports
         }
-    }
-
-    /**
-     * Calculate months difference between two dates
-     */
-    private function calculateMonthsDifference($startDate, $endDate): int
-    {
-        $start = Carbon::parse($startDate);
-        $end = Carbon::parse($endDate);
-
-        // Calculate year and month difference
-        $yearDiff = $end->year - $start->year;
-        $monthDiff = $end->month - $start->month;
-
-        // Total months difference
-        $totalMonths = $yearDiff * 12 + $monthDiff;
-
-        // Return absolute difference in months
-        return abs($totalMonths);
     }
 }

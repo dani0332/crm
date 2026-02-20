@@ -139,7 +139,7 @@ class ClaimStatusesSeeder extends Seeder
                     'claim_request_type_id' => null,
                     'quote_type_id' => $quoteTypeId,
                     'access_type_id' => $status['access_type_id'],
-                    'status_type' => ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY,
+                    'status_type' => ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
