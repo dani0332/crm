@@ -638,7 +638,7 @@ class SendUpdateLogService
             $deviceType = (isset($sendUpdateLog->personalQuote) && isset($sendUpdateLog->personalQuote->deviceQuote))
                 ? ($sendUpdateLog->personalQuote->deviceQuote->device_type ?? null)
                 : null;
-            $computedQuoteType = QuoteTypeId::displayLabel(
+            $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
                 $sendUpdateLog->quote_type_id,
                 $quoteType,
                 $deviceType
@@ -646,7 +646,7 @@ class SendUpdateLogService
             if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $invoiceDescription = $insuranceProvider->code.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
             } else {
-                $invoiceDescription = $insuranceProvider->code.'-'.$computedQuoteType.'-'.$quote->policy_number;
+                $invoiceDescription = $insuranceProvider->code.'-'.$quoteTypeDisplayLabel.'-'.$quote->policy_number;
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {

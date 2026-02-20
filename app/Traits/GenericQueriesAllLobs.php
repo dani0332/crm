@@ -286,21 +286,21 @@ trait GenericQueriesAllLobs
         $payment = $payments->whereNull('send_update_log_id')->first();
 
         $deviceType = isset($record->deviceQuote) ? ($record->deviceQuote?->device_type ?? null) : null;
-        $computedQuoteType = QuoteTypeId::displayLabel(
+        $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
             $quoteType,
             $quoteType,
             $deviceType
         );
 
         if ($payment) {
-            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $computedQuoteType, $record);
+            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteTypeDisplayLabel, $record);
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $isAbuDhabiBranch = $this->isAbuDhabiBranch($quoteType, $record);
 
         $bookPolicyDetails = [];
-        $bookPolicyDetails['lineOfBusiness'] = ucfirst($computedQuoteType);
+        $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteTypeDisplayLabel);
         $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
         $bookPolicyDetails['invoiceDescription'] = $invoiceDescription;
         $bookPolicyDetails['bookButton'] = false;

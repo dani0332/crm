@@ -247,7 +247,7 @@ class SendUpdateLogController extends Controller
         $deviceType = (isset($sendUpdateLog->personalQuote) && isset($sendUpdateLog->personalQuote->deviceQuote))
             ? ($sendUpdateLog->personalQuote->deviceQuote->device_type ?? null)
             : null;
-        $computedQuoteType = QuoteTypeId::displayLabel(
+        $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
             $sendUpdateLog->quote_type_id,
             $quoteType,
             $deviceType
@@ -257,7 +257,7 @@ class SendUpdateLogController extends Controller
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
-            'computedQuoteType' => $computedQuoteType,
+            'quoteTypeDisplayLabel' => $quoteTypeDisplayLabel,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $parentText,
             'sendUpdateOptions' => $sendUpdateOptions,
