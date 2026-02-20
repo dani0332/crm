@@ -1028,12 +1028,21 @@ class ClaimsService extends BaseService
             'customerName' => $claimRequest->full_name,
             'isWAConsent' => $claimRequest->whatsapp_consent,
             'quoteTypeId' => $claimRequest->quote_type_id,
+            'policyNumber' => $claimRequest->policy_number,
             'workflowType' => 'CLAIM_UPDATED',
             'emailTo' => $insuranceProviderContact->emails,
             'emailCc' => $insuranceProviderContact->email_cc,
         ];
-
-        Ken::request('/trigger-bird-claims-flow', 'post', $emailPayload);
+        try {
+            Ken::request('/trigger-bird-claims-flow', 'post', $emailPayload);
+        } catch (\Exception $e) {
+            LoggerService::error(' Error triggering Bird claims flow', extra: [
+                'error' => $e->getMessage(),
+                'claim_uuid' => $claimRequest->uuid,
+                'claim_code' => $claimRequest->code,
+            ]);
+            throw $e;
+        }
     }
 
     /**
