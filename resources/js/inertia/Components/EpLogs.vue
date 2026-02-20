@@ -58,7 +58,9 @@ const onLoadEpLogData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex items-center gap-2">
-          <h3 class="font-semibold text-primary-800 text-lg">Embedded Product Logs</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Embedded Product Logs
+          </h3>
 
           <!-- Refresh Icon - Only visible after logs are loaded -->
           <button
@@ -150,6 +152,5 @@ const onLoadEpLogData = async () => {
         </div>
       </template>
     </Collapsible>
-
   </div>
 </template>
