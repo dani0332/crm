@@ -10,16 +10,18 @@ use App\Exports\InstantChatConsolidatedExport;
 use App\Exports\InstantChatDetailedExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
-use App\Jobs\ExportCsvAndSendEmailJob;
+use App\Jobs\InstantAlfredExportJob;
 use App\Models\AlfredChat;
 use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use App\Models\RenewalBatch;
+use App\Services\InstantAlfredExportService;
 use App\Services\InstantAlfredService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AlfredChatController extends Controller
 {
@@ -164,16 +166,10 @@ class AlfredChatController extends Controller
             'ccRecipients.*' => 'email',
         ]);
 
-        $exportClassMap = [
-            InstantChatReportsEnum::CONSOLIDATED_REPORT => InstantChatConsolidatedExport::class,
-            InstantChatReportsEnum::DETAILED_REPORT => InstantChatDetailedExport::class,
-        ];
-
-        // Check if the requested report type is supported
-        if (! array_key_exists($request->report, $exportClassMap)) {
+        if (! in_array($request->report, [InstantChatReportsEnum::CONSOLIDATED_REPORT, InstantChatReportsEnum::DETAILED_REPORT])) {
             return response()->json([
                 'error' => 'Invalid report type requested.',
-                'available_reports' => array_keys($exportClassMap),
+                'available_reports' => [InstantChatReportsEnum::CONSOLIDATED_REPORT, InstantChatReportsEnum::DETAILED_REPORT],
             ], 400);
         }
 
@@ -190,27 +186,18 @@ class AlfredChatController extends Controller
         $fileName = $request->report.' '.Carbon::now()->format('Y-m-d_H-i-s');
         $subject = $request->subject ?? "Chat Report: {$request->report}";
 
-        $requestParams = array_merge($request->all(), [
-            'recipientEmail' => $recipientEmail,
-            'subject' => $subject,
-            'fileName' => $fileName,
-            'ccRecipients' => $request->ccRecipients ?? [],
-            'exportTitle' => 'Chat Report',
-            'user_id' => Auth::id(), // Pass user_id for job context
-        ]);
-
-        // Get the export class
-        $exportClass = $exportClassMap[$request->report];
         try {
-            // Dispatch the job using the existing ExportCsvAndSendEmailJob
-            ExportCsvAndSendEmailJob::dispatch(
-                $exportClass,
-                $recipientEmail,
-                $requestParams
-            );
+            InstantAlfredExportJob::dispatch([
+                ...$request->all(),
+                'recipientEmail' => $recipientEmail,
+                'recipientName' => Auth::user()?->name ?? 'User',
+                'subject' => $subject,
+                'fileName' => $fileName,
+                'user_id' => Auth::id(),
+            ]);
 
             return response()->json([
-                'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
+                'message' => 'Your export is being processed. You will receive an email with a download link shortly.',
                 'report_type' => $request->report,
                 'recipient' => $recipientEmail,
                 'subject' => $subject,
@@ -222,5 +209,73 @@ class AlfredChatController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function generateExportUrl(Request $request)
+    {
+        $apiStartTime = microtime(true);
+
+        $request->validate([
+            'report' => 'required|string|in:'.InstantChatReportsEnum::DETAILED_REPORT.','.InstantChatReportsEnum::CONSOLIDATED_REPORT,
+            'created_at_start' => 'sometimes|date',
+            'created_at_end' => 'sometimes|date|after_or_equal:created_at_start',
+            'chat_initiated_at' => 'sometimes|array|size:2',
+            'chat_initiated_at.0' => 'required_with:chat_initiated_at|date',
+            'chat_initiated_at.1' => 'required_with:chat_initiated_at|date',
+        ]);
+
+        try {
+            $service = app(InstantAlfredExportService::class);
+            $params = $this->prepareExportParams($request);
+
+            $result = $service->generateCsvAndGetUrl($params);
+
+            $totalApiTime = round(microtime(true) - $apiStartTime, 3);
+
+            Log::info('API endpoint: Export URL generated', [
+                'total_response_time' => $totalApiTime,
+                'records' => $result['records'],
+                'report' => $result['report_type'],
+            ]);
+
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            $totalApiTime = round(microtime(true) - $apiStartTime, 3);
+            Log::error('API endpoint: Export URL generation failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'time_before_failure' => $totalApiTime,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to generate export URL.',
+                'message' => $e->getMessage(),
+                'time_before_failure' => $totalApiTime,
+            ], 500);
+        }
+    }
+
+    private function prepareExportParams(Request $request): array
+    {
+        $params = $request->all();
+
+        $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
+        $params['recipientName'] = Auth::user()?->name ?? 'User';
+
+        if ($request->has('created_at_start') && $request->has('created_at_end')) {
+            $params['chat_initiated_at'] = [
+                $request->created_at_start,
+                $request->created_at_end,
+            ];
+        }
+
+        if ($request->has('chat_initiated_at') && is_array($request->chat_initiated_at)) {
+            $params['chat_initiated_at'] = $request->chat_initiated_at;
+        }
+
+        return $params;
     }
 }

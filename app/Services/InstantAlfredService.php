@@ -16,6 +16,7 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use MongoDB\BSON\UTCDateTime;
 
 class InstantAlfredService extends BaseService
 {
@@ -521,10 +522,20 @@ class InstantAlfredService extends BaseService
 
     public function createPipeline(Request $request, $itemIds, $type)
     {
+        $matchConditions = [
+            'quote_id' => ['$in' => $itemIds],
+        ];
+
+        if (! empty($request->chat_initiated_at) && is_array($request->chat_initiated_at)) {
+            // @phpstan-ignore-next-line
+            $dateFrom = new UTCDateTime(Carbon::parse($request->chat_initiated_at[0])->startOfDay()->timestamp * 1000);
+            // @phpstan-ignore-next-line
+            $dateTo = new UTCDateTime(Carbon::parse($request->chat_initiated_at[1])->endOfDay()->timestamp * 1000);
+            $matchConditions['created_at'] = ['$gte' => $dateFrom, '$lte' => $dateTo];
+        }
+
         $pipeline[] = [
-            '$match' => [
-                'quote_id' => ['$in' => $itemIds],
-            ],
+            '$match' => $matchConditions,
         ];
 
         if ($type === 'chat') {
