@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
+use App\Http\Requests\LogsRequest;
+use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
 use App\Models\HealthQuote;
-use App\Http\Requests\LogsRequest;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
 use App\Models\LifeQuote;
 use App\Models\OcrLog;
-use App\Models\EpLog;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
@@ -267,7 +267,7 @@ class AuditableController extends Controller
         } catch (\Exception $e) {
 
             LoggerService::error('Failed to load EP logs - ', exception: $e);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load EP logs',
