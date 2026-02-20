@@ -1,33 +1,38 @@
-name: Run Pint Fix
+name: Fix Code Style
 
 on:
-  pull_request:
-    branches:
-      - develop
-      - main
-    types: [opened, reopened, edited, synchronize]
+  push:
+    paths:
+      - '**/*.php' # Only run when PHP files change
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        php: [8.4]
 
     steps:
-      - name: Checkout PR branch
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Get changed PHP files
+        id: changed-files
+        uses: tj-actions/changed-files@v46
         with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0 # Required to push back to the PR branch
+          files: '**/*.php'
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
-          extensions: json, dom, curl, libxml, mbstring, pdo, pdo_sqlite
+          php-version: 8.4
+          extensions: pdo_sqlite
+          tools: pint
           coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -44,17 +49,12 @@ jobs:
       - name: Run Tests
         run: composer test --parallel --compact
 
-      - name: Run Pint Fix
-        run: composer pint:fix --dirty
-      - name: Fetch PR branch only
-        run: |
-          git fetch origin \
-            refs/heads/${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
-      - name: Commit and Push Pint Fix
+      - name: Run Pint on changed files only
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: pint ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Commit linted files
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'chore: apply pint fix'
-          branch: ${{ github.head_ref }} # Push only to the PR branch
-          push_options: '--force-with-lease'
-          skip_fetch: true # Don't fetch all branches
-
