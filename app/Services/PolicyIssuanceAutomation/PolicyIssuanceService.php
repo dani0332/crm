@@ -51,6 +51,8 @@ class PolicyIssuanceService
             },
             QuoteTypes::HEALTH->value => match ($insurerCode) {
                 InsuranceProvidersEnum::ADNIC => app(AdnicInsuranceService::class),
+                default => null,
+            },
             QuoteTypes::CYBER->value => match ($insurerCode) {
                 InsuranceProvidersEnum::AWNI => app(AwnicInsuranceService::class),
                 default => null,
