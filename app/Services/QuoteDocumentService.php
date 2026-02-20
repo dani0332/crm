@@ -1228,7 +1228,6 @@ class QuoteDocumentService extends BaseService
         // Get quote type IDs for claim documents
         $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
 
-        // Query documents linked to Claim model only (from ClaimsDocumentUploadUtility)
         $documents = GenericDocument::whereIn('quote_type_id', $quoteTypeIds)
             ->where('documentable_type', Claim::class)
             ->with(['insuranceProvider', 'businessTypeOfInsurance'])
