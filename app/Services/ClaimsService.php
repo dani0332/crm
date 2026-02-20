@@ -308,6 +308,14 @@ class ClaimsService extends BaseService
             });
         }
 
+        if (! empty($filters['insurance_provider_id'])) {
+            $query->where('insurance_provider_id', $filters['insurance_provider_id']);
+        }
+
+        if (! empty($filters['claim_type_id'])) {
+            $query->where('claim_type_id', $filters['claim_type_id']);
+        }
+
         return $query;
     }
 

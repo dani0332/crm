@@ -224,6 +224,8 @@ class ClaimStatusesService extends BaseService
                     'updated_by' => Auth::id(),
                 ]);
 
+                $this->markClaimAsClosed($claimRequest);
+
                 return;
             }
 
