@@ -28,6 +28,7 @@ enum LoggerFeatureEnum: string
     case SELECT_INSURANCE_PROVIDER = 'select-insurance-provider';
     case SEND_AND_BOOK_POLICY_EMAIL_JOB = 'send-and-book-policy-email-job';
     case POLICY_AUTOMATION = 'policy-automation';
+    case AWNIC_CYBER_POLICY_AUTOMATION = 'awnic-cyber-policy-automation';
     case SAGE_POLICY_BOOKING = 'sage-policy-booking';
     case POLICY_ISSUE_WHATSAPP_MESSAGE = 'policy-issue-whatsapp-message';
     case SAGE_ENDORSEMENT_BOOKING = 'sage-endorsement-booking';
@@ -55,6 +56,10 @@ enum LoggerFeatureEnum: string
     case CONVERSION_API = 'conversion-api';
     case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
     case PAYMENT_STATUS_UPDATE = 'payment-status-update';
+
+    case CYBER_OCB_INTRO_EMAIL = 'cyber-ocb-intro-email';
+    case CYBER_AUTOMATED_FOLLOWUPS = 'cyber-automated-followups';
+    case CHECK_DOCUMENT_UPLOAD_AFTER_PAYMENT = 'check-document-upload-after-payment';
     case API_QUOTE_DOCUMENT_UPLOAD = 'api-quote-document-upload';
 
     /* Claims Module */

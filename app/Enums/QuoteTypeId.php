@@ -30,6 +30,7 @@ final class QuoteTypeId extends Enum
     const TradeCredit = 12;
     const JobLoss = 16;
     const JBLS = 17;
+    const Cyber = 19;
 
     public static function getOptions()
     {
