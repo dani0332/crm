@@ -111,8 +111,15 @@ class WatermarkDocumentsJob implements ShouldQueue
             }
         } catch (\Exception $e) {
             cache()->forget("processing_{$this->lockKey}");
-            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage());
+            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage(), [], $e);
             throw $e; // Re-throw to trigger job retry
+        } catch (Throwable $t) {
+            // Ensure the processing lock is always cleared for non-Exception Throwables (e.g., TypeError, Error)
+            cache()->forget("processing_{$this->lockKey}");
+            LoggerService::error("throwable: Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$t->getMessage(), [
+                'throwable_class' => $t::class,
+            ], $t);
+            throw $t; // Re-throw to trigger job retry
         }
     }
 
