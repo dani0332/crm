@@ -326,6 +326,11 @@ const exportReport = async (exportType = 'download') => {
       }
     }
 
+    if (exportType === 'bird') {
+      await exportViaBird();
+      return;
+    }
+
     const data = {
       ...useCleanObj({ ...filters, ...serverOptions.value }),
       ...(exportType === 'email'
@@ -375,6 +380,42 @@ const exportReport = async (exportType = 'download') => {
       text:
         error.response?.data?.message ||
         'An error occurred while initiating the export. Please try again.',
+    });
+  } finally {
+    loader.exportLoader = false;
+  }
+};
+
+const exportViaBird = async () => {
+  try {
+    const data = {
+      ...useCleanObj({ ...filters, ...serverOptions.value }),
+      recipientEmail: page.props.auth.user.email,
+      report: filters.report,
+    };
+
+    const response = await axios.post(route('instant-alfred.export-bird'), data);
+
+    if (response.data.success) {
+      notification.success({
+        position: 'top',
+        title: 'Export Workflow Triggered',
+        text: response.data.message || 'Your export workflow has been triggered. You will receive an email with the download link shortly.',
+      });
+    } else {
+      notification.error({
+        position: 'top',
+        title: 'Export Error',
+        text: response.data.message || 'Failed to trigger export workflow. Please try again.',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      position: 'top',
+      title: 'Export Error',
+      text:
+        error.response?.data?.message ||
+        'An error occurred while triggering the export workflow. Please try again.',
     });
   } finally {
     loader.exportLoader = false;
@@ -676,6 +717,27 @@ const exportReport = async (exportType = 'download') => {
           :loading="loader.exportLoader"
           @click.prevent="exportReport('email')"
           >Export via Email</x-button
+        >
+
+        <x-tooltip v-if="reportButtonCon.disable" position="right">
+          <x-button size="sm" color="purple" :loading="loader.exportLoader">
+            Export via Bird
+          </x-button>
+          <template #tooltip v-if="reportButtonCon.msg">
+            <span class="font-medium">
+              {{ reportButtonCon.msg }}
+            </span>
+          </template>
+        </x-tooltip>
+
+        <x-button
+          :disabled="reportButtonCon.disable"
+          v-else
+          size="sm"
+          color="purple"
+          :loading="loader.exportLoader"
+          @click.prevent="exportReport('bird')"
+          >Export via Bird</x-button
         >
       </div>
 

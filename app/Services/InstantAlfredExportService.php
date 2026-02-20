@@ -321,7 +321,7 @@ class InstantAlfredExportService
         return [
             'success' => true,
             'download_url' => $result['url'],
-            'records' => $result['records'],
+            'records' => (string) $result['records'],
             'total_time_seconds' => $totalApiTime,
             'report_type' => $reportType,
         ];

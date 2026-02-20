@@ -16,6 +16,9 @@ use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use App\Models\RenewalBatch;
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
+use App\Services\BirdService;
 use App\Services\InstantAlfredExportService;
 use App\Services\InstantAlfredService;
 use Carbon\Carbon;
@@ -277,5 +280,89 @@ class AlfredChatController extends Controller
         }
 
         return $params;
+    }
+
+    public function exportChatViaBird(Request $request)
+    {
+        $request->validate([
+            'report' => 'required|string|in:'.InstantChatReportsEnum::DETAILED_REPORT.','.InstantChatReportsEnum::CONSOLIDATED_REPORT,
+            'recipientEmail' => 'sometimes|email',
+        ]);
+
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW)->first();
+
+        if (! $workflowUrl || empty($workflowUrl->value)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Bird workflow URL not configured.',
+                'message' => 'Please contact administrator to configure the Bird workflow URL.',
+            ], 500);
+        }
+
+        try {
+            $recipientName = Auth::user()?->name;
+            if (empty($recipientName)) {
+                $recipientName = 'User';
+            }
+
+            $birdPayload = [
+                'report' => $request->report,
+                'recipientEmail' => $request->recipientEmail ?? Auth::user()?->email ?? null,
+                'recipientName' => $recipientName,
+                'filters' => $request->except(['report', 'recipientEmail']),
+                'user_id' => Auth::id(),
+                'exportApiUrl' => route('api.instant-alfred.generate-url'),
+            ];
+
+            Log::info('Bird workflow payload prepared', [
+                'payload' => $birdPayload,
+                'recipientName' => $birdPayload['recipientName'],
+            ]);
+
+            $birdService = app(BirdService::class);
+            $response = $birdService->triggerWebHookRequest($workflowUrl->value, $birdPayload, 'post', false);
+
+            if (in_array($response->status_code, [200, 201])) {
+                Log::info('Bird workflow triggered for instant alfred export', [
+                    'report' => $request->report,
+                    'recipient' => $birdPayload['recipientEmail'],
+                    'workflow_url' => $workflowUrl->value,
+                    'status' => $response->status_code,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Export workflow has been triggered. You will receive an email with the download link shortly.',
+                    'report_type' => $request->report,
+                ]);
+            }
+
+            Log::error('Bird workflow failed for instant alfred export', [
+                'report' => $request->report,
+                'recipient' => $birdPayload['recipientEmail'],
+                'status' => $response->status_code,
+                'response' => $response->body,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to trigger Bird workflow.',
+                'message' => 'The workflow could not be initiated. Please try again.',
+            ], 500);
+
+        } catch (\Exception $e) {
+            Log::error('Bird workflow exception for instant alfred export', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'report' => $request->report,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to trigger Bird workflow.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
