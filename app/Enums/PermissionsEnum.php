@@ -480,6 +480,7 @@ final class PermissionsEnum extends Enum
     public const CYBER_LEADPOOL = 'cyber-leadpool';
     public const CYBER_API_TRIGGER = 'cyber-api-trigger';
     // End of Cyber Permissions
+    public const DEVICE_LEADPOOL = 'device-leadpool';
 
     public static function getAdvisorConversionReportPermissions()
     {

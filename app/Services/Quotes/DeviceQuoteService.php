@@ -8,12 +8,15 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\DeviceMake;
+use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,16 +33,20 @@ class DeviceQuoteService extends BaseQuoteService
         $query = $this->baseQuery()->with([
             'quoteStatus',
             'advisor',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
             'renewalBatchModel',
             'nationality',
             'insuranceProviderPlan',
+            'branch:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
-            ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
+            ->when(empty(request('booking_date')), function ($query) {
+                $query->filterByCreatedAt(request('created_at_start'), request('created_at_end'));
+            })
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByPaymentDueDates('payment_due_date')
@@ -49,6 +56,10 @@ class DeviceQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->filterByAdvisorAssignedDates('quoteDetail', ['advisor_assigned_date_start', 'advisor_assigned_date_end'], verifyQuoteStatus: true)
+            ->filterIn('renewal_batch_id')
+            ->filterBy('assignment_type', ignoreAll: true)
+            ->filterByPrivateClient(request('private_client'))
             ->when(request()->filled('insurer_tax_invoice_number'), function ($q) {
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_tax_number', request('insurer_tax_invoice_number'));
@@ -58,6 +69,36 @@ class DeviceQuoteService extends BaseQuoteService
                 $q->whereHas('payments', function ($subQuery) {
                     $subQuery->where('insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
                 });
+            })
+            ->when(request()->filled('payment_authorised_date'), function ($q) {
+                $authorizedAtRange = request('payment_authorised_date');
+                if (is_array($authorizedAtRange) && count($authorizedAtRange) >= 2) {
+                    $startDate = $authorizedAtRange[0];
+                    $endDate = $authorizedAtRange[1];
+                    if ($startDate && $endDate) {
+                        $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('authorized_at', [
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
+            })
+            ->when(request()->filled('payment_capture_date'), function ($q) {
+                $capturedAtRange = request('payment_capture_date');
+                if (is_array($capturedAtRange) && count($capturedAtRange) >= 2) {
+                    $startDate = $capturedAtRange[0];
+                    $endDate = $capturedAtRange[1];
+                    if ($startDate && $endDate) {
+                        $q->whereHas('payments', function ($paymentQuery) use ($startDate, $endDate) {
+                            $paymentQuery->whereBetween('captured_at', [
+                                Carbon::parse($startDate)->startOfDay(),
+                                Carbon::parse($endDate)->endOfDay(),
+                            ]);
+                        });
+                    }
+                }
             });
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
@@ -70,9 +111,23 @@ class DeviceQuoteService extends BaseQuoteService
         return $query->resolveData($paginted, $forExport, $getTotalCount);
     }
 
+    public function postProcessDeviceQuotes($quotes)
+    {
+        $quotes->getCollection()->transform(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable
+                ? 'N/A'
+                : ($item?->branch?->name ?? app(BranchAssignmentService::class)
+                    ->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Device));
+
+            return $item;
+        });
+
+        return $quotes;
+    }
+
     public function getOne(string $uuid, $allDetails = false)
     {
-        return $this->baseQuery()
+        $quote = $this->baseQuery()
             ->with('deviceQuote')
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -81,6 +136,8 @@ class DeviceQuoteService extends BaseQuoteService
                 $q->with([
                     'quoteStatus',
                     'advisor',
+                    'advisor.primaryBranch',
+                    'branch:id,name',
                     'paymentStatus',
                     'quoteDetail',
                     'quoteDetail.lostReason',
@@ -88,8 +145,16 @@ class DeviceQuoteService extends BaseQuoteService
                     'nationality',
                     'customer',
                     'customer.additionalContactInfo',
-                    'insuranceProvider:id,text,code',
-                    'insuranceProviderPlan.insuranceProvider',
+                    'insuranceProviderPlan',
+                    'insuranceProvider',
+                    'latestInsured',
+                    'latestInsured.insuredKyc' => function ($query) {
+                        $query->select([
+                            'id',
+                            'insured_id',        // advisor primary key
+                            'id_expiry_date',
+                        ]);
+                    },
                     'payments' => function ($q) {
                         $q->with([
                             'paymentStatus',
@@ -127,6 +192,10 @@ class DeviceQuoteService extends BaseQuoteService
             ");
             })
             ->where('uuid', $uuid)->firstOrFail();
+
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Device));
+
+        return $quote;
     }
 
     public function getShowData(string $uuid)
@@ -137,7 +206,7 @@ class DeviceQuoteService extends BaseQuoteService
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::DEVICE_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::Device) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
         return [
-            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::DeviceManager),
+            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SmartPhoneManager),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             ...$data,
         ];
@@ -272,11 +341,21 @@ class DeviceQuoteService extends BaseQuoteService
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
-        // Make API request to save the savings quote
-        $response = Capi::request('/api/device/create', 'post', $data);
-
-        if (isset($response->uuid)) {
+        // Make API request to save the device quote
+        $response = Capi::request('/api/v1/device/create', 'post', $data);
+        if (isset($response->code) && ! in_array($response->code, [200, 201], true) || isset($response->status) && ! in_array($response->status, [200, 201], true)) {
+            return $response;
+        }
+        if (isset($response->uuid) && $response->uuid != '') {
+            LoggerService::info(self::class.' - create: Assigning quote to self', extra: [
+                'quote_uuid' => $response->uuid,
+            ]);
             $this->selfAssign(QuoteTypes::DEVICE, $response->uuid, true);
+            $lead = $this->baseQuery()->where('uuid', $response->uuid)->first();
+            if ($lead) {
+                $lead->advisor_id = Auth::id();
+                $lead->save();
+            }
         }
 
         return $response;

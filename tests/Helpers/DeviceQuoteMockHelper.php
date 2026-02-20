@@ -2,7 +2,7 @@
 
 namespace Tests\Helpers;
 
-use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\DeviceQuote;
 use App\Models\PersonalQuote;
 use App\Services\CapiService;
@@ -11,45 +11,45 @@ use Mockery;
 class DeviceQuoteMockHelper
 {
     /**
-     * Mock CapiService to simulate external API behavior.
+     * Mock CapiService (via Capi facade) to simulate device create API behavior.
+     * When the service calls Capi::request('/api/v1/device/create', 'post', $data),
+     * we create PersonalQuote + DeviceQuote locally and return success with uuid.
      */
-    public static function mockCapiService(string $testUuid): \Mockery\MockInterface
+    public static function mockCapiDeviceCreate(string $testUuid): \Mockery\MockInterface
     {
-        $mock = Mockery::mock(CapiService::class);
+        $mock = Mockery::mock(CapiService::class)->makePartial();
+        $mock->shouldAllowMockingProtectedMethods();
         $mock->shouldReceive('request')
-            ->once()
-            ->with('/api/device/create', 'post', Mockery::type('array'))
-            ->andReturnUsing(function ($endpoint, $method, $data) use ($testUuid) {
-                return self::simulateCapiResponse($testUuid, $data);
+            ->with('/api/v1/device/create', 'post', Mockery::type('array'))
+            ->andReturnUsing(function ($path, $method, $data) use ($testUuid) {
+                return self::simulateDeviceCreateResponse($testUuid, $data);
             });
 
-        // Bind the mock to the service container using fully-qualified class name
-        // This works for both constructor injection and facade access
-        app()->instance(CapiService::class, $mock);
-        // Also bind the facade accessor string for facade resolution
         app()->instance('CapiService', $mock);
 
         return $mock;
     }
 
     /**
-     * Simulate what the CAPI service does: creates records and returns response.
+     * Simulate CAPI device create: create PersonalQuote and DeviceQuote, return response object.
      */
-    private static function simulateCapiResponse(string $testUuid, array $data): object
+    private static function simulateDeviceCreateResponse(string $testUuid, array $data): object
     {
         $personalQuote = PersonalQuote::create([
             'uuid' => $testUuid,
-            'quote_type_id' => QuoteTypeId::Device,
+            'quote_type_id' => (int) QuoteTypes::DEVICE->id(),
             'first_name' => $data['firstName'],
             'last_name' => $data['lastName'],
             'email' => $data['email'],
             'mobile_no' => $data['mobileNo'],
             'source' => $data['source'] ?? 'TEST',
             'device' => $data['device'] ?? 'DESKTOP',
-            'code' => 'TEST-'.uniqid(),
-            'created_by_id' => auth()->user()->id,
+            'code' => 'DEV-'.uniqid(),
+            'created_by_id' => auth()->id(),
             'advisor_id' => $data['advisorId'] ?? null,
         ]);
+
+        $purchaseDate = sprintf('%04d-%02d-01', $data['purchaseYear'] ?? date('Y'), $data['purchaseMonth'] ?? 1);
 
         DeviceQuote::create([
             'personal_quote_id' => $personalQuote->id,
@@ -57,17 +57,17 @@ class DeviceQuoteMockHelper
             'last_name' => $data['lastName'],
             'email' => $data['email'],
             'mobile_no' => $data['mobileNo'],
-            'month_of_purchase' => $data['purchaseMonth'],
-            'year_of_purchase' => $data['purchaseYear'],
-            'make_id' => $data['phoneMakeId'],
-            'model_id' => $data['phoneModelId'],
-            'imei' => $data['imei'],
+            'month_of_purchase' => (string) ($data['purchaseMonth'] ?? '1'),
+            'year_of_purchase' => (string) ($data['purchaseYear'] ?? date('Y')),
+            'purchase_date' => $purchaseDate,
+            'make_id' => $data['phoneMakeId'] ?? null,
+            'model_id' => $data['phoneModelId'] ?? null,
+            'imei' => $data['imei'] ?? null,
         ]);
 
         return (object) [
             'uuid' => $testUuid,
-            'message' => null,
-            'errors' => null,
+            'message' => 'Quote is created successfully.',
         ];
     }
 }

@@ -36,6 +36,7 @@ enum OCRDocumentTypeEnum: string
             'MEPP' => self::PASSPORT,
             'MEV' => self::VISA,
             'DRIVER_EID' => self::DRIVER_EMIRATES_ID,
+
             'PS' => self::POLICY_SCHEDULE,
             'GH_PS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Group Health Policy Schedule
             // Send Update document types
@@ -50,6 +51,10 @@ enum OCRDocumentTypeEnum: string
     public static function isOCREnabled(DocumentType $documentType, QuoteTypes $quoteType)
     {
         $documentType = self::getDocumentType($documentType);
+
+        if (! $documentType) {
+            return false;
+        }
 
         return $documentType?->isEnabled($quoteType);
     }

@@ -24,6 +24,8 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use App\Models\DeviceInsurerRequestResponses;
+use App\Models\DeviceQuote;
 
 class AuditableController extends Controller
 {
@@ -192,6 +194,9 @@ class AuditableController extends Controller
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case CyberQuote::class:
                 return CyberInsurerRequestResponses::with('insuranceProvider');
+            case DeviceQuote::class:
+                return DeviceInsurerRequestResponses::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
             case HealthQuote::class:
                 return HealthInsurerRequestResponse::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);

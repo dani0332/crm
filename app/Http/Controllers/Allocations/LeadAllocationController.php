@@ -86,6 +86,7 @@ class LeadAllocationController extends Controller
             QuoteTypes::GROUP_MEDICAL => PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
             QuoteTypes::TRAVEL => PermissionsEnum::TRAVEL_LEADPOOL,
             QuoteTypes::CYBER => PermissionsEnum::CYBER_LEADPOOL,
+            QuoteTypes::DEVICE => PermissionsEnum::DEVICE_LEADPOOL,
         };
 
         return request()->user()->can($permission);

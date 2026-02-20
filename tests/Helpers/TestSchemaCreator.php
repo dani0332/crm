@@ -5,6 +5,7 @@ namespace Tests\Helpers;
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\CyberSchema;
 use Tests\Support\Schema\RenewalsSchema;
+use Illuminate\Support\Facades\Schema;
 use Tests\Support\Schema\RulesSchema;
 
 class TestSchemaCreator

@@ -55,6 +55,7 @@ const props = defineProps({
   emailStatuses: Array,
   isFuncsEnabled: Object,
   paymentGatewayEnum: Array,
+  planURL: String,
 });
 
 const page = usePage();
@@ -64,6 +65,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
+const modelClassDevice = 'App\\Models\\DeviceQuote';
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
@@ -148,11 +150,10 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
-  emirates_id_expiry_date:
-    page.props.quote?.customer.emirates_id_expiry_date || null,
+  insured_first_name: page.props.quote?.latest_insured?.first_name  || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name|| '',
+  emirates_id_number: page.props.quote?.latest_insured?.id_number || null,
+  emirates_id_expiry_date: page.props.quote?.latest_insured?.insured_kyc.id_expiry_date|| null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -378,31 +379,55 @@ const onLoadAvailablePlansData = async () => {
         res.data?.quotes?.plans &&
         Array.isArray(res.data.quotes.plans)
       ) {
-        availablePlansTable.data = res.data.quotes.plans.map(plan => ({
-          ...plan,
-          isManualUpdate: plan.isManualUpdate ?? false,
-          isDisabled: plan.isDisabled ?? false,
-          coverageUpTo: plan.coverage ?? '-',
-          quoteNumber: plan.insurerQuoteNo ?? '-',
-          priceWithoutVat: plan.discountPremium ?? '0',
-          vat: plan.vat ?? '0',
-          priceWithVat: (
-            parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
-          ).toFixed(2),
-        }));
+        availablePlansTable.data = res.data.quotes.plans.map(plan => {
+          const priceWithoutVat =
+            plan.discountPremium ?? plan.actualPremium ?? '0';
+          const vat = plan.vat ?? '0';
+          const priceWithVat = (
+            parseFloat(priceWithoutVat) + parseFloat(vat)
+          ).toFixed(2);
+
+          return {
+            ...plan,
+            isManualUpdate: plan.isManualUpdate ?? false,
+            isDisabled: plan.isDisabled ?? false,
+            coverageUpTo: plan.coverage ?? '-',
+            quoteNumber: plan.insurerQuoteNo ?? '-',
+            providerName: plan.providerName ?? '',
+            name: plan.planName ?? plan.name ?? '',
+            priceWithoutVat: priceWithoutVat,
+            vat: vat,
+            priceWithVat: priceWithVat,
+            quote_premium: priceWithoutVat,
+            quote_VATamount: vat,
+            quote_premium_withVAT: priceWithVat,
+          };
+        });
       } else if (Array.isArray(res.data) && res.data.length > 0) {
-        availablePlansTable.data = res.data.map(plan => ({
-          ...plan,
-          isManualUpdate: plan.isManualUpdate ?? false,
-          isDisabled: plan.isDisabled ?? false,
-          coverageUpTo: plan.coverage ?? '-',
-          quoteNumber: plan.insurerQuoteNo ?? '-',
-          priceWithoutVat: plan.discountPremium ?? '0',
-          vat: plan.vat ?? '0',
-          priceWithVat: (
-            parseFloat(plan.discountPremium ?? 0) + parseFloat(plan.vat ?? 0)
-          ).toFixed(2),
-        }));
+        availablePlansTable.data = res.data.map(plan => {
+          const priceWithoutVat =
+            plan.discountPremium ?? plan.actualPremium ?? '0';
+          const vat = plan.vat ?? '0';
+          const priceWithVat = (
+            parseFloat(priceWithoutVat) + parseFloat(vat)
+          ).toFixed(2);
+
+          return {
+            ...plan,
+            isManualUpdate: plan.isManualUpdate ?? false,
+            isDisabled: plan.isDisabled ?? false,
+            coverageUpTo: plan.coverage ?? '-',
+            quoteNumber: plan.insurerQuoteNo ?? '-',
+            providerName: plan.providerName ?? '',
+            name: plan.planName ?? plan.name ?? '',
+            priceWithoutVat: priceWithoutVat,
+            vat: vat,
+            priceWithVat: priceWithVat,
+            quote_premium: priceWithoutVat,
+            quote_VATamount: vat,
+            quote_premium_withVAT: priceWithVat,
+          };
+        });
       } else {
         availablePlansTable.data = [];
       }
@@ -417,6 +442,7 @@ const onLoadAvailablePlansData = async () => {
 
 const getPlanDetails = id => {
   viewButtonLoading.value = true;
+
   try {
     const foundPlan = availablePlansTable.data.find(plan => plan.id === id);
     if (foundPlan) {
@@ -427,7 +453,24 @@ const getPlanDetails = id => {
       axios
         .get(`/device/${page.props.quote.uuid}/plan_details/${id}`)
         .then(res => {
-          planDetails.value = res.data;
+          const priceWithoutVat =
+            res.data.discountPremium ?? res.data.actualPremium ?? '0';
+          const vat = res.data.vat ?? '0';
+          const priceWithVat = (
+            parseFloat(priceWithoutVat) + parseFloat(vat)
+          ).toFixed(2);
+
+          planDetails.value = {
+            ...res.data,
+            providerName: res.data.providerName ?? '',
+            name: res.data.planName ?? res.data.name ?? '',
+            priceWithoutVat: priceWithoutVat,
+            vat: vat,
+            priceWithVat: priceWithVat,
+            quote_premium: priceWithoutVat,
+            quote_VATamount: vat,
+            quote_premium_withVAT: priceWithVat,
+          };
           modals.planDetails = true;
           viewButtonLoading.value = false;
         })
@@ -487,14 +530,61 @@ const copyLink = () => {
       position: 'top',
     });
 };
+
+const formatToDateTime = dateString => {
+  if (!dateString) return null;
+
+  const match = dateString.match(
+    /(\d{2})-([A-Za-z]{3})-(\d{4})\s(\d{2}):(\d{2})(am|pm)/i,
+  );
+
+  if (!match) return null;
+
+  let [, day, monthStr, year, hours, minutes, meridian] = match;
+
+  const months = {
+    Jan: 0,
+    Feb: 1,
+    Mar: 2,
+    Apr: 3,
+    May: 4,
+    Jun: 5,
+    Jul: 6,
+    Aug: 7,
+    Sep: 8,
+    Oct: 9,
+    Nov: 10,
+    Dec: 11,
+  };
+
+  const month = months[monthStr];
+  if (month === undefined) return null;
+
+  hours = parseInt(hours, 10);
+  minutes = parseInt(minutes, 10);
+
+  // Convert to 24-hour format
+  if (meridian.toLowerCase() === 'pm' && hours !== 12) {
+    hours += 12;
+  }
+  if (meridian.toLowerCase() === 'am' && hours === 12) {
+    hours = 0;
+  }
+
+  const date = new Date(year, month, day, hours, minutes, 0);
+
+  const pad = n => n.toString().padStart(2, '0');
+
+  return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
 </script>
 
 <template>
   <div>
-    <Head title="Device Quotes" />
+    <Head title="Smartphone Quotes" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Device Detail</h2>
+        <h2 class="text-xl font-semibold">Smartphone Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
@@ -576,7 +666,7 @@ const copyLink = () => {
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div">
-            Device Quotes
+            Smartphone Quotes
           </x-button>
         </Link>
       </template>
@@ -678,11 +768,11 @@ const copyLink = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
-                <dd>{{ quote.created_at }}</dd>
+                <dd>{{ formatToDateTime(quote.created_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
-                <dd>{{ quote.updated_at }}</dd>
+                <dd>{{ formatToDateTime(quote.updated_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -761,19 +851,24 @@ const copyLink = () => {
                   }}
                 </dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="quote?.device_quote?.make">
-                <dt class="font-medium">DEVICE MAKE</dt>
-                <dd>
-                  {{ quote.device_quote.make.name ?? 'N/A' }}
-                </dd>
-              </div>
+
               <div
                 class="grid sm:grid-cols-2"
-                v-if="quote?.device_quote?.model"
+                v-if="quote?.device_quote?.device_make"
+              >
+                <dt class="font-medium">DEVICE MAKE</dt>
+                <dd>
+                  {{ quote.device_quote.device_make.text ?? 'N/A' }}
+                </dd>
+              </div>
+
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote?.device_quote?.device_model"
               >
                 <dt class="font-medium">DEVICE MODEL</dt>
                 <dd>
-                  {{ quote.device_quote.model.name ?? 'N/A' }}
+                  {{ quote.device_quote.device_model.text ?? 'N/A' }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2" v-if="quote?.device_quote">
@@ -1432,10 +1527,42 @@ const copyLink = () => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                           <dt class="text-sm font-medium text-gray-700">
-                            Price
+                            Price (without VAT)
                           </dt>
                           <dd class="text-gray-900">
-                            {{ planDetails.actualPremium ?? '0' }}
+                            {{
+                              planDetails.quote_premium
+                                ? parseFloat(planDetails.quote_premium).toFixed(
+                                    2,
+                                  )
+                                : '0.00'
+                            }}
+                          </dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700">VAT</dt>
+                          <dd class="text-gray-900">
+                            {{
+                              planDetails.quote_VATamount
+                                ? parseFloat(
+                                    planDetails.quote_VATamount,
+                                  ).toFixed(2)
+                                : '0.00'
+                            }}
+                          </dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700">
+                            Total Price (with VAT)
+                          </dt>
+                          <dd class="text-gray-900">
+                            {{
+                              planDetails.quote_premium_withVAT
+                                ? parseFloat(
+                                    planDetails.quote_premium_withVAT,
+                                  ).toFixed(2)
+                                : '0.00'
+                            }}
                           </dd>
                         </div>
 
@@ -1456,13 +1583,13 @@ const copyLink = () => {
                       <div
                         v-if="
                           planDetails.benefits &&
-                          planDetails.benefits.INCLUSION &&
-                          planDetails.benefits.INCLUSION.length > 0
+                          planDetails.benefits.inclusion &&
+                          planDetails.benefits.inclusion.length > 0
                         "
                         class="space-y-3 max-w-3xl"
                       >
                         <div
-                          v-for="benefit in planDetails.benefits.INCLUSION"
+                          v-for="benefit in planDetails.benefits.inclusion"
                           :key="benefit.code"
                           class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-150"
                         >
@@ -1697,8 +1824,8 @@ const copyLink = () => {
 
     <ApiLogs
       v-if="can(permissionsEnum.API_LOG_VIEW)"
-      :type="modelClass"
-      :id="$page.props.quote.id"
+      :type="modelClassDevice"
+      :id="$page.props.quote.device_quote.id"
     />
 
     <PolicyIssuanceApiLogs

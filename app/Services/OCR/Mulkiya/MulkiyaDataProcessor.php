@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Services\OCR\Mulkiya;
 
 use App\Models\CarQuote;
-use App\Models\Nationality;
-use App\Models\RegistrationCertificate;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
+use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Support\Facades\DB;
 

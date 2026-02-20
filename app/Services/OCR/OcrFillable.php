@@ -345,6 +345,7 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
                 OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data, $documentTypeCode, $memberDetailId),
+                OCRDocumentTypeEnum::DRIVER_EMIRATES_ID => $this->fillDriverEmiratesId($quote, $data),
                 OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data, $documentTypeCode),
                 OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data, $documentTypeCode),
                 OCRDocumentTypeEnum::DRIVER_EMIRATES_ID => $this->fillDriverEmiratesId($quote, $data),
