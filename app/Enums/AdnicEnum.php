@@ -28,6 +28,8 @@ class AdnicEnum
     public const VISA_TYPE_EXISTING_VISA_HOLDER = 2;
     public const NATIONALITY_ID_EMIRATES_ID = 1;
     public const OCCUPATION_OTHER = 13;
+    public const SPONSER_CATEGORY_UAE = 2;
+    public const MEMBER_CATEGORY_DUBAI_RESIDENCY = 4;
 
     /* Insurer Document Keys */
     public const INSURER_DOCUMENT_KEY_POLICY_DOCUMENT = 'PolicyDocumentId';

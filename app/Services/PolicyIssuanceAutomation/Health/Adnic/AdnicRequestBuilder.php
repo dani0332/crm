@@ -72,13 +72,13 @@ class AdnicRequestBuilder
         $emiratesId = $healthUmafQuestionCollection->where('question_code', 'emiratesId')->first()['answer_text'] ?? null;
         $passportNumber = $healthUmafQuestionCollection->where('question_code', 'passportNumber')->first()['answer_text'] ?? null;
         $previouslyCovered = $healthUmafQuestionCollection->where('question_code', 'adnicInsured')->first()['answer_text'] ?? null;
-        $sponsorCategory = $healthUmafQuestionCollection->where('question_code', 'sponsorCategory')->first()['answer_text'] ?? null;
+        $sponsorCategory = AdnicEnum::SPONSER_CATEGORY_UAE;
         $visaFileNumber = $healthUmafQuestionCollection->where('question_code', 'visaFileNumber')->first()['answer_text'] ?? null;
         $industry = $healthUmafQuestionCollection->where('question_code', 'industry')->first()['answer_text'] ?? null;
         // $visaType = $healthUmafQuestionCollection->where('question_code', 'visaType')->first()['answer_text'] ?? null;
         $visaType = AdnicEnum::VISA_TYPE_EXISTING_VISA_HOLDER;
         $customerClassification = AdnicEnum::CUSTOMER_CLASSIFICATION_NATURAL_PERSONS; // FIX Value
-        $memberCategory = $sponsorCategory; // Member Category is same as Sponsor Category
+        $memberCategory = AdnicEnum::MEMBER_CATEGORY_DUBAI_RESIDENCY; // Member Category is same as Sponsor Category
 
         $healthInsurerRequest = json_decode($healthInsurerRequestResponse->request);
         $healthInsurerResponse = json_decode($healthInsurerRequestResponse->response);
