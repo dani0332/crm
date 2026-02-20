@@ -109,7 +109,6 @@ use App\Http\Middleware\SetReadDbConnection;
 use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
 use App\Services\Bor\BorPdfService;
-use App\Services\ClaimsDocumentUploadUtility;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -1076,18 +1075,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return view('pdf.bor-document', $pdfData);
     });
-    Route::get('claims/upload-documents', function () {
-        $exitCode = Artisan::call('claims:upload-documents');
-        $output = Artisan::output();
-
-        return response()->json([
-            'success' => $exitCode === 0,
-            'exit_code' => $exitCode,
-            'message' => $exitCode === 0 ? 'Document upload process completed successfully' : 'Document upload process completed with errors',
-            'output' => $output,
-        ], $exitCode === 0 ? 200 : 500);
-    });
-
 
     Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access');
     Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access')->name('trigger-policy-issuance');
