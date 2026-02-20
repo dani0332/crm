@@ -41,7 +41,6 @@ class ClaimRequestObserver
         }
 
         if ($claimRequest->isDirty('claim_sub_status_id')) {
-            $originalClaimSubStatusId = $claimRequest->getOriginal('claim_sub_status_id');
             $newClaimSubStatusId = $claimRequest->claim_sub_status_id;
 
             $shouldCloseTheClaim = $this->claimStatusesService->checkSubStatusForClaimClosure($claimRequest, $newClaimSubStatusId);

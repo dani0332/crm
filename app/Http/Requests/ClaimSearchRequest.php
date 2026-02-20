@@ -69,7 +69,7 @@ class ClaimSearchRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
-                'regex:/^[A-Z0-9\s\-]+$/',
+                'regex:/^[a-zA-Z0-9\s\-]+$/',
             ],
             'car_make' => 'nullable|string|max:100',
             'car_model' => 'nullable|string|max:100',
