@@ -19,4 +19,3 @@ class BusinessTypeOfInsuranceFactory extends Factory
         ];
     }
 }
-

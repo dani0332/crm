@@ -133,7 +133,7 @@ class ClaimDocumentsController extends Controller
         try {
             // Use the same logic as quote documents for S3 temp URLs
             $tempUrl = $this->quoteDocumentService->getDocumentUrl($request->safe()->docURL);
-            
+
             if ($tempUrl) {
                 return response()->json(['url' => $tempUrl], 200);
             } else {

@@ -7,7 +7,6 @@ use App\Enums\BorStatusEnum;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeText;
-use App\Enums\GenericDocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -25,7 +24,6 @@ use App\Models\CarPlanPolicyWording;
 use App\Models\Claim;
 use App\Models\DocumentType;
 use App\Models\GenericDocument;
-use App\Models\GenericDocumentType;
 use App\Models\HealthPlanPolicyWording;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
@@ -1220,8 +1218,6 @@ class QuoteDocumentService extends BaseService
 
     /**
      * Get claim documents grouped by quote type and insurance provider
-     *
-     * @return array
      */
     public function getClaimDocuments(): array
     {
@@ -1239,11 +1235,11 @@ class QuoteDocumentService extends BaseService
         }
 
         $grouped = $this->groupClaimDocumentsByQuoteType($documents);
-        
+
         // Ensure all quote types are present in response even if empty
         $emptyStructure = $this->getEmptyClaimDocumentsResponseStructure();
         foreach ($emptyStructure as $lob => $structure) {
-            if (!isset($grouped[$lob])) {
+            if (! isset($grouped[$lob])) {
                 $grouped[$lob] = $structure;
             }
         }
@@ -1253,8 +1249,6 @@ class QuoteDocumentService extends BaseService
 
     /**
      * Get empty response structure with all quote types for claim documents
-     *
-     * @return array
      */
     public function getEmptyClaimDocumentsResponseStructure(): array
     {
@@ -1267,7 +1261,7 @@ class QuoteDocumentService extends BaseService
             if ($lob) {
                 $structure[$lob] = [
                     'quoteTypeId' => $quoteTypeId,
-                    'docs' => []
+                    'docs' => [],
                 ];
             }
         }
@@ -1278,29 +1272,28 @@ class QuoteDocumentService extends BaseService
     /**
      * Group claim documents by quote type and insurance provider
      *
-     * @param \Illuminate\Database\Eloquent\Collection $documents
-     * @return array
+     * @param  \Illuminate\Database\Eloquent\Collection  $documents
      */
     public function groupClaimDocumentsByQuoteType($documents): array
     {
         $grouped = $this->getEmptyClaimDocumentsResponseStructure();
 
         foreach ($documents as $document) {
-            if (!$document->insuranceProvider) {
+            if (! $document->insuranceProvider) {
                 continue;
             }
 
             $quoteTypeId = $document->quote_type_id ?? null;
-            
+
             // Skip if quote_type_id is null
             if ($quoteTypeId === null) {
                 continue;
             }
 
             $lob = QuoteTypeId::getDisplayName($quoteTypeId);
-            
+
             // If LOB not found or not in grouped structure, skip this document
-            if (!$lob || !isset($grouped[$lob])) {
+            if (! $lob || ! isset($grouped[$lob])) {
                 continue;
             }
 
@@ -1310,11 +1303,11 @@ class QuoteDocumentService extends BaseService
                 'insuranceProviderId' => $document->insuranceProvider->id,
                 'insuranceProviderCode' => $document->insuranceProvider->code ?? '',
                 'docUrl' => $docUrl,
-                'docTitle' => $document->name
+                'docTitle' => $document->name,
             ];
 
             // Only include business_type_of_insurance for Business LOB (quote_type_id = 5)
-            if ($quoteTypeId === QuoteTypeId::Business && !empty($document->business_type_of_insurance_id)) {
+            if ($quoteTypeId === QuoteTypeId::Business && ! empty($document->business_type_of_insurance_id)) {
                 $docData['businessTypeOfInsuranceId'] = $document->business_type_of_insurance_id;
                 $docData['businessTypeOfInsurance'] = $document->businessTypeOfInsurance ? [
                     'id' => $document->businessTypeOfInsurance->id,

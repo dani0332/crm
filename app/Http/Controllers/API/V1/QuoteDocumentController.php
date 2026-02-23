@@ -134,7 +134,7 @@ class QuoteDocumentController extends Controller
         $data = $this->quoteDocumentService->getClaimDocuments();
 
         return response()->json([
-            'data' => $data
+            'data' => $data,
         ]);
     }
 }

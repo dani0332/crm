@@ -50,13 +50,13 @@ final class QuoteTypeId extends Enum
     public static function getDisplayName(?int $quoteTypeId): ?string
     {
         $options = self::getOptions();
+
         return $options[$quoteTypeId] ?? null;
 
     }
 
     /**
      * Get all quote type IDs for claim documents
-     * @return array
      */
     public static function getClaimDocumentQuoteTypes(): array
     {
@@ -69,7 +69,7 @@ final class QuoteTypeId extends Enum
             self::Home,
             self::Health,
             self::Business,
-            self::Jetski
+            self::Jetski,
         ];
     }
 }

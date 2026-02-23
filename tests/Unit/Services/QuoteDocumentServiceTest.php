@@ -25,13 +25,13 @@ class QuoteDocumentServiceTest extends TestCase
     {
         parent::setUp();
         TestSchemaCreator::createMinimalSchema();
-        $this->service = new QuoteDocumentService();
+        $this->service = new QuoteDocumentService;
     }
 
     public function test_get_empty_claim_documents_response_structure(): void
     {
         $result = $this->service->getEmptyClaimDocumentsResponseStructure();
-        
+
         $this->assertIsArray($result);
         $this->assertNotEmpty($result);
 
@@ -129,7 +129,7 @@ class QuoteDocumentServiceTest extends TestCase
         $this->assertCount(1, $result['Home']['docs']);
         $this->assertCount(1, $result['Travel']['docs']);
         $this->assertCount(1, $result['Business']['docs']);
-        
+
         // Verify Home document structure
         $homeDoc = $result['Home']['docs'][0];
         $this->assertEquals($insuranceProvider->id, $homeDoc['insuranceProviderId']);
@@ -216,4 +216,3 @@ class QuoteDocumentServiceTest extends TestCase
         $this->assertEquals('travel-doc.pdf', $result['Travel']['docs'][0]['docTitle']);
     }
 }
-
