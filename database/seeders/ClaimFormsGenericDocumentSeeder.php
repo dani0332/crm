@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\Claim;
 use App\Models\GenericDocument;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Seeds generic_documents with claim form documents (path: documents/claims_forms/).
@@ -27,25 +28,27 @@ class ClaimFormsGenericDocumentSeeder extends Seeder
     {
         $rows = $this->getRows();
 
-        foreach ($rows as $row) {
-            GenericDocument::updateOrCreate(
-                ['uuid' => $row['uuid']],
-                [
-                    'generic_document_type_id' => $row['generic_document_type_id'],
-                    'documentable_type' => self::DOCUMENTABLE_TYPE,
-                    'documentable_id' => self::DOCUMENTABLE_ID,
-                    'quote_type_id' => $row['quote_type_id'],
-                    'name' => $row['name'],
-                    'path' => $row['path'],
-                    'mime_type' => self::MIME_TYPE,
-                    'created_by_id' => self::CREATED_BY_ID,
-                    'insurance_provider_id' => $row['insurance_provider_id'],
-                    'business_type_of_insurance_id' => $row['business_type_of_insurance_id'],
-                    'created_at' => $row['created_at'],
-                    'updated_at' => $row['updated_at'],
-                ]
-            );
-        }
+        DB::transaction(function () use ($rows): void {
+            foreach ($rows as $row) {
+                GenericDocument::updateOrCreate(
+                    ['uuid' => $row['uuid']],
+                    [
+                        'generic_document_type_id' => $row['generic_document_type_id'],
+                        'documentable_type' => self::DOCUMENTABLE_TYPE,
+                        'documentable_id' => self::DOCUMENTABLE_ID,
+                        'quote_type_id' => $row['quote_type_id'],
+                        'name' => $row['name'],
+                        'path' => $row['path'],
+                        'mime_type' => self::MIME_TYPE,
+                        'created_by_id' => self::CREATED_BY_ID,
+                        'insurance_provider_id' => $row['insurance_provider_id'],
+                        'business_type_of_insurance_id' => $row['business_type_of_insurance_id'],
+                        'created_at' => $row['created_at'],
+                        'updated_at' => $row['updated_at'],
+                    ]
+                );
+            }
+        });
     }
 
     /**
