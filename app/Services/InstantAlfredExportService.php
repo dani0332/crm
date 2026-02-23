@@ -36,6 +36,7 @@ class InstantAlfredExportService
             'download_url' => $result['url'],
             'records' => (string) $result['records'],
             'report_type' => $reportType,
+            'time_period' => $this->formatTimePeriod($params),
         ];
     }
 
@@ -367,5 +368,16 @@ class InstantAlfredExportService
         sort($channels);
 
         return empty($channels) ? 'N/A' : implode(', ', $channels);
+    }
+
+    private function formatTimePeriod(array $params): string
+    {
+        if (! empty($params['chat_initiated_at']) && is_array($params['chat_initiated_at']) && count($params['chat_initiated_at']) === 2) {
+            $startDate = Carbon::parse($params['chat_initiated_at'][0])->format('Y-m-d');
+            $endDate = Carbon::parse($params['chat_initiated_at'][1])->format('Y-m-d');
+            return $startDate.' to '.$endDate;
+        }
+
+        return 'All Time';
     }
 }
