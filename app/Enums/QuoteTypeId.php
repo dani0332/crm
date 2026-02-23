@@ -69,6 +69,7 @@ final class QuoteTypeId extends Enum
             self::Home,
             self::Health,
             self::Business,
+            self::Jetski
         ];
     }
 }
