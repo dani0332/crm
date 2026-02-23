@@ -47,6 +47,8 @@ class WatermarkDocumentsJob implements ShouldQueue
     {
         LoggerService::startQuoteLogging($this->uuid, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
 
+        LoggerService::info("WatermarkDocumentsJob started for Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
+
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {
             LoggerService::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
