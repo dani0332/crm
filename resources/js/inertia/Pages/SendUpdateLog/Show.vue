@@ -12,7 +12,7 @@ import { reactive } from 'vue';
 
 const props = defineProps({
   quoteType: String,
-  computedQuoteType: String,
+  quoteTypeDisplayLabel: String,
   sendUpdateLog: Object,
   sendUpdateOptions: Array,
   insuranceProviders: Object,
@@ -898,7 +898,7 @@ const cancelOptionsList = computed(() => {
       :insuranceProviders="props.insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
-      :computedQuoteType="computedQuoteType"
+      :quoteTypeDisplayLabel="quoteTypeDisplayLabel"
       :isUpdateBooked="isUpdateBooked"
       :is-negative-value="isNegativeValue"
       :booking-details="props.bookPolicyDetails"

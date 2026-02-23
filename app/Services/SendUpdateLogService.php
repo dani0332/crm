@@ -637,15 +637,18 @@ class SendUpdateLogService
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
-            $computedQuoteType = computedQuoteTypeForDisplay(
+            $deviceType = (isset($sendUpdateLog->personalQuote) && isset($sendUpdateLog->personalQuote->deviceQuote))
+                ? ($sendUpdateLog->personalQuote->deviceQuote->device_type ?? null)
+                : null;
+            $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
                 $sendUpdateLog->quote_type_id,
                 $quoteType,
-                $sendUpdateLog?->personalQuote?->deviceQuote?->device_type
+                $deviceType
             );
             if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $invoiceDescription = $insuranceProvider->code.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
             } else {
-                $invoiceDescription = $insuranceProvider->code.'-'.$computedQuoteType.'-'.$quote->policy_number;
+                $invoiceDescription = $insuranceProvider->code.'-'.$quoteTypeDisplayLabel.'-'.$quote->policy_number;
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
@@ -1343,8 +1346,7 @@ class SendUpdateLogService
         $documentTypeCodes = [];
 
         if(! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business, QuoteTypeId::Savings, QuoteTypeId::Device, QuoteTypeId::Cyber])) {
-            $documentTypeCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+            $documentTypeCodes = $quoteTypeId == QuoteTypeId::Cyber ? [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE] : [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
         } elseif ($quoteTypeId == QuoteTypeId::Business || $quoteTypeId == QuoteTypeId::Device) {
             $documentTypeCodes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
@@ -1357,7 +1359,7 @@ class SendUpdateLogService
             ];
         }
 
-        if(! empty($documentTypeCodes)) {
+        if (! empty($documentTypeCodes)) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', $documentTypeCodes)->toArray();
         }
 

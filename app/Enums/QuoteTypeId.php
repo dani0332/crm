@@ -41,4 +41,24 @@ final class QuoteTypeId extends Enum
 
         return $retval;
     }
+
+    /**
+     * Line of business / invoice display label for a quote type.
+     * For Device quotes, returns device_type (e.g. smartphone, tablet) when present.
+     *
+     * @param  int|string  $quoteTypeIdOrCode  QuoteTypeId constant or quoteTypeCode constant
+     * @param  string  $fallback  Default label (e.g. quoteTypeCode value)
+     * @param  string|null  $deviceType  Device-specific type string from the quote
+     */
+    public static function displayLabel(int|string $quoteTypeIdOrCode, string $fallback, ?string $deviceType = null): string
+    {
+        $isDevice = $quoteTypeIdOrCode === self::Device
+            || $quoteTypeIdOrCode === quoteTypeCode::Device;
+
+        if ($isDevice) {
+            return $deviceType !== null ? ucfirst(strtolower(string: $deviceType)) : $fallback;
+        }
+
+        return $fallback;
+    }
 }

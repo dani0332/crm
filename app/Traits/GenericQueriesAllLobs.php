@@ -285,21 +285,22 @@ trait GenericQueriesAllLobs
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
 
-        $computedQuoteType = computedQuoteTypeForDisplay(
+        $deviceType = isset($record->deviceQuote) ? ($record->deviceQuote?->device_type ?? null) : null;
+        $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
             $quoteType,
             $quoteType,
-            $record?->deviceQuote?->device_type
+            $deviceType
         );
 
         if ($payment) {
-            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $computedQuoteType, $record);
+            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteTypeDisplayLabel, $record);
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $isAbuDhabiBranch = $this->isAbuDhabiBranch($quoteType, $record);
 
         $bookPolicyDetails = [];
-        $bookPolicyDetails['lineOfBusiness'] = ucfirst($computedQuoteType);
+        $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteTypeDisplayLabel);
         $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
         $bookPolicyDetails['invoiceDescription'] = $invoiceDescription;
         $bookPolicyDetails['bookButton'] = false;
