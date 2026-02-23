@@ -183,7 +183,7 @@ class InstantAlfredExportService
             $doc['created_at'] ?? 'N/A',
             $doc['role'] ?? 'N/A',
             $doc['msg'] ?? '',
-            $doc['communication_channel'] ?? 'N/A',
+            $this->formatCommunicationChannel($doc['communication_channel'] ?? null),
             $doc['employee_flag'] ?? 'N/A',
             $doc['email'] ?? 'N/A',
             $doc['input_tokens_usage'] ?? 0,
@@ -353,6 +353,10 @@ class InstantAlfredExportService
     {
         if ($channel instanceof \MongoDB\Model\BSONDocument || $channel instanceof \MongoDB\Model\BSONArray) {
             $channel = $channel->getArrayCopy();
+        }
+
+        if (is_string($channel)) {
+            return $channel === '' ? 'N/A' : $channel;
         }
 
         if (! is_array($channel)) {

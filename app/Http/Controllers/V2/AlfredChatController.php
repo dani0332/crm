@@ -147,15 +147,11 @@ class AlfredChatController extends Controller
         }
 
         try {
-            $recipientName = Auth::user()?->name;
-            if (empty($recipientName)) {
-                $recipientName = 'User';
-            }
-
+            
             $birdPayload = [
                 'report' => $request->report,
-                'recipientEmail' => $request->recipientEmail ?? Auth::user()?->email ?? null,
-                'recipientName' => $recipientName,
+                'recipientEmail' => $request->recipientEmail ?? Auth::user()?->email,
+                'recipientName' => Auth::user()?->name ?? 'User',
                 'filters' => $request->except(['report', 'recipientEmail']),
                 'user_id' => Auth::id(),
                 'exportApiUrl' => route('api.instant-alfred.generate-url'),
