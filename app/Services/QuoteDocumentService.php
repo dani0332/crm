@@ -199,7 +199,7 @@ class QuoteDocumentService extends BaseService
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
-        LoggerService::info("Watermark qualification check: {$isWaterMarkQualifyDoc}");
+        LoggerService::info("Watermark qualification check: ".(int) $isWaterMarkQualifyDoc);
         try {
             if (data_get($data, 'is_base_64', 0) == 1) {
                 $originalName = data_get($data, 'file_name', 'Base 64 file');
