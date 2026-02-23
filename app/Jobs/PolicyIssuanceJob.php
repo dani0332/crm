@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Exceptions\PolicyIssuanceModelNotFoundException;
+use App\Exceptions\PolicyIssuanceProcessNotFoundException;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -138,7 +140,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 LoggerService::error('Process not found - cannot proceed with automation', [
                     'process_id' => $this->processId,
                 ]);
-                throw new \RuntimeException("Process {$this->processId} not found");
+                throw new PolicyIssuanceProcessNotFoundException($this->processId);
             }
         }
     }
@@ -159,7 +161,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'message' => json_encode(['error' => 'Quote model not found']),
             ]);
 
-            throw new \RuntimeException("Model not found for process {$this->process->id}");
+            throw new PolicyIssuanceModelNotFoundException($this->process->id);
         }
 
         // Refresh to get latest data
