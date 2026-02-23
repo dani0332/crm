@@ -710,7 +710,7 @@ class HomeQuoteRepository extends BaseRepository
             'policy_expiry_date_end' => fn ($query, $value) => $query->whereDate('personal_quotes.policy_expiry_date', '<=', $value),
             'previous_quote_policy_number' => fn ($query, $value) => $query->where('personal_quotes.previous_quote_policy_number', $value),
             'renewal_batches' => fn ($query, $value) => $query->whereIn('personal_quotes.renewal_batch_id', (array) $value),
-            'advisor_assigned_date' => fn ($query, $value) => $query->when(!empty($value) && is_array($value) && count($value) >= 2, function ($q) use ($value) {
+            'advisor_assigned_date' => fn ($query, $value) => $query->when(! empty($value) && is_array($value) && count($value) >= 2, function ($q) use ($value) {
                 $dateFrom = Carbon::parse($value[0])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::parse($value[1])->endOfDay()->toDateTimeString();
                 $q->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
