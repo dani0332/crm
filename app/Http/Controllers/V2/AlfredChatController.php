@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\InstantChatReportsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\TransactionTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
+use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use App\Models\RenewalBatch;
-use App\Enums\ApplicationStorageEnums;
-use App\Models\ApplicationStorage;
 use App\Services\BirdService;
 use App\Services\InstantAlfredExportService;
 use App\Services\InstantAlfredService;
@@ -94,17 +94,17 @@ class AlfredChatController extends Controller
     {
         if ($request->has('filters') && is_array($request->filters)) {
             $params = $request->filters;
-            
+
             $params['report'] = $request->report;
             $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
             $params['recipientName'] = $request->recipientName ?? Auth::user()?->name ?? 'User';
-            
+
             if ($request->has('user_id')) {
                 $params['user_id'] = $request->user_id;
             }
         } else {
             $params = $request->all();
-            
+
             $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
             $params['recipientName'] = $request->recipientName ?? Auth::user()?->name ?? 'User';
 

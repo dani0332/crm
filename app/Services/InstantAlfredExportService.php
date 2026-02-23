@@ -373,6 +373,7 @@ class InstantAlfredExportService
         if (! empty($params['chat_initiated_at']) && is_array($params['chat_initiated_at']) && count($params['chat_initiated_at']) === 2) {
             $startDate = Carbon::parse($params['chat_initiated_at'][0])->format('Y-m-d');
             $endDate = Carbon::parse($params['chat_initiated_at'][1])->format('Y-m-d');
+
             return $startDate.' to '.$endDate;
         }
 

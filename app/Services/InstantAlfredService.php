@@ -288,7 +288,6 @@ class InstantAlfredService extends BaseService
         return $currentRequest;
     }
 
-
     /**
      * Process a chunk of consolidated chat data (used by chunked CSV export)
      * This method processes MongoDB data for a chunk of SQL records
@@ -429,7 +428,6 @@ class InstantAlfredService extends BaseService
             return collect();
         }
     }
-
 
     public function createPipeline(Request $request, $itemIds, $type)
     {
