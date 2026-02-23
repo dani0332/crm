@@ -91,6 +91,7 @@ class InstantAlfredExportService
                 ->getChatDetailedReportQuery($params);
 
             $rows = $query->get();
+
             return $rows
                 ->groupBy('uuid')
                 ->map(fn ($group) => $group->sortBy('id')->first())
