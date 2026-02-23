@@ -6,11 +6,8 @@ use App\Enums\InstantChatReportsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TransactionTypeEnum;
-use App\Exports\InstantChatConsolidatedExport;
-use App\Exports\InstantChatDetailedExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
-use App\Jobs\InstantAlfredExportJob;
 use App\Models\AlfredChat;
 use App\Models\Lookup;
 use App\Models\QuoteBatches;
@@ -21,7 +18,6 @@ use App\Models\ApplicationStorage;
 use App\Services\BirdService;
 use App\Services\InstantAlfredExportService;
 use App\Services\InstantAlfredService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -35,8 +31,6 @@ class AlfredChatController extends Controller
         $this->instantAlfredService = $instantAlfredService;
 
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
-
-        $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['exportChat']]);
 
         $this->middleware('readonly_db');
     }
@@ -143,139 +137,46 @@ class AlfredChatController extends Controller
         }
     }
 
-    public function exportChat(Request $request)
-    {
-        $fileName = $request->report;
-        switch ($request->report) {
-            case InstantChatReportsEnum::CONSOLIDATED_REPORT:
-                return (new InstantChatConsolidatedExport)->download($fileName);
 
-            case InstantChatReportsEnum::DETAILED_REPORT:
-                return (new InstantChatDetailedExport)->download($fileName);
-
-            default:
-                abort(400, 'Invalid report type requested.');
-        }
-    }
-
-    public function exportChatToEmail(Request $request)
-    {
-        // Validate request parameters
-        $request->validate([
-            'report' => 'required|string',
-            'recipientEmail' => 'sometimes|email',
-            'subject' => 'sometimes|string',
-            'ccRecipients' => 'sometimes|array',
-            'ccRecipients.*' => 'email',
-        ]);
-
-        if (! in_array($request->report, [InstantChatReportsEnum::CONSOLIDATED_REPORT, InstantChatReportsEnum::DETAILED_REPORT])) {
-            return response()->json([
-                'error' => 'Invalid report type requested.',
-                'available_reports' => [InstantChatReportsEnum::CONSOLIDATED_REPORT, InstantChatReportsEnum::DETAILED_REPORT],
-            ], 400);
-        }
-
-        // Set default recipient email to current user if not provided
-        $recipientEmail = $request->recipientEmail ?? (Auth::check() ? Auth::user()->email : null);
-
-        if (! $recipientEmail) {
-            return response()->json([
-                'error' => 'Recipient email is required.',
-                'message' => 'Please provide a recipient email or ensure you are authenticated.',
-            ], 400);
-        }
-
-        $fileName = $request->report.' '.Carbon::now()->format('Y-m-d_H-i-s');
-        $subject = $request->subject ?? "Chat Report: {$request->report}";
-
-        try {
-            InstantAlfredExportJob::dispatch([
-                ...$request->all(),
-                'recipientEmail' => $recipientEmail,
-                'recipientName' => Auth::user()?->name ?? 'User',
-                'subject' => $subject,
-                'fileName' => $fileName,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'message' => 'Your export is being processed. You will receive an email with a download link shortly.',
-                'report_type' => $request->report,
-                'recipient' => $recipientEmail,
-                'subject' => $subject,
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to initiate export.',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
 
     public function generateExportUrl(Request $request)
     {
-        $apiStartTime = microtime(true);
-
-        $request->validate([
-            'report' => 'required|string|in:'.InstantChatReportsEnum::DETAILED_REPORT.','.InstantChatReportsEnum::CONSOLIDATED_REPORT,
-            'recipientEmail' => 'sometimes|email',
-            'recipientName' => 'sometimes|string',
-            'user_id' => 'sometimes|integer',
-            'created_at_start' => 'sometimes|date',
-            'created_at_end' => 'sometimes|date|after_or_equal:created_at_start',
-            'chat_initiated_at' => 'sometimes|array|size:2',
-            'chat_initiated_at.0' => 'required_with:chat_initiated_at|date',
-            'chat_initiated_at.1' => 'required_with:chat_initiated_at|date',
-            'filters' => 'sometimes|array',
-            'filters.chat_initiated_at' => 'sometimes|array|size:2',
-            'filters.chat_initiated_at.0' => 'required_with:filters.chat_initiated_at|date',
-            'filters.chat_initiated_at.1' => 'required_with:filters.chat_initiated_at|date',
-        ]);
-
         try {
             $service = app(InstantAlfredExportService::class);
+
             $params = $this->prepareExportParams($request);
 
             $result = $service->generateCsvAndGetUrl($params);
 
-            $totalApiTime = round(microtime(true) - $apiStartTime, 3);
-
             Log::info('API endpoint: Export URL generated', [
-                'total_response_time' => $totalApiTime,
+                'recipient' => $request->recipientEmail,
+                'report' => $request->report,
                 'records' => $result['records'],
-                'report' => $result['report_type'],
             ]);
 
             return response()->json($result);
 
         } catch (\Exception $e) {
-            $totalApiTime = round(microtime(true) - $apiStartTime, 3);
-            Log::error('API endpoint: Export URL generation failed', [
+            Log::error('API endpoint: Export URL generation failed', extra: [
                 'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'time_before_failure' => $totalApiTime,
+                'recipient' => $request->recipientEmail,
+                'report' => $request->report,
             ]);
 
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to generate export URL.',
                 'message' => $e->getMessage(),
-                'time_before_failure' => $totalApiTime,
             ], 500);
         }
     }
 
     private function prepareExportParams(Request $request): array
     {
-        // Handle Bird payload structure where filters are nested
+
         if ($request->has('filters') && is_array($request->filters)) {
-            // Extract filters from nested structure (Bird payload)
             $params = $request->filters;
             
-            // Add report and recipient info from root level
             $params['report'] = $request->report;
             $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
             $params['recipientName'] = $request->recipientName ?? Auth::user()?->name ?? 'User';
@@ -284,7 +185,7 @@ class AlfredChatController extends Controller
                 $params['user_id'] = $request->user_id;
             }
         } else {
-            // Handle direct payload structure (existing format)
+
             $params = $request->all();
             
             $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
@@ -302,12 +203,10 @@ class AlfredChatController extends Controller
             }
         }
 
-        // Ensure report is set
         if (! isset($params['report'])) {
             $params['report'] = $request->report ?? InstantChatReportsEnum::DETAILED_REPORT;
         }
 
-        // Remove pagination and sorting params that shouldn't be in filters
         unset($params['page'], $params['per_page'], $params['sortType']);
 
         return $params;
@@ -325,8 +224,8 @@ class AlfredChatController extends Controller
         if (! $workflowUrl || empty($workflowUrl->value)) {
             return response()->json([
                 'success' => false,
-                'error' => 'Bird workflow URL not configured.',
-                'message' => 'Please contact administrator to configure the Bird workflow URL.',
+                'error' => 'Export workflow URL not configured.',
+                'message' => 'Please contact administrator to configure the export workflow URL.',
             ], 500);
         }
 
@@ -363,12 +262,12 @@ class AlfredChatController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Export workflow has been triggered. You will receive an email with the download link shortly.',
+                    'message' => 'Your export has been queued. You will receive an email with the download link shortly.',
                     'report_type' => $request->report,
                 ]);
             }
 
-            Log::error('Bird workflow failed for instant alfred export', [
+            Log::error('Export workflow failed for instant alfred export', [
                 'report' => $request->report,
                 'recipient' => $birdPayload['recipientEmail'],
                 'status' => $response->status_code,
@@ -377,12 +276,12 @@ class AlfredChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to trigger Bird workflow.',
-                'message' => 'The workflow could not be initiated. Please try again.',
+                'error' => 'Failed to trigger export workflow.',
+                'message' => 'The export workflow could not be initiated. Please try again.',
             ], 500);
 
         } catch (\Exception $e) {
-            Log::error('Bird workflow exception for instant alfred export', [
+            Log::error('Export workflow exception for instant alfred export', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -391,7 +290,7 @@ class AlfredChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to trigger Bird workflow.',
+                'error' => 'Failed to trigger export workflow.',
                 'message' => $e->getMessage(),
             ], 500);
         }

@@ -267,11 +267,11 @@ onMounted(() => {
   }
 });
 
-const exportReport = async (exportType = 'download') => {
+const exportViaBird = async () => {
   try {
     loader.exportLoader = true;
 
-    // Validate required fields for email export
+    // Validate required fields
     if (!filters.report) {
       notification.error({
         position: 'top',
@@ -326,51 +326,32 @@ const exportReport = async (exportType = 'download') => {
       }
     }
 
-    if (exportType === 'bird') {
-      await exportViaBird();
-      return;
-    }
-
     const data = {
       ...useCleanObj({ ...filters, ...serverOptions.value }),
-      ...(exportType === 'email'
-        ? { recipientEmail: page.props.auth.user.email }
-        : {}),
+      recipientEmail: page.props.auth.user.email,
       report: filters.report,
     };
 
-    const payload =
-      exportType === 'download'
-        ? {
-            type: 'instant-alfred-chat',
-            quote_type_id: null,
-            exportType: 'download',
-            url: `${route('exportChatData')}?${new URLSearchParams(useObjToUrl(data)).toString()}`,
-          }
-        : {
-            type: 'instant-alfred-chat',
-            quote_type_id: null,
-            exportType: 'email',
-            url: route('instant-alfred.export-email'),
-            data: data,
-            method: 'post',
-          };
+    const response = await axios.post(
+      route('instant-alfred.export-bird'),
+      data,
+    );
 
-    const result = await logAndExportQuotes(payload);
-
-    if (result.data.success !== false) {
+    if (response.data.success) {
       notification.success({
-        title:
-          exportType === 'download'
-            ? 'Export Initiated'
-            : 'Your export has been queued and will be sent to your email shortly.',
         position: 'top',
+        title: 'Export Queued',
+        text:
+          response.data.message ||
+          'Your export has been queued. You will receive an email with the download link shortly.',
       });
     } else {
       notification.error({
-        title:
-          result.data.message || 'Failed to initiate export. Please try again.',
         position: 'top',
+        title: 'Export Error',
+        text:
+          response.data.message ||
+          'Failed to initiate export. Please try again.',
       });
     }
   } catch (error) {
@@ -380,42 +361,6 @@ const exportReport = async (exportType = 'download') => {
       text:
         error.response?.data?.message ||
         'An error occurred while initiating the export. Please try again.',
-    });
-  } finally {
-    loader.exportLoader = false;
-  }
-};
-
-const exportViaBird = async () => {
-  try {
-    const data = {
-      ...useCleanObj({ ...filters, ...serverOptions.value }),
-      recipientEmail: page.props.auth.user.email,
-      report: filters.report,
-    };
-
-    const response = await axios.post(route('instant-alfred.export-bird'), data);
-
-    if (response.data.success) {
-      notification.success({
-        position: 'top',
-        title: 'Export Workflow Triggered',
-        text: response.data.message || 'Your export workflow has been triggered. You will receive an email with the download link shortly.',
-      });
-    } else {
-      notification.error({
-        position: 'top',
-        title: 'Export Error',
-        text: response.data.message || 'Failed to trigger export workflow. Please try again.',
-      });
-    }
-  } catch (error) {
-    notification.error({
-      position: 'top',
-      title: 'Export Error',
-      text:
-        error.response?.data?.message ||
-        'An error occurred while triggering the export workflow. Please try again.',
     });
   } finally {
     loader.exportLoader = false;
@@ -680,7 +625,14 @@ const exportViaBird = async () => {
     <div class="flex justify-between gap-3">
       <div v-if="can(permissionsEnum.DATA_EXTRACTION)" class="flex gap-2">
         <x-tooltip v-if="reportButtonCon.disable" position="right">
-          <x-button size="sm" color="emerald">Export Excel</x-button>
+          <x-button
+            size="md"
+            color="emerald"
+            :loading="loader.exportLoader"
+            disabled
+          >
+            Export via email
+          </x-button>
           <template #tooltip v-if="reportButtonCon.msg">
             <span class="font-medium">
               {{ reportButtonCon.msg }}
@@ -689,55 +641,12 @@ const exportViaBird = async () => {
         </x-tooltip>
 
         <x-button
-          :disabled="reportButtonCon.disable"
           v-else
-          size="sm"
+          size="md"
           color="emerald"
-          @click.prevent="exportReport('download')"
           :loading="loader.exportLoader"
-          >Export Excel</x-button
-        >
-
-        <x-tooltip v-if="reportButtonCon.disable" position="right">
-          <x-button size="sm" color="emerald" :loading="loader.exportLoader">
-            Export via Email
-          </x-button>
-          <template #tooltip v-if="reportButtonCon.msg">
-            <span class="font-medium">
-              {{ reportButtonCon.msg }}
-            </span>
-          </template>
-        </x-tooltip>
-
-        <x-button
-          :disabled="reportButtonCon.disable"
-          v-else
-          size="sm"
-          color="blue"
-          :loading="loader.exportLoader"
-          @click.prevent="exportReport('email')"
-          >Export via Email</x-button
-        >
-
-        <x-tooltip v-if="reportButtonCon.disable" position="right">
-          <x-button size="sm" color="purple" :loading="loader.exportLoader">
-            Export via Bird
-          </x-button>
-          <template #tooltip v-if="reportButtonCon.msg">
-            <span class="font-medium">
-              {{ reportButtonCon.msg }}
-            </span>
-          </template>
-        </x-tooltip>
-
-        <x-button
-          :disabled="reportButtonCon.disable"
-          v-else
-          size="sm"
-          color="purple"
-          :loading="loader.exportLoader"
-          @click.prevent="exportReport('bird')"
-          >Export via Bird</x-button
+          @click.prevent="exportViaBird"
+          >Export via email</x-button
         >
       </div>
 
