@@ -386,22 +386,7 @@ class InstantAlfredService extends BaseService
             '$match' => $matchConditions,
         ];
 
-        if ($type === 'chat') {
-            $pipeline[] = [
-                '$group' => [
-                    '_id' => '$quote_id',
-                    'created_at' => ['$first' => '$created_at'],
-                    'communication_channels' => ['$addToSet' => [
-                        '$cond' => [
-                            ['$ifNull' => ['$channel', false]],
-                            '$channel',
-                            '$$REMOVE',
-                        ],
-                    ]],
-                    'fallback' => ['$first' => '$fallback'],
-                ],
-            ];
-        } elseif ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
+        if ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
             $pipeline[] = [
                 '$project' => [
                     'created_at' => 1,

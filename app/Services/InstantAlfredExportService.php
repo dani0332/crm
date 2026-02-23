@@ -210,13 +210,18 @@ class InstantAlfredExportService
         try {
             fputcsv($stream, $this->getConsolidatedReportHeaders());
 
-            foreach ($this->streamConsolidatedReportData($params) as $row) {
-                fputcsv($stream, $row);
-                $records++;
+            DB::setDefaultConnection('mysql_read');
+            try {
+                foreach ($this->streamConsolidatedReportData($params) as $row) {
+                    fputcsv($stream, $row);
+                    $records++;
 
-                if ($records % self::FLUSH_INTERVAL === 0) {
-                    gc_collect_cycles();
+                    if ($records % self::FLUSH_INTERVAL === 0) {
+                        gc_collect_cycles();
+                    }
                 }
+            } finally {
+                DB::setDefaultConnection('mysql');
             }
 
             $result = $this->uploadCsvToAzure($stream, $azurePath);
@@ -237,37 +242,31 @@ class InstantAlfredExportService
 
     private function streamConsolidatedReportData(array $params): \Generator
     {
-        DB::setDefaultConnection('mysql_read');
+        $instantAlfredService = app(InstantAlfredService::class);
+        $query = $instantAlfredService->getChatConsolidateReportQuery($params);
+        $chunkSize = 500;
 
-        try {
-            $instantAlfredService = app(InstantAlfredService::class);
-            $query = $instantAlfredService->getChatConsolidateReportQuery($params);
-            $chunkSize = 500;
+        $sqlRecordsChunk = [];
+        foreach ($query->lazyById($chunkSize, 'pqr.id', 'id') as $sqlRecord) {
+            $sqlRecordsChunk[] = $sqlRecord;
 
-            $sqlRecordsChunk = [];
-            foreach ($query->lazyById($chunkSize, 'pqr.id', 'id') as $sqlRecord) {
-                $sqlRecordsChunk[] = $sqlRecord;
-
-                if (count($sqlRecordsChunk) >= $chunkSize) {
-                    $processedRecords = $instantAlfredService->processConsolidatedChunk($sqlRecordsChunk, $params);
-
-                    foreach ($processedRecords as $record) {
-                        yield $this->mapConsolidatedReportRow($record);
-                    }
-
-                    $sqlRecordsChunk = [];
-                }
-            }
-
-            if (! empty($sqlRecordsChunk)) {
+            if (count($sqlRecordsChunk) >= $chunkSize) {
                 $processedRecords = $instantAlfredService->processConsolidatedChunk($sqlRecordsChunk, $params);
 
                 foreach ($processedRecords as $record) {
                     yield $this->mapConsolidatedReportRow($record);
                 }
+
+                $sqlRecordsChunk = [];
             }
-        } finally {
-            DB::setDefaultConnection('mysql');
+        }
+
+        if (! empty($sqlRecordsChunk)) {
+            $processedRecords = $instantAlfredService->processConsolidatedChunk($sqlRecordsChunk, $params);
+
+            foreach ($processedRecords as $record) {
+                yield $this->mapConsolidatedReportRow($record);
+            }
         }
     }
 
