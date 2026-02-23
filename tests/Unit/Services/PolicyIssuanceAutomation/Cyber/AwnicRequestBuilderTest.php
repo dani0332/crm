@@ -29,7 +29,7 @@ it('builds issue policy payload with required fields', function () {
     ];
 
     $customer = (object) ['dob' => '1990-01-01'];
-    $nationality = (object) ['awni_country_code' => 'UAE'];
+    $nationality = (object) ['awni_country_code_number' => 'UAE'];
     $planDetail = (object) ['coverage' => 500000, 'planName' => 'Gold'];
     $splitPayment = (object) ['reference' => 'REF123'];
     $emirate = (object) ['text' => 'Dubai'];
