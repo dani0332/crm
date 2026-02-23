@@ -788,7 +788,7 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2" v-if="quote?.device_quote">
                 <dt class="font-medium">API ISSUANCE STATUS</dt>
-                <dd>{{ quote.api_issuance_status ?? 'N/A' }}</dd>
+                <dd>{{ quote.api_issuance_status ?? '' }}</dd>
               </div>
               <!-- End new fields -->
             </dl>

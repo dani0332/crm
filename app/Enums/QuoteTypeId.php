@@ -55,7 +55,7 @@ final class QuoteTypeId extends Enum
             || $quoteTypeIdOrCode === quoteTypeCode::Device;
 
         if ($isDevice) {
-            return $deviceType ?? $fallback;
+            return $deviceType !== null ? ucfirst(strtolower(string: $deviceType)) : $fallback;
         }
 
         return $fallback;
