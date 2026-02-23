@@ -711,11 +711,15 @@ class HomeQuoteRepository extends BaseRepository
             'previous_quote_policy_number' => fn ($query, $value) => $query->where('personal_quotes.previous_quote_policy_number', $value),
             'renewal_batches' => fn ($query, $value) => $query->whereIn('personal_quotes.renewal_batch_id', (array) $value),
             'advisor_assigned_date' => fn ($query, $value) => $query->when(! empty($value) && is_array($value) && count($value) >= 2, function ($q) use ($value) {
-                $dateFrom = Carbon::parse($value[0])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::parse($value[1])->endOfDay()->toDateTimeString();
-                $q->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
-                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
-                });
+                $startDate = $value[0];
+                $endDate = $value[1];
+                if ($startDate && $endDate) {
+                    $dateFrom = Carbon::parse($startDate)->startOfDay()->toDateTimeString();
+                    $dateTo = Carbon::parse($endDate)->endOfDay()->toDateTimeString();
+                    $q->whereHas('homeQuote.quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                        $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                    });
+                }
             }),
             'insurer_tax_invoice_number' => fn ($query, $value) => $query->whereHas('payments', function ($query) use ($value) {
                 $query->where('insurer_tax_number', $value);
