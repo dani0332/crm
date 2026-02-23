@@ -308,6 +308,19 @@ class CoreSchema
                 $table->unsignedBigInteger('updated_by_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
                 $table->string('insurer_aml_status')->nullable();
+                $table->string('policy_number')->nullable();
+                $table->date('policy_start_date')->nullable();
+                $table->date('policy_expiry_date')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
+                $table->unsignedBigInteger('currently_insured_with_id')->nullable();
+                $table->decimal('premium', 15, 2)->nullable();
+                $table->decimal('price_vat_applicable', 15, 2)->nullable();
+                $table->decimal('price_with_vat', 15, 2)->nullable();
+                $table->decimal('vat', 15, 2)->nullable();
+                $table->date('policy_issuance_date')->nullable();
+                $table->unsignedBigInteger('policy_issuance_status_id')->nullable();
+                $table->timestamp('quote_status_date')->nullable();
                 $table->timestamps();
             },
             'life_quote_request' => function (Blueprint $table) {

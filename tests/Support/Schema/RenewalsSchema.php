@@ -17,10 +17,14 @@ class RenewalsSchema
             'renewals_upload_leads' => function (Blueprint $table) {
                 $table->id();
                 $table->string('file_name');
-                $table->string('file_path');
+                $table->string('file_path')->nullable();
                 $table->string('quote_type')->nullable();
                 $table->string('status')->nullable();
+                $table->string('renewal_import_code')->nullable();
                 $table->string('renewal_import_type')->nullable();
+                $table->unsignedInteger('good')->default(0);
+                $table->unsignedInteger('cannot_upload')->default(0);
+                $table->unsignedInteger('total_records')->nullable();
                 $table->boolean('is_sic')->default(0);
                 $table->timestamps();
             },

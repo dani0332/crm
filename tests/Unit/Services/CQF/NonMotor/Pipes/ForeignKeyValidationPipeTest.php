@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
@@ -16,21 +16,25 @@ use App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteMappingService;
 use App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\LOBs\LifeCQFValidationService;
 use App\Services\CQF\NonMotor\Pipes\ForeignKeyValidationPipe;
+use Illuminate\Database\Eloquent\Model;
+use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
+    TestSchemaCreator::createRenewalsSchema();
     $this->pipe = app(ForeignKeyValidationPipe::class);
 });
 
 it('passes through when quote is not PersonalQuote', function () {
-    $carQuote = CarQuote::factory()->create();
+    $quote = Mockery::mock(Model::class)->shouldIgnoreMissing();
     $renewalsUploadLeads = RenewalsUploadLeads::create([
         'quote_type' => 'Bike',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
-        'status' => 1,
+        'file_path' => null,
+        'status' => '1',
     ]);
     $context = new CQFRenewalContext(
-        quote: $carQuote,
+        quote: $quote,
         renewalsUploadLeads: $renewalsUploadLeads,
         quoteType: QuoteTypes::BIKE,
         renewalDaysThreshold: 120,
@@ -48,12 +52,13 @@ it('passes through when quote is not PersonalQuote', function () {
 it('fails when PersonalQuote has non-existent insurance_provider_id', function () {
     $customer = Customer::factory()->create();
     $nationality = Nationality::factory()->create();
-    Lookup::create([
+    Lookup::forceCreate([
         'key' => LookupsEnum::TRANSACTION_TYPES->value,
         'code' => LookupsEnum::EXT_CUSTOMER_RENWAL->value,
         'text' => 'Ext Customer Renewal',
     ]);
     $quote = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Life,
         'customer_id' => $customer->id,
         'nationality_id' => $nationality->id,
         'insurance_provider_id' => 99999999,
@@ -63,7 +68,8 @@ it('fails when PersonalQuote has non-existent insurance_provider_id', function (
         'quote_type' => 'Life',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
-        'status' => 1,
+        'file_path' => null,
+        'status' => '1',
     ]);
     $context = new CQFRenewalContext(
         quote: $quote,
@@ -85,12 +91,13 @@ it('fails when PersonalQuote has non-existent insurance_provider_id', function (
 it('fails when PersonalQuote has null insurance_provider_id', function () {
     $customer = Customer::factory()->create();
     $nationality = Nationality::factory()->create();
-    Lookup::create([
+    Lookup::forceCreate([
         'key' => LookupsEnum::TRANSACTION_TYPES->value,
         'code' => LookupsEnum::EXT_CUSTOMER_RENWAL->value,
         'text' => 'Ext Customer Renewal',
     ]);
     $quote = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Life,
         'customer_id' => $customer->id,
         'nationality_id' => $nationality->id,
         'insurance_provider_id' => null,
@@ -100,7 +107,8 @@ it('fails when PersonalQuote has null insurance_provider_id', function () {
         'quote_type' => 'Life',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
-        'status' => 1,
+        'file_path' => null,
+        'status' => '1',
     ]);
     $context = new CQFRenewalContext(
         quote: $quote,
@@ -123,12 +131,13 @@ it('passes when PersonalQuote has all required FKs existing', function () {
     $customer = Customer::factory()->create();
     $nationality = Nationality::factory()->create();
     $insuranceProvider = InsuranceProvider::factory()->create();
-    Lookup::create([
+    Lookup::forceCreate([
         'key' => LookupsEnum::TRANSACTION_TYPES->value,
         'code' => LookupsEnum::EXT_CUSTOMER_RENWAL->value,
         'text' => 'Ext Customer Renewal',
     ]);
     $quote = PersonalQuote::factory()->create([
+        'quote_type_id' => QuoteTypeId::Life,
         'customer_id' => $customer->id,
         'nationality_id' => $nationality->id,
         'insurance_provider_id' => $insuranceProvider->id,
@@ -138,7 +147,8 @@ it('passes when PersonalQuote has all required FKs existing', function () {
         'quote_type' => 'Life',
         'renewal_import_code' => 'test-'.uniqid(),
         'file_name' => 'test.xlsx',
-        'status' => 1,
+        'file_path' => null,
+        'status' => '1',
     ]);
     $context = new CQFRenewalContext(
         quote: $quote,
@@ -153,4 +163,8 @@ it('passes when PersonalQuote has all required FKs existing', function () {
     $result = $this->pipe->handle($context, fn ($c) => $c);
 
     expect($result->hasErrors())->toBeFalse();
+});
+
+afterEach(function () {
+    Mockery::close();
 });

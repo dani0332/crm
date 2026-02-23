@@ -9,7 +9,7 @@ beforeEach(function () {
     $this->registry = app(NonMotorCQFRegistry::class);
 });
 
-it('returns supported LOBs including Bike, Yacht, Jetski, Cycle, Pet, Home, Life, Savings', function () {
+it('returns supported LOBs including Bike, Yacht, Jetski, Cycle, Pet, Home, Life, Business, Savings', function () {
     $lobs = NonMotorCQFRegistry::supportedLOBs();
 
     $expected = [
@@ -20,11 +20,12 @@ it('returns supported LOBs including Bike, Yacht, Jetski, Cycle, Pet, Home, Life
         QuoteTypes::PET,
         QuoteTypes::HOME,
         QuoteTypes::LIFE,
+        QuoteTypes::BUSINESS,
         QuoteTypes::SAVINGS,
     ];
 
     expect($lobs)->toBeArray()
-        ->and($lobs)->toHaveCount(8);
+        ->and($lobs)->toHaveCount(9);
 
     foreach ($expected as $lob) {
         expect($lobs)->toContain($lob);
