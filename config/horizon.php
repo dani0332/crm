@@ -169,7 +169,7 @@ return [
         'production' => [
             'supervisor-prod' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -196,7 +196,7 @@ return [
         'uat' => [
             'supervisor-uat' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -243,7 +243,7 @@ return [
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -297,7 +297,7 @@ return [
         'test' => [
             'supervisor-test' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -324,7 +324,7 @@ return [
         'local' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,

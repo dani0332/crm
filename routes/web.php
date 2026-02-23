@@ -63,6 +63,7 @@ use App\Http\Controllers\UserStatusLogController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\ActivityLogController;
 use App\Http\Controllers\V2\Admin\AllocationAuditController;
+use App\Http\Controllers\V2\Admin\LeadSourceController;
 use App\Http\Controllers\V2\Admin\PrivateClientConfigController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
@@ -711,6 +712,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('tiers', TierController::class);
         Route::resource('quadrants', QuadrantController::class);
         Route::resource('rule', RulesController::class);
+        Route::post('lead-sources', [LeadSourceController::class, 'store'])->name('lead-source.store');
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });
@@ -811,6 +813,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('policy-issuance-logs', [AuditableController::class, 'loadPolicyIssuanceApiLogs']);
     Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
+    Route::post('ep-logs', [AuditableController::class, 'loadEpLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/bike-model-by-id', [AjaxController::class, 'bikeModelBasedOnCarMakeId']);
@@ -912,6 +915,22 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         $addBtchNuimber->handle();
         echo 'Done';
     });
+
+    // for testing env only.
+    if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
+        Route::get('/run-advisor-payment-notification', function () {
+            if (! \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+                return response()->json(['error' => 'Not authorized'], 403);
+            }
+
+            \Illuminate\Support\Facades\Artisan::call('send-payment-email-to-advisor:cron');
+
+            return response()->json([
+                'message' => 'Advisor payment notification command executed successfully!',
+                'status' => 'completed',
+            ]);
+        });
+    }
 
     // Command to bulk send policy documents
     Route::get('/run-policy-bulk-send', function (\Illuminate\Http\Request $request) {

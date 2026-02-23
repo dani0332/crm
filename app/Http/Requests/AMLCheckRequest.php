@@ -28,7 +28,6 @@ class AMLCheckRequest extends FormRequest
      */
     public function rules(): array
     {
-        LoggerService::info('AML Check Request - Validation Rules');
         $rules = [
             'screening_id_type' => 'required|string',
             'screening_id_number' => 'required|string',
@@ -43,7 +42,6 @@ class AMLCheckRequest extends FormRequest
             ]);
 
             if (in_array($this->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value])) {
-                LoggerService::info('AML Check Request - Email Validation');
                 $rules['get_quote_email_gig'] = 'nullable|email:rfc,dns';
             }
         }
