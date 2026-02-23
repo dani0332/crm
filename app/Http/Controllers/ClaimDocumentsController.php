@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Auth;
 
 class ClaimDocumentsController extends Controller
 {
-    protected $cdnPath;
     protected ClaimDocumentService $claimDocumentService;
     protected QuoteDocumentService $quoteDocumentService;
 
@@ -27,7 +26,6 @@ class ClaimDocumentsController extends Controller
     ) {
         $this->claimDocumentService = $claimDocumentService;
         $this->quoteDocumentService = $quoteDocumentService;
-        $this->cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_UPLOAD], ['only' => ['storeDocument']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_DOCUMENT_DELETE], ['only' => ['destroyDocument']]);

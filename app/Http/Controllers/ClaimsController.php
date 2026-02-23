@@ -69,7 +69,7 @@ class ClaimsController extends Controller
 
             return Inertia::render('Claims/Index', [
                 'claims' => $claims,
-                'filters' => $this->claimsService->getFilters($request),
+                'filters' => $this->claimsService->getFilters($request->safe()),
                 'claimDropdownOptions' => $claimDropdownOptions,
             ]);
         } catch (Exception $e) {

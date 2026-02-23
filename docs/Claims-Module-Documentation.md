@@ -524,7 +524,7 @@ The Claims module uses a comprehensive Vue.js component architecture:
 - `CLAIM_SUB_STATUS_TOTAL_LOSS_PAYMENT_IN_PROGRESS = 'Total loss payment in progress'`
 - `CLAIM_SUB_STATUS_TOTAL_LOSS_PAID_AND_CLAIM_SETTLED = 'Total loss paid and claim settled'`
 - `CLAIM_SUB_STATUS_CASH_LOSS_APPROVED = 'Cash loss approved'`
-- `CLAIM_SUB_STATUS_CASH_LOSS_PAYMENT_IN_PROGRESS = 'Cash loss payment inprogress'`
+- `CLAIM_SUB_STATUS_CASH_LOSS_PAYMENT_IN_PROGRESS = 'Cash loss payment in progress'`
 - `CLAIM_SUB_STATUS_CASH_LOSS_PAID_AND_CLAIM_SETTLED = 'Cash loss paid and claim settled'`
 
 #### Document Related Sub-Statuses

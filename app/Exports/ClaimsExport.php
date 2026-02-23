@@ -19,7 +19,6 @@ class ClaimsExport implements CsvExportableInterface
         private ClaimsService $claimsService,
         private $requestParams = null
     ) {
-        $this->requestParams = $requestParams;
     }
 
     /**

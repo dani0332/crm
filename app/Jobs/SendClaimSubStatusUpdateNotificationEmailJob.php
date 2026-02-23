@@ -96,7 +96,7 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
             $responseCode = $claimRequestEmailService->sendClaimSubStatusCustomerUpdateEmail($claimRequest, $this->customerMessage);
 
             // Log success or failure based on response code
-            if (in_array($responseCode, [200, 201])) {
+            if (in_array($responseCode, [200, 201, 202])) {
                 LoggerService::info(' Claim sub status update notification email sent successfully - Claim UUID: '.$this->claimRequestUuid, [
                     'response_code' => $responseCode,
                     'customer_email' => $claimRequest->email,
