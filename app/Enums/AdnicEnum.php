@@ -6,8 +6,8 @@ namespace App\Enums;
 
 class AdnicEnum
 {
-    public const RESPONSIBLE_PERSON_DEFAULT_EMAIL = 'hitesh.motwani@insurancemarket.ae'; // TODO:: Shereen will let us know the when business confirmed the email
-    public const RESPONSIBLE_PERSON_DEFAULT_MOBILE = '+971505636254'; // TODO:: Shereen will let us know the when business confirmed the mobile
+    public const RESPONSIBLE_PERSON_DEFAULT_EMAIL = 'hitesh.motwani@insurancemarket.ae';
+    public const RESPONSIBLE_PERSON_DEFAULT_MOBILE = '+971505636254';
     public const DEFAULT_EMIRATE_OF_YOUR_VISA = 2;
     public const STEP_GENERATE_QUOTE = 'generateQuote';
     public const STEP_ISSUE_POLICY = 'IssuePolicy';
