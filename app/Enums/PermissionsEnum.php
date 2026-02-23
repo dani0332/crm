@@ -456,10 +456,25 @@ final class PermissionsEnum extends Enum
     public const NONRULE_LEADALLOCATION = 'nonrule_leadallocation';
     public const SAGE_PROCESS_ISSUE_MANAGEMENT = 'sage-issue-management';
     public const BUY_LEADS_REVIVAL = 'buy-leads-revival';
+    public const BUY_LEADS_ADMIN = 'buy-leads-admin';
     public const BRANCHES = 'branches';
     public const BRANCH_ASSIGNMENTS = 'branch-assignments';
     public const CAR_LEGACY_KYC_SKIP_INSURER_API = 'car-legacy-kyc-skip-insurer-api';
     public const COMPANY_PRIVATE_CAR_DRIVER_UPDATES = 'company-private-car-driver-updates';
+
+    // Cyber Permissions
+    public const CYBER_QUOTES_LIST = 'cyber-quotes-list';
+    public const CYBER_QUOTES_CREATE = 'cyber-quotes-create';
+    public const CYBER_QUOTES_EDIT = 'cyber-quotes-edit';
+    public const CYBER_QUOTES_SHOW = 'cyber-quotes-show';
+    public const CYBER_COMPREHENSIVE_DASHBOARD = 'cyber-comprehensive-dashboard';
+    public const CYBER_CONVERSION_REPORT = 'cyber-conversion-report';
+    public const CYBER_DISTRIBUTION_REPORT = 'cyber-distribution-report';
+    public const CYBER_LEAD_ALLOCATION_DASHBOARD = 'cyber-lead-allocation-dashboard';
+    public const CYBER_AS_AT_REPORT_MANAGER = 'cyber-as-at-report-manager';
+    public const CYBER_LEADPOOL = 'cyber-leadpool';
+    public const CYBER_API_TRIGGER = 'cyber-api-trigger';
+    // End of Cyber Permissions
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -476,6 +491,7 @@ final class PermissionsEnum extends Enum
             self::CORPLINE_CONVERSION_REPORT,
             self::GROUPMEDICAL_CONVERSION_REPORT,
             self::SAVINGS_CONVERSION_REPORT,
+            self::CYBER_CONVERSION_REPORT,
         ];
     }
 
@@ -494,6 +510,7 @@ final class PermissionsEnum extends Enum
             self::CORPLINE_COMPREHENSIVE_DASHBOARD,
             self::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
             self::SAVINGS_COMPREHENSIVE_DASHBOARD,
+            self::CYBER_COMPREHENSIVE_DASHBOARD,
         ];
     }
 
@@ -512,6 +529,7 @@ final class PermissionsEnum extends Enum
             self::CORPLINE_DISTRIBUTION_REPORT,
             self::GROUPMEDICAL_DISTRIBUTION_REPORT,
             self::SAVINGS_DISTRIBUTION_REPORT,
+            self::CYBER_DISTRIBUTION_REPORT,
         ];
     }
 

@@ -234,4 +234,7 @@ final class WatermarkDocTypesEnum extends Enum
     const GL_PET = 'GL_PET';
     const GL_TRVL = 'GL_TRVL';
     const GL_YTCH = 'GL_YTCH';
+    const CYB_TIRBB = 'CYB_TIRBB';
+    const CYB_TI = 'CYB_TI';
+    const CYB_PS = 'CYB_PS';
 }

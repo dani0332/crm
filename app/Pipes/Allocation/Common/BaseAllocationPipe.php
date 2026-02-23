@@ -204,7 +204,8 @@ abstract class BaseAllocationPipe extends AllocationService
             UserStatusEnum::OFFLINE,
         ];
 
-        if (! $this->allocationRequest->isReassignmentJob()) {
+        // We need to add unavailable status if the lead is not a reassignment job or the lead is an AI advisor assigned
+        if (! $this->allocationRequest->isReassignmentJob() || $this->lead->isAIAdvisorAssigned()) {
             $statuses[] = UserStatusEnum::UNAVAILABLE;
         }
 
@@ -299,6 +300,10 @@ abstract class BaseAllocationPipe extends AllocationService
         }
 
         if ($this->lead instanceof CarQuote || $this->lead instanceof TravelQuote || $this->lead instanceof HealthQuote) {
+            $this->lead->sic_flow_enabled = 0;
+        }
+
+        if ($this->lead instanceof PersonalQuote && $this->lead->isCyber()) {
             $this->lead->sic_flow_enabled = 0;
         }
 

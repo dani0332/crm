@@ -169,8 +169,12 @@ class LeadDistributionReportService extends BaseService
 
     private function getPersonalQuoteQuery($lob)
     {
-        $lobId = $this->getLobId($lob);
-        $quoteType = QuoteTypes::from($lob);
+        // For Cyber only: convert product name to quote type code; others use product name directly
+        $quoteTypeCode = ($lob === TeamNameEnum::CYBER) ? quoteTypeCode::getQuoteTypeCodeFromProductName($lob) : $lob;
+        $lobId = $this->getLobId($quoteTypeCode);
+        /* Doing a 2nd step because $quoteType uses methods from \App\Enums\QuoteTypes after few lines. */
+        $quoteType = QuoteTypes::from($quoteTypeCode);
+
         $parentTeam = $this->getProductByName($lob);
 
         $personalQuoteQuery = PersonalQuote::query()
@@ -265,6 +269,10 @@ class LeadDistributionReportService extends BaseService
     {
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
+        // For Cyber only: convert product name to quote type code; others use product name directly
+        if ($lob === TeamNameEnum::CYBER) {
+            $lob = quoteTypeCode::getQuoteTypeCodeFromProductName($lob);
+        }
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
         $query->when(in_array($lob, [quoteTypeCode::Travel, quoteTypeCode::Health]), function ($q) use ($lob) {
             $segmentMap = [
@@ -293,6 +301,7 @@ class LeadDistributionReportService extends BaseService
             quoteTypeCode::Jetski => ['jetski_quote_request', 'jetski_quote_request.personal_quote_id', 'personal_quotes.id'],
             quoteTypeCode::Business => ['business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid'],
             quoteTypeCode::SAVINGS => ['savings_quote_request', 'savings_quote_request.personal_quote_id', 'personal_quotes.id'],
+            quoteTypeCode::CYBER => ['cyber_quote_request', 'cyber_quote_request.uuid', 'personal_quotes.uuid'],
         ];
 
         // Apply join based on LOB

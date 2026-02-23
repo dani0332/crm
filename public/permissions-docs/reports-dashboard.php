@@ -152,10 +152,7 @@
                     <td><span class="permission-value">api-logs-view</span></td>
                     <td>Allows users to view API logs for system integration reporting.</td>
                 </tr>
-                <tr>
-                    <td><span class="permission-value">view-process-tracker</span></td>
-                    <td>Allows users to view process tracking information for workflow reporting.</td>
-                </tr>
+               
             </tbody>
         </table>
     </div>

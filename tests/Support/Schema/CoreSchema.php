@@ -23,7 +23,9 @@ class CoreSchema
         $this->ensurePaymentTables();
         $this->ensureDocumentTables();
         $this->ensurePolicyIssuanceTables();
+        $this->ensureSendUpdateTables();
         $this->ensureSageTables();
+        $this->ensureEPLogsTables();
     }
 
     private function ensureAuditTables(): void
@@ -629,6 +631,14 @@ class CoreSchema
                 $table->string('vehicle_plate_code')->nullable();
                 $table->timestamps();
             },
+            'cyber_quote_request' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('personal_quote_id')->nullable();
+                $table->unsignedBigInteger('emirate_of_registration_id')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->unsignedBigInteger('coverage_id')->nullable();
+                $table->timestamps();
+            },
         ]);
     }
 
@@ -895,6 +905,7 @@ class CoreSchema
                 $table->id();
                 $table->string('emirates_id_number')->nullable();
                 $table->date('emirates_id_expiry_date')->nullable();
+                $table->unsignedBigInteger('nationality_id')->nullable();
                 $table->date('dob')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
@@ -924,6 +935,63 @@ class CoreSchema
                 $table->string('mobile_no')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
+            },
+            'insured_kyc' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('insured_id');
+                $table->unsignedBigInteger('customer_details_id')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('mobile_no')->nullable();
+                $table->string('email')->nullable();
+                $table->string('website')->nullable();
+                $table->string('legal_structure')->nullable();
+                $table->string('country_of_corporation')->nullable();
+                $table->string('registered_address')->nullable();
+                $table->string('communication_address')->nullable();
+                $table->string('country_of_residence')->nullable();
+                $table->string('place_of_birth')->nullable();
+                $table->string('residential_status')->nullable();
+                $table->string('residential_address')->nullable();
+                $table->string('id_type')->nullable();
+                $table->string('id_number')->nullable();
+                $table->date('id_issuance_date')->nullable();
+                $table->date('id_expiry_date')->nullable();
+                $table->string('issuance_place')->nullable();
+                $table->string('id_issuance_authority')->nullable();
+                $table->string('source_of_income')->nullable();
+                $table->string('employer_company_name')->nullable();
+                $table->string('job_title')->nullable();
+                $table->string('employment_sector')->nullable();
+                $table->string('position_in_company')->nullable();
+                $table->string('trade_license_no')->nullable();
+                $table->boolean('pep')->nullable();
+                $table->boolean('financial_sanctions')->nullable();
+                $table->boolean('dual_nationality')->nullable();
+                $table->string('customer_tenure')->nullable();
+                $table->string('transaction_volume')->nullable();
+                $table->string('transaction_activities')->nullable();
+                $table->string('transaction_pattern')->nullable();
+                $table->string('premium_tenure')->nullable();
+                $table->string('mode_of_contact')->nullable();
+                $table->string('mode_of_delivery')->nullable();
+                $table->string('risk_score')->nullable();
+                $table->boolean('in_sanction_list')->nullable();
+                $table->boolean('deal_sanction_list')->nullable();
+                $table->boolean('is_operation_high_risk')->nullable();
+                $table->boolean('is_partner')->nullable();
+                $table->boolean('in_adverse_media')->nullable();
+                $table->boolean('is_owner_pep')->nullable();
+                $table->boolean('is_controlling_pep')->nullable();
+                $table->boolean('is_sanction_match')->nullable();
+                $table->boolean('in_fatf')->nullable();
+                $table->string('industry_type')->nullable();
+                $table->string('manager_name')->nullable();
+                $table->string('manager_nationality')->nullable();
+                $table->date('manager_dob')->nullable();
+                $table->string('manager_position')->nullable();
+                $table->boolean('is_owner_high_risk')->nullable();
+                $table->timestamps();
             },
             'customer_insured' => function (Blueprint $table) {
                 $table->id();
@@ -1046,7 +1114,7 @@ class CoreSchema
         SchemaUtils::ensureTables([
             'policy_issuance' => function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('insurance_provider_id');
+                $table->unsignedBigInteger('insurance_provider_id')->nullable();
                 $table->string('model_type');
                 $table->unsignedBigInteger('model_id');
                 $table->string('quote_type');
@@ -1055,20 +1123,38 @@ class CoreSchema
                 $table->text('message')->nullable();
                 $table->timestamps();
             },
-            'policy_issuance_log' => function (Blueprint $table) {
+            'policy_issuance_logs' => function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('policy_issuance_id');
+                $table->string('model_type')->nullable();
+                $table->unsignedBigInteger('model_id')->nullable();
                 $table->string('step')->nullable();
                 $table->string('status')->nullable();
-                $table->text('request_payload')->nullable();
-                $table->text('response_payload')->nullable();
-                $table->string('api_url')->nullable();
+                $table->text('payload')->nullable();
+                $table->text('response')->nullable();
+                $table->string('endPoint')->nullable();
                 $table->timestamps();
             },
             'policy_issuance_status' => function (Blueprint $table) {
                 $table->id();
                 $table->string('name')->nullable();
                 $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureSendUpdateTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'send_update_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->nullable();
+                $table->string('quote_uuid')->nullable();
+                $table->unsignedBigInteger('quote_type_id');
+                $table->string('status')->nullable();
+                $table->unsignedBigInteger('category_id')->nullable();
+                $table->unsignedBigInteger('option_id')->nullable();
                 $table->timestamps();
             },
         ]);
@@ -1099,6 +1185,22 @@ class CoreSchema
                 $table->string('sage_request_type')->nullable();
                 $table->integer('step')->nullable();
                 $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureEPLogsTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'ep_logs' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('embedded_transaction_id');
+                $table->string('event');
+                $table->text('values')->nullable();
+                $table->morphs('loggable');
+                $table->timestamps();
+
+                $table->index('embedded_transaction_id');
             },
         ]);
     }

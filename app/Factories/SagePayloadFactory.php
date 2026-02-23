@@ -52,12 +52,6 @@ class SagePayloadFactory
             $leadStatus == quoteStatusCode::PolicyBooked
         ) {
             return self::createPaymentReceiptOneInvoice($request); // Ignore this error because it's not being used anywhere in the codebase
-        } elseif (
-            $request->discount > 0 &&
-            $leadStatus == quoteStatusCode::PolicyBooked &&
-            strtolower($request->invoicePaymentStatus) != 'paid'
-        ) {
-            return self::createARInvoiceDis($request);
         } elseif ($request->callExtra) {
             return self::createAPInvoicePrem($request);
         } else {
@@ -243,81 +237,6 @@ class SagePayloadFactory
 
         return [
             'endPoint' => 'AP/APInvoiceBatches',
-            'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType,
-            'entry_type' => $entryType,
-        ];
-    }
-
-    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $reversalDetails = '', $extras = [])
-    {
-        // Payload creation logic for CreditNote scenario
-        $description = 'D.'.$request->invoiceDescription;
-        $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
-        $payLoad = [
-            'Invoices' => [
-                [
-                    'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumNumber.'-DIS',
-                    'InvoiceDescription' => $description,
-                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
-                    'DocumentType' => 'CreditNote',
-                    'CurrencyCode' => 'AED',
-                    'DueDate' => $invoicePaymentSchedulesDueDate,
-                    'AsOfDate' => $invoicePaymentSchedulesDueDate,
-                    'TaxGroup' => 'VAT',
-                    'TaxClass1' => 5,
-                    'DocumentTotalBeforeTax' => $request->discount,
-                    'DocumentTotalIncludingTax' => $request->discount,
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
-                    'InvoiceDetails' => [
-                        [
-                            'Description' => $description,
-                            'TaxClass1' => 5,
-                            'RevenueAccount' => '70010',
-                            'ExtendedAmountWithTIP' => roundNumber($request->discount),
-                            'ExtendedAmountWithoutTIP' => roundNumber($request->discount),
-                        ],
-                    ],
-                    'InvoicePaymentSchedules' => [
-                        [
-                            'DueDate' => $invoicePaymentSchedulesDueDate,
-                        ],
-                    ],
-                    'InvoiceOptionalFields' => self::createOptionalFields($request),
-                ],
-            ],
-        ];
-
-        if (! empty($extras['mainLeadDetails'])) {
-            $payLoad['Invoices'][0]['DocumentType'] = 'DebitNote';
-        }
-
-        $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_INV;
-        $entryType = SageEnum::SCT_STRAIGHT;
-
-        // Payload update logic for reversal and correction scenario
-        if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION]) && ! empty($reversalDetails)) {
-            $entryType = $type;
-
-            if ($type == SageEnum::SCT_REVERSAL) {
-                $reversePayLoad = self::prepareReversalPayload($reversalDetails);
-                $reversePayLoad->Invoices[0]->DocumentNumber = (string) mb_substr($reversePayLoad->Invoices[0]->DocumentNumber, -18);
-                $reversePayLoad = self::applyReversalTransformations($reversePayLoad, $request, 0);
-                $reversePayLoad->Invoices[0]->DocumentType = 'DebitNote';
-                $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_REV_INV;
-                $payLoad = $reversePayLoad;
-            }
-
-            if ($type == SageEnum::SCT_CORRECTION) {
-                $payLoad['Invoices'][0]['DocumentNumber'] = (string) mb_substr($payLoad['Invoices'][0]['DocumentNumber'], -18);
-                $payLoad = self::applyCorrectionTransformations($payLoad, 0, false);
-                $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_CORR_INV;
-            }
-        }
-
-        return [
-            'endPoint' => 'AR/ARInvoiceBatches',
             'payload' => $payLoad,
             'sage_request_type' => $sageRequestType,
             'entry_type' => $entryType,
@@ -793,7 +712,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function readyToPostInvoiceAr($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
+    public static function readyToPostInvoiceAr($batchNumber, $type = SageEnum::SCT_STRAIGHT, $extras = [])
     {
         $sageRequestType = null;
         $payLoad = [
@@ -804,8 +723,6 @@ class SagePayloadFactory
         $sageRequestTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_RTP_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_RTP_AR_SPPAY_INV,
-            SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_RTP_AR_DISC_INV,
-
         ];
 
         if (isset($extras['sage_request_type']) && ! in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
@@ -813,13 +730,8 @@ class SagePayloadFactory
         }
 
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
-
             $entryType = $type;
             $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_RTP_AR_PREM_COMM_REV_INV : SageEnum::SRT_RTP_AR_PREM_COMM_CORR_INV;
-
-            if ($useFor == SageEnum::SCT_DISCOUNT) {
-                $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_RTP_AR_DISC_REV_INV : SageEnum::SRT_RTP_AR_DISC_CORR_INV;
-            }
         }
 
         // Additional commission and Tax invoice booking Case
@@ -892,7 +804,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function aRPostInvoices($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
+    public static function aRPostInvoices($batchNumber, $type = SageEnum::SCT_STRAIGHT, $extras = [])
     {
         $sageRequestType = null;
         $payLoad = [
@@ -910,7 +822,6 @@ class SagePayloadFactory
         $sageRequestTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_POST_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_POST_AR_SPPAY_INV,
-            SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_POST_AR_DISC_INV,
         ];
 
         if (isset($extras['sage_request_type']) && ! in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
@@ -920,10 +831,6 @@ class SagePayloadFactory
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
             $entryType = $type;
             $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_POST_AR_PREM_COMM_REV_INV : SageEnum::SRT_POST_AR_PREM_COMM_CORR_INV;
-
-            if ($useFor == SageEnum::SCT_DISCOUNT) {
-                $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_POST_AR_DISC_REV_INV : SageEnum::SRT_POST_AR_DISC_CORR_INV;
-            }
         }
 
         // Additional commission and Tax invoice booking Case
@@ -1174,7 +1081,7 @@ class SagePayloadFactory
             'DocumentNumber' => $documentNumber,
             'PaymentNumber' => $paymentNumber,
             'ReceiptTransactionType' => 'Receipt',
-            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
+            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount)),
         ];
 
         $prePaymentData = [
@@ -1186,19 +1093,7 @@ class SagePayloadFactory
             'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
         ];
 
-        $discountData = null;
-        if ($payment->discount_value > 0 && $item->sr_no == 1) {
-            $discountData = [
-                'BatchType' => 'CA',
-                'CustomerNumber' => $sage_customer_number,
-                'DocumentNumber' => $documentNumber.'-DIS',
-                'PaymentNumber' => 1,
-                'ReceiptTransactionType' => 'Receipt',
-                'CustomerReceiptAmount' => -roundNumber($payment->discount_value),
-            ];
-        }
-
-        return [$receiptData, $prePaymentData, $discountData];
+        return [$receiptData, $prePaymentData];
     }
 
     public static function createAppliedReceiptsAdjustmentsForAR($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
@@ -1232,9 +1127,6 @@ class SagePayloadFactory
         }
         if (! isset($sageRequest->customer_id)) {
             $sageRequest->customer_id = $quote->customer_id;
-        }
-        if ($paymentSplit->sr_no == 1) {
-            $sageRequest->discount = $payment->discount_value;
         }
 
         if (! isset($sageRequest->advisorDepartment)) {
@@ -1323,7 +1215,6 @@ class SagePayloadFactory
 
         $sageRequest->quoteRefId = $personalQuote?->code ?? '';
         $sageRequest->userId = auth()->id();
-        $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
@@ -1397,7 +1288,8 @@ class SagePayloadFactory
 
         if (count($paymentSplits) == 1) {
             $sageRequest->sage_reciept_id = $firstChildPayment->sage_reciept_id;
-            $sageRequest->collection_amount = $firstChildPayment->collection_amount + $sageRequest->discount;
+            // Note: Discount invoices are no longer created, so we don't include discount in collection amount
+            $sageRequest->collection_amount = $firstChildPayment->collection_amount;
         } else {
             $sageRequest->invoicePaymentStatus = $firstChildPayment->payment_status_id;
         }
@@ -1740,12 +1632,9 @@ class SagePayloadFactory
         $receiptsAndAdjustmentsData = [];
         foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
             if (self::isPaymentProcessed($splitPaymentRecord->payment_status_id)) {
-                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptDataForAR($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptDataForAR($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
                 $receiptsAndAdjustmentsData[] = $singleReceiptData;
                 $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
-                if ($discountData) {
-                    $receiptsAndAdjustmentsData[] = $discountData;
-                }
             }
 
         }
@@ -1756,12 +1645,9 @@ class SagePayloadFactory
     {
         $receiptsAndAdjustmentsData = [];
         if (self::isPaymentProcessed($firstSplitPaymentRecord->payment_status_id)) {
-            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptDataForAR($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            [$singleReceiptData, $singlePrePaymentData] = self::createReceiptDataForAR($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
             $receiptsAndAdjustmentsData[] = $singleReceiptData;
             $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
-            if ($discountData) {
-                $receiptsAndAdjustmentsData[] = $discountData;
-            }
         }
 
         return $receiptsAndAdjustmentsData;
@@ -1803,7 +1689,8 @@ class SagePayloadFactory
             'DocumentNumber' => $documentNumber,
             'PaymentNumber' => $paymentNumber,
             'TransactionType' => 'PaymentPosted',
-            'PaymentAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
+            // Note: Discount invoices are no longer created, so we don't include discount in payment amount
+            'PaymentAmount' => roundNumber(floatval($item->payment_amount)),
         ];
 
         $prePaymentData = [

@@ -72,6 +72,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
 
+    Route::post('check-document-upload-after-authorization', [ApiController::class, 'checkDocumentUploadAfterPayment']);
     // Missing docs reminder and verify missing docs routes
     Route::prefix('imcrm')->group(function () {
         Route::post('/missing-docs-reminder/{quoteUuid}', [ApiController::class, 'missingDocsReminder'])->name('missingDocsReminder');
@@ -79,6 +80,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     });
 
     Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
+    Route::post('/stp-advisor-notification', [ApiController::class, 'stpAdvisorNotification']);
 
     Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
         ->name('pc-customer-assignment');
@@ -86,9 +88,10 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/tag-pc-qualified', [ApiController::class, 'tagPrivateClients']);
 
     Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
+    Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
 });
 
-Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
+Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 // Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClients'])->name('tagPrivateClientss');

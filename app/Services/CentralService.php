@@ -73,6 +73,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -243,7 +244,7 @@ class CentralService extends BaseService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home, quoteTypeCode::CYBER];
         $quoteBatch = QuoteBatches::latest()->first();
         LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
@@ -356,6 +357,8 @@ class CentralService extends BaseService
                 return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             case quoteTypeCode::SAVINGS:
                 return app(SavingsQuoteService::class)->getAvailablePlans($id);
+            case quoteTypeCode::CYBER:
+                return app(CyberQuoteService::class)->getAvailablePlans($id);
             default:
                 return [];
         }
@@ -658,6 +661,16 @@ class CentralService extends BaseService
                     'planId' => intval($data->plan_id),
                     'quoteUID' => $uuid,
                     'quoteTypeId' => QuoteTypeId::Savings,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
+            case QuoteTypes::CYBER->value:
+                $endpoint = '/cyber/process-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteUID' => $uuid,
+                    'quoteTypeId' => (int) QuoteTypes::CYBER->id(),
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
@@ -1255,7 +1268,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true, $isHomeRenewalLead = false)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true)
     {
         LoggerService::info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
@@ -1561,6 +1574,8 @@ class CentralService extends BaseService
 
     private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $workflowType = null, $existingEmailData = null): void
     {
+        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
+
         $emailData->advisorEmail = $quote->advisor->email ?? '';
         $emailData->customerName = $quote->first_name.' '.$quote->last_name;
         $emailData->advisorLandLine = $quote->advisor->landline_no ?? '';
@@ -1587,7 +1602,7 @@ class CentralService extends BaseService
         $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber])) {
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
@@ -1653,7 +1668,23 @@ class CentralService extends BaseService
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
-        $quoteDocuments = $existingEmailData->quoteDocuments ?? [];
+        if ($quoteTypeId == QuoteTypeId::Cyber) {
+            $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
+                ? number_format($quote->cyberPlanDetail->coverage)
+                : '-';
+            $emailData->planName = $quote?->cyberPlanDetail?->planName ?? '-';
+            $emailData->providerName = $quote?->cyberPlanDetail?->providerName ?? '-';
+            $emailData->policyWording = ! empty($quote?->cyberPolicyWording?->link) ? config('constants.AZURE_IM_STORAGE_URL').$quote?->cyberPolicyWording?->link : '';
+
+            $taxInvoiceDocument = $quoteDocuments->filter(function ($document) {
+                return $document['document_type_code'] == DocumentTypeCode::CYB_TI;
+            })->first();
+            $taxInvoicePath = $taxInvoiceDocument?->watermarked_doc_url ?? $taxInvoiceDocument?->doc_url ?? null;
+            $emailData->taxInvoice = ! empty($taxInvoicePath)
+                ? app(QuoteDocumentService::class)->getDocumentUrl($taxInvoicePath, 'azureIMPrivate', 60) ?? ''
+                : '';
+        }
+
         if (
             $quoteTypeId != QuoteTypeId::Business ||
             (
@@ -1689,7 +1720,7 @@ class CentralService extends BaseService
 
                     $emailData->handBookDocuments = '';
                     if (! empty($policyHandBook)) {
-                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($policyHandBook, 'azureIMPrivate') ?? '';
+                        $emailData->handBookDocuments = config('constants.AZURE_IM_STORAGE_URL').$policyHandBook;
                     }
                 } else {
                     $emailData->handBookDocuments = '';
@@ -1793,14 +1824,20 @@ class CentralService extends BaseService
                 return in_array($document['document_type_code'], [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
                     DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
-                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS,
+                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
                 ]);
-            })->first()?->doc_url ?? '';
+            })->first() ?? null;
+
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && $quoteTypeId == QuoteTypeId::Cyber
+                ? $emailData->policySchedule->watermarked_doc_url ?? ''
+                : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
+
+            LoggerService::info('timing to check policy schedule: '.now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
 
             if (empty($emailData->policySchedule)) {
                 LoggerService::info('Policy Schedule not found.');
             } else {
-                $emailData->policySchedule = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policySchedule, 'azureIMPrivate') ?? '';
+                $emailData->policySchedule = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policySchedule, 'azureIMPrivate', 60) ?? '';
                 $emailData->scheduleExt = ! empty($emailData->policySchedule) ? pathinfo(parse_url($emailData->policySchedule, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
             }
         }
@@ -1965,7 +2002,7 @@ class CentralService extends BaseService
             'customerName' => "{$quote->first_name} {$quote->last_name}",
             'policyNumber' => $quote->policy_number,
             'lob' => $lobName,
-            'whatsAppNumber' => formatMobileNo($quote->mobile_no),
+            'whatsAppNumber' => '+'.formatMobileNoWithoutPlus($quote->mobile_no),
             'workflowType' => $workFlowType,
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,

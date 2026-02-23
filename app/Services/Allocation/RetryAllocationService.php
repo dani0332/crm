@@ -363,10 +363,15 @@ class RetryAllocationService
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->when($quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
-                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
+                    ->whereNotNull('health_plan_type_id')
+                    ->whereNotNull('number_of_employees');
             })
             ->when($quoteType === QuoteTypes::CORPLINE, function ($q) {
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($quoteType === QuoteTypes::CYBER, function ($q) {
+                $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested');
             })
             ->take($chunkSize);
 
@@ -378,15 +383,22 @@ class RetryAllocationService
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
+            $isPaid = $lead->isPaymentAuthorizedOrDeclined();
+            $sicRequested = $quoteType === QuoteTypes::CYBER ? $lead->cyberQuote?->sic_advisor_requested ?? false : false;
+
             LoggerService::info(self::class.': Processing quote allocation', extra: [
                 'quote_type' => $quoteType->value,
                 'payment_status_id' => $lead->payment_status_id,
                 'quote_status_id' => $lead->quote_status_id,
                 'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
                 'source' => $lead->source,
+                'isPaid' => $isPaid,
+                'sicAdvisorRequested' => $sicRequested,
             ]);
+
             $quoteType->allocate(uuid: $lead->uuid);
             $processedRecords++;
+
             LoggerService::info(self::class.': Processed quote allocation', extra: [
                 'quote_type' => $quoteType->value,
             ]);
