@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\GenericDocumentTypeCode;
 use App\Models\GenericDocument;
 use App\Models\GenericDocumentType;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -56,4 +55,3 @@ class GenericDocumentFactory extends Factory
         });
     }
 }
-

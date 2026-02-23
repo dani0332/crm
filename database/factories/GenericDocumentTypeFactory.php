@@ -20,4 +20,3 @@ class GenericDocumentTypeFactory extends Factory
         ];
     }
 }
-

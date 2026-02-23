@@ -181,7 +181,7 @@ test('get claim documents includes business type of insurance only for Business 
     $response = $this->getJson('/api/v1/claim-documents');
 
     $response->assertStatus(200);
-    
+
     // Check Business LOB documents
     $businessDocs = $response->json('data.Business.docs');
     $withBusinessType = collect($businessDocs)->firstWhere('docTitle', 'BusinessWithType.pdf');
@@ -202,4 +202,3 @@ test('get claim documents includes business type of insurance only for Business 
     expect($homeDoc)->not->toHaveKey('businessTypeOfInsuranceId')
         ->and($homeDoc)->not->toHaveKey('businessTypeOfInsurance');
 });
-
