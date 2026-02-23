@@ -346,8 +346,6 @@ class InstantAlfredExportService
         return [
             'path' => $azurePath,
             'url' => $url,
-            'upload_time' => 0,
-            'url_time' => 0,
         ];
     }
 

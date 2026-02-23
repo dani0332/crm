@@ -288,44 +288,6 @@ class InstantAlfredService extends BaseService
         return $currentRequest;
     }
 
-    public function generateChatConsolidateReport()
-    {
-
-        $request = request();
-
-        $data = $this->processSqlChatFilters($request)->get();
-
-        $data->chunk(1000)->each(function ($sqlBatch) use ($request) {
-            $uuids = $sqlBatch->pluck('uuid')->toArray();
-
-            $mongoPipeline = $this->createPipeline($request, $uuids, $request->report);
-
-            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline))->toArray();
-
-            $mongoResultsCollection = collect($mongoResults);
-            foreach ($sqlBatch as $sqlRecord) {
-
-                $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
-
-                $sqlRecord->quote_type = $request->quoteType;
-                $sqlRecord->lead_assignment_trigger_text = $sqlRecord->lead_assignment_trigger
-                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger)
-                    : 'N/A';
-
-                if ($relatedMongoRecord) {
-                    $sqlRecord->communication_channels = $relatedMongoRecord['communication_channels'];
-                    $sqlRecord->customer_interactions = $relatedMongoRecord['customer_interactions'];
-                    $sqlRecord->ai_interactions = $relatedMongoRecord['ai_interactions'];
-                    $sqlRecord->total_ai_interactions = $relatedMongoRecord['total_ai_interactions'];
-                    $sqlRecord->fallbacks = $relatedMongoRecord['fallbacks'];
-                    $sqlRecord->date_of_first_interaction = $relatedMongoRecord['date_of_first_interaction'];
-                }
-            }
-
-        });
-
-        return $data;
-    }
 
     /**
      * Process a chunk of consolidated chat data (used by chunked CSV export)
@@ -468,57 +430,6 @@ class InstantAlfredService extends BaseService
         }
     }
 
-    public function generateChatDetailedReport()
-    {
-        $request = request();
-
-        $data = $this->processSqlChatFilters($request)->get();
-
-        $uuids = array_column($data->toArray(), 'uuid');
-
-        $chunkSize = 1000;
-
-        $uuidChunks = array_chunk($uuids, $chunkSize);
-
-        $mongoResults = collect();
-
-        foreach ($uuidChunks as $chunk) {
-
-            $mongoPipeline = $this->createPipeline($request, $chunk, $request->report);
-
-            $chunkResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline));
-
-            $mongoResults = $mongoResults->merge(collect($chunkResults));
-        }
-
-        // Create mappings for SQL data to merge with MongoDB results
-        $sqlData = $data->keyBy('uuid');
-
-        // Add SQL data to mongo results
-        $mongoResults = $mongoResults->map(function ($record) use ($sqlData) {
-            $quoteId = $record['quote_id'] ?? null;
-            if ($quoteId && isset($sqlData[$quoteId])) {
-                // Add segment
-                $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
-
-                // Add lead_created_at from SQL data
-                $record['lead_created_at'] = $sqlData[$quoteId]->lead_created_at ?? 'N/A';
-
-                // Add renewal batch information
-                $record['renewal_batch_text'] = $sqlData[$quoteId]->renewal_batch_text ?? 'N/A';
-
-                // Add lead_assignment_trigger and its text representation
-                $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
-                $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger
-                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlData[$quoteId]->lead_assignment_trigger)
-                    : 'N/A';
-            }
-
-            return $record;
-        });
-
-        return $mongoResults;
-    }
 
     public function createPipeline(Request $request, $itemIds, $type)
     {
