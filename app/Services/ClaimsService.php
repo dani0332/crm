@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
 use App\Enums\DocumentTypeCode;
@@ -926,8 +927,12 @@ class ClaimsService extends BaseService
         return $isRequiredFieldsFilled;
     }
 
-    public function getClaimDocumentTypes($quoteTypeId)
+    public function getClaimDocumentTypes($quoteTypeId, $businessTypeOfInsuranceId = null)
     {
+        if ($quoteTypeId == QuoteTypeId::Business && $businessTypeOfInsuranceId && $businessTypeOfInsuranceId == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            // Return Health documents for Group Health Insurance
+            $quoteTypeId = QuoteTypeId::Health;
+        }
         $claimDocumentTypes = DocumentType::active()->whereIn('category', [DocumentTypeCode::CLAIM])->where('quote_type_id', $quoteTypeId)->sortDocumentType()->get();
 
         $documentTypesByCategory = $claimDocumentTypes->groupBy('category');

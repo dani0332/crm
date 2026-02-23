@@ -172,7 +172,7 @@ class ClaimsController extends Controller
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
-            $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id);
+            $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id, $claimRequest->business_type_of_insurance_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
             $customerAdditionalContacts = $this->customerService->getAdditionalContacts($claimRequest->customer_id, $claimRequest->mobile_no);
 
