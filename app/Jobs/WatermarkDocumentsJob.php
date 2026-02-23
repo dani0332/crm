@@ -148,16 +148,22 @@ class WatermarkDocumentsJob implements ShouldQueue
     private function fileExists(string $path): bool
     {
         try {
-            // For Azure private storage paths
-            if (Storage::disk('azureIMPrivate')->exists($path)) {
-                return true;
-            }
-
             // For remote URLs
             if (filter_var($path, FILTER_VALIDATE_URL)) {
                 $headers = get_headers($path);
 
-                return $headers && strpos($headers[0], '200') !== false;
+                // Parse HTTP status code from the first header line and treat 2xx-3xx as reachable.
+                if (preg_match('#HTTP/\d+\.\d+\s+(\d{3})#', $headers[0], $matches)) {
+                    $status = (int) $matches[1];
+                    return $status >= 200 && $status < 400;
+                }
+
+                return false;
+            }
+
+            // For Azure private storage paths
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
+                return true;
             }
 
         } catch (UnableToCheckExistence $e) {
