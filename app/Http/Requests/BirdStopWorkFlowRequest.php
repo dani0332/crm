@@ -15,9 +15,9 @@ class BirdStopWorkFlowRequest extends FormRequest
     public function rules()
     {
         return [
-            'flowType' => 'nullable|string',
-            'uuid' => 'nullable|string',
-            'flowId' => 'nullable|string',
+            'flowType' => 'required|string',
+            'uuid' => 'required|string',
+            'workflowId' => 'required|string',
         ];
     }
 }

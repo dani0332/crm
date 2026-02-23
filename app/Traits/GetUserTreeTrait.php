@@ -37,7 +37,14 @@ trait GetUserTreeTrait
         }
 
         $childUserIds = [$userId];
-        $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
+        $productName = $productType ?? quoteTypeCode::Car;
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($productName);
+        $productTeam = $this->getProductByName($productName);
+
+        if (! $productTeam) {
+            return [$userId];
+        }
+
         $rolesArray = [
             RolesEnum::CarManager,
             RolesEnum::BikeManager,
@@ -51,6 +58,7 @@ trait GetUserTreeTrait
             RolesEnum::CorplineManager,
             RolesEnum::GMManager,
             RolesEnum::LeadPool,
+            RolesEnum::CyberManager,
         ];
         if ($user && $user->hasAnyRole($rolesArray) || $user->hasAnyPermission($allowedPermissions)) {
             $userAllTeams = DB::table('teams')

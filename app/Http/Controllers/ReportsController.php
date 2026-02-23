@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
@@ -161,7 +162,8 @@ class ReportsController extends Controller
      */
     public function fetchTeamListByLob(Request $request)
     {
-        $lobId = $this->getProductByName($request->lob)->id;
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $lobId = $this->getProductByName($productName)->id;
         $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
 
         if (auth()->user()->hasAnyRole([
@@ -190,7 +192,8 @@ class ReportsController extends Controller
      */
     public function fetchAdvisorsListByLob(Request $request)
     {
-        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob);
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $usersReportToLoggedInUser = $this->getUsersByProductName($productName);
         if (! auth()->user()->hasAnyRole([
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,
@@ -381,7 +384,8 @@ class ReportsController extends Controller
 
     public function fetchTeamsbyType(Request $request)
     {
-        $parentId = getTeamId($request->lob);
+        $teamName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $parentId = getTeamId($teamName);
         $teams = Team::where('parent_team_id', $parentId)
             ->select('name', 'id')
             ->orderBy('name')
@@ -605,14 +609,24 @@ class ReportsController extends Controller
             QuoteTypes::CYCLE,
             QuoteTypes::YACHT,
             QuoteTypes::SAVINGS,
+            QuoteTypes::CYBER,
         ];
 
         $products = Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->get();
 
+        $productNames = $products->pluck('name')->toArray();
+        $mappedProducts = array_map(function ($name) {
+            if ($name === TeamNameEnum::CYBER) {
+                return QuoteTypes::CYBER->value;
+            }
+
+            return $name;
+        }, $productNames);
+
         return inertia('Reports/StaleLeadsReport', [
             'reportData' => $data,
             'teams' => $team,
-            'products' => $products->pluck('name')->toArray(),
+            'products' => $mappedProducts,
         ]);
     }
 

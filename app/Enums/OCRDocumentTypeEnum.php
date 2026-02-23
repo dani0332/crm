@@ -79,6 +79,9 @@ enum OCRDocumentTypeEnum: string
                 self::POLICY_SCHEDULE,
                 self::MOTOR_INSURANCE_POLICY_SCHEDULE,
             ],
+            QuoteTypes::CYBER => [
+                self::ID_CARD,
+            ],
             QuoteTypes::HEALTH => [
                 self::ID_CARD,
                 self::PASSPORT,

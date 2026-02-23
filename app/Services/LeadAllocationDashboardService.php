@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\Team;
@@ -26,7 +27,8 @@ class LeadAllocationDashboardService extends BaseService
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
 
-            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('code', $quoteType->value)->active()->first();
+            $teamName = $this->getTeamName($quoteType);
+            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $teamName)->first();
             $advisorRoles = $quoteType->advisorRoles();
 
             if ($quoteType == QuoteTypes::SAVINGS) {
@@ -133,6 +135,14 @@ class LeadAllocationDashboardService extends BaseService
                 $query->where('code', $frequency->value);
             })
             ->count();
+    }
+
+    private function getTeamName(QuoteTypes $quoteType): string
+    {
+        return match ($quoteType) {
+            QuoteTypes::CYBER => TeamNameEnum::CYBER,
+            default => $quoteType->value,
+        };
     }
 
 }
