@@ -310,7 +310,7 @@ class InstantAlfredExportService
             $record->chat_initiated_at ?? ($record->date_of_first_interaction ?? 'N/A'),
             $this->formatCommunicationChannel($record->communication_channels ?? []),
             $record->quote_batch_id_text ?? 'N/A',
-            $record->renewal_batch_id_text ?? 'N/A',
+            $record->renewal_batch_text ?? 'N/A',
             $record->transaction_type_text ?? 'N/A',
             $record->segment ?? 'N/A',
             $record->customer_interactions ?? 0,

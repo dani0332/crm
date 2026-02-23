@@ -76,7 +76,7 @@ class AlfredChatController extends Controller
             return response()->json($result);
 
         } catch (\Exception $e) {
-            Log::error('API endpoint: Export URL generation failed', extra: [
+            Log::error('API endpoint: Export URL generation failed', [
                 'error' => $e->getMessage(),
                 'recipient' => $request->recipientEmail,
                 'report' => $request->report,
@@ -124,7 +124,7 @@ class AlfredChatController extends Controller
             $params['report'] = $request->report ?? InstantChatReportsEnum::DETAILED_REPORT;
         }
 
-        unset($params['page'], $params['per_page'], $params['sortType']);
+        unset($params['page'], $params['per_page']);
 
         return $params;
     }
