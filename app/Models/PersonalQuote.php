@@ -146,7 +146,6 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(JetskiQuote::class);
     }
-
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -379,6 +378,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function savingsQuote()
     {
         return $this->hasOne(SavingsQuote::class);
+    }
+
+    public function businessQuote()
+    {
+        return $this->hasOne(BusinessQuote::class, 'id', 'quote_id');    
     }
 
     public function age(): Attribute

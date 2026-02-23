@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\QuoteTypeId;
-use App\Models\CycleQuote;
+use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
@@ -15,10 +15,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class CycleCQFQuoteStorageService implements CQFQuoteStorageInterface
+class BusinessCQFQuoteStorageService implements CQFQuoteStorageInterface
 {
     public function __construct(
-        protected CycleCQFQuoteMappingService $mappingService
+        protected BusinessCQFQuoteMappingService $mappingService
     ) {}
 
     public function storeRenewalQuote(
@@ -31,7 +31,7 @@ class CycleCQFQuoteStorageService implements CQFQuoteStorageInterface
             return null;
         }
 
-        LoggerService::info(self::class.' - Storing cycle CQF renewal quote');
+        LoggerService::info(self::class.' - Storing business CQF renewal quote');
 
         $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
@@ -39,7 +39,7 @@ class CycleCQFQuoteStorageService implements CQFQuoteStorageInterface
 
         $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
-            LoggerService::error(self::class.' - Failed to generate UUID for cycle renewal quote');
+            LoggerService::error(self::class.' - Failed to generate UUID for business renewal quote');
 
             return null;
         }
@@ -48,14 +48,13 @@ class CycleCQFQuoteStorageService implements CQFQuoteStorageInterface
         $quoteData['policy_start_date'] = $policyStartDate;
         $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
 
-        $newQuote = PersonalQuote::create($quoteData);
-
-        return DB::transaction(function () use ($newQuote, $quote) {
+        return DB::transaction(function () use ($quoteData, $quote) {
+            $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
-            $this->copyCycleQuoteDetail($newQuote, $quote);
-            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Cycle);
+            $this->copyBusinessQuoteDetail($newQuote, $quote);
+            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Business);
 
-            LoggerService::info(self::class.' - Cycle CQF renewal quote created successfully', [
+            LoggerService::info(self::class.' - Business CQF renewal quote created successfully', [
                 'previous_quote_uuid' => $quote->uuid,
                 'new_quote_uuid' => $newQuote->uuid,
             ]);
@@ -64,21 +63,20 @@ class CycleCQFQuoteStorageService implements CQFQuoteStorageInterface
         });
     }
 
-    protected function copyCycleQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
+    protected function copyBusinessQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
     {
-        $oldCycleQuote = $oldQuote->cycleQuote;
+        $oldBusinessQuote = $oldQuote->businessQuote;
 
-        if ($oldCycleQuote === null) {
-            LoggerService::info(self::class.' - No cycle quote detail found for old quote');
+        if ($oldBusinessQuote === null) {
+            LoggerService::info(self::class.' - No business quote detail found for old quote');
 
             return;
         }
 
-        $data = $this->copyableAttributes($oldCycleQuote->getAttributes(), $newQuote->id);
-        LoggerService::info(self::class.' - Cycle quote detail copied for renewal quote', ['data' => $data]);
-        CycleQuote::create($data);
+        $data = $this->copyableAttributes($oldBusinessQuote->getAttributes(), $newQuote->id);
+        BusinessQuote::create($data);
 
-        LoggerService::info(self::class.' - Cycle quote detail copied for renewal quote');
+        LoggerService::info(self::class.' - Business quote detail copied for renewal quote');
     }
 
     /**

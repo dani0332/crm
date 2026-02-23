@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
@@ -18,6 +17,7 @@ use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\CQF\NonMotor\Pipes\DuplicateCheckPipe;
+use App\Services\CQF\NonMotor\Pipes\ForeignKeyValidationPipe;
 use App\Services\CQF\NonMotor\Pipes\LOBValidationPipe;
 use App\Services\CQF\NonMotor\Pipes\StoragePipe;
 use App\Services\Logger\LoggerService;
@@ -143,7 +143,6 @@ class NonMotorCQFRenewalExecutionService
     }
 
     /**
-     * @param  PersonalQuote|CarQuote  $quote
      * @param  callable(string): void  $onFailure
      */
     protected function runPipelineForQuote(
@@ -160,6 +159,7 @@ class NonMotorCQFRenewalExecutionService
         $pipes = [
             app(LOBValidationPipe::class),
             app(DuplicateCheckPipe::class),
+            app(ForeignKeyValidationPipe::class),
             app(StoragePipe::class),
         ];
 
@@ -216,7 +216,7 @@ class NonMotorCQFRenewalExecutionService
         $uploadLeadData = [
             'renewal_import_code' => app(RenewalsUploadService::class)->generateRandomString(),
             'quote_type' => $quoteTypeShortCode,
-            'file_name' => 'cqf_renewal_leads_'. $quoteTypeShortCode . '_' . uniqid() . '_' . now()->format('Y-m-d_H-i-s') . '.xlsx',
+            'file_name' => 'cqf_renewal_leads_'.$quoteTypeShortCode.'_'.uniqid().'_'.now()->format('Y-m-d_H-i-s').'.xlsx',
             'file_path' => null,
             'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,
@@ -236,7 +236,7 @@ class NonMotorCQFRenewalExecutionService
         $renewalQuoteProcess = $this->createRenewalQuoteProcess($quote, $renewalsUploadLeads);
         $renewalQuoteProcess->status = RenewalProcessStatuses::PROCESSED;
         $renewalQuoteProcess->save();
-        LoggerService::info(self::class . ' - Renewal quote process created for quote');
+        LoggerService::info(self::class.' - Renewal quote process created for quote');
     }
 
     /**
@@ -259,7 +259,7 @@ class NonMotorCQFRenewalExecutionService
         if ($recordFailure !== null) {
             $recordFailure($quote->policy_number ?? 'unknown');
         }
-        LoggerService::info(self::class . ' - Renewal quote process not created for quote (validation failed)');
+        LoggerService::info(self::class.' - Renewal quote process not created for quote (validation failed)');
     }
 
     protected function createRenewalQuoteProcess(PersonalQuote|CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads): RenewalQuoteProcess

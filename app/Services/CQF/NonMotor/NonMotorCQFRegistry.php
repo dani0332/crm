@@ -53,6 +53,11 @@ class NonMotorCQFRegistry
             'mapper' => \App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteMappingService::class,
             'storage' => \App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteStorageService::class,
         ],
+        QuoteTypes::BUSINESS->value => [
+            'validator' => \App\Services\CQF\NonMotor\LOBs\BusinessCQFValidationService::class,
+            'mapper' => \App\Services\CQF\NonMotor\LOBs\BusinessCQFQuoteMappingService::class,
+            'storage' => \App\Services\CQF\NonMotor\LOBs\BusinessCQFQuoteStorageService::class,
+        ],
         QuoteTypes::SAVINGS->value => [
             'validator' => \App\Services\CQF\NonMotor\LOBs\SavingsCQFValidationService::class,
             'mapper' => \App\Services\CQF\NonMotor\LOBs\SavingsCQFQuoteMappingService::class,

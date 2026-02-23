@@ -1,0 +1,156 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
+use App\Models\Customer;
+use App\Models\InsuranceProvider;
+use App\Models\Lookup;
+use App\Models\Nationality;
+use App\Models\PersonalQuote;
+use App\Models\RenewalsUploadLeads;
+use App\Services\CQF\NonMotor\CQFRenewalContext;
+use App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteMappingService;
+use App\Services\CQF\NonMotor\LOBs\LifeCQFQuoteStorageService;
+use App\Services\CQF\NonMotor\LOBs\LifeCQFValidationService;
+use App\Services\CQF\NonMotor\Pipes\ForeignKeyValidationPipe;
+
+beforeEach(function () {
+    $this->pipe = app(ForeignKeyValidationPipe::class);
+});
+
+it('passes through when quote is not PersonalQuote', function () {
+    $carQuote = CarQuote::factory()->create();
+    $renewalsUploadLeads = RenewalsUploadLeads::create([
+        'quote_type' => 'Bike',
+        'renewal_import_code' => 'test-'.uniqid(),
+        'file_name' => 'test.xlsx',
+        'status' => 1,
+    ]);
+    $context = new CQFRenewalContext(
+        quote: $carQuote,
+        renewalsUploadLeads: $renewalsUploadLeads,
+        quoteType: QuoteTypes::BIKE,
+        renewalDaysThreshold: 120,
+        validator: null,
+        mapper: null,
+        storage: null
+    );
+
+    $result = $this->pipe->handle($context, fn ($c) => $c);
+
+    expect($result)->toBe($context)
+        ->and($result->hasErrors())->toBeFalse();
+});
+
+it('fails when PersonalQuote has non-existent insurance_provider_id', function () {
+    $customer = Customer::factory()->create();
+    $nationality = Nationality::factory()->create();
+    Lookup::create([
+        'key' => LookupsEnum::TRANSACTION_TYPES->value,
+        'code' => LookupsEnum::EXT_CUSTOMER_RENWAL->value,
+        'text' => 'Ext Customer Renewal',
+    ]);
+    $quote = PersonalQuote::factory()->create([
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+        'insurance_provider_id' => 99999999,
+        'policy_expiry_date' => now()->addMonths(2),
+    ]);
+    $renewalsUploadLeads = RenewalsUploadLeads::create([
+        'quote_type' => 'Life',
+        'renewal_import_code' => 'test-'.uniqid(),
+        'file_name' => 'test.xlsx',
+        'status' => 1,
+    ]);
+    $context = new CQFRenewalContext(
+        quote: $quote,
+        renewalsUploadLeads: $renewalsUploadLeads,
+        quoteType: QuoteTypes::LIFE,
+        renewalDaysThreshold: 120,
+        validator: app(LifeCQFValidationService::class),
+        mapper: app(LifeCQFQuoteMappingService::class),
+        storage: app(LifeCQFQuoteStorageService::class)
+    );
+
+    $result = $this->pipe->handle($context, fn ($c) => $c);
+
+    expect($result->hasErrors())->toBeTrue()
+        ->and($result->validationErrors)->toHaveKey('insurance_provider_id')
+        ->and($result->validationErrors['insurance_provider_id'])->toContain('99999999');
+});
+
+it('fails when PersonalQuote has null insurance_provider_id', function () {
+    $customer = Customer::factory()->create();
+    $nationality = Nationality::factory()->create();
+    Lookup::create([
+        'key' => LookupsEnum::TRANSACTION_TYPES->value,
+        'code' => LookupsEnum::EXT_CUSTOMER_RENWAL->value,
+        'text' => 'Ext Customer Renewal',
+    ]);
+    $quote = PersonalQuote::factory()->create([
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+        'insurance_provider_id' => null,
+        'policy_expiry_date' => now()->addMonths(2),
+    ]);
+    $renewalsUploadLeads = RenewalsUploadLeads::create([
+        'quote_type' => 'Life',
+        'renewal_import_code' => 'test-'.uniqid(),
+        'file_name' => 'test.xlsx',
+        'status' => 1,
+    ]);
+    $context = new CQFRenewalContext(
+        quote: $quote,
+        renewalsUploadLeads: $renewalsUploadLeads,
+        quoteType: QuoteTypes::LIFE,
+        renewalDaysThreshold: 120,
+        validator: app(LifeCQFValidationService::class),
+        mapper: app(LifeCQFQuoteMappingService::class),
+        storage: app(LifeCQFQuoteStorageService::class)
+    );
+
+    $result = $this->pipe->handle($context, fn ($c) => $c);
+
+    expect($result->hasErrors())->toBeTrue()
+        ->and($result->validationErrors)->toHaveKey('insurance_provider_id')
+        ->and($result->validationErrors['insurance_provider_id'])->toBe('Insurance provider id is required for renewal quote.');
+});
+
+it('passes when PersonalQuote has all required FKs existing', function () {
+    $customer = Customer::factory()->create();
+    $nationality = Nationality::factory()->create();
+    $insuranceProvider = InsuranceProvider::factory()->create();
+    Lookup::create([
+        'key' => LookupsEnum::TRANSACTION_TYPES->value,
+        'code' => LookupsEnum::EXT_CUSTOMER_RENWAL->value,
+        'text' => 'Ext Customer Renewal',
+    ]);
+    $quote = PersonalQuote::factory()->create([
+        'customer_id' => $customer->id,
+        'nationality_id' => $nationality->id,
+        'insurance_provider_id' => $insuranceProvider->id,
+        'policy_expiry_date' => now()->addMonths(2),
+    ]);
+    $renewalsUploadLeads = RenewalsUploadLeads::create([
+        'quote_type' => 'Life',
+        'renewal_import_code' => 'test-'.uniqid(),
+        'file_name' => 'test.xlsx',
+        'status' => 1,
+    ]);
+    $context = new CQFRenewalContext(
+        quote: $quote,
+        renewalsUploadLeads: $renewalsUploadLeads,
+        quoteType: QuoteTypes::LIFE,
+        renewalDaysThreshold: 120,
+        validator: app(LifeCQFValidationService::class),
+        mapper: app(LifeCQFQuoteMappingService::class),
+        storage: app(LifeCQFQuoteStorageService::class)
+    );
+
+    $result = $this->pipe->handle($context, fn ($c) => $c);
+
+    expect($result->hasErrors())->toBeFalse();
+});

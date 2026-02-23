@@ -328,7 +328,7 @@ class BusinessQuote extends Model implements AuditableContract
 
     public function personalQuote()
     {
-        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Business);
+        return $this->belongsTo(PersonalQuote::class, 'quote_id', 'id');
     }
 
     public function renewalBatchModel()
