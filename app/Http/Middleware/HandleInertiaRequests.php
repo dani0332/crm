@@ -335,6 +335,12 @@ class HandleInertiaRequests extends Middleware
                         'Cyber',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),
                         fn ($s) => $s->attributes(['icon' => 'cyber'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD),
+                        'Device',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::DEVICE]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }

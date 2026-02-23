@@ -84,6 +84,11 @@ final class WorkflowTypeEnum extends Enum
     public const HEALTH_STP_ADVISOR_NOTIFICATION = 'health_stp_advisor_notification';
     public const HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 'health_stp_advisor_notification_api_failed';
 
+    // Device Workflow Types
+    public const DEVICE_AUTOMATED_FOLLOWUPS = 'device_automated_followups';
+    public const DEVICE_OCB_INTRO_EMAIL = 'device_ocb_intro_email';
+    public const DEVICE_OCB_INTRO_WHATSAPP = 'device_ocb_intro_whatsapp';
+    public const DEVICE_ZERO_PLANS_EMAIL = 'device_zero_plans_email';
     // Misreport Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
     public const SEND_FAILED_ILA_EMAILS = 'send_failed_ila_emails';

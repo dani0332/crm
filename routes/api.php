@@ -141,6 +141,7 @@ Route::prefix('v1')->group(function () {
     // upload to metlife API route
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
     Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
+    Route::post("quotes/send-zero-plans-email", [ApiController::class, 'sendZeroPlansEmail'])->name('sendZeroPlansEmail');
 
 });
 

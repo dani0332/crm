@@ -300,8 +300,9 @@ trait QuoteAllocatable
         })->orWhere->leadAllocationFailed();
     }
 
+    
     public function isAllocationFailed(): bool
     {
-        return filled($this->lead_allocation_failed_at);
+        return !empty($this->lead_allocation_failed_at);
     }
 }

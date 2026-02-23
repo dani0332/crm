@@ -46,6 +46,8 @@ enum QuoteFlowType: int
     case HEALTH_STP_ADVISOR_NOTIFICATION = 48;
     case HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 49;
 
+    case DEVICE_AUTOMATED_FOLLOWUPS = 50;
+    case DEVICE_OCB_INTRO_EMAIL = 51;
     public function label(): string
     {
         return match ($this) {
@@ -89,6 +91,8 @@ enum QuoteFlowType: int
             QuoteFlowType::CYBER_AUTOMATION_FAILED => 'cyber_automation_failed',
             QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION => 'health_stp_advisor_notification',
             QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED => 'health_stp_advisor_notification_api_failed',
+            QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS => 'device_automated_followups',
+            QuoteFlowType::DEVICE_OCB_INTRO_EMAIL => 'device_ocb_intro_email',
         };
     }
 
@@ -131,6 +135,8 @@ enum QuoteFlowType: int
             47 => QuoteFlowType::DEVICE_NEW_POLICY,
             48 => QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION,
             49 => QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED,
+            50 => QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS,
+            51 => QuoteFlowType::DEVICE_OCB_INTRO_EMAIL,
             40 => QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS,
             41 => QuoteFlowType::CYBER_OCB_INTRO_EMAIL,
             42 => QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS,

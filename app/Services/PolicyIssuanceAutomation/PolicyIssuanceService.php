@@ -10,6 +10,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
@@ -34,6 +35,9 @@ class PolicyIssuanceService
     use GenericQueriesAllLobs;
 
     private string $className = 'policyIssuanceService';
+    private const ALLOCATABLE_QUOTE_TYPES = [
+        QuoteTypes::DEVICE,
+    ];
 
     public function __construct() {}
 
@@ -495,6 +499,17 @@ class PolicyIssuanceService
         if (! $advisorId && $isPolicyBooked && $quoteType == QuoteTypes::CYBER->value) {
             $this->triggerAdvisorAllocation($quoteType, $quote, $advisorId);
         }
+        elseif (! $advisorId && $isPolicyBooked) {
+            $allocationResult = $this->attemptAdvisorAllocation($quoteType, $uuid);
+            $advisorId = $allocationResult['advisorId'] ?? null;
+
+            if ($allocationResult['allocationAttempted'] ?? false) {
+                LoggerService::info('Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                    'advisorId' => $advisorId,
+                    'allocation_response' => $allocationResult['response'] ?? null,
+                ]);
+            }
+        }
 
         if (
             in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) &&
@@ -568,6 +583,45 @@ class PolicyIssuanceService
         }
 
         return [$quoteTypeId, $workflowType, $recipientUser];
+    }
+
+    private function attemptAdvisorAllocation(string $quoteType, string $uuid): array
+    {
+        $quoteTypeEnum = QuoteTypes::tryFrom($quoteType);
+
+        $allocationAttempted = $quoteTypeEnum && $this->isAllocationSupported($quoteTypeEnum);
+
+        if (! $allocationAttempted) {
+            return [
+                'advisorId' => null,
+                'response' => null,
+                'quoteType' => $quoteTypeEnum?->value,
+                'allocationAttempted' => false,
+            ];
+        }
+
+        $teamId = $this->getAllocationTeamId($quoteTypeEnum);
+        $response = $quoteTypeEnum->allocate($uuid, $teamId);
+
+        return [
+            'advisorId' => is_array($response) ? ($response['advisorId'] ?? null) : null,
+            'response' => $response,
+            'quoteType' => $quoteTypeEnum->value,
+            'allocationAttempted' => true,
+        ];
+    }
+
+    private function isAllocationSupported(QuoteTypes $quoteTypeEnum): bool
+    {
+        return in_array($quoteTypeEnum, self::ALLOCATABLE_QUOTE_TYPES, true);
+    }
+
+    private function getAllocationTeamId(QuoteTypes $quoteTypeEnum): int|false
+    {
+        return match ($quoteTypeEnum) {
+            QuoteTypes::DEVICE => getTeamId(TeamNameEnum::SIC_UNASSISTED),
+            default => false,
+        };
     }
 
     public function getInsurerAPIStatuses($status = null, $onlyKeys = false)

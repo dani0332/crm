@@ -71,6 +71,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\SendZeroPlanEmailRequest;
 
 class ApiController extends Controller
 {
@@ -781,6 +782,21 @@ class ApiController extends Controller
         return apiResponse($result, Response::HTTP_OK, 'Watermark jobs dispatched');
     }
 
+    public function sendZeroPlansEmail(SendZeroPlanEmailRequest $request)
+    {
+       $response = app(ApiService::class)->sendZeroPlansEmail($request);
+       if ($response['success']) {
+        return response()->json([
+            'success' => true,
+            'message' => $response['message'],
+        ], Response::HTTP_OK);
+       } else {
+        return response()->json([
+            'success' => false,
+            'message' => $response['message'],
+        ], Response::HTTP_BAD_REQUEST);
+       }
+    }
     public function getLeadOCRComparison(Request $request)
     {
         $request->validate(

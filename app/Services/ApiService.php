@@ -33,6 +33,8 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use App\Models\PersonalQuote;
+use App\Services\EmailServices\DeviceEmailService;
 
 class ApiService
 {
@@ -632,6 +634,46 @@ class ApiService
                 'success' => false,
                 'message' => 'STP Advisor notification failed: '.$e->getMessage(),
             ];
+        }
+    }
+    public function sendZeroPlansEmail( $request)
+    {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        LoggerService::info(self::class.': Sending zero plans email for quote uuid: '.$request->quoteUuid);
+        if (! $quoteType) {
+            LoggerService::info(self::class.': Invalid quote type');
+            return [
+                'success' => false,
+                'message' => 'Invalid quote type',
+            ];
+        }
+        switch ($quoteType->value) {
+            case QuoteTypes::DEVICE->value:
+                $lead = PersonalQuote::where('uuid', $request->quoteUuid)->first();
+                if (! $lead) {
+                    return [
+                        'success' => false,
+                        'message' => 'Lead not found',
+                    ];
+                }
+                $response = app(DeviceEmailService::class)->sendZeroPlansEmail($lead);
+                if ($response['success']) {
+                    return [
+                        'success' => true,
+                        'message' => $response['message'],
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => $response['message'],
+                    ];
+                }
+                break;
+            default:
+                return [
+                    'success' => false,
+                    'message' => 'Invalid quote type',
+                ];
         }
     }
 }

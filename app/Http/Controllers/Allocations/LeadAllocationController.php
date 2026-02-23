@@ -32,6 +32,7 @@ class LeadAllocationController extends Controller
             QuoteTypes::GROUP_MEDICAL => PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::TRAVEL => PermissionsEnum::TRAVEL_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::CYBER => PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::DEVICE => PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD,
         };
 
         $this->middleware("permission:{$permission}", ['only' => ['index']]);

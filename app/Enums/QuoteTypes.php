@@ -50,6 +50,8 @@ use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
+use App\Strategies\Allocations\DeviceAllocation;
+use App\Jobs\OCB\SendDeviceOCBIntroEmailJob;
 
 enum QuoteTypes: string
 {
@@ -209,6 +211,7 @@ enum QuoteTypes: string
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
             self::HOME => SendHomeOCBIntroEmailJob::class,
             self::CYBER => SendCyberOCBIntroEmailJob::class,
+            self::DEVICE => SendDeviceOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
@@ -318,6 +321,7 @@ enum QuoteTypes: string
             self::SAVINGS => new SavingsAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::CYBER => new CyberAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::DEVICE => new DeviceAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             default => null,
         };
 
@@ -347,6 +351,7 @@ enum QuoteTypes: string
             self::CYBER => [RolesEnum::CyberAdvisor],
             self::BUSINESS => [RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::GMAdvisor],
             self::JETSKI => [RolesEnum::JetskiAdvisor],
+            self::DEVICE => [RolesEnum::SmartPhoneAdvisor],
             default => [],
         };
     }

@@ -11,6 +11,10 @@ use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
 use Database\Seeders\Traits\PermissionableSeeder;
 use Illuminate\Database\Seeder;
+use App\Models\Team;
+use App\Enums\TeamTypeEnum;
+use App\Models\QuoteStatusMap;
+use App\Models\QuoteStatus;
 
 class DeviceQuoteSeeder extends Seeder
 {
@@ -21,12 +25,18 @@ class DeviceQuoteSeeder extends Seeder
      */
     public function run(): void
     {
-        LoggerService::info('DeviceQuoteSeeder started');
+        LoggerService::info(self::class.' - DeviceQuoteSeeder started');
         $this->upsertQuoteType();
+        LoggerService::info(self::class.' - Device Quote type upserted');
         $this->mapQuoteStatuses();
+        LoggerService::info(self::class.' - Device Quote statuses mapped');
+        LoggerService::info(self::class.' - Device Roles seeded');
         $this->seedRoles([RolesEnum::SmartPhoneAdvisor, RolesEnum::SmartPhoneManager]);
         $this->seedDevicePermissions();
-        LoggerService::info('DeviceQuoteSeeder completed');
+        LoggerService::info(self::class.' - Device Permissions seeded');
+        $this->product();
+        LoggerService::info(self::class.' - Device Product seeded');
+        LoggerService::info(self::class.' - DeviceQuoteSeeder completed');
     }
 
     /**
@@ -80,6 +90,7 @@ class DeviceQuoteSeeder extends Seeder
             PermissionsEnum::DEVICE_QUOTES_CREATE,
             PermissionsEnum::DEVICE_QUOTES_EDIT,
             PermissionsEnum::DEVICE_QUOTES_SHOW,
+            PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::DEVICE_LEADPOOL,
         ];
         // The DEVICE_LEADPOOL permission should NOT be assigned to the SmartPhoneAdvisor role.
@@ -96,6 +107,27 @@ class DeviceQuoteSeeder extends Seeder
             LoggerService::info('DeviceQuoteSeeder: ' . $permission . ' permissions seeded for roles: ' . implode(', ', $roles));
         }
 
+    }
+
+   
+    private function product()
+    {
+        if (! Team::where('name', 'Device Insurance')->where('type', TeamTypeEnum::PRODUCT)->exists()) {
+            Team::create([
+                'name' => 'Device Insurance',
+                'type' => TeamTypeEnum::PRODUCT,
+                'is_active' => 1,
+            ]);
+        }
+
+        if (! Team::where('name', 'Device Insurance - Team')->where('type', TeamTypeEnum::TEAM)->exists()) {
+            Team::create([
+                'name' => 'Device Insurance - Team',
+                'parent_team_id' => Team::where('name', 'Device Insurance')->value('id'),
+                'type' => TeamTypeEnum::TEAM,
+                'is_active' => 1,
+            ]);
+        }
     }
 
 }

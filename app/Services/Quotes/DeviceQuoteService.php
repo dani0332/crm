@@ -204,7 +204,11 @@ class DeviceQuoteService extends BaseQuoteService
         $data = $this->getShowCommonData($quote);
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::DEVICE_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::Device) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
+        $automationUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::SMART_PHONE_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true); // Test/UAT email
 
+        if ($quote->advisor && $quote->advisor->email === $automationUserEmail) {
+            $quote->advisor->name = PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL;
+        }
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SmartPhoneManager),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],

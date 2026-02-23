@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Enums\TeamNameEnum;
 
 class UserController extends Controller
 {
@@ -381,7 +382,7 @@ class UserController extends Controller
                         if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
                             $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
                         } else {
-                            $quoteTypeName = $type->name;
+                            $quoteTypeName =  TeamNameEnum::getQuoteTypeValue($type->name);
                         }
                         $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
                         if (! empty($quoteTypeId)) {
