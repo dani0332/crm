@@ -4,6 +4,7 @@ use App\Enums\GenericDocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessTypeOfInsurance;
+use App\Models\Claim;
 use App\Models\GenericDocument;
 use App\Models\GenericDocumentType;
 use App\Models\InsuranceProvider;
@@ -31,18 +32,18 @@ test('get claim documents returns documents for Home quote type', function () {
         'text' => InsuranceProviderEnum::getTextByCode(InsuranceProviderEnum::AXA->value),
     ]);
 
-    // Create documents for Home (quote_type_id = 2)
+    // Create documents for Home (quote_type_id = 2); API filters by documentable_type = Claim::class
     GenericDocument::factory()->forHome()->create([
-        'documentable_type' => GenericDocumentType::class,
-        'documentable_id' => $documentType->id,
+        'documentable_type' => Claim::class,
+        'documentable_id' => 1,
         'name' => 'QIC.pdf',
         'path' => 'documents/claims/QIC.pdf',
         'insurance_provider_id' => $insuranceProvider1->id,
     ]);
 
     GenericDocument::factory()->forHome()->create([
-        'documentable_type' => GenericDocumentType::class,
-        'documentable_id' => $documentType->id,
+        'documentable_type' => Claim::class,
+        'documentable_id' => 1,
         'name' => 'LIVA.pdf',
         'path' => 'documents/claims/LIVA.pdf',
         'insurance_provider_id' => $insuranceProvider2->id,
@@ -95,10 +96,10 @@ test('get claim documents returns empty docs for Travel quote type when no docum
 
     // Create documents only for Home (quote_type_id = 2), not for Travel (quote_type_id = 8)
     $insuranceProvider = InsuranceProvider::factory()->create();
-    
+
     GenericDocument::factory()->forHome()->create([
-        'documentable_type' => GenericDocumentType::class,
-        'documentable_id' => $documentType->id,
+        'documentable_type' => Claim::class,
+        'documentable_id' => 1,
         'insurance_provider_id' => $insuranceProvider->id,
     ]);
 
@@ -148,10 +149,10 @@ test('get claim documents includes business type of insurance only for Business 
     $insuranceProvider = InsuranceProvider::factory()->create();
     $businessType = BusinessTypeOfInsurance::factory()->create(['text' => 'Property']);
 
-    // Document for Business LOB with business type
+    // Document for Business LOB with business type; API filters by documentable_type = Claim::class
     GenericDocument::factory()->create([
-        'documentable_type' => GenericDocumentType::class,
-        'documentable_id' => $documentType->id,
+        'documentable_type' => Claim::class,
+        'documentable_id' => 1,
         'quote_type_id' => QuoteTypeId::Business,
         'insurance_provider_id' => $insuranceProvider->id,
         'business_type_of_insurance_id' => $businessType->id,
@@ -160,8 +161,8 @@ test('get claim documents includes business type of insurance only for Business 
 
     // Document for Business LOB without business type
     GenericDocument::factory()->create([
-        'documentable_type' => GenericDocumentType::class,
-        'documentable_id' => $documentType->id,
+        'documentable_type' => Claim::class,
+        'documentable_id' => 1,
         'quote_type_id' => QuoteTypeId::Business,
         'insurance_provider_id' => $insuranceProvider->id,
         'business_type_of_insurance_id' => null,
@@ -170,8 +171,8 @@ test('get claim documents includes business type of insurance only for Business 
 
     // Document for Home LOB (should NOT have business_type_of_insurance even if set)
     GenericDocument::factory()->forHome()->create([
-        'documentable_type' => GenericDocumentType::class,
-        'documentable_id' => $documentType->id,
+        'documentable_type' => Claim::class,
+        'documentable_id' => 1,
         'insurance_provider_id' => $insuranceProvider->id,
         'business_type_of_insurance_id' => $businessType->id,
         'name' => 'HomeWithType.pdf',
@@ -191,10 +192,8 @@ test('get claim documents includes business type of insurance only for Business 
         ->and($withBusinessType)->toHaveKey('businessTypeOfInsurance')
         ->and($withBusinessType['businessTypeOfInsurance'])->not->toBeNull()
         ->and($withBusinessType['businessTypeOfInsurance']['text'])->toBe('Property')
-        ->and($withoutBusinessType)->toHaveKey('businessTypeOfInsuranceId')
-        ->and($withoutBusinessType['businessTypeOfInsuranceId'])->toBeNull()
-        ->and($withoutBusinessType)->toHaveKey('businessTypeOfInsurance')
-        ->and($withoutBusinessType['businessTypeOfInsurance'])->toBeNull();
+        ->and($withoutBusinessType)->not->toHaveKey('businessTypeOfInsuranceId')
+        ->and($withoutBusinessType)->not->toHaveKey('businessTypeOfInsurance');
 
     // Check Home LOB document (should NOT have business_type_of_insurance fields)
     $homeDocs = $response->json('data.Home.docs');
