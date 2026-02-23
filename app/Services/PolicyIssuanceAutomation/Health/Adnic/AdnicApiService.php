@@ -149,6 +149,13 @@ class AdnicApiService
                 app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadDocResponse, AdnicHttpFacade::getBaseUrl().$endPoint, AdnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadDocResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
                 if (! $uploadDocResponse['status']) {
+                    LoggerService::info('Document upload failed', extra: [
+                        'document_type' => $quoteDocument->document_type_code,
+                        'insurer_document_code' => $insurerDocumentCode,
+                        'document_name' => $quoteDocument->original_name ?? $quoteDocument->doc_name,
+                        'message' => $uploadDocResponse['message'] ?? 'Document upload failed',
+                    ]);
+
                     $allDocsDownloaded = false;
                     break;
                 }
