@@ -775,12 +775,12 @@ const formatToDateTime = dateString => {
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ formatToDateTime(quote.updated_at) }}</dd>
               </div>
-             
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
-             
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
                 <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
@@ -789,7 +789,6 @@ const formatToDateTime = dateString => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
-            
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF INSURANCE</dt>
