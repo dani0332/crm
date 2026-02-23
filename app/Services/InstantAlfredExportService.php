@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\InstantChatReportsEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\AlfredChat;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -160,6 +161,8 @@ class InstantAlfredExportService
             'Channel',
             'Employee',
             'Email',
+            'User System',
+            'User IP Address',
             'Input Tokens',
             'Completion Tokens',
             'Total Tokens',
@@ -186,6 +189,8 @@ class InstantAlfredExportService
             $this->formatCommunicationChannel($doc['communication_channel'] ?? null),
             $doc['employee_flag'] ?? 'N/A',
             $doc['email'] ?? 'N/A',
+            $doc['user_system'] ?? 'N/A',
+            $doc['user_ip_address'] ?? 'N/A',
             $doc['input_tokens_usage'] ?? 0,
             $doc['completion_tokens'] ?? 0,
             $doc['total_tokens'] ?? 0,
@@ -238,7 +243,7 @@ class InstantAlfredExportService
             $chunkSize = 500;
 
             $sqlRecordsChunk = [];
-            foreach ($query->lazyById($chunkSize, 'pqr.id') as $sqlRecord) {
+            foreach ($query->lazyById($chunkSize, 'pqr.id', 'id') as $sqlRecord) {
                 $sqlRecordsChunk[] = $sqlRecord;
 
                 if (count($sqlRecordsChunk) >= $chunkSize) {
@@ -342,6 +347,9 @@ class InstantAlfredExportService
             $azurePath,
             now()->addHours(self::URL_EXPIRY_HOURS)
         );
+
+        DeleteTempOCBPDFFileJob::dispatch($azurePath)
+            ->delay(now()->addHours(self::URL_EXPIRY_HOURS));
 
         return [
             'path' => $azurePath,

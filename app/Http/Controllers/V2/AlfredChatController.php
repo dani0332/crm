@@ -66,6 +66,12 @@ class AlfredChatController extends Controller
 
     public function generateExportUrl(Request $request)
     {
+        $request->validate([
+            'report' => 'required|string|in:'.InstantChatReportsEnum::DETAILED_REPORT.','.InstantChatReportsEnum::CONSOLIDATED_REPORT,
+            'recipientEmail' => 'required|email',
+            'recipientName' => 'nullable|string|max:255',
+        ]);
+
         try {
             $service = app(InstantAlfredExportService::class);
 

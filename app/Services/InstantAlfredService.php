@@ -370,9 +370,15 @@ class InstantAlfredService extends BaseService
             'quote_id' => ['$in' => $itemIds],
         ];
 
-        if (! empty($request->chat_initiated_at) && is_array($request->chat_initiated_at)) {
-            // Parse dates as UTC dates (not local timezone) to match MongoDB's UTC storage
-            // This ensures "2025-11-30" is treated as "2025-11-30 UTC", not "2025-11-30 Asia/Dubai"
+        // Apply date filter only for DETAILED_REPORT: we want messages within the range.
+        // For CONSOLIDATED_REPORT, omit it so aggregations count ALL messages per quote
+        // (customer_interactions, ai_interactions, fallbacks, etc.). Quote selection by date
+        // is already done at the SQL layer via chat_initiated_at.
+        $shouldFilterByDate = $request->report === InstantChatReportsEnum::DETAILED_REPORT
+            && ! empty($request->chat_initiated_at)
+            && is_array($request->chat_initiated_at);
+
+        if ($shouldFilterByDate) {
             // @phpstan-ignore-next-line
             $dateFrom = new UTCDateTime(Carbon::parse($request->chat_initiated_at[0], 'UTC')->startOfDay()->timestamp * 1000);
             // @phpstan-ignore-next-line
