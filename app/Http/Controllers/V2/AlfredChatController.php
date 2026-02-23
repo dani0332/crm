@@ -147,7 +147,7 @@ class AlfredChatController extends Controller
         }
 
         try {
-            
+
             $birdPayload = [
                 'report' => $request->report,
                 'recipientEmail' => $request->recipientEmail ?? Auth::user()?->email,
