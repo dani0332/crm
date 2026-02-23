@@ -90,8 +90,10 @@ class InstantAlfredExportService
             $query = app(InstantAlfredService::class)
                 ->getChatDetailedReportQuery($params);
 
-            return $query->get()
-                ->keyBy('uuid')
+            $rows = $query->get();
+            return $rows
+                ->groupBy('uuid')
+                ->map(fn ($group) => $group->sortBy('id')->first())
                 ->map(fn ($item) => (array) $item)
                 ->toArray();
         } finally {

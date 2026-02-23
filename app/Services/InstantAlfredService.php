@@ -370,11 +370,7 @@ class InstantAlfredService extends BaseService
             'quote_id' => ['$in' => $itemIds],
         ];
 
-        // Apply date filter only for DETAILED_REPORT: we want messages within the range.
-        // For CONSOLIDATED_REPORT, omit it so aggregations count ALL messages per quote
-        // (customer_interactions, ai_interactions, fallbacks, etc.). Quote selection by date
-        // is already done at the SQL layer via chat_initiated_at.
-        $shouldFilterByDate = $request->report === InstantChatReportsEnum::DETAILED_REPORT
+        $shouldFilterByDate = $type === InstantChatReportsEnum::DETAILED_REPORT
             && ! empty($request->chat_initiated_at)
             && is_array($request->chat_initiated_at);
 
