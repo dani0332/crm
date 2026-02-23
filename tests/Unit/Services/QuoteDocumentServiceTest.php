@@ -8,6 +8,7 @@ use App\Enums\GenericDocumentTypeCode;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessTypeOfInsurance;
+use App\Models\Claim;
 use App\Models\GenericDocument;
 use App\Models\GenericDocumentType;
 use App\Models\InsuranceProvider;
@@ -189,16 +190,17 @@ class QuoteDocumentServiceTest extends TestCase
             'code' => InsuranceProviderEnum::RSA->value,
         ]);
 
+        // Service filters by documentable_type = Claim::class
         GenericDocument::factory()->forHome()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
+            'documentable_type' => Claim::class,
+            'documentable_id' => 1,
             'insurance_provider_id' => $insuranceProvider->id,
             'name' => 'home-doc.pdf',
         ]);
 
         GenericDocument::factory()->forTravel()->create([
-            'documentable_type' => GenericDocumentType::class,
-            'documentable_id' => $documentType->id,
+            'documentable_type' => Claim::class,
+            'documentable_id' => 1,
             'insurance_provider_id' => $insuranceProvider->id,
             'name' => 'travel-doc.pdf',
         ]);
