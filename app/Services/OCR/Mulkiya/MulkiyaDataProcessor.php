@@ -22,7 +22,7 @@ class MulkiyaDataProcessor
     public function __construct(
         private CarQuote $quote,
         private object $data,
-        private string $documentTypeCode,
+        private string $documentTypeCode
     ) {
         $this->mulkiyaExtractor = new MulkiyaExtractor($this->data, $quote?->plan?->provider_id);
     }

@@ -286,4 +286,25 @@ class LookupService extends BaseService
             ])->get();
         });
     }
+
+    public function getCyberQuoteLookUpData()
+    {
+        return CacheManager::remember(CacheKeyEnum::CYBER_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/cyber/lookup', 'get');
+        });
+    }
+
+    public function getCyberCoverages()
+    {
+        return Cache::remember(
+            'cyber_coverages',
+            now()->addHour(),
+            function () {
+                return Lookup::where('key', LookupsEnum::CYBER_COVERAGE)
+                    ->select('id', 'code', 'text')
+                    ->orderBy('sort_order')
+                    ->get();
+            }
+        );
+    }
 }
