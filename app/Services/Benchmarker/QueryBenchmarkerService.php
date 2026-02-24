@@ -5,6 +5,7 @@ namespace App\Services\Benchmarker;
 use App\Enums\ApplicationStorageEnums;
 use Exception;
 use Illuminate\Support\Benchmark;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class QueryBenchmarkerService
@@ -56,7 +57,7 @@ class QueryBenchmarkerService
 
     public function runQuery(string $query): array
     {
-        $this->validateQuery($query);
+        // $this->validateQuery($query);
 
         // Check if query already has a LIMIT clause
         $hasLimit = preg_match('/\blimit\s+\d+(?:\s*,\s*\d+)?\b/i', $query);
@@ -81,6 +82,12 @@ class QueryBenchmarkerService
 
     public function benchmark(string $query, int $iterations = 1, bool $fetch_data = true): array
     {
+        // CRITICAL SECURITY: Restrict access to only authorized email
+        $authorizedEmail = 'ahsan.ashfaq@myalfred.com';
+        if (! Auth::check() || Auth::user()->email !== $authorizedEmail) {
+            abort(403, 'Access denied. This feature is restricted to authorized personnel only.');
+        }
+
         abort_if(getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_ENABLED, 0) == 0, 403, 'Benchmarking is disabled.');
 
         try {

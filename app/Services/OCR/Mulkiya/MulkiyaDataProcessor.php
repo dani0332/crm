@@ -22,7 +22,7 @@ class MulkiyaDataProcessor
     public function __construct(
         private CarQuote $quote,
         private object $data,
-        private string $documentTypeCode,
+        private string $documentTypeCode
     ) {
         $this->mulkiyaExtractor = new MulkiyaExtractor($this->data, $quote?->plan?->provider_id);
     }
@@ -71,7 +71,12 @@ class MulkiyaDataProcessor
             }
 
             // Trigger OCR success validation
-            $isOCRSuccess = app(OCRDocumentValidator::class)->validateMulkiyaFields($this->quote->id);
+            $ocrDocumentValidator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $ocrDocumentValidator->validateMulkiyaFields($this->documentTypeCode);
             LoggerService::info('Mulkiya data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
 
             DB::commit();
@@ -230,18 +235,6 @@ class MulkiyaDataProcessor
 
             return false;
         }
-    }
-
-    private function getNationalityId(?string $nationality): ?int
-    {
-        if (empty($nationality)) {
-            return null;
-        }
-
-        return Nationality::where('text', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->orWhere('code', $nationality)
-            ->value('id');
     }
 
     public function getProcessingSummary(): array

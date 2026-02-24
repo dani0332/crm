@@ -73,12 +73,16 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'gender',
             'emirate_of_your_visa_id',
             'pec_marked_at',
+            'branch_id',
+            'is_branch_applicable',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
             'nationality:id,text',
             'emirate:id,text',
             'advisor:id,name,email,mobile_no,landline_no',
+            'advisor.primaryBranch',
+            'branch:id,name',
             'previousAdvisor:id,name',
             'healthQuoteRequestDetail:id,health_quote_request_id,next_followup_date,transapp_code,notes,insly_id,lost_reason_id,advisor_assigned_date',
             'healthLeadType:id,text',
@@ -123,7 +127,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('previous_quote_policy_premium', requestParams: $requestParams)
             ->filterBy('sub_team', 'health_team_type', requestParams: $requestParams)
             ->filterIn('quote_status', 'quote_status_id', requestParams: $requestParams)
-            ->filterIn('payment_status', 'payment_status_id', requestParams: $requestParams)
+            ->filterIn('payment_status_id', requestParams: $requestParams)
             ->filterIn('renewal_batches', 'renewal_batch_id', requestParams: $requestParams)
             ->filterBy('currently_insured_with', requestParams: $requestParams)
             ->filterBy('is_cold', 'is_cold', 1, requestParams: $requestParams)
@@ -186,7 +190,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                     ->filterByDate('previous_policy_expiry_date', 'policy_expiry_date_end', false, requestParams: $requestParams));
             })
             ->when(Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM'), function ($query) {
-                $query->filterBy('advisor_id', Auth::user()->id);
+                $query->where('advisor_id', Auth::user()->id);
             })
             ->when($this->hasFilterValue('advisors', $requestParams) && is_array($this->getFilterValue('advisors', $requestParams)) && in_array(DefaultAdvisorEnum::UNASSIGNED, $this->getFilterValue('advisors', $requestParams)), function ($query) {
                 $query->whereNull('advisor_id');

@@ -102,6 +102,14 @@ const tableHeader = ref([
     tooltip:
       'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
   },
+  {
+    text: 'BL-CAT-A Assigned',
+    value: 'BLCATAAllocationCount',
+    sortable: true,
+    width: '100',
+    tooltip:
+      'The BL CAT-A ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
+  },
   { text: 'BL Reset CAP', value: 'blResetCap', sortable: true, width: '100' },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
@@ -113,7 +121,6 @@ const leadData = ref([
     cap: 0,
     BlMaxcap: 0,
     BlCapEdit: false,
-    BlAllocationStatus: false,
     capEdit: false,
     status: '1',
     loading: false,
@@ -424,6 +431,27 @@ watch(
   },
 );
 
+// Watch for changes in props.data to update leadData
+watch(
+  () => props.data,
+  newData => {
+    if (newData && newData.length > 0) {
+      leadData.value = newData.map(item => {
+        return {
+          id: item.id,
+          userId: item.userId,
+          cap: item.maxCapacity,
+          capEdit: false,
+          status: item.isAvailable,
+          BlMaxcap: item.BLMaxCapacity,
+          BlCapEdit: false,
+        };
+      });
+    }
+  },
+  { deep: true },
+);
+
 onMounted(() => {
   setQueryStringFilters(params, filters);
   tableHeader.value = tableHeader.value.filter(column => {
@@ -441,6 +469,8 @@ onMounted(() => {
       cap: item.maxCapacity,
       capEdit: false,
       status: item.isAvailable,
+      BlMaxcap: item.BLMaxCapacity,
+      BlCapEdit: false,
     };
   });
 });

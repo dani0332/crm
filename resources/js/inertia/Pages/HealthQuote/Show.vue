@@ -1,11 +1,11 @@
 <script setup>
+import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 
 const props = defineProps({
   quote: Object,
@@ -22,7 +22,6 @@ const props = defineProps({
   teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
-  cdnPath: String,
   documentType: Object,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
@@ -41,7 +40,6 @@ const props = defineProps({
   quoteRequest: Object,
   can: Object,
   paymentMethods: Object,
-  storageUrl: String,
   sendPolicy: Boolean,
   insuranceProviders: Array,
   planTypes: Array,
@@ -81,7 +79,7 @@ const isManualPlansCount = ref(0);
 
 const page = usePage();
 const authId = computed(() => page.props.auth.user.id);
-
+const genericRequestEnum = page.props.genericRequestEnum;
 let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
 const compareDueDate = useCompareDueDate;
 const permissionsEnum = page.props.permissionsEnum;
@@ -252,7 +250,7 @@ const subTeamOptions = [
   { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
-  { value: 'PCP', label: 'PCP' },
+  { value: 'GBP', label: 'GBP' },
 ];
 
 const advisorOptions = computed(() => {
@@ -599,14 +597,17 @@ const onMemberSubmit = isValid => {
   if (memberActionEdit.value) {
     memberForm.put(`/health-quote-update-member`, {
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Member Updated',
-          position: 'top',
-        });
-        memberForm.reset();
-        onLoadAvailablePlansData();
-        // location.reload();
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages.error) {
+          notification.success({
+            title: 'Member Updated',
+            position: 'top',
+          });
+          memberForm.reset();
+          onLoadAvailablePlansData();
+          // location.reload();
+        }
       },
       onError: errors => {
         notification.error({
@@ -623,13 +624,16 @@ const onMemberSubmit = isValid => {
     memberForm.post(`/health-quote-add-member`, {
       // new mavonic endpoint
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Member Added',
-          position: 'top',
-        });
-        onLoadAvailablePlansData();
-        // location.reload();
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages.error) {
+          notification.success({
+            title: 'Member Added',
+            position: 'top',
+          });
+          onLoadAvailablePlansData();
+          // location.reload();
+        }
       },
       onError: errors => {
         notification.error({
@@ -675,6 +679,12 @@ const memberDeleteConfirmed = () => {
         onLoadAvailablePlansData();
         // location.reload();
       },
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not updated',
+          position: 'top',
+        });
+      },
       onFinish: () => {
         modals.memberConfirm = false;
         membersDetailsUpdated.value = true;
@@ -686,16 +696,19 @@ const memberDeleteConfirmed = () => {
 const memberPrincipalConfirmed = () => {
   memberForm.put(`/health-quote-update-member`, {
     preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
-        position: 'top',
-      });
-      onLoadAvailablePlansData();
+    onSuccess: response => {
+      const flash_messages = response.props.flash;
+      if (!flash_messages.error) {
+        notification.success({
+          title: `${memberForm.first_name} ${memberForm.last_name} has been made principal`,
+          position: 'top',
+        });
+        onLoadAvailablePlansData();
+      }
     },
-    onError: () => {
+    onError: errors => {
       notification.error({
-        title: 'Some error occurred while processing request',
+        title: errors.error || 'Some error occurred while processing request',
         position: 'top',
       });
     },
@@ -719,8 +732,6 @@ const memberDataDocs = membersDetail => {
 };
 
 // plans
-const planDataTable = ref();
-
 const plansTable = reactive({
   isLoading: false,
   data: [],
@@ -810,6 +821,14 @@ const onLoadAvailablePlansData = async () => {
       plansTable.isLoading = false;
     });
 };
+
+const { sectionRef: planDataTable, isLoaded: plansLoaded } = useLazyLoadSection(
+  onLoadAvailablePlansData,
+  {
+    threshold: 0.1,
+    rootMargin: '100px',
+  },
+);
 
 const planClicked = plan => {
   selectedPlan.value = plan;
@@ -1456,6 +1475,13 @@ const additionalContactPrimaryConfirmed = () => {
         contactLoader.value = false;
         modals.contactPrimaryConfirm = false;
       },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      },
     },
   );
 };
@@ -1578,11 +1604,15 @@ const customerProfileForm = useForm({
   quote_request_id: page.props.quote.id,
   insured_first_name: page.props.quote.insured_first_name || '',
   insured_last_name: page.props.quote.insured_last_name || '',
-  emirates_id_number: page.props.quote.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.quote.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
-  trade_license_no: page.props.quote.trade_license_no ?? null,
+  trade_license_no:
+    page.props.quote.insured_id_type === genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote.insured_id_number
+      : null,
   company_name: page.props.quote.company_name ?? null,
   company_address: page.props.quote.company_address ?? null,
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
@@ -1637,8 +1667,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -1666,7 +1696,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -1676,7 +1706,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -1703,7 +1733,6 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
-  onLoadAvailablePlansData();
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
   ) || { id: null };
@@ -1939,6 +1968,31 @@ const onAddUpdate = () => {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const isLocked = page.props.quote.is_quote_locked ?? false;
+
+const isPrimaryEmailLocked = computed(() => {
+  return [
+    page.props.quoteStatusEnum.POLICY_BOOKING_QUEUED,
+    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED,
+  ].includes(page.props.quote?.quote_status_id);
+});
+
+const validateEmirateOfVisa = () => {
+  if (
+    !props.quote.emirate_of_your_visa_id &&
+    props.quote.source == leadSource.RENEWAL_UPLOAD
+  ) {
+    notification.error({
+      title:
+        'Emirate of Visa is required to proceed. Please update the Customer Profile with the Emirate of Visa and other required details before adding a plan.',
+      position: 'top',
+    });
+
+    return false;
+  }
+  modals.createPlan = true;
+};
 </script>
 
 <template>
@@ -1997,10 +2051,18 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('health.edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled && !isLocked"
+            :href="route('health.edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">
+          <x-button
+            v-else
+            :disabled="isDisabled || isLocked"
+            size="sm"
+            tag="div"
+          >
             Edit
           </x-button>
         </LeadEditBtnTemplate>
@@ -2749,7 +2811,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               @click.prevent="onAddMemberModal"
               size="sm"
               color="orange"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isLocked"
               v-if="readOnlyMode.isDisable === true"
             >
               Add Member
@@ -2775,7 +2837,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               color="primary"
               outlined
               @click.prevent="onEditMember(item)"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isLocked"
               v-if="readOnlyMode.isDisable === true"
             >
               Edit
@@ -2787,7 +2849,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               color="error"
               outlined
               @click.prevent="memberDelete(item.id)"
-              :disabled="isDisabled"
+              :disabled="isDisabled || isLocked"
               v-if="readOnlyMode.isDisable === true && !item.is_principal"
             >
               Delete
@@ -2800,6 +2862,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               outlined
               @click.prevent="memberPrincipal(item)"
               v-if="!item.is_principal"
+              :disabled="isLocked"
             >
               Make Principal
             </x-button>
@@ -3235,15 +3298,29 @@ const applyEmiratesIdNumMasking = emiratesId =>
             </template>
 
             <template #item-action="item">
-              <x-button
-                size="xs"
-                color="emerald"
-                outlined
-                @click.prevent="additionalContactPrimary(item)"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Make Primary
-              </x-button>
+              <div class="space-x-4">
+                <x-tooltip
+                  v-if="isPrimaryEmailLocked && item.key === 'email'"
+                  placement="bottom"
+                >
+                  <x-button size="xs" color="red" outlined disabled>
+                    Make Primary
+                  </x-button>
+                  <template #tooltip>
+                    Primary email ID cannot be changed while the policy booking
+                    is in progress.
+                  </template>
+                </x-tooltip>
+                <x-button
+                  v-else-if="readOnlyMode.isDisable === true"
+                  size="xs"
+                  color="emerald"
+                  outlined
+                  @click.prevent="additionalContactPrimary(item)"
+                >
+                  Make Primary
+                </x-button>
+              </div>
             </template>
           </DataTable>
         </template>
@@ -3635,8 +3712,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
                   size="sm"
                   color="emerald"
-                  @click.prevent="modals.createPlan = true"
-                  :disabled="isDisabled"
+                  @click.prevent="validateEmirateOfVisa"
+                  :disabled="isDisabled || isLocked"
                 >
                   Add Plan
                 </x-button>
@@ -4043,7 +4120,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :eCommercePriceWithLP="
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
@@ -4100,10 +4176,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :payments="payments"
     />
 
-    <QuoteDocument
+    <HealthQuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
@@ -4111,6 +4186,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
       :bookPolicyDetails="bookPolicyDetails"
+      :members="membersDetail"
     />
 
     <BorLogsSection
@@ -4422,6 +4498,20 @@ const applyEmiratesIdNumMasking = emiratesId =>
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
+    />
+
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <OcrLogs
+      v-if="can(permissionsEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <lead-raw-data

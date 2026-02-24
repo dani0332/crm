@@ -37,6 +37,7 @@ use App\Models\QuoteBatches;
 use App\Repositories\CurrencyTypeRepository;
 use App\Repositories\UserRepository;
 use App\Services\BaseService;
+use App\Services\BranchAssignmentService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -52,6 +53,7 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use PDF;
 
 class LifeQuoteService extends BaseService
@@ -66,6 +68,7 @@ class LifeQuoteService extends BaseService
     public function getLifeQuoteData($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
         $quotes = $this->getLifeQuotes($isExportRequest, $isTotalLeadCountRequest);
+        $this->postProcessLifeQuote($quotes);
         $leadStatuses = $this->getPersonalQuoteStatuses(QuoteTypeId::Life)->get();
         $advisors = $this->getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $authorizedDays = $this->getPaymentAuthorisedDays();
@@ -79,18 +82,36 @@ class LifeQuoteService extends BaseService
         return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes', 'quoteSegments');
     }
 
-    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
+    private function postProcessLifeQuote($quotes)
     {
-        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest);
+        $quotes->map(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable ? 'N/A' : ($item->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($item->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life));
 
-        return ($isExportRequest) ? $query->get() : $query->simplePaginate(15)->withQueryString();
+            return $item;
+        });
     }
 
-    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false)
+    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false, $requestParams = [])
     {
+        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest, $requestParams);
+
+        return ($isExportRequest) ? $query : $query->simplePaginate(15)->withQueryString();
+    }
+
+    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false, $requestParams = [])
+    {
+
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)->with([
             'advisor',
+            'advisor.primaryBranch',
             'quoteStatus',
             'nationality',
             'quoteDetail.lostReason:id,text',
@@ -109,6 +130,7 @@ class LifeQuoteService extends BaseService
                     'subType:id,code',
                 ]);
             },
+            'branch:id,name',
         ])
             ->when(auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->user()->id);
@@ -283,9 +305,6 @@ class LifeQuoteService extends BaseService
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
-            'height' => $data['height'],
-            'weight' => $data['weight'],
-            'bmi' => $data['bmi'],
             'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
@@ -300,6 +319,12 @@ class LifeQuoteService extends BaseService
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
             'additionalNotes' => $data['notes'] ?? null,
         ];
+
+        foreach (['height', 'weight', 'bmi'] as $field) {
+            if (isset($data[$field]) && $data[$field] !== null && is_numeric($data[$field])) {
+                $lifeQuote[$field] = $data[$field];
+            }
+        }
 
         LoggerService::info('saveLifeQuote: ', [
             'subSourceId' => $data['sub_source_id'] ?? null,
@@ -322,6 +347,7 @@ class LifeQuoteService extends BaseService
             ->with([
                 'quoteCustomerPlan',
                 'advisor',
+                'advisor.primaryBranch',
                 'quoteStatus',
                 'nationality',
                 'lifeQuote' => function ($q) {
@@ -367,6 +393,7 @@ class LifeQuoteService extends BaseService
                 },
                 'subSource',
                 'subSourceOption',
+                'branch:id,name',
             ])
             ->select([
                 'personal_quotes.*',
@@ -386,6 +413,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $lifeQuote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $lifeQuote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        $lifeQuote->branch_name = ! $lifeQuote->is_branch_applicable ? 'N/A' : ($lifeQuote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($lifeQuote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life));
 
         return $lifeQuote;
     }

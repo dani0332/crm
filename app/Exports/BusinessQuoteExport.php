@@ -3,8 +3,10 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
+use App\Services\BranchAssignmentService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -40,6 +42,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             'LOST REASON',
             'ADVISOR',
             'OE/AE',
+            'BRANCH',
             'LEAD STATUS',
             'CREATED DATE',
             'ADVISOR ASSIGNED DATE',
@@ -60,6 +63,8 @@ class BusinessQuoteExport implements CsvExportableInterface
 
     public function map($quote): array
     {
+        $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Business));
+
         return [
             $quote->code,
             $quote->first_name,
@@ -71,6 +76,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             optional($quote->advisor)->name,
             $quote->supportUser?->name,
+            $branch,
             optional($quote->quoteStatus)->text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',

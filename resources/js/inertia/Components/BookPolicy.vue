@@ -86,6 +86,8 @@ const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const commissionPercentageExceedsLimit = ref(false);
 const showCommissionPercentageExceedsLimitAlert = ref(false);
+const isParentCancelReissuePen =
+  props.bookPolicyDetails.isParentPolicyCancellationReissuedPending;
 
 const dateToYMD = date => {
   if (date) {
@@ -123,8 +125,8 @@ const dateToDMYWithTime = date => {
   return '';
 };
 
-let isHealthAUHLead = ref(
-  page.props.bookPolicyDetails.isHealthAUHLead || false,
+let isAbuDhabiBranch = ref(
+  page.props.bookPolicyDetails.isAbuDhabiBranch || false,
 );
 
 const commissionErrorMessage =
@@ -1495,19 +1497,10 @@ const isDocTypeLoading = docType => {
                 </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
-              <div
-                v-if="
-                  props.quoteType === quoteTypeCodeEnum.Health.toLowerCase()
-                "
-                class="grid sm:grid-cols-2"
-              >
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Branch</dt>
                 <dd>
-                  {{
-                    page.props.branchOptions?.find(
-                      item => item.id === props.quote.emirate_of_your_visa_id,
-                    )?.branch
-                  }}
+                  {{ quote.branch_name }}
                 </dd>
               </div>
             </dl>
@@ -1824,6 +1817,30 @@ const isDocTypeLoading = docType => {
                     </template>
                   </x-tooltip>
                 </template>
+                <template
+                  v-else-if="
+                    isParentCancelReissuePen &&
+                    can(permissionsEnum.BOOK_POLICY_BUTTON)
+                  "
+                >
+                  <x-tooltip>
+                    <x-button
+                      size="sm"
+                      class="mt-4 mr-2"
+                      color="orange"
+                      disabled
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
+                    <template #tooltip>
+                      <span>
+                        {{
+                          `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
+                        }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </template>
                 <template v-else>
                   <x-button
                     size="sm"
@@ -1952,11 +1969,17 @@ const isDocTypeLoading = docType => {
                   <template
                     v-if="
                       (props.bookPolicyDetails?.bookButton ||
-                        props.bookPolicyDetails?.policyCancelled) &&
+                        props.bookPolicyDetails?.policyCancelled ||
+                        isParentCancelReissuePen) &&
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
-                    <x-tooltip v-if="props.bookPolicyDetails.policyCancelled">
+                    <x-tooltip
+                      v-if="
+                        props.bookPolicyDetails.policyCancelled ||
+                        isParentCancelReissuePen
+                      "
+                    >
                       <x-button
                         size="sm"
                         class="mt-4 mr-2"
@@ -1964,7 +1987,8 @@ const isDocTypeLoading = docType => {
                         :disabled="
                           disableBookPolicyButton ||
                           isAMLNotClearedForTravelQuote ||
-                          disableIfPolicyFailedAndNoBookingFailedEditPermission
+                          disableIfPolicyFailedAndNoBookingFailedEditPermission ||
+                          isParentCancelReissuePen
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -2018,9 +2042,9 @@ const isDocTypeLoading = docType => {
                 </template>
               </template>
             </div>
-            <template v-if="isHealthAUHLead">
+            <template v-if="isAbuDhabiBranch">
               <p class="text-gray-500 text-sm text-right mt-3 mb-2 mx-4">
-                {{ productionProcessTooltipEnum.HEALTH_AUH_BOOKING_NOTE }}
+                {{ productionProcessTooltipEnum.ABU_DHABI_BRANCH_BOOKING_NOTE }}
               </p>
             </template>
           </div>

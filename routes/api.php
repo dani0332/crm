@@ -9,6 +9,7 @@ use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\LifeController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\FtcEmailController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,9 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
     Route::post('/imcrm/trigger-sic-whatsapp', [ApiController::class, 'triggerSICWhatsapp'])->name('triggerSICWhatsapp');
     Route::post('/imcrm/run-cqf-jobs', [ApiController::class, 'runCQFJobs']);
+
+    // FTC email
+    Route::post('ftc-email/{quoteType}/{uuid}/dispatch', [FtcEmailController::class, 'send'])->name('api.ftc-email.dispatch');
 
     // FTC email tracking routes
     Route::post('ftc/{quoteType}/{uuid}', [FtcEmailLogController::class, 'store']);
@@ -69,6 +73,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     });
     Route::post('/imcrm/claim/assign-quote', [ApiController::class, 'assignClaim'])->name('assignClaim');
 
+    Route::post('check-document-upload-after-authorization', [ApiController::class, 'checkDocumentUploadAfterPayment']);
     // Missing docs reminder and verify missing docs routes
     Route::prefix('imcrm')->group(function () {
         Route::post('/missing-docs-reminder/{quoteUuid}', [ApiController::class, 'missingDocsReminder'])->name('missingDocsReminder');
@@ -76,13 +81,21 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     });
 
     Route::post('/imcrm/life-sync-health-questionnaire', [ApiController::class, 'lifeSyncHealthQuestionnaire'])->name('life-sync-health-questionnaire');
+    Route::post('/stp-advisor-notification', [ApiController::class, 'stpAdvisorNotification']);
 
+    Route::post('/pc-customer-assignment', [ApiController::class, 'tagPcpCustomers'])
+        ->name('pc-customer-assignment');
+    Route::post('/remove-pc-qualified', [ApiController::class, 'removePcQualified'])->name('remove-pc-qualified');
+    Route::post('/tag-pc-qualified', [ApiController::class, 'tagPrivateClients']);
+
+    Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
+    Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
 });
 
-Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
+Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
-Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClientss'])->name('tagPrivateClientss');
+// Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClients'])->name('tagPrivateClientss');
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
@@ -128,6 +141,7 @@ Route::prefix('v1')->group(function () {
 
     // upload to metlife API route
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
+    Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
 
 });
 

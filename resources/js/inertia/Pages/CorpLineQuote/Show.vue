@@ -3,6 +3,7 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: {
@@ -187,10 +188,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  storageUrl: {
-    type: String,
-    required: true,
-  },
   amlStatusName: {
     type: String,
     required: true,
@@ -208,6 +205,7 @@ const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const can = permission => useCan(permission);
+const genericRequestEnum = page.props.genericRequestEnum;
 
 const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 const compareDueDate = useCompareDueDate;
@@ -581,11 +579,15 @@ const customerProfileForm = useForm({
     page.props.quote.insured_last_name ??
     page.props.quote.customer_insured_last_name ??
     '',
-  emirates_id_number: page.props.quote.emirates_id_number || null,
+  emirates_id_number:
+    applyEmiratesNumberMasking(page.props.quote.emirates_id_number) || null,
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
-  trade_license_no: page.props.quote.trade_license_no ?? null,
+  trade_license_no:
+    page.props.quote.insured_id_type === genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote.insured_id_number
+      : null,
   company_name: page.props.quote.company_name ?? null,
   company_address: page.props.quote.company_address ?? null,
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
@@ -640,8 +642,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -666,7 +668,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -676,7 +678,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -744,7 +746,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           :notes="quoteNotes"
           modelType="Business"
           :quote="quote"
-          :cdn="cdnPath"
         />
         <Link
           v-if="quote?.insly_id"
@@ -1439,6 +1440,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail
@@ -1593,7 +1595,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :quoteSubType="quoteTypeCodeEnum.CORPLINE"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
@@ -1623,7 +1624,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"

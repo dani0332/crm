@@ -32,10 +32,17 @@ enum QuoteFlowType: int
     case LIFE_ADVANCE_BIRTHDAY_WISH = 13;
     case LIFE_BIRTHDAY_WISH = 14;
     case HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 15;
+    case TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS = 40;
     case SIC_HEALTH_FOLLOWUPS_WA = 10;
     case CAR_AUTOMATION_FAILED = 36;
     case CAR_MISSING_DOC_REMINDER = 37;
     case CAR_AI_ADVISOR_OCB = 39;
+    case CYBER_OCB_INTRO_EMAIL = 41;
+    case CYBER_AUTOMATED_FOLLOWUPS = 42;
+    case CYBER_NEW_POLICY = 43;
+    case CYBER_AUTOMATION_FAILED = 44;
+    case HEALTH_STP_ADVISOR_NOTIFICATION = 48;
+    case HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED = 49;
 
     public function label(): string
     {
@@ -63,6 +70,7 @@ enum QuoteFlowType: int
             QuoteFlowType::OTHER_BUSINESS_NEW_POLICY => 'other_business_new_policy',
             QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS => 'home_automated_followups',
             QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS => 'home_renewal_automated_followups',
+            QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS => 'travel_renewal_automated_followups',
             QuoteFlowType::MOTOR_PCP_FOLLOWUPS => 'motor_pcp_followups',
             QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA => 'sic_health_followups_wa',
             QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS => 'life_automated_followups',
@@ -71,6 +79,12 @@ enum QuoteFlowType: int
             QuoteFlowType::CAR_AUTOMATION_FAILED => 'car_automation_failed',
             QuoteFlowType::CAR_MISSING_DOC_REMINDER => 'car_missing_doc_reminder',
             QuoteFlowType::CAR_AI_ADVISOR_OCB => 'car_ai_advisor_ocb',
+            QuoteFlowType::CYBER_OCB_INTRO_EMAIL => 'cyber_ocb_intro_email',
+            QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS => 'cyber_automated_followups',
+            QuoteFlowType::CYBER_NEW_POLICY => 'cyber_new_policy',
+            QuoteFlowType::CYBER_AUTOMATION_FAILED => 'cyber_automation_failed',
+            QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION => 'health_stp_advisor_notification',
+            QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED => 'health_stp_advisor_notification_api_failed',
         };
     }
 
@@ -109,6 +123,13 @@ enum QuoteFlowType: int
             36 => QuoteFlowType::CAR_AUTOMATION_FAILED,
             37 => QuoteFlowType::CAR_MISSING_DOC_REMINDER,
             39 => QuoteFlowType::CAR_AI_ADVISOR_OCB,
+            48 => QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION,
+            49 => QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED,
+            40 => QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS,
+            41 => QuoteFlowType::CYBER_OCB_INTRO_EMAIL,
+            42 => QuoteFlowType::CYBER_AUTOMATED_FOLLOWUPS,
+            43 => QuoteFlowType::CYBER_NEW_POLICY,
+            44 => QuoteFlowType::CYBER_AUTOMATION_FAILED,
             default => null,  // Return null if the value doesn't match any case
         };
     }

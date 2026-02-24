@@ -105,6 +105,8 @@ class BusinessQuoteService extends BaseService
                 'i.first_name as insured_first_name',
                 'i.last_name as insured_last_name',
                 DB::raw('IF(i.id_type = "emiratesId", i.id_number, "") as emirates_id_number'),
+                'i.id_type as insured_id_type',
+                'i.id_number as insured_id_number',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -143,7 +145,11 @@ class BusinessQuoteService extends BaseService
                         WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                         ELSE insurer_aml_status
                     END AS insurer_aml_status_display
-                ')
+                '),
+                'ub.branch_id as advisor_primary_branch_id',
+                'b.name as lead_branch_name',
+                'b.id as lead_branch_id',
+                'bqr.is_branch_applicable',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -165,14 +171,29 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('customer_insured as ci', function ($query) {
                 $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $query->on('ci.quote_request_id', '=', 'bqr.id');
-                $query->whereRaw('ci.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Business]);
+                $query->where('ci.is_active', '=', true);
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
             // Sub-source lookup joins
             ->leftJoin('lookups as ss', 'ss.id', '=', 'bqr.sub_source_id')
-            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id');
+            ->leftJoin('lookups as sso', 'sso.id', '=', 'bqr.sub_source_options_id')
+            ->leftJoin('user_branches as ub', function ($join) {
+                $join->on('ub.user_id', '=', 'bqr.advisor_id')
+                    ->where('ub.is_primary', '=', 1)
+                    ->where('ub.status', '=', 1);
+            })
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+    }
+
+    public function postProcessBusinessQuotes($quotes)
+    {
+        return $quotes->map(function ($quote) {
+            $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::Business));
+
+            return $quote;
+        });
     }
 
     public function getEntity($id)

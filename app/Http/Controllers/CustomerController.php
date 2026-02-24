@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\SLAActionTypeEnum;
+use App\Http\Requests\CustomerPrimaryEmailRequest;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
@@ -184,20 +185,8 @@ class CustomerController extends Controller
         ]]);
     }
 
-    public function makeAdditionalContactPrimary(Request $request)
+    public function makeAdditionalContactPrimary(CustomerPrimaryEmailRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'quote_id' => 'required',
-            'quote_type' => 'required',
-            'key' => 'required',
-            'value' => 'required',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['error' => [
-                'message' => $validator->errors(),
-            ]]);
-        }
-
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
 

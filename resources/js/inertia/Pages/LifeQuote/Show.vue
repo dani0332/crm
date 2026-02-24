@@ -43,7 +43,6 @@ const props = defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
-  storageUrl: String,
   vatPercentage: Number,
   payments: Array,
   paymentTooltipEnum: Object,
@@ -73,6 +72,7 @@ const props = defineProps({
   lifeCutOffDate: String,
 });
 
+const genericRequestEnum = page.props.genericRequestEnum;
 const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
@@ -457,9 +457,7 @@ const getTotalAnnualPremiumAED = item => {
 
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
-    return item.isManualPlan
-      ? getTotalAnnualPremium(item)
-      : getTotalAnnualPremium(item);
+    return getTotalAnnualPremium(item);
   }
   return 'N/A';
 };
@@ -820,8 +818,10 @@ const customerProfileForm = useForm({
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
-    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
-    null,
+    page.props.quote?.latest_insured?.id_type ===
+    genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote?.latest_insured?.id_number
+      : null,
   company_name:
     page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
     null,
@@ -885,8 +885,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -911,7 +911,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -921,7 +921,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -1274,7 +1274,10 @@ const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const isMetLife = item => {
   if (!item) return false;
 
-  return item.providerCode === insuranceProviderCodeEnum?.MTL;
+  return (
+    item.providerCode === insuranceProviderCodeEnum?.MTL &&
+    item.instantPolicy === true
+  ); // only for metlife instant policy
 };
 
 const canSelectMetLifePlan = computed(() => {
@@ -1432,7 +1435,6 @@ const getDisplayPriceInAED = item => {
             :notes="quoteNotes"
             :modelType="modelType"
             :quote="quote"
-            :cdn="cdnPath"
           />
 
           <Link
@@ -2172,6 +2174,7 @@ const getDisplayPriceInAED = item => {
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
       :expanded="sectionExpanded"
+      :quoteStatusId="quote?.quote_status_id"
     />
 
     <LastYearPolicyDetail
@@ -2947,7 +2950,6 @@ const getDisplayPriceInAED = item => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
@@ -2988,7 +2990,6 @@ const getDisplayPriceInAED = item => {
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote?.documents || []"
-      :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"

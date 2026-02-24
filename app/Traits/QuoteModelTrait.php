@@ -18,6 +18,7 @@ use App\Models\CarQuotePlanDetail;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
+use App\Services\BuyLeads\BuyLeadService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -225,6 +226,11 @@ trait QuoteModelTrait
             $this->assignment_type,
             [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]
         );
+    }
+
+    public function isCatABuyLeadApplicable(QuoteTypes $quoteType): bool
+    {
+        return ! $this->isStale() && $this->source == LeadSourceEnum::REVIVAL && in_array($this->nationality_id, BuyLeadService::getNationalitiesIds($quoteType));
     }
 
     public function getForeignKey()
@@ -460,5 +466,19 @@ trait QuoteModelTrait
         ];
 
         return in_array($this->quote_status_id, $excludedQuoteStatuses);
+    }
+
+    public function getCrmQuoteLink(): string
+    {
+        $baseUrl = config('app.url', env('APP_URL'));
+        $quoteId = $this->uuid ?? $this->id ?? '';
+
+        // Generate appropriate link based on quote type
+        return match ($this->quote_type_id) {
+            QuoteTypeId::Car => "{$baseUrl}/quotes/car/{$quoteId}",           // Car quote type
+            QuoteTypeId::Bike => "{$baseUrl}/personal-quotes/bike/{$quoteId}", // Bike quote type
+            QuoteTypeId::Cyber => "{$baseUrl}/personal-quotes/cyber/{$quoteId}", // Cyber quote type
+            default => 'N/A'
+        };
     }
 }

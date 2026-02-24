@@ -44,6 +44,7 @@ use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
+use App\Services\BranchAssignmentService;
 use App\Services\CsvExportService;
 use App\Services\EmailExportService;
 use App\Services\LeadsCountService;
@@ -67,6 +68,9 @@ class AppServiceProvider extends ServiceProvider
         // Register new CSV export services
         $this->app->singleton(CsvExportService::class);
         $this->app->singleton(EmailExportService::class);
+
+        // Register Branch Assignment Service
+        $this->app->singleton(BranchAssignmentService::class);
     }
 
     /**

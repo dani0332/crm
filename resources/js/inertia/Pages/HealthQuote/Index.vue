@@ -97,6 +97,7 @@ const tableHeader = ref([
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
+  { text: 'BRANCH', value: 'branch_name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   {
     text: 'ADVISOR REQUESTED',
@@ -210,7 +211,6 @@ const filters = reactive({
   date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
-  payment_status: [],
   is_cold: false,
   is_stale: false,
   status_filters: null,
@@ -229,6 +229,7 @@ const filters = reactive({
   pec_flag: 'all',
   authorize_date: '',
   captured_date: '',
+  payment_status_id: [],
 });
 
 const canExport = ref(false);
@@ -292,12 +293,13 @@ const renewalBatchOptions = computed(() => {
 
 const modifiedAdvisorOptions = ref([]);
 
-modifiedAdvisorOptions.value = advisorOptions.value;
-
-modifiedAdvisorOptions.value.push({
-  value: 'unassigned',
-  label: 'Unassigned',
-});
+modifiedAdvisorOptions.value = [
+  {
+    value: 'unassigned',
+    label: 'Unassigned',
+  },
+  ...advisorOptions.value,
+];
 
 // const subTeamsOptions = computed(() => {
 
@@ -362,8 +364,8 @@ const handleSelectedFilters = selectedFilters => {
     filters.quote_status = selectedFilters.quote_status;
   }
 
-  if (selectedFilters.payment_status) {
-    filters.payment_status = selectedFilters.payment_status;
+  if (selectedFilters.payment_status_id) {
+    filters.payment_status_id = selectedFilters.payment_status_id;
   }
 
   filters.is_cold = selectedFilters.cold;
@@ -416,7 +418,7 @@ function setQueryStringFilters() {
     'insurer_aml_status',
     'advisors',
     'renewal_batches',
-    'payment_status',
+    'payment_status_id',
     'emirate_of_your_visa_id',
     'sub_source_id',
     'page',
@@ -773,6 +775,13 @@ const insurerAMLStatusOption = computed(() => {
 
 // Handle lead creation from modal
 const onLeadConfirmed = leadData => {};
+
+const paymentStatusOptions = computed(() => {
+  return page.props.dropdownSource.payment_status_id.map(status => ({
+    value: Number.parseInt(status.id),
+    label: status.text,
+  }));
+});
 </script>
 
 <template>
@@ -1106,6 +1115,28 @@ const onLeadConfirmed = leadData => {};
           multi-calendars
           multi-calendars-solo
         />
+        <x-select
+          v-model="filters.payment_status_id"
+          label="Payment Status"
+          name="payment_status_id"
+          :options="paymentStatusOptions"
+          placeholder="Please select payment status"
+          class="w-full"
+          filterable
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.payment_status_id = paymentStatusOptions.map(
+                  status => status.value,
+                )
+              "
+              @clear="filters.payment_status_id = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-model="filters.authorize_date"
           label="Payment Authorised Date"

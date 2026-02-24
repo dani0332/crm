@@ -42,6 +42,10 @@ class RolePermissionSeeder extends Seeder
         $this->addExportHomePuaUpdatesPermission();
         $this->addUtmReportExportPermission();
         $this->addEditLastYearDetailsPermission();
+        $this->sageProcessTrackerPermissions();
+        $this->addBranchesPermission();
+        $this->addCarLegacyKycSkipInsurerApiPermission();
+        $this->addCarDriverEmiratesIdUpdatePermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -210,6 +214,7 @@ class RolePermissionSeeder extends Seeder
             PermissionsEnum::CORPLINE_LEADPOOL,
             PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
             PermissionsEnum::SAVINGS_LEADPOOL,
+            PermissionsEnum::CYBER_LEADPOOL,
         ];
 
         foreach ($permissions as $permission) {
@@ -467,5 +472,111 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addBranchesPermission(): void
+    {
+        $branchesPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::BRANCHES,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $branchAssignmentsPermission = Permission::firstOrCreate(
+            [
+                'name' => PermissionsEnum::BRANCH_ASSIGNMENTS,
+                'guard_name' => 'web',
+            ],
+            [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($branchesPermission)) {
+                    $role->givePermissionTo($branchesPermission);
+                }
+
+                if (! $role->hasPermissionTo($branchAssignmentsPermission)) {
+                    $role->givePermissionTo($branchAssignmentsPermission);
+                }
+            }
+        }
+    }
+    private function sageProcessTrackerPermissions(): void
+    {
+        $permissions = [
+            PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT,
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $engineeringRole = Role::where('name', RolesEnum::Engineering)->first();
+        if ($engineeringRole) {
+            foreach ($permissions as $permission) {
+                if (! $engineeringRole->hasPermissionTo($permission)) {
+                    $engineeringRole->givePermissionTo($permission);
+                }
+            }
+        }
+    }
+
+    private function addCarLegacyKycSkipInsurerApiPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::CAR_LEGACY_KYC_SKIP_INSURER_API,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                }
+            }
+        }
+    }
+
+    private function addCarDriverEmiratesIdUpdatePermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::COMPANY_PRIVATE_CAR_DRIVER_UPDATES,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+
+        if ($roles) {
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                }
+            }
+        }
     }
 }
