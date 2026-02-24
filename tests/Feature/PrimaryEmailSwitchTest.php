@@ -9,7 +9,7 @@ use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\PersonalQuote;
-use Illuminate\Support\Facades\DB;
+use App\Models\Permission;
 use Illuminate\Support\Facades\Queue;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -34,10 +34,10 @@ beforeEach(function () {
     // Fake the queue to prevent jobs from being dispatched during tests
     Queue::fake();
     
-    // Create permission
-    DB::connection('sqlite')->table('permissions')->insert([
+    // Create permission (events needed so Spatie's permission cache is updated)
+    Permission::create([
         'name' => PermissionsEnum::DELETE_ADDITIONAL_CONTACT,
-        'guard_name' => 'web'
+        'guard_name' => 'web',
     ]);
 
     $this->user = TestDataSeeder::createUser();
@@ -74,7 +74,7 @@ beforeEach(function () {
  */
 function createPersonalQuoteForCarQuote(CarQuote $quote): int
 {
-    $personalQuoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
+    $personalQuote = PersonalQuote::withoutEvents(fn () => PersonalQuote::create([
         'code' => $quote->code,
         'uuid' => $quote->uuid,
         'first_name' => $quote->first_name,
@@ -85,9 +85,9 @@ function createPersonalQuoteForCarQuote(CarQuote $quote): int
         'quote_type_id' => QUOTE_TYPE->id(),
         'created_at' => now(),
         'updated_at' => now(),
-    ]);
-    
-    return $personalQuoteId;
+    ]));
+
+    return $personalQuote->id;
 }
 
 afterEach(function () {

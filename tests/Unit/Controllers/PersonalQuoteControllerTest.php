@@ -6,10 +6,10 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Requests\ChangePrimaryContactRequest;
+use App\Models\PersonalQuote;
 use App\Services\CustomerService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -27,8 +27,8 @@ afterEach(function () {
 });
 
 test('changePrimaryContact calls service makeAdditionalContactPrimary with correct parameters when keep_existing_primary_email is provided', function () {
-    // Setup: Create a real PersonalQuote in database
-    $personalQuoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
+    // Setup: Create a PersonalQuote using model (without events for speed)
+    $personalQuote = PersonalQuote::withoutEvents(fn () => PersonalQuote::create([
         'code' => 'CAR-TEST-123',
         'uuid' => 'test-uuid-123',
         'first_name' => 'Test',
@@ -39,7 +39,8 @@ test('changePrimaryContact calls service makeAdditionalContactPrimary with corre
         'quote_type_id' => QUOTE_TYPE->id(),
         'created_at' => now(),
         'updated_at' => now(),
-    ]);
+    ]));
+    $personalQuoteId = $personalQuote->id;
     
     // Mock CustomerService
     $mockCustomerService = Mockery::mock(CustomerService::class);
@@ -74,8 +75,8 @@ test('changePrimaryContact calls service makeAdditionalContactPrimary with corre
 });
 
 test('changePrimaryContact uses default keepExistingPrimaryEmail value of 1 when not provided', function () {
-    // Setup: Create a real PersonalQuote in database
-    $personalQuoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
+    // Setup: Create a PersonalQuote using model (without events for speed)
+    $personalQuote = PersonalQuote::withoutEvents(fn () => PersonalQuote::create([
         'code' => 'CAR-TEST-456',
         'uuid' => 'test-uuid-456',
         'first_name' => 'Test',
@@ -86,7 +87,8 @@ test('changePrimaryContact uses default keepExistingPrimaryEmail value of 1 when
         'quote_type_id' => QUOTE_TYPE->id(),
         'created_at' => now(),
         'updated_at' => now(),
-    ]);
+    ]));
+    $personalQuoteId = $personalQuote->id;
     
     // Mock CustomerService - should be called with true (default value)
     $mockCustomerService = Mockery::mock(CustomerService::class);
@@ -121,8 +123,8 @@ test('changePrimaryContact uses default keepExistingPrimaryEmail value of 1 when
 });
 
 test('changePrimaryContact handles mobile_no key correctly', function () {
-    // Setup: Create a real PersonalQuote in database
-    $personalQuoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
+    // Setup: Create a PersonalQuote using model (without events for speed)
+    $personalQuote = PersonalQuote::withoutEvents(fn () => PersonalQuote::create([
         'code' => 'CAR-TEST-789',
         'uuid' => 'test-uuid-789',
         'first_name' => 'Test',
@@ -133,7 +135,8 @@ test('changePrimaryContact handles mobile_no key correctly', function () {
         'quote_type_id' => QUOTE_TYPE->id(),
         'created_at' => now(),
         'updated_at' => now(),
-    ]);
+    ]));
+    $personalQuoteId = $personalQuote->id;
     
     // Mock CustomerService
     $mockCustomerService = Mockery::mock(CustomerService::class);
@@ -182,8 +185,8 @@ test('changePrimaryContact throws ModelNotFoundException when quote not found', 
 });
 
 test('changePrimaryContact converts keep_existing_primary_email to boolean correctly', function () {
-    // Setup: Create a real PersonalQuote in database
-    $personalQuoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
+    // Setup: Create a PersonalQuote using model (without events for speed)
+    $personalQuote = PersonalQuote::withoutEvents(fn () => PersonalQuote::create([
         'code' => 'CAR-TEST-ABC',
         'uuid' => 'test-uuid-abc',
         'first_name' => 'Test',
@@ -194,7 +197,8 @@ test('changePrimaryContact converts keep_existing_primary_email to boolean corre
         'quote_type_id' => QUOTE_TYPE->id(),
         'created_at' => now(),
         'updated_at' => now(),
-    ]);
+    ]));
+    $personalQuoteId = $personalQuote->id;
     
     // Mock CustomerService - should receive boolean true even if request has string '1'
     $mockCustomerService = Mockery::mock(CustomerService::class);
@@ -231,8 +235,8 @@ test('changePrimaryContact converts keep_existing_primary_email to boolean corre
 });
 
 test('changePrimaryContact allows service exceptions to bubble up', function () {
-    // Setup: Create a real PersonalQuote in database
-    $personalQuoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
+    // Setup: Create a PersonalQuote using model (without events for speed)
+    $personalQuote = PersonalQuote::withoutEvents(fn () => PersonalQuote::create([
         'code' => 'CAR-TEST-EXCEPTION',
         'uuid' => 'test-uuid-exception',
         'first_name' => 'Test',
@@ -243,7 +247,8 @@ test('changePrimaryContact allows service exceptions to bubble up', function () 
         'quote_type_id' => QUOTE_TYPE->id(),
         'created_at' => now(),
         'updated_at' => now(),
-    ]);
+    ]));
+    $personalQuoteId = $personalQuote->id;
     
     // Mock CustomerService to throw an exception
     $mockCustomerService = Mockery::mock(CustomerService::class);
@@ -269,8 +274,8 @@ test('changePrimaryContact allows service exceptions to bubble up', function () 
 });
 
 test('changePrimaryContact handles invalid key value gracefully', function () {
-    // Setup: Create a real PersonalQuote in database
-    $personalQuoteId = DB::connection('sqlite')->table('personal_quotes')->insertGetId([
+    // Setup: Create a PersonalQuote using model (without events for speed)
+    $personalQuote = PersonalQuote::withoutEvents(fn () => PersonalQuote::create([
         'code' => 'CAR-TEST-INVALID-KEY',
         'uuid' => 'test-uuid-invalid-key',
         'first_name' => 'Test',
@@ -281,7 +286,8 @@ test('changePrimaryContact handles invalid key value gracefully', function () {
         'quote_type_id' => QUOTE_TYPE->id(),
         'created_at' => now(),
         'updated_at' => now(),
-    ]);
+    ]));
+    $personalQuoteId = $personalQuote->id;
     
     // Note: In unit tests, we directly call the controller method, so FormRequest
     // validation (which happens at middleware level) won't run. However, we can
