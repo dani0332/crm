@@ -19,7 +19,7 @@ URLs:
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
- 
+
 ## Other Stack & libraries
 
 - [Vue](https://vuejs.org/)
@@ -206,4 +206,4 @@ renewals/renewals_upload_create_m3.xlsx
 renewals/renewals_home_upload_update_m4.xlsx
 renewals/renewals_health_upload_update_m4.xlsx
 
-Policy wording ka folder need to verify on storage 
+Policy wording ka folder need to verify on storage
