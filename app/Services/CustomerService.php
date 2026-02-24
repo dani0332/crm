@@ -186,7 +186,7 @@ class CustomerService extends BaseService
                 $email = trim($lead->email);
 
                 if (str_ends_with($email, '@insurancemarket.ae') || str_ends_with($email, '@afia.ae')) {
-                    $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)?->delete();
+                    $this->getFirstAdditionalContactByEmail($value, $lead->customer_id)?->delete();
 
                 } else {
 
@@ -217,7 +217,7 @@ class CustomerService extends BaseService
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $this->removeAdditionalEmailContactIfExitst($lead->email, $lead->customer_id)?->delete();
+                $this->getFirstAdditionalContactByEmail($lead->email, $lead->customer_id)?->delete();
 
                 // ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
                 $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
@@ -238,7 +238,7 @@ class CustomerService extends BaseService
                 }
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $this->removeAdditionalEmailContactIfExitst($value, $lead->customer_id)?->delete();
+                $this->getFirstAdditionalContactByEmail($value, $lead->customer_id)?->delete();
 
                 $email = trim($lead->email);
                 if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
@@ -277,7 +277,7 @@ class CustomerService extends BaseService
             }
 
             if (!$keepExistingPrimaryEmail) {
-                $this->removeAdditionalEmailContactIfExitst($previousEmail, $lead->customer_id)?->delete();
+                $this->getFirstAdditionalContactByEmail($previousEmail, $lead->customer_id)?->delete();
             }
 
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
@@ -341,7 +341,7 @@ class CustomerService extends BaseService
         return ['success' => $success, 'message' => $message];
     }
 
-    private function removeAdditionalEmailContactIfExitst($email, $customerId)
+    private function getFirstAdditionalContactByEmail($email, $customerId)
     {
         $additionalContacts = CustomerAdditionalContact::where('customer_id', $customerId)
             ->where('value', $email)
