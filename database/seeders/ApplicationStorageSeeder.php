@@ -167,6 +167,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedDisableClaimsModule();
+        $this->seedOcrPlanValidation();
     }
 
     private function livaCarAutomationSeed()
@@ -1679,6 +1680,20 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED],
             [
                 'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOcrPlanValidation()
+    {
+        /** For sukoon purple API */
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES],
+            [
+                'value' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
