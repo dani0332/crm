@@ -327,7 +327,12 @@ class CustomerService extends BaseService
         }
 
         $filters = $additionalContact->only(['key', 'value', 'customer_id']);
-        $deleteCount = CustomerAdditionalContact::where($filters)->delete();
+        $matchingContacts = CustomerAdditionalContact::where($filters)->get();
+        $deleteCount = $matchingContacts->count();
+
+        foreach ($matchingContacts as $contact) {
+            $contact->delete();
+        }
 
         @[$success, $message] = $deleteCount > 0
             ? [true, "{$deleteCount} additional contact deleted."]
