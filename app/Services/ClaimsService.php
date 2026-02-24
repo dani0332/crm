@@ -984,6 +984,8 @@ class ClaimsService extends BaseService
             'manager',
             'insuranceProvider.contacts',
             'claimRequestType',
+            'quoteType',
+            'claimRequestDetails',
         ]);
 
         $canTrigger = true;
@@ -1052,6 +1054,7 @@ class ClaimsService extends BaseService
             'quoteTypeId' => $claimRequest->quote_type_id,
             'policyNumber' => $claimRequest->policy_number,
             'workflowType' => 'CLAIM_UPDATED',
+            'subject' => $this->getClaimsFlowEmailSubject($claimRequest),
             'emailTo' => $insuranceProviderContact->emails,
             'emailCc' => $insuranceProviderContact->email_cc,
         ];
@@ -1065,6 +1068,47 @@ class ClaimsService extends BaseService
             ]);
             throw $e;
         }
+    }
+
+    private function getClaimsFlowEmailSubject(ClaimRequest $claimRequest): string
+    {
+        $lob = $claimRequest->quoteType?->text ?? 'Car/Bike';
+        $parts = array_merge(
+            ["New {$lob} Claim"],
+            $this->getClaimsFlowEmailSubjectParts($claimRequest)
+        );
+
+        return implode(' - ', $parts);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function getClaimsFlowEmailSubjectParts(ClaimRequest $claimRequest): array
+    {
+        $parts = [];
+
+        if (filled($claimRequest->policy_number)) {
+            $parts[] = "Policy Number [{$claimRequest->policy_number}]";
+        }
+
+        $details = $claimRequest->claimRequestDetails;
+        if ($details !== null) {
+            if (filled($details->plate_number)) {
+                $parts[] = "Plate - [{$details->plate_number}]";
+            }
+            $vehicleParts = array_filter([$details->model_year, $details->car_make, $details->car_model]);
+            if ($vehicleParts !== []) {
+                $parts[] = '['.implode(', ', $vehicleParts).']';
+            }
+        }
+
+        $insuredName = trim($claimRequest->fullName);
+        if ($insuredName !== '') {
+            $parts[] = "[{$insuredName}]";
+        }
+
+        return $parts;
     }
 
     /**
