@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Queue;
 use Tests\Helpers\TestSchemaCreator;
 
-if (!defined('QUOTE_TYPE')) {
+if (! defined('QUOTE_TYPE')) {
     define('QUOTE_TYPE', QuoteTypes::CAR);
 }
 
@@ -41,7 +41,7 @@ test('changePrimaryContact calls service makeAdditionalContactPrimary with corre
         'updated_at' => now(),
     ]));
     $personalQuoteId = $personalQuote->id;
-    
+
     // Mock CustomerService
     $mockCustomerService = Mockery::mock(CustomerService::class);
     $mockCustomerService->shouldReceive('makeAdditionalContactPrimary')
@@ -54,22 +54,22 @@ test('changePrimaryContact calls service makeAdditionalContactPrimary with corre
             'newemail@example.com',
             true
         );
-    
+
     // Bind mock to service container
     App::instance(CustomerService::class, $mockCustomerService);
-    
+
     // Create mock request
     $mockRequest = Mockery::mock(ChangePrimaryContactRequest::class);
     $mockRequest->keep_existing_primary_email = 1;
     $mockRequest->key = GenericRequestEnum::EMAIL;
     $mockRequest->value = 'newemail@example.com';
-    
+
     // Create controller instance
-    $controller = new PersonalQuoteController();
-    
+    $controller = new PersonalQuoteController;
+
     // Action: Call the method
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
-    
+
     // Assert: Should return redirect response
     expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
 });
@@ -89,7 +89,7 @@ test('changePrimaryContact uses default keepExistingPrimaryEmail value of 1 when
         'updated_at' => now(),
     ]));
     $personalQuoteId = $personalQuote->id;
-    
+
     // Mock CustomerService - should be called with true (default value)
     $mockCustomerService = Mockery::mock(CustomerService::class);
     $mockCustomerService->shouldReceive('makeAdditionalContactPrimary')
@@ -102,22 +102,22 @@ test('changePrimaryContact uses default keepExistingPrimaryEmail value of 1 when
             'newemail@example.com',
             true // Default value when keep_existing_primary_email is not set
         );
-    
+
     // Bind mock to service container
     App::instance(CustomerService::class, $mockCustomerService);
-    
+
     // Create mock request without keep_existing_primary_email
     $mockRequest = Mockery::mock(ChangePrimaryContactRequest::class);
     $mockRequest->keep_existing_primary_email = null; // Not set
     $mockRequest->key = GenericRequestEnum::EMAIL;
     $mockRequest->value = 'newemail@example.com';
-    
+
     // Create controller instance
-    $controller = new PersonalQuoteController();
-    
+    $controller = new PersonalQuoteController;
+
     // Action: Call the method
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
-    
+
     // Assert: Should return redirect response
     expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
 });
@@ -137,7 +137,7 @@ test('changePrimaryContact handles mobile_no key correctly', function () {
         'updated_at' => now(),
     ]));
     $personalQuoteId = $personalQuote->id;
-    
+
     // Mock CustomerService
     $mockCustomerService = Mockery::mock(CustomerService::class);
     $mockCustomerService->shouldReceive('makeAdditionalContactPrimary')
@@ -150,22 +150,22 @@ test('changePrimaryContact handles mobile_no key correctly', function () {
             '+971509876543',
             false
         );
-    
+
     // Bind mock to service container
     App::instance(CustomerService::class, $mockCustomerService);
-    
+
     // Create mock request
     $mockRequest = Mockery::mock(ChangePrimaryContactRequest::class);
     $mockRequest->keep_existing_primary_email = 0;
     $mockRequest->key = GenericRequestEnum::MOBILE_NO;
     $mockRequest->value = '+971509876543';
-    
+
     // Create controller instance
-    $controller = new PersonalQuoteController();
-    
+    $controller = new PersonalQuoteController;
+
     // Action: Call the method
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
-    
+
     // Assert: Should return redirect response
     expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
 });
@@ -175,12 +175,12 @@ test('changePrimaryContact throws ModelNotFoundException when quote not found', 
     $mockRequest = Mockery::mock(ChangePrimaryContactRequest::class);
     $mockRequest->key = GenericRequestEnum::EMAIL;
     $mockRequest->value = 'test@example.com';
-    
+
     // Create controller instance
-    $controller = new PersonalQuoteController();
-    
+    $controller = new PersonalQuoteController;
+
     // Action & Assert: Should throw ModelNotFoundException
-    expect(fn() => $controller->changePrimaryContact(99999, $mockRequest))
+    expect(fn () => $controller->changePrimaryContact(99999, $mockRequest))
         ->toThrow(ModelNotFoundException::class);
 });
 
@@ -199,7 +199,7 @@ test('changePrimaryContact converts keep_existing_primary_email to boolean corre
         'updated_at' => now(),
     ]));
     $personalQuoteId = $personalQuote->id;
-    
+
     // Mock CustomerService - should receive boolean true even if request has string '1'
     $mockCustomerService = Mockery::mock(CustomerService::class);
     $mockCustomerService->shouldReceive('makeAdditionalContactPrimary')
@@ -214,22 +214,22 @@ test('changePrimaryContact converts keep_existing_primary_email to boolean corre
                 return $arg === true; // Should be boolean, not string
             })
         );
-    
+
     // Bind mock to service container
     App::instance(CustomerService::class, $mockCustomerService);
-    
+
     // Create mock request with string value
     $mockRequest = Mockery::mock(ChangePrimaryContactRequest::class);
     $mockRequest->keep_existing_primary_email = '1'; // String value
     $mockRequest->key = GenericRequestEnum::EMAIL;
     $mockRequest->value = 'newemail@example.com';
-    
+
     // Create controller instance
-    $controller = new PersonalQuoteController();
-    
+    $controller = new PersonalQuoteController;
+
     // Action: Call the method
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
-    
+
     // Assert: Should return redirect response
     expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
 });
@@ -249,27 +249,27 @@ test('changePrimaryContact allows service exceptions to bubble up', function () 
         'updated_at' => now(),
     ]));
     $personalQuoteId = $personalQuote->id;
-    
+
     // Mock CustomerService to throw an exception
     $mockCustomerService = Mockery::mock(CustomerService::class);
     $mockCustomerService->shouldReceive('makeAdditionalContactPrimary')
         ->once()
         ->andThrow(new \RuntimeException('Service error occurred'));
-    
+
     // Bind mock to service container
     App::instance(CustomerService::class, $mockCustomerService);
-    
+
     // Create mock request
     $mockRequest = Mockery::mock(ChangePrimaryContactRequest::class);
     $mockRequest->keep_existing_primary_email = 1;
     $mockRequest->key = GenericRequestEnum::EMAIL;
     $mockRequest->value = 'newemail@example.com';
-    
+
     // Create controller instance
-    $controller = new PersonalQuoteController();
-    
+    $controller = new PersonalQuoteController;
+
     // Action & Assert: Should allow exception to bubble up
-    expect(fn() => $controller->changePrimaryContact($personalQuoteId, $mockRequest))
+    expect(fn () => $controller->changePrimaryContact($personalQuoteId, $mockRequest))
         ->toThrow(\RuntimeException::class, 'Service error occurred');
 });
 
@@ -288,18 +288,18 @@ test('changePrimaryContact handles invalid key value gracefully', function () {
         'updated_at' => now(),
     ]));
     $personalQuoteId = $personalQuote->id;
-    
+
     // Note: In unit tests, we directly call the controller method, so FormRequest
     // validation (which happens at middleware level) won't run. However, we can
     // test that the controller passes invalid data to the service, which may
     // handle it or throw an exception.
-    
+
     // Create mock request with invalid key (not EMAIL or MOBILE_NO)
     $mockRequest = Mockery::mock(ChangePrimaryContactRequest::class);
     $mockRequest->key = 'invalid_key'; // Invalid - should be EMAIL or MOBILE_NO
     $mockRequest->value = 'newemail@example.com';
     $mockRequest->keep_existing_primary_email = 1;
-    
+
     // Mock CustomerService - will receive invalid key
     // The service may handle this or throw an exception depending on implementation
     $mockCustomerService = Mockery::mock(CustomerService::class);
@@ -311,18 +311,18 @@ test('changePrimaryContact handles invalid key value gracefully', function () {
             'newemail@example.com',
             true
         );
-    
+
     // Bind mock to service container
     App::instance(CustomerService::class, $mockCustomerService);
-    
+
     // Create controller instance
-    $controller = new PersonalQuoteController();
-    
+    $controller = new PersonalQuoteController;
+
     // Action: Call the method - controller doesn't validate, it passes data to service
     // Note: In real Laravel flow, FormRequest validation would prevent this
     // from reaching the controller. Validation is tested in feature tests.
     $result = $controller->changePrimaryContact($personalQuoteId, $mockRequest);
-    
+
     // Assert: Controller still returns redirect (validation happens at request level)
     expect($result)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class);
 });

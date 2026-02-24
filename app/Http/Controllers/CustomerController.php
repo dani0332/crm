@@ -186,7 +186,7 @@ class CustomerController extends Controller
     public function makeAdditionalContactPrimary(CustomerPrimaryEmailRequest $request)
     {
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-        if (!$quoteObject) {
+        if (! $quoteObject) {
             if (isset($request->isInertia) && $request->isInertia) {
                 return redirect()->back()->with('error', 'Quote not found.');
             }

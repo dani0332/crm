@@ -205,7 +205,7 @@ class CustomerService extends BaseService
                         ->where('value', $email)
                         ->exists();
 
-                    if ($keepExistingPrimaryEmail && !$isExist) {
+                    if ($keepExistingPrimaryEmail && ! $isExist) {
                         CustomerAdditionalContact::create([
                             'customer_id' => $customer->id,
                             'key' => GenericRequestEnum::EMAIL,
@@ -276,7 +276,7 @@ class CustomerService extends BaseService
                 }
             }
 
-            if (!$keepExistingPrimaryEmail) {
+            if (! $keepExistingPrimaryEmail) {
                 $this->getFirstAdditionalContactByEmail($previousEmail, $lead->customer_id)?->delete();
             }
 
@@ -313,16 +313,16 @@ class CustomerService extends BaseService
      * Delete customer additional contact(s) by ID.
      * Deletes all contacts matching the same key, value, and customer_id.
      *
-     * @param int $additionalContactId
      * @return array{success: bool, message: string}
      */
     public function deleteCustomerAdditionalContacts(int $additionalContactId): array
     {
         $additionalContact = CustomerAdditionalContact::find($additionalContactId);
-        if (!$additionalContact) {
+        if (! $additionalContact) {
             LoggerService::warning(__CLASS__.' fn:deleteCustomerAdditionalContacts - Additional contact not found.', [
-                'additionalContactId' => $additionalContactId
+                'additionalContactId' => $additionalContactId,
             ]);
+
             return ['success' => false, 'message' => 'Additional contact not found.'];
         }
 
@@ -331,11 +331,11 @@ class CustomerService extends BaseService
 
         @[$success, $message] = $deleteCount > 0
             ? [true, "{$deleteCount} additional contact deleted."]
-            : [false, "No additional contacts were deleted."];
+            : [false, 'No additional contacts were deleted.'];
 
         LoggerService::info(__CLASS__.' fn:deleteCustomerAdditionalContacts', [
             ...$filters,
-            'message' => $message
+            'message' => $message,
         ]);
 
         return ['success' => $success, 'message' => $message];
@@ -348,7 +348,7 @@ class CustomerService extends BaseService
             ->where('key', GenericRequestEnum::EMAIL)
             ->first();
 
-        if (!$additionalContacts) {
+        if (! $additionalContacts) {
             LoggerService::info('No additional email contact found to delete.', [
                 'email' => $email,
                 'customerId' => $customerId,
