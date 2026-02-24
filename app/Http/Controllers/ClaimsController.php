@@ -50,8 +50,9 @@ class ClaimsController extends Controller
 
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store', 'searchPolicies']]);
-        $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails', 'updateComplaintStatus', 'updateNextFollowUp', 'makeAdditionalContactPrimary', 'optimizeMessage', 'sendNotification']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails', 'updateComplaintStatus', 'updateNextFollowUp', 'makeAdditionalContactPrimary']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_STATUS_UPDATE], ['only' => ['updateClaimStatus']]);
+        $this->middleware(['permission:'.PermissionsEnum::CLAIMS_SUB_STATUS_UPDATE], ['only' => ['sendNotification', 'optimizeMessage']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_SHOW], ['only' => ['show']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIMS_EXPORT_DATA], ['only' => ['export']]);
     }
@@ -146,7 +147,7 @@ class ClaimsController extends Controller
 
             return redirect()->route('claims.show', $claim['claimUID'])->with('success', "Claim {$claim['claimUID']} has been created successfully.");
         } catch (Exception $e) {
-            LoggerService::warning(' Error creating claim', extra: [
+            LoggerService::error(' Error creating claim', extra: [
                 'error' => $e->getMessage(),
                 'data' => $request->safe(),
                 'user_id' => Auth::id(),
