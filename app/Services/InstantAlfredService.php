@@ -313,7 +313,7 @@ class InstantAlfredService extends BaseService
 
             // Merge SQL and MongoDB data
             foreach ($sqlRecords as $sqlRecord) {
-                $relatedMongoRecord = $mongoResultsCollection->firstWhere('_id', $sqlRecord->uuid);
+                $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
 
                 // Set quote type
                 $sqlRecord->quote_type = $request->quoteType ?? explode('-', $sqlRecord->code ?? '')[0] ?? 'N/A';
