@@ -579,11 +579,6 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(CyberQuote::class, 'personal_quote_id', 'id');
     }
 
-    public function cyberPlan()
-    {
-        return $this->belongsTo(InsuranceProviderPlan::class, 'quoteUuid', 'uuid');
-    }
-
     public function cyberPlanDetail()
     {
         return $this->hasOne(CyberQuotePlanDetail::class, 'quoteUuid', 'uuid')->where('planId', $this->plan_id);
