@@ -3519,8 +3519,6 @@ const validateEmirateOfVisa = () => {
         <p>
           Do you want to keep the existing primary email ID as the additional contact for this lead?
         </p>
-        <br />
-        <p>Are you sure you want to continue?</p>
         <template #actions>
           <div class="text-right space-x-4">
             <x-button
