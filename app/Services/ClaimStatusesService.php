@@ -229,29 +229,12 @@ class ClaimStatusesService extends BaseService
                 return;
             }
 
-            $claimStatusClosed = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_CLOSED->value)
-                ->active()
-                ->first();
-
-            if (! $claimStatusClosed) {
-                LoggerService::warning(' Could not find "Closed" status - Claim UUID: '.$claimRequest->uuid, extra: [
-                    'claim_request_id' => $claimRequest->id,
-                    'claim_uuid' => $claimRequest->uuid,
-                    'updated_by' => Auth::id(),
-                ]);
-
-                return;
-            }
-
-            $claimRequest->claim_sub_status_id = $claimStatusDenied->id;
-            $claimRequest->claim_status_id = $claimStatusClosed->id;
-            $claimRequest->saveQuietly();
+            $claimRequest->update(['claim_sub_status_id' => $claimStatusDenied->id]);
 
             LoggerService::info(' Claim marked as denied and closed - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_sub_status_id' => $claimStatusDenied->id,
-                'claim_status_id' => $claimStatusClosed->id,
                 'quote_type_id' => $claimRequest->quote_type_id,
                 'updated_by' => Auth::id(),
             ]);
