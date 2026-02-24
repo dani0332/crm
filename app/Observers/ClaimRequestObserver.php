@@ -46,6 +46,7 @@ class ClaimRequestObserver
             $shouldCloseTheClaim = $this->claimStatusesService->checkSubStatusForClaimClosure($claimRequest, $newClaimSubStatusId);
             if ($shouldCloseTheClaim) {
                 $this->claimStatusesService->markClaimAsClosed($claimRequest);
+                $this->claimRequestEmailService->dispatchClaimGoogleReviewEmail($claimRequest);
             }
 
         }
@@ -68,7 +69,7 @@ class ClaimRequestObserver
 
                 if (empty($originalApprovedTotalLossAmount) && ! empty($newApprovedTotalLossAmount)) {
                     $claimStatusTotalLossOfferShared = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_TOTAL_LOSS_OFFER_LETTER_SHARED->value)->where('is_active', 1)->first();
-                    $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusTotalLossOfferShared);
+                        $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusTotalLossOfferShared);
                 }
             }
             if ($claimRequest->isDirty('approved_cash_loss_amount')) {
@@ -77,7 +78,7 @@ class ClaimRequestObserver
 
                 if (empty($originalApprovedCashLossAmount) && ! empty($newApprovedCashLossAmount)) {
                     $claimStatusCashLossApproved = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_CASH_LOSS_APPROVED->value)->where('is_active', 1)->first();
-                    $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusCashLossApproved);
+                        $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusCashLossApproved);
                 }
             }
             if ($claimRequest->isDirty('policy_number') && $claimRequest->manager_id && $claimRequest->insurance_provider_id) {
