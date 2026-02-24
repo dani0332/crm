@@ -3332,7 +3332,6 @@ const validateEmirateOfVisa = () => {
               </div>
             </template>
           </x-modal>
-
         </template>
       </x-accordion-item>
     </x-accordion>
@@ -3517,7 +3516,8 @@ const validateEmirateOfVisa = () => {
         backdrop
       >
         <p>
-          Do you want to keep the existing primary email ID as the additional contact for this lead?
+          Do you want to keep the existing primary email ID as the additional
+          contact for this lead?
         </p>
         <template #actions>
           <div class="text-right space-x-4">

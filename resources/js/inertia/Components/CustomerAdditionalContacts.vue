@@ -286,7 +286,10 @@ onMounted(() => {
                 color="red"
                 outlined
                 @click.prevent="additionalContactDelete(item.id)"
-                v-if="readOnlyMode.isDisable === true && can(permissionsEnum.DELETE_ADDITIONAL_CONTACT)"
+                v-if="
+                  readOnlyMode.isDisable === true &&
+                  can(permissionsEnum.DELETE_ADDITIONAL_CONTACT)
+                "
               >
                 Delete
               </x-button>
@@ -385,7 +388,8 @@ onMounted(() => {
           backdrop
         >
           <p>
-            Do you want to keep the existing primary email ID as the additional contact for this lead?
+            Do you want to keep the existing primary email ID as the additional
+            contact for this lead?
           </p>
           <template #actions>
             <div class="text-right space-x-4">
@@ -393,8 +397,12 @@ onMounted(() => {
                 size="sm"
                 color="primary"
                 @click.prevent="additionalContactPrimaryConfirmed(true)"
-                :loading="keepExistingPrimaryEmailLoader === true && contactLoader"
-                :disabled="keepExistingPrimaryEmailLoader === false && contactLoader"
+                :loading="
+                  keepExistingPrimaryEmailLoader === true && contactLoader
+                "
+                :disabled="
+                  keepExistingPrimaryEmailLoader === false && contactLoader
+                "
               >
                 Yes
               </x-button>
@@ -404,8 +412,12 @@ onMounted(() => {
                 color="red"
                 outlined
                 @click.prevent="additionalContactPrimaryConfirmed(false)"
-                :loading="keepExistingPrimaryEmailLoader === false && contactLoader"
-                :disabled="keepExistingPrimaryEmailLoader === true && contactLoader"
+                :loading="
+                  keepExistingPrimaryEmailLoader === false && contactLoader
+                "
+                :disabled="
+                  keepExistingPrimaryEmailLoader === true && contactLoader
+                "
               >
                 No
               </x-button>
