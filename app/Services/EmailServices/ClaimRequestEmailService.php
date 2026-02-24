@@ -30,6 +30,8 @@ class ClaimRequestEmailService extends BaseService
     public function dispatchClaimGoogleReviewEmail(ClaimRequest $claimRequest): void
     {
         try {
+            $claimRequest = $claimRequest->fresh();
+            
             $isLifeLob = $claimRequest->quote_type_id == QuoteTypeId::Life;
 
             LoggerService::info(' Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
