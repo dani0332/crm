@@ -29,9 +29,20 @@ class ClaimRequestEmailService extends BaseService
      */
     public function dispatchClaimGoogleReviewEmail(ClaimRequest $claimRequest): void
     {
+        $originalClaimRequest = $claimRequest;
+
         try {
             $claimRequest = $claimRequest->fresh();
-            
+
+            if ($claimRequest === null) {
+                LoggerService::warning(' Cannot dispatch Google review email - claim request no longer exists', extra: [
+                    'claim_request_id' => $originalClaimRequest->id,
+                    'claim_uuid' => $originalClaimRequest->uuid,
+                ]);
+
+                return;
+            }
+
             $isLifeLob = $claimRequest->quote_type_id == QuoteTypeId::Life;
 
             LoggerService::info(' Dispatching Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
@@ -46,10 +57,10 @@ class ClaimRequestEmailService extends BaseService
                 SendClaimGoogleReviewEmailJob::dispatch($claimRequest->uuid);
             }
 
-        } catch (\Exception $e) {
-            LoggerService::error(' Failed to dispatch Google review email job - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
+        } catch (\Throwable $e) {
+            LoggerService::error(' Failed to dispatch Google review email job - Claim UUID: '.$originalClaimRequest->uuid, extra: [
+                'claim_request_id' => $originalClaimRequest->id,
+                'claim_uuid' => $originalClaimRequest->uuid,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
