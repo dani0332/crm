@@ -415,13 +415,9 @@ class InstantAlfredService extends BaseService
                     '_id' => '$quote_id',
                     'quote_type' => ['$last' => '$quote_type'],
                     'date_of_first_interaction' => ['$min' => '$created_at'],
-                    'communication_channels' => ['$addToSet' => [
-                        '$cond' => [
-                            ['$ifNull' => ['$channel', false]],
-                            '$channel',
-                            '$$REMOVE',
-                        ],
-                    ]],
+                    // $$REMOVE is not supported inside $group accumulators.
+                    // Use plain $addToSet and filter nulls in PHP via formatCommunicationChannel().
+                    'communication_channels' => ['$addToSet' => '$channel'],
                     'customer_interactions' => [
                         '$sum' => [
                             '$cond' => [

@@ -13,7 +13,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use MongoDB\BSON\UTCDateTime;
 
 class InstantAlfredExportService
 {
@@ -118,13 +117,11 @@ class InstantAlfredExportService
 
     private function buildDetailedReportPipeline(array $uuids, array $params): array
     {
+        // Match only by quote_id — date filtering is already applied by the SQL query
+        // on chat_initiated_at, so we must include ALL messages for each matched quote.
+        // Filtering MongoDB by date here would drop quotes whose messages fall outside
+        // the window, causing the Detailed report to have fewer unique Ref-IDs than Summary.
         $matchConditions = ['quote_id' => ['$in' => $uuids]];
-
-        if (! empty($params['chat_initiated_at']) && is_array($params['chat_initiated_at'])) {
-            $dateFrom = new UTCDateTime(Carbon::parse($params['chat_initiated_at'][0], 'UTC')->startOfDay()->timestamp * 1000);
-            $dateTo = new UTCDateTime(Carbon::parse($params['chat_initiated_at'][1], 'UTC')->endOfDay()->timestamp * 1000);
-            $matchConditions['created_at'] = ['$gte' => $dateFrom, '$lte' => $dateTo];
-        }
 
         $sortDir = ($params['sortType'] ?? 'asc') === 'desc' ? -1 : 1;
 
