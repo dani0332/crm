@@ -131,7 +131,8 @@ class AdnicApiService
                     return $response;
                 }
 
-                $base64Content = base64_encode($documentContentResponse['content']);
+                $compressedContent = gzencode($documentContentResponse['content']);
+                $base64Content = base64_encode($compressedContent);
 
                 LoggerService::info('Preparing upload payload', extra: [
                     'document_type' => $quoteDocument->document_type_code,
