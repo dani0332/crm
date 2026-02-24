@@ -1103,7 +1103,7 @@ class ClaimsService extends BaseService
             }
         }
 
-        $insuredName = trim($claimRequest->fullName);
+        $insuredName = trim($claimRequest->full_name);
         if ($insuredName !== '') {
             $parts[] = "[{$insuredName}]";
         }
