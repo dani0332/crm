@@ -130,7 +130,7 @@ class AdnicRequestBuilder
                 'UIDNo' => $emiratesId ?? '',
                 'WorkLocation' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
                 'ResidenceLocation' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
-                'Industry' => $industry ?? AdnicEnum::OCCUPATION_OTHER,
+                'Industry' => ! empty($industry) ? $industry : AdnicEnum::OCCUPATION_OTHER,
                 'DocumentInfo' => $this->uploadedDocumentsInfo($uploadDocumentsResponse, $insuredMember->MemberSeqNo),
                 'PreviousVisaEmirate' => $insuredMember?->PreviousVisaEmirate,
             ];
