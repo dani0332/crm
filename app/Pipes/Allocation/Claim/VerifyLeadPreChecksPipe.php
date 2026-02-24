@@ -48,7 +48,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         if ($lead->source == LeadSourceEnum::IMCRM) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead source is IMCRM, failing pre-check');
             $continueAssignment = false;
-        } elseif (! empty($lead->manager_id)) {
+        } elseif (! empty($lead->manager_id) && ! $this->allocationRequest->isReassignmentJob()) {
             LoggerService::info(self::class.'::verifyPreChecks - Manager ID is already set, failing pre-check');
             $this->allocationRequest->markAsAlreadyAssigned();
             $manager = User::find($lead->manager_id);

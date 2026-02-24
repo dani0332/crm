@@ -20,11 +20,11 @@ class ClaimEmailService extends BaseService
             LoggerService::info(self::class.' - Claim intro email is not enabled');
             return;
         }
-        LoggerService::startQuoteLogging($claim->uuid);
-
         if (! $claim) {
             LoggerService::error(self::class.' - Claim not found');
+            return;
         }
+        LoggerService::startQuoteLogging($claim->uuid);
         $advisor = User::where('id', $claim->manager_id)->first() ?? null;
 
         $payload = [

@@ -15,6 +15,10 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
+        if ($request->isSameManager()) {
+            return $next($request);
+        }
+
         $this->assign(function () {
             LoggerService::info('Claim lead assigned to Manager');
         });
