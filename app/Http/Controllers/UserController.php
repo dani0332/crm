@@ -204,7 +204,7 @@ class UserController extends Controller
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
-                        if ($user->hasAnyRole(RolesEnum::ClaimsManager,RolesEnum::CarClaimManager,RolesEnum::GmClaimManager,RolesEnum::HealthClaimManager,RolesEnum::LifeClaimManager,RolesEnum::TravelClaimManager,RolesEnum::HomeClaimManager,RolesEnum::PetClaimManager,RolesEnum::YachtClaimManager,RolesEnum::CycleClaimManager,RolesEnum::JetskiClaimManager,RolesEnum::CorplineClaimManager)) {
+                        if ($user->hasAnyRole(RolesEnum::ClaimsManager,RolesEnum::CarClaimManager,RolesEnum::GMClaimManager,RolesEnum::HealthClaimManager,RolesEnum::LifeClaimManager,RolesEnum::TravelClaimManager,RolesEnum::HomeClaimManager,RolesEnum::PetClaimManager,RolesEnum::YachtClaimManager,RolesEnum::CycleClaimManager,RolesEnum::JetskiClaimManager,RolesEnum::CorplineClaimManager)) {
                             app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
                     }
@@ -393,9 +393,9 @@ class UserController extends Controller
                             if (empty($isLead)) {
                                 $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                             }
-                        }
-                        if ($user->hasAnyRole(RolesEnum::ClaimsManager,RolesEnum::CarClaimManager,RolesEnum::GmClaimManager,RolesEnum::HealthClaimManager,RolesEnum::LifeClaimManager,RolesEnum::TravelClaimManager,RolesEnum::HomeClaimManager,RolesEnum::PetClaimManager,RolesEnum::YachtClaimManager,RolesEnum::CycleClaimManager,RolesEnum::JetskiClaimManager,RolesEnum::CorplineClaimManager)) {
-                            app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                            if ($user->hasAnyRole(RolesEnum::ClaimsManager,RolesEnum::CarClaimManager,RolesEnum::GMClaimManager,RolesEnum::HealthClaimManager,RolesEnum::LifeClaimManager,RolesEnum::TravelClaimManager,RolesEnum::HomeClaimManager,RolesEnum::PetClaimManager,RolesEnum::YachtClaimManager,RolesEnum::CycleClaimManager,RolesEnum::JetskiClaimManager,RolesEnum::CorplineClaimManager)) {
+                                app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                            }
                         }
                     }
                 }

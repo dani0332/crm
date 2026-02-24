@@ -33,10 +33,10 @@ class ClaimAllocationService
 
         $allocationRequest = new AllocationRequest(
             quoteType: QuoteTypes::getName($quoteTypeId),
-            quoteTypeLabel: QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteTypeLabel)),
+            quoteTypeLabel: QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteTypeLabel)) ?? QuoteTypes::getName($quoteTypeId),
             claimUUID: $claimUuid,
-            assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED,
-            isReassignmentJob: false,
+            assignmentType: $isReassignmentJob ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED,
+            isReassignmentJob: $isReassignmentJob,
         );
 
         try {

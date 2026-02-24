@@ -156,7 +156,7 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
     {
         $assignmentType = $this->allocationRequest->getAssignmentType();
 
-        if (! empty($this->lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
+        if (! empty($this->lead->manager_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
             $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
         }
 
@@ -168,8 +168,12 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         $manager = $this->allocationRequest->getManager();
         $assignmentType = $this->resolveAssignmentType();
 
-        if (! empty($this->lead->manager_id)) {
-            LoggerService::info("Was previously assigned to User ID: {$this->lead->manager_id} and is now being assigned to User ID: {$manager->id}");
+        $previousManagerId = $this->lead->manager_id;
+        $previousAssignmentType = $this->lead->assignment_type ?? null;
+        $isReAssignment = ! empty($this->lead->manager_id);
+
+        if ($isReAssignment) {
+            LoggerService::info("Was previously assigned to User ID: {$previousManagerId} and is now being assigned to User ID: {$manager->id}");
         }
 
         LoggerService::info(self::class.' - assignLead: Going to Assign Manager');
@@ -184,9 +188,9 @@ abstract class BaseAllocationPipe extends ClaimAllocationService
         return [
             'manager' => $manager,
             'assignmentType' => $assignmentType,
-            'previousManagerId' => $this->lead->manager_id,
-            'previousAssignmentType' => $this->lead->assignment_type,
-            'isReAssignment' => ! empty($this->lead->manager_id),
+            'previousManagerId' => $previousManagerId,
+            'previousAssignmentType' => $previousAssignmentType,
+            'isReAssignment' => $isReAssignment,
         ];
     }
 

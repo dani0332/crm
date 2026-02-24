@@ -18,7 +18,9 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  */
 class ClaimRequest extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory , QuoteAllocatable;
+    use Auditable, FilterCriteria, HasFactory, QuoteAllocatable;
 
     protected $table = 'claim_requests';
+
+    protected $guarded = [];
 }

@@ -22,8 +22,8 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             $this->resolveLead();
         }
         $lead = $this->lead;
-        // Check if manager is already assigned
-        if ($lead && ! empty($lead->manager_id)) {
+        // Check if manager is already assigned (reassignment jobs are allowed to proceed)
+        if ($lead && ! empty($lead->manager_id) && ! $this->allocationRequest->isReassignmentJob()) {
             LoggerService::info('Manager is already assigned to this claim. Manager ID: '.$lead->manager_id);
             $this->stop('Manager is already assigned', self::OK);
         }
@@ -49,7 +49,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             LoggerService::info(self::class.'::verifyPreChecks - Lead source is IMCRM, failing pre-check');
             $continueAssignment = false;
         } elseif (! empty($lead->manager_id)) {
-            LoggerService::info(self::class.'::verifyPreChecks - Manager ID is empty, failing pre-check');
+            LoggerService::info(self::class.'::verifyPreChecks - Manager ID is already set, failing pre-check');
             $this->allocationRequest->markAsAlreadyAssigned();
             $manager = User::find($lead->manager_id);
             $this->allocationRequest->setManager($manager);

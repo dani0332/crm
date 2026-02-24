@@ -107,7 +107,7 @@ final class RolesEnum extends Enum
     public const ClaimsManager = 'CLAIMS_MANAGER';
     public const CarClaimManager = 'CAR_CLAIM_MANAGER';
     public const HealthClaimManager = 'HEALTH_CLAIM_MANAGER';
-    public const GmClaimManager = 'GM_CLAIM_MANAGER';
+    public const GMClaimManager = 'GM_CLAIM_MANAGER';
     public const LifeClaimManager = 'LIFE_CLAIM_MANAGER';
     public const TravelClaimManager = 'TRAVEL_CLAIM_MANAGER';
     public const HomeClaimManager = 'HOME_CLAIM_MANAGER';

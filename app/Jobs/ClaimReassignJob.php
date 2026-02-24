@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteTypes;
 use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -42,7 +43,7 @@ class ClaimReassignJob implements ShouldQueue
     public function handle()
     {
         LoggerService::info(self::class.'::handle - Reassignment job started at : '.now());
-        if (! $this->shouldProceed() && ! now()->isWeekend()) {
+        if (! $this->shouldProceed() || now()->isWeekend()) {
             LoggerService::info('Reassignment job is not proceeding as per business timings');
 
             return false;
@@ -65,6 +66,7 @@ class ClaimReassignJob implements ShouldQueue
             app(ClaimAllocationService::class)->execute(
                 claimUuid: $lead->uuid,
                 quoteTypeId: $lead->quote_type_id,
+                quoteTypeLabel: QuoteTypes::getName($lead->quote_type_id)?->value ?? '',
                 isReassignmentJob: true
             );
 

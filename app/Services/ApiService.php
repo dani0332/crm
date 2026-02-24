@@ -535,8 +535,6 @@ class ApiService
                 'An error occurred while processing the claim assignment.'
             );
         }
-
-        return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid request');
     }
     public function missingDocsReminder($quoteUuid)
     {

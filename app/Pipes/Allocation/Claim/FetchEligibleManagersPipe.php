@@ -69,7 +69,7 @@ class FetchEligibleManagersPipe extends BaseAllocationPipe
             case QuoteTypes::HEALTH:
                 return RolesEnum::HealthClaimManager;
             case QuoteTypes::GROUP_MEDICAL:
-                return RolesEnum::GmClaimManager;
+                return RolesEnum::GMClaimManager;
             case QuoteTypes::LIFE:
                 return RolesEnum::LifeClaimManager;
             case QuoteTypes::TRAVEL:

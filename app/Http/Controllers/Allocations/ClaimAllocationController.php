@@ -62,7 +62,7 @@ class ClaimAllocationController extends Controller
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->join('quote_type as qt', 'qt.id', '=', 'la.quote_type_id')
-                ->whereIn('r.name', [RolesEnum::ClaimsManager, RolesEnum::CarClaimManager, RolesEnum::HealthClaimManager, RolesEnum::GmClaimManager, RolesEnum::LifeClaimManager, RolesEnum::TravelClaimManager, RolesEnum::HomeClaimManager, RolesEnum::PetClaimManager, RolesEnum::YachtClaimManager, RolesEnum::CycleClaimManager, RolesEnum::JetskiClaimManager, RolesEnum::CorplineClaimManager])
+                ->whereIn('r.name', [RolesEnum::ClaimsManager, RolesEnum::CarClaimManager, RolesEnum::HealthClaimManager, RolesEnum::GMClaimManager, RolesEnum::LifeClaimManager, RolesEnum::TravelClaimManager, RolesEnum::HomeClaimManager, RolesEnum::PetClaimManager, RolesEnum::YachtClaimManager, RolesEnum::CycleClaimManager, RolesEnum::JetskiClaimManager, RolesEnum::CorplineClaimManager])
                 ->groupBy('users.name', 'users.id', 'la.id');
 
             return $users->get();
