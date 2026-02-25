@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\PermissionsEnum;
 use App\Models\User;
+use Spatie\Permission\Models\Permission;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -10,8 +12,16 @@ beforeEach(function () {
 describe('UserController - Update Active State', function () {
 
     test('it updates user active state successfully', function () {
-        // Create authenticated user
         $authUser = User::factory()->create();
+
+        $permission = Permission::firstOrCreate(
+            ['name' => PermissionsEnum::UsersEdit, 'guard_name' => 'web'],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+        $authUser->givePermissionTo($permission);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $authUser->refresh();
+
         $this->actingAs($authUser);
 
         $user = User::factory()->create([
