@@ -85,4 +85,7 @@ final class WorkflowTypeEnum extends Enum
     public const SEND_MISREPORT_EMAIL = 'send_misreport_email';
     public const SEND_FAILED_ILA_EMAILS = 'send_failed_ila_emails';
     public const MANAGER_DEACTIVATION_EMAIL = 'manager_deactivation_email';
+
+    // Non-motor renewals
+    public const CQF_NON_MOTOR_RENEWALS = 'cqf_non_motor_renewals';
 }

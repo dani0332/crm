@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs\CQF;
 
 use App\Enums\ProcessStatusCode;
-use App\Enums\RenewalProcessStatuses;
-use App\Jobs\SendFailedNonMotorRenewalsJob;
-use App\Models\RenewalQuoteProcess;
+use App\Mail\NonCQF\SendFailedNonCQFRenewal;
 use App\Models\RenewalsUploadLeads;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
@@ -31,7 +29,7 @@ class FinalizeNonMotorCQFLOBJob implements ShouldQueue
     {
         $lead = RenewalsUploadLeads::find($this->renewalsUploadLeadsId);
         if ($lead === null) {
-            LoggerService::info(self::class . ' - RenewalsUploadLeads not found', ['id' => $this->renewalsUploadLeadsId]);
+            LoggerService::info(self::class.' - RenewalsUploadLeads not found', ['id' => $this->renewalsUploadLeadsId]);
 
             return;
         }
@@ -47,20 +45,9 @@ class FinalizeNonMotorCQFLOBJob implements ShouldQueue
             $lead->save();
         }
 
-        $failedPolicyNumbers = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewalsUploadLeadsId)
-            ->where('status', RenewalProcessStatuses::BAD_DATA)
-            ->pluck('policy_number')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        if (count($failedPolicyNumbers) > 0) {
-            SendFailedNonMotorRenewalsJob::dispatch($failedPolicyNumbers, $this->renewalsUploadLeadsId);
-            LoggerService::info(self::class . ' - Dispatched SendFailedNonMotorRenewalsJob', [
-                'renewals_upload_lead_id' => $this->renewalsUploadLeadsId,
-                'failed_count' => count($failedPolicyNumbers),
-            ]);
+        if ($lead->cannot_upload > 0) {
+            $mail = new SendFailedNonCQFRenewal($this->renewalsUploadLeadsId);
+            $mail->sendViaBird();
         }
     }
 }
