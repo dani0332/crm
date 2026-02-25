@@ -54,6 +54,36 @@ const currentFile = computed(() => {
 });
 
 /**
+ * PDF MIME type variants and URL fallback for when doc_mime_type is missing or non-standard.
+ */
+const PDF_MIME_PREFIX = 'application/pdf';
+const PDF_MIME_ALIASES = ['application/pdf', 'application/x-pdf'];
+
+function isPdfMimeOrUrl(file) {
+  if (!file) return false;
+  const mime = (file.doc_mime_type || '').trim().toLowerCase();
+  if (PDF_MIME_ALIASES.includes(mime)) return true;
+  if (mime.startsWith(PDF_MIME_PREFIX)) return true;
+  const url = (file.doc_url || '').toLowerCase();
+  return url.endsWith('.pdf');
+}
+
+/**
+ * Whether the current file should be rendered as a PDF (embed).
+ */
+const isCurrentFilePdf = computed(() => isPdfMimeOrUrl(currentFile.value));
+
+/**
+ * Whether the current file is a previewable image (jpeg/png).
+ */
+const isCurrentFileImage = computed(() => {
+  const file = currentFile.value;
+  if (!file) return false;
+  const mime = (file.doc_mime_type || '').trim().toLowerCase();
+  return ['image/jpeg', 'image/jpg', 'image/png'].includes(mime) || mime.startsWith('image/');
+});
+
+/**
  * Determines if there is a next file available in the gallery
  * Used to enable/disable the "Next" navigation button
  */
@@ -233,7 +263,7 @@ watch(
           </button>
           <div
             class="flex items-center space-x-2"
-            v-if="currentFile?.doc_mime_type != 'application/pdf'"
+            v-if="!isCurrentFilePdf"
           >
             <button
               class="flex items-center space-x-2 cursor-pointer text-gray-300"
@@ -308,10 +338,7 @@ watch(
       </div>
       <div class="modal-body w-full h-full mt-2">
         <div
-          v-if="
-            currentFile?.doc_mime_type === 'image/jpeg' ||
-            currentFile?.doc_mime_type === 'image/png'
-          "
+          v-if="isCurrentFileImage"
           class="flex items-center justify-center"
         >
           <div class="overflow-auto items-center justify-center">
@@ -324,7 +351,7 @@ watch(
           </div>
         </div>
         <div
-          v-else-if="currentFile?.doc_mime_type === 'application/pdf'"
+          v-else-if="isCurrentFilePdf"
           class="w-full h-80vh"
         >
           <embed
