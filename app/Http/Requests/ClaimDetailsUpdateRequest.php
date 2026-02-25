@@ -84,7 +84,6 @@ class ClaimDetailsUpdateRequest extends FormRequest
             ],
             'incident_date' => [
                 'required',
-                'date',
                 'date_format:Y-m-d',
                 'before_or_equal:today',
             ],
@@ -113,7 +112,6 @@ class ClaimDetailsUpdateRequest extends FormRequest
             'claim_number.max' => 'Claim number cannot exceed 100 characters.',
             'claim_decline_reason.max' => 'Claim decline reason cannot exceed 2000 characters.',
             'incident_date.required' => 'Incident date is required.',
-            'incident_date.date' => 'Incident date must be a valid date.',
             'incident_date.date_format' => 'Incident date must be in the format YYYY-MM-DD.',
             'incident_date.before_or_equal' => 'Incident date must be today or before.',
         ];

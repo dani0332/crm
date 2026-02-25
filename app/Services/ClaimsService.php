@@ -180,7 +180,10 @@ class ClaimsService extends BaseService
     }
 
     /**
-     * Get claims data for export with all necessary relationships
+     * Get claims data for export with all necessary relationships.
+     * Eager-loads every relationship used by ClaimsExport::map() to prevent N+1
+     * when streaming chunked CSV (quoteType, claimType, claimStatus, claimSubStatus,
+     * complaintStatus, manager, insuranceProvider, claimRequestType, claimRequestDetails.serviceType).
      */
     public function getClaimsDataForExport($requestParams = [])
     {
