@@ -6,6 +6,7 @@ use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
@@ -160,6 +161,41 @@ class EmbeddedProduct
         return $item;
     }
 
+    /**
+     * Process report record for Car/Bike renewals (RDX/COU) that support both quote types.
+     *
+     * @param  object  $quoteObject
+     * @param  object  $item
+     * @return object
+     */
+    protected function processCarBikeReportRecord($quoteObject, $item)
+    {
+        $item->lob = QuoteTypeId::getOptions()[$item->quote_type_id] ?? '';
+
+        if ($item->quote_type_id == QuoteTypeId::Car) {
+            $carMake = $quoteObject?->carMake?->text ?? '';
+            $carModel = $quoteObject?->carModel?->text ?? '';
+            $item->vehicle = $carMake.' '.$carModel;
+        } elseif ($item->quote_type_id == QuoteTypeId::Bike) {
+            $make = $quoteObject?->bikeQuote?->bikeMake?->text ?? '';
+            $model = $quoteObject?->bikeQuote?->bikeModel?->text ?? '';
+            $item->vehicle = $make.' '.$model;
+        } else {
+            $item->vehicle = 'N/A';
+        }
+
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+        $item->advisor_name = $quoteObject?->advisor?->name ?? '';
+        $item->dob = isset($quoteObject?->dob) ? Carbon::parse($quoteObject?->dob)->format($dateFormat) : '';
+        $item->nationality = $quoteObject?->customer?->nationality?->text ?? '';
+        $item->policy_issuance_date = $quoteObject?->policy_issuance_date ?? '';
+        $item->age = isset($quoteObject?->dob) ?
+            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())).' Years'
+            : '';
+
+        return $item;
+    }
+
     protected function getReportRelations()
     {
         return [
@@ -269,6 +305,32 @@ class EmbeddedProduct
         }
 
         $dataset = $this->postFilterReportProcessing($dataset);
+
+        return $dataset;
+    }
+
+    protected function loadVehicleRelations($dataset)
+    {
+        // Group transactions by quote_type_id
+        $carTransactions = $dataset->where('quote_type_id', QuoteTypeId::Car);
+        $bikeTransactions = $dataset->where('quote_type_id', QuoteTypeId::Bike);
+
+        // Load car-specific relations in a single query for the car group
+        if ($carTransactions->isNotEmpty()) {
+            $carTransactions->loadMissing([
+                'quoteRequest.carMake',
+                'quoteRequest.carModel',
+            ]);
+        }
+
+        // Load bike-specific relations in a single query for the bike group
+        if ($bikeTransactions->isNotEmpty()) {
+            $bikeTransactions->loadMissing([
+                'quoteRequest.bikeQuote',
+                'quoteRequest.bikeQuote.bikeMake',
+                'quoteRequest.bikeQuote.bikeModel',
+            ]);
+        }
 
         return $dataset;
     }

@@ -125,7 +125,7 @@ class ReportService extends BaseService
             });
         }
 
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
         $lobs->push([
             'id' => 999,
             'text' => 'Group Medical',
@@ -256,6 +256,7 @@ class ReportService extends BaseService
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
             QuoteTypes::SAVINGS,
+            QuoteTypes::CYBER,
         ];
 
         $allowedLOBs = [];
@@ -329,7 +330,7 @@ class ReportService extends BaseService
             Carbon::parse(now())->startOfDay()->format($dateFormat),
             Carbon::parse(now())->endOfDay()->format($dateFormat),
         ];
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
 
         return [
             'tiers' => $tiers,
@@ -354,6 +355,7 @@ class ReportService extends BaseService
             QuoteTypes::CYCLE,
             QuoteTypes::CORPLINE,
             QuoteTypes::SAVINGS,
+            QuoteTypes::CYBER,
         ];
 
         $productsName = $products->pluck('name')->toArray();
@@ -384,12 +386,13 @@ class ReportService extends BaseService
 
         $totalOp = $request->filter_by === 'total_opportunity';
 
-        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value || $lob == QuoteTypes::SAVINGS->value) {
+        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value || $lob == QuoteTypes::SAVINGS->value || $lob == QuoteTypes::CYBER->value) {
             $pqs = [
                 QuoteTypes::PET->value => QuoteTypeId::Pet,
                 QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
                 QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
                 QuoteTypes::SAVINGS->value => QuoteTypeId::Savings,
+                QuoteTypes::CYBER->value => QuoteTypeId::Cyber,
             ];
 
             $qtCode = [
@@ -397,6 +400,7 @@ class ReportService extends BaseService
                 QuoteTypes::CYCLE->value => quoteTypeCode::Cycle,
                 QuoteTypes::YACHT->value => quoteTypeCode::Yacht,
                 QuoteTypes::SAVINGS->value => quoteTypeCode::SAVINGS,
+                QuoteTypes::CYBER->value => quoteTypeCode::CYBER,
             ];
 
             $userIds = $this->walkTree($authUserId, $qtCode[$lob]);
@@ -593,7 +597,7 @@ class ReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
 
         return [
             'teams' => $teams,
@@ -670,7 +674,7 @@ class ReportService extends BaseService
             $userTeams = $userOwnTeamIds;
         }
 
-        $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS, 1, true);
+        $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS, 1, true);
 
         $quoteTypeId = $request->quoteTypeId ? (int) $request->quoteTypeId : null;
         $allowedQuoteTypeIds = QuoteTypes::allowedIdsForUser($user, $quoteTypeId);

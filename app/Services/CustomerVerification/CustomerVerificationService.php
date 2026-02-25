@@ -374,7 +374,8 @@ class CustomerVerificationService
     {
         match ($quoteType) {
             QuoteTypes::CAR,
-            QuoteTypes::HEALTH => $this->processEmiratesIdVerificationData($quote, $ocrData, $documentType),
+            QuoteTypes::PERSONAL,
+            QuoteTypes::HEALTH => $this->processCarEmiratesIdVerification($quote, $ocrData, $documentType, $quoteType->value),
             // Add other quote types here as needed
             default => $this->handleUnsupportedVerification($quoteType, $documentType, 'Emirates'),
         };
@@ -389,7 +390,7 @@ class CustomerVerificationService
         };
     }
 
-    private function processEmiratesIdVerificationData($quote, array $ocrData, string $documentType): void
+    private function processCarEmiratesIdVerification($quote, array $ocrData, string $documentType, string $quoteType): void
     {
         $verificationData = [];
 
@@ -422,7 +423,7 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => $this->getQuoteType($quote),
+                'quote_type' => $quoteType,
             ]);
 
             return;
@@ -435,7 +436,7 @@ class CustomerVerificationService
                 'document_type' => $documentType,
                 'quote_id' => $quote->id,
                 'quote_code' => $quote->code ?? null,
-                'quote_type' => $this->getQuoteType($quote),
+                'quote_type' => $quoteType,
                 'error' => $e->getMessage(),
             ]);
         }
@@ -620,6 +621,7 @@ class CustomerVerificationService
 
         $quoteType = match (true) {
             $quote instanceof CarQuote => QuoteTypes::CAR,
+            $quote instanceof PersonalQuote => QuoteTypes::PERSONAL,
             $quote instanceof HealthQuote => QuoteTypes::HEALTH,
             // Add other quote types here as needed
             default => null,

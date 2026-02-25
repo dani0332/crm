@@ -42,7 +42,7 @@ class AdvisorPaymentNotificationJob implements ShouldQueue
         if (! $birdUrl) {
             LoggerService::error('AdvisorPaymentNotificationJob: Bird URL not found');
 
-            throw new BirdUrlNotFoundException();
+            throw new BirdUrlNotFoundException;
         }
 
         $response = $birdService->triggerWebHookRequest($birdUrl, $emailData);

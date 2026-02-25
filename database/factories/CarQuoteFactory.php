@@ -95,4 +95,24 @@ class CarQuoteFactory extends Factory
             'plan_id' => null,
         ]);
     }
+
+    /**
+     * Indicate that the quote belongs to a specific customer.
+     */
+    public function forCustomer(int $customerId)
+    {
+        return $this->state(fn (array $attributes) => [
+            'customer_id' => $customerId,
+        ]);
+    }
+
+    /**
+     * Indicate that the quote has a specific email.
+     */
+    public function withEmail(string $email)
+    {
+        return $this->state(fn (array $attributes) => [
+            'email' => $email,
+        ]);
+    }
 }
