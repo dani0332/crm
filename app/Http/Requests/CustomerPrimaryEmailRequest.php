@@ -30,6 +30,7 @@ class CustomerPrimaryEmailRequest extends FormRequest
             'quote_type' => 'required',
             'key' => 'required',
             'value' => 'required',
+            'keep_existing_primary_email' => 'nullable|numeric|in:0,1',
         ];
     }
 
