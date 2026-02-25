@@ -26,6 +26,21 @@ const loader = reactive({
   table: false,
 });
 
+/** Local active state by user id; reverted on API error so ItemToggler stays in sync with DB */
+const activeStateByUserId = reactive({});
+
+watch(
+  () => props.users?.data,
+  (data) => {
+    if (data) {
+      data.forEach(u => {
+        activeStateByUserId[u.id] = u.is_active;
+      });
+    }
+  },
+  { immediate: true },
+);
+
 const tableHeader = [
   { text: 'Employee Code', value: 'employee_code' },
   { text: 'NAME', value: 'name' },
@@ -80,20 +95,25 @@ function setQueryStringFilters() {
 function onToggleActiveStatus(status, id) {
   loader.table = true;
 
-  axios.post('/admin/update-user-state', { id, status,})
-  .then(res => {
-    notification.success({
-      title: res.data.message,
-      position: 'top',
+  axios
+    .post('/admin/update-user-state', { id, status })
+    .then(res => {
+      activeStateByUserId[id] = status;
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      activeStateByUserId[id] = !status;
+      notification.error({
+        title: err.response?.data?.message ?? 'Failed to update user status',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      loader.table = false;
     });
-  }).catch(err => {
-    notification.error({
-      title: err.response.data.message,
-      position: 'top',
-    });
-  }).finally(() => {
-    loader.table = false;
-  });
 }
 
 // Inline toggle function - will set to val if different, or empty if same value
@@ -230,9 +250,9 @@ onMounted(() => {
     <template #item-is_active="{ is_active, id }">
       <div class="text-center">
         <ItemToggler
-          :is-active="is_active"
+          :is-active="activeStateByUserId[id] ?? is_active"
           :id="id"
-          @toggle="onToggleActiveStatus($event.active, id )"
+          @toggle="onToggleActiveStatus($event.active, id)"
         />
       </div>
     </template>
