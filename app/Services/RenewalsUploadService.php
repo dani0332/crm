@@ -497,14 +497,15 @@ class RenewalsUploadService
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
         $quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first();
-        if (!$quoteObject || !$quote) {
-            $message = 'QuoteId not found for leadId: ' . $renewalQuoteProcess->id . ' PolicyNumber: ' . $renewalQuoteProcess->policy_number;
-            LoggerService::info($logPrefix . ' ' . $message);
+        if (! $quoteObject || ! $quote) {
+            $message = 'QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number;
+            LoggerService::info($logPrefix.' '.$message);
             $renewalQuoteProcess->update([
                 'step_errors' => [$message],
                 'retry_count' => $renewalQuoteProcess->retry_count + 1,
             ]);
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+
             return false;
         }
 
@@ -517,7 +518,6 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])->exists() && $isGenesisLead['status'];
 
-        
         if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
             $message = 'can not proceed with quote as payment is already in process. ';
             LoggerService::info($logPrefix.' can not proceed with quote as payment is already in process. ');
@@ -573,7 +573,7 @@ class RenewalsUploadService
             $renewalQuoteProcess->update(['step_errors' => [$errorMsg], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
-        
+
     }
 
     /**
@@ -1932,7 +1932,7 @@ class RenewalsUploadService
                 if ($checkGenesisLead['status']) {
                     $emailData->currentInsurer = '';
                 }
-                
+
                 LoggerService::info($logPrefix.' Renewals OCB Email email data created');
 
                 $this->attachPdfIfNeeded($carQuote, $listQuotePlans, $emailData);
