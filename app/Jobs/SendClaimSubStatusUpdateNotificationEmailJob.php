@@ -83,8 +83,8 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
             }
 
             // Check if customer is eligible for review email
-            if (! $claimRequestEmailService->isEligibleForReviewEmail($claimRequest)) {
-                LoggerService::info(' Customer not eligible for  Claim sub status update notification email - Claim UUID: '.$claimRequest->uuid, [
+            if (! $claimRequestEmailService->isEligibleForSubStatusUpdateEmail($claimRequest)) {
+                LoggerService::info(' Customer not eligible for Claim sub status update notification email - Claim UUID: '.$claimRequest->uuid, [
                     'claim_request_id' => $claimRequest->id,
                     'claim_uuid' => $claimRequest->uuid,
                     'customer_email' => $claimRequest->email,

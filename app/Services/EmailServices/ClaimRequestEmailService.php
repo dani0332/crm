@@ -241,9 +241,21 @@ class ClaimRequestEmailService extends BaseService
      */
     public function isEligibleForReviewEmail(ClaimRequest $claimRequest): bool
     {
-        // Check if customer has email
+        return $this->hasCustomerEmailForClaim($claimRequest, 'Google review email');
+    }
+
+    /**
+     * Check if customer is eligible for Claim sub status update email
+     */
+    public function isEligibleForSubStatusUpdateEmail(ClaimRequest $claimRequest): bool
+    {
+        return $this->hasCustomerEmailForClaim($claimRequest, 'Claim sub status update email');
+    }
+
+    private function hasCustomerEmailForClaim(ClaimRequest $claimRequest, string $emailContext): bool
+    {
         if (empty($claimRequest->email)) {
-            LoggerService::info(' Customer not eligible for Google review email - no email address - Claim UUID: '.$claimRequest->uuid, [
+            LoggerService::info(' Customer not eligible for '.$emailContext.' - no email address - Claim UUID: '.$claimRequest->uuid, [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
             ]);
