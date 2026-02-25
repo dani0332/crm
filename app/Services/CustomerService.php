@@ -9,6 +9,7 @@ use App\Models\CustomerAddress;
 use App\Models\CustomerMembers;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class CustomerService extends BaseService
 {
@@ -168,6 +169,17 @@ class CustomerService extends BaseService
     }
 
     public function makeAdditionalContactPrimary($lead, $key, $value, bool $keepExistingPrimaryEmail = true)
+    {
+        DB::transaction(function () use ($lead, $key, $value, $keepExistingPrimaryEmail) {
+            $this->executeMakeAdditionalContactPrimary($lead, $key, $value, $keepExistingPrimaryEmail);
+        });
+    }
+
+    /**
+     * Performs the database writes for making an additional contact primary.
+     * Called inside a transaction by makeAdditionalContactPrimary().
+     */
+    private function executeMakeAdditionalContactPrimary($lead, $key, $value, bool $keepExistingPrimaryEmail): void
     {
         if ($key == GenericRequestEnum::EMAIL) {
             $customer = null;
@@ -330,9 +342,11 @@ class CustomerService extends BaseService
         $matchingContacts = CustomerAdditionalContact::where($filters)->get();
         $deleteCount = $matchingContacts->count();
 
-        foreach ($matchingContacts as $contact) {
-            $contact->delete();
-        }
+        DB::transaction(function () use ($matchingContacts) {
+            foreach ($matchingContacts as $contact) {
+                $contact->delete();
+            }
+        });
 
         @[$success, $message] = $deleteCount > 0
             ? [true, "{$deleteCount} additional contact deleted."]

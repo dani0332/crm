@@ -191,7 +191,6 @@ const additionalContactPrimaryConfirmed = (keepExistingPrimaryEmail = true) => {
           position: 'top',
         });
       },
-      //
       onFinish: () => {
         contactLoader.value = false;
         EmailCheckLoader.value = false;
