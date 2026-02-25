@@ -34,7 +34,7 @@ class RetryAllocationService
 
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
         $startTime = now()->subWeek()->startOfDay()->toDateTimeString();
-        if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 0) {
+        if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $endTime = now()->subMinutes(5)->toDateTimeString();
 
             return [$startTime, $endTime];
