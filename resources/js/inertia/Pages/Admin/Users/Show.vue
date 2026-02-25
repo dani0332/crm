@@ -102,10 +102,8 @@ function onSubmit(isValid) {
 function updateUserStatus(status) {
   loading.value = true;
 
-  axios.post(`/admin/update-user-state`, {
-    id: props.user.id,
-    status,
-  }).then(res => {
+  axios.post(`/admin/update-user-state`, { id: props.user.id, status })
+  .then(res => {
     notification.success({
       title: res.data.message,
       position: 'top',

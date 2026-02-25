@@ -12,6 +12,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const user = page.props.auth.user;
 const impersonatingUser = page.props.impersonatingUser;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+const notification = useNotifications('toast');
 
 const filters = reactive({
   email: '',
@@ -74,6 +75,25 @@ function setQueryStringFilters() {
       filters[key] = params[key];
     }
   }
+}
+
+function onToggleActiveStatus(status, id) {
+  loader.table = true;
+
+  axios.post('/admin/update-user-state', { id, status,})
+  .then(res => {
+    notification.success({
+      title: res.data.message,
+      position: 'top',
+    });
+  }).catch(err => {
+    notification.error({
+      title: err.response.data.message,
+      position: 'top',
+    });
+  }).finally(() => {
+    loader.table = false;
+  });
 }
 
 // Inline toggle function - will set to val if different, or empty if same value
@@ -207,11 +227,13 @@ onMounted(() => {
         {{ updated_at ? dateFormat(updated_at) : 'N/A' }}
       </span>
     </template>
-    <template #item-is_active="{ is_active }">
+    <template #item-is_active="{ is_active, id }">
       <div class="text-center">
-        <x-tag size="sm" :color="is_active ? 'success' : 'error'">
-          {{ is_active ? 'Yes' : 'No' }}
-        </x-tag>
+        <ItemToggler
+          :is-active="is_active"
+          :id="id"
+          @toggle="onToggleActiveStatus($event.active, id )"
+        />
       </div>
     </template>
     <template #item-roles="item">
