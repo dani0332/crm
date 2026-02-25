@@ -643,7 +643,7 @@ class UserController extends Controller
     {
         $user = User::find($request->id);
 
-        if ($user->is_active != $request->status) {
+        if ($user && $user->is_active != $request->status) {
             $user->is_active = $request->status;
             $user->save();
         }
