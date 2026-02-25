@@ -114,13 +114,6 @@ class AlfredChatController extends Controller
             $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
             $params['recipientName'] = $request->recipientName ?? Auth::user()?->name ?? 'User';
 
-            if ($request->has('created_at_start') && $request->has('created_at_end')) {
-                $params['chat_initiated_at'] = [
-                    $request->created_at_start,
-                    $request->created_at_end,
-                ];
-            }
-
             if ($request->has('chat_initiated_at') && is_array($request->chat_initiated_at)) {
                 $params['chat_initiated_at'] = $request->chat_initiated_at;
             }
