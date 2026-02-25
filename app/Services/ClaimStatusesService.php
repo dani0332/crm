@@ -177,6 +177,7 @@ class ClaimStatusesService extends BaseService
     public function markClaimAsReOpen(ClaimRequest $claimRequest): void
     {
         $claimStatusOpen = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_REOPEN->value)
+            ->byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
             ->active()
             ->first();
 
@@ -194,18 +195,19 @@ class ClaimStatusesService extends BaseService
     public function markClaimAsClosed(ClaimRequest $claimRequest): void
     {
         $claimStatusClosed = ClaimStatus::byText(ClaimsEnum::CLAIM_STATUS_CLOSED->value)
+            ->byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
             ->active()
             ->first();
 
         if ($claimStatusClosed) {
             $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
             LoggerService::info(' Claim status updated to '.$claimStatusClosed?->text['value'].' - Claim UUID: '.$claimRequest->uuid, extra: [
-                'claim_request_id' => $claimRequest->id,
-                'claim_uuid' => $claimRequest->uuid,
+            'claim_request_id' => $claimRequest->id,
+            'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusClosed->id,
-                'updated_by' => Auth::id(),
-            ]);
-        }
+            'updated_by' => Auth::id(),
+        ]);
+    }
     }
 
     public function markClaimAsDenied(ClaimRequest $claimRequest): void

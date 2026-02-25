@@ -504,7 +504,13 @@ class ClaimsService extends BaseService
 
             if ($responseData['success'] && $isClaimManager) {
                 $claim = $this->getClaimById($responseData['claimUID']);
-                $claim->update(['manager_id' => $user->id, 'manager_assigned_date' => now()]);
+                if ($claim !== null) {
+                    $claim->update(['manager_id' => $user->id, 'manager_assigned_date' => now()]);
+                } else {
+                    LoggerService::warning('Claim not found in local database after API create; skipping manager assignment', extra: [
+                        'claimUID' => $responseData['claimUID'] ?? null,
+                    ]);
+                }
             }
 
             return $responseData;
@@ -968,24 +974,12 @@ class ClaimsService extends BaseService
     public function sendNotification(ClaimRequest $claimRequest, $request)
     {
         $claimActivity = DB::transaction(function () use ($claimRequest, $request) {
-            $claimRequest->claim_sub_status_id = $request->claim_sub_status_id;
-            $subStatus = ClaimStatus::find($request->claim_sub_status_id);
-            $targetStatus = $this->claimsStatusesService->checkSubStatusForClaimClosure($claimRequest, $subStatus->id) ? ClaimsEnum::CLAIM_STATUS_CLOSED->value : null;
-            if ($targetStatus) {
-                $claimRequest->claim_status_id = ClaimStatus::byText($targetStatus)
-                    ->byStatusType(ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value)
-                    ->active()
-                    ->first()?->id;
-            }
+            $claimRequest->update(['claim_sub_status_id' => $request->claim_sub_status_id]); // Observer sets claim_status_id to closed when sub-status triggers closure
 
-            $claimRequest->save();
-
-            $claimActivity = ClaimActivity::createForClaim(
+            return ClaimActivity::createForClaim(
                 $claimRequest->id, $claimRequest->uuid, $request->claim_sub_status_id,
                 $request->customer_message, $request->ai_optimized_message
             );
-
-            return $claimActivity;
         });
 
         // Dispatch job AFTER transaction commits to ensure data consistency
