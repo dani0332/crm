@@ -70,6 +70,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('send-payment-email-to-advisor:cron')->timezone('Asia/Dubai')->dailyAt('12:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('PaymentExpireNotification:cron')
             ->timezone('Asia/Dubai')
@@ -111,6 +112,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('RetryAllocation:cron --quoteType=Pet')->name('retry_allocation:cron:pet')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('RetryAllocation:cron --quoteType=Yacht')->name('retry_allocation:cron:yacht')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('RetryAllocation:cron --quoteType=Savings')->name('retry_allocation:cron:savings')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Cyber')->name('retry_allocation:cron:cyber')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 

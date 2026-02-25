@@ -420,7 +420,9 @@ class RetentionReportService extends BaseService
      */
     private function applyPermissionFilters($query, $request)
     {
-        if (auth()->user()->isAdmin()) {
+        // added lead pool check also because lead pool can view all reports across lob
+        // CU: https://app.clickup.com/t/86ewjv9a5
+        if (auth()->user()->isAdmin() || auth()->user()->isLeadPool()) {
             return true;
         }
         // Check if the user is a manager or deputy and has the permission to view the manager retention report

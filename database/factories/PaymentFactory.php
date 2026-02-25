@@ -8,14 +8,15 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Models\CarQuote;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Payment>
- */
 class PaymentFactory extends Factory
 {
+    protected $model = Payment::class;
+
     /**
      * Define the model's default state.
      *
@@ -24,6 +25,16 @@ class PaymentFactory extends Factory
     public function definition(): array
     {
         return [
+            'code' => 'PAY-'.Str::upper(Str::random(6)),
+            'price_vat_applicable' => $this->faker->randomFloat(2, 1000, 5000),
+            'price_vat' => 0,
+            'commission_vat_applicable' => 0,
+            'commission' => 0,
+            'commission_vat' => 0,
+            'commmission_percentage' => 0,
+            'insurer_tax_number' => null,
+            'insurer_invoice_date' => now()->toDateString(),
+            'insurer_commmission_invoice_number' => null,
             'payment_status_id' => PaymentStatusEnum::NEW,
             'payment_methods_code' => PaymentMethodsEnum::InsurerPayment,
             'collection_type' => CollectionTypeEnum::INSURER,
@@ -33,6 +44,20 @@ class PaymentFactory extends Factory
             'collection_date' => now(),
             'captured_amount' => 0,
         ];
+    }
+
+    /**
+     * Define the model's cyber quote state.
+     *
+     * @return array
+     */
+    public function cyberPayment($code, $id)
+    {
+        return $this->state(fn (array $attributes) => [
+            'code' => $code,
+            'paymentable_id' => $id,
+            'paymentable_type' => PersonalQuote::class,
+        ]);
     }
 
     /**

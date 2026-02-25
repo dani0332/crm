@@ -19,6 +19,7 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -32,6 +33,7 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\STPAdvisorNotificationRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
+use App\Jobs\CheckDocumentUploadAfterPaymentJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Jobs\LifeSyncHealthQuestionnaireJob;
@@ -192,17 +194,17 @@ class ApiController extends Controller
     {
         $flowType = $request->flowType;
         $quoteUID = $request->uuid;
-        $flowId = $request->flowId ?? null;
-        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
+        $workflowId = $request->workflowId;
+        LoggerService::info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
             ->first();
         if (! $workflow) {
-            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
+            LoggerService::info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
-        $response = app(BirdService::class)->stopWorkFlow($workflow, $flowId);
+        $response = app(BirdService::class)->stopWorkFlow($workflow, $workflowId);
 
         return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }
@@ -312,6 +314,7 @@ class ApiController extends Controller
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
     {
+        $quoteType = ucfirst(strtolower($quoteType));
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         if ($quoteTypeId) {
             LoggerService::startQuoteLogging(QuoteTypes::getName($quoteTypeId)->refId($quoteUuid));
@@ -322,6 +325,11 @@ class ApiController extends Controller
         ]);
 
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
+
+        if (! $quote) {
+            return response()->json(['success' => false, 'message' => 'Quote not found']);
+        }
+
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 
@@ -340,8 +348,11 @@ class ApiController extends Controller
             ]);
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
-            if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
-                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
+            if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $isCyberLob) {
+                // reason for adding this check on process involved is because we not triggering the payment capture failure for car AXA
+                $processInvolved = $isCyberLob ? PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE : null;
+                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID, $processInvolved);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
                 $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
@@ -633,6 +644,41 @@ class ApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while updating customer replied status',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Dispatch job to check document upload after 24 hours of payment authorization.
+     * Prevents duplicate job dispatch for the same payment code.
+     */
+    public function checkDocumentUploadAfterPayment(CheckDocumentUploadAfterPaymentRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+            $paymentCode = $validated['payment_code'];
+
+            LoggerService::info("CheckDocumentUploadAfterPayment: Starting job execution for payment code: {$paymentCode}");
+
+            // Dispatch job with 24 hours delay
+            CheckDocumentUploadAfterPaymentJob::dispatch($paymentCode)
+                ->delay(now()->addHours(24));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Job dispatched successfully. Will check document upload after 24 hours.',
+                'payment_code' => $paymentCode,
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            $paymentCodeForError = $request->input('payment_code', 'unknown');
+
+            LoggerService::error("CheckDocumentUploadAfterPayment: Failed to dispatch job for payment code: {$paymentCodeForError}", exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while dispatching the job',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
