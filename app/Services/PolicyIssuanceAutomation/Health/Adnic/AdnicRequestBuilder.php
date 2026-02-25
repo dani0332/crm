@@ -70,6 +70,7 @@ class AdnicRequestBuilder
         $inceptionDate = $healthUmafQuestionCollection->where('question_code', 'inceptionDate')->first()['answer_text'] ?? null;
         $currentlyPregnant = $healthUmafQuestionCollection->where('question_code', 'currentlyPregnant')->first()['answer_text'] ?? null;
         $emiratesId = $healthUmafQuestionCollection->where('question_code', 'emiratesId')->first()['answer_text'] ?? null;
+        $uidNo = str_replace('-', '', $emiratesId ?? '');
         $passportNumber = $healthUmafQuestionCollection->where('question_code', 'passportNumber')->first()['answer_text'] ?? null;
         $previouslyCovered = $healthUmafQuestionCollection->where('question_code', 'adnicInsured')->first()['answer_text'] ?? null;
         $sponsorCategory = AdnicEnum::SPONSER_CATEGORY_UAE;
@@ -127,7 +128,7 @@ class AdnicRequestBuilder
                 'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
                 'Nationality' => AdnicEnum::NATIONALITY_ID_EMIRATES_ID, // Emirates ID is the default nationality
                 'PassportNo' => $passportNumber ?? '',
-                'UIDNo' => $emiratesId ?? '',
+                'UIDNo' => $uidNo ?? '',
                 'WorkLocation' => AdnicEnum::DUBAI_RESIDENCY,
                 'ResidenceLocation' => AdnicEnum::DUBAI_RESIDENCY,
                 'Industry' => ! empty($industry) ? $industry : AdnicEnum::OCCUPATION_OTHER,
@@ -155,7 +156,7 @@ class AdnicRequestBuilder
                 'SponserCategory' => $sponsorCategory ?? '',
                 'MaritalStatus' => $this->mappingMaritalStatus($quote->marital_status_id ?? $insuredInfoArray[0]['MaritalStatus']),
                 'PassportNo' => $passportNumber ?? '',
-                'UIDNo' => $emiratesId ?? '',
+                'UIDNo' => $uidNo ?? '',
                 'MemberCategory' => $memberCategory ?? '',
                 'VisaType' => $visaType ?? '',
                 'PreviousVisaEmirate' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
