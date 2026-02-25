@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,5 +36,15 @@ class SendFailedNonMotorRenewalsJob implements ShouldQueue
             'renewals_upload_lead_id' => $this->renewalsUploadLeadsId,
             'failed_policy_numbers' => $this->failedPolicyNumbers,
         ]);
+
+        $workflowSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+
+        if ($workflowSwitch) {
+            app(CarEmailService::class)->sendFailedCarRenewals($this->failedPolicyNumbers, $this->renewalsUploadLeadsId);
+
+            LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.implode(', ', $this->failedPolicyNumbers));
+        } else {
+            LoggerService::info(self::class.' - Car CQF Renewals Errors | Time: '.now().' | Ref-ID: '.$this->failedPolicyNumbers);
+        }
     }
 }

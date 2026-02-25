@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Imports\UploadAndCreateImport;
 use App\Models\RenewalQuoteProcess;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
@@ -25,30 +26,27 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
         $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewaUploadLead->id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
         $exportLeads = collect();
         if ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::CREATE_LEADS) {
+            $columns = (new UploadAndCreateImport($this->renewaUploadLead))->getColumns();
             $firstRow = (object) [];
-            $firstRow->customer_name = 'Customer Name';
-            $firstRow->email = 'Customer e-mail';
-            $firstRow->mobile_no = 'Customer Mobile';
-            $firstRow->quote_type = 'Insurance Type';
-            $firstRow->insurer = 'Insurance Provider';
-            $firstRow->product = 'Product';
-            $firstRow->product_type = 'Product Type';
-            $firstRow->advisor = 'Advisor Email';
-            $firstRow->policy_number = 'Policy Number';
-            $firstRow->start_date = 'Policy Start Date';
-            $firstRow->end_date = 'Policy End date';
-            $firstRow->batch = 'Batch';
-            $firstRow->make = 'Car Make';
-            $firstRow->model = 'Car Model';
-            $firstRow->year = 'Model Year';
-            $firstRow->previous_advisor = 'Previous Advisor Email';
-            $firstRow->previous_quote_policy_premium = 'Gross Premium';
-            $firstRow->source = 'Sales channel';
-            $firstRow->notes = 'Notes';
-            $firstRow->plan_name = 'Plan Name';
+            foreach ($columns as $key => $column) {
+                $firstRow->{$key} = $column['title'];
+            }
             $firstRow->errors = 'Error Message(s)';
             $exportLeads->push($firstRow);
-        } elseif ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+
+            foreach ($failedLeads as $lead) {
+                if (! $lead->data) {
+                    continue;
+                }
+                $leadData = $lead->data;
+                $row = $this->mapFailedLeadToCreateQuoteFormat($columns, $leadData);
+                $row['errors'] = is_string($lead->validation_errors) ? $lead->validation_errors : (is_array($lead->validation_errors) ? implode('; ', $lead->validation_errors) : 'No errors');
+                $exportLeads->push((object) $row);
+            }
+
+            return $exportLeads;
+        }
+        if ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
             $firstRow = (object) [];
             $firstRow->customer_name = 'Customer Name';
             $firstRow->email = 'Customer e-mail';
@@ -98,19 +96,41 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->is_gcc = 'Is GCC';
             $firstRow->errors = 'Error Message(s)';
             $exportLeads->push($firstRow);
-        }
-        foreach ($failedLeads as $lead) {
-            if ($lead->data) {
-                $leadData = $lead->data;
-                if (isset($leadData['renewal_batch_id'])) {
-                    unset($leadData['renewal_batch_id']);
-                }
-                $leadData['errors'] = $lead->validation_errors ?? 'No errors';
 
-                $exportLeads->push($leadData);
+            foreach ($failedLeads as $lead) {
+                if ($lead->data) {
+                    $leadData = $lead->data;
+                    if (isset($leadData['renewal_batch_id'])) {
+                        unset($leadData['renewal_batch_id']);
+                    }
+                    $leadData['errors'] = $lead->validation_errors ?? 'No errors';
+                    $exportLeads->push($leadData);
+                }
             }
         }
 
         return $exportLeads;
+    }
+
+    /**
+     * Map failed lead data to the exact format expected by UploadAndCreateImport and createQuote().
+     * Ensures downloaded file can be re-uploaded to create renewal quotes (all LOBs: Car, Bike, Life, Home, etc.).
+     *
+     * @param  array<string, array{index: int, title: string, rules: mixed}>  $columns
+     * @param  array<string, mixed>  $leadData
+     * @return array<string, mixed>
+     */
+    protected function mapFailedLeadToCreateQuoteFormat(array $columns, array $leadData): array
+    {
+        $row = [];
+        foreach ($columns as $key => $column) {
+            if ($key === 'premium') {
+                $row[$key] = $leadData['premium'] ?? $leadData['previous_quote_policy_premium'] ?? null;
+            } else {
+                $row[$key] = $leadData[$key] ?? null;
+            }
+        }
+
+        return $row;
     }
 }
