@@ -49,7 +49,7 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(string $claimRequestUuid, $message)
+    public function __construct(string $claimRequestUuid, string $message)
     {
         $this->claimRequestUuid = $claimRequestUuid;
         $this->customerMessage = $message;

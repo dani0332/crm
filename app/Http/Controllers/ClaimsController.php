@@ -348,11 +348,11 @@ class ClaimsController extends Controller
             $optimizedMessageResponse = $this->claimsService->optimizeMessageWithAI($request->safe());
 
             if (! $optimizedMessageResponse->success) {
-                return response()->json(['status' => false, 'message' => $optimizedMessageResponse->error], 500);
+                return response()->json(['success' => false, 'message' => $optimizedMessageResponse->error], 500);
             }
 
             return response()->json([
-                'status' => true,
+                'success' => true,
                 'optimized_message' => $optimizedMessageResponse->optimized_message,
             ], 200);
         } catch (Exception $e) {
@@ -362,7 +362,7 @@ class ClaimsController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            return response()->json(['status' => false, 'message' => 'Failed to optimize message.'], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to optimize message.'], 500);
         }
     }
 

@@ -292,7 +292,7 @@ const optimizeMessage = async () => {
       claim_uuid: props.claim?.uuid,
     });
 
-    if (response.data.status) {
+    if (response.data.success) {
       claimSubStatusAndCustomerForm.ai_optimized_message =
         response.data.optimized_message;
       notification.success({

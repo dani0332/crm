@@ -47,10 +47,13 @@ class SendClaimGoogleReviewEmailJob implements ShouldQueue
 
     /**
      * Create a new job instance.
+     * Defers dispatch until after the current DB transaction commits, so the job is not
+     * queued if the enclosing transaction rolls back (e.g. when dispatched from the observer).
      */
     public function __construct(string $claimRequestUuid)
     {
         $this->claimRequestUuid = $claimRequestUuid;
+        $this->afterCommit();
     }
 
     /**
