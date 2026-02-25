@@ -47,6 +47,8 @@ class WatermarkDocumentsJob implements ShouldQueue
     {
         LoggerService::startQuoteLogging($this->uuid, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
 
+        LoggerService::info("WatermarkDocumentsJob started for Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
+
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {
             LoggerService::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
@@ -111,8 +113,15 @@ class WatermarkDocumentsJob implements ShouldQueue
             }
         } catch (\Exception $e) {
             cache()->forget("processing_{$this->lockKey}");
-            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage());
+            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage(), [], $e);
             throw $e; // Re-throw to trigger job retry
+        } catch (Throwable $t) {
+            // Ensure the processing lock is always cleared for non-Exception Throwables (e.g., TypeError, Error)
+            cache()->forget("processing_{$this->lockKey}");
+            LoggerService::error("throwable: Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$t->getMessage(), [
+                'throwable_class' => $t::class,
+            ], $t);
+            throw $t; // Re-throw to trigger job retry
         }
     }
 
@@ -143,7 +152,14 @@ class WatermarkDocumentsJob implements ShouldQueue
             if (filter_var($path, FILTER_VALIDATE_URL)) {
                 $headers = get_headers($path);
 
-                return $headers && strpos($headers[0], '200') !== false;
+                // Parse HTTP status code from the first header line and treat 2xx-3xx as reachable.
+                if (! empty($headers) && is_array($headers) && preg_match('#HTTP/\d+\.\d+\s+(\d{3})#', $headers[0], $matches)) {
+                    $status = (int) $matches[1];
+
+                    return $status >= 200 && $status < 400;
+                }
+
+                return false;
             }
 
             // For Azure private storage paths
