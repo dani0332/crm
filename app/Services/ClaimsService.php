@@ -2,10 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
-use App\Enums\DocumentTypeCode;
 use App\Enums\InsuranceProviderContactDepartmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -21,7 +19,6 @@ use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
 use App\Models\ClaimRequestDetail;
 use App\Models\ClaimStatus;
-use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\YearOfManufacture;
@@ -348,11 +345,13 @@ class ClaimsService extends BaseService
             'created_at_end',
             'claim_status_id',
             'claim_sub_status_id',
+            'claim_type_id',
             'manager_id',
             'manager_assigned_date',
             'quote_type_id',
             'business_type_of_insurance_id',
             'policy_number',
+            'insurance_provider_id',
             'complaint_status_id',
             'next_followup_datetime',
             'assigned_status',
@@ -951,24 +950,6 @@ class ClaimsService extends BaseService
         }
 
         return $isRequiredFieldsFilled;
-    }
-
-    public function getClaimDocumentTypes($quoteTypeId, $businessTypeOfInsuranceId = null)
-    {
-        if ($quoteTypeId == QuoteTypeId::Business && $businessTypeOfInsuranceId && $businessTypeOfInsuranceId == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
-            // Return Health documents for Group Health Insurance
-            $quoteTypeId = QuoteTypeId::Health;
-        }
-        $claimDocumentTypes = DocumentType::active()->whereIn('category', [DocumentTypeCode::CLAIM])->where('quote_type_id', $quoteTypeId)->sortDocumentType()->get();
-
-        $documentTypesByCategory = $claimDocumentTypes->groupBy('category');
-        $orderedDocumentTypesByCategory = collect();
-
-        if ($documentTypesByCategory->has(DocumentTypeCode::CLAIM)) {
-            $orderedDocumentTypesByCategory->put(DocumentTypeCode::CLAIM, $documentTypesByCategory->get(DocumentTypeCode::CLAIM));
-        }
-
-        return $orderedDocumentTypesByCategory;
     }
 
     public function sendNotification(ClaimRequest $claimRequest, $request)

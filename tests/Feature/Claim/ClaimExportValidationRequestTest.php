@@ -121,7 +121,6 @@ function makeExportValidator(array $data): \Illuminate\Validation\Validator
     $validator->after(function ($v) use ($request) {
         if (! $v->errors()->any()) {
             (new ReflectionMethod($request, 'validateDateRange'))->invoke($request, $v);
-            (new ReflectionMethod($request, 'validateEmailExportRequirements'))->invoke($request, $v);
         }
     });
 

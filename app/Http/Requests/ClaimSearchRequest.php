@@ -55,12 +55,14 @@ class ClaimSearchRequest extends FormRequest
             'claim_status_id' => 'nullable|integer|exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_STATUS_KEY->value,
             'claim_sub_status_id' => 'nullable|integer|exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_SUB_STATUS_KEY->value,
             'complaint_status_id' => 'nullable|integer|exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value,
+            'claim_type_id' => 'nullable|integer|exists:lookups,id',
             'claim_request_type_id' => 'nullable|integer|exists:lookups,id',
 
             // Assignment and policy filters
             'manager_id' => 'nullable|integer|exists:users,id',
             'quote_type_id' => 'nullable|integer|exists:quote_type,id',
             'business_type_of_insurance_id' => 'nullable|integer|exists:business_type_of_insurance,id',
+            'insurance_provider_id' => 'nullable|integer|exists:insurance_provider,id',
             'policy_number' => 'nullable|string|max:100',
             'assigned_status' => 'nullable|in:assigned,un-assigned',
 
@@ -106,6 +108,8 @@ class ClaimSearchRequest extends FormRequest
             'car_model' => 'car model',
             'model_year' => 'model year',
             'service_type_id' => 'service type',
+            'claim_type_id' => 'claim type',
+            'insurance_provider_id' => 'insurance provider',
         ];
     }
 
@@ -132,6 +136,8 @@ class ClaimSearchRequest extends FormRequest
             'manager_id.exists' => 'The selected manager is invalid.',
             'quote_type_id.exists' => 'The selected line of business is invalid.',
             'service_type_id.exists' => 'The selected service type is invalid.',
+            'claim_type_id.exists' => 'The selected claim type is invalid.',
+            'insurance_provider_id.exists' => 'The selected insurance provider is invalid.',
             'assigned_status.in' => 'The assignment status must be either assigned or un-assigned.',
             'model_year.min' => 'The model year must be at least 1900.',
             'model_year.max' => 'The model year cannot be more than next year.',

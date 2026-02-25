@@ -58,8 +58,6 @@ class ClaimRequest extends Model implements AuditableContract
         'approved_repair_amount',
         'approved_total_loss_amount',
         'approved_cash_loss_amount',
-        'created_at',
-        'updated_at',
     ];
     protected $casts = [
         'google_review_email_sent_at' => 'datetime',

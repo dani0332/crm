@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\ClaimRequest;
 use App\Models\DocumentType;
 use App\Services\Logger\LoggerService;
@@ -24,9 +26,15 @@ class ClaimDocumentService extends BaseService
         $this->claimsStatusesService = $claimsStatusesService;
     }
 
-    public function getClaimDocumentTypes($quoteTypeId)
+    public function getClaimDocumentTypes($quoteTypeId, $businessTypeOfInsuranceId = null)
     {
-        $claimDocumentTypes = DocumentType::active()->whereIn('category', [DocumentTypeCode::CLAIM])->where('quote_type_id', $quoteTypeId)->sortDocumentType()->get();
+        $resolvedQuoteTypeId = $this->resolveQuoteTypeIdForDocuments($quoteTypeId, $businessTypeOfInsuranceId);
+
+        $claimDocumentTypes = DocumentType::active()
+            ->whereIn('category', [DocumentTypeCode::CLAIM])
+            ->where('quote_type_id', $resolvedQuoteTypeId)
+            ->sortDocumentType()
+            ->get();
 
         $documentTypesByCategory = $claimDocumentTypes->groupBy('category');
         $orderedDocumentTypesByCategory = collect();
@@ -36,6 +44,15 @@ class ClaimDocumentService extends BaseService
         }
 
         return $orderedDocumentTypesByCategory;
+    }
+
+    protected function resolveQuoteTypeIdForDocuments($quoteTypeId, $businessTypeOfInsuranceId = null)
+    {
+        if ($quoteTypeId == QuoteTypeId::Business && $businessTypeOfInsuranceId && $businessTypeOfInsuranceId == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            return QuoteTypeId::Health;
+        }
+
+        return $quoteTypeId;
     }
 
     /**

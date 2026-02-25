@@ -18,6 +18,7 @@ use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
 use App\Http\Requests\SearchPoliciesRequest;
 use App\Models\ClaimRequest;
+use App\Services\ClaimDocumentService;
 use App\Services\ClaimsService;
 use App\Services\ClaimStatusesService;
 use App\Services\CustomerService;
@@ -36,18 +37,20 @@ class ClaimsController extends Controller
     protected ClaimsService $claimsService;
     protected ClaimStatusesService $claimsStatusesService;
     protected CustomerService $customerService;
+    protected ClaimDocumentService $claimDocumentService;
 
     public function __construct(
         ClaimsService $claimsService,
         ClaimStatusesService $claimsStatusesService,
         CustomerService $customerService,
+        ClaimDocumentService $claimDocumentService,
     ) {
         $this->claimsService = $claimsService;
         $this->claimsStatusesService = $claimsStatusesService;
         $this->customerService = $customerService;
         $this->cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $this->claimEcomTrackingURL = config('constants.CLAIM_ECOM_TRACKING_URL').'/';
-
+        $this->claimDocumentService = $claimDocumentService;
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_LIST], ['only' => ['index']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_CREATE], ['only' => ['create', 'store', 'searchPolicies']]);
         $this->middleware(['permission:'.PermissionsEnum::CLAIM_EDIT], ['only' => ['edit', 'update', 'updateClaimDetails', 'updateComplaintStatus', 'updateNextFollowUp', 'makeAdditionalContactPrimary']]);
@@ -173,7 +176,7 @@ class ClaimsController extends Controller
             // Get related data for the show page
             $dropdownData = $this->claimsService->getDropdownData();
 
-            $claimDocumentTypes = $this->claimsService->getClaimDocumentTypes($claimRequest->quote_type_id, $claimRequest->business_type_of_insurance_id);
+            $claimDocumentTypes = $this->claimDocumentService->getClaimDocumentTypes($claimRequest->quote_type_id, $claimRequest->business_type_of_insurance_id);
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
             $customerAdditionalContacts = $this->customerService->getAdditionalContacts($claimRequest->customer_id, $claimRequest->mobile_no);
 
