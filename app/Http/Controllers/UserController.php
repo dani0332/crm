@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Http\Requests\InslyAdvisorRequest;
+use App\Http\Requests\UpdateUserActiveStateRequest;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\InslyAdvisor;
 use App\Models\Team;
@@ -19,6 +20,7 @@ use App\Services\LookupService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -635,5 +637,15 @@ class UserController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function updateActiveState(UpdateUserActiveStateRequest $request): JsonResponse
+    {
+        User::where('id', $request->id)
+            ->update([
+                'is_active' => $request->status,
+            ]);
+
+        return response()->json(['success' => true, 'message' => 'User status updated successfully']);
     }
 }
