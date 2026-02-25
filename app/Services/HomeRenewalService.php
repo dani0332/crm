@@ -305,7 +305,7 @@ class HomeRenewalService extends RenewalsUploadService
     }
 
     /**
-     * Override the getPlans method to match parent signature, 
+     * Override the getPlans method to match parent signature,
      * but $isRenewalHistorical is not used in Home context.
      * This avoids PHP "Declaration must be compatible" errors.
      */
