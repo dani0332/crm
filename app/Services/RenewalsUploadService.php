@@ -505,6 +505,7 @@ class RenewalsUploadService
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
+        $quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first();
 
         $leadValidationErrors = collect();
         $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
@@ -515,7 +516,7 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])->exists() && $isGenesisLead['status'];
 
-        if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+        if ($quoteObject && $quote) {
             if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
                 $message = 'can not proceed with quote as payment is already in process. ';
                 LoggerService::info($logPrefix.' can not proceed with quote as payment is already in process. ');
@@ -1914,7 +1915,7 @@ class RenewalsUploadService
                     'fetch_plans_status' => FetchPlansStatuses::FETCHED,
                 ])->exists() && $checkGenesisLead['status'];
 
-                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, true, $isRenewalHistorical) : [];
+                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
                 if ($this->isCommercialRenewalQuote($carQuote)) {
@@ -1940,13 +1941,12 @@ class RenewalsUploadService
                 $previousAdvisor = $this->getPreviousAdvisor($carQuote);
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-                $leadData = (object) $renewalQuoteProcess?->data ?? [];
-                $leadValidationErrors = collect();
-                $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
+
                 // if the lead is a Genesis lead, then set the current insurer to empty
                 if ($checkGenesisLead['status']) {
                     $emailData->currentInsurer = '';
                 }
+                
                 LoggerService::info($logPrefix.' Renewals OCB Email email data created');
 
                 $this->attachPdfIfNeeded($carQuote, $listQuotePlans, $emailData);
