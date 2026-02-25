@@ -10,10 +10,12 @@ use App\Pipes\Allocation\Device\AssignLeadPipe;
 use App\Pipes\Allocation\Device\EvaluateTeamPipe;
 use App\Pipes\Allocation\Device\FetchAvailableAdvisorPipe;
 use App\Pipes\Allocation\Device\VerifyLeadPreChecksPipe;
+use App\Exceptions\Allocation\AllocationException;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Pipeline;
 
 class DeviceAllocation implements Allocation
@@ -55,9 +57,18 @@ class DeviceAllocation implements Allocation
             ])->thenReturn();
 
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - Exception occurred in Device allocation pipeline', extra: [
-                'uuid' => $this->uuid,
-            ], exception: $e);
+            $isExpectedStop = $e instanceof AllocationException && $e->getCode() === Response::HTTP_OK;
+
+            if ($isExpectedStop) {
+                LoggerService::info(self::class.' - Device allocation stopped (expected)', extra: [
+                    'uuid' => $this->uuid,
+                    'message' => $e->getMessage(),
+                ]);
+            } else {
+                LoggerService::error(self::class.' - Exception occurred in Device allocation pipeline', extra: [
+                    'uuid' => $this->uuid,
+                ], exception: $e);
+            }
 
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }

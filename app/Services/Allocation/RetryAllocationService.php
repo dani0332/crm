@@ -34,7 +34,7 @@ class RetryAllocationService
 
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
         $startTime = now()->subWeek()->startOfDay()->toDateTimeString();
-        if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
+        if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 0) {
             $endTime = now()->subMinutes(5)->toDateTimeString();
 
             return [$startTime, $endTime];
@@ -372,6 +372,9 @@ class RetryAllocationService
             })
             ->when($quoteType === QuoteTypes::CYBER, function ($q) {
                 $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested');
+            })
+            ->when($quoteType === QuoteTypes::DEVICE, function ($q) {
+               $q->with('deviceQuote:id,personal_quote_id,sic_advisor_requested');
             })
             ->take($chunkSize);
 
