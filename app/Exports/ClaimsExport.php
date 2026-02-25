@@ -10,6 +10,7 @@ use App\Traits\ModernCsvExportable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class ClaimsExport implements CsvExportableInterface
 {
@@ -107,9 +108,9 @@ class ClaimsExport implements CsvExportableInterface
             $claim->policy_number,
             $claim->quoteType?->text ?? '',
             $claim->claimType?->text ?? '',
-            ($claim->claimStatus?->text ?? [])['label'] ?? '',
-            ($claim->claimSubStatus?->text ?? [])['label'] ?? '',
-            ($claim->complaintStatus?->text ?? [])['label'] ?? '',
+            $this->formatStatusLabelForExport(($claim->claimStatus?->text ?? [])['label'] ?? ''),
+            $this->formatStatusLabelForExport(($claim->claimSubStatus?->text ?? [])['label'] ?? ''),
+            $this->formatStatusLabelForExport(($claim->complaintStatus?->text ?? [])['label'] ?? ''),
             $claim->manager?->name ?? '',
             $claim->manager_assigned_date ? Carbon::parse($claim->manager_assigned_date)->format(config('constants.datetime_format')) : '',
             $claim->insuranceProvider?->text ?? '',
@@ -137,6 +138,15 @@ class ClaimsExport implements CsvExportableInterface
             $claim->claimRequestDetails?->serviceType?->text ?? '',
             $claim->claimRequestDetails?->request_reference_number ?? '',
         ];
+    }
+
+    /**
+     * Format status label for CSV export so enum-backed and non-enum values display consistently (title-cased).
+     * Cast returns raw DB value for unknown statuses; this normalizes display without changing cast contract.
+     */
+    private function formatStatusLabelForExport(string $label): string
+    {
+        return $label !== '' ? Str::title($label) : '';
     }
 
     /**

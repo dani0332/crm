@@ -66,6 +66,7 @@ class ClaimExportValidationRequest extends FormRequest
             'manager_assigned_date' => 'nullable|date',
             'next_followup_datetime' => 'nullable|date',
             'assigned_status' => 'nullable|in:assigned,un-assigned',
+            'business_type_of_insurance_id' => 'nullable|integer|exists:business_type_of_insurance,id',
 
             // Car-specific filters
             'plate_number' => 'nullable|string|max:20',
@@ -99,6 +100,7 @@ class ClaimExportValidationRequest extends FormRequest
             'car_make' => 'car make',
             'car_model' => 'car model',
             'model_year' => 'model year',
+            'business_type_of_insurance_id' => 'business type of insurance',
         ];
     }
 
