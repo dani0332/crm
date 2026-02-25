@@ -127,7 +127,6 @@ class ClaimExportValidationRequest extends FormRequest
         $validator->after(function ($validator) {
             if (! $validator->errors()->any()) {
                 $this->validateDateRange($validator);
-                $this->validateEmailExportRequirements($validator);
             }
         });
     }
@@ -163,16 +162,6 @@ class ClaimExportValidationRequest extends FormRequest
             if ($start->gt($end)) {
                 $validator->errors()->add('created_at_start', 'The start date must be before or equal to the end date.');
             }
-        }
-    }
-
-    /**
-     * Validate email export specific requirements
-     */
-    private function validateEmailExportRequirements($validator): void
-    {
-        if ($this->input('exportType') === 'email') {
-            // no validation required for email exports
         }
     }
 }
