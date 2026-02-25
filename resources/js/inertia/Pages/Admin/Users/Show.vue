@@ -11,6 +11,7 @@ const props = defineProps({
   rmCategoryText: String,
 });
 
+const loading = ref(false);
 const user = ref(props.user);
 const page = usePage();
 const can = permission => useCan(permission);
@@ -99,14 +100,23 @@ function onSubmit(isValid) {
 
 // Function to update user status
 function updateUserStatus(status) {
-  alert(`${status} - ${props.user.id}`);
+  loading.value = true;
+
   axios.post(`/admin/update-user-state`, {
     id: props.user.id,
     status,
   }).then(res => {
-    console.log(res);
+    notification.success({
+      title: res.data.message,
+      position: 'top',
+    });
   }).catch(err => {
-    console.log(err);
+    notification.error({
+      title: err.response.data.message,
+      position: 'top',
+    });
+  }).finally(() => {
+    loading.value = false;
   });
 }
 </script>
@@ -312,6 +322,11 @@ function updateUserStatus(status) {
           </dd>
         </div>
       </dl>
+    </div>
+
+      <!-- Page Loader -->
+    <div v-if="loading" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+        <div class="h-6 w-6 border-4 border-blue-200 border-t-transparent rounded-full animate-spin"></div>
     </div>
   </div>
 
