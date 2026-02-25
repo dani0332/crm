@@ -98,24 +98,28 @@ function onSubmit(isValid) {
   }
 }
 
-// Function to update user status
+// Function to update user status (receives the new value after v-model update)
 function updateUserStatus(status) {
   loading.value = true;
 
   axios.post(`/admin/update-user-state`, { id: props.user.id, status })
-  .then(res => {
-    notification.success({
-      title: res.data.message,
-      position: 'top',
+    .then(res => {
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      // Revert to previous status if api fails
+      user.value.is_active = !status;
+      notification.error({
+        title: err.response?.data?.message ?? 'Failed to update user status',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      loading.value = false;
     });
-  }).catch(err => {
-    notification.error({
-      title: err.response.data.message,
-      position: 'top',
-    });
-  }).finally(() => {
-    loading.value = false;
-  });
 }
 </script>
 <template>

@@ -18,7 +18,7 @@ describe('UserController - Update Active State', function () {
             'is_active' => false,
         ]);
 
-        $response = $this->postJson(route('users.update-active-state'), [
+        $response = $this->postJson('/admin/update-user-state', [
             'id' => $user->id,
             'status' => true,
         ]);
