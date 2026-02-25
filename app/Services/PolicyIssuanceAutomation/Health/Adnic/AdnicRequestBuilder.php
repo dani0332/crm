@@ -128,8 +128,8 @@ class AdnicRequestBuilder
                 'Nationality' => AdnicEnum::NATIONALITY_ID_EMIRATES_ID, // Emirates ID is the default nationality
                 'PassportNo' => $passportNumber ?? '',
                 'UIDNo' => $emiratesId ?? '',
-                'WorkLocation' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
-                'ResidenceLocation' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate ?? '',
+                'WorkLocation' => AdnicEnum::DUBAI_RESIDENCY,
+                'ResidenceLocation' => AdnicEnum::DUBAI_RESIDENCY,
                 'Industry' => ! empty($industry) ? $industry : AdnicEnum::OCCUPATION_OTHER,
                 'DocumentInfo' => $this->uploadedDocumentsInfo($uploadDocumentsResponse, $insuredMember->MemberSeqNo),
                 'PreviousVisaEmirate' => $insuredMember?->PreviousVisaEmirate,
@@ -148,7 +148,7 @@ class AdnicRequestBuilder
                 'Address' => $quote->emirate?->text ?? '',
                 'DateOfBirth' => $quote->dob ? date('d-m-Y', strtotime($quote->dob)) : null,
                 'Gender' => $this->mappingGender($quote->gender ?? null),
-                'Nationality' => $this->mappingNationality($quote->nationality?->name ?? null), // Need to check, it's pass as null
+                'Nationality' => AdnicEnum::NATIONALITY_ID_EMIRATES_ID, // Emirates ID is the default nationality
                 'SalaryType' => $this->mappingSalaryBand($quote->salary_band_id ?? null), // TODO:: Some attributes need to be created
                 'EmiratesId' => $emiratesId ?? '',
                 'City' => $healthInsurerRequest?->SponsorInfo?->PreviousVisaEmirate,
