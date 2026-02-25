@@ -497,6 +497,16 @@ class RenewalsUploadService
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
         $quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first();
+        if (!$quoteObject || !$quote) {
+            $message = 'QuoteId not found for leadId: ' . $renewalQuoteProcess->id . ' PolicyNumber: ' . $renewalQuoteProcess->policy_number;
+            LoggerService::info($logPrefix . ' ' . $message);
+            $renewalQuoteProcess->update([
+                'step_errors' => [$message],
+                'retry_count' => $renewalQuoteProcess->retry_count + 1,
+            ]);
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+            return false;
+        }
 
         $leadValidationErrors = collect();
         $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
@@ -507,71 +517,63 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])->exists() && $isGenesisLead['status'];
 
-        if ($quoteObject && $quote) {
-            if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
-                $message = 'can not proceed with quote as payment is already in process. ';
-                LoggerService::info($logPrefix.' can not proceed with quote as payment is already in process. ');
+        
+        if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
+            $message = 'can not proceed with quote as payment is already in process. ';
+            LoggerService::info($logPrefix.' can not proceed with quote as payment is already in process. ');
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+            $renewalQuoteProcess->update(['step_errors' => [$message], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
+
+            return false;
+        }
+
+        if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
+            $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isGenesisLead, $isRenewalHistorical);
+
+            if (is_int($planResponse) && $planResponse == 200) {
+                LoggerService::info($logPrefix.' plan created successfully', extra: [
+                    'UUID' => $quote->uuid,
+                ]);
+            } else {
+                $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
+
+                if (isset($planResponse->message)) {
+                    $error = 'Error: '.$planResponse->message;
+                }
+
+                LoggerService::info($logPrefix.' plan creation failed. API Response ('.$error.')', extra: [
+                    'UUID' => $quote->uuid,
+                ]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-                $renewalQuoteProcess->update(['step_errors' => [$message], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
+                $renewalQuoteProcess->update(['step_errors' => ['plan creation failed. API Response'], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
 
                 return false;
             }
+        }
 
-            if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-                $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isGenesisLead, $isRenewalHistorical);
-
-                if (is_int($planResponse) && $planResponse == 200) {
-                    LoggerService::info($logPrefix.' plan created successfully', extra: [
-                        'UUID' => $quote->uuid,
-                    ]);
-                } else {
-                    $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
-
-                    if (isset($planResponse->message)) {
-                        $error = 'Error: '.$planResponse->message;
-                    }
-
-                    LoggerService::info($logPrefix.' plan creation failed. API Response ('.$error.')', extra: [
-                        'UUID' => $quote->uuid,
-                    ]);
-                    RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-                    $renewalQuoteProcess->update(['step_errors' => ['plan creation failed. API Response'], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
-
-                    return false;
-                }
-            }
-
-            $plansResponse = $this->getPlans($quote->uuid, $isRenewalHistorical);
-            if ($plansResponse === true) {
-                LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra: [
-                    'UUID' => $quote->uuid,
-                ]);
-                // update status to plans fetched
-                $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
-                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
-            } else {
-                LoggerService::info($logPrefix.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
-
-                // Properly extract or stringify $plansResponse for step_errors so Vue renders useful info.
-                if (is_string($plansResponse)) {
-                    $errorMsg = $plansResponse;
-                } elseif (is_object($plansResponse) || is_array($plansResponse)) {
-                    $errorMsg = json_encode($plansResponse);
-                } else {
-                    $errorMsg = strval($plansResponse);
-                }
-                $renewalQuoteProcess->update(['step_errors' => [$errorMsg], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
-                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-            }
-        } else {
-            $message = 'QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number;
-            LoggerService::info($logPrefix.' '.$message);
-            $renewalQuoteProcess->update([
-                'step_errors' => [$message],
-                'retry_count' => $renewalQuoteProcess->retry_count + 1,
+        $plansResponse = $this->getPlans($quote->uuid, $isRenewalHistorical);
+        if ($plansResponse === true) {
+            LoggerService::info($logPrefix.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type, extra: [
+                'UUID' => $quote->uuid,
             ]);
+            // update status to plans fetched
+            $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
+        } else {
+            LoggerService::info($logPrefix.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
+
+            // Properly extract or stringify $plansResponse for step_errors so Vue renders useful info.
+            if (is_string($plansResponse)) {
+                $errorMsg = $plansResponse;
+            } elseif (is_object($plansResponse) || is_array($plansResponse)) {
+                $errorMsg = json_encode($plansResponse);
+            } else {
+                $errorMsg = strval($plansResponse);
+            }
+            $renewalQuoteProcess->update(['step_errors' => [$errorMsg], 'retry_count' => $renewalQuoteProcess->retry_count + 1]);
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
+        
     }
 
     /**
