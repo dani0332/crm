@@ -53,10 +53,19 @@ class EvaluateTeamPipe extends BaseAllocationPipe
         
         // SIC advisor requested or has retry flag, assign to hardcoded advisors
         if ($sicAdvisorRequested || $hasRetryFlag || $lead->isPaymentAuthorized() || $isPaymentAuthorizedOrDeclined || $lead->hasRemainedUnauthorizedFor12Hours()) {
-            $reason = $sicAdvisorRequested
-                ? 'SIC advisor explicitly requested'
-                : 'Lead has retry flag (lead_allocation_failed_at)';
-          
+            $reason = '';
+            if ($sicAdvisorRequested) {
+                $reason = 'SIC advisor explicitly requested';
+            } elseif ($lead->isPaymentAuthorized()) {
+                $reason = 'Lead has authorized payment';
+            } elseif ($isPaymentAuthorizedOrDeclined) {
+                $reason = 'Lead payment is authorized or declined';
+            } elseif ($lead->hasRemainedUnauthorizedFor12Hours()) {
+                $reason = 'Lead has remained unauthorized for 12 hours';
+            } elseif ($hasRetryFlag) {
+                $reason = 'Lead has retry flag (lead_allocation_failed_at)';
+            }
+
             LoggerService::info(self::class.' - Device lead will be assigned to hardcoded advisors', extra: [
                 'teamId' => $defaultTeamId,
                 'reason' => $reason,
