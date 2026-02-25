@@ -107,11 +107,11 @@ test('ClaimStoreRequest has no extra validation-failed context', function () {
     expect($extra)->toBe([]);
 });
 
-test('ClaimUpdateRequest adds claim_id to validation-failed context', function () {
+test('ClaimUpdateRequest adds claim_uuid to validation-failed context', function () {
     $extra = (new ReflectionMethod(ClaimUpdateRequest::class, 'validationFailedExtraContext'))
         ->invoke(new ClaimUpdateRequest);
 
-    expect($extra)->toHaveKey('claim_id');
+    expect($extra)->toHaveKey('claim_uuid');
 });
 
 // ── claim_decline_reason attribute label is consistent ────────────────────────

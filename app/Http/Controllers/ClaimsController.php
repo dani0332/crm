@@ -80,7 +80,7 @@ class ClaimsController extends Controller
             ]);
 
             return Inertia::render('Claims/Index', [
-                'claims' => collect([]),
+                'claims' => $this->claimsService->getEmptyClaimsPaginator(),
                 'filters' => [],
                 'claimDropdownOptions' => [],
                 'error' => $e->getMessage(),

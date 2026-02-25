@@ -17,7 +17,7 @@ class ClaimUpdateRequest extends ClaimBaseRequest
     protected function validationFailedExtraContext(): array
     {
         return [
-            'claim_id' => $this->route('claim')?->id ?? $this->route('id'),
+            'claim_uuid' => $this->route('uuid'),
         ];
     }
 }

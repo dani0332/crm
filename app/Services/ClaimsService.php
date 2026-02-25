@@ -28,6 +28,7 @@ use App\Models\YearOfManufacture;
 use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -177,6 +178,18 @@ class ClaimsService extends BaseService
         $query = $this->applyFilters($this->buildDetailedClaimListQuery(), $filters);
 
         return $query->simplePaginate($this->perPage)->withQueryString();
+    }
+
+    /**
+     * Return an empty paginated result with the same structure as getClaimsData().
+     * Used when the index fails so the frontend always receives a paginator shape (data, links, current_page, etc.).
+     */
+    public function getEmptyClaimsPaginator()
+    {
+        return ClaimRequest::query()
+            ->whereRaw('1 = 0')
+            ->simplePaginate($this->perPage)
+            ->withQueryString();
     }
 
     /**
@@ -513,6 +526,10 @@ class ClaimsService extends BaseService
     public function updateClaim($uuid, $request): ClaimRequest
     {
         $claimRequest = $this->getClaimById($uuid);
+
+        if (! $claimRequest) {
+            throw new ModelNotFoundException('Claim not found.');
+        }
 
         try {
             return DB::transaction(function () use ($claimRequest, $request) {

@@ -379,8 +379,8 @@ class ClaimStatusesService extends BaseService
 
                 // Check if complaint status has changed to open complaint status
                 $newComplaintStatus = ClaimStatus::active()->find($complaintStatusId);
-
-                $isNewStatusComplaintOpen = $newComplaintStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
+                $statusText = $newComplaintStatus?->text;
+                $isNewStatusComplaintOpen = is_array($statusText) && ($statusText['value'] ?? null) === ClaimsEnum::CLAIM_STATUS_OPEN_COMPLAINT->value;
 
                 if ($isNewStatusComplaintOpen) {
                     $this->markClaimAsReOpen($claim);
