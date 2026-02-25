@@ -13,6 +13,6 @@ class BusinessTypeOfInsurance extends Model
 
     public function scopeActive($query)
     {
-        $query->where('is_active', 1);
+        return $query->where('is_active', 1);
     }
 }
