@@ -127,7 +127,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('previous_quote_policy_premium', requestParams: $requestParams)
             ->filterBy('sub_team', 'health_team_type', requestParams: $requestParams)
             ->filterIn('quote_status', 'quote_status_id', requestParams: $requestParams)
-            ->filterIn('payment_status', 'payment_status_id', requestParams: $requestParams)
+            ->filterIn('payment_status_id', requestParams: $requestParams)
             ->filterIn('renewal_batches', 'renewal_batch_id', requestParams: $requestParams)
             ->filterBy('currently_insured_with', requestParams: $requestParams)
             ->filterBy('is_cold', 'is_cold', 1, requestParams: $requestParams)
@@ -190,7 +190,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                     ->filterByDate('previous_policy_expiry_date', 'policy_expiry_date_end', false, requestParams: $requestParams));
             })
             ->when(Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM'), function ($query) {
-                $query->filterBy('advisor_id', Auth::user()->id);
+                $query->where('advisor_id', Auth::user()->id);
             })
             ->when($this->hasFilterValue('advisors', $requestParams) && is_array($this->getFilterValue('advisors', $requestParams)) && in_array(DefaultAdvisorEnum::UNASSIGNED, $this->getFilterValue('advisors', $requestParams)), function ($query) {
                 $query->whereNull('advisor_id');

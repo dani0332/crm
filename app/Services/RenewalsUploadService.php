@@ -198,7 +198,7 @@ class RenewalsUploadService
         if ($isTravel) {
             $path .= '/travel';
         }
-        $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'azureIM');
+        $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'azureIMPrivate');
 
         return [
             'file_name' => $fileName,
@@ -268,17 +268,8 @@ class RenewalsUploadService
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
                 // start file import
                 $renewalsUpload = new UploadAndCreateImport($renewalsUploadLead);
-                $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
-
-                // update counts
-                $validRows = $renewalsUpload->getValidCount();
-                $failedRows = $renewalsUpload->getFailedCount();
-
-                $renewalsUploadLead->update([
-                    'cannot_upload' => $failedRows,
-                    'good' => 0,
-                    'total_records' => ($validRows + $failedRows),
-                ]);
+                $renewalsUploadLeadFile = app(QuoteDocumentService::class)->getDocumentUrl($renewalsUploadLead->file_path);
+                $renewalsUpload->import($renewalsUploadLeadFile);
 
                 return $renewalsUploadLead;
             });
@@ -623,16 +614,8 @@ class RenewalsUploadService
                 } else {
                     $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
                 }
-                $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
-
-                $validRows = $renewalsUpload->getValidCount();
-                $failedRows = $renewalsUpload->getFailedCount();
-
-                $renewalsUploadLead->update([
-                    'cannot_upload' => $failedRows,
-                    'good' => 0,
-                    'total_records' => ($validRows + $failedRows),
-                ]);
+                $renewalsUploadLeadFile = app(QuoteDocumentService::class)->getDocumentUrl($renewalsUploadLead->file_path);
+                $renewalsUpload->import($renewalsUploadLeadFile);
 
                 return $renewalsUploadLead;
             });
@@ -1134,6 +1117,7 @@ class RenewalsUploadService
             $newAdvisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $advisorId = $quote->advisor_id == null ? $newAdvisorId : $quote->advisor_id;
             $carModel = null;
+            $previousAdvisor = null;
             if ($isQuoteTypeCar) {
                 $carMake = $this->renewalsAddonService->getCarMake($data['make']);
                 $carModel = $this->renewalsAddonService->getCarModel($data['model'], $carMake);
@@ -3024,17 +3008,8 @@ class RenewalsUploadService
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
                 // start file import
                 $renewalsUpload = new TravelUploadAndCreateImport($renewalsUploadLead);
-                $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
-
-                // update counts
-                $validRows = $renewalsUpload->getValidCount();
-                $failedRows = $renewalsUpload->getFailedCount();
-
-                $renewalsUploadLead->update([
-                    'cannot_upload' => $failedRows,
-                    'good' => 0,
-                    'total_records' => ($validRows + $failedRows),
-                ]);
+                $renewalsUploadLeadFile = app(QuoteDocumentService::class)->getDocumentUrl($renewalsUploadLead->file_path);
+                $renewalsUpload->import($renewalsUploadLeadFile);
 
                 return $renewalsUploadLead;
             });

@@ -356,6 +356,7 @@ class CRUDController extends Controller
                 'canAssignLeadAdvisor' => $canAssignLeadAdvisor,
                 'canAssignClientSupport' => $canAssignClientSupport,
                 'supportUsers' => $supportUsers,
+                'dropdownSource' => $dropdownSource,
             ]);
         }
 
@@ -495,6 +496,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
+            $emirates = Emirate::getOptions('id', 'text', true);
 
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
@@ -502,6 +504,7 @@ class CRUDController extends Controller
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'quoteStatusEnums' => QuoteStatusEnum::asArray(),
                 'subSources' => $subSources,
+                'emirates' => $emirates,
                 'leadSourceParams' => [
                     'type' => $request->input('type'),
                     'subSource' => $request->input('subSourceId'),
@@ -860,7 +863,7 @@ class CRUDController extends Controller
                 } else {
                     $documentQuoteTypeId = QuoteTypeId::Car;
                 }
-                @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId);
+                @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId, null, null, null, $quote);
                 $quoteDocuments = array_values($quoteDocuments->toArray());
                 $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
                 $storageUrl = storageUrl();
@@ -1060,7 +1063,6 @@ class CRUDController extends Controller
             if ($this->genericModel->modelType == quoteTypeCode::Home) {
                 $nationalities = Nationality::getActiveNationalities();
                 $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-                $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
                 $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
                 $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
@@ -1124,7 +1126,6 @@ class CRUDController extends Controller
                     'allowedDuplicateLOB' => $allowedDuplicateLOB,
                     'leadStatuses' => array_values($leadStatuses->toArray()),
                     'advisors' => $advisors,
-                    'cdnPath' => $cdnPath,
                     'domainPath' => $domainPath,
                     'activities' => $activities,
                     'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -1199,8 +1200,6 @@ class CRUDController extends Controller
 
                     return $quoteDocument;
                 });
-
-                $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
                 $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
 
                 $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
@@ -1281,7 +1280,6 @@ class CRUDController extends Controller
                     'teams' => $teams,
                     'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
                     'documentTypes' => $documentTypes,
-                    'cdnPath' => $cdnPath,
                     'domainPath' => $domainPath,
                     'activities' => $activities,
                     'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -1453,6 +1451,8 @@ class CRUDController extends Controller
                 $record->company_contact_name = $record->first_name.' '.$record->last_name;
             }
 
+            $emirates = Emirate::getOptions('id', 'text', true);
+
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -1466,6 +1466,7 @@ class CRUDController extends Controller
                 'ecbExcludedCarMakeCodes' => EpEcbExcludeVehicleEnum::CAR_MAKE_CODES,
                 'ecbExcludedCarModelCodes' => EpEcbExcludeVehicleEnum::CAR_MODEL_CODES,
                 'subSources' => $subSources,
+                'emirates' => $emirates,
             ]);
         }
 
@@ -1728,7 +1729,7 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS];
+        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Savings';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
@@ -2193,11 +2194,12 @@ class CRUDController extends Controller
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
         $request = (object) $policyDetailRequest->validated();
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_QUOTE_POLICY, $request->quote_code ?? null);
+
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
-        info('Quote Code: '.$quoteModel->code.' fn: updateQuotePolicy called');
 
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
@@ -2242,10 +2244,10 @@ class CRUDController extends Controller
         $centralService = app(CentralService::class);
         $centralService->synchronizePaymentInformation($quoteModel);
         $centralService->updateQuoteInformation($request->modelType, $request->quote_id);
-        info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
+        LoggerService::info('Policy detail updated successfully');
         if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
-            info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
+            LoggerService::info('BIN Generated for transactional leads');
         }
 
         return redirect()->back()->with([

@@ -207,6 +207,10 @@ class ConversionAsAtReportService extends BaseService
             $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::GroupMedical)] = quoteTypeCode::GroupMedical.' Insurance';
         }
 
+        if ($authUser->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::CyberManager]) || in_array('Cyber Insurance', $userProducts)) {
+            $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::CYBER)] = quoteTypeCode::CYBER.' Insurance';
+        }
+
         return [
             'lobs' => $lobs,
         ];
@@ -218,11 +222,17 @@ class ConversionAsAtReportService extends BaseService
 
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
-        $startDate = isset($filters->startEndDate) ?
+        $startDate = (isset($filters->startEndDate)
+        && is_array($filters->startEndDate)
+        && ! empty($filters->startEndDate[0])
+        ) ?
             Carbon::parse($filters->startEndDate[0])->startOfDay()->format($dateFormat) :
             Carbon::parse(now())->startOfDay()->format($dateFormat);
 
-        $endDate = isset($filters->startEndDate) ?
+        $endDate = (isset($filters->startEndDate)
+        && is_array($filters->startEndDate)
+        && ! empty($filters->startEndDate[1])
+        ) ?
             Carbon::parse($filters->startEndDate[1])->endOfDay()->format($dateFormat) :
             Carbon::parse(now())->endOfDay()->format($dateFormat);
 

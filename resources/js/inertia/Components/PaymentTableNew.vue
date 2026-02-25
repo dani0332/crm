@@ -100,8 +100,8 @@ const props = defineProps({
     default: [],
   },
   isFuncsEnabled: {
-    type: Array,
-    default: [],
+    type: Object,
+    default: () => ({}),
   },
   realQuote: Object,
   // For car commercial vehicles
@@ -141,6 +141,7 @@ const selectedPaymentForEdit = ref(null);
 const showInsurerReceiptNumberInputField = ref(false);
 const isInsurerReceiptNumberExistsModalOpen = ref(false);
 const insurerReceiptNumberCheckInProcess = ref(false);
+const currentFileURL = ref('');
 
 // Short: is life plan details enabled
 const isLifePlanDetailsEnabled = computed(() => {
@@ -160,6 +161,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.SAVINGS,
+  quoteTypeCodeEnum.CYBER,
 ]; //Ecommerce LOBs
 
 if (
@@ -279,6 +281,8 @@ if (
 ) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
+} else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
@@ -871,6 +875,8 @@ const setPlanDetail = () => {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
+  } else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
+    initalPlanDetails = props.quoteRequest.insurance_provider_plan;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -1286,6 +1292,7 @@ watch(
             @close-insurer-receipt-number-exists-modal="
               closeInsurerReceiptNumberExistsModal
             "
+            @update-current-file-url="value => (currentFileURL = value)"
           />
 
           <!-- Image Gallery Modal -->
@@ -1296,6 +1303,8 @@ watch(
             :storage-url="storageUrl"
             @update:model-value="val => val === false && closeInnerModal()"
             class="max-w-6xl mx-auto"
+            :currentFileURL="currentFileURL"
+            @update:currentFileURL="currentFileURL = $event"
           />
         </x-modal>
 

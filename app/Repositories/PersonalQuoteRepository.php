@@ -32,7 +32,9 @@ use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
 {
-    use GenericQueriesAllLobs, OcrUtils;
+    use GenericQueriesAllLobs, OcrUtils {
+        GenericQueriesAllLobs::getNationalityId insteadof OcrUtils;
+    }
 
     public function model()
     {
@@ -134,7 +136,7 @@ class PersonalQuoteRepository extends BaseRepository
             $fileMimeType = $file->getClientMimeType();
             // upload file to azure
             $fileNameAzure = uniqid().'_'.$quote->uuid.'_original_'.$docName;
-            $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+            $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
 
             // generate unique uuid
             $docUuid = uniqid();
@@ -156,6 +158,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentTypeText,
                 'doc_uuid' => $docUuid,
+                'member_detail_id' => $data['member_detail_id'] ?? null,
                 'created_by_id' => Auth::id(),
             ];
             // info('Document array prepared for creation', $document);
@@ -191,7 +194,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $isSendUpdateEligibleForOCR = $this->isSendUpdateEligibleForOCR($quote, $isSendUpdate);
 
                 LoggerService::info(self::class.' - fn: populateDocumentData called - Quote UUID: '.$data['quote_uuid']);
-                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR);
+                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR, $data['member_detail_id'] ?? 0);
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
                     LoggerService::info(self::class.' - Dispatching WatermarkDocumentsJob - Quote UUID: '.$data['quote_uuid']);
@@ -219,7 +222,7 @@ class PersonalQuoteRepository extends BaseRepository
         }
     }
 
-    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR)
+    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType, $isSendUpdateEligibleForOCR, $memberDetailId = 0)
     {
         $isOcrSendUpdateLogFlagEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_SENDUPDATE_OCR, useCache: true) == '1';
         // For SendUpdateLog, get the quote type from the quote_type_id
@@ -245,6 +248,7 @@ class PersonalQuoteRepository extends BaseRepository
             $quote,
             $filePathAzure,
             $fileMimeType,
+            $memberDetailId,
             $quoteTypeParam, // Pass the determined quote type for send update log flow
             $isSendUpdateEligibleForOCR
         );
