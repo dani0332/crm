@@ -12,8 +12,6 @@ use Illuminate\Support\Str;
  */
 enum ClaimsEnum: string
 {
-    use Enumable;
-
     case CLAIM_STATUSES_STATUS_KEY = 'statuses';
     case CLAIM_STATUSES_SUB_STATUS_KEY = 'sub-statuses';
     case CLAIM_STATUSES_COMPLAINT_STATUS_KEY = 'complaint-statuses';

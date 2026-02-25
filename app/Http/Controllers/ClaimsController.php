@@ -305,18 +305,6 @@ class ClaimsController extends Controller
         try {
             $requestParams = $request->safe();
 
-            /* TODO: Might need in future so commented it */
-
-            // Check export type for email vs download
-            /*if ($request->input('exportType') === 'email') {
-                $requestParams->recipientEmail = auth()->user()->email;
-
-                return app(ClaimsExport::class, [
-                    'claimsService' => app(ClaimsService::class),
-                    'requestParams' => $requestParams,
-                ])->emailCSV('Claims-List', $requestParams);
-            }*/
-
             return app(ClaimsExport::class, [
                 'claimsService' => app(ClaimsService::class),
                 'requestParams' => $requestParams,
@@ -328,11 +316,6 @@ class ClaimsController extends Controller
                 'export_params' => $request->all(),
                 'user_id' => Auth::id(),
             ]);
-
-            /* TODO: Might need in future so commented it */
-            // if ($request->input('exportType') === 'email') {
-            //     return response()->json(['success' => false, 'message' => 'Failed to initiate claims export. Please try again.'], 500);
-            // }
 
             return redirect()->back()->with('error', 'Failed to export claims data. Please try again.');
         }
