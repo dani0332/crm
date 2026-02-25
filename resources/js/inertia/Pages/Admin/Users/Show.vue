@@ -58,7 +58,7 @@ const deleteAdvisor = index => {
 // Function to handle form submission
 function onSubmit(isValid) {
   if (isValid) {
-    form.processing = true;
+    form.processing = true; 
     form.advisors = [];
 
     advisors.value.forEach(advisor => {
@@ -95,6 +95,19 @@ function onSubmit(isValid) {
       },
     });
   }
+}
+
+// Function to update user status
+function updateUserStatus(status) {
+  alert(`${status} - ${props.user.id}`);
+  axios.post(`/admin/update-user-state`, {
+    id: props.user.id,
+    status,
+  }).then(res => {
+    console.log(res);
+  }).catch(err => {
+    console.log(err);
+  });
 }
 </script>
 <template>
@@ -220,10 +233,13 @@ function onSubmit(isValid) {
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">ACTIVE</dt>
           <dd>
-            <x-tag size="sm" :color="user.is_active ? 'success' : 'error'">
-              {{ user.is_active ? 'Yes' : 'No' }}
-            </x-tag>
-          </dd>
+            <x-toggle
+              v-model="user.is_active"
+              color="success"
+              size="lg"
+              @update:model-value="updateUserStatus"
+            />
+          </dd>         
         </div>
 
         <div class="grid sm:grid-cols-2">
