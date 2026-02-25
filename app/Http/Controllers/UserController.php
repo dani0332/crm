@@ -641,10 +641,12 @@ class UserController extends Controller
 
     public function updateActiveState(UpdateUserActiveStateRequest $request): JsonResponse
     {
-        User::where('id', $request->id)
-            ->update([
-                'is_active' => $request->status,
-            ]);
+        $user = User::find($request->id);
+
+        if ($user->is_active != $request->status) {
+            $user->is_active = $request->status;
+            $user->save();
+        }
 
         return response()->json(['success' => true, 'message' => 'User status updated successfully']);
     }
