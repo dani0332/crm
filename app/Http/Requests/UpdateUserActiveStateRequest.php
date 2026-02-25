@@ -13,4 +13,12 @@ class UpdateUserActiveStateRequest extends FormRequest
             'status' => 'required|boolean',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'id.exists' => 'User not found',
+            'status.boolean' => 'Status must be a boolean',
+        ];
+    }
 }
