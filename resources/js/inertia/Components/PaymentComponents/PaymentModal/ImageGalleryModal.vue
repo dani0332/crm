@@ -80,7 +80,10 @@ const isCurrentFileImage = computed(() => {
   const file = currentFile.value;
   if (!file) return false;
   const mime = (file.doc_mime_type || '').trim().toLowerCase();
-  return ['image/jpeg', 'image/jpg', 'image/png'].includes(mime) || mime.startsWith('image/');
+  return (
+    ['image/jpeg', 'image/jpg', 'image/png'].includes(mime) ||
+    mime.startsWith('image/')
+  );
 });
 
 /**
@@ -261,10 +264,7 @@ watch(
             </svg>
             <span>Previous</span>
           </button>
-          <div
-            class="flex items-center space-x-2"
-            v-if="!isCurrentFilePdf"
-          >
+          <div class="flex items-center space-x-2" v-if="!isCurrentFilePdf">
             <button
               class="flex items-center space-x-2 cursor-pointer text-gray-300"
               @click="zoomOut"
@@ -337,10 +337,7 @@ watch(
         </div>
       </div>
       <div class="modal-body w-full h-full mt-2">
-        <div
-          v-if="isCurrentFileImage"
-          class="flex items-center justify-center"
-        >
+        <div v-if="isCurrentFileImage" class="flex items-center justify-center">
           <div class="overflow-auto items-center justify-center">
             <img
               :src="currentFileURL"
@@ -350,10 +347,7 @@ watch(
             />
           </div>
         </div>
-        <div
-          v-else-if="isCurrentFilePdf"
-          class="w-full h-80vh"
-        >
+        <div v-else-if="isCurrentFilePdf" class="w-full h-80vh">
           <embed
             :src="currentFileURL"
             type="application/pdf"
