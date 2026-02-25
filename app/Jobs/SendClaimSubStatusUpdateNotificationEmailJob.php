@@ -53,6 +53,7 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
     {
         $this->claimRequestUuid = $claimRequestUuid;
         $this->customerMessage = $message;
+        $this->afterCommit();
     }
 
     /**
