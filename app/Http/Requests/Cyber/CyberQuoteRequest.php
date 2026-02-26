@@ -40,7 +40,7 @@ class CyberQuoteRequest extends FormRequest
             'dob' => 'required|date',
             'nationality_id' => ['required', Rule::exists(Nationality::class, 'id')],
             'emirate_of_registration_id' => ['required', Rule::exists(Emirate::class, 'id')],
-            ...$customerAddressRules
+            ...$customerAddressRules,
         ];
     }
 

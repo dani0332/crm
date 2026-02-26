@@ -24,7 +24,7 @@ class CustomerAddressObserver
 
             if (! empty($dirty)) {
                 // Fetch the associated car/cyber quote using quote_uuid
-                if(in_array($customerAddress->quote_type_id, [QuoteTypeId::Car, QuoteTypeId::Cyber])) {
+                if (in_array($customerAddress->quote_type_id, [QuoteTypeId::Car, QuoteTypeId::Cyber])) {
 
                     $modelType = QuoteTypeId::getOptions()[$customerAddress->quote_type_id] ?? null;
                     $quote = $this->getQuoteObject($modelType, $customerAddress->quote_uuid);

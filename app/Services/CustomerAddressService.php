@@ -200,6 +200,7 @@ class CustomerAddressService
     {
         if (! $lead->embeddedTransactions()->exists()) {
             LoggerService::info('No embedded transactions found for lead : '.$lead->uuid);
+
             return;
         }
 
