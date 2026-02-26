@@ -176,8 +176,7 @@ const customerProfileForm = useForm({
     page.props.quote?.quote_request_entity_mapping?.entity
       ?.industry_type_code ?? null,
   emirate_of_registration_id:
-    page.props.quote?.quote_request_entity_mapping?.entity
-      ?.emirate_of_registration_id ?? null,
+      page.props.quote?.cyber_quote?.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
@@ -533,6 +532,10 @@ const confirmSendEmail = () => {
 };
 
 const [DirhamSignTemplate, DirhamSignReuseTemplate] = createReusableTemplate();
+
+const formatDob = dob => {
+  return dob ? useDateFormat(dob, 'DD-MM-YYYY').value : '-';
+};
 </script>
 
 <template>
@@ -745,10 +748,6 @@ const [DirhamSignTemplate, DirhamSignReuseTemplate] = createReusableTemplate();
                 <dd>{{ quote.source }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-                <dd></dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
                 <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
               </div>
@@ -865,7 +864,7 @@ const [DirhamSignTemplate, DirhamSignReuseTemplate] = createReusableTemplate();
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
-                  <dd>{{ quote.dob }}</dd>
+                  <dd>{{ formatDob(quote.dob) }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
@@ -901,6 +900,19 @@ const [DirhamSignTemplate, DirhamSignReuseTemplate] = createReusableTemplate();
                     <DatePicker
                       v-model="customerProfileForm.emirates_id_issuing_date"
                       placeholder="EMIRATES ID ISSUING DATE"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES OF RESIDENCE</dt>
+                  <dd>
+                    <ComboBox
+                      v-model="customerProfileForm.emirate_of_registration_id"
+                      :single="true"
+                      placeholder="SELECT EMIRATES OF RESIDENCE"
+                      :options="emiratesOptions"
+                      class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
@@ -953,12 +965,12 @@ const [DirhamSignTemplate, DirhamSignReuseTemplate] = createReusableTemplate();
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                  <dt class="font-medium">EMIRATES OF RESIDENCE</dt>
                   <dd>
                     <ComboBox
                       v-model="customerProfileForm.emirate_of_registration_id"
                       :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      placeholder="SELECT EMIRATES OF RESIDENCE"
                       :options="emiratesOptions"
                       class="w-full"
                     />
