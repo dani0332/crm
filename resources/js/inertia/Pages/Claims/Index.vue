@@ -870,19 +870,19 @@ watch(
       </template>
 
       <template #item-plate_number="{ claim_request_details }">
-        {{ claim_request_details.plate_number }}
+        {{ claim_request_details?.plate_number }}
       </template>
 
       <template #item-car_make="{ claim_request_details }">
-        {{ claim_request_details.car_make }}
+        {{ claim_request_details?.car_make }}
       </template>
 
       <template #item-car_model="{ claim_request_details }">
-        {{ claim_request_details.car_model }}
+        {{ claim_request_details?.car_model }}
       </template>
 
       <template #item-model_year="{ claim_request_details }">
-        {{ claim_request_details.model_year }}
+        {{ claim_request_details?.model_year }}
       </template>
 
       <template #item-manager="{ manager }">

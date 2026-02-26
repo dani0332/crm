@@ -4,7 +4,10 @@ import NProgress from 'nprogress';
 const props = defineProps({
   claim: Object,
   documents: Object,
-  documentTypes: Object,
+  documentTypes: {
+    type: Object,
+    default: () => ({}),
+  },
   storageUrl: String,
   expanded: {
     type: Boolean,
@@ -342,7 +345,7 @@ const downloadAllDocuments = async () => {
             </a>
           </template>
           <template #item-created_by="item">
-            {{ item.created_by.name }}
+            {{ item.created_by?.name }}
           </template>
           <template #item-action="{ id, doc_uuid, original_name }">
             <div>

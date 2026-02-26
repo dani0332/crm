@@ -25,7 +25,7 @@ const claimStatusForm = useForm({
 
 const statusOptions = computed(() => {
   return (
-    props.dropdowns.claimStatuses?.map(status => ({
+    props.dropdowns?.claimStatuses?.map(status => ({
       value: status.id,
       label: status.text.label,
     })) || []
