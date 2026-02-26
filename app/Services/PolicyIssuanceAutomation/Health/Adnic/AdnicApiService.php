@@ -135,9 +135,11 @@ class AdnicApiService
                 $base64Content = base64_encode($compressedContent);
 
                 LoggerService::info('Preparing upload payload', extra: [
+                    'quote_uuid' => $quote->uuid,
                     'document_type' => $quoteDocument->document_type_code,
                     'insurer_document_code' => $insurerDocumentCode,
                     'document_name' => $quoteDocument->original_name ?? $quoteDocument->doc_name,
+                    'document_string_length' => strlen($base64Content),
                     'document_size_kb' => round(strlen($base64Content) / 1024, 2),
                 ]);
 
