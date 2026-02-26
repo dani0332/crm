@@ -61,7 +61,7 @@ class AdnicApiService
             return $response;
         }
 
-        $issuePolicyResult = $issuePolicyResponse['data']?->data;
+        $issuePolicyResult = $issuePolicyResponse['data'];
         LoggerService::info('API call successful, updating quote and payment', extra: [
             'policy_number' => $issuePolicyResult?->PolicyInfo?->PolicyNo,
             'policy_start_date' => $issuePolicyResult?->PolicyInfo?->PolicyStartDate,
