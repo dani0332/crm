@@ -7,11 +7,12 @@ use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Services\CustomerAddressService;
 use Tests\Helpers\TestSchemaCreator;
+use Tests\Support\Schema\SchemaUtils;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
 
-    schema()->create('customer_addresses', function ($table) {
+    SchemaUtils::ensureTable('customer_addresses', function ($table) {
         $table->id();
         $table->unsignedBigInteger('customer_id');
         $table->string('type')->nullable();
