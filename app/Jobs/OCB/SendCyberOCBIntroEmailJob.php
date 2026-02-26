@@ -3,6 +3,7 @@
 namespace App\Jobs\OCB;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\CyberEmailService;
 use App\Services\Logger\LoggerService;
@@ -86,6 +87,11 @@ class SendCyberOCBIntroEmailJob implements ShouldQueue
         $lead = PersonalQuote::where('uuid', $this->quoteUuid)->first();
         if (! $lead) {
             LoggerService::info(static::class." - Lead not found for uuid: {$this->quoteUuid}");
+
+            return;
+        }
+        if (in_array($lead->quote_status_id, [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost, QuoteStatusEnum::Fake])) {
+            LoggerService::info(static::class." - Lead not eligible for OCB email uuid: {$this->quoteUuid}");
 
             return;
         }
