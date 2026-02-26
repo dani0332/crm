@@ -12,17 +12,56 @@ class CustomerFactory extends Factory
 {
     protected $model = Customer::class;
 
+    /**
+     * Configure the model factory.
+     */
+    public function configure()
+    {
+        return $this->afterMaking(function (Customer $customer) {
+            // Use SQLite connection for tests
+            if (app()->environment('testing')) {
+                $customer->setConnection('sqlite');
+            }
+        });
+    }
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         return [
-            'emirates_id_number' => '784-'.random_int(1000, 9999).'-'.random_int(1000000, 9999999).'-1',
-            'first_name' => fake()->firstName(),
-            'last_name' => fake()->lastName(),
-            'email' => fake()->unique()->safeEmail(),
-            'mobile_no' => '+971'.random_int(500000000, 599999999),
-            'dob' => fake()->date('Y-m-d', '-25 years'),
+            'first_name' => $this->faker->firstName(),
+            'last_name' => $this->faker->lastName(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'mobile_no' => $this->faker->numerify('05########'),
+            'dob' => $this->faker->date('Y-m-d', '-25 years'),
+            'nationality_id' => Nationality::factory(),
+            'emirates_id_number' => '784-'.$this->faker->numerify('####').'-'.$this->faker->numerify('#######').'-'.$this->faker->randomDigit(),
             'created_at' => now(),
             'updated_at' => now(),
         ];
+    }
+
+    /**
+     * Indicate that the customer has a specific email.
+     */
+    public function withEmail(string $email)
+    {
+        return $this->state(fn (array $attributes) => [
+            'email' => $email,
+        ]);
+    }
+
+    /**
+     * Indicate that the customer has a specific customer ID.
+     */
+    public function withCustomerId(int $customerId)
+    {
+        return $this->state(fn (array $attributes) => [
+            'id' => $customerId,
+        ]);
     }
 }
