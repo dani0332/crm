@@ -27,7 +27,6 @@ class ClaimNextFollowUpUpdateRequest extends FormRequest
             'next_follow_up_date' => [
                 'required',
                 'date',
-                'after:'.now()->format('Y-m-d H:i:s'),
             ],
             'notes' => [
                 'nullable',

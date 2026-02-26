@@ -309,7 +309,7 @@ class ClaimsController extends Controller
             $requestParams = $request->safe();
 
             return app(ClaimsExport::class, [
-                'claimsService' => app(ClaimsService::class),
+                'claimsService' => $this->claimsService,
                 'requestParams' => $requestParams,
             ])->download('Claims-List');
 
