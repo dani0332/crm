@@ -41,7 +41,7 @@ class InstantAlfredReportService
      */
     public function getReportQuery(array $params)
     {
-        $request     = $this->buildRequest($params);
+        $request = $this->buildRequest($params);
         $quoteTypeId = $this->resolveQuoteTypeId($request->quoteType ?? 'Car');
 
         return $this->buildCoreQuery($quoteTypeId, $request);
@@ -68,23 +68,24 @@ class InstantAlfredReportService
             return collect();
         }
 
-        $request     = $this->buildRequest($params);
+        $request = $this->buildRequest($params);
         $quoteTypeId = $this->resolveQuoteTypeId($request->quoteType ?? 'Car');
-        $uuids       = array_column($sqlRecords, 'uuid');
+        $uuids = array_column($sqlRecords, 'uuid');
 
-        $lookupMaps  = $this->loadLookupMaps();
-        $tagsByUuid  = $this->fetchTagsByUuids($uuids, $quoteTypeId);
+        $transactionTypeIds = array_column($sqlRecords, 'transaction_type_id');
+        $lookupMaps = $this->loadLookupMaps($transactionTypeIds);
+        $tagsByUuid = $this->fetchTagsByUuids($uuids, $quoteTypeId);
         $segmentFilter = $this->getSegmentFilter($request);
 
         $pipeline = $this->buildConsolidatedPipeline($uuids, $request);
 
         try {
             $mongoResults = AlfredChat::raw(fn ($c) => $c->aggregate($pipeline))->toArray();
-            $mongoByUuid  = collect($mongoResults)->keyBy('id');
+            $mongoByUuid = collect($mongoResults)->keyBy('id');
         } catch (\Exception $e) {
             Log::error('[ConsolidatedChunk] MongoDB aggregation failed', [
                 'uuid_count' => count($uuids),
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             $mongoByUuid = collect();
         }
@@ -92,7 +93,7 @@ class InstantAlfredReportService
         $result = [];
 
         foreach ($sqlRecords as $sqlRecord) {
-            $mongo   = $mongoByUuid->get($sqlRecord->uuid);
+            $mongo = $mongoByUuid->get($sqlRecord->uuid);
             $segment = $this->resolveSegment($tagsByUuid[$sqlRecord->uuid] ?? null, $sqlRecord->source ?? '');
 
             // PHP-based segment filter (replaces SQL HAVING)
@@ -100,31 +101,31 @@ class InstantAlfredReportService
                 continue;
             }
 
-            $sqlRecord->quote_type               = $request->quoteType ?? explode('-', $sqlRecord->code ?? '')[0] ?? 'N/A';
+            $sqlRecord->quote_type = $request->quoteType ?? explode('-', $sqlRecord->code ?? '')[0] ?? 'N/A';
             $sqlRecord->lead_assignment_trigger_text = $sqlRecord->lead_assignment_trigger
                 ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger)
                 : 'N/A';
 
             // PHP-resolved lookup text (replaces lookup JOINs)
-            $sqlRecord->payment_status        = $lookupMaps['payment_statuses'][$sqlRecord->payment_status_id ?? '']   ?? 'N/A';
-            $sqlRecord->quote_status_id_text  = $lookupMaps['quote_statuses'][$sqlRecord->quote_status_id ?? '']       ?? 'N/A';
-            $sqlRecord->quote_batch_id_text   = $lookupMaps['quote_batches'][$sqlRecord->quote_batch_id ?? '']         ?? 'N/A';
+            $sqlRecord->payment_status = $lookupMaps['payment_statuses'][$sqlRecord->payment_status_id ?? ''] ?? 'N/A';
+            $sqlRecord->quote_status_id_text = $lookupMaps['quote_statuses'][$sqlRecord->quote_status_id ?? ''] ?? 'N/A';
+            $sqlRecord->quote_batch_id_text = $lookupMaps['quote_batches'][$sqlRecord->quote_batch_id ?? ''] ?? 'N/A';
             $sqlRecord->transaction_type_text = $lookupMaps['transaction_types'][$sqlRecord->transaction_type_id ?? ''] ?? 'N/A';
-            $sqlRecord->segment               = $segment;
+            $sqlRecord->segment = $segment;
 
             if ($mongo) {
-                $sqlRecord->communication_channels    = $mongo['communication_channels']    ?? [];
-                $sqlRecord->customer_interactions     = $mongo['customer_interactions']     ?? 0;
-                $sqlRecord->ai_interactions           = $mongo['ai_interactions']           ?? 0;
-                $sqlRecord->total_ai_interactions     = $mongo['total_ai_interactions']     ?? 0;
-                $sqlRecord->fallbacks                 = $mongo['fallbacks']                 ?? 0;
+                $sqlRecord->communication_channels = $mongo['communication_channels'] ?? [];
+                $sqlRecord->customer_interactions = $mongo['customer_interactions'] ?? 0;
+                $sqlRecord->ai_interactions = $mongo['ai_interactions'] ?? 0;
+                $sqlRecord->total_ai_interactions = $mongo['total_ai_interactions'] ?? 0;
+                $sqlRecord->fallbacks = $mongo['fallbacks'] ?? 0;
                 $sqlRecord->date_of_first_interaction = $mongo['date_of_first_interaction'] ?? 'N/A';
             } else {
-                $sqlRecord->communication_channels    = [];
-                $sqlRecord->customer_interactions     = 0;
-                $sqlRecord->ai_interactions           = 0;
-                $sqlRecord->total_ai_interactions     = 0;
-                $sqlRecord->fallbacks                 = 0;
+                $sqlRecord->communication_channels = [];
+                $sqlRecord->customer_interactions = 0;
+                $sqlRecord->ai_interactions = 0;
+                $sqlRecord->total_ai_interactions = 0;
+                $sqlRecord->fallbacks = 0;
                 $sqlRecord->date_of_first_interaction = 'N/A';
             }
 
@@ -148,20 +149,21 @@ class InstantAlfredReportService
             return $sqlData;
         }
 
-        $request       = $this->buildRequest($params);
-        $quoteTypeId   = $this->resolveQuoteTypeId($request->quoteType ?? 'Car');
-        $uuids         = array_keys($sqlData);
+        $request = $this->buildRequest($params);
+        $quoteTypeId = $this->resolveQuoteTypeId($request->quoteType ?? 'Car');
+        $uuids = array_keys($sqlData);
         $segmentFilter = $this->getSegmentFilter($request);
 
-        $lookupMaps = $this->loadLookupMaps();
+        $transactionTypeIds = array_column($sqlData, 'transaction_type_id');
+        $lookupMaps = $this->loadLookupMaps($transactionTypeIds);
         $tagsByUuid = $this->fetchTagsByUuids($uuids, $quoteTypeId);
 
         foreach ($sqlData as $uuid => &$record) {
-            $record['payment_status']        = $lookupMaps['payment_statuses'][$record['payment_status_id'] ?? '']    ?? 'N/A';
-            $record['quote_status_id_text']  = $lookupMaps['quote_statuses'][$record['quote_status_id'] ?? '']        ?? 'N/A';
-            $record['quote_batch_id_text']   = $lookupMaps['quote_batches'][$record['quote_batch_id'] ?? '']          ?? 'N/A';
+            $record['payment_status'] = $lookupMaps['payment_statuses'][$record['payment_status_id'] ?? ''] ?? 'N/A';
+            $record['quote_status_id_text'] = $lookupMaps['quote_statuses'][$record['quote_status_id'] ?? ''] ?? 'N/A';
+            $record['quote_batch_id_text'] = $lookupMaps['quote_batches'][$record['quote_batch_id'] ?? ''] ?? 'N/A';
             $record['transaction_type_text'] = $lookupMaps['transaction_types'][$record['transaction_type_id'] ?? ''] ?? 'N/A';
-            $record['segment']               = $this->resolveSegment($tagsByUuid[$uuid] ?? null, $record['source'] ?? '');
+            $record['segment'] = $this->resolveSegment($tagsByUuid[$uuid] ?? null, $record['source'] ?? '');
         }
         unset($record);
 
@@ -381,17 +383,27 @@ class InstantAlfredReportService
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Loads all small reference tables into memory once per request.
-     * These tables typically have < 100 rows each, making PHP maps
-     * far cheaper than joining them to a 5k-50k row result set.
+     * Loads reference tables into PHP maps for fast O(1) lookup.
+     *
+     * - payment_status / quote_status / quote_batches are tiny (< 100 rows) → loaded in full.
+     * - lookups can have 5k+ rows, so we scope it to only the distinct
+     *   transaction_type_ids present in the current result set.
+     *
+     * @param  int[]  $transactionTypeIds  Distinct IDs from the SQL result set
      */
-    private function loadLookupMaps(): array
+    private function loadLookupMaps(array $transactionTypeIds = []): array
     {
+        $transactionTypeQuery = DB::table('lookups')->select('id', 'text');
+
+        if (! empty($transactionTypeIds)) {
+            $transactionTypeQuery->whereIn('id', array_unique($transactionTypeIds));
+        }
+
         return [
-            'payment_statuses'  => DB::table('payment_status')->pluck('text', 'id'),
-            'quote_statuses'    => DB::table('quote_status')->pluck('text', 'id'),
-            'quote_batches'     => DB::table('quote_batches')->pluck('name', 'id'),
-            'transaction_types' => DB::table('lookups')->pluck('text', 'id'),
+            'payment_statuses' => DB::table('payment_status')->pluck('text', 'id'),
+            'quote_statuses' => DB::table('quote_status')->pluck('text', 'id'),
+            'quote_batches' => DB::table('quote_batches')->pluck('name', 'id'),
+            'transaction_types' => $transactionTypeQuery->pluck('text', 'id'),
         ];
     }
 
@@ -400,7 +412,7 @@ class InstantAlfredReportService
      * Scoping to specific UUIDs avoids a full table scan on quote_tags,
      * unlike the old subquery which joined the entire table.
      *
-     * @return array<string, string>  uuid → comma-separated tags
+     * @return array<string, string> uuid → comma-separated tags
      */
     private function fetchTagsByUuids(array $uuids, int $quoteTypeId): array
     {
@@ -428,9 +440,9 @@ class InstantAlfredReportService
             return 'NON-SIC';
         }
 
-        $tagsLower     = strtolower($tags);
-        $aigTag        = strtolower(QuoteSegmentEnum::AIG->tag());
-        $sicTag        = strtolower(QuoteSegmentEnum::SIC->tag());
+        $tagsLower = strtolower($tags);
+        $aigTag = strtolower(QuoteSegmentEnum::AIG->tag());
+        $sicTag = strtolower(QuoteSegmentEnum::SIC->tag());
         $sicRevivalTag = strtolower(QuoteSegmentEnum::SIC_REVIVAL->tag());
         $revivalSources = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
 
@@ -468,13 +480,13 @@ class InstantAlfredReportService
         return [
             ['$match' => ['quote_id' => ['$in' => $uuids]]],
             ['$group' => [
-                '_id'                        => '$quote_id',
-                'date_of_first_interaction'  => ['$min' => '$created_at'],
-                'communication_channels'     => ['$addToSet' => '$channel'],
-                'customer_interactions'      => ['$sum' => ['$cond' => [['$eq' => ['$role', 'USER']], 1, 0]]],
-                'ai_interactions'            => ['$sum' => ['$cond' => [['$eq' => ['$role', 'AI']], 1, 0]]],
-                'total_ai_interactions'      => ['$sum' => ['$cond' => [['$in' => ['$role', ['AI', 'USER']]], 1, 0]]],
-                'fallbacks'                  => ['$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0]]],
+                '_id' => '$quote_id',
+                'date_of_first_interaction' => ['$min' => '$created_at'],
+                'communication_channels' => ['$addToSet' => '$channel'],
+                'customer_interactions' => ['$sum' => ['$cond' => [['$eq' => ['$role', 'USER']], 1, 0]]],
+                'ai_interactions' => ['$sum' => ['$cond' => [['$eq' => ['$role', 'AI']], 1, 0]]],
+                'total_ai_interactions' => ['$sum' => ['$cond' => [['$in' => ['$role', ['AI', 'USER']]], 1, 0]]],
+                'fallbacks' => ['$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0]]],
             ]],
             ['$sort' => ['date_of_first_interaction' => ($request->sortType === 'desc') ? -1 : 1]],
         ];
