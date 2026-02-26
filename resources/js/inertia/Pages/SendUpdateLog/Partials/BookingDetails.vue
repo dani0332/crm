@@ -357,7 +357,9 @@ const bookingDetailsForm = useForm({
     props.sendUpdateLog?.total_commission ||
     props?.payments[0]?.commission ||
     '',
-  total_vat_amount: props.sendUpdateLog?.total_vat_amount || '0.00',
+  total_vat_amount: can(permissionsEnum.POLICY_DETAILS_ADD_VAT)
+    ? Math.abs(props.sendUpdateLog?.total_vat_amount)
+    : props.sendUpdateLog?.total_vat_amount || '0.00',
   price_vat_applicable:
     Math.abs(props.sendUpdateLog.price_vat_applicable) || '0.00',
   price_vat_not_applicable:
@@ -424,7 +426,11 @@ const calculatePriceDetailsForATIB = () => {
       Number(bookingDetailsForm.price_vat_not_applicable);
     let total_vat_amount =
       Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
-    bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
+    bookingDetailsForm.total_vat_amount = can(
+      permissionsEnum.POLICY_DETAILS_ADD_VAT,
+    )
+      ? Number(total_vat_amount)
+      : convertToNegative(total_vat_amount);
 
     let price_with_vat =
       total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
@@ -475,8 +481,11 @@ const calculateCommission = () => {
           Number(bookingDetailsForm.price_vat_not_applicable);
         let total_vat_amount =
           Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
-        bookingDetailsForm.total_vat_amount =
-          convertToNegative(total_vat_amount);
+        bookingDetailsForm.total_vat_amount = can(
+          permissionsEnum.POLICY_DETAILS_ADD_VAT,
+        )
+          ? Number(total_vat_amount)
+          : convertToNegative(total_vat_amount);
 
         let price_with_vat =
           total_price_with_vat_and_not_vat_applicable +
@@ -1230,6 +1239,7 @@ const onReversalEdit = () => {
   }
 };
 
+// Reminder: Adjusted discount is no longer be applicable - 86erkena0
 const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
@@ -1315,15 +1325,6 @@ const noDiscountType = computed(() => {
     isCIOrCIR.value
   );
 });
-
-watch(
-  () => bookingDetailsForm.price_with_vat,
-  (newValue, oldValue) => {
-    if (!(noDiscountType.value || ignoreCheckDiscount.value)) {
-      checkDiscount(newValue, oldValue);
-    }
-  },
-);
 
 watch(
   () => props.bookingDetails?.broker_invoice_number,
@@ -2571,6 +2572,7 @@ watch(
                     @change="calculateTotalPriceOnVatChange"
                     @keypress="preventInvalidVatInput"
                     class="!mb-0 w-full"
+                    :class="isNegativeValue ? ' icon-padding' : ''"
                     :disabled="
                       !can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ||
                       !state.isEdit
@@ -2578,6 +2580,7 @@ watch(
                     placeholder="Enter Total VAT Amount"
                     :rules="[isRequired]"
                     size="xs"
+                    :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
                 <div v-else>
