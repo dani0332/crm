@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cyber;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
 use App\Http\Requests\CustomerAddressRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
@@ -29,8 +30,8 @@ class CyberQuoteRequest extends FormRequest
      */
     public function rules(): array
     {
-        $customerAddressRequest = CustomerAddressRequest::createFrom($this)->rules();
-        $customerAddressRules = Arr::dot(['addressObj' => $customerAddressRequest]);
+        $this->merge(['modelType' => $this->input('modelType') ?? QuoteTypes::CYBER->value]);
+        $customerAddressRules = Arr::dot(['addressObj' => CustomerAddressRequest::createFrom($this)->rules()]);
 
         return [
             'first_name' => 'required|between:1,20|regex:/^[a-zA-Z\s\-]+$/',
