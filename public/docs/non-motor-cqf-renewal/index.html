@@ -151,7 +151,7 @@
                     ✓ Work is distributed across queue workers (e.g. Supervisor)<br>
                     ✓ One quote per job: better parallelism and failure isolation<br>
                     ✓ Batch progress and completion are visible (e.g. Horizon)<br>
-                    ✓ Failed policies are collected and reported via <code>SendFailedNonMotorRenewalsJob</code>
+                    ✓ Failed policies are reported via <code>SendFailedNonCQFRenewal</code> (Mail) from <code>FinalizeNonMotorCQFLOBJob</code>
                 </p>
             </div>
         </div>
@@ -222,7 +222,7 @@
             <p><strong>Files:</strong> <code>app/Jobs/CQF/ProcessNonMotorCQFQuoteJob.php</code></p>
 
             <h3>4. FinalizeNonMotorCQFLOBJob</h3>
-            <p>Runs when the LOB’s quote batch completes. Loads the lead; sets <code>total_records = good + cannot_upload</code> and <code>status = COMPLETED</code> (or <code>is_deleted = 1</code> if none processed). Collects failed policy numbers from <code>RenewalQuoteProcess</code> where <code>status = BAD_DATA</code> for that lead; if any, dispatches <strong>SendFailedNonMotorRenewalsJob</strong> with the list and lead id.</p>
+            <p>Runs when the LOB’s quote batch completes. Loads the lead; sets <code>total_records = good + cannot_upload</code> and <code>status = COMPLETED</code> (or <code>is_deleted = 1</code> if none processed). If <code>cannot_upload</code> &gt; 0, sends the failed notification via <strong>SendFailedNonCQFRenewal</strong> (Mailable) which builds the Bird payload (with LOB in validationErrors and fileName) and triggers the Bird workflow.</p>
             <p><strong>Files:</strong> <code>app/Jobs/CQF/FinalizeNonMotorCQFLOBJob.php</code></p>
         </div>
 
@@ -296,7 +296,7 @@
                     <div class="tech-item"><strong>LOB job</strong> ProcessNonMotorCQFLOBJob</div>
                     <div class="tech-item"><strong>Quote job</strong> ProcessNonMotorCQFQuoteJob</div>
                     <div class="tech-item"><strong>Finalize</strong> FinalizeNonMotorCQFLOBJob</div>
-                    <div class="tech-item"><strong>Failed report</strong> SendFailedNonMotorRenewalsJob</div>
+                    <div class="tech-item"><strong>Failed report</strong> SendFailedNonCQFRenewal (Mail)</div>
                 </div>
                 <h3>Queues & batches</h3>
                 <div class="tech-grid">
