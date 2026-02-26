@@ -540,7 +540,12 @@ class ClaimsService extends BaseService
             return DB::transaction(function () use ($claimRequest, $request) {
                 // Update main claim request data
                 $claimRequestData = $this->prepareClaimRequestData($request);
+                $shouldDenyClaim = $this->isClaimDeclineReasonUpdated($claimRequest, $claimRequestData);
                 $claimRequest->update($claimRequestData);
+
+                if ($shouldDenyClaim) {
+                    $this->claimsStatusesService->markClaimAsDenied($claimRequest);
+                }
 
                 // Update claim request detail with quote type-specific logic
                 $quoteTypeId = $request->quote_type_id ?? $claimRequest->quote_type_id;

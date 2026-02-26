@@ -233,7 +233,7 @@ class ClaimStatusesService extends BaseService
 
             $claimRequest->update(['claim_sub_status_id' => $claimStatusDenied->id]);
 
-            LoggerService::info(' Claim marked as denied and closed - Claim UUID: '.$claimRequest->uuid, extra: [
+            LoggerService::info(' Claim marked as denied - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_sub_status_id' => $claimStatusDenied->id,
