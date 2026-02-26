@@ -199,7 +199,7 @@ class SagePayloadFactory
                             'DistributedAmountBeforeTaxes' => roundNumber($request->premiumWithTax),
                         ],
                     ],
-                    'InvoicePaymentSchedules' => self::createPaymentSchedules($paymentSplits, $bookingDate),
+                    'InvoicePaymentSchedules' => self::createPaymentSchedules($paymentSplits, $bookingDate, $request->insurerInvoiceDate ?? null),
                     'InvoiceOptionalFields' => $optionalFields,
                 ],
             ],
@@ -499,13 +499,17 @@ class SagePayloadFactory
     /**
      * Build InvoicePaymentSchedules for split payments.
      * First payment due date is always bookingDate (when provided); remaining payments use due dates from payment items.
+     * For SPLIT_PAYMENTS frequency, non-first items use the later of item due_date and insurerInvoiceDate (when provided)
+     * so that initial payload matches the patch logic in SageApiService / SageCustomApiService.
      *
      * @param  object[]  $splitPayments
-     * @param  string|null  $firstPaymentDueDate  Booking date for the first schedule (e.g. bookingDate); when null, first schedule uses $insurerInvoiceDate
+     * @param  string|null  $bookingDate  Booking date for the first schedule; when null, first schedule uses insurerInvoiceDate
+     * @param  string|null  $insurerInvoiceDate  When provided, used with calculateDueDate for SPLIT_PAYMENTS non-first items
      */
-    public static function createPaymentSchedules($splitPayments, $bookingDate = null)
+    public static function createPaymentSchedules($splitPayments, $bookingDate = null, $insurerInvoiceDate = null)
     {
         $data = [];
+        $dateFormat = self::instanceData()->sage_api_date_format;
         foreach ($splitPayments as $key => $item) {
             if (! isset($item->payment)) {
                 $item->payment = Payment::where('code', $item->code)->first();
@@ -517,12 +521,25 @@ class SagePayloadFactory
             if ($isFirstSchedule && $bookingDate !== null) {
                 $dueDate = $bookingDate;
             } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                $dueDate = $isFirstSchedule ? $bookingDate : date('Y-m-d', strtotime($item->due_date));
+                if ($isFirstSchedule) {
+                    $dueDate = $bookingDate ?? ($insurerInvoiceDate !== null
+                        ? Carbon::parse($insurerInvoiceDate)->format($dateFormat)
+                        : Carbon::parse($item->due_date)->format($dateFormat));
+                } elseif ($insurerInvoiceDate !== null) {
+                    $itemDueDate = Carbon::parse($item->due_date)->format($dateFormat);
+                    $dueDate = self::calculateDueDate($itemDueDate, $insurerInvoiceDate);
+                } else {
+                    $dueDate = Carbon::parse($item->due_date)->format($dateFormat);
+                }
             } else {
-                $dueDate = date('Y-m-d', strtotime($item->due_date));
-                if ($item->sr_no == 1) {
+                $dueDate = Carbon::parse($item->due_date)->format($dateFormat);
+                if ($item->sr_no == 1 && $bookingDate !== null) {
                     $dueDate = $bookingDate;
                 }
+            }
+
+            if ($dueDate === null) {
+                $dueDate = Carbon::parse($item->due_date)->format($dateFormat);
             }
 
             $temp['EntryNumber'] = 1;
@@ -1729,7 +1746,7 @@ class SagePayloadFactory
 
         // Update InvoicePaymentSchedules DueDate only, keeping amounts the same
         if (isset($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules) && is_array($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules)) {
-            $newPaymentSchedules = self::createPaymentSchedules($paymentSplits, $bookingDate);
+            $newPaymentSchedules = self::createPaymentSchedules($paymentSplits, $bookingDate, $request->insurerInvoiceDate ?? null);
             foreach ($reversePayLoad->Invoices[$invoiceIndex]->InvoicePaymentSchedules as $index => $schedule) {
                 if (isset($newPaymentSchedules[$index])) {
                     $schedule->DueDate = $newPaymentSchedules[$index]['DueDate'];
