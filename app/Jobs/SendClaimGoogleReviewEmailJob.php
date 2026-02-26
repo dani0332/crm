@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 /**
  * Send Google Review Email Job
@@ -137,7 +138,7 @@ class SendClaimGoogleReviewEmailJob implements ShouldQueue
     /**
      * Handle a job failure.
      */
-    public function failed(Exception $exception): void
+    public function failed(Throwable $exception): void
     {
         LoggerService::error(' Job permanently failed after all retries - Claim UUID: '.$this->claimRequestUuid, [
             'error' => $exception->getMessage(),

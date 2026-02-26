@@ -18,7 +18,6 @@ use App\Models\CarModel;
 use App\Models\ClaimActivity;
 use App\Models\ClaimRequest;
 use App\Models\ClaimRequestDetail;
-use App\Models\ClaimStatus;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\YearOfManufacture;
@@ -499,7 +498,7 @@ class ClaimsService extends BaseService
 
             $responseData = $response->data;
             $user = auth()->user();
-            $isClaimManager = $user->hasRole(RolesEnum::CLAIM_MANAGER);
+            $isClaimManager = $user?->hasRole(RolesEnum::CLAIM_MANAGER);
 
             if ($responseData['success'] && $isClaimManager) {
                 $claim = $this->getClaimById($responseData['claimUID']);

@@ -7,6 +7,30 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+test('rules enforce non-negative numeric approved amounts', function () {
+    $request = new ClaimDetailsUpdateRequest;
+
+    $rules = $request->rules();
+
+    expect($rules['approved_repair_amount'])->toBe([
+        'nullable',
+        'numeric',
+        'min:0',
+    ]);
+
+    expect($rules['approved_total_loss_amount'])->toBe([
+        'nullable',
+        'numeric',
+        'min:0',
+    ]);
+
+    expect($rules['approved_cash_loss_amount'])->toBe([
+        'nullable',
+        'numeric',
+        'min:0',
+    ]);
+});
+
 // ── failedValidation claim_uuid context ───────────────────────────────────────
 
 test('failedValidation logs claim_uuid from the bound route model', function () {

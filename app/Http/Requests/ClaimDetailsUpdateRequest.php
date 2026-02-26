@@ -87,6 +87,21 @@ class ClaimDetailsUpdateRequest extends FormRequest
                 'date_format:Y-m-d',
                 'before_or_equal:today',
             ],
+            'approved_repair_amount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+            'approved_total_loss_amount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+            'approved_cash_loss_amount' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
         ];
     }
 
@@ -111,6 +126,12 @@ class ClaimDetailsUpdateRequest extends FormRequest
             'claim_type_id.integer' => 'Claim type must be a number.',
             'claim_number.max' => 'Claim number cannot exceed 100 characters.',
             'claim_decline_reason.max' => 'Claim decline reason cannot exceed 2000 characters.',
+            'approved_repair_amount.numeric' => 'Approved repair amount must be a number.',
+            'approved_repair_amount.min' => 'Approved repair amount must be greater than or equal to 0.',
+            'approved_total_loss_amount.numeric' => 'Approved total loss amount must be a number.',
+            'approved_total_loss_amount.min' => 'Approved total loss amount must be greater than or equal to 0.',
+            'approved_cash_loss_amount.numeric' => 'Approved cash loss amount must be a number.',
+            'approved_cash_loss_amount.min' => 'Approved cash loss amount must be greater than or equal to 0.',
             'incident_date.required' => 'Incident date is required.',
             'incident_date.date_format' => 'Incident date must be in the format YYYY-MM-DD.',
             'incident_date.before_or_equal' => 'Incident date must be today or before.',
@@ -132,6 +153,9 @@ class ClaimDetailsUpdateRequest extends FormRequest
             'claim_type_id' => 'claim type',
             'claim_number' => 'insurer claim number',
             'claim_decline_reason' => 'claim decline reason',
+            'approved_repair_amount' => 'approved repair amount',
+            'approved_total_loss_amount' => 'approved total loss amount',
+            'approved_cash_loss_amount' => 'approved cash loss amount',
             'incident_date' => 'incident date',
         ];
     }
