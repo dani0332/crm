@@ -59,13 +59,26 @@ class QuoteDocumentService extends BaseService
      *
      * @return mixed
      */
-    public function getQuoteDocumentsToReceive($quoteTypeId)
+    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null)
     {
         return DocumentType::where([
             'is_active' => 1,
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
+            ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($registrationType, $vehicleUse) {
+                $query->where(function ($query) use ($registrationType) {
+                    $query->whereNull('registration_type')
+                        ->orWhere('registration_type', $registrationType);
+                });
+
+                $query->where(function ($query) use ($vehicleUse) {
+                    $query->whereNull('vehicle_use')
+                        ->orWhere('vehicle_use', $vehicleUse);
+                });
+
+                return $query;
+            })
             ->orderBy('sort_order')
             ->get();
     }
@@ -179,13 +192,15 @@ class QuoteDocumentService extends BaseService
         LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
 
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
+            LoggerService::warning('Invalid document type code provided '.$data['document_type_code']);
+
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
+        LoggerService::info('Watermark qualification check: '.(int) $isWaterMarkQualifyDoc);
         try {
-
             if (data_get($data, 'is_base_64', 0) == 1) {
                 $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
@@ -202,7 +217,7 @@ class QuoteDocumentService extends BaseService
 
                 // Set the filename for Azure storage
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                Storage::disk('azureIM')->put($filePathAzure, base64_decode($file_data));
+                Storage::disk('azureIMPrivate')->put($filePathAzure, base64_decode($file_data));
             } elseif ($isPaymentReceipt) {
                 $originalName = 'Receipt-'.$data['pdf_filename'].'.pdf';
 
@@ -213,7 +228,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -231,7 +246,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -245,7 +260,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/homeSAL/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -259,7 +274,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
-                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
                     return false;
                 }
@@ -272,7 +287,7 @@ class QuoteDocumentService extends BaseService
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_original_'.$docName;
-                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
             }
 
             // Generate a unique UUID
@@ -281,6 +296,7 @@ class QuoteDocumentService extends BaseService
                 $docUuid = uniqid().rand(1, 100);
             }
 
+            LoggerService::info('Creating quote document record in database');
             $quoteDocument = $quote->documents()->create([
                 'doc_name' => 'original_'.$docName,
                 'original_name' => $originalName,
@@ -305,15 +321,18 @@ class QuoteDocumentService extends BaseService
             }
 
             LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
+                LoggerService::info('Dispatching WatermarkDocumentsJob');
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
                     $data['quote_uuid'],
                     $documentType->id
                 )->afterCommit();
             }
+
+            LoggerService::info('Document uploaded successfully');
 
             return $quoteDocument;
         } catch (\Exception $exception) {
@@ -386,7 +405,12 @@ class QuoteDocumentService extends BaseService
             // Return documents filtered by document type codes if provided
             // If watermarked_doc_url is not null then we can send watermarked document in email
             // Bor Signature document is not show on document section
-            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with(self::CREATED_BY_RELATION)->latest()->get();
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)
+                ->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)
+                ->with(self::CREATED_BY_RELATION)
+                ->with('memberDetail')
+                ->latest()->get();
+
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Exclude documents that contain "Certificate of Insurance" followed by any text or space
@@ -398,7 +422,9 @@ class QuoteDocumentService extends BaseService
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
-        return $quote ? $quote->documents()->with(self::CREATED_BY_RELATION)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
+        return $quote
+            ? $quote->documents()->with(self::CREATED_BY_RELATION)->with('memberDetail')->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get()
+            : [];
     }
 
     /**
@@ -408,7 +434,7 @@ class QuoteDocumentService extends BaseService
      *
      * @return array
      */
-    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
+    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null, $quote = null)
     {
         $borPermission = PermissionsEnum::BOR_DOCUMENT_UPLOAD;
         $havePermission = Auth::user()->hasPermissionTo($borPermission);
@@ -428,6 +454,21 @@ class QuoteDocumentService extends BaseService
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
 
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
+            })
+            ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($quote) {
+                $registrationType = $quote?->registration_type ?? null;
+                $vehicleUse = $quote?->vehicle_use ?? null;
+                $query->where(function ($query) use ($registrationType) {
+                    $query->whereNull('registration_type')
+                        ->orWhere('registration_type', $registrationType);
+                });
+
+                $query->where(function ($query) use ($vehicleUse) {
+                    $query->whereNull('vehicle_use')
+                        ->orWhere('vehicle_use', $vehicleUse);
+                });
+
+                return $query;
             })
             ->sortDocumentType()->get();
         // Handle documents for quote types like CORPLINE and GroupMedical.
@@ -619,14 +660,17 @@ class QuoteDocumentService extends BaseService
             $outputFile = $outputPath = storage_path('temp/'.$docName);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         if (! $fileContent) {
-            LoggerService::error("Unable to read file azureFilePath: $azureFilePath ");
-            throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
         }
 
         // Save the source file
@@ -680,92 +724,114 @@ class QuoteDocumentService extends BaseService
         }
     }
 
+    /**
+     * Watermark a PDF while preserving form appearances:
+     * - Decrypts the source (blank password) to a temp copy and logs qpdf output.
+     * - Preprocesses with qpdf (force v1.4) for FPDI compatibility and logs output.
+     * - Builds a watermark-only PDF (FPDI) sized per page; no original content rewritten here.
+     * - Overlays the watermark PDF onto the preprocessed original via qpdf overlay to keep fields intact.
+     * - Stores the watermarked media; cleans up temp artifacts in finally.
+     */
     private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
     {
-        // Preprocess the PDF with qpdf for FPDI compatibility
-        $tempFilePath = storage_path('temp/preprocessed_'.$docName);
-        $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
+        $watermarkOverlayPath = storage_path('temp/watermark_'.$docName);
 
-        $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
-        $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
-            escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
+        try {
+            // Preprocess the PDF with qpdf for FPDI compatibility
+            $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+            $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
 
-        shell_exec($decryptCommand);
+            $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+            $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
+                escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
 
-        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
-            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+            shell_exec($decryptCommand);
 
-            if (strpos($logOutput, 'invalid password') !== false) {
-                /** PDF has password, falling back to original document*/
+            if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
 
-                // Copy the original file to the output path
-                copy($sourceFilePath, $outputPath);
+                if (strpos($logOutput, 'invalid password') !== false) {
+                    /** PDF has password, falling back to original document*/
 
-                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+                    // Copy the original file to the output path
+                    copy($sourceFilePath, $outputPath);
 
-            } else {
-                throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
-            }
-        }
+                    return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
 
-        // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
-        $qpdfCommand = 'qpdf '.
-            '--no-warn '. // Suppress warnings
-            '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
-            escapeshellarg($decryptedTempPath).' '.
-            escapeshellarg($tempFilePath).' > '.
-            escapeshellarg($qpdfLogPath).' 2>&1';
-
-        $output = shell_exec($qpdfCommand);
-
-        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
-            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
-            LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
-            throw new \Exception('qpdf preprocessing failed');
-        }
-
-        // region Apply watermark with FPDI
-        $pdf = new Fpdi;
-        $pageCount = $pdf->setSourceFile($tempFilePath);
-
-        $watermarkImagePath = public_path('images/watermark1.png');
-        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-
-            // Layer the original page content first
-            $pdf->useTemplate($templateId);
-
-            // Add watermark as overlay (on top)
-            if ($size['orientation'] === 'P') {
-                $pdf->Image(
-                    $watermarkImagePath,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
-            } else {
-                $pdf->Image(
-                    $watermarkImageAA4Path,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
+                } else {
+                    throw new \Exception("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+                }
             }
 
+            // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
+            $qpdfCommand = 'qpdf '.
+                '--no-warn '. // Suppress warnings
+                '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
+                escapeshellarg($decryptedTempPath).' '.
+                escapeshellarg($tempFilePath).' > '.
+                escapeshellarg($qpdfLogPath).' 2>&1';
+
+            $output = shell_exec($qpdfCommand);
+
+            if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+                LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
+                throw new \Exception('qpdf preprocessing failed');
+            }
+
+            // region Apply watermark with FPDI
+            $pdf = new Fpdi;
+            $pageCount = $pdf->setSourceFile($tempFilePath);
+
+            $watermarkImagePath = public_path('images/watermark1.png');
+            $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
+
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $templateId = $pdf->importPage($pageNo);
+                $size = $pdf->getTemplateSize($templateId);
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+
+                // Add watermark as overlay (on top)
+                if ($size['orientation'] === 'P') {
+                    $pdf->Image(
+                        $watermarkImagePath,
+                        0, 0, $size['width'], $size['height'],
+                        '', '', '', false, 300, '', false, false, 0
+                    );
+                } else {
+                    $pdf->Image(
+                        $watermarkImageAA4Path,
+                        0, 0, $size['width'], $size['height'],
+                        '', '', '', false, 300, '', false, false, 0
+                    );
+                }
+
+            }
+
+            $pdf->Output($watermarkOverlayPath, 'F');
+            // endregion
+
+            // Apply the watermark overlay using qpdf to preserve form fields/annotations
+            $overlayCommand = 'qpdf --overlay '.escapeshellarg($watermarkOverlayPath).' -- '.
+                escapeshellarg($tempFilePath).' '.
+                escapeshellarg($outputPath).' >> '.
+                escapeshellarg($qpdfLogPath).' 2>&1';
+
+            shell_exec($overlayCommand);
+
+            // Check if the output file was created successfully
+            if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+                $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+                LoggerService::error("qpdf overlay failed for UUID: $uuid. Output: $logOutput");
+                throw new \Exception('qpdf overlay failed');
+            }
+
+            return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+        } finally {
+            if (file_exists($watermarkOverlayPath)) {
+                unlink($watermarkOverlayPath);
+            }
         }
-
-        $pdf->Output($outputPath, 'F');
-        // endregion
-
-        // Check if the output file was created successfully
-        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
-            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
-            throw new \Exception('FPDI watermarking failed');
-        }
-
-        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
     /**
@@ -783,10 +849,13 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         $manager = new ImageManager(new Driver);
 
@@ -839,7 +908,7 @@ class QuoteDocumentService extends BaseService
         // Set the filename for Azure storage
         $watermarkedFileNameAzure = uniqid().'_'.$uuid.'_'.$docName;
         // upload file to azure
-        $filePathAzure = Storage::disk('azureIM')->putFileAs('documents/'.$documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
+        $filePathAzure = Storage::disk('azureIMPrivate')->putFileAs('documents/'.$documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
 
         // delete temp file
         if (file_exists(storage_path('temp/'.$docName))) {
@@ -858,10 +927,13 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
+        // Read directly from private storage
+        if (! Storage::disk('azureIMPrivate')->exists($file)) {
+            LoggerService::error("Unable to read file from storage: $file", extra: ['uuid' => $uuid, 'file_path' => $file]);
+            throw new \Exception("Unable to read file from storage: $file");
+        }
 
-        $encodedUrl = $this->encodeUrl($azureFilePath);
-        $fileContent = file_get_contents($encodedUrl);
+        $fileContent = Storage::disk('azureIMPrivate')->get($file);
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
@@ -888,36 +960,41 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5)
     {
-        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
-
-        if (Storage::disk($storageDisk)->exists($fileName)) {
-            $encodedFileName = urlencode($fileName);
-
-            return Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
-        } else {
+        // Early return if filePath is empty or null to avoid any errors
+        if (empty($filePath)) {
             return null;
         }
+
+        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
+
+        if (Storage::disk($storageDisk)->exists(path: $filePath)) {
+            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
+        }
+
+        return null;
     }
 
     /**
-     * Generate a temporary URL for a document stored in a specified storage disk.
+     * Get document file extension from file path
      *
-     * @param  string  $fileName  The name of the file for which to generate the temporary URL.
-     * @param  string  $storageDisk  The storage disk where the file is located. Default is 'azureIM'.
-     * @param  int  $expiryTimeInMinutes  The expiry time for the temporary URL in minutes. Default is 20 minutes.
-     * @return \Illuminate\Http\JsonResponse JSON response containing the temporary URL or an error message.
+     * @param  string  $filePath
+     * @return string
      */
-    public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    public function getDocumentExtension($filePath)
     {
-        $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
-
-        if ($url) {
-            return response()->json(['url' => $url]);
-        } else {
-            return response()->json(['error' => 'File does not exist on server']);
+        if (empty($filePath)) {
+            return '';
         }
+
+        // Clean the URL by removing query parameters
+        $cleanPath = strtok($filePath, '?');
+
+        // Remove trailing whitespace
+        $cleanPath = preg_replace('/\s+$/m', '', $cleanPath);
+
+        return pathinfo($cleanPath, PATHINFO_EXTENSION);
     }
 
     /**
@@ -996,6 +1073,16 @@ class QuoteDocumentService extends BaseService
      */
     public function updateQuoteAndPaymentStatusToPaymentPending($quote)
     {
+        // if Quote status is in already in the list of statuses to don't update payment status
+        $statuses = [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::TransactionApproved];
+        if (in_array($quote->quote_status_id, $statuses)) {
+            LoggerService::info("Quote status is already in the list of statuses to don't update payment status", extra: [
+                'quote_status_id' => $quote->quote_status_id,
+                'statuses' => $statuses,
+            ]);
+
+            return;
+        }
         $quote->quote_status_id = QuoteStatusEnum::PaymentPending;
         $quote->save();
         $payment = $quote->getLastPaymentWithInsurerPaymentLink();
@@ -1100,6 +1187,7 @@ class QuoteDocumentService extends BaseService
      */
     private function updateBorLogReference($borReference, $quoteDocument)
     {
+        LoggerService::info('Updating Bor log reference with uploaded document time and status');
         $borLog = BorLog::where('bor_reference', $borReference)->first();
         if ($borLog) {
             $borLog->update([
@@ -1112,7 +1200,7 @@ class QuoteDocumentService extends BaseService
         }
     }
 
-    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
+    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $memberDetailId)
     {
         LoggerService::info('Dispatching OCR job from API');
 
@@ -1121,7 +1209,7 @@ class QuoteDocumentService extends BaseService
             $quote,
             $filePathAzure,
             $fileMimeType,
+            $memberDetailId,
         );
     }
-
 }

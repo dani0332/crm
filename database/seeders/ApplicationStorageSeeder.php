@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EnvEnum;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
 
@@ -63,7 +64,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAutoCaptureEPPayments();
         $this->seedEnableVoiceAIIntegration();
         $this->seedSla();
-        $this->seedTravelAutomatedFollowUps();
+        // $this->seedTravelAutomatedFollowUps();
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
@@ -73,8 +74,12 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTempDisableSageBooking();
         $this->seedMrIncludeFailedBookings();
         $this->seedLegacyPolicyKeys();
-        $this->seedCyberAdvisors();
+        $this->seedCyberConfigurations();
         $this->seedBranchData();
+        $this->seedOcrUtilEnabled();
+        $this->seedCarOcbEmailTemplatesUpdate();
+        $this->seedOCRCustomerJourneyHealthEnabled();
+        $this->seedAdvisorPaymentNotificationWorkflowUrl();
     }
 
     private function livaCarAutomationSeed()
@@ -646,6 +651,19 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedOCRCustomerJourneyHealthEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedGIGCarPolicyIssuance()
     {
         ApplicationStorage::firstOrCreate(
@@ -951,10 +969,10 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedTravelAutomatedFollowUps()
     {
-        ApplicationStorage::updateOrCreate(
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_AUTOMATED_FOLLOWUPS],
             [
-                'value' => 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/6ac637e8-4bf6-418b-8f65-7485ce47687f/invoke-sync',
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/d2390476-791f-493e-a68e-a3625839261c/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1220,32 +1238,12 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedCyberAdvisors()
+    private function seedCyberConfigurations()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS],
             [
                 'value' => 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS_TEST],
-            [
-                'value' => 'fahadhussain2020@gmail.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE],
-            [
-                'value' => '0',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1262,7 +1260,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        $ccEmails = env('APP_ENV') === 'production' ? 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com' : 'diya.lekhwani@myalfred.com';
+        $ccEmails = config('app.env') === 'production' ? 'dt.system.notifications@insurancemarket.ae, cyber.enquiries@insurancemarket.ae, sandeep.sharma@insurancemarket.ae, diya.lekhwani@myalfred.com, digital.transformation.support@myalfred.com' : 'diya.lekhwani@myalfred.com, productionapproval@yopmail.com, sheza.moeen@myalfred.com, tasawar.hussain@myalfred.com';
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_FAILURE_EMAIL],
@@ -1274,12 +1272,44 @@ class ApplicationStorageSeeder extends Seeder
             ]
         );
 
-        $escalationLink = env('APP_ENV') === 'production' ? 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T' : 'https://imcrmuat.alfred.ae/';
+        $cyberCaptureFailureEmail = config('app.env') === 'production' ? 'production.approval.team@insurancemarket.ae' : 'productionapproval@yopmail.com';
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_CAPTURE_FAILURE_EMAIL],
+            [
+                'value' => $cyberCaptureFailureEmail,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        $escalationLink = config('app.env') === 'production' ? 'https://forms.clickup.com/2197982/f/232ey-57398/E5NVOINDYMZRFPTA3T' : 'https://imcrmuat.alfred.ae/';
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CYBER_ESCALATION_LINK],
             [
                 'value' => $escalationLink,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL],
+            [
+                'value' => 'hapexuser@gmail.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CHIEF_DEPUTY_OFFICER_MOBILE_NO],
+            [
+                'value' => '971502732524',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1312,5 +1342,92 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+    }
+
+    private function seedOcrUtilEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_UTIL_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCarOcbEmailTemplatesUpdate()
+    {
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE],
+            [
+                'value' => 778,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE],
+            [
+                'value' => 778,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE],
+            [
+                'value' => 778,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    // region Advisor Payment Notification
+
+    private function seedAdvisorPaymentNotificationWorkflowUrl()
+    {
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR],
+            [
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/4f168567-e5fa-4617-9f74-43293e0f6c6c/invoke-sync';
+        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+            $birdWorkflowUrl = 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/bdfeeeee-4101-4d9d-97b2-22f51b82ba26/invoke-sync';
+        }
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL],
+            [
+                'value' => $birdWorkflowUrl,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        ApplicationStorage::updateOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS],
+            [
+                'value' => 30,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+        // endregion
     }
 }

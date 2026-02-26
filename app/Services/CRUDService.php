@@ -147,11 +147,9 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($modelType, $leadCode) {
+        return Cache::remember("allowed_duplicate_lob_{$modelType}_{$leadCode}", now()->addHour(), function () use ($leadCode) {
             $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
-            if (strtolower($modelType) == 'business') {
-                $modelType = 'Corpline';
-            }
+
             $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
                 return $item;
             });
@@ -328,7 +326,7 @@ class CRUDService extends BaseService
 
                         $azureFileName = get_guid().'_'.$fileName;
                         $azureFilePath = $request->file('mo_proof_document')
-                            ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+                            ->storeAs('car_proof_docs', $azureFileName, 'azureIMPrivate');
 
                         $carLostQuoteLog->documents()->create([
                             'name' => $fileName,
@@ -354,7 +352,7 @@ class CRUDService extends BaseService
 
                     $azureFileName = get_guid().'_'.$fileName;
                     $azureFilePath = $request->file('proof_document')
-                        ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+                        ->storeAs('car_proof_docs', $azureFileName, 'azureIMPrivate');
 
                     $carLostQuoteLog->documents()->create([
                         'name' => $fileName,
@@ -417,7 +415,8 @@ class CRUDService extends BaseService
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
+            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"))
+            ->activeUser();
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
@@ -585,11 +584,11 @@ class CRUDService extends BaseService
         $key = '';
         if ($type == quoteTypeCode::Car) {
             if ($quotePlansCount == 1) {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE;
             } elseif ($quotePlansCount > 1) {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE;
             } else {
-                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
+                $key = ApplicationStorageEnums::SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE;
             }
         } elseif ($type == quoteTypeCode::Bike) {
             $key = 'SIB_BIKE_QUOTE_PLAN_TEMPLATE';

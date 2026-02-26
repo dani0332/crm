@@ -222,11 +222,17 @@ class ConversionAsAtReportService extends BaseService
 
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
-        $startDate = isset($filters->startEndDate) ?
+        $startDate = (isset($filters->startEndDate)
+        && is_array($filters->startEndDate)
+        && ! empty($filters->startEndDate[0])
+        ) ?
             Carbon::parse($filters->startEndDate[0])->startOfDay()->format($dateFormat) :
             Carbon::parse(now())->startOfDay()->format($dateFormat);
 
-        $endDate = isset($filters->startEndDate) ?
+        $endDate = (isset($filters->startEndDate)
+        && is_array($filters->startEndDate)
+        && ! empty($filters->startEndDate[1])
+        ) ?
             Carbon::parse($filters->startEndDate[1])->endOfDay()->format($dateFormat) :
             Carbon::parse(now())->endOfDay()->format($dateFormat);
 
@@ -469,7 +475,11 @@ class ConversionAsAtReportService extends BaseService
             ->when($isHealth,
                 function ($q) use ($alias) {
                     $q->join('health_quote_request as hqr', 'hqr.uuid', "{$alias}.uuid");
-                    $q->join('teams', 'teams.name', '=', 'hqr.health_team_type');
+                    // Health uses `health_quote_request.health_team_type` as a team-name field.
+                    // Since `teams.name` is not guaranteed unique across all team types,
+                    // constrain the join to `Team` rows to avoid duplicate matches inflating COUNT(*).
+                    $q->join('teams', 'teams.name', '=', 'hqr.health_team_type')
+                        ->where('teams.type', TeamTypeEnum::TEAM);
                 },
                 function ($q) use ($alias) {
                     $q->join('user_team', 'user_team.user_id', "{$alias}.advisor_id");

@@ -31,6 +31,7 @@ const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
+const collectionTypeEnum = page.props.collectionTypeEnum;
 
 const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
@@ -140,6 +141,7 @@ const selectedPaymentForEdit = ref(null);
 const showInsurerReceiptNumberInputField = ref(false);
 const isInsurerReceiptNumberExistsModalOpen = ref(false);
 const insurerReceiptNumberCheckInProcess = ref(false);
+const currentFileURL = ref('');
 
 // Short: is life plan details enabled
 const isLifePlanDetailsEnabled = computed(() => {
@@ -513,9 +515,9 @@ const addPaymentModal = async () => {
       props.quoteSubType != quoteTypeCodeEnum.CORPLINE) ||
     !createPaymentFormRef.value.isBrokerHavePermission()
   ) {
-    paymentFormUpdateData.collection_type = 'insurer';
+    paymentFormUpdateData.collection_type = collectionTypeEnum.INSURER;
   } else {
-    paymentFormUpdateData.collection_type = 'broker';
+    paymentFormUpdateData.collection_type = collectionTypeEnum.BROKER;
   }
 
   paymentFormUpdateData.amount = '';
@@ -654,7 +656,7 @@ const editPaymentModal = async (
   }
 
   if (
-    payment.collection_type === 'insurer' &&
+    payment.collection_type === collectionTypeEnum.INSURER &&
     isEditPaymentEnabled(payment) &&
     split_payment_id == 0 &&
     sr_no == 0 &&
@@ -673,10 +675,14 @@ const editPaymentModal = async (
     const splitPayment = payment?.payment_splits?.find(
       split => split.id === split_payment_id,
     );
+    const paymentMethods = [
+      paymentMethodsEnums.InsurerPayment,
+      paymentMethodsEnums.InsurerPaymentLink,
+    ];
     if (
-      payment.collection_type === 'insurer' &&
+      payment.collection_type === collectionTypeEnum.INSURER &&
       splitPayment &&
-      splitPayment.payment_method.code == paymentMethodsEnums.InsurerPayment
+      paymentMethods.includes(splitPayment.payment_method.code)
     ) {
       showInsurerReceiptNumberInputField.value = true;
     }
@@ -1286,6 +1292,7 @@ watch(
             @close-insurer-receipt-number-exists-modal="
               closeInsurerReceiptNumberExistsModal
             "
+            @update-current-file-url="value => (currentFileURL = value)"
           />
 
           <!-- Image Gallery Modal -->
@@ -1296,6 +1303,8 @@ watch(
             :storage-url="storageUrl"
             @update:model-value="val => val === false && closeInnerModal()"
             class="max-w-6xl mx-auto"
+            :currentFileURL="currentFileURL"
+            @update:currentFileURL="currentFileURL = $event"
           />
         </x-modal>
 

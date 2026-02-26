@@ -3,12 +3,15 @@
 namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BranchEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
@@ -19,7 +22,9 @@ use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
+use App\Services\EmailServices\TravelEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -28,6 +33,8 @@ use Illuminate\Support\Facades\Log;
 class TravelQuoteObserver
 {
     use PersonalQuoteSyncTrait;
+
+    private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'TravelQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
 
     public function updating(TravelQuote $quote): void
     {
@@ -96,6 +103,10 @@ class TravelQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $travelQuote->transaction_approved_at];
         }
+        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::Quoted && $travelQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+            LoggerService::info(self::class." - Sending automated travel followup for quote uuid: {$travelQuote->uuid}");
+            app(TravelEmailService::class)->handleAutomatedFollowup($travelQuote);
+        }
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             try {
@@ -111,11 +122,19 @@ class TravelQuoteObserver
                 app(BranchAssignmentService::class)->saveBranchOverride($travelQuote, QuoteTypeId::Travel);
                 TravelQuote::withoutEvents(function () use ($travelQuote, &$dirty) {
 
-                    $branch = app(BranchAssignmentService::class)->getBranch($travelQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+                    $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($travelQuote, QuoteTypes::TRAVEL->value);
+                    $branch_id = null;
+                    if ($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($travelQuote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Travel);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+
                     $travelQuote->update([
-                        'branch_id' => $branch?->id,
+                        'branch_id' => $branch_id,
                     ]);
-                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                    $dirty = [...$dirty, 'branch_id' => $branch_id];
                 });
             } catch (Exception $e) {
                 LoggerService::error('TravelQuoteObserver - save branch data failed', [
@@ -144,7 +163,15 @@ class TravelQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
-            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+
+            try {
+                event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $travelQuote->uuid,
+                    'quote_status_id' => $travelQuote->quote_status_id,
+                ], exception: $e);
+            }
 
             try {
                 EmbeddedProductRepository::capturePayment($travelQuote->id, quoteTypeCode::Travel);
@@ -155,12 +182,30 @@ class TravelQuoteObserver
 
         if (
             isset($dirty['quote_status_id']) &&
+            $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($travelQuote->uuid, QuoteTypeId::Travel);
+            } catch (Exception $e) {
+                LoggerService::error('TravelQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $travelQuote->uuid]);
+            }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
             $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote->uuid, QuoteTypes::TRAVEL->id())->onQueue('insly');
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
-            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            try {
+                event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $travelQuote->uuid,
+                    'quote_status_id' => $travelQuote->quote_status_id,
+                ], exception: $e);
+            }
         }
     }
 

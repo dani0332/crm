@@ -16,9 +16,7 @@ class CustomerInsuredService
             return null;
         }
 
-        $insuredData = $this->getInsuredData($customerInsured->insured_id);
-
-        return $insuredData;
+        return $this->getInsuredData($customerInsured->insured_id);
     }
 
     private function getInsuredData($insuredId): ?array

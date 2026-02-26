@@ -11,6 +11,8 @@ import {
   PaymentFormVerification,
   PaymentFormFooter,
 } from './PaymentFormComps/index.js';
+import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
+const { getTempUrl } = useDocumentTempUrl();
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -1220,17 +1222,28 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   resetTotalPayments();
   calculatePaymentBreakup();
   isPaymentNoEnabled.value = false;
+
+  const isEditMode = paymentMethodsForm.status === 'edit';
+  const shouldPreservePaymentNo =
+    isEditMode && !noPaymentUpdate && oldTotalPayments.value > 0;
+
   if (paymentMethodsForm.frequency === paymentFrequencyEnum.MONTHLY) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '12';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '12';
+    }
   } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.QUARTERLY) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '4';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '4';
+    }
   } else if (
     paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
   ) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '2';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '2';
+    }
   } else if (
     paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
   ) {
@@ -1254,7 +1267,8 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
     ) {
       totalPayments.value.splice(0, 1);
     }
-  } else {
+  } else if (!shouldPreservePaymentNo) {
+    // Preserve existing payment_no when editing, only set if creating new payment
     paymentMethodsForm.payment_no = '1';
   }
   calculatePaymentBreakup();
@@ -2045,7 +2059,7 @@ const uploadDocument = (doc, files, count) => {
  *
  * @param {number} fileId - ID of the file to display initially
  */
-const openInnerModal = fileId => {
+const openInnerModal = async fileId => {
   // Prepare the files array for the gallery modal by combining files from different sources
   filesTest.value = [
     ...fileUploadModels.value.flat(),
@@ -2058,9 +2072,20 @@ const openInnerModal = fileId => {
     item => item.id === fileId,
   );
 
-  // Open the modal
-  // isGalleryModelOpen.value = true;
-  emit('update-gallery-model-open', true);
+  // Get the current file
+  const currentFile = filesTest.value[currentFileIndex.value];
+
+  if (currentFile && currentFile.doc_url) {
+    // Use centralized composable to get the URL
+    const documentUrl = await getTempUrl(currentFile.doc_url);
+
+    if (documentUrl) {
+      // Set the URL first, then open the modal
+      emit('update-current-file-url', documentUrl);
+      // Now open the modal
+      emit('update-gallery-model-open', true);
+    }
+  }
 };
 
 const deleteDocument = (docName, count, doc_id, doc_uuid) => {

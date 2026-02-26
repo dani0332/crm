@@ -15,6 +15,8 @@ defineProps({
   },
   cyberPlans: Array,
   cyberCoverages: Array,
+  apiIssuanceStatuses: Object,
+  insurerApiStatuses: Object,
 });
 
 const page = usePage();
@@ -35,12 +37,13 @@ let availableFilters = {
   mobile_no: '',
   payment_status_id: '',
   is_ecommerce: '',
-  created_at_start: new Date() || '',
-  created_at_end: new Date() || '',
+  created_at_start: new Date().toISOString() || '',
+  created_at_end: new Date().toISOString() || '',
   quote_status_id: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   advisor_id: [],
+  sic_advisor_requested: 'All',
   payment_due_date: '',
   booking_date: '',
   last_modified_date: '',
@@ -51,6 +54,8 @@ let availableFilters = {
   transaction_approved_dates: '',
   plan_name: [],
   insurer_aml_status: [],
+  api_issuance_status_id: [],
+  insurer_api_status_id: [],
   page: 1,
 };
 
@@ -94,6 +99,16 @@ const tableHeader = ref([
   { text: 'TOTAL PRICE', value: 'premium', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
+  {
+    text: 'BRANCH',
+    value: 'branch_name',
+    is_active: true,
+  },
+  {
+    text: 'ADVISOR REQUESTED',
+    value: 'sic_advisor_requested',
+    is_active: true,
+  },
   {
     text: 'CREATED DATE',
     value: 'created_at',
@@ -182,6 +197,8 @@ const handleSelectedFilters = selectedFilters => {
 
 const exportLoader = ref(false);
 const onDataExport = () => {
+  // Format dates to YYYY-MM-DD before exporting
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'cyber');
   const payload = {
@@ -190,12 +207,27 @@ const onDataExport = () => {
   };
 
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    if (result)
-      setTimeout(() => {
-        exportLoader.value = false;
-      }, 1000);
-  });
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result) {
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+      }
+    })
+    .catch(error => {
+      exportLoader.value = false;
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.errors?.flash?.[0] ||
+        'Export failed. Please try again.';
+
+      notification.error({
+        title: errorMessage,
+        position: 'top',
+      });
+    });
 };
 
 const advisorOptions = computed(() => {
@@ -238,6 +270,8 @@ function setQueryStringFilters() {
     'insurer_aml_status',
     'plan_name',
     'coverage_up_to',
+    'api_issuance_status_id',
+    'insurer_api_status_id',
     'page',
   ];
 
@@ -265,9 +299,16 @@ function setQueryStringFilters() {
     const cleanValues = values.filter(v => v !== undefined);
 
     if (integerFields.includes(fieldName)) {
-      filters[fieldName] = cleanValues
-        .map(v => parseInt(v))
-        .filter(v => !isNaN(v));
+      if (fieldName === 'api_issuance_status_id') {
+        // Handle 'blank' as a special case for api_issuance_status_id
+        filters[fieldName] = cleanValues.map(v =>
+          v === 'blank' ? 'blank' : isNaN(parseInt(v)) ? v : parseInt(v),
+        );
+      } else {
+        filters[fieldName] = cleanValues
+          .map(v => parseInt(v))
+          .filter(v => !isNaN(v));
+      }
     } else {
       filters[fieldName] = cleanValues;
     }
@@ -275,7 +316,12 @@ function setQueryStringFilters() {
 
   for (const [key, value] of Object.entries(singleParams)) {
     if (integerFields.includes(key) && !isNaN(parseInt(value))) {
-      filters[key] = parseInt(value);
+      if (key === 'api_issuance_status_id' && value === 'blank') {
+        // Preserve 'blank' as string for api_issuance_status_id
+        filters[key] = value;
+      } else {
+        filters[key] = parseInt(value);
+      }
     } else if (key === 'is_ecommerce') {
       if (value === '0' || value === '1' || value === 0 || value === 1) {
         filters[key] = parseInt(value);
@@ -387,6 +433,24 @@ const computedCyberCoverages = computed(() => {
     value: item.id,
     label: '$ ' + item.text,
   }));
+});
+
+const apiIssuanceStatusOptions = computed(() => {
+  return Object.entries(page.props.apiIssuanceStatuses || {}).map(
+    ([key, value]) => ({
+      value: key === 'blank' ? 'blank' : parseInt(key),
+      label: value,
+    }),
+  );
+});
+
+const insurerApiStatusOptions = computed(() => {
+  return Object.entries(page.props.insurerApiStatuses || {}).map(
+    ([key, value]) => ({
+      value: parseInt(key),
+      label: value,
+    }),
+  );
 });
 </script>
 
@@ -552,6 +616,18 @@ const computedCyberCoverages = computed(() => {
             :options="advisorOptions"
           />
         </x-field>
+        <x-select
+          v-model="filters.sic_advisor_requested"
+          name="sic_advisor_requested"
+          placeholder="Search by Advisor Requested"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          label="Advisor Requested"
+        />
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -664,6 +740,52 @@ const computedCyberCoverages = computed(() => {
             </template>
           </x-select>
         </x-field>
+        <x-field label="API Issuance Status">
+          <x-select
+            v-model="filters.api_issuance_status_id"
+            name="api_issuance_status_id"
+            placeholder="Search by API Issuance Status"
+            :options="apiIssuanceStatusOptions"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.api_issuance_status_id = apiIssuanceStatusOptions.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.api_issuance_status_id = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
+        <x-field label="Insurer API Status">
+          <x-select
+            v-model="filters.insurer_api_status_id"
+            name="insurer_api_status_id"
+            placeholder="Search by Insurer API Status"
+            :options="insurerApiStatusOptions"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.insurer_api_status_id = insurerApiStatusOptions.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.insurer_api_status_id = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -759,6 +881,16 @@ const computedCyberCoverages = computed(() => {
       </template>
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
+      </template>
+      <template #item-sic_advisor_requested="{ cyber_quote }">
+        <div class="text-center">
+          <x-tag
+            size="sm"
+            :color="cyber_quote?.sic_advisor_requested ? 'success' : 'error'"
+          >
+            {{ cyber_quote?.sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
       </template>
       <template
         #item-previous_policy_expiry_date="{

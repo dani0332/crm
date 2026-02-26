@@ -12,6 +12,7 @@ enum OCRDocumentTypeEnum: string
     case CERTIFICATE_OF_ISSUANCE = 'PC';
     case MOTOR_INSURANCE_POLICY_SCHEDULE = 'MPS';
     case ID_CARD = 'IDC'; // Emirates ID
+    case DRIVER_EMIRATES_ID = 'DRIVER_EID'; // Driver Emirates ID
     case VISA = 'VI';
     case PASSPORT = 'PP';
     case REGISTRATION_CERTIFICATE = 'RC'; // Car Registration Certificate - Mulkiya
@@ -30,6 +31,10 @@ enum OCRDocumentTypeEnum: string
             'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
             'EID_CAR' => self::ID_CARD,
             'CYB_EID' => self::ID_CARD,
+            'MEEID' => self::ID_CARD,
+            'MEPP' => self::PASSPORT,
+            'MEV' => self::VISA,
+            'DRIVER_EID' => self::DRIVER_EMIRATES_ID,
 
             'PS' => self::POLICY_SCHEDULE,
             'GH_PS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE, // Group Health Policy Schedule
@@ -58,6 +63,7 @@ enum OCRDocumentTypeEnum: string
                 self::CERTIFICATE_OF_ISSUANCE,
                 self::MOTOR_INSURANCE_POLICY_SCHEDULE,
                 self::ID_CARD,
+                self::DRIVER_EMIRATES_ID,
                 self::REGISTRATION_CERTIFICATE,
                 self::DRIVING_LICENSE,
             ],
@@ -75,6 +81,11 @@ enum OCRDocumentTypeEnum: string
             ],
             QuoteTypes::CYBER => [
                 self::ID_CARD,
+            ],
+            QuoteTypes::HEALTH => [
+                self::ID_CARD,
+                self::PASSPORT,
+                self::VISA,
             ],
             default => [],
         };

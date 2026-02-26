@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
@@ -12,6 +14,8 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SukoonMedexEnum;
+use App\Enums\VehicleTypeEnum;
+use App\Exceptions\EpEcbException;
 use App\Jobs\SyncSukoonDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
@@ -22,11 +26,11 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class SukoonMedexService
 {
@@ -65,14 +69,14 @@ class SukoonMedexService
     {
         try {
             if (empty($this->certificateNumber)) {
-                throw new Exception('Step: #16 viewQuotePolicy - Required certificate_number');
+                throw new EpEcbException('Step: #16 viewQuotePolicy - Required certificate_number');
             }
 
             $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
             $response = $this->request("/policy/{$this->certificateNumber}", 'get', headers: $headers)->json();
 
             return $response;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -81,7 +85,7 @@ class SukoonMedexService
     {
         try {
             if (empty($quote) || empty($quoteTypeId) || empty($transaction)) {
-                throw new Exception('Invalid quote, quoteTypeId or transaction');
+                throw new EpEcbException('Invalid quote, quoteTypeId or transaction');
             }
 
             $this->currentQuote = $quote;
@@ -93,10 +97,8 @@ class SukoonMedexService
             $this->quotePolicy = $transaction->quote_policy ?? null;
             $this->certificateNumber = $transaction->certificate_number ?? null;
 
-            LoggerService::startQuoteLogging($this->currentQuote);
-
             if (! in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
-                throw new Exception('Only (Car / Bike) LOB are eligible');
+                throw new EpEcbException('Only (Car / Bike) LOB are eligible');
             }
 
             $this->validateCustomerDetails($this->currentQuote);
@@ -109,7 +111,7 @@ class SukoonMedexService
             $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
             $this->providerId = InsuranceProvider::where('code', InsuranceProviderEnum::OIC->value)->value('id');
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -208,7 +210,8 @@ class SukoonMedexService
                     ->delay(now()->addMinutes(1));
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            LoggerService::info("{$this->logPrefix} processPurchaseFlow failed", extra: ['exception' => $e->getMessage()]);
             throw $e;
         }
     }
@@ -288,7 +291,7 @@ class SukoonMedexService
             }
 
             return $quoteDocument;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             LoggerService::error("Error processing watermark for document ID: {$quoteDocument->id}, UUID: {$this->currentQuote->uuid}. Error: ".$e->getMessage());
 
             return false;
@@ -314,7 +317,7 @@ class SukoonMedexService
     {
         try {
             // For local storage
-            if (Storage::disk('azureIM')->exists($path)) {
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
                 return true;
             }
 
@@ -326,7 +329,7 @@ class SukoonMedexService
             }
 
             return false;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
 
             return false;
@@ -346,7 +349,7 @@ class SukoonMedexService
 
             $this->handleJobSuccess();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -431,7 +434,7 @@ class SukoonMedexService
             $viewQuotePolicyResponse = $this->viewQuotePolicy();
 
             return $this->paymentToken = $viewQuotePolicyResponse['payments'][0]['payment_token'] ?? null;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -512,7 +515,7 @@ class SukoonMedexService
 
             return $savedDocuments;
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -576,7 +579,7 @@ class SukoonMedexService
      * @param  array  $headers  The headers to include with the request.
      * @return mixed The response from the API.
      *
-     * @throws Exception When API request fails or returns error responses
+     * @throws EpEcbException When API request fails or returns error responses
      */
     private function request($endPoint, $method = 'post', $payload = [], $headers = [])
     {
@@ -595,7 +598,7 @@ class SukoonMedexService
 
                 if (str_contains($contentType, 'application/json')) {
                     $this->fetchErrors($response->json());
-                    throw new Exception("{$this->logPrefix} API Error, Response: {$responseData}");
+                    throw new EpEcbException("{$this->logPrefix} API Error, Response: {$responseData}");
                 }
             });
 
@@ -603,23 +606,23 @@ class SukoonMedexService
             $responseData = str_contains($contentType, 'text/html') ? $response->body() : $response->json();
 
             if (str_contains($contentType, 'text/html')) {
-                throw new Exception("{$this->logPrefix} API Error, Response: {$responseData}");
+                throw new EpEcbException("{$this->logPrefix} API Error, Response: {$responseData}");
             }
 
             if ($responseData['has_errors'] ?? null) {
                 $this->fetchErrors($responseData);
-                throw new Exception("{$this->logPrefix} API Request has errors");
+                throw new EpEcbException("{$this->logPrefix} API Request has errors");
             }
 
             if (str_contains($contentType, 'application/json') && isset($responseData['status']) && $this->checkIsErrorMessage($responseData['status'])) {
-                throw new Exception("{$this->logPrefix} API Error, Response status: ".($responseData['status'] ?? ''));
+                throw new EpEcbException("{$this->logPrefix} API Error, Response status: ".($responseData['status'] ?? ''));
             }
 
             $this->logRequest('passed', 'Request Successful', $payload, $endPoint, $responseData, $parentFunction);
 
             return $response;
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logRequest('failed', $e->getMessage(), $payload, $endPoint, $responseData, $parentFunction);
             throw $e;
         }
@@ -730,7 +733,7 @@ class SukoonMedexService
      * @param  mixed  $quote  The quote object.
      * @return void
      *
-     * @throws Exception If validation fails.
+     * @throws EpEcbException If validation fails.
      */
     public function validateCustomerDetails($quote)
     {
@@ -738,22 +741,19 @@ class SukoonMedexService
         $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
-        if ($customerType != CustomerTypeEnum::Individual) {
-            throw new Exception('Insured record should be individual customer-type');
-        }
-
         if (empty($insuredKyc)) {
-            throw new Exception('KYC is not found');
+            throw new EpEcbException('KYC is not found');
         }
 
         $missingFields = [];
 
-        if (empty($insuredKyc?->residential_address)) {
+        if ((empty($insuredKyc?->residential_address) && $customerType == CustomerTypeEnum::Individual) ||
+            (empty($insuredKyc?->registered_address) && $customerType == CustomerTypeEnum::Entity)) {
             $missingFields[] = 'residential-address';
         }
 
         if (! empty($missingFields)) {
-            throw new Exception('Missing: '.implode(', ', $missingFields));
+            throw new EpEcbException('Missing: '.implode(', ', $missingFields));
         }
     }
 
@@ -763,9 +763,11 @@ class SukoonMedexService
      * @param  mixed  $quote  The quote object.
      * @return array The prepared user details.
      */
+    // Reminder:: this function is used for Bike and Car quotes - already back tracked in the code
     private function prepareUserDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
+        $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
         if (! empty($quote->quoteRequestEntityMapping)) {
@@ -777,27 +779,39 @@ class SukoonMedexService
         }
 
         $quoteType = $quote->quote_type_id ?? null;
-        $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
-        $emirateIdNumber = str_replace('-', '', $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '');
+        $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote?->emirates ?? null) : ($quote->emirate ?? null);
 
+        if ($this->quoteTypeId == QuoteTypeId::Car &&
+        $quote->registration_type == CarRegistrationType::COMPANY &&
+        $quote->vehicle_use == CarVehicleUse::PRIVATE) {
+            $emirateIdNumber = $quote->vehicleDriverDetail?->driver_eid_number ?? '';
+            $title = $quote->vehicleDriverDetail?->driver_gender == 'male' ? 'Mr' : 'Ms';
+        } else {
+            $emirateIdNumber = $latestInsuredData?->id_type == 'emiratesId' ? $latestInsuredData?->id_number : '';
+            $title = $latestInsuredData?->gender == 'Male' ? 'Mr' : 'Ms';
+        }
+
+        $emirateIdNumber = str_replace('-', '', $emirateIdNumber);
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
             $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
                 .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
         }
 
+        $address = $customerType == CustomerTypeEnum::Individual ? $insuredKyc?->residential_address : $insuredKyc?->registered_address;
+
         return [
             'form_name' => 'personal_details',
-            'title' => $latestInsuredData->gender == 'Male' ? 'Mr' : 'Ms',
+            'title' => $title,
             'first_name' => $firstName,
             'last_name' => $lastName,
             'mobile' => '+9710502732524',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
-            'emirate' => $emirate->text ?? '',
+            'emirate' => $emirate?->text ?? '',
             'emirates_id_number' => $emirateIdNumber,
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',
-            'address' => $insuredKyc?->residential_address ?? '',
+            'address' => $address ?? '',
         ];
     }
 
@@ -820,7 +834,7 @@ class SukoonMedexService
      *
      * @return void
      *
-     * @throws Exception If login fails.
+     * @throws EpEcbException If login fails.
      */
     public function login()
     {
@@ -834,14 +848,14 @@ class SukoonMedexService
             $response = $this->request('/login/', 'post', $data, $headers)->json();
 
             if (empty($response['session_id'] ?? null)) {
-                throw new Exception('Session id is missing');
+                throw new EpEcbException('Session id is missing');
             }
 
             $this->sessionId = $response['session_id'] ?? null;
 
             return $response;
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -852,7 +866,7 @@ class SukoonMedexService
      * @param  array  $data  The data to submit with the form.
      * @return void
      *
-     * @throws Exception If form submission fails.
+     * @throws EpEcbException If form submission fails.
      */
     public function submitPlan($data)
     {
@@ -865,13 +879,13 @@ class SukoonMedexService
             ])->json();
 
             if (empty($result['policy_number'] ?? null) || empty($result['policy_status'] ?? null)) {
-                throw new Exception('Step: #6 submitPlan - Missing (policy_number, policy_status) in response');
+                throw new EpEcbException('Step: #6 submitPlan - Missing (policy_number, policy_status) in response');
             }
 
             // policy_status => SukoonPurchaseFlowEnum::STATUS_QUOTED
             return ['quote_policy' => $result['policy_number'], 'policy_status' => $result['policy_status']];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -920,7 +934,7 @@ class SukoonMedexService
             $fields = $result['form']['fields'] ?? [];
 
             if (empty($fields) || ! empty(array_diff(['policy_number', 'policy_status'], array_keys($result)))) {
-                throw new Exception('Step: #4 submitPersonalDetail - Missing (fields, policy_number, policy_status) in response');
+                throw new EpEcbException('Step: #4 submitPersonalDetail - Missing (fields, policy_number, policy_status) in response');
             }
 
             $requiredFields = ['payment_plan', 'amount_disclaimer_text'];
@@ -928,7 +942,7 @@ class SukoonMedexService
 
             // Check required fields are present in response?, sometimes required fields are not present in success response
             if (! empty(array_diff($requiredFields, array_keys($pluckedFieldsValue)))) {
-                throw new Exception('Step: #4 submitPersonalDetail - Missing (payment_plan, amount_disclaimer_text) in response');
+                throw new EpEcbException('Step: #4 submitPersonalDetail - Missing (payment_plan, amount_disclaimer_text) in response');
             }
 
             return [
@@ -938,7 +952,7 @@ class SukoonMedexService
                 'amount_disclaimer_text' => $pluckedFieldsValue['amount_disclaimer_text'],
             ];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -976,9 +990,18 @@ class SukoonMedexService
      */
     private function prepareAdditionalData()
     {
-        $planOption = match ($this->quoteTypeId) {
-            QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
-            QuoteTypeId::Bike => "{$this->productSlug}-personal_sports_mc",
+        // Check if this should use the bike/sports MC plan
+        $bikeVehicleTypes = [
+            VehicleTypeEnum::MOTOR_CYCLE->value,
+            VehicleTypeEnum::BIKE->value,
+            VehicleTypeEnum::MOTOR_CYCLES->value,
+        ];
+        $useBikePlan = $this->quoteTypeId === QuoteTypeId::Bike ||
+                        ($this->quoteTypeId === QuoteTypeId::Car && in_array($this->currentQuote?->vehicle_type_id, $bikeVehicleTypes));
+
+        $planOption = match (true) {
+            $useBikePlan => "{$this->productSlug}-personal_sports_mc",
+            $this->quoteTypeId === QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
             default => null
         };
 
@@ -1008,7 +1031,7 @@ class SukoonMedexService
 
             $responsePolicyData = $response['policy_data'] ?? [];
             if (empty($responsePolicyData['quote_number'] ?? null) || empty($responsePolicyData['policy_status'] ?? null)) {
-                throw new Exception('Step: #7 reviewSubmittedData - Missing (quote_number, policy_status) in response');
+                throw new EpEcbException('Step: #7 reviewSubmittedData - Missing (quote_number, policy_status) in response');
             }
 
             return [
@@ -1016,7 +1039,7 @@ class SukoonMedexService
                 'policy_status' => $responsePolicyData['policy_status'], // SukoonPurchaseFlowEnum::STATUS_QUOTED
             ];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1036,7 +1059,7 @@ class SukoonMedexService
             );
 
             return true;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1046,7 +1069,7 @@ class SukoonMedexService
      *
      * @return void
      *
-     * @throws Exception If payment initiation fails.
+     * @throws EpEcbException If payment initiation fails.
      */
     public function initiatePaymentProcess()
     {
@@ -1054,7 +1077,7 @@ class SukoonMedexService
 
         try {
             if (empty($data['policy_number']) || empty($data['gateway'])) {
-                throw new Exception('Step: #10 initiatePaymentProcess - Required policy number & gateway');
+                throw new EpEcbException('Step: #10 initiatePaymentProcess - Required policy number & gateway');
             }
 
             $result = $this->request('/payment/initiate/', 'post', $data, [
@@ -1064,12 +1087,12 @@ class SukoonMedexService
             ])->json();
 
             if (empty($result['token'] ?? null)) {
-                throw new Exception('Step: #10 initiatePaymentProcess - Missing token in response');
+                throw new EpEcbException('Step: #10 initiatePaymentProcess - Missing token in response');
             }
 
             return ['payment_token' => $result['token'] ?? null];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1079,7 +1102,7 @@ class SukoonMedexService
      *
      * @return void
      *
-     * @throws Exception If payment completion fails.
+     * @throws EpEcbException If payment completion fails.
      */
     public function completeInvoicePayment()
     {
@@ -1088,7 +1111,7 @@ class SukoonMedexService
 
         try {
             if (empty($paymentReference) || empty($this->paymentToken)) {
-                throw new Exception('Step: #11 completeInvoicePayment - Required payment_reference & payment_token');
+                throw new EpEcbException('Step: #11 completeInvoicePayment - Required payment_reference & payment_token');
             }
 
             $result = $this->request('/payment/complete/'.$this->paymentGateway.'/?token='.$this->paymentToken, 'post', $data, [
@@ -1099,12 +1122,12 @@ class SukoonMedexService
             ])->json();
 
             if (empty($result['policy_number'])) {
-                throw new Exception('Step: #11 completeInvoicePayment - Missing policy_number in response');
+                throw new EpEcbException('Step: #11 completeInvoicePayment - Missing policy_number in response');
             }
 
             return ['certificate_number' => $result['policy_number'], 'policy_status' => EmbeddedTransactionEnum::STATUS_PAYMENT_SUCCEED];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1113,11 +1136,11 @@ class SukoonMedexService
     {
         try {
             if (empty($this->certificateNumber)) {
-                throw new Exception('Step: #12 getPolicyScheduleCoi - Required certificate_number');
+                throw new EpEcbException('Step: #12 getPolicyScheduleCoi - Required certificate_number');
             }
 
             $this->request('/policy/'.$this->certificateNumber.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1126,11 +1149,11 @@ class SukoonMedexService
     {
         try {
             if (empty($this->paymentToken)) {
-                throw new Exception('Step: #13 getCustomerTaxInvoice - Required payment_token');
+                throw new EpEcbException('Step: #13 getCustomerTaxInvoice - Required payment_token');
             }
 
             $this->request('/payment/'.$this->paymentToken.'/tax-invoice', 'get', headers: ['x-session-id' => $this->sessionId]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1142,20 +1165,20 @@ class SukoonMedexService
      * @param  mixed  $transaction  The transaction object.
      * @return void
      *
-     * @throws Exception If document retrieval fails.
+     * @throws EpEcbException If document retrieval fails.
      */
     public function listGeneratedDocument()
     {
         try {
             if (empty($this->certificateNumber)) {
-                throw new Exception('Step: #14 listGeneratedDocument - Required certificate_number');
+                throw new EpEcbException('Step: #14 listGeneratedDocument - Required certificate_number');
             }
 
             $result = $this->request('/policy/'.$this->certificateNumber.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
 
             return $result->json();
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1239,7 +1262,7 @@ class SukoonMedexService
 
             return $savedDocuments;
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw $e;
         }
     }
@@ -1257,7 +1280,7 @@ class SukoonMedexService
      * @return array|false Success: Document data array with fields matching App\Models\QuoteDocument for create/update operations
      *                     Failure: false when document is unavailable or upload fails
      *
-     * @throws Exception Throws exceptions for critical failures
+     * @throws EpEcbException Throws exceptions for critical failures
      */
     public function downloadDocument($docId, DocumentType $documentType, array $logContext = [])
     {
@@ -1324,9 +1347,9 @@ class SukoonMedexService
 
                 return false;
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logFailure('downloadDocument', $e->getMessage(), [...$logContext, 'doc_code' => $docCode]);
-            throw new Exception('downloadDocument ERROR: '.$e->getMessage());
+            throw new EpEcbException('downloadDocument ERROR: '.$e->getMessage());
         }
     }
 
@@ -1335,15 +1358,15 @@ class SukoonMedexService
         try {
             $fileNameAzure = uniqid()."_{$this->currentQuote->uuid}_{$docName}";
             $docUrl = "{$dir}/{$fileNameAzure}";
-            $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
+            $filePathAzure = Storage::disk('azureIMPrivate')->put($docUrl, $content);
 
             if (! $filePathAzure) {
-                throw new Exception('failed to upload document, doc_name: '.$docName.' doc_url: '.$docUrl);
+                throw new EpEcbException('failed to upload document, doc_name: '.$docName.' doc_url: '.$docUrl);
             }
 
             return response()->json(['success' => $filePathAzure, 'doc_name' => $docName, 'doc_url' => $docUrl]);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }

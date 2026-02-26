@@ -7,7 +7,6 @@ use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -15,6 +14,7 @@ use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\QuoteTraits\PersonalQuotable;
+use App\Traits\SpatieActivityLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,7 +28,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
 {
-    use Auditable, Filterable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait;
+    use Auditable, Filterable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait, SpatieActivityLog;
 
     protected $guarded = [];
     public $filterables = [
@@ -304,20 +304,6 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(Customer::class);
     }
 
-    // TODO: Remove this function and use latestInsured() instead
-    public function lastInsured()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // Foreign key on customer_insured table...
-            'id',               // Foreign key on insured table...
-            'id',               // Local key on personal_quotes table...
-            'insured_id'        // Local key on customer_insured table...
-        )
-            ->where('customer_insured.quote_type_id', $this->quote_type_id);
-    }
-
     public function leadHistory()
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
@@ -331,13 +317,13 @@ class PersonalQuote extends Model implements AuditableContract
     public function quoteRequestEntityMapping()
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Home]);
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds());
     }
 
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds());
     }
 
     public function notes()
@@ -422,23 +408,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds())
+            ->active();
     }
 
-    // Get all insured records for this quote (multiple AML screenings)
-    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
-    {
-        return $this->hasManyThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id
-            'id', // insured.id
-            'id', // personal_quotes.id
-            'insured_id' // customer_insured.insured_id
-        );
-    }
-
-    // Get the latest/most recent insured record for this quote
+    // Get the active insured record for this quote
     public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
@@ -448,13 +422,15 @@ class PersonalQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
+        )
+            ->whereIn('customer_insured.quote_type_id', getPersonalQuoteTypeIds())
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
     {
         return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet])->withTrashed();
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds())->withTrashed();
     }
 
     public function homeQuote()
@@ -603,14 +579,9 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(CyberQuote::class, 'personal_quote_id', 'id');
     }
 
-    public function cyberPlan()
-    {
-        return $this->belongsTo(InsuranceProviderPlan::class, 'quoteUuid', 'uuid');
-    }
-
     public function cyberPlanDetail()
     {
-        return $this->hasOne(CyberPlan::class, 'quoteUuid', 'uuid')->where('planId', $this->plan_id);
+        return $this->hasOne(CyberQuotePlanDetail::class, 'quoteUuid', 'uuid')->where('planId', $this->plan_id);
     }
 
     public function cyberPolicyWording()
@@ -686,5 +657,15 @@ class PersonalQuote extends Model implements AuditableContract
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+
+    public function amlAutomation()
+    {
+        return $this->hasOne(AmlAutomation::class, 'code', 'code');
+    }
+
+    public function isAutomationCompleted()
+    {
+        return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
     }
 }

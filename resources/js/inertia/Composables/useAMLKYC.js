@@ -88,8 +88,8 @@ export const useAMLKYC = () => {
    */
   const isInsurerAmlVerified = (quoteRequest, quoteType, payments) => {
     const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-    let isInsurerAmlBypassEligibleQuote =
-      quoteType === quoteTypeCodeEnum.Travel;
+    let isTravelQuote = quoteType === quoteTypeCodeEnum.Travel;
+
     let isGIGInsuranceProvider =
       page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
       page.props?.bookingDetails?.isGIGInsuranceProvider ||
@@ -106,14 +106,17 @@ export const useAMLKYC = () => {
     let isInsurerAmlCleared =
       insurerAmlClearedStatuses.includes(insurerAMLStatus);
 
-    if (isInsurerAmlBypassEligibleQuote) {
+    if (isTravelQuote) {
       if (isGIGInsuranceProvider && isPaymentMethodCC) {
         // Insurer AML is required if its travel and insurer is GIG and payment is CC
         return isInsurerAmlCleared;
       }
       //Bypass Insurer AML if its travel and insurer is other than GIG and payment is non CC
       return true;
-    } else if (isPaymentMethodCC) {
+    } /*  else if(isCarQuote && !isQuotePolicyIssuanceAutomationEnabled){
+      //Bypass Insurer AML if its car and policy issuance automation is disabled
+      return true;
+    } */ else if (isPaymentMethodCC) {
       // Insurer AML is required if its non travel and payment is CC
       return isInsurerAmlCleared;
     }

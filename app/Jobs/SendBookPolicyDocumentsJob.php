@@ -51,7 +51,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $this->code = $code;
         $this->forceEmailSend = $forceEmailSend;
         $this->fromSageProcess = $fromSageProcess;
-        $this->onQueue('insly');
+        $this->onQueue('insly')->afterCommit();
     }
 
     /**

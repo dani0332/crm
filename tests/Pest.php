@@ -11,7 +11,7 @@
 |
 */
 
-uses(Tests\TestCase::class)->in('Feature');
+uses(Tests\TestCase::class)->in('Feature', 'Unit');
 
 /*
 |--------------------------------------------------------------------------
@@ -38,3 +38,5 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the amount of code you need to write.
 |
 */
+
+require_once __DIR__.'/Helpers/AwnicTestHelper.php';

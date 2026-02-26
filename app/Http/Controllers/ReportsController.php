@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
@@ -383,7 +384,8 @@ class ReportsController extends Controller
 
     public function fetchTeamsbyType(Request $request)
     {
-        $parentId = Team::where('name', $request->lob)->first()->id;
+        $teamName = quoteTypeCode::getProductNameFromQuoteTypeCode($request->lob);
+        $parentId = getTeamId($teamName);
         $teams = Team::where('parent_team_id', $parentId)
             ->select('name', 'id')
             ->orderBy('name')
@@ -463,6 +465,7 @@ class ReportsController extends Controller
             'advisor' => $advisor,
             'fieldDisable' => $fieldDisable,
             'leadStatuses' => $leadStatuses ?? [],
+            'quoteTypeIdEnum' => QuoteTypeId::asArray(),
         ]);
     }
 
@@ -613,8 +616,8 @@ class ReportsController extends Controller
 
         $productNames = $products->pluck('name')->toArray();
         $mappedProducts = array_map(function ($name) {
-            if ($name === 'Cyber Insurance') {
-                return 'Cyber';
+            if ($name === TeamNameEnum::CYBER) {
+                return QuoteTypes::CYBER->value;
             }
 
             return $name;

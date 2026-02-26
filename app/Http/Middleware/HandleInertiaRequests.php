@@ -8,6 +8,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -121,7 +122,6 @@ class HandleInertiaRequests extends Middleware
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'pusherCluster' => config('constants.VITE_PUSHER_APP_CLUSTER'),
@@ -133,7 +133,7 @@ class HandleInertiaRequests extends Middleware
             'amlStatusEnum' => AMLStatusCode::asArray(),
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
-            'authorisePaymentCount' => Cache::remember("shared_authorisepayment_count_{$authID}", now()->addMinutes(5), fn () => app(PaymentRepository::class)->getAuthorisePaymentCount()),
+            'authorisePaymentCount' => fn () => app(PaymentRepository::class)->getAuthorisePaymentCount(),
             'checkAuthUserRole' => checkAuthUserRole(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => Cache::remember('shared_payment_lookups', now()->addHour(), fn () => app(SplitPaymentService::class)->getPaymentLookups()),
@@ -162,6 +162,8 @@ class HandleInertiaRequests extends Middleware
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
             'genericRequestEnum' => GenericRequestEnum::asArray(),
+            'collectionTypeEnum' => CollectionTypeEnum::asArray(),
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
         ];
     }
 
@@ -367,6 +369,10 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
             $nav = $nav->add('Search', route('search-leads'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SAGE_PROCESS_ISSUE_MANAGEMENT)) {
+            $nav = $nav->add('Sage Failed Leads', route('sage-failed-processes.index'));
         }
 
         /* personal quotes section */
@@ -685,6 +691,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Activity Logs',
+                        route('admin.activity-logs.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::RoleList),
                         'Roles',
                         route('roles.index'),
@@ -727,12 +739,6 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
-                        'Process Tracker',
-                        route('process-tracker.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]),
                         'Allocation Audit',
                         route('admin.allocation-audit.index'),
@@ -742,6 +748,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_ADMIN),
+                        'Buy Lead Requests',
+                        route('admin.buy-leads.requests.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

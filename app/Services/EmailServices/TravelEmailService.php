@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -298,11 +299,10 @@ class TravelEmailService extends BaseService
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
             // Only update status if email was successfully sent
             if (in_array($responseCode, [200, 201])) {
-                if ($quotePlansCount > 0) {
+                if ($quotePlansCount > 0 && in_array($lead->quote_status_id, [QuoteStatusEnum::NewLead, QuoteStatusEnum::Qualified])) {
                     $this->updateTravelQuoteStatus($lead->uuid);
                 }
-                // Only dispatch automated followup if intro email was successful
-                $this->handleAutomatedFollowup($lead);
+
             } else {
                 LoggerService::info(self::class." - Intro email failed with code {$responseCode}, skipping automated followup for uuid: {$lead->uuid}");
             }
@@ -558,7 +558,7 @@ class TravelEmailService extends BaseService
             }
 
             // Dispatch automated travel follow-up job with a short delay
-            SendAutomatedTravelFollowup::dispatch($travelQuote->uuid)->delay(now()->addSeconds(10));
+            SendAutomatedTravelFollowup::dispatch($travelQuote->uuid)->delay(now()->addSeconds(60));
 
             LoggerService::info(self::class." - TRAVEL_AUTOMATED_FOLLOWUPS - Dispatched for travel quote: {$travelQuote->uuid}");
         } catch (Exception $e) {
@@ -619,17 +619,23 @@ class TravelEmailService extends BaseService
 
             // Generate a unique temporary file path (exactly like HomeEmailService)
             $tempFilePath = 'temp/'.uniqid().'.pdf';
-            Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
+            Storage::disk('azureIMPrivate')->put($tempFilePath, $pdfContent);
 
             LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - PDF stored successfully at path: '.$tempFilePath.' for uuid: '.$quoteUID);
 
-            // Generate a public URL (exactly like HomeEmailService)
+            // Generate a public URL using generic method
             try {
-                // @phpstan-ignore-next-line
-                $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+                $url = app(QuoteDocumentService::class)->getDocumentUrl(
                     $tempFilePath,
-                    now()->addMinutes($pdfExpiry)
+                    'azureIMPrivate',
+                    $pdfExpiry
                 );
+
+                if (! $url) {
+                    LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: File does not exist for uuid: '.$quoteUID);
+
+                    return '';
+                }
             } catch (\Exception $urlException) {
                 LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: '.$urlException->getMessage().' for uuid: '.$quoteUID, exception: $urlException);
 
@@ -639,9 +645,9 @@ class TravelEmailService extends BaseService
             // Schedule deletion after expiry time
             $this->scheduleFileDeletion($tempFilePath, $pdfExpiry);
 
-            LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Final URL for Bird workflow: '.$publicUrl.' for uuid: '.$quoteUID);
+            LoggerService::info(self::class.' - attachTravelOCBPDFToEmail - Final URL for Bird workflow: '.$url.' for uuid: '.$quoteUID);
 
-            return $publicUrl;
+            return $url;
         } catch (Exception $e) {
             LoggerService::error(self::class." - attachTravelOCBPDFToEmail - Error: {$e->getMessage()} for uuid: {$quoteUID}", exception: $e);
 

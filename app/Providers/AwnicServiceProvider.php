@@ -4,10 +4,10 @@ namespace App\Providers;
 
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicBookPolicyService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicHttpClient;
+use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicResponseHandler;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicStepExecutor;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicValidationService;
-use App\Services\PolicyIssuanceAutomation\Cyber\AwniInsuranceService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,8 +32,8 @@ class AwnicServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        App::bind(AwniInsuranceService::class, function ($app) {
-            return new AwniInsuranceService(
+        App::bind(AwnicInsuranceService::class, function ($app) {
+            return new AwnicInsuranceService(
                 $app->make(AwnicStepExecutor::class),
                 $app->make(AwnicValidationService::class),
                 $app->make(AwnicBookPolicyService::class),

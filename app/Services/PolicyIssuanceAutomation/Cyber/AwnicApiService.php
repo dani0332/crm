@@ -97,27 +97,47 @@ class AwnicApiService
         // Validate required documents and insurer quote number added before hitting api
         $requiredDocuments = $this->documentHandler->getDocumentByType($quote, DocumentTypeCode::CYB_EID);
         $validationResult = $this->validationService->validateUploadDocuments($quote, $requiredDocuments);
-        if (! $validationResult['status']) {
-            return $validationResult;
+        $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_UPLOAD_DOCUMENTS);
+        $shouldExecute = $validationResult['status'];
+
+        if (! $shouldExecute) {
+            $response = $validationResult;
+        } else {
+            $documents = is_array($requiredDocuments) ? $requiredDocuments : [$requiredDocuments];
+            $uploadOutcome = $this->uploadRequiredDocuments($quote, $process, $documents);
+
+            $response['status'] = $uploadOutcome['status'];
+            $response['message'] = $uploadOutcome['message'];
+            $response['error'] = $uploadOutcome['error'];
+            $response['completed_step'] = $uploadOutcome['completed_step'];
         }
 
+        return $response;
+    }
+
+    private function uploadRequiredDocuments($quote, $process, array $documents): array
+    {
         $endPoint = '/cyber/uploadDocument';
-        $response = $this->responseHandler->buildStepResponse(AwnicEnum::STEP_UPLOAD_DOCUMENTS);
+        $response = [
+            'status' => false,
+            'message' => null,
+            'error' => null,
+            'completed_step' => null,
+        ];
+        $allDocsUploaded = true;
 
         LoggerService::info('Starting document upload process', extra: [
             'endpoint' => $endPoint,
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
-        $allDocsDownloaded = true;
-        $documents = is_array($requiredDocuments) ? $requiredDocuments : [$requiredDocuments];
         foreach ($documents as $requiredDocument) {
             $documentType = $this->documentHandler->getDocTypeCodeForCyber($requiredDocument['document_type_code']);
             $documentContentResponse = $this->documentHandler->fetchDocumentContent($requiredDocument['doc_url']);
             if (! $documentContentResponse['status']) {
                 $response['message'] = $response['error'] = $documentContentResponse['message'];
-
-                return $response;
+                $allDocsUploaded = false;
+                break;
             }
 
             $base64Content = base64_encode($documentContentResponse['content']);
@@ -136,25 +156,24 @@ class AwnicApiService
             app(PolicyIssuanceService::class)->storePolicyIssuanceLog($quote, $payload, $uploadResponse, Awnic::getBaseUrl().$endPoint, AwnicEnum::STEP_UPLOAD_DOCUMENTS, $uploadResponse['status'] ? PolicyIssuanceEnum::SUCCESS_STATUS : PolicyIssuanceEnum::FAILED_STATUS, $process);
 
             if (! $uploadResponse['status']) {
-                $allDocsDownloaded = false;
+                $response['message'] = $response['error'] = 'Some documents failed to upload';
+                $allDocsUploaded = false;
                 break;
             }
         }
 
         // this email is used to test the document download automation failure scenario
-        if (! $allDocsDownloaded || $quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD) {
-            $response['message'] = 'Some documents failed to upload';
-            $response['error'] = 'Some documents failed to upload';
+        if ($quote->email == PolicyIssuanceEnum::FAKE_EMAIL_IMCRM_DOC_DOWNLOAD || ! $allDocsUploaded) {
+            $response['error'] = $response['error'] ?? 'Some documents failed to upload';
+            $response['message'] = $response['error'];
             $response['status'] = false;
+        } else {
+            LoggerService::info('Documents uploaded successfully');
 
-            return $response;
+            $response['status'] = true;
+            $response['message'] = 'Documents uploaded successfully';
+            $response['completed_step'] = AwnicEnum::STEP_UPLOAD_DOCUMENTS;
         }
-
-        LoggerService::info('Documents uploaded successfully');
-
-        $response['status'] = true;
-        $response['message'] = 'Documents uploaded successfully';
-        $response['completed_step'] = AwnicEnum::STEP_UPLOAD_DOCUMENTS;
 
         return $response;
     }
@@ -177,10 +196,11 @@ class AwnicApiService
         $endPoint = '/cyber/downloadDocument';
 
         $uploadedDocumentsToIMCRM = collect();
+        $quote->load('cyberQuote');
         $docTypeCodeForIMCRM = $this->documentHandler->getDocTypeCodeForIMCRM($quote);
 
         // validation added before hitting api to awnic for downloading document
-        $validationResult = $this->validationService->validateDownloadDocuments($quote, $docTypeCodeForIMCRM);
+        $validationResult = $this->validationService->validateDownloadDocuments($docTypeCodeForIMCRM);
         if (! $validationResult['status']) {
             return $validationResult;
         }

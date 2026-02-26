@@ -17,42 +17,64 @@ class AwnicDocumentHandler
      */
     public function fetchDocumentContent(string $relativePath): array
     {
+        $result = ['status' => false];
         $filePath = $this->buildAzureDocumentPath($relativePath);
-        $fileContent = @file_get_contents($filePath);
-
-        if ($fileContent === false || $fileContent === '') {
-            $message = 'Invalid or empty document content';
-            LoggerService::error('Document fetch failed', extra: [
-                'file_path' => $filePath,
+        if (! $filePath) {
+            $result['message'] = 'Failed to generate temporary URL for document';
+            LoggerService::error('Document URL generation failed', extra: [
                 'relative_path' => $relativePath,
-                'error' => $message,
+                'error' => $result['message'],
             ]);
+        } else {
+            $fileContent = @file_get_contents($filePath);
 
-            return ['status' => false, 'message' => $message];
+            if ($fileContent === false || $fileContent === '') {
+                $result['message'] = 'Invalid or empty document content';
+                LoggerService::error('Document fetch failed', extra: [
+                    'file_path' => $filePath,
+                    'relative_path' => $relativePath,
+                    'error' => $result['message'],
+                ]);
+            } else {
+                $mimeType = $this->detectMimeType($fileContent);
+                if (! $mimeType || ! in_array($mimeType, self::ALLOWED_DOCUMENT_MIME_TYPES, true)) {
+                    $result['message'] = 'Unsupported document type: '.($mimeType ?? 'unknown');
+                    LoggerService::error('Invalid document mime type', extra: [
+                        'file_path' => $filePath,
+                        'mime_type' => $mimeType,
+                        'allowed_types' => self::ALLOWED_DOCUMENT_MIME_TYPES,
+                        'error' => $result['message'],
+                    ]);
+                } else {
+                    $result['status'] = true;
+                    $result['content'] = $fileContent;
+                }
+            }
         }
 
-        $mimeType = $this->detectMimeType($fileContent);
-        if (! $mimeType || ! in_array($mimeType, self::ALLOWED_DOCUMENT_MIME_TYPES, true)) {
-            $message = 'Unsupported document type: '.($mimeType ?? 'unknown');
-            LoggerService::error('Invalid document mime type', extra: [
-                'file_path' => $filePath,
-                'mime_type' => $mimeType,
-                'allowed_types' => self::ALLOWED_DOCUMENT_MIME_TYPES,
-                'error' => $message,
-            ]);
-
-            return ['status' => false, 'message' => $message];
-        }
-
-        return ['status' => true, 'content' => $fileContent];
+        return $result;
     }
 
     /**
      * Build Azure document path from relative path
      */
-    private function buildAzureDocumentPath(string $relativePath): string
+    private function buildAzureDocumentPath(string $relativePath): ?string
     {
-        return rtrim(config('constants.AZURE_IM_STORAGE_URL'), '/').'/'.rtrim(config('constants.AZURE_IM_STORAGE_CONTAINER'), '/').'/'.ltrim($relativePath, '/');
+        $quoteDocumentService = app(QuoteDocumentService::class);
+
+        // Use getDocumentUrl to get the actual URL string, not the JSON response
+        $url = $quoteDocumentService->getDocumentUrl($relativePath);
+
+        if (! $url) {
+            LoggerService::error('Failed to generate temporary URL for document', extra: [
+                'relative_path' => $relativePath,
+                'url' => $url,
+            ]);
+
+            return null;
+        }
+
+        return $url;
     }
 
     /**
@@ -129,9 +151,9 @@ class AwnicDocumentHandler
     public function getDocTypeCodeForIMCRM(PersonalQuote $quote): array
     {
         return [
-            DocumentTypeCode::CYB_TI => $quote->insurer_tax_invoice_doc_id,
-            DocumentTypeCode::CYB_TIRBB => $quote->insurer_debit_note_doc_id,
-            DocumentTypeCode::CYB_PS => $quote->insurer_policy_doc_id,
+            DocumentTypeCode::CYB_TI => $quote->cyberQuote?->insurer_tax_invoice_doc_id,
+            DocumentTypeCode::CYB_TIRBB => $quote->cyberQuote?->insurer_debit_note_doc_id,
+            DocumentTypeCode::CYB_PS => $quote->cyberQuote?->insurer_policy_doc_id,
         ];
     }
 }

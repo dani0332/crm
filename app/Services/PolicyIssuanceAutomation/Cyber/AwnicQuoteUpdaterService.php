@@ -5,31 +5,40 @@ namespace App\Services\PolicyIssuanceAutomation\Cyber;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
+use Illuminate\Support\Facades\DB;
 
 class AwnicQuoteUpdaterService
 {
     public function updateQuoteFromIssuePolicyResponse($quote, $issuePolicyResult): void
     {
-        $quote->update([
-            'policy_number' => $issuePolicyResult?->policyInfo?->policyNo,
-            'policy_issuance_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate,
-            'policy_start_date' => $issuePolicyResult?->policyInfo?->policyStartDate,
-            'policy_expiry_date' => $issuePolicyResult?->policyInfo?->policyEndDate,
-            'price_vat_applicable' => $issuePolicyResult?->policyInfo?->premiumAmount,
-            'vat' => $issuePolicyResult?->policyInfo?->prmVatAmt,
-            'price_with_vat' => $issuePolicyResult?->policyInfo?->prmPayableAmt,
-            'insurer_quote_number' => $issuePolicyResult?->QuoteRefNo ?? null,
-            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-            'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
-            'quote_status_date' => now(),
-            'insurer_debit_note_doc_id' => $issuePolicyResult?->policyInfo?->drcrDocId,
-            'insurer_tax_invoice_doc_id' => $issuePolicyResult?->policyInfo?->taxInvoiceDocId,
-            'insurer_policy_doc_id' => $issuePolicyResult?->policyInfo?->policyDocId,
-        ]);
+        DB::transaction(function () use ($quote, $issuePolicyResult) {
+            $quote->update([
+                'policy_number' => $issuePolicyResult?->policyInfo?->policyNo,
+                'policy_issuance_date' => $issuePolicyResult?->policyInfo?->policyIssuedDate,
+                'policy_start_date' => $issuePolicyResult?->policyInfo?->policyStartDate,
+                'policy_expiry_date' => $issuePolicyResult?->policyInfo?->policyEndDate,
+                'price_vat_applicable' => $issuePolicyResult?->policyInfo?->premiumAmount,
+                'vat' => $issuePolicyResult?->policyInfo?->prmVatAmt,
+                'price_with_vat' => $issuePolicyResult?->policyInfo?->prmPayableAmt,
+                'insurer_quote_number' => $issuePolicyResult?->QuoteRefNo ?? null,
+                'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+                'quote_status_date' => now(),
+            ]);
 
-        $quote->cyberPlanDetail()->update([
-            'insurerQuoteNo' => $issuePolicyResult?->QuoteRefNo,
-        ]);
+            // Use Eloquent fetch/update for auditing (do NOT bypass models/events)
+            $cyberQuote = $quote->cyberQuote;
+            if ($cyberQuote) {
+                $cyberQuote->insurer_debit_note_doc_id = $issuePolicyResult?->policyInfo?->drcrDocId;
+                $cyberQuote->insurer_tax_invoice_doc_id = $issuePolicyResult?->policyInfo?->taxInvoiceDocId;
+                $cyberQuote->insurer_policy_doc_id = $issuePolicyResult?->policyInfo?->policyDocId;
+                $cyberQuote->save();
+            }
+
+            $quote->cyberPlanDetail()->update([
+                'insurerQuoteNo' => $issuePolicyResult?->QuoteRefNo,
+            ]);
+        });
     }
 
     public function updatePaymentFromIssuePolicyResponse(string $quoteCode, $issuePolicyResult): void

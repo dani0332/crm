@@ -11,8 +11,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Cyber\CyberQuoteRequest;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Models\InsuranceProviderPlan;
-use App\Models\PaymentStatus;
-use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
@@ -35,10 +33,8 @@ class CyberQuoteController extends Controller
         $advisors = $this->cyberQuoteService->getAdvisors();
         $quoteStatuses = $this->cyberQuoteService->getQuoteStatuses([QuoteStatusEnum::Lost]);
         $authorizedDays = $this->cyberQuoteService->getPaymentAuthorizedDays();
-        $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
-        $paymentStatuses = PaymentStatus::where('is_active', 1)
-            ->orderBy('text')
-            ->get(['id', 'text']);
+        $insurerAMLStatus = $this->cyberQuoteService->getInsurerAMLStatuses();
+        $paymentStatuses = $this->cyberQuoteService->getPaymentStatuses();
 
         $query = $this->cyberQuoteService->getData();
 
@@ -47,6 +43,7 @@ class CyberQuoteController extends Controller
                     $this->cyberQuoteService->getData(forExport: true, getTotalCount: true);
 
         $data = $query->simplePaginate(10)->withQueryString();
+        $data = $this->cyberQuoteService->postProcessCyberQuotes($data);
 
         $cyberCoverages = $this->cyberQuoteService->getCyberCoverages();
 
@@ -60,6 +57,8 @@ class CyberQuoteController extends Controller
             'paymentStatuses' => $paymentStatuses,
             'cyberPlans' => InsuranceProviderPlan::where('quote_type_id', (int) QuoteTypes::CYBER->id())->select(['id', 'code', 'text'])->get(),
             'cyberCoverages' => $cyberCoverages,
+            'apiIssuanceStatuses' => \App\Enums\PolicyIssuanceEnum::getAPIIssuanceStatuses(null, true),
+            'insurerApiStatuses' => app(\App\Services\PolicyIssuanceAutomation\PolicyIssuanceService::class)->getInsurerAPIStatuses(),
         ]);
     }
 

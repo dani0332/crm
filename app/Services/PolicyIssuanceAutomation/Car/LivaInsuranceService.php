@@ -101,10 +101,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::startQuoteLogging($quote);
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
-        if ($this->isPolicyIssuanceAutomationEnabled()) {
+        $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+        if ($this->isPolicyIssuanceAutomationEnabled() && $isQuotePolicyIssuanceAutomationEnabled) {
             $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
         } else {
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - LIVA Car Automation is disabled');
+            $errorMessage = ! $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Quote Policy Issuance Automation is disabled' : 'LIVA Car Automation is disabled';
+            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
@@ -125,10 +127,12 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id.' started');
 
         try {
-            if (! $this->isPolicyIssuanceAutomationEnabled()) {
-                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - LIVA Car Automation is disabled');
-                $response['error'] = 'LIVA Car Automation is disabled';
-                $response['message'] = 'LIVA Car Automation is disabled';
+            $isQuotePolicyIssuanceAutomationEnabled = $quote->isQuotePolicyIssuanceAutomationEnabled();
+            if (! $this->isPolicyIssuanceAutomationEnabled() || ! $isQuotePolicyIssuanceAutomationEnabled) {
+                $errorMessage = $isQuotePolicyIssuanceAutomationEnabled ? 'LIVA Car Automation is disabled' : 'LIVA Car Quote Policy Issuance Automation is disabled';
+                LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - '.$errorMessage);
+                $response['error'] = $errorMessage;
+                $response['message'] = $errorMessage;
 
                 return $response;
             }
@@ -582,7 +586,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
 
-        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+        Storage::disk('azureIMPrivate')->put($filePathAzure, $fileContents);
 
         $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
@@ -784,15 +788,22 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
         foreach ($requiredDocuments as $document) {
             try {
-                // Get the file path (assuming documents are stored in storage)
-                $filePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$document['doc_url']; // Adjust path as needed
+                $fileContent = Storage::disk('azureIMPrivate')->get($document['doc_url']);
 
-                // Read file content and convert to base64
-                $fileContent = file_get_contents($filePath);
+                if (empty($fileContent) || $fileContent === false) {
+                    LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Document file is empty', extra: [
+                        'file_path' => $document['doc_url'],
+                        'document_type' => $document['document_type_code'] ?? 'unknown',
+                        'document_name' => $document['document_type_text'] ?? 'unknown',
+                    ]);
+
+                    continue;
+                }
+
                 $base64Content = base64_encode($fileContent);
 
                 // Get file extension
-                $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+                $extension = pathinfo($document['doc_url'], PATHINFO_EXTENSION);
 
                 // Map document type based on your business logic
                 $documentType = $this->getDocTypeCodeForLIVA($document['document_type_code'] ?? 'other');

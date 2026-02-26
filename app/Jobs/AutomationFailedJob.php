@@ -89,10 +89,6 @@ class AutomationFailedJob implements ShouldQueue
             if ($quote?->advisor) {
                 $this->recipientEmail = $quote->advisor->email;
                 $this->recipientName = $quote->advisor->name;
-            } else {
-                LoggerService::info('job:AutomationFailedJob - No advisor assigned, stopping job - Insurer: '.$this->insurerName);
-
-                return;
             }
         }
 
@@ -107,18 +103,12 @@ class AutomationFailedJob implements ShouldQueue
             $cc['advisoremail'] = $quote?->advisor?->email ?? '';
         }
 
-        $notificationContext = app(CyberQuoteService::class)
-            ->applyAutomationFailureNotificationRules(
-                $quote,
-                $cc,
-                $this->processInvolved,
-                $this->recipientEmail,
-                $this->recipientName
-            );
+        $notificationContext = $this->addLobViseDataForMail($quoteType, $quote, $cc);
 
-        $cc = $notificationContext['cc'];
+        $ccEmails = $notificationContext['cc'] ?? [];
         $this->recipientEmail = $notificationContext['recipientEmail'];
         $this->recipientName = $notificationContext['recipientName'];
+        $this->processInvolved = $notificationContext['processInvolved'];
 
         if (! $this->recipientEmail || ! $this->recipientName) {
             LoggerService::info('job:AutomationFailedJob - Recipient details missing, stopping job - Insurer: '.$this->insurerName);
@@ -126,7 +116,7 @@ class AutomationFailedJob implements ShouldQueue
             return;
         }
 
-        $escalationLink = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, '');
+        $escalationLink = $notificationContext['escalationLink'] ?? '';
 
         $emailData = (object) [
             'actionRequired' => $this->actionRequired,
@@ -140,6 +130,7 @@ class AutomationFailedJob implements ShouldQueue
             'insurerName' => $this->insuranceProvider?->text ?? '',
             'processInvolved' => $this->processInvolved,
             'cc' => $cc,
+            'ccEmails' => $ccEmails,
             'workflowType' => $this->workflowType,
         ];
 
@@ -169,4 +160,25 @@ class AutomationFailedJob implements ShouldQueue
         return [(new WithoutOverlapping($this->quoteId.'-automation'))->dontRelease()];
     }
 
+    private function addLobViseDataForMail($quoteType, $quote, $cc)
+    {
+        switch ($quoteType) {
+            case QuoteTypes::CYBER->value:
+                return app(CyberQuoteService::class)
+                    ->applyAutomationFailureNotificationRules(
+                        $quote,
+                        $cc,
+                        $this->processInvolved,
+                        $this->recipientEmail,
+                        $this->recipientName
+                    );
+            default:
+                return [
+                    'recipientEmail' => $this->recipientEmail,
+                    'recipientName' => $this->recipientName,
+                    'processInvolved' => $this->processInvolved,
+                ];
+        }
+
+    }
 }

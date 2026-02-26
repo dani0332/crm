@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\BranchEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -12,6 +13,7 @@ use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\LeadStatusUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CarMissingDocReminderJob;
 use App\Jobs\CourtesyEmailJob;
@@ -25,6 +27,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +36,9 @@ use Illuminate\Support\Facades\Route;
 class CarQuoteObserver
 {
     use PersonalQuoteSyncTrait;
+
+    private const LOG_LEAD_STATUS_UPDATED_FAILED = 'CarQuoteObserver - dispatch LeadStatusUpdated event failed';
+    private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'CarQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
 
     public function updating(CarQuote $quote): void
     {
@@ -59,7 +65,7 @@ class CarQuoteObserver
      */
     public function updated(CarQuote $lead)
     {
-        $dirty = $lead->getDirty();
+        $dirty = $lead->getChanges();
         $changes = [];
 
         if (Route::currentRouteName() == 'car.update' && $this->checkIfAnythingDirty($dirty, ['first_name', 'last_name', 'email', 'mobile_no', 'updated_at', 'is_quote_locked', 'quote_updated_at', 'advisor_id'])) {
@@ -120,11 +126,19 @@ class CarQuoteObserver
                 app(BranchAssignmentService::class)->saveBranchOverride($lead, QuoteTypeId::Car);
                 CarQuote::withoutEvents(function () use ($lead, &$dirty) {
 
-                    $branch = app(BranchAssignmentService::class)->getBranch($lead?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+                    $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($lead, QuoteTypes::CAR->value);
+                    $branch_id = null;
+                    if ($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($lead?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Car);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+
                     $lead->update([
-                        'branch_id' => $branch?->id,
+                        'branch_id' => $branch_id,
                     ]);
-                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                    $dirty = [...$dirty, 'branch_id' => $branch_id];
                 });
             } catch (Exception $e) {
                 LoggerService::error('CarQuoteObserver - save branch data failed', [
@@ -136,7 +150,14 @@ class CarQuoteObserver
         $this->syncQuote($lead, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
-            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            try {
+                LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_LEAD_STATUS_UPDATED_FAILED, [
+                    'uuid' => $lead->uuid,
+                    'quote_status_id' => $lead->quote_status_id,
+                ], exception: $e);
+            }
 
             try {
                 EmbeddedProductRepository::cancelEmbeddedProducts($lead->id, quoteTypeCode::Car);
@@ -152,7 +173,15 @@ class CarQuoteObserver
             isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
-            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            try {
+                LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_LEAD_STATUS_UPDATED_FAILED, [
+                    'uuid' => $lead->uuid,
+                    'quote_status_id' => $lead->quote_status_id,
+                ], exception: $e);
+            }
+
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
             ExtendCustomerSubscriptionViaSQS::dispatch(
                 $lead->customer,
@@ -170,17 +199,47 @@ class CarQuoteObserver
                     ]);
                 }
             }
-            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $lead->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
+            } catch (Exception $e) {
+                LoggerService::error('CarQuoteObserver - dispatch QuotePolicyBooked event failed', [
+                    'uuid' => $lead->uuid,
+                ], exception: $e);
+            }
+
+            try {
+                event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $lead->uuid,
+                    'quote_status_id' => $lead->quote_status_id,
+                ], exception: $e);
+            }
+        }
+
         if (
             isset($dirty['quote_status_id']) &&
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             SendPolicyIssueWhatsappMessageJob::dispatch($lead->uuid, QuoteTypes::CAR->id())->onQueue('insly');
-            LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+
+            try {
+                LeadStatusUpdated::dispatch(QuoteTypes::CAR, $lead->uuid);
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_LEAD_STATUS_UPDATED_FAILED, [
+                    'uuid' => $lead->uuid,
+                    'quote_status_id' => $lead->quote_status_id,
+                ], exception: $e);
+            }
+
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
-            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PaymentPending) {
 

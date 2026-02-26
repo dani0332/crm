@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -700,6 +702,27 @@ class DocumentTypesSeeder extends Seeder
                 'receive_from_customer' => 1,
                 'category' => DocumentTypeCode::QUOTE,
             ],
+            [
+                'code' => DocumentTypeCode::DRIVER_EMIRATES_ID,
+                'text' => 'Driver\'s Emirates ID (both sides)',
+                'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::CompanyCar,
+                'folder_path' => 'car',
+                'accepted_files' => '.pdf,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 10,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 0,
+                'sort_order' => 3,
+                'receive_from_customer' => 1,
+                'category' => DocumentTypeCode::QUOTE,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+                'registration_type' => CarRegistrationType::COMPANY,
+                'vehicle_use' => CarVehicleUse::PRIVATE,
+            ],
         ];
 
         foreach ($quoteDocuments as $document) {
@@ -713,7 +736,94 @@ class DocumentTypesSeeder extends Seeder
             );
         }
 
+        // Seed UMAF document types
+        $this->seedUmafDocumentTypes();
+    }
+
+    /**
+     * Seed UMAF document types for Health quotes
+     */
+    private function seedUmafDocumentTypes(): void
+    {
+        $umafDocuments = [
+            [
+                'code' => 'UMAFSIG',
+                'text' => 'Signature',
+                'description' => null,
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypeId::Health,
+                'folder_path' => 'health',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 1,
+                'max_size' => 25,
+                'is_required' => 0,
+                'send_to_customer' => 0,
+                'sort_order' => null,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::QUOTE,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+        ];
+
+        foreach ($umafDocuments as $document) {
+            DocumentType::firstOrCreate(
+                [
+                    'code' => $document['code'],
+                    'quote_type_id' => $document['quote_type_id'],
+                    'business_type_of_insurance_id' => $document['business_type_of_insurance_id'] ?? null,
+                ],
+                $document
+            );
+        }
+        $this->updateEIDCompanyCarDocument();
         $this->cyberDocumentTypes();
+    }
+
+    private function updateEIDCompanyCarDocument()
+    {
+        $ownerEIDDocument = [
+            'code' => 'EID_CAR',
+            'text' => 'Owner\'s Emirates ID (both sides)',
+            'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
+            'is_active' => 1,
+            'quote_type_id' => QuoteTypeId::CompanyCar,
+            'folder_path' => 'car',
+            'accepted_files' => '.pdf,.docx,.doc,.jpeg,.jpg,.png,.webp',
+            'max_files' => 10,
+            'max_size' => 25,
+            'is_required' => 1,
+            'send_to_customer' => 0,
+            'sort_order' => 3,
+            'receive_from_customer' => 1,
+            'category' => DocumentTypeCode::QUOTE,
+            'is_required_for_send_policy' => 0,
+            'business_type_of_insurance_id' => null,
+            'business_type_of_customer' => null,
+            'registration_type' => CarRegistrationType::COMPANY,
+            'vehicle_use' => CarVehicleUse::PRIVATE,
+        ];
+
+        DocumentType::firstOrCreate(
+            [
+                'code' => 'EID_CAR',
+                'quote_type_id' => $ownerEIDDocument['quote_type_id'],
+                'registration_type' => $ownerEIDDocument['registration_type'],
+                'vehicle_use' => $ownerEIDDocument['vehicle_use'],
+            ],
+            $ownerEIDDocument
+        );
+
+        // update existing EID type of company car document to commercial
+        DocumentType::where('code', 'EID_CAR')
+            ->where('quote_type_id', QuoteTypeId::CompanyCar)
+            ->whereNull('registration_type')
+            ->whereNull('vehicle_use')
+            ->update([
+                'registration_type' => CarRegistrationType::COMPANY,
+                'vehicle_use' => CarVehicleUse::COMMERCIAL,
+            ]);
     }
 
     private function cyberDocumentTypes()

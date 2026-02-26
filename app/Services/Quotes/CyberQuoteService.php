@@ -14,44 +14,49 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\UserNameEnum;
 use App\Facades\Capi;
+use App\Facades\Ken;
 use App\Models\PersonalQuote;
 use App\Models\User;
+use App\Services\BranchAssignmentService;
 use App\Services\CustomerInsuredService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CyberQuoteService extends BaseQuoteService
 {
-    private const CYBER_BOOKING_TEAM_EMAIL = 'production.approval.team@insurancemarket.ae';
-    private const CYBER_BOOKING_TEAM_NAME = 'Production Approval Team';
     public function __construct(
         private CustomerInsuredService $customerInsuredService
     ) {
         parent::__construct(QuoteTypes::CYBER);
     }
 
-    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
+    public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false, bool $getQuery = false)
     {
         $query = $this->baseQuery()->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'advisor.primaryBranch',
             'paymentStatus',
             'payments',
             'quoteDetail',
             'renewalBatchModel',
             'nationality',
             'insuranceProviderPlan',
+            'cyberQuote',
             'cyberQuote.coverage',
+            'branch:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
-            ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
+            ->when(request()->filled('created_at_start') || request()->filled('created_at_end'), function ($q) {
+                $q->filterByCreatedAt(request('created_at_start'), request('created_at_end'));
+            })
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByPaymentDueDates('payment_due_date')
@@ -61,6 +66,25 @@ class CyberQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->when(request()->filled('api_issuance_status_id'), function ($q) {
+                $values = is_array(request('api_issuance_status_id'))
+                    ? request('api_issuance_status_id')
+                    : [request('api_issuance_status_id')];
+
+                $hasBlank = in_array('blank', $values);
+                $numericValues = array_filter($values, fn ($v) => $v !== 'blank' && is_numeric($v));
+
+                $q->where(fn ($subQuery) => $subQuery
+                    ->when(! empty($numericValues), fn ($q) => $q->whereIn('api_issuance_status_id', $numericValues))
+                    ->when($hasBlank, fn ($q) => $q->orWhereNull('api_issuance_status_id'))
+                );
+            })
+            ->filterIn('insurer_api_status_id')
+            ->when(request()->filled('sic_advisor_requested') && request('sic_advisor_requested') !== 'All', function ($q) {
+                $q->whereHas('cyberQuote', function ($subQuery) {
+                    $subQuery->where('sic_advisor_requested', request('sic_advisor_requested'));
+                });
+            })
             ->when(request()->filled('coverage_up_to'), function ($q) {
                 $q->whereHas('cyberQuote', function ($subQuery) {
                     $subQuery->where('coverage_id', request('coverage_up_to'));
@@ -79,26 +103,39 @@ class CyberQuoteService extends BaseQuoteService
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        if (request()->has('debug') && request()->debug == 'true') {
-            echo $query->toRawSql();
-            exit;
+        if ($getQuery) {
+            return $query;
         }
 
         return $query->resolveData($paginted, $forExport, $getTotalCount);
     }
 
+    public function postProcessCyberQuotes($quotes)
+    {
+        $quotes->getCollection()->transform(function ($item) {
+            $item->branch_name = ! $item->is_branch_applicable
+                ? 'N/A'
+                : ($item?->branch?->name ?? app(BranchAssignmentService::class)
+                    ->getBranchName($item?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Cyber));
+
+            return $item;
+        });
+
+        return $quotes;
+    }
+
     public function getOne(string $uuid, $allDetails = false)
     {
         $quote = $this->baseQuery()
+            ->select(['personal_quotes.*'])
             ->with('cyberQuote')
             ->when($allDetails, function ($q) {
-                $entityCustomerType = CustomerTypeEnum::Entity;
-                $individualCustomerType = CustomerTypeEnum::Individual;
-
                 $q->with([
                     'quoteStatus',
                     'currentlyInsuredWith',
                     'advisor',
+                    'advisor.primaryBranch',
+                    'branch:id,name',
                     'paymentStatus',
                     'quoteDetail',
                     'quoteDetail.lostReason',
@@ -137,20 +174,12 @@ class CyberQuoteService extends BaseQuoteService
                     'documents' => function ($q) {
                         $q->with('createdBy')->orderBy('created_at', 'desc');
                     },
-                ])->select([
-                    'personal_quotes.*',
-                ])->selectRaw("
-                IF(
-                    EXISTS (
-                        SELECT *
-                        FROM quote_request_entity_mapping
-                        WHERE quote_type_id = {$this->quoteType->id()}
-                        AND quote_request_id = personal_quotes.id
-                    ), '{$entityCustomerType}', '{$individualCustomerType}'
-                ) AS customer_type
-            ");
+                ]);
             })
             ->where('uuid', $uuid)->firstOrFail();
+
+        // Set customer_type - Cyber quotes always have Individual customer type
+        $quote->customer_type = CustomerTypeEnum::Individual;
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
@@ -161,6 +190,8 @@ class CyberQuoteService extends BaseQuoteService
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
         }
+
+        $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote?->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote?->advisor?->primaryBranch?->branch_id, QuoteTypeId::Cyber));
 
         return $quote;
     }
@@ -174,6 +205,18 @@ class CyberQuoteService extends BaseQuoteService
             $quote->payment_status_id,
             $quote->payment_status_id_text ?? $quote->paymentStatus?->text ?? null
         );
+
+        // Replace advisor name with "Auto Issued" if advisor is automation user
+        if (app()->environment('production')) {
+            $automationUserEmail = PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL;
+        } else {
+            // Non-production environments use test/UAT email from app storage
+            $automationUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true);
+        }
+
+        if ($quote->advisor && $quote->advisor->email === $automationUserEmail) {
+            $quote->advisor->name = PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL;
+        }
 
         $data = $this->getShowCommonData($quote);
 
@@ -202,31 +245,19 @@ class CyberQuoteService extends BaseQuoteService
 
     public function listQuotePlans($id)
     {
-        $listQuotePlans = '';
         $quotePlans = $this->getQuotePlans($id);
 
-        if (isset($quotePlans->message) && $quotePlans->message != '') {
-            $listQuotePlans = $quotePlans->message;
-        } else {
-            if (gettype($quotePlans) != 'string') {
-                $listQuotePlans = $quotePlans->quotes->plans ?? [];
-            } else {
-                $listQuotePlans = $quotePlans;
-            }
+        // getQuotePlans() returns string for errors, array for success
+        if (is_string($quotePlans)) {
+            return $quotePlans;
         }
 
-        return $listQuotePlans;
+        // Success response: array with 'quotes' key containing 'plans'
+        return $quotePlans['quotes']['plans'] ?? [];
     }
 
     public function getQuotePlans($id, bool $getLatestRating = false)
     {
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/cyber/get-quote-plans';
-        $plansApiToken = config('constants.KEN_API_TOKEN');
-        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
-        $plansApiUserName = config('constants.KEN_API_USER');
-        $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
-
         $plansDataArr = [
             'quoteUID' => $id,
             'lang' => 'en',
@@ -234,60 +265,27 @@ class CyberQuoteService extends BaseQuoteService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        $client = new \GuzzleHttp\Client;
-
         try {
-            $kenRequest = $client->post(
-                $plansApiEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
-                    ],
-                    'body' => json_encode($plansDataArr),
-                    'timeout' => $plansApiTimeout,
-                ]
-            );
+            $response = Ken::request('/cyber/get-quote-plans', 'post', $plansDataArr);
 
-            $getStatusCode = $kenRequest->getStatusCode();
-
-            if ($getStatusCode == 200) {
-                $getContents = (string) $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
-
-                return $getdecodeContents;
-            }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-            $contents = (string) $response->getBody();
-            $response = json_decode($contents);
-
-            if (isset($response->message)) {
-                $responseBodyAsString = $response->message;
-            } elseif (isset($response->error)) {
-                $responseBodyAsString = $response->error;
-            } else {
-                $responseBodyAsString = $contents;
+            if (isset($response['message'])) {
+                return $response['message'];
             }
 
-            return $responseBodyAsString;
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
-            $responseBodyAsString = 'Connection error occurred.';
+            if (isset($response['msg'])) {
+                return $response['msg'];
+            }
 
-            return $responseBodyAsString;
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            $responseBodyAsString = 'Request error occurred.';
+            if (isset($response['error'])) {
+                return $response['error'];
+            }
 
-            return $responseBodyAsString;
+            return $response;
+        } catch (ConnectionException $e) {
+            return 'Connection error occurred.';
         } catch (\Exception $e) {
-            $responseBodyAsString = 'An unexpected error occurred.';
-
-            return $responseBodyAsString;
+            return 'An unexpected error occurred.';
         }
-
-        return 'Failed to fetch quote plans.';
     }
 
     public function getFormOptions()
@@ -383,16 +381,17 @@ class CyberQuoteService extends BaseQuoteService
     ): array {
         if ((int) $quote->quote_type_id !== QuoteTypeId::Cyber) {
             return [
-                'cc' => $cc,
                 'recipientEmail' => $recipientEmail,
                 'recipientName' => $recipientName,
+                'escalationLink' => '',
+                'processInvolved' => $processInvolved,
             ];
         }
 
         $distribution = $this->getCyberDistributionEmails();
-        $isBookingFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_BOOK_POLICY;
+        $isCaptureFailure = $processInvolved === PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE;
 
-        if ($isBookingFailure) {
+        if ($isCaptureFailure) {
             [$recipientEmail, $recipientName] = $this->getPaContactDetails();
         } elseif (! $recipientEmail && $quote?->advisor) {
             $recipientEmail = $quote->advisor->email;
@@ -400,16 +399,13 @@ class CyberQuoteService extends BaseQuoteService
         }
 
         if (! $recipientEmail) {
+            // OE user not updated by BA yet, production approval team will be the default recipient
             [$recipientEmail, $recipientName] = $this->getPaContactDetails();
         }
 
+        // adding advisor email to cc if it is not in recipient email this happened on capture failure situation
         if ($quote?->advisor?->email && $quote->advisor->email !== $recipientEmail) {
             $distribution[] = $quote->advisor->email;
-        }
-
-        $advisorManagerEmail = $this->getAdvisorManagerEmail($quote);
-        if ($advisorManagerEmail && $advisorManagerEmail !== $recipientEmail) {
-            $distribution[] = $advisorManagerEmail;
         }
 
         $distribution = array_values(array_unique(array_filter($distribution)));
@@ -417,10 +413,14 @@ class CyberQuoteService extends BaseQuoteService
             $cc = $distribution;
         }
 
+        $escalationLink = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ESCALATION_LINK, '');
+
         return [
             'cc' => $cc,
             'recipientEmail' => $recipientEmail,
             'recipientName' => $recipientName,
+            'escalationLink' => $escalationLink,
+            'processInvolved' => PolicyIssuanceEnum::mapProcessTextForAutomationFailureNotification($processInvolved),
         ];
     }
 
@@ -435,36 +435,85 @@ class CyberQuoteService extends BaseQuoteService
         $emails = array_map('trim', explode(',', $configured));
         $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
 
-        return ! empty($emails) ? array_values($emails) : self::FALLBACK_CYBER_FAILURE_DISTRIBUTION;
+        return ! empty($emails) ? array_values($emails) : [];
     }
 
     private function getPaContactDetails(): array
     {
-        // TODO: need to add OE user here; right now we don't have any from Business
-        $paUser = User::activeUser()
-            ->where('name', UserNameEnum::PA)
-            ->first();
-
-        if ($paUser && $paUser->email) {
-            return [$paUser->email, $paUser->name ?? self::CYBER_BOOKING_TEAM_NAME];
+        if (! app()->environment('production')) {
+            return [getAppStorageValueByKey(ApplicationStorageEnums::CYBER_CAPTURE_FAILURE_EMAIL), 'Production Approval Team'];
         }
 
-        return [self::CYBER_BOOKING_TEAM_EMAIL, self::CYBER_BOOKING_TEAM_NAME];
+        return [getAppStorageValueByKey(ApplicationStorageEnums::CYBER_CAPTURE_FAILURE_EMAIL, useCache: true), 'Production Approval Team'];
     }
 
-    private function getAdvisorManagerEmail(PersonalQuote $quote): ?string
+    /**
+     * Get customer cyber info for AML screening automation.
+     *
+     * @return object|false
+     */
+    public function getCustomerCyberInfo(int $quoteRequestId, string $quoteType)
     {
-        if (! $quote?->advisor) {
-            return null;
+        $model = $this->getModelObject($quoteType);
+
+        if (! class_exists($model)) {
+            return false;
         }
 
-        $cyberManager = $quote->advisor
-            ->managers()
-            ->get()
-            ->first(function (User $manager) {
-                return $manager->isCyberManager();
-            });
+        return DB::table('personal_quotes as pq')
+            ->leftJoin('customer_insured as ci', function ($join) {
+                $join->on('ci.quote_request_id', '=', 'pq.id')
+                    ->where('ci.quote_type_id', '=', QuoteTypeId::Cyber);
+            })
+            ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
+            ->select(
+                'pq.id',
+                'pq.code',
+                'pq.customer_id',
+                'pq.gender',
+                'pq.first_name',
+                'pq.last_name',
+                'pq.dob',
+                'pq.nationality_id',
+                'i.id_type',
+                'i.id_number'
+            )
+            ->where('pq.id', $quoteRequestId)
+            ->where('pq.quote_type_id', QuoteTypeId::Cyber)
+            ->orderBy('ci.updated_at', 'desc')
+            ->first();
+    }
 
-        return $cyberManager?->email;
+    /**
+     * Check if customer cyber info is complete for AML screening.
+     */
+    public function checkCustomerCyberInfoIsComplete(array $cyberQuoteRequest): array
+    {
+        $message = '';
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id']);
+
+        $missingDetails = [];
+        foreach ($requiredProperty as $value) {
+            if (empty($cyberQuoteRequest[$value])) {
+                $propertyName = match ($value) {
+                    'dob' => 'date of birth',
+                    'nationality_id' => 'nationality',
+                    default => str_replace(['-', '_'], ' ', $value)
+                };
+                array_push($missingDetails, ucwords($propertyName));
+            }
+        }
+
+        // Check for ID number (either passport or emirates ID)
+        if (empty($cyberQuoteRequest['id_number'])) {
+            array_push($missingDetails, 'ID Number (Passport or Emirates ID)');
+        }
+
+        $missingDetailCount = count($missingDetails);
+        if ($missingDetailCount) {
+            $message = 'Missing Info: '.implode(', ', $missingDetails);
+        }
+
+        return ['status' => $missingDetailCount ? false : true, 'message' => $message];
     }
 }

@@ -2,6 +2,10 @@
 
 namespace App\Services\OCR\Validators;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
+use App\Enums\DocumentTypeCode;
+use App\Models\CarQuote;
 use App\Models\CustomerInsured;
 use App\Models\QuoteDocument;
 use App\Models\RegistrationCertificate;
@@ -22,6 +26,12 @@ class OCRDocumentValidator
             'driver_first_name',
             'driver_last_name',
             'driver_dob',
+            'nationality_id',
+        ],
+        'DRIVER_EMIRATES_ID_FIELDS' => [
+            'driver_eid_number',
+            'driver_name',
+            'dob',
             'nationality_id',
         ],
         'INSURED_FIELDS' => [
@@ -93,7 +103,9 @@ class OCRDocumentValidator
             ->select('driver_gender')
             ->first();
 
-        $customerInsured = CustomerInsured::where('quote_request_id', $this->quoteId)
+        // Reminder:: Quote type id missing here - used forQuote
+        $customerInsured = CustomerInsured::active()
+            ->where('quote_request_id', $this->quoteId)
             ->first();
 
         if (! $customerInsured) {
@@ -121,6 +133,30 @@ class OCRDocumentValidator
 
         // Update ocr flag in quote document
         $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
+
+        return $result;
+    }
+
+    public function validateDriverEidFields(CarQuote $quote): bool
+    {
+        // Verify driver_eid_number in vehicle_driver_details
+        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quote->id)
+            ->where('quoteable_type', CarQuote::class)
+            ->select('driver_eid_number')
+            ->first();
+
+        // Verify driver details in car_quote_request
+        $carQuoteFields = ['driver_name', 'dob', 'nationality_id'];
+
+        // Check if driver_eid_number exists in vehicle_driver_details
+        $result = $vehicleDriverDetails && ! empty($vehicleDriverDetails->driver_eid_number);
+
+        // Check if all required fields in car_quote are not empty (filters empty fields, result should be empty array = all filled)
+        if ($quote->registration_type == CarRegistrationType::COMPANY && $quote->vehicle_use == CarVehicleUse::PRIVATE) {
+            $result = $result && empty(array_filter($carQuoteFields, fn ($field) => empty($quote->$field)));
+        }
+
+        $this->updateQuoteDocument($quote->id, DocumentTypeCode::DRIVER_EMIRATES_ID, $result);
 
         return $result;
     }

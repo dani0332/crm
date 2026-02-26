@@ -11,10 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 class AwnicValidationService
 {
-    public function __construct(
-        private AwnicDocumentHandler $documentHandler,
-    ) {}
-
     /**
      * Validate book policy prerequisites
      *
@@ -75,7 +71,9 @@ class AwnicValidationService
     {
         $customer = $quote->customer ?? null;
         $emiratesIdNumber = null;
+        LoggerService::info('validateRequiredData for policy issuance - customer details', ['customer' => $quote->customer]);
         if (isset($quote->latestInsured)) {
+            LoggerService::info('validateRequiredData for policy issuance - latestInsured details', ['latestInsured' => $quote->latestInsured]);
             $emiratesIdNumber = $quote->latestInsured['id_type'] == 'emiratesId' ? $quote->latestInsured['id_number'] : null;
         }
         $nationality = $quote->nationality ?? null;
@@ -145,7 +143,7 @@ class AwnicValidationService
         return ['status' => true];
     }
 
-    public function validateDownloadDocuments($quote, $docTypeCodeForIMCRM): array
+    public function validateDownloadDocuments($docTypeCodeForIMCRM): array
     {
         $missingDocs = array_keys(array_filter($docTypeCodeForIMCRM, fn ($docId) => $docId === null));
         if (! empty($missingDocs)) {

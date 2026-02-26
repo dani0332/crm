@@ -30,18 +30,7 @@ smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae
 **Primary Advisor**: First email in the list  
 **Backup Advisors**: All remaining emails
 
-### Test Mode Flag
-
-**App Storage Key**: `CYBER_ALLOCATION_TEST_MODE`  
-**Value**: `0` (production mode)
-
-**Ensure Production Mode**:
-
-```sql
-UPDATE application_storages
-SET value = '0'
-WHERE key_name = 'CYBER_ALLOCATION_TEST_MODE';
-```
+**Note**: Different environments (UAT/Stage vs Production) can set different emails in this key as needed.
 
 ## Production Logic
 
@@ -50,9 +39,7 @@ WHERE key_name = 'CYBER_ALLOCATION_TEST_MODE';
 ```
 Lead Created
     ↓
-Check CYBER_ALLOCATION_TEST_MODE == 0
-    ↓
-getProductionModeAdvisorEmails()
+getAdvisorEmails()
     ↓
 Fetch CYBER_ADVISORS from app storage
     ↓
@@ -78,27 +65,21 @@ Check primary advisor leave status
 
 ### Code Reference
 
-**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:141-182`
+**Location**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:115-148`
 
-**Production Mode Method**:
+**Method**:
 
 ```php
-private function getProductionModeAdvisorEmails(): array
+private function getAdvisorEmails(): array
 {
-    $emails = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ADVISORS, useCache: true);
+    $emails = $this->parseAdvisorEmails(
+        ApplicationStorageEnums::CYBER_ADVISORS,
+        self::WARNING_NO_ADVISORS_FOUND
+    );
 
     if (empty($emails)) {
-        LoggerService::warning(self::class.' - No production Cyber advisors found in app storage');
-        return [];
-    }
+        LoggerService::warning(self::class.' - '.self::WARNING_NO_VALID_ADVISOR_EMAILS);
 
-    $emails = explode(',', $emails);
-    $emails = array_map('trim', $emails);
-    $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
-    $emails = array_values($emails);
-
-    if (empty($emails)) {
-        LoggerService::warning(self::class.' - No valid Cyber advisor emails found in app storage');
         return [];
     }
 
@@ -108,7 +89,7 @@ private function getProductionModeAdvisorEmails(): array
     $isOnLeave = $this->isUserOnLeave($primaryEmail, addUnavailable: true);
 
     if ($isOnLeave) {
-        LoggerService::info(self::class.' - PRODUCTION: Primary advisor is on SICK or LEAVE, assigning to backups', extra: [
+        LoggerService::info(self::class.' - Primary advisor is on SICK or LEAVE, assigning to backups', extra: [
             'primaryEmail' => $primaryEmail,
             'backupCount' => count($backupEmails),
             'backupEmails' => $backupEmails,
@@ -117,7 +98,7 @@ private function getProductionModeAdvisorEmails(): array
         return $backupEmails;
     }
 
-    LoggerService::info(self::class.' - PRODUCTION: Assigning to primary advisor', extra: [
+    LoggerService::info(self::class.' - Assigning to primary advisor', extra: [
         'primaryEmail' => $primaryEmail,
     ]);
 
@@ -311,15 +292,19 @@ When querying advisors, the system tries statuses in order:
 
 ## Seeder Configuration
 
-**Location**: `database/seeders/ApplicationStorageSeeder.php:1070-1101`
+**Location**: `database/seeders/ApplicationStorageSeeder.php`
 
-**Default Production Configuration**:
+**Seeder Method**: `seedCyberConfigurations()`
+
+**Default Configuration**:
 
 ```php
 ApplicationStorage::firstOrCreate(
     ['key_name' => ApplicationStorageEnums::CYBER_ADVISORS],
     [
         'value' => 'smitha.chandran@insurancemarket.ae,neil.rama@insurancemarket.ae',
+        'created_at' => now(),
+        'updated_at' => now(),
         'is_active' => 1,
     ],
 );
@@ -327,7 +312,7 @@ ApplicationStorage::firstOrCreate(
 
 ## Related Files
 
-- **Production Mode Method**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:141-182`
+- **Advisor Email Method**: `app/Pipes/Allocation/Cyber/FetchAvailableAdvisorPipe.php:115-148`
 - **Leave Check Method**: `app/Services/AllocationService.php:460-480`
 - **Status Enum**: `app/Enums/UserStatusEnum.php`
 - **Storage Enum**: `app/Enums/ApplicationStorageEnums.php`

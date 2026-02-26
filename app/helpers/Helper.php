@@ -3,6 +3,7 @@
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DatabaseConnectionEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
@@ -550,6 +551,23 @@ if (! function_exists('checkPersonalQuotes')) {
     }
 }
 
+if (! function_exists('getPersonalQuoteTypeIds')) {
+    function getPersonalQuoteTypeIds()
+    {
+        return [
+            QuoteTypeId::Home,
+            QuoteTypeId::Life,
+            QuoteTypeId::Bike,
+            QuoteTypeId::Yacht,
+            QuoteTypeId::Pet,
+            QuoteTypeId::Cycle,
+            QuoteTypeId::Jetski,
+            QuoteTypeId::Savings,
+            QuoteTypeId::Cyber,
+        ];
+    }
+}
+
 if (! function_exists('getBase64FileInfo')) {
     function getBase64FileInfo($base64File)
     {
@@ -800,11 +818,7 @@ if (! function_exists('checkAuthUserRole')) {
             return false;
         }
 
-        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::BusinessManager, RolesEnum::HomeManager, RolesEnum::LifeManager, RolesEnum::PetManager, RolesEnum::YachtManager, RolesEnum::TravelManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::JetskiManager])) {
-            return true;
-        } else {
-            return false;
-        }
+        return Auth::user()->hasAnyRole(getManagerRoles());
     }
 }
 
@@ -918,10 +932,6 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->where('code', $request->code);
         }
 
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $partialQuery->where('renewal_batch', $request->renewal_batch);
-        }
-
         if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $partialQuery->whereIn('quote_status_id', $request->quote_status);
         }
@@ -967,8 +977,8 @@ if (! function_exists('getCardViewRequestFilters')) {
             });
         }
 
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $partialQuery->where('renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && is_array($request->renewal_batches) && count($request->renewal_batches) > 0) {
+            $partialQuery->whereIn('renewal_batch_id', $request->renewal_batches);
         }
 
         if (isset($request->sub_team) && $request->sub_team != '') {
@@ -1751,9 +1761,15 @@ if (! function_exists('isTapEnabled')) {
 }
 
 if (! function_exists('userHasProduct')) {
-    function userHasProduct($product)
+    function userHasProduct($product, $user = null)
     {
-        $productIds = auth()->user()->products->pluck('id');
+        $user = $user ?? auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $productIds = $user->products->pluck('id');
 
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
@@ -1800,9 +1816,48 @@ if (! function_exists('formatEmiratesIdNumber')) {
     function formatEmiratesIdNumber($idNumber): string
     {
         $eidNumber = str_replace('-', '', $idNumber);
-        $formattedIdNumber = substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
-            .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
 
-        return $formattedIdNumber;
+        return substr($eidNumber, 0, 3).'-'.substr($eidNumber, 3, 4)
+            .'-'.substr($eidNumber, 7, 7).'-'.substr($eidNumber, 14, 1);
+    }
+}
+
+if (! function_exists('ensureWriteDefaultConnection')) {
+    /**
+     * Ensure the application's default DB connection is the write-enabled connection.
+     * This changes the global default connection for the current PHP process/request.
+     */
+    function ensureWriteDefaultConnection(array $context = []): void
+    {
+        if (DB::getDefaultConnection() !== DatabaseConnectionEnum::MYSQL_READ->value) {
+            return;
+        }
+
+        LoggerService::warning('ensureWriteDefaultConnection - Default DB connection is read replica; switching to write connection', context: [
+            ...$context,
+            'from' => DB::getDefaultConnection(),
+            'to' => DatabaseConnectionEnum::MYSQL->value,
+        ]);
+
+        DB::setDefaultConnection(DatabaseConnectionEnum::MYSQL->value);
+    }
+}
+
+if (! function_exists('getManagerRoles')) {
+    function getManagerRoles(): array
+    {
+        return [
+            RolesEnum::CarManager,
+            RolesEnum::HealthManager,
+            RolesEnum::TravelManager,
+            RolesEnum::LifeManager,
+            RolesEnum::HomeManager,
+            RolesEnum::PetManager,
+            RolesEnum::BikeManager,
+            RolesEnum::CycleManager,
+            RolesEnum::YachtManager,
+            RolesEnum::JetskiManager,
+            RolesEnum::BusinessManager,
+        ];
     }
 }

@@ -2,12 +2,14 @@
 
 namespace App\Observers;
 
+use App\Enums\BranchEnum;
 use App\Enums\BusinessTypeOfInsuranceEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
@@ -16,6 +18,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -122,11 +125,24 @@ class BusinessQuoteObserver
 
                 app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, $quoteTypeId);
                 BusinessQuote::withoutEvents(function () use ($businessQuote, $quoteTypeId, $emirateOfRegistrationId, &$dirty) {
-                    $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirateOfRegistrationId);
+
+                    $shouldValidateBranch = true;
+                    if ($quoteTypeId === QuoteTypeId::Business) {
+                        $shouldValidateBranch = app(PolicyIssuanceService::class)->shouldValidateBranch($businessQuote, QuoteTypes::BUSINESS->value);
+                    }
+
+                    $branch_id = null;
+                    if ($shouldValidateBranch) {
+                        $branch = app(BranchAssignmentService::class)->getBranch($businessQuote?->advisor?->primaryBranch?->branch_id, $quoteTypeId, $emirateOfRegistrationId);
+                        $branch_id = $branch?->id;
+                    } else {
+                        $branch_id = BranchEnum::DUBAI->value;
+                    }
+
                     $businessQuote->update([
-                        'branch_id' => $branch?->id,
+                        'branch_id' => $branch_id,
                     ]);
-                    $dirty = [...$dirty, 'branch_id' => $branch?->id];
+                    $dirty = [...$dirty, 'branch_id' => $branch_id];
                 });
             } catch (Exception $e) {
                 LoggerService::error('BusinessQuoteObserver - save branch data failed', [
@@ -146,6 +162,24 @@ class BusinessQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                // Determine the correct quote type based on business type of insurance
+                $quoteTypeId = QuoteTypeId::Business;
+                if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                    $quoteTypeId = QuoteTypeId::GroupMedical;
+                }
+                QuotePolicyBooked::dispatch($businessQuote->uuid, $quoteTypeId);
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - dispatch QuotePolicyBooked event failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
         }
 
         if (

@@ -8,29 +8,31 @@ use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\CyberAllocation;
 use Closure;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {
+    private const WARNING_NO_ADVISORS_FOUND = 'No Cyber advisors found in app storage';
+    private const WARNING_NO_VALID_ADVISOR_EMAILS = 'No valid Cyber advisor emails found in app storage';
+
     public function handle(AllocationRequest $request, Closure $next)
     {
         LoggerService::info(self::class.' - Starting to fetch available Cyber advisor');
 
         $this->setRequest($request);
 
-        if ($this->allocationRequest->shouldAssignToHappinessUser()) {
-            LoggerService::info(self::class.' - Paid Cyber lead - Fetching Happiness Support User');
+        if ($this->allocationRequest->get('isCHSAdvisor')) {
+            LoggerService::info(self::class.' - CHS Advisor is required for Cyber lead');
 
-            $advisor = $this->getHappinessUser();
+            $advisor = $this->findAvailableAdvisor(teamId: null);
 
             if (! $advisor) {
-                LoggerService::warning(self::class.' - Happiness Support User not found');
+                LoggerService::warning(self::class.' - CHS Advisor not found');
                 $this->allocationRequest->markAsFailed();
-                $this->throw('Happiness Support User not found', self::NOT_FOUND);
+                $this->throw('CHS Advisor not found', self::NOT_FOUND);
             }
 
-            LoggerService::info(self::class.' - Happiness Support User found successfully', extra: [
+            LoggerService::info(self::class.' - CHS Advisor found successfully', extra: [
                 'advisorId' => $advisor->id,
                 'advisorName' => $advisor->name,
                 'advisorEmail' => $advisor->email,
@@ -41,33 +43,12 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             return $next($request);
         }
 
-        LoggerService::info(self::class.' - Unpaid Cyber lead with SIC request - Fetching advisor using hardcoded email list');
+        LoggerService::info(self::class.' - Cyber lead with SIC request - Fetching advisor using hardcoded email list');
 
         $advisor = $this->findAvailableAdvisor(teamId: null);
 
         if (! $advisor) {
-            if ($this->isTestMode()) {
-                LoggerService::info(self::class.' - No Cyber advisor available for allocation - Trying backup advisor (TEST MODE)');
-
-                $backupAdvisor = $this->getBackupAdvisor();
-
-                if ($backupAdvisor) {
-                    LoggerService::info(self::class.' - Backup advisor found and assigned', extra: [
-                        'advisorId' => $backupAdvisor->id,
-                        'advisorName' => $backupAdvisor->name,
-                        'advisorEmail' => $backupAdvisor->email,
-                    ]);
-
-                    $this->allocationRequest->setAdvisor($backupAdvisor);
-
-                    return $next($request);
-                }
-
-                LoggerService::info(self::class.' - No Cyber advisor available for allocation (including backup)');
-            } else {
-                LoggerService::info(self::class.' - No Cyber advisor available for allocation (PRODUCTION MODE - backup advisor not used)');
-            }
-
+            LoggerService::info(self::class.' - No Cyber advisor available for allocation');
             $this->allocationRequest->markAsFailed();
             $this->throw('Advisor not found', self::NOT_FOUND);
         }
@@ -86,6 +67,21 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     protected function getAdvisorByStatus($onlineStatus, $teamId)
     {
         LoggerService::info(self::class." - Searching for Cyber advisor with status: {$onlineStatus}");
+
+        if ($this->allocationRequest->get('isCHSAdvisor')) {
+            LoggerService::info(self::class.' - CHS Advisor is required');
+
+            if (app()->environment('production')) {
+                return User::select('users.id as user_id')->chs()->first();
+            }
+
+            // Non-production environments use test/UAT email from app storage
+            $happinessUserEmail = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_HAPPINESS_SUPPORT_USER_EMAIL, useCache: true);
+
+            return User::select('users.id as user_id')
+                ->where('users.email', $happinessUserEmail)
+                ->first();
+        }
 
         return $this->getAdvisorByHardcodedEmails($onlineStatus);
     }
@@ -125,62 +121,15 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         return $advisorRecord;
     }
 
-    private function isTestMode(): bool
-    {
-        $testMode = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ALLOCATION_TEST_MODE);
-
-        return $testMode == 1;
-    }
-
     private function getAdvisorEmails(): array
     {
-        if ($this->isTestMode()) {
-            return $this->getTestModeAdvisorEmails();
-        }
-
-        return $this->getProductionModeAdvisorEmails();
-    }
-
-    private function getTestModeAdvisorEmails(): array
-    {
-        $emails = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ADVISORS_TEST, useCache: true);
+        $emails = $this->parseAdvisorEmails(
+            ApplicationStorageEnums::CYBER_ADVISORS,
+            self::WARNING_NO_ADVISORS_FOUND
+        );
 
         if (empty($emails)) {
-            LoggerService::warning(self::class.' - No test Cyber advisors found in app storage');
-
-            return [];
-        }
-
-        $emails = explode(',', $emails);
-        $emails = array_map('trim', $emails);
-        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
-        $emails = array_values($emails);
-
-        LoggerService::info(self::class.' - TEST MODE: Cyber advisors fetched', extra: [
-            'emailCount' => count($emails),
-            'emails' => $emails,
-        ]);
-
-        return $emails;
-    }
-
-    private function getProductionModeAdvisorEmails(): array
-    {
-        $emails = getAppStorageValueByKey(ApplicationStorageEnums::CYBER_ADVISORS, useCache: true);
-
-        if (empty($emails)) {
-            LoggerService::warning(self::class.' - No production Cyber advisors found in app storage');
-
-            return [];
-        }
-
-        $emails = explode(',', $emails);
-        $emails = array_map('trim', $emails);
-        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
-        $emails = array_values($emails);
-
-        if (empty($emails)) {
-            LoggerService::warning(self::class.' - No valid Cyber advisor emails found in app storage');
+            LoggerService::warning(self::class.' - '.self::WARNING_NO_VALID_ADVISOR_EMAILS);
 
             return [];
         }
@@ -191,7 +140,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         $isOnLeave = $this->isUserOnLeave($primaryEmail, addUnavailable: true);
 
         if ($isOnLeave) {
-            LoggerService::info(self::class.' - PRODUCTION: Primary advisor is on SICK or LEAVE, assigning to backups', extra: [
+            LoggerService::info(self::class.' - Primary advisor is on SICK or LEAVE, assigning to backups', extra: [
                 'primaryEmail' => $primaryEmail,
                 'backupCount' => count($backupEmails),
                 'backupEmails' => $backupEmails,
@@ -200,52 +149,28 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             return $backupEmails;
         }
 
-        LoggerService::info(self::class.' - PRODUCTION: Assigning to primary advisor', extra: [
+        LoggerService::info(self::class.' - Assigning to primary advisor', extra: [
             'primaryEmail' => $primaryEmail,
         ]);
 
         return [$primaryEmail];
     }
 
-    private function getHappinessUser(): ?User
+    private function parseAdvisorEmails($storageKey, string $emptyWarningMessage): array
     {
-        $email = CyberAllocation::HAPPINESS_SUPPORT_USER_EMAIL;
+        $emails = getAppStorageValueByKey($storageKey, useCache: true);
 
-        LoggerService::info(self::class.' - Fetching Happiness Support User by email', extra: [
-            'email' => $email,
-        ]);
+        if (empty($emails)) {
+            LoggerService::warning(self::class." - {$emptyWarningMessage}");
 
-        $user = User::where('email', $email)->first();
-
-        if (! $user) {
-            LoggerService::warning(self::class.' - Happiness Support User not found in database', extra: [
-                'email' => $email,
-            ]);
+            return [];
         }
 
-        return $user;
-    }
+        $emails = explode(',', $emails);
+        $emails = array_map('trim', $emails);
+        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
+        $emails = array_values($emails);
 
-    private function getBackupAdvisor(): ?User
-    {
-        $backupEmail = 'diya.lekhwani@myalfred.com';
-
-        LoggerService::info(self::class.' - Fetching backup advisor by email', extra: [
-            'email' => $backupEmail,
-        ]);
-
-        $user = User::where('email', $backupEmail)
-            ->whereHas('roles', function ($query) {
-                $query->where('name', RolesEnum::CyberAdvisor);
-            })
-            ->first();
-
-        if (! $user) {
-            LoggerService::warning(self::class.' - Backup advisor not found in database', extra: [
-                'email' => $backupEmail,
-            ]);
-        }
-
-        return $user;
+        return $emails;
     }
 }
