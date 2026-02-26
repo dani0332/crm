@@ -1804,8 +1804,6 @@ class SageApiEmbeddedProductService
         }
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $commissionDescription = 'C.'.$sageRequestEmbeddedProduct->invoiceDescription;
-        $createdOn = $sageRequestEmbeddedProduct->createdOn;
-        $createdOnDate = Carbon::parse($createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
         $bookingDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
         $optionalFields = self::createOptionalFields($request, $sageRequestEmbeddedProduct);
 
@@ -1836,7 +1834,7 @@ class SageApiEmbeddedProductService
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => $createdOnDate,
+                            'DueDate' => $bookingDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => $optionalFields,
@@ -1865,7 +1863,7 @@ class SageApiEmbeddedProductService
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => $createdOnDate,
+                            'DueDate' => $bookingDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => $optionalFields,
@@ -1874,9 +1872,6 @@ class SageApiEmbeddedProductService
         ];
 
         if ($isReversal) {
-
-            $createdOnDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
-
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
@@ -1884,7 +1879,7 @@ class SageApiEmbeddedProductService
             $payLoad['Invoices'][0]['DocumentDate'] = $bookingDate;
             $payLoad['Invoices'][0]['DueDate'] = $bookingDate;
             $payLoad['Invoices'][0]['AsOfDate'] = $bookingDate;
-            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $bookingDate;
 
             $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][1]['DocumentNumber'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber.'-REV';
@@ -1892,7 +1887,7 @@ class SageApiEmbeddedProductService
             $payLoad['Invoices'][1]['DocumentDate'] = $bookingDate;
             $payLoad['Invoices'][1]['DueDate'] = $bookingDate;
             $payLoad['Invoices'][1]['AsOfDate'] = $bookingDate;
-            $payLoad['Invoices'][1]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][1]['InvoicePaymentSchedules'][0]['DueDate'] = $bookingDate;
 
             $sageRequestType = SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV_REV;
             $entryType = SageEnum::SCT_REVERSAL;
@@ -2058,8 +2053,6 @@ class SageApiEmbeddedProductService
             'Value' => 'N',
         ];
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
-        $createdOn = $sageRequestEmbeddedProduct->createdOn;
-        $createdOnDate = Carbon::parse($createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
         $bookingDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
 
         $payLoad = [
@@ -2089,7 +2082,7 @@ class SageApiEmbeddedProductService
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => $createdOnDate,
+                            'DueDate' => $bookingDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => $optionalFields,
