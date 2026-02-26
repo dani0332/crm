@@ -142,4 +142,47 @@ describe('CustomerAddressService - Optional Fields Handling', function () {
             ->and($address->street)->toBeNull()
             ->and($address->landmark)->toBeNull();
     });
+
+    test('createOrUpdateCustomerAddress skips when required fields are missing', function () {
+        $customer = Customer::factory()->create();
+
+        $partialAddressData = [
+            'address_type' => 'Home',
+            'area' => 'Some Area',
+        ];
+
+        $this->service->createOrUpdateCustomerAddress(
+            $partialAddressData,
+            $customer->id,
+            'test-uuid-partial',
+            QuoteTypes::CYBER->id()
+        );
+
+        $address = CustomerAddress::where('quote_uuid', 'test-uuid-partial')->first();
+
+        expect($address)->toBeNull();
+    });
+
+    test('createOrUpdateCustomerAddress skips when address_type is missing', function () {
+        $customer = Customer::factory()->create();
+
+        $addressWithoutType = [
+            'villa_apartment_office_no' => '101',
+            'floor_no' => '1',
+            'villa_building_name' => 'Test Building',
+            'area' => 'Test Area',
+            'city' => 'Dubai',
+        ];
+
+        $this->service->createOrUpdateCustomerAddress(
+            $addressWithoutType,
+            $customer->id,
+            'test-uuid-no-type',
+            QuoteTypes::CYBER->id()
+        );
+
+        $address = CustomerAddress::where('quote_uuid', 'test-uuid-no-type')->first();
+
+        expect($address)->toBeNull();
+    });
 });
