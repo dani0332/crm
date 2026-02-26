@@ -250,7 +250,9 @@ function onSubmit(isValid) {
                 :rules="[isRequired]"
                 class="w-full"
                 :disabled="isCourierStatusNotPending"
-                :error="quoteForm.errors['addressObj.villa_apartment_office_no']"
+                :error="
+                  quoteForm.errors['addressObj.villa_apartment_office_no']
+                "
               />
             </div>
             <div class="w-1/2 px-2">
