@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use App\Enums\QuoteStatusEnum;
 
 class SendCyberOCBIntroEmailJob implements ShouldQueue
 {
@@ -87,6 +88,10 @@ class SendCyberOCBIntroEmailJob implements ShouldQueue
         if (! $lead) {
             LoggerService::info(static::class." - Lead not found for uuid: {$this->quoteUuid}");
 
+            return;
+        }
+        if(in_array($lead->quote_status_id, [QuoteStatusEnum::Duplicate,QuoteStatusEnum::Lost,QuoteStatusEnum::Fake])) {
+           LoggerService::info(static::class." - Lead not eligible for OCB email uuid: {$this->quoteUuid}");
             return;
         }
         LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CYBER_OCB_INTRO_EMAIL);

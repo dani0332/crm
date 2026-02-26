@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Enums\QuoteStatusEnum;
 
 class SendCyberAutomatedFollowupJob implements ShouldQueue
 {
@@ -37,6 +38,10 @@ class SendCyberAutomatedFollowupJob implements ShouldQueue
         if (! $lead) {
             LoggerService::info(self::class.' - Cyber Lead not found');
 
+            return;
+        }
+        if(in_array($lead->quote_status_id, [QuoteStatusEnum::Duplicate,QuoteStatusEnum::Lost,QuoteStatusEnum::Fake])) {
+            LoggerService::info(self::class.' - Lead not eligible for Cyber Automated Followups uuid: '.$this->quoteUuid);
             return;
         }
 
