@@ -30,11 +30,9 @@ class CyberQuoteRequest extends FormRequest
      */
     public function rules(): array
     {
-        $this->merge(['modelType' => $this->input('modelType') ?? QuoteTypes::CYBER->value]);
-
         $rules = [
             'modelType' => 'required|in:'.QuoteTypes::CYBER->value,
-            'addressObj' => 'sometimes|array',
+            'addressObj' => 'required|array',
             'addressObj.address_type' => 'nullable|string|max:50',
             'first_name' => 'required|between:1,20|regex:/^[a-zA-Z\s\-]+$/',
             'last_name' => 'required|between:1,50|regex:/^[a-zA-Z\s\-]+$/',
