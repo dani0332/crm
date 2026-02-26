@@ -228,9 +228,11 @@ class AdnicApiService
             if (isset($downloadReponse['status'])) {
                 $docCode = $this->documentHandler->getQuoteDocumentMappingForInsurerDocuments($policyDocumentKey);
 
-                $documentContent = $downloadReponse['data'];
-                if ($downloadReponse['status'] && $documentContent && isset($documentContent->documentContent, $documentContent->documentName)) {
-                    $quoteDocument = $this->documentHandler->uploadAndAttachToQuoteDocuments($quote, $documentContent->documentContent, $docCode, $documentContent->documentName);
+                $documentContent = $downloadReponse['data']?->PolicyDocumentInfo?->DocumentContent ?? null;
+                $documentName = $downloadReponse['data']?->PolicyDocumentInfo?->DocumentName ?? null    ;
+
+                if ($downloadReponse['status'] && $documentContent && $documentName) {
+                    $quoteDocument = $this->documentHandler->uploadAndAttachToQuoteDocuments($quote, $documentContent, $docCode, $documentName);
                 } else {
                     $quoteDocument = null;
                 }
