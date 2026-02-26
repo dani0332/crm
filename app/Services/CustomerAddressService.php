@@ -23,14 +23,15 @@ class CustomerAddressService
         $addressType = $address['address_type'] ?? null;
         if (! empty(array_filter((array) $address))) {
             $requiredFields = ['address_type', 'villa_apartment_office_no', 'floor_no', 'villa_building_name', 'area', 'city'];
-            $missingFields = array_filter($requiredFields, fn($field) => empty($address[$field]));
-            
-            if (!empty($missingFields)) {
+            $missingFields = array_filter($requiredFields, fn ($field) => empty($address[$field]));
+
+            if (! empty($missingFields)) {
                 LoggerService::warning('Cannot create/update customer address - missing required fields', [
                     'customer_id' => $customerId,
                     'quote_uuid' => $quoteUuid,
                     'missing_fields' => $missingFields,
                 ]);
+
                 return;
             }
 
