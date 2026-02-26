@@ -616,4 +616,15 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphOne(PolicyIssuance::class, 'model');
     }
 
+    /**
+     * ADNIC non-STP flag from MongoDB health-umaf-responses (stp_rating.is_non_stp).
+     */
+    public function hasAdnicPlan(): bool
+    {
+        $umaf = HealthUMAF::where('quote_uuid', $this->uuid)->first();
+        if (!$umaf || !$umaf?->isADNIC()) {
+            return false;
+        }
+        return  $umaf?->isADNIC() ? true : false;
+    }
 }
