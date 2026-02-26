@@ -31,9 +31,11 @@ class CyberQuoteRequest extends FormRequest
     public function rules(): array
     {
         $this->merge(['modelType' => $this->input('modelType') ?? QuoteTypes::CYBER->value]);
-        $customerAddressRules = Arr::dot(['addressObj' => CustomerAddressRequest::createFrom($this)->rules()]);
 
-        return [
+        $rules = [
+            'modelType' => 'required|in:'.QuoteTypes::CYBER->value,
+            'addressObj' => 'sometimes|array',
+            'addressObj.address_type' => 'nullable|string|max:50',
             'first_name' => 'required|between:1,20|regex:/^[a-zA-Z\s\-]+$/',
             'last_name' => 'required|between:1,50|regex:/^[a-zA-Z\s\-]+$/',
             'email' => 'required|email',
@@ -41,8 +43,14 @@ class CyberQuoteRequest extends FormRequest
             'dob' => 'required|date',
             'nationality_id' => ['required', Rule::exists(Nationality::class, 'id')],
             'emirate_of_registration_id' => ['required', Rule::exists(Emirate::class, 'id')],
-            ...$customerAddressRules,
         ];
+
+        $addressRules = CustomerAddressRequest::createFrom($this)->rules();
+        if (! empty($addressRules)) {
+            $rules = array_merge($rules, Arr::dot(['addressObj' => $addressRules]));
+        }
+
+        return $rules;
     }
 
     /**

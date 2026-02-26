@@ -44,16 +44,16 @@ class CustomerAddressService
     {
         $this->validateAddress($request);
 
-        if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj'))))) {
-
-            $customerId = app(CustomerService::class)->getCustomerIdByEmail($email);
-            if ($quote && $customerId) {
-
-                $this->sendAddressNotificationToCustomer($quote, $request->input('addressObj'), $quoteType->id());
-                $this->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $quote->uuid, $quoteType->id());
-                SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType->id());
-            }
+        $customerId = app(CustomerService::class)->getCustomerIdByEmail($email);
+        $addressObj = $request->input('addressObj', []);
+        $addressType = $addressObj['address_type'] ?? null;
+        if (empty($quote) || empty($customerId) || ! in_array($addressType, ['Home', 'Office'], true) || empty(array_filter((array) $addressObj))) {
+            return;
         }
+
+        $this->sendAddressNotificationToCustomer($quote, $addressObj, $quoteType->id());
+        $this->createOrUpdateCustomerAddress($addressObj, $customerId, $quote->uuid, $quoteType->id());
+        SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType->id());
     }
 
     public function createOrUpdateAddress(array $address)

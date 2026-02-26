@@ -78,9 +78,11 @@ class CyberQuoteController extends Controller
         }
 
         $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
-        if ($customerId && $request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) {
+        $addressObj = $request->input('addressObj', []);
+        $addressType = $addressObj['address_type'] ?? null;
+        if ($customerId && in_array($addressType, ['Home', 'Office'], true) && ! empty(array_filter((array) $addressObj))) {
             app(CustomerAddressService::class)->createOrUpdateCustomerAddress(
-                $request->input('addressObj'),
+                $addressObj,
                 $customerId,
                 $response->quoteUID,
                 $this->cyberQuoteService->quoteType->id()
