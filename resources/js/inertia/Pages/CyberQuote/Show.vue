@@ -176,7 +176,7 @@ const customerProfileForm = useForm({
     page.props.quote?.quote_request_entity_mapping?.entity
       ?.industry_type_code ?? null,
   emirate_of_registration_id:
-      page.props.quote?.cyber_quote?.emirate_of_registration_id ?? null,
+    page.props.quote?.cyber_quote?.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
