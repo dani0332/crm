@@ -20,20 +20,21 @@ class CustomerAddressService
 {
     public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid, $quoteTypeId = null)
     {
+        $addressType = $address['address_type'] ?? null;
         if (! empty(array_filter((array) $address))) {
             $address = [
                 'customer_id' => $customerId,
-                'address_type' => $address['address_type'],
+                'address_type' => $addressType,
                 'quote_type_id' => $quoteTypeId ?? QuoteTypes::CAR->id(),
                 'quote_uuid' => $quoteUuid,
-                'office_number' => $address['villa_apartment_office_no'],
-                'floor_number' => $address['floor_no'],
-                'building_name' => $address['villa_building_name'],
+                'office_number' => $address['villa_apartment_office_no'] ?? null,
+                'floor_number' => $address['floor_no'] ?? null,
+                'building_name' => $address['villa_building_name'] ?? null,
                 'street' => $address['street_name'] ?? null,
-                'area' => $address['area'],
-                'city' => $address['city'],
+                'area' => $address['area'] ?? null,
+                'city' => $address['city'] ?? null,
                 'landmark' => $address['landmark'] ?? null,
-                'is_default' => $address['address_type'] == 'Home' ? 1 : 0,
+                'is_default' => $addressType == 'Home' ? 1 : 0,
             ];
             $this->createOrUpdateAddress($address);
         }
