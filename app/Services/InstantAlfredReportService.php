@@ -192,9 +192,10 @@ class InstantAlfredReportService
 
         $query->groupBy('pqr.id');
 
-        if (! empty($request->sortType)) {
-            $query->orderBy('pqrd.chat_initiated_at', $request->sortType);
-        }
+        // No SQL ORDER BY — lazyById() uses cursor pagination on pqr.id,
+        // and any pre-existing ORDER BY on a different column causes it to
+        // skip records. Sorting for exports is handled by MongoDB instead:
+        // consolidated sorts by date_of_first_interaction, detailed by created_at.
 
         return $query;
     }
