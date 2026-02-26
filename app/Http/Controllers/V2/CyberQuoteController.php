@@ -11,9 +11,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Cyber\CyberQuoteRequest;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Models\InsuranceProviderPlan;
-use App\Services\Logger\LoggerService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
+use App\Services\Logger\LoggerService;
 use App\Services\MACRMService;
 use App\Services\Quotes\CyberQuoteService;
 
@@ -78,11 +78,11 @@ class CyberQuoteController extends Controller
         }
 
         $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
-        if ($customerId && $request->has('addressObj') && !empty(array_filter((array) $request->input('addressObj')))) {
+        if ($customerId && $request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) {
             app(CustomerAddressService::class)->createOrUpdateCustomerAddress(
-                $request->input('addressObj'), 
-                $customerId, 
-                $response->quoteUID, 
+                $request->input('addressObj'),
+                $customerId,
+                $response->quoteUID,
                 $this->cyberQuoteService->quoteType->id()
             );
         }
