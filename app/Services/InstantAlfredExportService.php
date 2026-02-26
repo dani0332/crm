@@ -20,6 +20,7 @@ class InstantAlfredExportService
     private const URL_EXPIRY_HOURS = 1;
     private const BATCH_SIZE = 500;
     private const FLUSH_INTERVAL = 1000;
+    private const UUID_BATCH_SIZE = 2000;
 
     public function generateCsvAndGetUrl(array $params): array
     {
@@ -42,8 +43,15 @@ class InstantAlfredExportService
 
     private function generateDetailedReportCsv(array $params): array
     {
+        $startTime = microtime(true);
+
         $sqlData = $this->fetchDetailedReportSqlData($params);
         $uuids = array_keys($sqlData);
+
+        Log::info('[DetailedReport] SQL fetch completed', [
+            'uuid_count' => count($uuids),
+            'elapsed_sec' => round(microtime(true) - $startTime, 2),
+        ]);
 
         $fileName = 'detailed_report_'.now()->format('Y-m-d_His').'_'.uniqid().'.csv';
         $azurePath = "temp/exports/{$fileName}";
@@ -55,6 +63,7 @@ class InstantAlfredExportService
             fputcsv($stream, $this->getDetailedReportHeaders());
 
             if (! empty($uuids)) {
+                $mongoStart = microtime(true);
                 foreach ($this->streamDetailedReportMongoData($uuids, $sqlData, $params) as $row) {
                     fputcsv($stream, $row);
                     $records++;
@@ -63,10 +72,22 @@ class InstantAlfredExportService
                         gc_collect_cycles();
                     }
                 }
+                Log::info('[DetailedReport] MongoDB streaming completed', [
+                    'mongo_records' => $records,
+                    'mongo_elapsed_sec' => round(microtime(true) - $mongoStart, 2),
+                    'total_elapsed_sec' => round(microtime(true) - $startTime, 2),
+                ]);
             }
 
+            $uploadStart = microtime(true);
             $result = $this->uploadCsvToAzure($stream, $azurePath);
             $result['records'] = $records;
+
+            Log::info('[DetailedReport] Completed', [
+                'records' => $records,
+                'azure_upload_sec' => round(microtime(true) - $uploadStart, 2),
+                'total_elapsed_sec' => round(microtime(true) - $startTime, 2),
+            ]);
 
             return $result;
 
@@ -76,6 +97,7 @@ class InstantAlfredExportService
             }
             Log::error('Detailed report CSV generation failed', [
                 'error' => $e->getMessage(),
+                'elapsed_sec' => round(microtime(true) - $startTime, 2),
             ]);
             throw $e;
         }
@@ -86,16 +108,17 @@ class InstantAlfredExportService
         DB::setDefaultConnection('mysql_read');
 
         try {
-            $query = app(InstantAlfredService::class)
-                ->getChatDetailedReportQuery($params);
+            $reportService = app(InstantAlfredReportService::class);
 
-            $rows = $query->get();
+            $rows = $reportService->getReportQuery($params)->get();
 
-            return $rows
+            $sqlData = $rows
                 ->groupBy('uuid')
                 ->map(fn ($group) => $group->sortBy('id')->first())
                 ->map(fn ($item) => (array) $item)
                 ->toArray();
+
+            return $reportService->enrichDetailedSqlData($sqlData, $params);
         } finally {
             DB::setDefaultConnection('mysql');
         }
@@ -103,15 +126,17 @@ class InstantAlfredExportService
 
     private function streamDetailedReportMongoData(array $uuids, array $sqlData, array $params): \Generator
     {
-        $pipeline = $this->buildDetailedReportPipeline($uuids, $params);
+        foreach (array_chunk($uuids, self::UUID_BATCH_SIZE) as $uuidBatch) {
+            $pipeline = $this->buildDetailedReportPipeline($uuidBatch, $params);
 
-        $cursor = AlfredChat::raw(fn ($collection) => $collection->aggregate($pipeline, [
-            'allowDiskUse' => true,
-            'cursor' => ['batchSize' => self::BATCH_SIZE],
-        ]));
+            $cursor = AlfredChat::raw(fn ($collection) => $collection->aggregate($pipeline, [
+                'allowDiskUse' => true,
+                'cursor' => ['batchSize' => self::BATCH_SIZE],
+            ]));
 
-        foreach ($cursor as $doc) {
-            yield $this->mapDetailedReportRow($doc, $sqlData);
+            foreach ($cursor as $doc) {
+                yield $this->mapDetailedReportRow($doc, $sqlData);
+            }
         }
     }
 
@@ -199,6 +224,8 @@ class InstantAlfredExportService
 
     private function generateConsolidatedReportCsv(array $params): array
     {
+        $startTime = microtime(true);
+
         $fileName = 'consolidated_report_'.now()->format('Y-m-d_His').'_'.uniqid().'.csv';
         $azurePath = "temp/exports/{$fileName}";
 
@@ -222,8 +249,20 @@ class InstantAlfredExportService
                 DB::setDefaultConnection('mysql');
             }
 
+            Log::info('[ConsolidatedReport] SQL+MongoDB streaming completed', [
+                'records' => $records,
+                'elapsed_sec' => round(microtime(true) - $startTime, 2),
+            ]);
+
+            $uploadStart = microtime(true);
             $result = $this->uploadCsvToAzure($stream, $azurePath);
             $result['records'] = $records;
+
+            Log::info('[ConsolidatedReport] Completed', [
+                'records' => $records,
+                'azure_upload_sec' => round(microtime(true) - $uploadStart, 2),
+                'total_elapsed_sec' => round(microtime(true) - $startTime, 2),
+            ]);
 
             return $result;
 
@@ -233,6 +272,7 @@ class InstantAlfredExportService
             }
             Log::error('Consolidated report CSV generation failed', [
                 'error' => $e->getMessage(),
+                'elapsed_sec' => round(microtime(true) - $startTime, 2),
             ]);
             throw $e;
         }
@@ -240,27 +280,26 @@ class InstantAlfredExportService
 
     private function streamConsolidatedReportData(array $params): \Generator
     {
-        $instantAlfredService = app(InstantAlfredService::class);
-        $query = $instantAlfredService->getChatConsolidateReportQuery($params);
-        $chunkSize = 500;
+        $reportService = app(InstantAlfredReportService::class);
+        $query = $reportService->getReportQuery($params);
 
-        $sqlRecordsChunk = [];
-        foreach ($query->lazyById($chunkSize, 'pqr.id', 'id') as $sqlRecord) {
-            $sqlRecordsChunk[] = $sqlRecord;
+        $sqlRecordsBatch = [];
+        foreach ($query->lazyById(self::BATCH_SIZE, 'pqr.id', 'id') as $sqlRecord) {
+            $sqlRecordsBatch[] = $sqlRecord;
 
-            if (count($sqlRecordsChunk) >= $chunkSize) {
-                $processedRecords = $instantAlfredService->processConsolidatedChunk($sqlRecordsChunk, $params);
+            if (count($sqlRecordsBatch) >= self::UUID_BATCH_SIZE) {
+                $processedRecords = $reportService->processConsolidatedChunk($sqlRecordsBatch, $params);
 
                 foreach ($processedRecords as $record) {
                     yield $this->mapConsolidatedReportRow($record);
                 }
 
-                $sqlRecordsChunk = [];
+                $sqlRecordsBatch = [];
             }
         }
 
-        if (! empty($sqlRecordsChunk)) {
-            $processedRecords = $instantAlfredService->processConsolidatedChunk($sqlRecordsChunk, $params);
+        if (! empty($sqlRecordsBatch)) {
+            $processedRecords = $reportService->processConsolidatedChunk($sqlRecordsBatch, $params);
 
             foreach ($processedRecords as $record) {
                 yield $this->mapConsolidatedReportRow($record);
