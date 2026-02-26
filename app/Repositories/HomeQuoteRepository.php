@@ -716,7 +716,7 @@ class HomeQuoteRepository extends BaseRepository
                 if ($startDate && $endDate) {
                     $dateFrom = Carbon::parse($startDate)->startOfDay()->toDateTimeString();
                     $dateTo = Carbon::parse($endDate)->endOfDay()->toDateTimeString();
-                    $q->whereHas('homeQuote.quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                    $q->whereHas('homeQuote.homeQuoteRequestDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                         $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                     });
                 }
