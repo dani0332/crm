@@ -29,10 +29,10 @@ class CustomerAddressService
                 'office_number' => $address['villa_apartment_office_no'],
                 'floor_number' => $address['floor_no'],
                 'building_name' => $address['villa_building_name'],
-                'street' => $address['street_name'],
+                'street' => $address['street_name'] ?? null,
                 'area' => $address['area'],
                 'city' => $address['city'],
-                'landmark' => $address['landmark'],
+                'landmark' => $address['landmark'] ?? null,
                 'is_default' => $address['address_type'] == 'Home' ? 1 : 0,
             ];
             $this->createOrUpdateAddress($address);
