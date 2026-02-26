@@ -7,6 +7,7 @@ namespace App\Services\PolicyIssuanceAutomation\Health\Adnic;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
+use Carbon\Carbon;
 
 class AdnicQuoteUpdaterService
 {
@@ -14,8 +15,8 @@ class AdnicQuoteUpdaterService
     {
         $data = [
             'policy_number' => $issuePolicyResult?->PolicyInfo?->PolicyNo,
-            'policy_start_date' => $issuePolicyResult?->PolicyInfo?->PolicyStartDate,
-            'policy_expiry_date' => $issuePolicyResult?->PolicyInfo?->PolicyEndDate,
+            'policy_start_date' => Carbon::parse($issuePolicyResult?->PolicyInfo?->PolicyStartDate)->format(config('constants.DB_DATE_FORMAT_MATCH')),
+            'policy_expiry_date' => Carbon::parse($issuePolicyResult?->PolicyInfo?->PolicyEndDate)->format(config('constants.DB_DATE_FORMAT_MATCH')),
             'quote_status_id' => QuoteStatusEnum::PolicyIssued,
             'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
             'quote_status_date' => now(),
