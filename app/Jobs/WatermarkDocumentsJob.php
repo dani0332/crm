@@ -153,7 +153,7 @@ class WatermarkDocumentsJob implements ShouldQueue
                 $headers = get_headers($path);
 
                 // Parse HTTP status code from the first header line and treat 2xx-3xx as reachable.
-                if (preg_match('#HTTP/\d+\.\d+\s+(\d{3})#', $headers[0], $matches)) {
+                if (! empty($headers) && is_array($headers) && preg_match('#HTTP/\d+\.\d+\s+(\d{3})#', $headers[0], $matches)) {
                     $status = (int) $matches[1];
 
                     return $status >= 200 && $status < 400;

@@ -29,6 +29,7 @@ Route::middleware(['basicAuth'])->group(function () {
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
+    Route::post('/instant-alfred/generate-export-url', [\App\Http\Controllers\V2\AlfredChatController::class, 'generateExportUrl'])->name('api.instant-alfred.generate-url');
     Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
     Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
     Route::post('/imcrm/analyze-health', [ApiController::class, 'analyseHealthData']);
