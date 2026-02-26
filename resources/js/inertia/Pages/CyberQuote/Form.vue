@@ -149,9 +149,9 @@ function onSubmit(isValid) {
           class="w-full"
           :error="quoteForm.errors.emirate_of_registration_id"
           :rules="[isRequired]"
-          label="Emirate of Registration"
+          label="Emirate of Residence"
           filterable
-          placeholder="Search by Emirate of Registration"
+          placeholder="Search by Emirate of Residence"
           required
         />
       </div>
