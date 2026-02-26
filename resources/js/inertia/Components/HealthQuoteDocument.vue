@@ -603,6 +603,7 @@ const signedMedicalApplicationDocs = computed(() => {
       :storage-url="storageUrl"
       :currentFileURL="currentFileURL"
       @update:model-value="val => val === false && closeGallery()"
+      class="max-w-6xl mx-auto"
       @update:currentFileURL="currentFileURL = $event"
     />
   </div>
