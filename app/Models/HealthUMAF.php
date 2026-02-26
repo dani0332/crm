@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-
-use Illuminate\Support\Arr;
 use App\Enums\InsuranceProviderEnum;
-use App\Models\BaseMongoModel;
+use Illuminate\Support\Arr;
 
 class HealthUMAF extends BaseMongoModel
 {
-
     protected $table = 'health-umaf-responses';
 
     /**
@@ -19,10 +16,12 @@ class HealthUMAF extends BaseMongoModel
     public function isNonStp(): bool
     {
         $stpRating = $this->getAttribute('stp_rating') ?? [];
-        return  Arr::get($stpRating, 'is_non_stp', false) === true;
+
+        return Arr::get($stpRating, 'is_non_stp', false) === true;
     }
-    
-    public function isADNIC(){
+
+    public function isADNIC()
+    {
         return $this->getAttribute('provider_code') === InsuranceProviderEnum::ADNIC->value;
     }
 }

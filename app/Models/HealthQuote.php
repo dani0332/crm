@@ -567,9 +567,10 @@ class HealthQuote extends Model implements AuditableContract
     public function hasAdnicPlan(): bool
     {
         $umaf = HealthUMAF::where('quote_uuid', $this->uuid)->first();
-        if (!$umaf || !$umaf?->isADNIC()) {
+        if (! $umaf || ! $umaf?->isADNIC()) {
             return false;
         }
-        return  $umaf?->isADNIC() ? true : false;
+
+        return $umaf?->isADNIC() ? true : false;
     }
 }
