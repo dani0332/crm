@@ -336,7 +336,7 @@ watch(
           </button>
         </div>
       </div>
-      <div class="modal-body w-full h-full mt-2">
+      <div class="modal-body flex-1 min-h-0 w-full mt-2 overflow-auto">
         <div v-if="isCurrentFileImage" class="flex items-center justify-center">
           <div class="overflow-auto items-center justify-center">
             <img
@@ -373,17 +373,17 @@ watch(
   z-index: 1040;
 }
 
+/* Fill the overlay so constrained overlay (e.g. max-w-6xl) constrains the modal too */
 .modal-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   background-color: hsl(0, 4%, 9%);
   border-radius: 4px;
   padding: 5px;
   z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
