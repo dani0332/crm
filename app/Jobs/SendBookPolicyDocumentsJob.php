@@ -27,7 +27,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Log\Logger;
 use Throwable;
 
 class SendBookPolicyDocumentsJob implements ShouldQueue
