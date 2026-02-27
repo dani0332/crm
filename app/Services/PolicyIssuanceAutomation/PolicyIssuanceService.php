@@ -472,6 +472,7 @@ class PolicyIssuanceService
             if ($isPolicyBooked) {
                 // Here we need to dispatch document email
                 $data = new \stdClass;
+                $data->advisorId = $advisorId;
                 $data->model_type = $quoteType;
                 $data->quote_id = $quote->id;
                 LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob advisor id '.$quote->advisor_id);
