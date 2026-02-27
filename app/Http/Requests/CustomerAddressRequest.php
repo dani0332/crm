@@ -25,7 +25,7 @@ class CustomerAddressRequest extends FormRequest
      */
     public function rules()
     {
-        if ($this->input('modelType') == quoteTypeCode::Car) {
+        if (in_array($this->input('modelType'), [quoteTypeCode::Car, quoteTypeCode::CYBER])) {
             $addressType = $this->input('addressObj.address_type');
 
             if (in_array($addressType, ['Home', 'Office'])) {

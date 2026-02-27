@@ -11,7 +11,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Cyber\CyberQuoteRequest;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Models\InsuranceProviderPlan;
+use App\Services\CustomerAddressService;
+use App\Services\CustomerService;
 use App\Services\Logger\LoggerService;
+use App\Services\MACRMService;
 use App\Services\Quotes\CyberQuoteService;
 
 class CyberQuoteController extends Controller
@@ -74,6 +77,18 @@ class CyberQuoteController extends Controller
             vAbort($response->msg);
         }
 
+        $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
+        $addressObj = $request->input('addressObj', []);
+        $addressType = $addressObj['address_type'] ?? null;
+        if ($customerId && in_array($addressType, ['Home', 'Office'], true) && ! empty(array_filter((array) $addressObj))) {
+            app(CustomerAddressService::class)->createOrUpdateCustomerAddress(
+                $addressObj,
+                $customerId,
+                $response->quoteUID,
+                $this->cyberQuoteService->quoteType->id()
+            );
+        }
+
         return redirect(route('cyber-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
 
@@ -81,15 +96,28 @@ class CyberQuoteController extends Controller
     {
         $data = $this->cyberQuoteService->getFormOptions();
         $quote = $this->cyberQuoteService->getOne($uuid);
+        $quoteType = $this->cyberQuoteService->quoteType;
+
+        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
+
+        $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($quote->uuid, $quoteType->id());
+        $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
+            ? $courierQuoteResponse['data']['status']
+            : 'Pending';
 
         return inertia('CyberQuote/Form', array_merge($data, [
             'quote' => $quote,
+            'customerAddressData' => $customerAddressData,
+            'courierQuoteStatus' => $courierQuoteStatus,
         ]));
     }
 
     public function update(CyberQuoteRequest $request, $uuid)
     {
-        $this->cyberQuoteService->update($uuid, $request->validated());
+        $quote = $this->cyberQuoteService->update($uuid, $request->validated());
+
+        $quoteType = $this->cyberQuoteService->quoteType;
+        app(CustomerAddressService::class)->syncCustomerAddress($request, $quoteType, $quote, $request->email);
 
         return redirect(route('cyber-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
     }
