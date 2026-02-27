@@ -25,7 +25,7 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
     {
         return [
             'complaint_status_id' => [
-                'nullable',
+                'required',
                 'integer',
                 'exists:claim_statuses,id,status_type,'.ClaimsEnum::CLAIM_STATUSES_COMPLAINT_STATUS_KEY->value,
             ],
@@ -67,6 +67,7 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'complaint_status_id.required' => 'The complaint status field is required.',
             'complaint_status_id.exists' => 'The selected complaint status is invalid.',
             'complaint_datetime.required' => 'The complaint date field is required.',
             'complaint_datetime.date' => 'The complaint date must be a valid date.',
