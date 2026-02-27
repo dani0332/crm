@@ -82,11 +82,11 @@ function validateFields() {
 
 function onSubmit() {
   const isValid = validateFields();
-  return;
+
   if (isValid) {
-    let method = 'post';
     let url = route('admin.sic-health-config.store');
-    sicConfigurableForm.submit(method, url, {
+
+    sicConfigurableForm.submit('post', url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
           sicConfigurableForm.setError(key, errors[key]);
@@ -94,8 +94,6 @@ function onSubmit() {
         return false;
       },
     });
-  } else {
-    console.log('error');
   }
 }
 
