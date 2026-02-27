@@ -48,6 +48,8 @@ class CyberQuoteRequest extends FormRequest
         return [
             'first_name.regex' => 'The first name may only contain letters, spaces, and hyphens.',
             'last_name.regex' => 'The last name may only contain letters, spaces, and hyphens.',
+            'emirate_of_registration_id.required' => 'The emirate of residence field is required.',
+            'emirate_of_registration_id.exists' => 'The selected emirate of residence is invalid.',
         ];
     }
 }
