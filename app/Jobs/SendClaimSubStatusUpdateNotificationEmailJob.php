@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 /**
  * Send Claim Sub Status Update Notification Email Job
@@ -48,6 +49,8 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
 
     /**
      * Create a new job instance.
+     * Defers dispatch until after the current DB transaction commits, so the job is not
+     * queued if the enclosing transaction rolls back (e.g. when dispatched from the observer).
      */
     public function __construct(string $claimRequestUuid, string $message)
     {
@@ -126,7 +129,7 @@ class SendClaimSubStatusUpdateNotificationEmailJob implements ShouldQueue
     /**
      * Handle a job failure.
      */
-    public function failed(Exception $exception): void
+    public function failed(Throwable $exception): void
     {
         LoggerService::error(' Job permanently failed after all retries - Claim UUID: '.$this->claimRequestUuid, [
             'error' => $exception->getMessage(),
