@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\GenericRequestEnum;
 use App\Enums\SLAActionTypeEnum;
 use App\Http\Requests\CustomerPrimaryEmailRequest;
+use App\Http\Requests\DeleteAdditionalContactRequest;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
@@ -167,35 +168,39 @@ class CustomerController extends Controller
         return view('customers.upload');
     }
 
-    public function deleteAdditionalContact($id, Request $request)
+    public function deleteAdditionalContact($id, DeleteAdditionalContactRequest $request)
     {
-        $deleteCustomerAdditionalContact = CustomerAdditionalContact::find($id);
-
-        if ($deleteCustomerAdditionalContact) {
-            Log::info('Customer additional contact deleted. ID: '.$id);
-            $deleteCustomerAdditionalContact->delete();
-        }
+        $result = $this->customerService->deleteCustomerAdditionalContacts($id);
 
         if (isset($request->isInertia) && $request->isInertia) {
-            return redirect()->back();
+            return redirect()->back()->with($result['success'] ? 'success' : 'error', $result['message']);
         }
 
-        return response()->json(['data' => [
-            'message' => 'Additional Contact Deleted.',
-        ]]);
+        if ($result['success']) {
+            return response()->json(['data' => ['message' => $result['message']]], 200);
+        }
+
+        return response()->json(['error' => ['message' => $result['message']]], 404);
     }
 
     public function makeAdditionalContactPrimary(CustomerPrimaryEmailRequest $request)
     {
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-        $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
+        if (! $quoteObject) {
+            if (isset($request->isInertia) && $request->isInertia) {
+                return redirect()->back()->with('error', 'Quote not found.');
+            }
 
-        if ($quoteObject) {
-            $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
+            return response()->json(['error' => ['message' => 'Quote not found.']], 404);
         }
 
+        $keepExistingPrimaryEmail = isset($request->keep_existing_primary_email) ? $request->keep_existing_primary_email : 1;
+
+        $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value, (bool) $keepExistingPrimaryEmail);
+        $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_PRIMARY_UPDATE);
+
         if (isset($request->isInertia) && $request->isInertia) {
-            return redirect()->back();
+            return redirect()->back()->with('success', 'Primary Contact Updated');
         }
 
         return response()->json(['data' => [

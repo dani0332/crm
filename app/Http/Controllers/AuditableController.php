@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
 use App\Http\Requests\LogsRequest;
+use App\Models\CyberInsurerRequestResponses;
+use App\Models\CyberQuote;
 use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
 use App\Models\HealthQuote;
@@ -88,7 +90,7 @@ class AuditableController extends Controller
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        if (empty($quote) || empty($quoteType) || $quoteType !== QuoteTypes::CAR->value) {
+        if (empty($quote) || empty($quoteType) || ($quoteType !== QuoteTypes::CAR->value && $quoteType !== QuoteTypes::CYBER->value)) {
             return response()->json([
                 'success' => false,
                 'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',
@@ -105,6 +107,7 @@ class AuditableController extends Controller
             'success' => true,
             'message' => 'Policy issuance API logs retrieved successfully',
             'data' => $policyIssuanceLogs,
+            'policyIssuance' => $quote->policyIssuance ?? null,
         ]);
     }
 
@@ -186,6 +189,8 @@ class AuditableController extends Controller
             case LifeQuote::class:
                 return LifeInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
+            case CyberQuote::class:
+                return CyberInsurerRequestResponses::with('insuranceProvider');
             case HealthQuote::class:
                 return HealthInsurerRequestResponse::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
