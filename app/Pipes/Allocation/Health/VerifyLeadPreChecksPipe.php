@@ -20,9 +20,8 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         $isVerified = $this->verifyPreChecks();
         if (! $isVerified) {
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
-        }
-        else {
-          return $next($request);
+        } else {
+            return $next($request);
         }
         $lead = $this->findLead();
 
@@ -37,19 +36,18 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 
     private function verifyPreChecks()
     {
-      $lead = $this->lead;
-      $continueAssignment = false;
+        $lead = $this->lead;
+        $continueAssignment = false;
 
-      if ($lead->has_pec_tag && ! empty($lead->price_starting_from) && ($this->allocationRequest->isOverrideAdvisorRequest() || empty($lead->advisor_id))) {
-        $continueAssignment = true;
-        LoggerService::info(self::class."::verifyPreChecks - Lead has PEC tag and price starting from, continuing assignment");
-      }
-      elseif ($lead->hasAdnicPlan()) {
-        LoggerService::info(self::class.'::verifyPreChecks - Lead has ADNIC plan, continuing assignment');
-        $continueAssignment = true;
-      }
+        if ($lead->has_pec_tag && ! empty($lead->price_starting_from) && ($this->allocationRequest->isOverrideAdvisorRequest() || empty($lead->advisor_id))) {
+            $continueAssignment = true;
+            LoggerService::info(self::class.'::verifyPreChecks - Lead has PEC tag and price starting from, continuing assignment');
+        } elseif ($lead->hasAdnicPlan()) {
+            LoggerService::info(self::class.'::verifyPreChecks - Lead has ADNIC plan, continuing assignment');
+            $continueAssignment = true;
+        }
 
-      return $continueAssignment;
+        return $continueAssignment;
     }
 
     private function findLead()

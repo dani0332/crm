@@ -382,4 +382,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Chief Deputy Officer Mobile Number
     public const CHIEF_DEPUTY_OFFICER_MOBILE_NO = 'CHIEF_DEPUTY_OFFICER_MOBILE_NO';
+
+    // Instant Alfred Export Workflow
+    public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
 }
