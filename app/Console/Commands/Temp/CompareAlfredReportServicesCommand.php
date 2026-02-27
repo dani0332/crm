@@ -9,6 +9,7 @@
  * Usage:
  *   php artisan alfred:compare-services --quote-type=Car --from=2025-08-01 --to=2025-08-31
  *   php artisan alfred:compare-services --quote-type=Car --from=2025-10-01 --to=2025-10-31 --segment=SIC
+ *   php artisan alfred:compare-services --quote-type=Car --from=2025-08-01 --to=2025-08-31 --dump-sql
  */
 
 namespace App\Console\Commands\Temp;
@@ -27,7 +28,8 @@ class CompareAlfredReportServicesCommand extends Command
         {--from=             : chat_initiated_at start date (Y-m-d)}
         {--to=               : chat_initiated_at end date   (Y-m-d)}
         {--segment=          : Optional segment filter (SIC, NON-SIC, AIG, SIC-REVIVAL)}
-        {--sale-leads=       : Optional sale_leads filter (Yes / No)}';
+        {--sale-leads=       : Optional sale_leads filter (Yes / No)}
+        {--dump-sql          : Dump raw SQL queries instead of running them}';
     protected $description = '[TEMP] Compare UUID results and timing: InstantAlfredService vs InstantAlfredReportService';
 
     public function handle(): int
@@ -37,6 +39,7 @@ class CompareAlfredReportServicesCommand extends Command
         $to = $this->option('to');
         $segment = $this->option('segment');
         $saleLeads = $this->option('sale-leads');
+        $dumpSql = $this->option('dump-sql');
 
         if (! $from || ! $to) {
             $this->error('--from and --to are required. Example: --from=2025-08-01 --to=2025-08-31');
@@ -45,7 +48,7 @@ class CompareAlfredReportServicesCommand extends Command
         }
 
         $params = array_filter([
-            'report' => 'Consolidated',   // forces full query in the old service
+            'report' => 'Consolidated',
             'quoteType' => $quoteType,
             'chat_initiated_at' => [$from, $to],
             'segment' => $segment ?: null,
@@ -56,7 +59,7 @@ class CompareAlfredReportServicesCommand extends Command
 
         $this->line('');
         $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        $this->info(' Alfred Report Service Comparison');
+        $this->info(' Alfred Report Service — '.($dumpSql ? 'Raw SQL Dump' : 'Comparison'));
         $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         $this->table(
             ['Filter', 'Value'],
@@ -68,6 +71,82 @@ class CompareAlfredReportServicesCommand extends Command
             ]
         );
 
+        if ($dumpSql) {
+            return $this->dumpRawSql($params);
+        }
+
+        return $this->runComparison($params);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SQL Dump Mode
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private function dumpRawSql(array $params): int
+    {
+        $this->line('');
+
+        // ── Old service ──────────────────────────────────────────────────────
+        $this->info('── OLD SERVICE (InstantAlfredService) ──────────────');
+        $oldQuery = app(InstantAlfredService::class)->getChatConsolidateReportQuery($params);
+        $this->line($this->toRawSql($oldQuery));
+
+        $this->line('');
+
+        // ── New service ──────────────────────────────────────────────────────
+        $this->info('── NEW SERVICE (InstantAlfredReportService) ────────');
+        $newQuery = app(InstantAlfredReportService::class)->getReportQuery($params);
+        $this->line($this->toRawSql($newQuery));
+
+        $this->line('');
+
+        // ── Sorted IDs query (Pass 1 for sortType) ───────────────────────────
+        $this->info('── NEW SERVICE — Pass 1 getSortedIds() ─────────────');
+        $paramsWithSort = array_merge($params, ['sortType' => 'desc']);
+        $this->injectFakeRequest($paramsWithSort);
+        $sortedIdsQuery = app(InstantAlfredReportService::class)->getSortedIds($paramsWithSort);
+        $this->comment('(returns '.count($sortedIdsQuery).' sorted IDs — not a query object)');
+
+        $this->line('');
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Interpolates bindings into the SQL string to produce a ready-to-run query.
+     */
+    private function toRawSql($query): string
+    {
+        $sql = $query->toSql();
+        $bindings = $query->getBindings();
+
+        $rawSql = preg_replace_callback('/\?/', function () use (&$bindings) {
+            $binding = array_shift($bindings);
+
+            if (is_null($binding)) {
+                return 'NULL';
+            }
+
+            if (is_bool($binding)) {
+                return $binding ? '1' : '0';
+            }
+
+            if (is_numeric($binding)) {
+                return $binding;
+            }
+
+            return "'".addslashes((string) $binding)."'";
+        }, $sql);
+
+        return $rawSql;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Comparison Mode
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private function runComparison(array $params): int
+    {
         // ── Old service ──────────────────────────────────────────────────────
         $this->line('');
         $this->comment('Running OLD service (InstantAlfredService)…');
@@ -111,10 +190,10 @@ class CompareAlfredReportServicesCommand extends Command
         $this->table(
             ['Metric', 'Old Service', 'New Service'],
             [
-                ['UUID count (raw)',   count($oldUuids), count($newUuids)],
-                ['UUID count (unique)', count($oldSet),  count($newSet)],
-                ['Execution time',     round($oldMs, 1).' ms', round($newMs, 1).' ms'],
-                ['Speedup',           '—', $oldMs > 0 ? round($oldMs / $newMs, 1).'x faster' : '—'],
+                ['UUID count (raw)',    count($oldUuids),              count($newUuids)],
+                ['UUID count (unique)', count($oldSet),                count($newSet)],
+                ['Execution time',     round($oldMs, 1).' ms',        round($newMs, 1).' ms'],
+                ['Speedup',            '—', $oldMs > 0 ? round($oldMs / $newMs, 1).'x faster' : '—'],
             ]
         );
 
@@ -151,10 +230,10 @@ class CompareAlfredReportServicesCommand extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * Injects a fake Request into the container so both services
-     * can call request() and get the correct filter values.
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
     private function injectFakeRequest(array $params): void
     {
         $request = Request::create('/', 'GET', $params);
