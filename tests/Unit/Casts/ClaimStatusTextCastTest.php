@@ -31,11 +31,13 @@ describe('ClaimStatusText Cast', function () {
         $cast = new ClaimStatusText;
         $model = new ClaimStatus;
 
-        $result = $cast->get($model, 'text', 'custom new status', []);
+        $rawStatus = 'custom new status';
+
+        $result = $cast->get($model, 'text', $rawStatus, []);
 
         expect($result)->toBe([
-            'value' => 'custom new status',
-            'label' => 'custom new status',
+            'value' => $rawStatus,
+            'label' => $rawStatus,
         ]);
     });
 
@@ -59,12 +61,21 @@ describe('ClaimStatusText Cast', function () {
         expect($result)->toBe('claim-registered');
     });
 
-    it('handles null input in set', function () {
+    it('handles null input in set by returning null', function () {
         $cast = new ClaimStatusText;
         $model = new ClaimStatus;
 
         $result = $cast->set($model, 'text', null, []);
 
-        expect($result)->toBe('');
+        expect($result)->toBeNull();
+    });
+
+    it('handles empty string input in set by returning null', function () {
+        $cast = new ClaimStatusText;
+        $model = new ClaimStatus;
+
+        $result = $cast->set($model, 'text', '', []);
+
+        expect($result)->toBeNull();
     });
 });
