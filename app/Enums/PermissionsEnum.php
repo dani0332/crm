@@ -474,6 +474,7 @@ final class PermissionsEnum extends Enum
     public const BRANCHES = 'branches';
     public const BRANCH_ASSIGNMENTS = 'branch-assignments';
     public const CAR_LEGACY_KYC_SKIP_INSURER_API = 'car-legacy-kyc-skip-insurer-api';
+    public const DELETE_ADDITIONAL_CONTACT = 'delete-additional-contact';
     public const COMPANY_PRIVATE_CAR_DRIVER_UPDATES = 'company-private-car-driver-updates';
 
     // Cyber Permissions

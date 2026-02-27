@@ -28,6 +28,10 @@ class PermissionSeeder extends Seeder
                 'name' => PermissionsEnum::NONRULE_LEADALLOCATION,
                 'guard_name' => 'web',
             ],
+            [
+                'name' => PermissionsEnum::DELETE_ADDITIONAL_CONTACT,
+                'guard_name' => 'web',
+            ],
         ];
 
         foreach ($permissions as $permission) {
