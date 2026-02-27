@@ -56,6 +56,58 @@ class InstantAlfredReportService
     }
 
     /**
+     * Two-pass sort — Pass 1:
+     * Fetches only pqr.id values sorted by chat_initiated_at using a lightweight
+     * query with no heavy JOINs. Avoids the lazyById + ORDER BY conflict that
+     * causes records to be skipped.
+     *
+     * @return int[]
+     */
+    public function getSortedIds(array $params): array
+    {
+        $request = $this->buildRequest($params);
+        $quoteTypeId = $this->resolveQuoteTypeId($request->quoteType ?? 'Car');
+        $sortDir = ($request->sortType === 'desc') ? 'desc' : 'asc';
+
+        $query = DB::table('personal_quotes as pqr')
+            ->select('pqr.id')
+            ->where('pqr.quote_type_id', $quoteTypeId)
+            ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
+            ->whereNotNull('pqrd.chat_initiated_at')
+            ->groupBy('pqr.id')
+            ->orderBy('pqrd.chat_initiated_at', $sortDir);
+
+        $this->applyDateFilters($query, $request);
+        $this->applyScalarFilters($query, $request);
+
+        return $query->pluck('pqr.id')->toArray();
+    }
+
+    /**
+     * Two-pass sort — Pass 2:
+     * Fetches full report records for a specific batch of pqr.id values.
+     * Uses WHERE id IN (...) on primary key (instant lookup) and preserves
+     * the original sort order via FIELD().
+     */
+    public function getReportQueryByIds(array $ids, array $params)
+    {
+        $request = $this->buildRequest($params);
+        $quoteTypeId = $this->resolveQuoteTypeId($request->quoteType ?? 'Car');
+
+        $query = DB::table('personal_quotes as pqr')
+            ->select($this->coreSelectFields())
+            ->whereIn('pqr.id', $ids)
+            ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id');
+
+        $this->addQuoteTypeJoins($query, $quoteTypeId);
+
+        $idList = implode(',', array_map('intval', $ids));
+        $query->orderByRaw("FIELD(pqr.id, {$idList})");
+
+        return $query;
+    }
+
+    /**
      * Processes a batch of SQL records for the Consolidated report.
      * Fetches MongoDB $group aggregation, merges with SQL data, and
      * enriches with PHP-resolved lookup text + segment.

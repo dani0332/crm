@@ -109,8 +109,19 @@ class InstantAlfredExportService
 
         try {
             $reportService = app(InstantAlfredReportService::class);
+            $hasSortType = ! empty($params['sortType']);
 
-            $rows = $reportService->getReportQuery($params)->get();
+            if ($hasSortType) {
+                // Two-pass: fetch sorted IDs, then full records per batch in sorted order.
+                $sortedIds = $reportService->getSortedIds($params);
+                $rows = collect();
+
+                foreach (array_chunk($sortedIds, self::UUID_BATCH_SIZE) as $idBatch) {
+                    $rows = $rows->merge($reportService->getReportQueryByIds($idBatch, $params)->get());
+                }
+            } else {
+                $rows = $reportService->getReportQuery($params)->get();
+            }
 
             $sqlData = $rows
                 ->groupBy('uuid')
@@ -281,28 +292,46 @@ class InstantAlfredExportService
     private function streamConsolidatedReportData(array $params): \Generator
     {
         $reportService = app(InstantAlfredReportService::class);
-        $query = $reportService->getReportQuery($params);
+        $hasSortType = ! empty($params['sortType']);
 
-        $sqlRecordsBatch = [];
-        foreach ($query->lazyById(self::BATCH_SIZE, 'pqr.id', 'id') as $sqlRecord) {
-            $sqlRecordsBatch[] = $sqlRecord;
+        if ($hasSortType) {
+            // Two-pass: fetch sorted IDs first (lightweight, no heavy JOINs),
+            // then batch fetch full records in sorted order via WHERE id IN (...).
+            $sortedIds = $reportService->getSortedIds($params);
 
-            if (count($sqlRecordsBatch) >= self::UUID_BATCH_SIZE) {
+            foreach (array_chunk($sortedIds, self::UUID_BATCH_SIZE) as $idBatch) {
+                $records = $reportService->getReportQueryByIds($idBatch, $params)->get()->all();
+                $processedRecords = $reportService->processConsolidatedChunk($records, $params);
+
+                foreach ($processedRecords as $record) {
+                    yield $this->mapConsolidatedReportRow($record);
+                }
+            }
+        } else {
+            // No sort: lazyById() cursor pagination (most memory-efficient path).
+            $query = $reportService->getReportQuery($params);
+            $sqlRecordsBatch = [];
+
+            foreach ($query->lazyById(self::BATCH_SIZE, 'pqr.id', 'id') as $sqlRecord) {
+                $sqlRecordsBatch[] = $sqlRecord;
+
+                if (count($sqlRecordsBatch) >= self::UUID_BATCH_SIZE) {
+                    $processedRecords = $reportService->processConsolidatedChunk($sqlRecordsBatch, $params);
+
+                    foreach ($processedRecords as $record) {
+                        yield $this->mapConsolidatedReportRow($record);
+                    }
+
+                    $sqlRecordsBatch = [];
+                }
+            }
+
+            if (! empty($sqlRecordsBatch)) {
                 $processedRecords = $reportService->processConsolidatedChunk($sqlRecordsBatch, $params);
 
                 foreach ($processedRecords as $record) {
                     yield $this->mapConsolidatedReportRow($record);
                 }
-
-                $sqlRecordsBatch = [];
-            }
-        }
-
-        if (! empty($sqlRecordsBatch)) {
-            $processedRecords = $reportService->processConsolidatedChunk($sqlRecordsBatch, $params);
-
-            foreach ($processedRecords as $record) {
-                yield $this->mapConsolidatedReportRow($record);
             }
         }
     }
