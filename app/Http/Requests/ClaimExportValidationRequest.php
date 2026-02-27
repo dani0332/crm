@@ -67,6 +67,7 @@ class ClaimExportValidationRequest extends FormRequest
             'next_followup_datetime' => 'nullable|date',
             'assigned_status' => 'nullable|in:assigned,un-assigned',
             'business_type_of_insurance_id' => 'nullable|integer|exists:business_type_of_insurance,id',
+            'service_type_id' => 'nullable|integer|exists:lookups,id',
 
             // Car-specific filters
             'plate_number' => 'nullable|string|max:20',
@@ -101,6 +102,7 @@ class ClaimExportValidationRequest extends FormRequest
             'car_model' => 'car model',
             'model_year' => 'model year',
             'business_type_of_insurance_id' => 'business type of insurance',
+            'service_type_id' => 'service type',
         ];
     }
 
@@ -116,6 +118,7 @@ class ClaimExportValidationRequest extends FormRequest
             'exportType.in' => 'The export type must be either email or download.',
             'model_year.min' => 'The model year must be at least 1900.',
             'model_year.max' => 'The model year cannot be more than next year.',
+            'service_type_id.exists' => 'The selected service type is invalid.',
         ];
     }
 
