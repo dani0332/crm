@@ -373,10 +373,12 @@ watch(
   z-index: 1040;
 }
 
-/* Fill the overlay so constrained overlay (e.g. max-w-6xl) constrains the modal too */
+/* Centered modal box with max dimensions so it never goes full screen */
 .modal-container {
-  position: absolute;
-  inset: 0;
+  max-width: 72rem; /* max-w-6xl */
+  max-height: 90vh;
+  width: 100%;
+  height: 100%;
   background-color: hsl(0, 4%, 9%);
   border-radius: 4px;
   padding: 5px;
