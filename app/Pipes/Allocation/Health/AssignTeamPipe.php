@@ -2,7 +2,6 @@
 
 namespace App\Pipes\Allocation\Health;
 
-use App\Enums\HealthTeamType;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\Team;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
@@ -56,9 +55,7 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         if ($healthTeam) {
             LoggerService::info("Filtered team is: {$healthTeam->name}");
-            $this->lead->health_team_type = ($healthTeam->name === HealthTeamType::GBP && $this->lead->members->count() > 2)
-                ? HealthTeamType::RM_NB
-                : $healthTeam->name;
+            $this->lead->health_team_type = $healthTeam->name;
         } else {
             LoggerService::warning('No team found for the given price range');
             $this->lead->is_error_email_sent = true;
