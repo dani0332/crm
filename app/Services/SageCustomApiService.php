@@ -310,13 +310,10 @@ class SageCustomApiService
                             foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
                                 // add discount amount to amount due for the first child payment in sage for balancing the amount
                                 $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
-                                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
-                                if ($key === 0) {
+                                if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                                     $dueDate = $apBookingDateFormatted;
-                                } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                                    $dueDate = $invoicePaymentSchedulesDueDate;
                                 } else {
-                                    $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                                    $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $apBookingDateFormatted : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
                                 }
 
                                 $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));

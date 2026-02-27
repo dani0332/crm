@@ -1326,19 +1326,6 @@ class SagePayloadFactory
         ];
     }
 
-    // Payment code mapping
-    public static function calculateDueDate($paymentDueDate, $insurerInvoiceDate)
-    {
-        // if due date is older than Insurer invoice date than use insure invoice date
-        $paymentDueDateCarbonObject = Carbon::parse($paymentDueDate)->startOfDay();
-        $insurerInvoiceDateDateCarbon = Carbon::parse($insurerInvoiceDate)->startOfDay();
-        if ($insurerInvoiceDateDateCarbon->gt($paymentDueDateCarbonObject)) {
-            return $insurerInvoiceDateDateCarbon->format(self::instanceData()->sage_api_date_format);
-        }
-
-        return $paymentDueDateCarbonObject->format(self::instanceData()->sage_api_date_format);
-    }
-
     public static function createAPPrepaymentReceiptPayload($sageRequest)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
