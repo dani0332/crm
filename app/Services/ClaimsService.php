@@ -33,14 +33,20 @@ class ClaimsService extends BaseService
     use CentralTrait;
 
     protected ClaimStatusesService $claimsStatusesService;
+    protected LookupService $lookupService;
+    protected UserService $userService;
     protected $searchPrefix = 'claims.';
     protected $perPage = 15;
 
-    public function __construct(ClaimStatusesService $claimsStatusesService)
-    {
+    public function __construct(
+        ClaimStatusesService $claimsStatusesService,
+        LookupService $lookupService,
+        UserService $userService,
+    ) {
         parent::__construct();
         $this->claimsStatusesService = $claimsStatusesService;
-
+        $this->lookupService = $lookupService;
+        $this->userService = $userService;
     }
 
     /**
@@ -851,18 +857,15 @@ class ClaimsService extends BaseService
     {
         $carMake = $request?->car_make;
 
-        $lookupService = new LookupService;
-        $userService = app(UserService::class);
-
         return [
             'lineOfBusiness' => $this->getLineOfBusinessOptions(),
-            'claimTypes' => $lookupService->getClaimTypes(),
+            'claimTypes' => $this->lookupService->getClaimTypes(),
             'claimStatuses' => $this->claimsStatusesService->getClaimStatuses(),
             'claimSubStatuses' => $this->claimsStatusesService->getClaimSubStatuses(),
             'complaintStatuses' => $this->claimsStatusesService->getClaimComplaintStatuses(),
-            'claimsManagers' => $userService->getClaimsManagers(),
-            'claimRequestTypes' => $lookupService->getClaimRequestTypes(),
-            'claimServiceTypes' => $lookupService->getClaimServiceTypes(),
+            'claimsManagers' => $this->userService->getClaimsManagers(),
+            'claimRequestTypes' => $this->lookupService->getClaimRequestTypes(),
+            'claimServiceTypes' => $this->lookupService->getClaimServiceTypes(),
             'carMake' => $this->getCarMake(),
             'carModel' => $carMake ? $this->getCarModelByMake($carMake) : [],
             'carModelYear' => $this->getCarModelYear(),
