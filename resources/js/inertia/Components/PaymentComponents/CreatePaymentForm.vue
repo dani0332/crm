@@ -777,6 +777,9 @@ const providerName = computed(() => {
   if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     return props.quoteRequest.insurance_provider?.text || 'Not Available';
   }
+  if (props.quoteType == quoteTypeCodeEnum.CYBER) {
+    return props.quoteRequest.insurance_provider?.text || 'Not Available';
+  }
   const ecomQuoteType = [...props.quoteTypesToCheck, quoteTypeCodeEnum.Bike];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
@@ -1233,17 +1236,28 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   resetTotalPayments();
   calculatePaymentBreakup();
   isPaymentNoEnabled.value = false;
+
+  const isEditMode = paymentMethodsForm.status === 'edit';
+  const shouldPreservePaymentNo =
+    isEditMode && !noPaymentUpdate && oldTotalPayments.value > 0;
+
   if (paymentMethodsForm.frequency === paymentFrequencyEnum.MONTHLY) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '12';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '12';
+    }
   } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.QUARTERLY) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '4';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '4';
+    }
   } else if (
     paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
   ) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '2';
+    if (!shouldPreservePaymentNo) {
+      paymentMethodsForm.payment_no = '2';
+    }
   } else if (
     paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
   ) {
@@ -1267,7 +1281,8 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
     ) {
       totalPayments.value.splice(0, 1);
     }
-  } else {
+  } else if (!shouldPreservePaymentNo) {
+    // Preserve existing payment_no when editing, only set if creating new payment
     paymentMethodsForm.payment_no = '1';
   }
   calculatePaymentBreakup();

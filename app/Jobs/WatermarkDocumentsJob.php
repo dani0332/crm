@@ -14,6 +14,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\UnableToCheckExistence;
+use Throwable;
 
 class WatermarkDocumentsJob implements ShouldQueue
 {
@@ -45,6 +47,8 @@ class WatermarkDocumentsJob implements ShouldQueue
     {
         LoggerService::startQuoteLogging($this->uuid, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
 
+        LoggerService::info("WatermarkDocumentsJob started for Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
+
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {
             LoggerService::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
@@ -63,20 +67,33 @@ class WatermarkDocumentsJob implements ShouldQueue
             return;
         }
 
-        // Check if the source file exists
-        if (! $this->fileExists($quoteDocument->doc_url)) {
-            LoggerService::error("Source file does not exist: {$quoteDocument->doc_url}");
-
-            return;
-        }
-
         try {
+            // Check if the source file exists
+            $sourcePath = (string) ($quoteDocument->doc_url ?? '');
+            if ($sourcePath === '') {
+                LoggerService::warning('Source file path is empty');
+
+                return;
+            }
+
+            if (! $this->fileExists($sourcePath)) {
+                LoggerService::warning("Source file does not exist: {$sourcePath}");
+
+                return;
+            }
+
             // Perform watermarking based on file type
             $watermarkService = app()->make(QuoteDocumentService::class);
             $fileMimeType = $quoteDocument->doc_mime_type;
             $docName = str_replace('original_', '', $quoteDocument->doc_name);
 
             $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
+
+            LoggerService::info("Watermark starting for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}", [
+                'doc_name' => $docName,
+                'fileMimeType' => $fileMimeType,
+                'documentType' => $documentType->code,
+            ]);
 
             if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf' || $extension == 'pdf') {
                 $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
@@ -95,8 +112,16 @@ class WatermarkDocumentsJob implements ShouldQueue
                 LoggerService::info('watermark job completed for '.$this->uuid);
             }
         } catch (\Exception $e) {
-            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage());
+            cache()->forget("processing_{$this->lockKey}");
+            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage(), [], $e);
             throw $e; // Re-throw to trigger job retry
+        } catch (Throwable $t) {
+            // Ensure the processing lock is always cleared for non-Exception Throwables (e.g., TypeError, Error)
+            cache()->forget("processing_{$this->lockKey}");
+            LoggerService::error("throwable: Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$t->getMessage(), [
+                'throwable_class' => $t::class,
+            ], $t);
+            throw $t; // Re-throw to trigger job retry
         }
     }
 
@@ -120,27 +145,59 @@ class WatermarkDocumentsJob implements ShouldQueue
     /**
      * Check if a file exists
      */
-    private function fileExists($path)
+    private function fileExists(string $path): bool
     {
         try {
-            // For local storage
-            if (Storage::disk('azureIMPrivate')->exists($path)) {
-                return true;
-            }
-
             // For remote URLs
             if (filter_var($path, FILTER_VALIDATE_URL)) {
                 $headers = get_headers($path);
 
-                return $headers && strpos($headers[0], '200') !== false;
+                // Parse HTTP status code from the first header line and treat 2xx-3xx as reachable.
+                if (! empty($headers) && is_array($headers) && preg_match('#HTTP/\d+\.\d+\s+(\d{3})#', $headers[0], $matches)) {
+                    $status = (int) $matches[1];
+
+                    return $status >= 200 && $status < 400;
+                }
+
+                return false;
             }
 
-            return false;
-        } catch (\Exception $e) {
-            LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
+            // For Azure private storage paths
+            if (Storage::disk('azureIMPrivate')->exists($path)) {
+                return true;
+            }
 
-            return false;
+        } catch (UnableToCheckExistence $e) {
+            $previous = $e->getPrevious();
+            LoggerService::error(
+                "Unable to check file existence (Azure transient failure): {$path}",
+                [
+                    'previous_exception_class' => $previous ? $previous::class : null,
+                    'previous_exception_message' => $previous?->getMessage(),
+                ],
+                $e
+            );
+
+            // Let the job retry - this is not a "missing file" case.
+            throw $e;
+        } catch (Throwable $e) {
+            $previous = $e->getPrevious();
+            LoggerService::error(
+                "Error checking file existence: {$path}",
+                [
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $previous ? $previous::class : null,
+                    'previous_exception_message' => $previous?->getMessage(),
+                ],
+                $e
+            );
+
+            // Do not convert runtime/storage failures into "missing file".
+            // Let the job fail so it can be retried.
+            throw $e;
         }
+
+        return false;
     }
 
     public function middleware()

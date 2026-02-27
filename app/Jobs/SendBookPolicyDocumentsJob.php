@@ -51,7 +51,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $this->code = $code;
         $this->forceEmailSend = $forceEmailSend;
         $this->fromSageProcess = $fromSageProcess;
-        $this->onQueue('insly');
+        $this->onQueue('insly')->afterCommit();
     }
 
     /**
@@ -182,7 +182,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $emailData->policyWordingHandbook = $policyWordingDoc;
         $emailData->isHealthAUH = $isAUHHealthLead;
         $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber])) {
             $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);
 
             if (! empty($emailData)) {

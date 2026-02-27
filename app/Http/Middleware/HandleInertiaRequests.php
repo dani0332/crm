@@ -260,6 +260,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::UtmLeadsSalesReport,
+            PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
                 $section
@@ -328,6 +329,12 @@ class HandleInertiaRequests extends Middleware
                         'Group Medical',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD),
+                        'Cyber',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),
+                        fn ($s) => $s->attributes(['icon' => 'cyber'])
                     );
             });
         }
@@ -451,6 +458,7 @@ class HandleInertiaRequests extends Middleware
                 ->addIf((auth()->user()->can(PermissionsEnum::BikeQuotesList) || (userHasProduct(quoteTypeCode::Bike) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Bike Quotes', route('bike-quotes-list'), fn ($s) => $s->attributes(['icon' => 'bike']))
                 ->addIf((auth()->user()->can(PermissionsEnum::CycleQuotesList) || (userHasProduct(quoteTypeCode::Cycle) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cycle Quotes', route('cycle-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cycle']))
                 ->addIf((auth()->user()->can(PermissionsEnum::YachtQuotesList) || (userHasProduct(quoteTypeCode::Yacht) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Yacht Quotes', route('yacht-quotes-list'), fn ($s) => $s->attributes(['icon' => 'yacht']))
+                ->addIf((auth()->user()->can(PermissionsEnum::CYBER_QUOTES_LIST) || (userHasProduct(quoteTypeCode::CYBER) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cyber Quotes', route('cyber-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cyber']))
                 ->addIf((auth()->user()->can(PermissionsEnum::JetskiQuotesList) || (userHasProduct(quoteTypeCode::Jetski) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Jetski Quotes', route('jetski-quotes-list'), fn ($s) => $s->attributes(['icon' => 'jetski']));
         });
         /* personal quotes section end */
@@ -728,12 +736,6 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::RENEWAL_BATCHES_LIST),
                         'Renewal Batches',
                         route('renewal-batches-list'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
-                        'Process Tracker',
-                        route('process-tracker.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

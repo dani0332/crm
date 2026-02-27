@@ -1361,19 +1361,7 @@ const closeModal = v => {
 const readOnlyMode = reactive({
   isDisable: true,
 });
-onMounted(() => {
-  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
-  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
-    getFollowUpsByQuote();
-  }
-  window.addEventListener('ocr-notification', handleOcrNotification);
-  window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
-  window.addEventListener(
-    'customer-verification-updated',
-    handleCustomerVerificationUpdated,
-  );
-});
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
   window.removeEventListener('lead-status-updated', handleLeadStatusUpdated);
@@ -1613,6 +1601,24 @@ if (isPlanDetailEnabled.value && page.props.record.insurer_name !== '') {
 }
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
+    getFollowUpsByQuote();
+  }
+  window.addEventListener('ocr-notification', handleOcrNotification);
+  window.addEventListener('lead-status-updated', handleLeadStatusUpdated);
+  window.addEventListener(
+    'customer-verification-updated',
+    handleCustomerVerificationUpdated,
+  );
+
+  if (isPlanDetailEnabled.value) {
+    loadEmbeddedProducts();
+  }
+});
 
 const copyUploadURL = () => {
   copy(page.props.docUploadURL);
