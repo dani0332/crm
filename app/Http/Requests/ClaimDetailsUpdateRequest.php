@@ -157,8 +157,13 @@ class ClaimDetailsUpdateRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Custom validation logic can be added here if needed
-            $quoteTypeId = $this->quote_type_id;
+            $claim = $this->route('claim');
+            $quoteTypeId = $claim?->quote_type_id ?? $this->quote_type_id;
+
+            if ($quoteTypeId === null) {
+                return;
+            }
+
             $isCarLob = $quoteTypeId == QuoteTypes::CAR->id();
             $isBikeLob = $quoteTypeId == QuoteTypes::BIKE->id();
             $isHealthLob = $quoteTypeId == QuoteTypes::HEALTH->id();
