@@ -96,7 +96,9 @@ class ClaimsService extends BaseService
                 'insuranceProvider:id,code,text',
                 'claimStatus:id,text',
                 'claimSubStatus:id,text',
+                'complaintStatus:id,text',
                 'claimType:id,code,text',
+                'claimRequestType:id,code,text',
                 'claimRequestDetails' => function ($query) {
                     $query->with('serviceType:id,code,text');
                 },

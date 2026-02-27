@@ -3,6 +3,7 @@
 use App\Http\Requests\ClaimBaseRequest;
 use App\Http\Requests\ClaimStoreRequest;
 use App\Http\Requests\ClaimUpdateRequest;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Tests\Helpers\TestSchemaCreator;
@@ -82,6 +83,43 @@ it('marks all optional fields as nullable in the rules', function (string $field
     'claim_decline_reason',
     'claim_request_type_id',
     'service_type_id',
+]);
+
+// ── incident_date temporal validation ───────────────────────────────────────────
+
+it('rejects future incident_date values for ClaimStoreRequest', function () {
+    $data = array_merge(validClaimPayload(), [
+        'incident_date' => Carbon::now()->addDay()->format('Y-m-d'),
+    ]);
+
+    $validator = Validator::make($data, (new ClaimStoreRequest)->rules());
+
+    expect($validator->fails())->toBeTrue()
+        ->and($validator->errors()->has('incident_date'))->toBeTrue();
+});
+
+it('rejects future incident_date values for ClaimUpdateRequest', function () {
+    $data = array_merge(validClaimPayload(), [
+        'incident_date' => Carbon::now()->addDay()->format('Y-m-d'),
+    ]);
+
+    $validator = Validator::make($data, (new ClaimUpdateRequest)->rules());
+
+    expect($validator->fails())->toBeTrue()
+        ->and($validator->errors()->has('incident_date'))->toBeTrue();
+});
+
+it('accepts today or past incident_date values when provided', function (string $incidentDate) {
+    $data = array_merge(validClaimPayload(), [
+        'incident_date' => $incidentDate,
+    ]);
+
+    $validator = Validator::make($data, (new ClaimStoreRequest)->rules());
+
+    expect($validator->errors()->has('incident_date'))->toBeFalse();
+})->with([
+    'today' => fn () => Carbon::now()->format('Y-m-d'),
+    'yesterday' => fn () => Carbon::now()->subDay()->format('Y-m-d'),
 ]);
 
 // ── Log message hook ──────────────────────────────────────────────────────────
