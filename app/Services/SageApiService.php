@@ -1910,16 +1910,15 @@ class SageApiService
                 LoggerService::info('SAGE API :  Skip Patch payload for Commission Splits  for '.$quote->code);
             } else {
                 LoggerService::info('SAGE API :  Prepare Patch payload for Commission Splits  for '.$quote->code);
-                $commissionBookingDateFormatted = Carbon::parse($sageRequest->bookingDate)->format($sageDateFormat);
                 foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
                     $paymentSplit = $paymentSplits[$key];
                     $commissionSplit = $paymentSplit['commission_vat_applicable'];
                     $vatOnCommission = $paymentSplit['commission_vat'];
                     $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
                     if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                        $dueDate = $commissionBookingDateFormatted;
+                        $dueDate = $bookingDateFormatted;
                     } else {
-                        $dueDate = $paymentSplit['sr_no'] == 1 ? $commissionBookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                        $dueDate = $paymentSplit['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
                     }
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
@@ -2392,10 +2391,10 @@ class SageApiService
 
                     if ($aPInvoicePaymentsScheduleResponse['status']) {
                         $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
+                        $bookingDateFormatted = Carbon::parse($sageRequest->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
                         foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
                             // Note: Discount invoices are no longer created, so we don't include discount in amount due
                             $dueAmount = roundNumber($paymentSplits[$key]['payment_amount']);
-                            $bookingDateFormatted = Carbon::parse($sageRequest->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
                             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                                 $dueDate = $bookingDateFormatted;
                             } else {
