@@ -75,7 +75,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quote->refresh();
         LoggerService::info('automation:SendBookPolicyDocumentsJob - Quote Code : '.$quote->code.' - check advisor id', extra: [
             'quoteAdvisorId' => $quote->advisor_id,
-            'dataAdvisorId' => $this->data->advisorId,
+            'dataAdvisorId' => $this->data?->advisorId ?? null,
         ]);
 
         $isAUHHealthLead = strtolower($this->data->model_type) === strtolower(QuoteTypes::HEALTH->value) && $quote->isAUHLead();
@@ -131,11 +131,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         }
 
         $quote->load('advisor');
-        $advisor = $quote->advisor_id ? $quote->advisor : User::find($this->data->advisorId);
+        $advisor = $quote->advisor_id ? $quote->advisor : User::find($this->data?->advisorId) ?? null;
         LoggerService::info('automation:SendBookPolicyDocumentsJob - Quote Code : ' . $quote->code . ' - Advisor Object', extra: [
             'advisor' => $advisor,
             'quoteAdvisorId' => $quote->advisor_id,
-            'dataAdvisorId' => $this->data->advisorId,
+            'dataAdvisorId' => $this->data?->advisorId ?? null,
         ]);
 
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
