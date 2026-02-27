@@ -1582,7 +1582,6 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
-        $sageRequestEmbeddedProduct->createdOn = Carbon::parse($insurerRequestResponseObject->premium_inv_dt)->format(env('DATE_FORMAT_ONLY'));
         $sageRequestEmbeddedProduct->taxAmount = $insurerRequestResponseObject->policy_premium_tax;
         $sageRequestEmbeddedProduct->policyPrice = $insurerRequestResponseObject->policy_premium_without_tax;
         $sageRequestEmbeddedProduct->totalPrice = $insurerRequestResponseObject->policy_premium_with_tax;
@@ -1624,7 +1623,6 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
-        $sageRequestEmbeddedProduct->createdOn = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->created_on)->format(env('DATE_FORMAT_ONLY'));
         $sageRequestEmbeddedProduct->taxAmount = $insurerRequestResponseObject->pricing->tax_amount;
         $sageRequestEmbeddedProduct->policyPrice = $insurerRequestResponseObject->pricing->policy_price;
         $sageRequestEmbeddedProduct->totalPrice = $insurerRequestResponseObject->pricing->total_price;
