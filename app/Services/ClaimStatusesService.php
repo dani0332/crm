@@ -171,7 +171,10 @@ class ClaimStatusesService extends BaseService
             ];
         }
 
-        return in_array($newClaimStatus?->text['value'], $subStatusListForClaimClosed);
+        $newStatusText = $newClaimStatus?->text;
+        $newStatusValue = is_array($newStatusText) ? ($newStatusText['value'] ?? null) : null;
+
+        return in_array($newStatusValue, $subStatusListForClaimClosed);
     }
 
     public function markClaimAsReOpen(ClaimRequest $claimRequest): void
@@ -183,7 +186,11 @@ class ClaimStatusesService extends BaseService
 
         if ($claimStatusOpen) {
             $claimRequest->update(['claim_status_id' => $claimStatusOpen->id]);
-            LoggerService::info(' Claim status updated to '.$claimStatusOpen?->text['value'].' - Claim UUID: '.$claimRequest->uuid, extra: [
+
+            $statusText = $claimStatusOpen->text;
+            $statusValue = is_array($statusText) ? ($statusText['value'] ?? null) : null;
+
+            LoggerService::info(' Claim status updated to '.$statusValue.' - Claim UUID: '.$claimRequest->uuid, extra: [
                 'claim_request_id' => $claimRequest->id,
                 'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusOpen->id,
@@ -201,13 +208,17 @@ class ClaimStatusesService extends BaseService
 
         if ($claimStatusClosed) {
             $claimRequest->updateQuietly(['claim_status_id' => $claimStatusClosed->id]);
-            LoggerService::info(' Claim status updated to '.$claimStatusClosed?->text['value'].' - Claim UUID: '.$claimRequest->uuid, extra: [
-            'claim_request_id' => $claimRequest->id,
-            'claim_uuid' => $claimRequest->uuid,
+
+            $statusText = $claimStatusClosed->text;
+            $statusValue = is_array($statusText) ? ($statusText['value'] ?? null) : null;
+
+            LoggerService::info(' Claim status updated to '.$statusValue.' - Claim UUID: '.$claimRequest->uuid, extra: [
+                'claim_request_id' => $claimRequest->id,
+                'claim_uuid' => $claimRequest->uuid,
                 'claim_status_id' => $claimStatusClosed->id,
-            'updated_by' => Auth::id(),
-        ]);
-    }
+                'updated_by' => Auth::id(),
+            ]);
+        }
     }
 
     public function markClaimAsDenied(ClaimRequest $claimRequest): void
@@ -322,7 +333,10 @@ class ClaimStatusesService extends BaseService
         $closedStatus = ClaimStatus::active()
             ->find($statusId);
 
-        return $closedStatus?->text['value'] === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
+        $statusText = $closedStatus?->text;
+        $statusValue = is_array($statusText) ? ($statusText['value'] ?? null) : null;
+
+        return $statusValue === ClaimsEnum::CLAIM_STATUS_CLOSED->value;
     }
 
     /**
@@ -347,10 +361,12 @@ class ClaimStatusesService extends BaseService
                 ->orderBy('created_at', 'asc')
                 ->get()
                 ->map(function ($activity) {
+                    $statusText = $activity->claimStatus?->text;
+
                     return [
                         'ModifiedAt' => $activity->created_at,
                         'ModifiedBy' => $activity->createdBy->name ?? null,
-                        'NewSubStatus' => $activity->claimStatus?->text['label'] ?? null,
+                        'NewSubStatus' => is_array($statusText) ? ($statusText['label'] ?? null) : null,
                         'Notes' => $activity->comment_ai,
                         'created_at' => $activity->created_at, // Include for frontend sorting
                     ];

@@ -1132,11 +1132,13 @@ class ClaimsService extends BaseService
                 ->orderBy('created_at', 'asc')
                 ->get()
                 ->map(function ($activity) {
+                    $statusText = $activity->claimStatus?->text;
+
                     return [
                         'ModifiedAt' => $activity->created_at,
                         'Notes' => $activity->comment,
                         'ModifiedBy' => $activity->createdBy->name ?? null,
-                        'NewStatus' => $activity->claimStatus?->text['label'] ?? null,
+                        'NewStatus' => is_array($statusText) ? ($statusText['label'] ?? null) : null,
                         'created_at' => $activity->created_at, // Include for frontend sorting
                     ];
                 });
