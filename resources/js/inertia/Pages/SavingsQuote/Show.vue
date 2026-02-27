@@ -9,6 +9,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import AvailablePlans from './Partials/AvailablePlans.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -167,11 +168,12 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  insured_first_name: page.props.quote?.latest_insured?.first_name,
+  insured_last_name: page.props.quote?.latest_insured?.last_name,
+  emirates_id_number: page.props.quote?.latest_insured?.id_number &&
+   applyEmiratesNumberMasking(page.props.quote.latest_insured.id_number),
   emirates_id_expiry_date:
-    page.props.quote?.customer.emirates_id_expiry_date || null,
+    page.props.quote?.latest_insured?.insured_kyc?.id_expiry_date,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -736,6 +738,7 @@ const handlePlanSelected = plan => {
                       placeholder="EMIRATES ID NUMBER"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
+                      @input="applyEmiratesNumberMasking(customerProfileForm.emirates_id_number)"
                     />
                   </dd>
                 </div>
@@ -1240,6 +1243,13 @@ const handlePlanSelected = plan => {
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
+    />
+
+    <OcrLogs
+    v-if="can(permissionsEnum.API_LOG_VIEW)"
+    :type="modelClass"
+    :id="$page.props.quote.id"
+    :expanded="sectionExpanded"
     />
 
     <lead-raw-data

@@ -167,6 +167,8 @@ class SavingsQuoteService extends BaseQuoteService
             'subSourceOption',
             'branch:id,name',
             'quoteCustomerPlan',
+            'latestInsured',
+            'latestInsured.insuredKyc',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
