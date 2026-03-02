@@ -53,6 +53,11 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         $startTime = microtime(true);
         $initialMemory = memory_get_usage(true) / 1024 / 1024;
 
+        // Always use writable in start because we login for user-based filters
+        if (DB::getDefaultConnection() == 'mysql_read') {
+            DB::setDefaultConnection('mysql');
+        }
+
         Log::info("CSV export job started for {$this->requestParams['fileName']}. Memory: {$initialMemory}MB, Attempt: {$this->attempts()}");
 
         try {
