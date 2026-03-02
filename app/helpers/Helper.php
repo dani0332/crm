@@ -1484,7 +1484,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer_addresses.city as courier_address_city',
                 'customer_addresses.landmark as courier_address_landmark',
             ])
-                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
+                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Cyber]), function ($q) use ($table, $quoteTypeId) {
                     $q->addSelect([
                         'emirates.code as emirate_code',
                         'emirates.text as emirate_text',
@@ -1493,6 +1493,17 @@ if (! function_exists('getCourierQuote')) {
                             QuoteTypeId::Health => "{$table}.emirate_of_your_visa_id",
                             default => "{$table}.emirate_of_registration_id"
                         });
+                })
+                ->when(in_array($quoteTypeId, [QuoteTypeId::Cyber]), function ($q) use ($table) {
+                    $q->addSelect([
+                        'emirates.code as emirate_code',
+                        'emirates.text as emirate_text',
+                    ])->leftJoin('cyber_quote_request', function (JoinClause $join) use ($table) {
+                        $join->on('cyber_quote_request.personal_quote_id', '=', "{$table}.id")
+                            ->leftJoin('emirates', function (JoinClause $sub) {
+                                $sub->on('emirates.id', '=', 'cyber_quote_request.emirate_of_registration_id');
+                            });
+                    });
                 })
                 ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table) {
                     $q->addSelect([

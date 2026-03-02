@@ -54,6 +54,39 @@ const currentFile = computed(() => {
 });
 
 /**
+ * PDF MIME type variants and URL fallback for when doc_mime_type is missing or non-standard.
+ */
+const PDF_MIME_PREFIX = 'application/pdf';
+const PDF_MIME_ALIASES = ['application/pdf', 'application/x-pdf'];
+
+function isPdfMimeOrUrl(file) {
+  if (!file) return false;
+  const mime = (file.doc_mime_type || '').trim().toLowerCase();
+  if (PDF_MIME_ALIASES.includes(mime)) return true;
+  if (mime.startsWith(PDF_MIME_PREFIX)) return true;
+  const url = (file.doc_url || '').toLowerCase();
+  return url.endsWith('.pdf');
+}
+
+/**
+ * Whether the current file should be rendered as a PDF (embed).
+ */
+const isCurrentFilePdf = computed(() => isPdfMimeOrUrl(currentFile.value));
+
+/**
+ * Whether the current file is a previewable image (jpeg/png).
+ */
+const isCurrentFileImage = computed(() => {
+  const file = currentFile.value;
+  if (!file) return false;
+  const mime = (file.doc_mime_type || '').trim().toLowerCase();
+  return (
+    ['image/jpeg', 'image/jpg', 'image/png'].includes(mime) ||
+    mime.startsWith('image/')
+  );
+});
+
+/**
  * Determines if there is a next file available in the gallery
  * Used to enable/disable the "Next" navigation button
  */
@@ -231,10 +264,7 @@ watch(
             </svg>
             <span>Previous</span>
           </button>
-          <div
-            class="flex items-center space-x-2"
-            v-if="currentFile?.doc_mime_type != 'application/pdf'"
-          >
+          <div class="flex items-center space-x-2" v-if="!isCurrentFilePdf">
             <button
               class="flex items-center space-x-2 cursor-pointer text-gray-300"
               @click="zoomOut"
@@ -306,14 +336,8 @@ watch(
           </button>
         </div>
       </div>
-      <div class="modal-body w-full h-full mt-2">
-        <div
-          v-if="
-            currentFile?.doc_mime_type === 'image/jpeg' ||
-            currentFile?.doc_mime_type === 'image/png'
-          "
-          class="flex items-center justify-center"
-        >
+      <div class="modal-body flex-1 min-h-0 w-full mt-2 overflow-auto">
+        <div v-if="isCurrentFileImage" class="flex items-center justify-center">
           <div class="overflow-auto items-center justify-center">
             <img
               :src="currentFileURL"
@@ -323,10 +347,7 @@ watch(
             />
           </div>
         </div>
-        <div
-          v-else-if="currentFile?.doc_mime_type === 'application/pdf'"
-          class="w-full h-80vh"
-        >
+        <div v-else-if="isCurrentFilePdf" class="w-full h-80vh">
           <embed
             :src="currentFileURL"
             type="application/pdf"
@@ -346,23 +367,29 @@ watch(
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  min-width: 100%;
+  min-height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1040;
 }
 
+/* Centered modal box with max dimensions so it never goes full screen */
 .modal-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  max-width: 72rem; /* max-w-6xl */
+  max-height: 90vh;
   width: 100%;
   height: 100%;
   background-color: hsl(0, 4%, 9%);
   border-radius: 4px;
   padding: 5px;
   z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
