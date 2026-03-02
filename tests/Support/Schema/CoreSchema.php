@@ -25,6 +25,7 @@ class CoreSchema
         $this->ensurePolicyIssuanceTables();
         $this->ensureSendUpdateTables();
         $this->ensureSageTables();
+        $this->ensureCustomerAdditionalContactTables();
         $this->ensureEPLogsTables();
     }
 
@@ -920,6 +921,7 @@ class CoreSchema
                 $table->date('emirates_id_expiry_date')->nullable();
                 $table->unsignedBigInteger('nationality_id')->nullable();
                 $table->date('dob')->nullable();
+                $table->string('code')->nullable();
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
                 $table->string('email')->nullable();
@@ -1197,6 +1199,20 @@ class CoreSchema
                 $table->string('status')->nullable();
                 $table->string('sage_request_type')->nullable();
                 $table->integer('step')->nullable();
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureCustomerAdditionalContactTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'customer_additional_contact' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('customer_id')->nullable();
+                $table->string('key')->nullable();
+                $table->string('value')->nullable();
+                $table->boolean('wa_opt_in')->default(0);
                 $table->timestamps();
             },
         ]);

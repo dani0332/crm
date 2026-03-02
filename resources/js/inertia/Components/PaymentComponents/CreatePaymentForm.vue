@@ -1104,6 +1104,20 @@ const initializePaymentForm = (
     paymentMethodsForm.frequency =
       paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
       paymentFrequencyEnum.UPFRONT;
+  } else if (
+    props.quoteType === quoteTypeCodeEnum.SAVINGS &&
+    props.quoteRequest?.savings_quote?.payment_term
+  ) {
+    // Special handling for savings quotes - map payment term to frequency during edit
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      3: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentMethodsForm.frequency =
+      paymentTermToFrequency[props.quoteRequest?.savings_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
   } else {
     paymentMethodsForm.frequency = payment.frequency;
   }
@@ -2688,6 +2702,7 @@ watch(props.createPaymentModal, async (newVal, oldVal) => {
       :quoteType="quoteType"
       :quoteTypeCodeEnum="quoteTypeCodeEnum"
       :isLifePlanDetailsEnabled="isLifePlanDetailsEnabled"
+      :sendUpdate="sendUpdate"
       @handle-collection-type-change="handleCollectionTypeChange"
       @handle-frequency-change="handleFrequencyChange"
       @calculate-payment-breakup="calculatePaymentBreakup"

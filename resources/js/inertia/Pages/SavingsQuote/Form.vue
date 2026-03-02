@@ -354,33 +354,29 @@ watch(
           required
         />
 
-        <div class="px-2 w-full">
-          <div class="mb-2">
-            <x-field label="Investment frequency" required>
-              <div class="flex gap-12 mt-2">
-                <x-form-group
-                  v-model="quoteForm.investment_frequency"
-                  :rules="[isRequired]"
-                >
-                  <div
-                    v-for="item in investmentFrequencies"
-                    :key="item.value"
-                    class="relative group mb-6"
-                  >
-                    <div class="radio-wrapper">
-                      <x-radio :value="item.value" :label="item.label" />
-                    </div>
-                    <div
-                      class="hidden group-hover:block absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-blue-400 rounded-md shadow-lg z-10 text-sm tooltip-box"
-                    >
-                      {{ item.description }}
-                    </div>
-                  </div>
-                </x-form-group>
+        <x-field label="Investment frequency" required>
+          <x-form-group
+            v-model="quoteForm.investment_frequency"
+            :rules="[isRequired]"
+            class="mt-2"
+          >
+            <div
+              v-for="item in investmentFrequencies"
+              :key="item.value"
+              class="relative group inline-block mr-12"
+            >
+              <div class="radio-wrapper">
+                <x-radio :value="item.value" :label="item.label" />
               </div>
-            </x-field>
-          </div>
-        </div>
+              <div
+                v-if="item.description"
+                class="hidden group-hover:block absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-blue-400 rounded-md shadow-lg z-10 text-sm tooltip-box"
+              >
+                {{ item.description }}
+              </div>
+            </div>
+          </x-form-group>
+        </x-field>
 
         <div class="grid sm:grid-cols-2 gap-4">
           <x-select

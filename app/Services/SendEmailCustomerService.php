@@ -1947,7 +1947,7 @@ class SendEmailCustomerService extends BaseService
         }
     }
 
-    public function getBCCEmails(string $quoteType, string $source)
+    public function getBCCEmails(string $quoteType, ?string $source = null)
     {
         $bccEmails = [];
 
