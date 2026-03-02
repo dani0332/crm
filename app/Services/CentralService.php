@@ -406,8 +406,9 @@ class CentralService extends BaseService
         $repository = getRepositoryObject($quoteType);
         $quote = $repository::where('code', $code)->firstOrFail();
 
-        $priceVatApp = $data->price_vat_applicable ?? 0;
-        $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+        $priceVatApp = (float) ($data->price_vat_applicable ?? 0);
+        $priceVatNotApp = (float) ($data->price_vat_not_applicable ?? 0);
+        $vatPercentage = (float) $vatPercentage;
         $vatAmount = ($priceVatApp / 100) * $vatPercentage;
         LoggerService::info("Quote {$code} - VAT values: priceVatApp: {$priceVatApp}, priceVatNotApp: {$priceVatNotApp}, vatAmount: {$vatAmount}");
 
