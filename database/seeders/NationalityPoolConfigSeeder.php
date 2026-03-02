@@ -29,7 +29,7 @@ class NationalityPoolConfigSeeder extends Seeder
     {
         $role = Role::firstWhere('name', $role);
         if ($role) {
-            $role->permissions()->syncWithoutDetaching([$permission]);
+            $role->permissions()->syncWithoutDetaching($permission->id);
         }
     }
 }
