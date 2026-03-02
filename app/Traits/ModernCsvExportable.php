@@ -140,7 +140,7 @@ trait ModernCsvExportable
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
         $requestParams = $this->processEmailParameters($fileName, $requestParams);
 
-        LoggerService::info("Dispatching ExportCsvAndSendEmailJob()", [
+        LoggerService::info('Dispatching ExportCsvAndSendEmailJob()', [
             'export_class' => static::class,
             'recipientEmail' => $requestParams['recipientEmail'],
             'requestParams' => $requestParams,
