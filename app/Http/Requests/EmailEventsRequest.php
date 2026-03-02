@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ProcessStatusCode;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EmailEventsRequest extends FormRequest
@@ -25,6 +26,7 @@ class EmailEventsRequest extends FormRequest
             'message_id' => 'required',
             'customer_email' => 'required',
             'subject' => 'nullable',
+            'status' => 'nullable|in:' . ProcessStatusCode::SENT . ',' . ProcessStatusCode::FAILED . ',' . ProcessStatusCode::UNSUBSCRIBED.','.ProcessStatusCode::PENDING,
         ];
     }
 }

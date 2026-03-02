@@ -36,7 +36,6 @@ class EmailStatusService extends BaseService
         $newEmailStatus->email_subject = $emailSubject;
         $newEmailStatus->reason = $reason;
         $newEmailStatus->save();
-
         Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
 
         return $newEmailStatus->id;
@@ -55,6 +54,7 @@ class EmailStatusService extends BaseService
             case QuoteTypeId::Savings:
             case QuoteTypeId::Life:
             case QuoteTypeId::Cyber:
+            case QuoteTypeId::Device:
                 $quote = PersonalQuote::where('uuid', $request->uuid)->first();
                 break;
             case QuoteTypeId::Travel:
@@ -73,12 +73,13 @@ class EmailStatusService extends BaseService
 
             return (object) ['message' => 'lead not found', 'status' => false];
         }
-        if (! EmailStatus::where('email_status', ProcessStatusCode::SENT)
+    
+        if (! EmailStatus::where('email_status', $request->status ?? ProcessStatusCode::SENT)
             ->where('msg_id', $request->message_id)
             ->where('quote_id', $quote->id)->exists()) {
             $request->quoteId = $quote->id;
             $request->customerEmail = $request->customer_email;
-            $this->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
+            $this->addEmailStatus($request, $request->message_id, $request->subject, $request->status ?? ProcessStatusCode::SENT);
 
             return (object) ['message' => 'Email event logged successfully', 'status' => true];
         } else {
