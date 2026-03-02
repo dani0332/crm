@@ -1241,6 +1241,7 @@ class SplitPaymentService
 
         $computedPrice = 0;
         $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home, quoteTypeCode::CYBER];
+        $noVatLobs = [quoteTypeCode::Life, quoteTypeCode::SAVINGS];
 
         if ($send_update_id > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
@@ -1260,7 +1261,11 @@ class SplitPaymentService
             }
         }
 
-        if (isset($quoteModel)) {
+        // For Life and Savings LOBs - use masterTotalPrice directly, no VAT
+        if (in_array($modelType, $noVatLobs) && $masterTotalPrice > 0) {
+            $computedPrice = $masterTotalPrice;
+            $priceVatNotApplicable = 0;
+        } elseif (isset($quoteModel)) {
             if (isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
                 $computedPrice = $quoteModel->price_vat_applicable;
                 LoggerService::info('SplitPaymentService - Using price_vat_applicable from quote for payment code: '.$paymentCode, extra: [
@@ -1284,7 +1289,11 @@ class SplitPaymentService
         }
 
         if ($computedPrice > 0) {
-            if (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
+            // For Life and Savings LOBs - no VAT calculation, price_vat_applicable = total_price
+            if (in_array($modelType, $noVatLobs)) {
+                $priceWithoutVat = $computedPrice;
+                $vat = 0;
+            } elseif (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
                 $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
                 LoggerService::info('SplitPaymentService - ecommLob VAT calculation for payment code: '.$paymentCode, extra: [

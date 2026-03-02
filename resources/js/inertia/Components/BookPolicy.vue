@@ -254,6 +254,8 @@ let is_lacking_payment = ref(
 );
 
 const isLifeLead = props.quoteType === quoteTypeCodeEnum.Life.toLowerCase();
+const isSavingsLead =
+  props.quoteType?.toLowerCase() === quoteTypeCodeEnum.SAVINGS?.toLowerCase();
 
 watch(
   () => page.props.bookPolicyDetails.isLackingOfPayment,
@@ -449,7 +451,7 @@ const calculateCommissionPercentage = (
 };
 
 const calculateCommissionBasedOnCurrency = () => {
-  if (isLifeLead && bpForm.currency !== 'AED') {
+  if ((isLifeLead || isSavingsLead) && bpForm.currency !== 'AED') {
     const exchangeRate = Number(bpForm.exchange_rate) || 0;
     const commissionBasedOnCurrency =
       Number(bpForm.commission_based_on_currency) || 0;
@@ -461,6 +463,8 @@ const calculateCommissionBasedOnCurrency = () => {
     } else {
       bpForm.commission_vat_not_applicable = '';
     }
+    // Trigger commission calculation to update totals and percentage
+    calculateCommission();
   }
 };
 
@@ -557,8 +561,8 @@ const commissionVatApplicableTooltip = computed(() => {
 });
 
 const disableCommissionVatNotApplicable = computed(() => {
-  // for life only
-  if (isLifeLead) {
+  // for life and savings
+  if (isLifeLead || isSavingsLead) {
     if (bpForm.currency !== 'AED') {
       return true;
     } else {
@@ -589,11 +593,13 @@ const disableCommissionVatApplicable = computed(() => {
 });
 
 const showCurrencyFields = computed(() => {
-  return isLifeLead && !props.isPlanDetailSectionEnabled;
+  // For life: show only when plan details section is not enabled
+  // For savings: always show (no plan details check needed)
+  return (isLifeLead && !props.isPlanDetailSectionEnabled) || isSavingsLead;
 });
 
 const showNonAEDFields = computed(() => {
-  return isLifeLead && bpForm.currency !== 'AED';
+  return (isLifeLead || isSavingsLead) && bpForm.currency !== 'AED';
 });
 
 const currencyOptions = [
@@ -812,14 +818,18 @@ watch(
 watch(
   () => bpForm.currency,
   newCurrency => {
-    if (isLifeLead) {
+    if (isLifeLead || isSavingsLead) {
       if (newCurrency === 'AED') {
         // Clear calculated fields when switching to AED
         bpForm.commission_based_on_currency = '';
         bpForm.exchange_rate = '';
+        // Recalculate commission after clearing currency-based fields
+        calculateCommission();
       } else {
         // Clear commission_vat_not_applicable when switching away from AED
         bpForm.commission_vat_not_applicable = '';
+        // Recalculate commission after clearing
+        calculateCommission();
       }
     }
   },

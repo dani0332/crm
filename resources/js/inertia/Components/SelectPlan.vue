@@ -396,7 +396,7 @@ const updateSelectedPlan = () => {
     });
 };
 
-watch(() => {
+watchEffect(() => {
   const quoteType = props.quoteType?.toLowerCase();
 
   if (quoteType == quoteTypeCodeEnum?.Health?.toLowerCase()) {

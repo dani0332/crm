@@ -3933,7 +3933,10 @@ const { openTempUrl } = useDocumentTempUrl();
                   </div>
                   <span>
                     <SelectPlan
-                      v-if="selectedProviderPlan.id != item.id"
+                      v-if="
+                        !selectedProviderPlan?.id ||
+                        String(selectedProviderPlan.id) !== String(item.id)
+                      "
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="quoteType"

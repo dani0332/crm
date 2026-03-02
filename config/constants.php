@@ -137,6 +137,7 @@ return [
     'MA_BREVO_KEY' => env('MA_BREVO_KEY', ''),
     'ECOM_BIKE_INSURANCE_QUOTE_URL' => env('ECOM_BIKE_INSURANCE_QUOTE_URL'),
     'ECOM_LIFE_INSURANCE_QUOTE_URL' => env('ECOM_LIFE_INSURANCE_QUOTE_URL', 'https://insurancemarket.ae/life-insurance/quote/'),
+    'ECOM_SAVINGS_INSURANCE_QUOTE_URL' => env('ECOM_SAVINGS_INSURANCE_QUOTE_URL', 'https://insurancemarket.ae/savings-insurance/quote/'),
     'SUKOON_API_URL' => env('SUKOON_API_URL', ''),
     'SUKOON_API_VERSION' => env('SUKOON_API_VERSION', ''),
     'SUKOON_USERNAME' => env('SUKOON_USERNAME', ''),

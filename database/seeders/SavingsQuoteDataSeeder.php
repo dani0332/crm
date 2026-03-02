@@ -179,7 +179,7 @@ class SavingsQuoteDataSeeder extends Seeder
                 'business_type_of_customer' => null,
             ],
             [
-                'code' => 'EID_SAV',
+                'code' => 'SAV_EID',
                 'text' => 'Emirates ID (both sides)',
                 'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
                 'is_active' => 1,
