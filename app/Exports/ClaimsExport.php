@@ -25,7 +25,7 @@ class ClaimsExport implements CsvExportableInterface
      * Get the data collection - this is used by the original implementation
      * and falls back when getQuery is not available
      */
-    public function collection($requestParams = null): Collection
+    public function collection(array $requestParams = []): Collection
     {
         // If request params were provided in constructor, use those
         // Otherwise use the params passed to this method

@@ -6,15 +6,20 @@ namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
 use App\Models\ClaimRequest;
-use App\Models\DocumentType;
 use App\Rules\CustomFileType;
 use App\Rules\ValidateBase64;
+use App\Services\ClaimDocumentService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class ClaimDocumentRequest extends FormRequest
 {
     protected $documentType;
+
+    public function __construct(protected ClaimDocumentService $claimDocumentService)
+    {
+        parent::__construct();
+    }
 
     /**
      * Determine if the user is authorized to make this request.
@@ -43,9 +48,7 @@ class ClaimDocumentRequest extends FormRequest
 
         // Get document type for validation
         if ($this->filled('document_type_code')) {
-            $this->documentType = DocumentType::where('code', $this->document_type_code)
-                ->where('is_active', 1)
-                ->first();
+            $this->documentType = $this->claimDocumentService->getDocumentTypeByCode($this->document_type_code);
 
             if ($this->documentType) {
                 // Add file type and size validation based on document type

@@ -26,6 +26,16 @@ class ClaimDocumentService extends BaseService
         $this->claimsStatusesService = $claimsStatusesService;
     }
 
+    /**
+     * Retrieve an active document type by its code.
+     */
+    public function getDocumentTypeByCode(string $code): ?DocumentType
+    {
+        return DocumentType::where('code', $code)
+            ->where('is_active', 1)
+            ->first();
+    }
+
     public function getClaimDocumentTypes($quoteTypeId, $businessTypeOfInsuranceId = null)
     {
         $resolvedQuoteTypeId = $this->resolveQuoteTypeIdForDocuments($quoteTypeId, $businessTypeOfInsuranceId);

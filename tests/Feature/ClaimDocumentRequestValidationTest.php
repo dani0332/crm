@@ -3,10 +3,11 @@
 declare(strict_types=1);
 
 use App\Http\Requests\ClaimDocumentRequest;
+use App\Services\ClaimDocumentService;
 use Illuminate\Support\Facades\Validator;
 
 test('validation rule requires files to be an array with at least one item', function () {
-    $request = new ClaimDocumentRequest;
+    $request = new ClaimDocumentRequest(Mockery::mock(ClaimDocumentService::class));
     $rules = $request->rules();
 
     expect($rules['files'])->toContain('required')
@@ -79,7 +80,7 @@ test('validation passes when files array has multiple items', function () {
 });
 
 test('custom error message is set for min validation', function () {
-    $request = new ClaimDocumentRequest;
+    $request = new ClaimDocumentRequest(Mockery::mock(ClaimDocumentService::class));
     $messages = $request->messages();
 
     expect($messages)->toHaveKey('files.min')
@@ -87,7 +88,7 @@ test('custom error message is set for min validation', function () {
 });
 
 test('custom error message is set for required validation', function () {
-    $request = new ClaimDocumentRequest;
+    $request = new ClaimDocumentRequest(Mockery::mock(ClaimDocumentService::class));
     $messages = $request->messages();
 
     expect($messages)->toHaveKey('files.required')
@@ -95,7 +96,7 @@ test('custom error message is set for required validation', function () {
 });
 
 test('custom error message is set for array validation', function () {
-    $request = new ClaimDocumentRequest;
+    $request = new ClaimDocumentRequest(Mockery::mock(ClaimDocumentService::class));
     $messages = $request->messages();
 
     expect($messages)->toHaveKey('files.array')
