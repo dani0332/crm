@@ -197,9 +197,11 @@ class SavingsQuoteController extends Controller
     public function sendOCAEmail(Request $request, string $quoteUuId)
     {
         try {
-            $quote = PersonalQuote::where('uuid', $quoteUuId)->firstOrFail();
+            $quote = PersonalQuote::where('uuid', $quoteUuId)
+                ->where('quote_type_id', QuoteTypes::SAVINGS->id())
+                ->firstOrFail();
 
-            LoggerService::startQuoteLogging($quoteUuId);
+            LoggerService::startQuoteLogging($quote);
             LoggerService::info('SavingsQuoteController - sendOCAEmail', [
                 'quote_uuid' => $quoteUuId,
                 'customer_email' => $quote->email,
