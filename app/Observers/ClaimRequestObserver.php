@@ -59,8 +59,8 @@ class ClaimRequestObserver
                 $newApprovedRepairAmount = $claimRequest->approved_repair_amount;
 
                 if (empty($originalApprovedRepairAmount) && ! empty($newApprovedRepairAmount)) {
-                    $claimStatusClosed = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS->value)->where('is_active', 1)->first();
-                    $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimStatusClosed);
+                    $claimSubStatusRepairApprovedAndWorkInProgress = ClaimStatus::where('text', ClaimsEnum::CLAIM_SUB_STATUS_REPAIR_APPROVED_AND_WORK_IN_PROGRESS->value)->where('is_active', 1)->first();
+                    $this->claimStatusesService->updateClaimSubStatus($claimRequest, $claimSubStatusRepairApprovedAndWorkInProgress);
                 }
             }
             if ($claimRequest->isDirty('approved_total_loss_amount')) {
