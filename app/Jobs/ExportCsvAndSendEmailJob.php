@@ -19,7 +19,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
     public $timeout = 600; // 300 (5 minutes) 900 (15 minutes)
     public $tries = 2;
-    public $backoff = 30;
+    public $backoff = 120;
     private $exportClass;
     private $recipientEmail;
     private $requestParams;
@@ -151,8 +151,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
         return [
             (new WithoutOverlapping($lockKey))
-                ->dontRelease() // Don't release back to queue if locked
-                ->expireAfter(300), // Lock expires after 5 mins (same as timeout)
+                ->dontRelease()
+                ->expireAfter($this->timeout + $this->backoff),
         ];
     }
 }
