@@ -178,15 +178,14 @@ class ClaimDetailsUpdateRequest extends FormRequest
 
     /**
      * Validate car-specific fields based on context.
+     * All four vehicle fields are unconditionally required for Car/Bike LOB.
      */
     private function validateCarFields($validator): void
     {
-        // If car_make is provided, car_model should also be provided (when editing)
         if (! $this->filled('car_model')) {
             $validator->errors()->add('car_model', 'Vehicle model is required when Car/Bike LOB is selected.');
         }
 
-        // If car_model is provided, car_make should also be provided
         if (! $this->filled('car_make')) {
             $validator->errors()->add('car_make', 'Vehicle make is required when Car/Bike LOB is selected.');
         }
