@@ -170,8 +170,9 @@ const customerProfileForm = useForm({
 
   insured_first_name: page.props.quote?.latest_insured?.first_name,
   insured_last_name: page.props.quote?.latest_insured?.last_name,
-  emirates_id_number: page.props.quote?.latest_insured?.id_number &&
-   applyEmiratesNumberMasking(page.props.quote.latest_insured.id_number),
+  emirates_id_number:
+    page.props.quote?.latest_insured?.id_number &&
+    applyEmiratesNumberMasking(page.props.quote.latest_insured.id_number),
   emirates_id_expiry_date:
     page.props.quote?.latest_insured?.insured_kyc?.id_expiry_date,
 
@@ -738,7 +739,11 @@ const handlePlanSelected = plan => {
                       placeholder="EMIRATES ID NUMBER"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
-                      @input="applyEmiratesNumberMasking(customerProfileForm.emirates_id_number)"
+                      @input="
+                        applyEmiratesNumberMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                     />
                   </dd>
                 </div>
@@ -1246,10 +1251,10 @@ const handlePlanSelected = plan => {
     />
 
     <OcrLogs
-    v-if="can(permissionsEnum.API_LOG_VIEW)"
-    :type="modelClass"
-    :id="$page.props.quote.id"
-    :expanded="sectionExpanded"
+      v-if="can(permissionsEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <lead-raw-data
