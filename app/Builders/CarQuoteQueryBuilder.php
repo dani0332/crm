@@ -111,13 +111,6 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 
     public function applyFilters(Builder $query, $requestParams)
     {
-        if (! Auth::check()) {
-            $user = $requestParams['user'] ?? null;
-            unset($requestParams['user']);
-            Auth::login($user);
-            DB::setDefaultConnection('mysql_read');
-            request()->merge($requestParams);
-        }
 
         // Helper method to get filter value from requestParams or request object
         $getFilterValue = function ($filterName) use ($requestParams) {

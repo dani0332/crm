@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -48,15 +50,11 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
      */
     public function handle()
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CSV_EXPORT);
 
         $jobId = $this->job->getJobId() ?? 'unknown';
         $startTime = microtime(true);
         $initialMemory = memory_get_usage(true) / 1024 / 1024;
-
-        // Always use writable in start because we login for user-based filters
-        if (DB::getDefaultConnection() == 'mysql_read') {
-            DB::setDefaultConnection('mysql');
-        }
 
         Log::info("CSV export job started for {$this->requestParams['fileName']}. Memory: {$initialMemory}MB, Attempt: {$this->attempts()}");
 
@@ -66,6 +64,15 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
             if (empty($this->requestParams['user']) && ! empty($this->requestParams['user_id'])) {
                 $this->requestParams['user'] = User::with(['permissions', 'roles.permissions'])->findOrFail($this->requestParams['user_id']);
+            }
+
+            // Login on the write connection before CsvExportService::generateCsvFileWithCount switches to mysql_read.
+            // has already been downgraded to the read replica, causing a read-only error.
+            if (! Auth::check() && ! empty($this->requestParams['user'])) {
+                Auth::login($this->requestParams['user']);
+                request()->merge($this->requestParams);
+            }else if(empty($this->requestParams['user'])){
+                LoggerService::error("No user found ");;
             }
 
             // Process CSV and send email
