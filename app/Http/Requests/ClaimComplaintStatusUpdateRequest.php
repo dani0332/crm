@@ -32,7 +32,7 @@ class ClaimComplaintStatusUpdateRequest extends FormRequest
             'complaint_datetime' => [
                 'required',
                 'date',
-                function (string $attribute, mixed $value, \Closure $fail): void {
+                function (string $_attribute, mixed $value, \Closure $fail): void {
                     $errorMessage = 'The complaint date must be a valid date.';
                     // Guard against non-string/non-parseable values
                     if (! is_string($value) && ! is_numeric($value) && ! $value instanceof \DateTimeInterface) {

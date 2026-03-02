@@ -376,7 +376,10 @@ class ClaimsService extends BaseService
      */
     public function getClaimById($uuid)
     {
-        return $this->buildDetailedClaimQuery()->where('uuid', $uuid)->first();
+        return $this->buildDetailedClaimQuery()
+            ->with(['documents.createdBy:id,name'])
+            ->where('uuid', $uuid)
+            ->first();
     }
 
     /**

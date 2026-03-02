@@ -180,7 +180,7 @@ class ClaimsController extends Controller
             $requiredFieldsFilled = $this->claimsService->isRequiredFieldsFilled($claimRequest);
             $customerAdditionalContacts = $this->customerService->getAdditionalContacts($claimRequest->customer_id, $claimRequest->mobile_no);
 
-            $documents = $claimRequest->documents()->with('createdBy:id,name')->get();
+            $documents = $claimRequest->documents;
 
             return Inertia::render('Claims/Show', [
                 'claim' => $claimRequest,
