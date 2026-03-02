@@ -152,7 +152,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease()
-                ->expireAfter($this->timeout + $this->backoff),
+                ->expireAfter($this->timeout),
         ];
     }
 }
