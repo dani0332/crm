@@ -402,4 +402,43 @@ class TestDataSeeder
 
         return compact('productTeamId', 'teamId');
     }
+
+    /**
+     * Seed required lookup data for Cyber Quote tests.
+     *
+     * @return array Array of created lookup IDs
+     */
+    public static function seedCyberQuoteLookups(): array
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        // Create Nationality
+        $nationalityId = $db->table('nationality')->where('text', 'United Arab Emirates')->value('id');
+        if (! $nationalityId) {
+            $nationalityId = $db->table('nationality')->insertGetId([
+                'text' => 'United Arab Emirates',
+                'code' => 'AE',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Create Emirate (note: table is "emirates" not "emirate")
+        $emirateId = $db->table('emirates')->where('text', 'Dubai')->value('id');
+        if (! $emirateId) {
+            $emirateId = $db->table('emirates')->insertGetId([
+                'text' => 'Dubai',
+                'code' => 'DXB',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'nationality_id' => $nationalityId,
+            'emirate_id' => $emirateId,
+        ];
+    }
 }

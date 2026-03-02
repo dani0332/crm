@@ -6,19 +6,20 @@ use App\Enums\BranchEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Jobs\SendAutomatedHomeRenewalFollowup;
 use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
 use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Jobs\SendOCAEmailJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
+use App\Jobs\SendSavingsOCAEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
@@ -52,7 +53,7 @@ trait PersonalQuoteObservable
 
             // For now PolicyCancelled Handling is only for Bike
             if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled &&
-            ($personalQuote->isBike() || $personalQuote->isHome())) {
+            ($personalQuote->isBike() || $personalQuote->isHome() || $personalQuote->isCyber())) {
                 $this->handleBikePolicyCancelled($personalQuote);
             }
         }
@@ -99,7 +100,8 @@ trait PersonalQuoteObservable
 
         if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
             $this->handlePolicyIssued($personalQuote);
-            if ($personalQuote->isHome()) {
+            $allowedQuoteTypes = [QuoteTypes::HOME->id(), QuoteTypes::CYBER->id()];
+            if (in_array($personalQuote->quote_type_id, $allowedQuoteTypes)) {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$personalQuote->code.' Policy Issued ');
                 SendPolicyIssueWhatsappMessageJob::dispatch($personalQuote->uuid, $personalQuote->quote_type_id)->onQueue('insly');
             }
@@ -125,7 +127,23 @@ trait PersonalQuoteObservable
             }
         }
 
-        if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle() || $personalQuote->isSavings()) {
+        if ($personalQuote->isSavings()) {
+
+            if (empty($oldAdvisorId) && ! $personalQuote->isNonAdvisorEmailSent()) {
+                SendSavingsOCAEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
+                LoggerService::info(self::class." - OCA email job dispatched for savings quote {$personalQuote->uuid} (first assignment)");
+            } else {
+                LoggerService::info(self::class." - Sending reassignment email for savings quote {$personalQuote->uuid} (reassignment from advisor {$oldAdvisorId})");
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
+                    $personalQuote,
+                    QuoteTypes::SAVINGS->value,
+                    $oldAdvisorId
+                );
+                LoggerService::info(self::class." - Reassignment email sent to customer for savings quote {$personalQuote->uuid}");
+            }
+        }
+
+        if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle()) {
             $this->IntroAndReassignEmail($personalQuote, $oldAdvisorId);
         }
         if ($personalQuote->isLife()) {
@@ -136,6 +154,10 @@ trait PersonalQuoteObservable
                 SendOCAEmailJob::dispatch($personalQuote->uuid, []);
                 LoggerService::info(self::class." - OCA email sent to customer for life quote {$personalQuote->uuid}");
             }
+        }
+        if ($personalQuote->isCyber()) {
+            SendCyberOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+            LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
         }
 
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
@@ -194,7 +216,7 @@ trait PersonalQuoteObservable
             'lead-status-update-myalfred-we'
         );
 
-        if ($personalQuote->isHome() || ($personalQuote->isBike() && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
+        if ($personalQuote->isHome() || (($personalQuote->isBike() || $personalQuote->isCyber()) && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
             try {
                 EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             } catch (Exception $e) {
@@ -242,7 +264,7 @@ trait PersonalQuoteObservable
     private function handleBikePolicyCancelled(PersonalQuote $personalQuote): void
     {
         try {
-            EmbeddedProductRepository::cancelEmbeddedProducts($personalQuote->id, quoteTypeCode::Bike);
+            EmbeddedProductRepository::cancelEmbeddedProducts($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
         } catch (Exception $e) {
             Log::error('PersonalQuoteObserver - cancel embedded products failed', [
                 'error' => $e->getMessage(),

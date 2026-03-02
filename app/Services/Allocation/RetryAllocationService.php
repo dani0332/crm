@@ -122,7 +122,11 @@ class RetryAllocationService
             ]);
 
             // Only apply teamId if the payment status is AUTHORIZED
-            $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+            $revivalSources = [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
+            $currentTeamId = false;
+            if ($lead->payment_status_id == PaymentStatusEnum::AUTHORISED && ! in_array($lead->source, $revivalSources)) {
+                $currentTeamId = $teamId;
+            }
 
             QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
@@ -163,8 +167,7 @@ class RetryAllocationService
 
         $leads->logRawSql();
 
-        // Get the teamId once before the loop
-        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        $teamId = getTeamId(TeamNameEnum::ORGANIC);
 
         $leads = $leads->get();
         LoggerService::info(self::class.':executeCarRevivalAllocation: Found '.count($leads).' leads to process');
@@ -188,6 +191,7 @@ class RetryAllocationService
                 'quote_status_id' => $lead->quote_status_id,
             ]);
 
+            // All revival sources should be assigned to ORGANIC team
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 
@@ -370,6 +374,9 @@ class RetryAllocationService
             ->when($quoteType === QuoteTypes::CORPLINE, function ($q) {
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
+            ->when($quoteType === QuoteTypes::CYBER, function ($q) {
+                $q->with('cyberQuote:id,personal_quote_id,sic_advisor_requested');
+            })
             ->take($chunkSize);
 
         $leads->logRawSql();
@@ -380,15 +387,22 @@ class RetryAllocationService
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
+            $isPaid = $lead->isPaymentAuthorizedOrDeclined();
+            $sicRequested = $quoteType === QuoteTypes::CYBER ? $lead->cyberQuote?->sic_advisor_requested ?? false : false;
+
             LoggerService::info(self::class.': Processing quote allocation', extra: [
                 'quote_type' => $quoteType->value,
                 'payment_status_id' => $lead->payment_status_id,
                 'quote_status_id' => $lead->quote_status_id,
                 'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
                 'source' => $lead->source,
+                'isPaid' => $isPaid,
+                'sicAdvisorRequested' => $sicRequested,
             ]);
+
             $quoteType->allocate(uuid: $lead->uuid);
             $processedRecords++;
+
             LoggerService::info(self::class.': Processed quote allocation', extra: [
                 'quote_type' => $quoteType->value,
             ]);

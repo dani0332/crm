@@ -81,6 +81,7 @@ use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CustomerAcceptanceLogController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
+use App\Http\Controllers\V2\CyberQuoteController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
@@ -92,6 +93,7 @@ use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\PolicyIssuanceController;
 use App\Http\Controllers\V2\QuoteSyncController;
 use App\Http\Controllers\V2\SageProcessesController;
 use App\Http\Controllers\V2\SavingsQuoteController;
@@ -160,8 +162,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('instant-alfred/index', [AlfredChatController::class, 'index'])->name('instant-alfred.index');
 
     Route::post('instant-alfred/chats', [AlfredChatController::class, 'chats']);
-    Route::get('instant-alfred/export', [AlfredChatController::class, 'exportChat'])->name('exportChatData');
-    Route::post('instant-alfred/export-email', [AlfredChatController::class, 'exportChatToEmail'])->name('instant-alfred.export-email');
+    Route::post('instant-alfred/export-bird', [AlfredChatController::class, 'exportChatViaBird'])->name('instant-alfred.export-bird');
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
@@ -198,6 +199,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // travel routes
         Route::post('travel/{quoteUuId}/send-email-one-click-buy', [TravelController::class, 'sendEmailOneClickBuy'])->name('travelSendEmailOneClickBuy');
+
+        // cyber routes
+        Route::post('cyber/{quoteUuId}/send-email-one-click-buy', [CyberQuoteController::class, 'sendEmailOneClickBuy'])->name('cyberSendEmailOneClickBuy');
     });
     Route::get('/bike-insurance-provider-plans', [BikeQuoteController::class, 'bikePlansByInsuranceProvider']);
 
@@ -211,7 +215,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/savings-plan-manual-update-process', [SavingsQuoteController::class, 'savingsPlanUpdateManualProcess'])->name('savingsPlanUpdate');
     Route::get('savings/{quoteId}/plan_details/{planId}', [SavingsQuoteController::class, 'planDetails'])->name('savings_plan_details');
     Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
-
+    Route::post('quotes/savings/{quoteUuId}/send-oca', [SavingsQuoteController::class, 'sendOCAEmail'])->name('savingsSendOCAEmail');
+    Route::post('quotes/savings/{quoteUuId}/savings-plan-manual-process', [SavingsQuoteController::class, 'savingsPlanManualProcess'])->name('savingsPlanManualProcess');
+    Route::get('personal-quotes/savings/provider-plans/{providerId}', [SavingsQuoteController::class, 'getProviderPlans'])->name('savings-provider-plans');
+    Route::get('personal-quotes/savings/riders/{planId}', [SavingsQuoteController::class, 'riders'])->name('savings-plan-riders');
+    Route::post('personal-quotes/savings/toggle-savings-plan-visibility', [SavingsQuoteController::class, 'toggleSavingsPlanVisibility'])->name('savings-plan-toggle-visibility');
+    Route::post('personal-quotes/savings/update-exchange-rate', [SavingsQuoteController::class, 'updateExchangeRate'])->name('savings-plan-update-exchange-rate');
     // life routes with check_route_access middleware
     Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
     Route::post('personal-quotes/life/load-more-cards', [LifeController::class, 'getCardsViewLoadMore'])->name('life-quotes-load-more-cards');
@@ -308,6 +317,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             // Non Motor
             Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update');
             Route::get('renewals/retry/{renewalsUploadLead}', [RenewalsUploadController::class, 'retryRenewalProcesses'])->name('renewals.retry');
+        });
+
+        Route::prefix('personal-quotes')->group(function () {
+            Route::resource('/cyber', CyberQuoteController::class)->names(generateRouteNames('cyber-quotes'));
         });
     });
 
@@ -809,6 +822,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('policy-issuance-logs', [AuditableController::class, 'loadPolicyIssuanceApiLogs']);
     Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
+    Route::post('ep-logs', [AuditableController::class, 'loadEpLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/bike-model-by-id', [AjaxController::class, 'bikeModelBasedOnCarMakeId']);
@@ -1027,4 +1041,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return view('pdf.bor-document', $pdfData);
     });
+
+    Route::get('trigger-policy-issuance/{policyIssuanceId}', [PolicyIssuanceController::class, 'triggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access');
+    Route::get('trigger-policy-issuance', [PolicyIssuanceController::class, 'manualTriggerPolicyIssuance'])->middleware('permission:'.PermissionsEnum::CYBER_API_TRIGGER, 'check_route_access')->name('trigger-policy-issuance');
 });

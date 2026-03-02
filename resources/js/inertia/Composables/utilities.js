@@ -136,6 +136,7 @@ export const useGetShowPageRoute = (
     9: route('pet-quotes-show', uuid),
     10: route('cycle-quotes-show', uuid),
     18: route('savings-quotes-show', uuid),
+    19: route('cyber-quotes-show', uuid),
   };
 
   return routesObj[quoteTypeId];
@@ -479,6 +480,7 @@ export function getQuoteType(id, returnType = 'code') {
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
     11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
     18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
+    19: { code: 'CYB', id: 'cyber', link: '/personal-quotes' },
     102: { code: 'BUS', id: 'amt', link: '/medical' },
   };
   return types[id] ? types[id][returnType] : '';

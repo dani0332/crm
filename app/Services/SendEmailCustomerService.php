@@ -1129,6 +1129,14 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
+                    if (isset($document['isPolicyWording']) && $document['isPolicyWording']) {
+                        $attachments[] = [
+                            'url' => $document['doc_url'],
+                            'name' => $document['document_type_text'],
+                        ];
+
+                        continue;
+                    }
                     $path = ! empty($document['watermarked_doc_url']) ? $document['watermarked_doc_url'] : $document['doc_url'];
                     if (empty($path)) {
                         LoggerService::warning("Send lead document not found for document ID: {$document['id']} Error Code: 404");
@@ -1939,7 +1947,7 @@ class SendEmailCustomerService extends BaseService
         }
     }
 
-    public function getBCCEmails(string $quoteType, string $source)
+    public function getBCCEmails(string $quoteType, ?string $source = null)
     {
         $bccEmails = [];
 

@@ -49,4 +49,8 @@ trait PersonalQuotable
     {
         return $this->quote_type_id === QuoteTypeId::Savings;
     }
+    public function isCyber()
+    {
+        return $this->quote_type_id === QuoteTypeId::Cyber;
+    }
 }
