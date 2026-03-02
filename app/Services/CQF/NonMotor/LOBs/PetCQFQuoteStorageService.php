@@ -67,14 +67,13 @@ class PetCQFQuoteStorageService implements CQFQuoteStorageInterface
     protected function copyPetQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
     {
         $oldPetQuote = $oldQuote->petQuote;
-
         if ($oldPetQuote === null) {
             LoggerService::info(self::class.' - No pet quote detail found for old quote');
 
             return;
         }
 
-        $data = $this->copyableAttributes($oldPetQuote->getAttributes(), $newQuote->id);
+        $data = $this->copyableAttributes($oldPetQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         $newPetQuote = PetQuote::create($data);
 
         if ($oldPetQuote->petQuoteRequestDetail) {
@@ -91,10 +90,12 @@ class PetCQFQuoteStorageService implements CQFQuoteStorageInterface
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
      */
-    protected function copyableAttributes(array $attributes, int $personalQuoteId): array
+    protected function copyableAttributes(array $attributes, int $personalQuoteId, string $newQuoteUuid, string $newQuoteCode): array
     {
-        unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at']);
+        unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at'], $attributes['uuid'], $attributes['code']);
         $attributes['personal_quote_id'] = $personalQuoteId;
+        $attributes['uuid'] = $newQuoteUuid;
+        $attributes['code'] = $newQuoteCode;
 
         return $attributes;
     }

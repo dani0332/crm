@@ -74,7 +74,7 @@ class CycleCQFQuoteStorageService implements CQFQuoteStorageInterface
             return;
         }
 
-        $data = $this->copyableAttributes($oldCycleQuote->getAttributes(), $newQuote->id);
+        $data = $this->copyableAttributes($oldCycleQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
         LoggerService::info(self::class.' - Cycle quote detail copied for renewal quote', ['data' => $data]);
         CycleQuote::create($data);
 
@@ -85,10 +85,12 @@ class CycleCQFQuoteStorageService implements CQFQuoteStorageInterface
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
      */
-    protected function copyableAttributes(array $attributes, int $personalQuoteId): array
+    protected function copyableAttributes(array $attributes, int $personalQuoteId, string $newQuoteUuid, string $newQuoteCode): array
     {
-        unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at']);
+        unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at'], $attributes['uuid'], $attributes['code']);
         $attributes['personal_quote_id'] = $personalQuoteId;
+        $attributes['uuid'] = $newQuoteUuid;
+        $attributes['code'] = $newQuoteCode;
 
         return $attributes;
     }

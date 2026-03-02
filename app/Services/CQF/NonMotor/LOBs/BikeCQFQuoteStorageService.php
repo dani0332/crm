@@ -125,30 +125,9 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
      */
     protected function copyCarQuoteToBikeQuoteDetail(PersonalQuote $newQuote, CarQuote $carQuote): void
     {
-        $bikeQuoteData = [
-            'uuid' => $newQuote->uuid,
-            'code' => $newQuote->code,
-            'personal_quote_id' => $newQuote->id,
-            'bike_company_to_insure' => null,
-            'year_of_manufacture' => $carQuote->getAttribute('Year_of_manufacture') ?? $carQuote->getAttribute('year_of_manufacture') ?? null,
-            'uae_license_held_for_id' => $carQuote->uae_license_held_for_id ?? null,
-            'bike_value_tier' => null,
-            'make_id' => $carQuote->car_make_id,
-            'model_id' => $carQuote->car_model_id,
-            'currently_insured_with' => $carQuote->currently_insured_with ?? null,
-            'cubic_capacity' => $carQuote->getAttribute('cylinder') ?? $carQuote->getAttribute('cubic_capacity') ?? null,
-            'emirate_of_registration_id' => $carQuote->emirate_of_registration_id ?? null,
-            'claim_history_id' => $carQuote->claim_history_id ?? null,
-            'bike_value' => $carQuote->car_value ?? null,
-        ];
-
-        $vehicleDetail = $carQuote->vehicle_detail_id;
-        $chassisNumber = $vehicleDetail?->chassis_number ?? null;
-        if ($chassisNumber !== null) {
-            $bikeQuoteData['chassis_number'] = $chassisNumber;
-        }
-
-        BikeQuote::create($bikeQuoteData);
+        $data = $this->copyableAttributes($carQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
+        $data['personal_quote_id'] = $newQuote->id;
+        BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied from car quote for renewal');
     }
@@ -163,26 +142,22 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
             return;
         }
 
-        $bikeQuoteData = [
-            'uuid' => $newQuote->uuid,
-            'code' => $newQuote->code,
-            'personal_quote_id' => $newQuote->id,
-            'bike_company_to_insure' => $oldBikeQuote->bike_company_to_insure,
-            'year_of_manufacture' => $oldBikeQuote->year_of_manufacture,
-            'uae_license_held_for_id' => $oldBikeQuote->uae_license_held_for_id,
-            'bike_value_tier' => $oldBikeQuote->bike_value_tier,
-            'make_id' => $oldBikeQuote->make_id,
-            'model_id' => $oldBikeQuote->model_id,
-            'currently_insured_with' => $oldBikeQuote->currently_insured_with,
-            'cubic_capacity' => $oldBikeQuote->cubic_capacity,
-            'emirate_of_registration_id' => $oldBikeQuote->emirate_of_registration_id,
-            'claim_history_id' => $oldBikeQuote->claim_history_id,
-            'bike_value' => $oldBikeQuote->bike_value,
-            'chassis_number' => $oldBikeQuote->chassis_number,
-        ];
-
-        BikeQuote::create($bikeQuoteData);
+        $data = $this->copyableAttributes($oldBikeQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
+        BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    protected function copyableAttributes(array $attributes, int $personalQuoteId, string $newQuoteUuid, string $newQuoteCode): array
+    {
+        unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at'], $attributes['uuid'], $attributes['code']);
+        $attributes['personal_quote_id'] = $personalQuoteId;
+        $attributes['uuid'] = $newQuoteUuid;
+        $attributes['code'] = $newQuoteCode;
+        return $attributes;
     }
 }
