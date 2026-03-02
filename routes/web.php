@@ -35,6 +35,7 @@ use App\Http\Controllers\LifeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\NationalityAllocationConfigurationController;
+use App\Http\Controllers\NationalityPoolConfigurationController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QuoteDocumentController;
@@ -896,12 +897,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('nationality-pool-config', NationalityPoolConfigurationController::class)->names([
         'index' => 'admin.nationality-pool-config.index',
-        'create' => 'admin.nationality-pool-config.create',
-        'store' => 'admin.nationality-pool-config.store',
         'show' => 'admin.nationality-pool-config.show',
         'edit' => 'admin.nationality-pool-config.edit',
         'update' => 'admin.nationality-pool-config.update',
-        'destroy' => 'admin.nationality-pool-config.destroy',
     ]);
 
     Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
