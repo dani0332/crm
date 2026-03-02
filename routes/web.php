@@ -894,6 +894,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'destroy' => 'admin.nationality-allocation-config.destroy',
     ]);
 
+    Route::resource('nationality-pool-config', NationalityPoolConfigurationController::class)->names([
+        'index' => 'admin.nationality-pool-config.index',
+        'create' => 'admin.nationality-pool-config.create',
+        'store' => 'admin.nationality-pool-config.store',
+        'show' => 'admin.nationality-pool-config.show',
+        'edit' => 'admin.nationality-pool-config.edit',
+        'update' => 'admin.nationality-pool-config.update',
+        'destroy' => 'admin.nationality-pool-config.destroy',
+    ]);
+
     Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
         ->name('admin.nationality-allocation-config.audit-logs');
