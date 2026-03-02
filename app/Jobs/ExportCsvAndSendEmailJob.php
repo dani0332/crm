@@ -68,11 +68,13 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
             // Login on the write connection before CsvExportService::generateCsvFileWithCount switches to mysql_read.
             // has already been downgraded to the read replica, causing a read-only error.
-            if (! Auth::check() && ! empty($this->requestParams['user'])) {
+            if (! Auth::check()) {
+                if (empty($this->requestParams['user'])) {
+                    throw new \RuntimeException('Export job cannot proceed: no user resolved for auth context (user_id: '.($this->requestParams['user_id'] ?? 'null').')');
+                }
+
                 Auth::login($this->requestParams['user']);
                 request()->merge($this->requestParams);
-            }else if(! Auth::check() && empty($this->requestParams['user'])){
-                LoggerService::error("No user found ");;
             }
 
             // Process CSV and send email
