@@ -40,7 +40,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         $this->recipientEmail = $recipientEmail;
         $this->requestParams = $requestParams;
 
-        $this->onQueue('renewals');
+        $this->onQueue('ocr_dedicated');
     }
 
     /**
