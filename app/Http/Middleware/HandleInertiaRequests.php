@@ -850,7 +850,7 @@ class HandleInertiaRequests extends Middleware
                             )
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::NATIONALITY_POOL_CONFIG),
-                                'Health Nationality Allocation',
+                                'Nationality Pool Config',
                                 route('admin.nationality-pool-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
