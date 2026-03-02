@@ -71,8 +71,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             if (! Auth::check() && ! empty($this->requestParams['user'])) {
                 Auth::login($this->requestParams['user']);
                 request()->merge($this->requestParams);
-            }else if(empty($this->requestParams['user'])){
-                LoggerService::error("No user found ");;
+            } elseif (empty($this->requestParams['user'])) {
+                LoggerService::error('No user found ');
             }
 
             // Process CSV and send email
