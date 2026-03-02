@@ -23,6 +23,7 @@ use App\Models\VehicleDriverDetail;
 use App\Services\CapiService;
 use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\OCR\OcrUtils;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -31,7 +32,9 @@ use Illuminate\Support\Str;
 
 class CustomerVerificationService
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, OcrUtils {
+        OcrUtils::getNationalityId insteadof GenericQueriesAllLobs;
+    }
 
     private $isCustomerVerificationEnabled = null;
     private $documentTypeCode = null;
@@ -531,7 +534,6 @@ class CustomerVerificationService
 
         // Update customer verification status
         $this->updateCustomerVerificationStatus($quote);
-
     }
 
     private function saveVehicleChassisDetails(Model $quote, array $data): void
@@ -542,6 +544,7 @@ class CustomerVerificationService
 
     private function updateCustomerVerificationStatus(Model $quote): void
     {
+        $quoteType = $this->getQuoteType($quote);
         $requestData = ['quoteUuid' => $quote->uuid,
             'quoteTypeId' => $this->getQuoteTypeId($quote),
             'callSource' => LeadSourceEnum::IMCRM,
@@ -559,12 +562,12 @@ class CustomerVerificationService
 
         LoggerService::info('Customer verification status updated, broadcasting event', extra: [
             'quote_uuid' => $quote->uuid,
-            'quote_type' => get_class($quote),
+            'quote_type' => $quoteType,
             'verification_success' => $verificationSuccess,
             'has_response' => $response !== null,
         ]);
 
-        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, $this->getQuoteType($quote)));
+        event(new CustomerVerificationUpdated($quote->uuid, $verificationSuccess, $quoteType));
     }
 
     private function handleUnsupportedVerification(QuoteTypes $quoteType, string $documentType, string $documentTypeText): void
@@ -581,17 +584,6 @@ class CustomerVerificationService
             $quote instanceof CarQuote => QuoteTypes::CAR->value,
             $quote instanceof HealthQuote => QuoteTypes::HEALTH->value,
             $quote instanceof PersonalQuote => QuoteTypes::PERSONAL->value,
-            // Add other quote types here as needed
-            default => null,
-        };
-    }
-
-    private function getQuoteTypeId(Model $quote): ?int
-    {
-        return match (true) {
-            $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
-            $quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
-            $quote instanceof PersonalQuote => $quote->quote_type_id,
             // Add other quote types here as needed
             default => null,
         };
@@ -640,6 +632,7 @@ class CustomerVerificationService
             }
         } else {
             LoggerService::info('Customer verification not supported for quote type', extra: [
+                'quote_type_id' => $this->getQuoteTypeId($quote),
                 'quote_uuid' => $quote->uuid,
                 'quote_class' => get_class($quote),
                 'document_type' => $this->documentTypeCode,
