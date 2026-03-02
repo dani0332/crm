@@ -38,6 +38,7 @@ class ClaimDocumentRequest extends FormRequest
                 Rule::exists('document_types', 'code')->where('is_active', 1),
             ],
             'folder_path' => ['nullable', 'string', 'max:255'],
+            'is_base_64' => ['nullable', 'boolean'],
         ];
 
         // Get document type for validation
@@ -53,7 +54,8 @@ class ClaimDocumentRequest extends FormRequest
             }
         }
 
-        // Handle base64 file uploads
+        // Base64 uploads: replace the 'file' rule and type/size rules with ValidateBase64,
+        // which enforces the same accepted_files and max_size constraints internally.
         if ($this->boolean('is_base_64')) {
             $rules['files.*'] = ['required', new ValidateBase64($this->documentType)];
         }
