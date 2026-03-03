@@ -11,11 +11,11 @@ use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
 class RenewalFailedValidationExport implements FromCollection, WithStrictNullComparison
 {
-    private $renewaUploadLead;
+    private $renewalUploadLead;
 
     public function __construct($renewalUploadLead)
     {
-        $this->renewaUploadLead = $renewalUploadLead;
+        $this->renewalUploadLead = $renewalUploadLead;
     }
 
     /**
@@ -23,13 +23,16 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
      */
     public function collection()
     {
-        $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewaUploadLead->id)
+        $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewalUploadLead->id)
             ->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])
             ->get();
 
         $exportLeads = collect();
 
-        switch ($this->renewaUploadLead->renewal_import_type) {
+        switch ($this->renewalUploadLead->renewal_import_type) {
+            default:
+                // Optionally, handle unknown import type. For now, do nothing or log an error.
+                break;
             case RenewalsUploadType::CREATE_LEADS:
                 $this->handleCreateLeads($exportLeads, $failedLeads);
                 break;
@@ -46,7 +49,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
      */
     private function handleCreateLeads($exportLeads, $failedLeads)
     {
-        $columns = (new UploadAndCreateImport($this->renewaUploadLead))->getColumns();
+        $columns = (new UploadAndCreateImport($this->renewalUploadLead))->getColumns();
         $exportLeads->push($this->getCreateLeadsHeader($columns));
 
         foreach ($failedLeads as $lead) {
