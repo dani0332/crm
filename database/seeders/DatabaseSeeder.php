@@ -57,6 +57,7 @@ class DatabaseSeeder extends Seeder
             NationalityPoolConfigSeeder::class,
             HealthNationalityGroupSeeder::class,
             CanonicalNationalitySeeder::class,
+            HealthGroupNationalitySeeder::class,
         ]);
     }
 }
