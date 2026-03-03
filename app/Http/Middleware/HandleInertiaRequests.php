@@ -850,7 +850,7 @@ class HandleInertiaRequests extends Middleware
                             )
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::NATIONALITY_POOL_CONFIG),
-                                'Nationality Pool Config',
+                                'GBP Eligible Nationalities',
                                 route('admin.nationality-pool-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
