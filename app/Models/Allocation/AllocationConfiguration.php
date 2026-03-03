@@ -91,14 +91,20 @@ class AllocationConfiguration extends Model implements AuditableContract
     public function microBrackets(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->config['micro_brackets'] ?? [],
+            get: fn () => $this->config['micro_brackets']
+                ?? $this->config['non-auh']['micro_brackets']
+                ?? $this->config['non_auh']['micro_brackets']
+                ?? [],
         );
     }
 
     public function nonMicroBrackets(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->config['non_micro_brackets'] ?? [],
+            get: fn () => $this->config['non_micro_brackets']
+                ?? $this->config['non-auh']['non_micro_brackets']
+                ?? $this->config['non_auh']['non_micro_brackets']
+                ?? [],
         );
     }
 

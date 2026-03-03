@@ -16,7 +16,7 @@ class AllocationConfigurationService
 {
     use AllocationConfigurationFindable;
 
-    private function resolveConfig(QuoteTypes $quoteType, array $data): array
+    private function resolveConfig(QuoteTypes $quoteType, array $data, array $existingConfig = []): array
     {
         return match ($quoteType) {
             QuoteTypes::SAVINGS => [
@@ -41,8 +41,14 @@ class AllocationConfigurationService
                 'volume_profiles' => $data['volume_profiles'] ?? [],
             ],
             QuoteTypes::GROUP_MEDICAL => [
-                'micro_brackets' => $data['micro_brackets'] ?? [],
-                'non_micro_brackets' => $data['non_micro_brackets'] ?? [],
+                'auh' => [
+                    'micro_brackets' => $data['auh']['micro_brackets'] ?? $existingConfig['auh']['micro_brackets'] ?? [],
+                    'non_micro_brackets' => $data['auh']['non_micro_brackets'] ?? $existingConfig['auh']['non_micro_brackets'] ?? [],
+                ],
+                'non-auh' => [
+                    'micro_brackets' => $data['non-auh']['micro_brackets'] ?? $data['non_auh']['micro_brackets'] ?? $existingConfig['non-auh']['micro_brackets'] ?? $existingConfig['non_auh']['micro_brackets'] ?? [],
+                    'non_micro_brackets' => $data['non-auh']['non_micro_brackets'] ?? $data['non_auh']['non_micro_brackets'] ?? $existingConfig['non-auh']['non_micro_brackets'] ?? $existingConfig['non_auh']['non_micro_brackets'] ?? [],
+                ],
             ],
             default => [],
         };
@@ -65,7 +71,7 @@ class AllocationConfigurationService
     public function updateConfiguration(AllocationConfiguration $configuration, QuoteTypes $quoteType, array $data, int $userId): AllocationConfiguration
     {
         return DB::transaction(function () use ($configuration, $quoteType, $data, $userId) {
-            $config = $this->resolveConfig($quoteType, $data);
+            $config = $this->resolveConfig($quoteType, $data, $configuration->config ?? []);
 
             $configuration->update([
                 'quote_type_id' => $data['quote_type_id'],

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
+use App\Models\Department;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,12 +26,19 @@ class GetAdvisorsByQuoteTypeRequest extends FormRequest
     {
         return [
             'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
+            'department_ids' => ['sometimes', 'array'],
+            'department_ids.*' => ['integer', Rule::exists(Department::class, 'id')],
         ];
     }
 
     public function getQuoteType(): QuoteTypes
     {
         return QuoteTypes::from($this->input('quote_type'));
+    }
+
+    public function getDepartmentIds(): array
+    {
+        return $this->input('department_ids', []);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Requests\AllocationConfigurationRequest;
 use App\Http\Requests\FetchAllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
 use App\Models\BusinessTypeOfInsurance;
+use App\Models\Department;
 use App\Models\HealthPlanType;
 use App\Models\Team;
 use App\Services\AllocationConfiguration\AllocationConfigurationService;
@@ -160,6 +161,27 @@ class AllocationConfigurationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch sub areas.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getDepartments()
+    {
+        try {
+            $departments = Department::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $departments,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch departments.',
                 'error' => $e->getMessage(),
             ], 500);
         }
