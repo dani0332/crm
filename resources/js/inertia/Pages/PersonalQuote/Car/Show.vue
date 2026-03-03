@@ -1910,6 +1910,10 @@ const handleCancelConfirmationModal = () => {
 };
 
 const { openTempUrl } = useDocumentTempUrl();
+
+const isCars24 = computed(() => {
+  return page.props.record.source == page.props.leadSourceEnum.CARS24
+});
 </script>
 
 <template>
@@ -3716,10 +3720,19 @@ const { openTempUrl } = useDocumentTempUrl();
                   puaType,
                   isSystemDiscountPrice,
                   tags,
+                  insurerQuoteStatus
                 }"
               >
                 <p>{{ providerName }}</p>
                 <div class="flex gap-1">
+                  <x-tag
+                    v-if="isCars24 && [genericRequestEnum.QUOTE_INITIATED, genericRequestEnum.QUOTE_FINALIZED].includes(insurerQuoteStatus)"
+                    size="xs"
+                    :color="insurerQuoteStatus === genericRequestEnum.QUOTE_INITIATED ? 'error' : 'success'"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    {{ insurerQuoteStatus }}
+                  </x-tag>
                   <x-tag
                     v-if="isManualUpdate"
                     size="xs"
