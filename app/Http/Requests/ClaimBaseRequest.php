@@ -88,8 +88,7 @@ abstract class ClaimBaseRequest extends FormRequest
             ],
             'incident_date' => [
                 'nullable',
-                'date_format:Y-m-d',
-                'before_or_equal:today',
+                'date'
             ],
             'incident_story' => [
                 'nullable',
@@ -213,8 +212,7 @@ abstract class ClaimBaseRequest extends FormRequest
             'service_type_id.exists' => 'Selected service type is invalid.',
             'business_type_of_insurance_id.required' => 'Business Type of Insurance is required for Business line of business.',
             'business_type_of_insurance_id.exists' => 'The selected business type of insurance is invalid.',
-            'incident_date.date_format' => 'Incident date must be in the format YYYY-MM-DD.',
-            'incident_date.before_or_equal' => 'Incident date must be today or before.',
+            'incident_date.date' => 'Incident date must be a valid date.',
         ];
     }
 
