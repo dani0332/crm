@@ -9,7 +9,6 @@ use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Closure;
-
 class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 {
     public function handle(AllocationRequest $request, Closure $next)
@@ -68,10 +67,13 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         } elseif ($isSIC && $isAdvisorRequested) {
             LoggerService::info(self::class . ' - Lead is SIC and advisor is requested, continuing assignment');
             $continueAssignment = true;
-        }else if($lead->isPaymentAuthorized() || $lead->isPaymentAuthorizedOrDeclined()) {
+        } elseif ($lead->isPaymentAuthorized() || $lead->isPaymentAuthorizedOrDeclined()) {
             LoggerService::info(self::class . ' - Lead is Payment Authorized or Payment Authorized or Declined, continuing assignment');
             $continueAssignment = true;
-        } 
+        } elseif ($lead->hasRemainedUnauthorizedFor12Hours()) {
+            LoggerService::info(self::class . ' - Lead has remained unauthorized for 12 hours, continuing assignment');
+            $continueAssignment = true;
+        }
         else {
             LoggerService::info(self::class . ' - Lead does not meet allocation criteria (SIC and advisor requested), skipping assignment', extra: [
                 'isSIC' => $isSIC,
