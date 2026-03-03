@@ -117,27 +117,25 @@ class AMLEntityService
 
         if ($orphanedRecord) {
             LoggerService::info('Customer Insured found against orphaned record');
-            DB::transaction(function () use ($orphanedRecord, $quoteTypeId, $quoteRequestId, $customerId, $insuredId, &$isCustomerInsuredAssociationUpdated) {
 
-                $isCustomerInsuredAssociationUpdated = true;
-                CustomerInsured::forQuote($quoteTypeId, $quoteRequestId)
-                    ->update(['is_active' => false]);
+            $isCustomerInsuredAssociationUpdated = true;
+            CustomerInsured::forQuote($quoteTypeId, $quoteRequestId)
+                ->update(['is_active' => false]);
 
-                $orphanedRecord->update([
-                    'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $quoteRequestId,
-                    'is_active' => true,
-                    'updated_at' => now(),
-                ]);
+            $orphanedRecord->update([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+                'is_active' => true,
+                'updated_at' => now(),
+            ]);
 
-                LoggerService::info('Updated orphaned customer_insured record', extra: [
-                    'customer_insured_id' => $orphanedRecord->id,
-                    'customer_id' => $customerId,
-                    'insured_id' => $insuredId,
-                    'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $quoteRequestId,
-                ]);
-            });
+            LoggerService::info('Updated orphaned customer_insured record', extra: [
+                'customer_insured_id' => $orphanedRecord->id,
+                'customer_id' => $customerId,
+                'insured_id' => $insuredId,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+            ]);
         }
 
         if (! $isCustomerInsuredAssociationUpdated) {
@@ -147,43 +145,41 @@ class AMLEntityService
                 ->lockForUpdate()
                 ->first();
 
-            DB::transaction(function () use ($existingQuoteMapping, $customerId, $insuredId, $quoteTypeId, $quoteRequestId, $quoteObject, &$isCustomerInsuredAssociationUpdated) {
-                if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insuredId) {
-                    $isCustomerInsuredAssociationUpdated = true;
+            if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insuredId) {
+                $isCustomerInsuredAssociationUpdated = true;
 
-                    CustomerInsured::createOrUpdateActive([
-                        'customer_id' => $customerId,
-                        'insured_id' => $insuredId,
-                        'quote_type_id' => $quoteTypeId,
-                        'quote_request_id' => $quoteRequestId,
-                    ], [], true);
+                CustomerInsured::createOrUpdateActive([
+                    'customer_id' => $customerId,
+                    'insured_id' => $insuredId,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quoteRequestId,
+                ], [], true);
 
-                    $quoteObject->update(['kyc_decision' => Kyc::PENDING]);
+                $quoteObject->update(['kyc_decision' => Kyc::PENDING]);
 
-                    LoggerService::info('Insured association changed for quote', extra: [
-                        'old_insured_id' => $existingQuoteMapping->insured_id,
-                        'new_insured_id' => $insuredId,
-                        'quote_type_id' => $quoteTypeId,
-                        'quote_request_id' => $quoteRequestId,
-                    ]);
-                } elseif (! $existingQuoteMapping) {
-                    // This is a completely new quote-insured association
-                    $isCustomerInsuredAssociationUpdated = true;
+                LoggerService::info('Insured association changed for quote', extra: [
+                    'old_insured_id' => $existingQuoteMapping->insured_id,
+                    'new_insured_id' => $insuredId,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quoteRequestId,
+                ]);
+            } elseif (! $existingQuoteMapping) {
+                // This is a completely new quote-insured association
+                $isCustomerInsuredAssociationUpdated = true;
 
-                    CustomerInsured::createOrUpdateActive([
-                        'customer_id' => $customerId,
-                        'insured_id' => $insuredId,
-                        'quote_type_id' => $quoteTypeId,
-                        'quote_request_id' => $quoteRequestId,
-                    ], [], true);
+                CustomerInsured::createOrUpdateActive([
+                    'customer_id' => $customerId,
+                    'insured_id' => $insuredId,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quoteRequestId,
+                ], [], true);
 
-                    LoggerService::info('New insured association created for quote', extra: [
-                        'insured_id' => $insuredId,
-                        'quote_type_id' => $quoteTypeId,
-                        'quote_request_id' => $quoteRequestId,
-                    ]);
-                }
-            });
+                LoggerService::info('New insured association created for quote', extra: [
+                    'insured_id' => $insuredId,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quoteRequestId,
+                ]);
+            }
         }
     }
 
