@@ -620,7 +620,7 @@ class ClaimsService extends BaseService
     protected function prepareClaimDetailData($request, ?int $quoteTypeId): array
     {
         $claimRequestDetailFillable = (new ClaimRequestDetail)->getFillable();
-        $detailData = collect($request)->only($claimRequestDetailFillable)->toArray();
+        $detailData = collect($request)->only($claimRequestDetailFillable)->filter(fn ($value) => ! is_null($value))->toArray();
 
         return $this->clearQuoteTypeSpecificFields($detailData, $quoteTypeId);
     }
