@@ -1145,6 +1145,7 @@ const onLeadStatus = () => {
 const toggleLoader = ref(false);
 const exportLoader = ref(false);
 const isLoadingAvailablePlans = ref(false);
+const isLoading = ref(false);
 
 const onTogglePlans = toggle => {
   toggleLoader.value = true;

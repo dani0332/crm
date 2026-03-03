@@ -157,7 +157,7 @@ class HandleInertiaRequests extends Middleware
             'isTapEnabled' => isTapEnabled(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'impersonatingUser' => app('impersonate')?->getImpersonatorId() ? User::find(app('impersonate')?->getImpersonatorId()) : null,
-            'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
+            'paymentGatewayEnum' => array_values(PaymentGatewayEnum::asArray()),
             'carVehicleUse' => CarVehicleUse::asArray(),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
             'eligibleOcrProviders' => app(OCRService::class)->getEligibleProviders(),
