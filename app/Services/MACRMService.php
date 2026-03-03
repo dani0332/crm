@@ -130,7 +130,7 @@ class MACRMService
         LoggerService::info(self::class." - Getting Courier Quote Status on MACRM for UUID: {$uuid} and QuoteTypeId: {$quoteTypeId}");
 
         // making it hard code because not every lead has payment done so we can't get ref_id from payment
-        $refId = 'COU-Car-'.$uuid;
+        $refId = "COU-{$quote->code}";
 
         LoggerService::info("Get Courier Quote Status on MACRM for UUID: {$uuid} and QuoteTypeId: {$quoteTypeId}");
         ['ok' => $ok, 'object' => $response] = self::sendRequest("/couriers/get-status/{$refId}", [], 'GET');
