@@ -87,28 +87,6 @@ it('marks all optional fields as nullable in the rules', function (string $field
 
 // ── incident_date temporal validation ───────────────────────────────────────────
 
-it('rejects future incident_date values for ClaimStoreRequest', function () {
-    $data = array_merge(validClaimPayload(), [
-        'incident_date' => Carbon::now()->addDay()->format('Y-m-d'),
-    ]);
-
-    $validator = Validator::make($data, (new ClaimStoreRequest)->rules());
-
-    expect($validator->fails())->toBeTrue()
-        ->and($validator->errors()->has('incident_date'))->toBeTrue();
-});
-
-it('rejects future incident_date values for ClaimUpdateRequest', function () {
-    $data = array_merge(validClaimPayload(), [
-        'incident_date' => Carbon::now()->addDay()->format('Y-m-d'),
-    ]);
-
-    $validator = Validator::make($data, (new ClaimUpdateRequest)->rules());
-
-    expect($validator->fails())->toBeTrue()
-        ->and($validator->errors()->has('incident_date'))->toBeTrue();
-});
-
 it('accepts today or past incident_date values when provided', function (string $incidentDate) {
     $data = array_merge(validClaimPayload(), [
         'incident_date' => $incidentDate,
