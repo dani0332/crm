@@ -108,9 +108,7 @@ const hasPreviousFile = computed(() => {
 
 /** Show loading when fetching URL (next/prev) or when we have a file but URL not ready yet (e.g. initial open) */
 const isFileLoading = computed(
-  () =>
-    isLoadingNext.value ||
-    (currentFile.value && !displayUrl.value),
+  () => isLoadingNext.value || (currentFile.value && !displayUrl.value),
 );
 
 /**
@@ -384,7 +382,10 @@ watch(
           </div>
         </div>
         <template v-else-if="displayUrl">
-          <div v-if="isCurrentFileImage" class="flex items-center justify-center">
+          <div
+            v-if="isCurrentFileImage"
+            class="flex items-center justify-center"
+          >
             <div class="overflow-auto items-center justify-center">
               <img
                 :src="displayUrl"
