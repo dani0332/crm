@@ -28,52 +28,53 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         int $renewalDaysThreshold,
         array &$epCodes = []
     ): ?Model {
+        $result = null;
+
         if ($quote instanceof CarQuote) {
-            return $this->storeRenewalQuoteFromCarQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $epCodes);
-        }
+            $result = $this->storeRenewalQuoteFromCarQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $epCodes);
+        } elseif ($quote instanceof PersonalQuote) {
+            LoggerService::info(self::class.' - Storing bike CQF renewal quote');
 
-        if (! $quote instanceof PersonalQuote) {
-            return null;
-        }
+            $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
+            $policyStartDate = $policyExpiryDate->copy()->addDays(1);
+            $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
 
-        LoggerService::info(self::class.' - Storing bike CQF renewal quote');
-
-        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
-        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
-        $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
-
-        LoggerService::info(self::class.' - Policy details', [
-            'policyExpiryDate' => $policyExpiryDate,
-            'policyStartDate' => $policyStartDate,
-            'newPolicyExpiryDate' => $newPolicyExpiryDate,
-        ]);
-
-        $quoteUuid = $this->mappingService->generateUUID();
-        if ($quoteUuid === null) {
-            LoggerService::error(self::class.' - Failed to generate UUID for bike renewal quote');
-
-            return null;
-        }
-
-        $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
-        $quoteData['policy_start_date'] = $policyStartDate;
-        $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
-
-        return DB::transaction(function () use ($quoteData, $quote) {
-            $newQuote = PersonalQuote::create($quoteData);
-            $newQuote->quoteDetail()->create([]);
-            $this->copyBikeQuoteDetail($newQuote, $quote);
-            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
-
-            LoggerService::info(self::class.' - Bike CQF renewal quote created successfully', [
-                'previous_quote_uuid' => $quote->uuid,
-                'new_quote_uuid' => $newQuote->uuid,
-                'previous_quote_id' => $quote->id,
-                'new_quote_id' => $newQuote->id,
+            LoggerService::info(self::class.' - Policy details', [
+                'policyExpiryDate' => $policyExpiryDate,
+                'policyStartDate' => $policyStartDate,
+                'newPolicyExpiryDate' => $newPolicyExpiryDate,
             ]);
 
-            return $newQuote;
-        });
+            $quoteUuid = $this->mappingService->generateUUID();
+            if ($quoteUuid === null) {
+                LoggerService::error(self::class.' - Failed to generate UUID for bike renewal quote');
+                $result = null;
+            } else {
+                $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
+                $quoteData['policy_start_date'] = $policyStartDate;
+                $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
+
+                $result = DB::transaction(function () use ($quoteData, $quote) {
+                    $newQuote = PersonalQuote::create($quoteData);
+                    $newQuote->quoteDetail()->create([]);
+                    $this->copyBikeQuoteDetail($newQuote, $quote);
+                    app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
+
+                    LoggerService::info(self::class.' - Bike CQF renewal quote created successfully', [
+                        'previous_quote_uuid' => $quote->uuid,
+                        'new_quote_uuid' => $newQuote->uuid,
+                        'previous_quote_id' => $quote->id,
+                        'new_quote_id' => $newQuote->id,
+                    ]);
+
+                    return $newQuote;
+                });
+            }
+        } else {
+            $result = null;
+        }
+
+        return $result;
     }
 
     /**

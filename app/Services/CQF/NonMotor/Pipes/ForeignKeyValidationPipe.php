@@ -47,50 +47,92 @@ class ForeignKeyValidationPipe
     {
         $errors = [];
 
-        if ($quote->customer_id !== null) {
-            if (! Customer::where('id', $quote->customer_id)->exists()) {
-                $errors['customer_id'] = "Customer with id {$quote->customer_id} does not exist.";
+        // Helper for checking existence
+        $checkExists = function ($model, $id) {
+            return $model::where('id', $id)->exists();
+        };
+
+        // Handle required FKs
+        $this->validateRequiredFk(
+            $quote,
+            'customer_id',
+            Customer::class,
+            'Customer id is required for renewal quote.',
+            fn($id) => "Customer with id {$id} does not exist.",
+            $errors,
+            $checkExists
+        );
+
+        $this->validateRequiredFk(
+            $quote,
+            'insurance_provider_id',
+            InsuranceProvider::class,
+            'Insurance provider id is required for renewal quote.',
+            fn($id) => "Insurance provider with id {$id} does not exist.",
+            $errors,
+            $checkExists
+        );
+
+        // Handle optional FKs in a loop
+        $optionalFks = [
+            'nationality_id' => [
+                'model' => Nationality::class,
+                'not_found_msg' => fn($id) => "Nationality with id {$id} does not exist."
+            ],
+            'currently_insured_with_id' => [
+                'model' => InsuranceProvider::class,
+                'not_found_msg' => fn($id) => "Currently insured with (insurance provider) id {$id} does not exist."
+            ],
+        ];
+
+        foreach ($optionalFks as $field => $meta) {
+            $id = $quote->{$field};
+            if ($id !== null && ! $checkExists($meta['model'], $id)) {
+                $errors[$field] = ($meta['not_found_msg'])($id);
             }
-        } else {
-            $errors['customer_id'] = 'Customer id is required for renewal quote.';
         }
 
-        if ($quote->nationality_id !== null) {
-            if (! Nationality::where('id', $quote->nationality_id)->exists()) {
-                $errors['nationality_id'] = "Nationality with id {$quote->nationality_id} does not exist.";
-            }
+        // Transaction type lookup by id if set
+        if ($quote->transaction_type_id !== null &&
+            ! LookupRepository::where('id', $quote->transaction_type_id)->exists()) {
+            $errors['transaction_type_id'] = "Transaction type with id {$quote->transaction_type_id} does not exist.";
         }
 
-        if ($quote->insurance_provider_id !== null) {
-            if (! InsuranceProvider::where('id', $quote->insurance_provider_id)->exists()) {
-                $errors['insurance_provider_id'] = "Insurance provider with id {$quote->insurance_provider_id} does not exist.";
-            }
-        } else {
-            $errors['insurance_provider_id'] = 'Insurance provider id is required for renewal quote.';
-        }
-
-        if ($quote->currently_insured_with_id !== null) {
-            if (! InsuranceProvider::where('id', $quote->currently_insured_with_id)->exists()) {
-                $errors['currently_insured_with_id'] = "Currently insured with (insurance provider) id {$quote->currently_insured_with_id} does not exist.";
-            }
-        }
-
-        $transactionTypeLookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
-            ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
-            ->first();
-
-        if ($quote->transaction_type_id !== null) {
-            $transactionTypeLookup = LookupRepository::where('id', $quote->transaction_type_id)->first();
-            if ($transactionTypeLookup === null) {
-                $errors['transaction_type_id'] = "Transaction type with id {$quote->transaction_type_id} does not exist.";
-            }
-        }
-
+        // renewal_batch_id (derived)
         $renewalBatchId = BaseCQFQuoteMappingService::getRenewalBatchIdForDate($quote->policy_expiry_date);
         if ($renewalBatchId !== null && ! RenewalBatch::where('id', $renewalBatchId)->exists()) {
             $errors['renewal_batch_id'] = "Renewal batch with id {$renewalBatchId} does not exist.";
         }
 
         return $errors;
+    }
+
+    /**
+     * Validate a required foreign key field and populate $errors if needed.
+     *
+     * @param PersonalQuote $quote
+     * @param string $field
+     * @param string $model
+     * @param string $requiredMsg
+     * @param callable $notFoundMsg
+     * @param array $errors
+     * @param callable $checkExists
+     * @return void
+     */
+    private function validateRequiredFk(
+        PersonalQuote $quote,
+        string $field,
+        string $model,
+        string $requiredMsg,
+        callable $notFoundMsg,
+        array &$errors,
+        callable $checkExists
+    ): void {
+        $id = $quote->{$field};
+        if ($id === null) {
+            $errors[$field] = $requiredMsg;
+        } elseif (! $checkExists($model, $id)) {
+            $errors[$field] = $notFoundMsg($id);
+        }
     }
 }

@@ -73,7 +73,7 @@ class BusinessCQFQuoteStorageService implements CQFQuoteStorageInterface
             return;
         }
 
-        $data = $this->copyableAttributes($oldBusinessQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
+        $data = $this->copyableAttributes($oldBusinessQuote->getAttributes(), $newQuote->uuid, $newQuote->code);
         $businessQuote = BusinessQuote::create($data);
         $newQuote->businessQuote()->associate($businessQuote);
 
@@ -84,9 +84,9 @@ class BusinessCQFQuoteStorageService implements CQFQuoteStorageInterface
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
      */
-    protected function copyableAttributes(array $attributes, int $personalQuoteId, string $newQuoteUuid, string $newQuoteCode): array
+    protected function copyableAttributes(array $attributes, string $newQuoteUuid, string $newQuoteCode): array
     {
-        unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at'], $attributes['uuid'], $attributes['code']);
+        unset($attributes['id'], $attributes['created_at'], $attributes['updated_at'], $attributes['uuid'], $attributes['code']);
         $attributes['uuid'] = $newQuoteUuid;
         $attributes['code'] = $newQuoteCode;
 
