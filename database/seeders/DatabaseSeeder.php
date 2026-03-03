@@ -55,6 +55,7 @@ class DatabaseSeeder extends Seeder
             SetPcpTeamAllocationThresholdDisabledSeeder::class,
             HealthTeamSeeder::class,
             NationalityPoolConfigSeeder::class,
+            HealthNationalityGroupSeeder::class
         ]);
     }
 }
