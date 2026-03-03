@@ -50,6 +50,8 @@ const validateTeams = () => {
     }
 
     // Chcek sequence (as per business requirement)
+    // Comment this sequence for now as business might need it later
+    /*
     if (i != 0 && teams[i].min_price !== teams[i - 1].max_price + 1) {
       notification.error({
         title: {
@@ -61,6 +63,7 @@ const validateTeams = () => {
       });
       return false;
     }
+    */
   }
 
   return true;
@@ -140,6 +143,14 @@ onMounted(() => {
   </div>
   <x-divider class="my-4" />
 
+  <!-- Disclaimer -->
+  <p class="text-sm text-red-600 mt-2 mb-2">
+    <span class="font-semibold">Effective 9th March 2026:</span>
+    price-threshold routing is disabled for
+    Entry Level, Good, and Best teams. These leads will be routed based on
+    customer intent. GBP routing continues based on threshold and GBP nationality pool.
+  </p>
+
   <!-- Tabs -->
   <div class="flex border-b border-gray-300 mb-4">
     <button
@@ -180,6 +191,7 @@ onMounted(() => {
                 class="w-full"
                 v-model="team.min_price"
                 label="Min Price"
+                :disabled = "team.name != 'GBP'"
               />
               <p class="text-xs -mt-4">
                 Minimum annual premium (AED) required for this
@@ -191,13 +203,14 @@ onMounted(() => {
               class="w-full"
               v-model="team.max_price"
               label="Max Price"
+              :disabled = "team.name != 'GBP'"
             />
           </div>
         </x-form>
       </div>
 
       <div class="flex justify-end gap-3 mt-5">
-        <x-button size="sm" color="#ff5e00" @click="updateTeams()">
+        <x-button size="sm" color="#ff5e00" @click="updateTeams()" :disabled="tabs[activeTab].label == 'AUH'">
           Update {{ tabs[activeTab].label }}
         </x-button>
       </div>

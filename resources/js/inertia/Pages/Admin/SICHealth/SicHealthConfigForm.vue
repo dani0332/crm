@@ -18,16 +18,17 @@ const sicConfigurableForm = useForm({
   min_age: props.sicConfigurable?.min_age ?? 0,
   price_starting_from: props.sicConfigurable?.price_starting_from ?? 0,
   max_age: props.sicConfigurable?.max_age ?? 0,
-  plan_types: [],
+  is_age: props.sicConfigurable?.is_age ?? false,
+  is_price_starting_from:
+    props.sicConfigurable?.is_price_starting_from ?? false,
+  // Only comment for now as business might need it later
+  /* plan_types: [],
   is_type: props.sicConfigurable?.is_type ?? false,
   nationalities: [],
   member_categories: [],
   is_nationality: props.sicConfigurable?.is_nationality ?? false,
   is_member_category: props.sicConfigurable?.is_member_category ?? false,
-  is_age: props.sicConfigurable?.is_age ?? false,
-  is_price_starting_from:
-    props.sicConfigurable?.is_price_starting_from ?? false,
-  is_emirate_of_visa: props.sicConfigurable?.is_emirate_of_visa ?? false,
+  is_emirate_of_visa: props.sicConfigurable?.is_emirate_of_visa ?? false, */
 });
 
 onMounted(() => {
@@ -48,11 +49,44 @@ onMounted(() => {
       props.relations?.emirates.map(item => item.id) ?? [];
   }
 });
-function onSubmit(isValid) {
+
+function validateFields() {
+ if (sicConfigurableForm.is_price_starting_from && sicConfigurableForm.price_starting_from == 0) {
+  notification.error({
+    title: 'Max Price is required',
+    position: 'top',
+  });
+  return false;
+ }
+
+ if (sicConfigurableForm.is_age) {
+   if (sicConfigurableForm.min_age == 0 || sicConfigurableForm.max_age == 0) {
+      notification.error({
+        title: 'Min Age and Max Age are required',
+        position: 'top',
+      });
+      return false;
+    }
+
+    if (sicConfigurableForm.min_age > sicConfigurableForm.max_age) {
+      notification.error({
+        title: 'Min Age must be less than or equal to Max Age',
+        position: 'top',
+      });
+      return false;
+    }
+ }
+
+  return true;
+}
+
+function onSubmit() {
+  const isValid = validateFields();
+
   if (isValid) {
-    let method = 'post';
     let url = route('admin.sic-health-config.store');
-    sicConfigurableForm.submit(method, url, {
+
+    sicConfigurableForm.submit('post', url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
           sicConfigurableForm.setError(key, errors[key]);
@@ -60,8 +94,6 @@ function onSubmit(isValid) {
         return false;
       },
     });
-  } else {
-    console.log('error');
   }
 }
 
@@ -148,6 +180,26 @@ const ageRangeValid = computed(() => {
           </div>
         </div>
         <div class="col-span-1 sm:col-span-1">
+          <x-checkbox
+            v-model="sicConfigurableForm.is_price_starting_from"
+            label="Max Price"
+          />
+          <div
+            class="grid sm:grid-cols-1 gap-4"
+            v-if="sicConfigurableForm.is_price_starting_from"
+          >
+            <x-input
+              v-model="sicConfigurableForm.price_starting_from"
+              required
+              placeholder="Max Price"
+              class="w-full"
+              :rules="[isRequired]"
+              :error="errors.price_starting_from"
+              label="Max Price"
+            />
+          </div>
+        </div>
+        <div class="col-span-1 sm:col-span-1 hidden">
           <x-checkbox v-model="sicConfigurableForm.is_type" label="Plan Type" />
           <div
             class="grid sm:grid-cols-1 gap-4"
@@ -182,7 +234,7 @@ const ageRangeValid = computed(() => {
 
       <div class="grid sm:grid-cols-2 gap-4 mt-4">
         <!-- Nationality -->
-        <div class="col-span-1 sm:col-span-1">
+        <div class="col-span-1 sm:col-span-1 hidden">
           <x-checkbox
             v-model="sicConfigurableForm.is_nationality"
             label="Nationality"
@@ -216,7 +268,7 @@ const ageRangeValid = computed(() => {
             </x-select>
           </div>
         </div>
-        <div class="col-span-1 sm:col-span-1">
+        <div class="col-span-1 sm:col-span-1 hidden">
           <x-checkbox
             v-model="sicConfigurableForm.is_member_category"
             label="Member Category "
@@ -250,7 +302,7 @@ const ageRangeValid = computed(() => {
             </x-select>
           </div>
         </div>
-        <div class="col-span-1 sm:col-span-1">
+        <div class="col-span-1 sm:col-span-1 hidden">
           <x-checkbox
             v-model="sicConfigurableForm.is_emirate_of_visa"
             label="Emirate of Visa"
@@ -283,26 +335,6 @@ const ageRangeValid = computed(() => {
                 />
               </template>
             </x-select>
-          </div>
-        </div>
-        <div class="col-span-1 sm:col-span-1">
-          <x-checkbox
-            v-model="sicConfigurableForm.is_price_starting_from"
-            label="Price Starting From"
-          />
-          <div
-            class="grid sm:grid-cols-1 gap-4"
-            v-if="sicConfigurableForm.is_price_starting_from"
-          >
-            <x-input
-              v-model="sicConfigurableForm.price_starting_from"
-              required
-              placeholder="Price Starting From"
-              class="w-full"
-              :rules="[isRequired]"
-              :error="errors.price_starting_from"
-              label="Price Starting From"
-            />
           </div>
         </div>
       </div>
