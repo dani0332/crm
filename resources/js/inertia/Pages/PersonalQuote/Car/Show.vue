@@ -2439,6 +2439,10 @@ const { openTempUrl } = useDocumentTempUrl();
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ record.pc_qualified_formatted }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS UPDATE QUOTE READY</dt>
+                <dd>{{ record.is_update_quote_ready ? 'YES' : 'NO' }}</dd>
+              </div>
             </dl>
           </div>
 

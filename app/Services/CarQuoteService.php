@@ -619,6 +619,7 @@ class CarQuoteService extends BaseService
                 'cqr.is_branch_applicable',
                 'vdd.driver_eid_number',
                 'vdd.driver_gender',
+                'cqrd.is_update_quote_ready',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
