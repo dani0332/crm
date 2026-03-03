@@ -121,9 +121,7 @@ class AMLEntityService
 
                 $isCustomerInsuredAssociationUpdated = true;
                 CustomerInsured::forQuote($quoteTypeId, $quoteRequestId)
-                    ->lockForUpdate()->get()->each(function ($record) {
-                        $record->update(['is_active' => false]);
-                    });
+                    ->update(['is_active' => false]);
 
                 $orphanedRecord->update([
                     'quote_type_id' => $quoteTypeId,
@@ -158,7 +156,7 @@ class AMLEntityService
                         'insured_id' => $insuredId,
                         'quote_type_id' => $quoteTypeId,
                         'quote_request_id' => $quoteRequestId,
-                    ]);
+                    ], [], true);
 
                     $quoteObject->update(['kyc_decision' => Kyc::PENDING]);
 
@@ -177,7 +175,7 @@ class AMLEntityService
                         'insured_id' => $insuredId,
                         'quote_type_id' => $quoteTypeId,
                         'quote_request_id' => $quoteRequestId,
-                    ]);
+                    ], [], true);
 
                     LoggerService::info('New insured association created for quote', extra: [
                         'insured_id' => $insuredId,

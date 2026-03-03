@@ -555,14 +555,14 @@ if (! function_exists('getPersonalQuoteTypeIds')) {
     function getPersonalQuoteTypeIds()
     {
         return [
-            QuoteTypeId::Home,
-            QuoteTypeId::Life,
             QuoteTypeId::Bike,
-            QuoteTypeId::Yacht,
-            QuoteTypeId::Pet,
             QuoteTypeId::Cycle,
             QuoteTypeId::Jetski,
+            QuoteTypeId::Pet,
+            QuoteTypeId::Yacht,
             QuoteTypeId::Savings,
+            QuoteTypeId::Home,
+            QuoteTypeId::Life,
             QuoteTypeId::Cyber,
         ];
     }
