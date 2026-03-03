@@ -441,4 +441,30 @@ class TestDataSeeder
             'emirate_id' => $emirateId,
         ];
     }
+
+    /**
+     * Seed required lookup data for HealthQuote tests.
+     *
+     * @return array Array of created lookup IDs
+     */
+    public static function seedHealthQuoteLookups(): array
+    {
+        $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+
+        // Create Nationality
+        $nationalityId = $db->table('nationality')->where('text', 'United Arab Emirates')->value('id');
+        if (! $nationalityId) {
+            $nationalityId = $db->table('nationality')->insertGetId([
+                'text' => 'United Arab Emirates',
+                'code' => 'AE',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'nationality_id' => $nationalityId,
+        ];
+    }
 }
