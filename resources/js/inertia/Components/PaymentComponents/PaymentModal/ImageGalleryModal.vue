@@ -42,6 +42,10 @@ const emit = defineEmits(['update:modelValue', 'update:currentFileURL']);
 const currentFileIndex = ref(props.initialIndex);
 const zoomLevel = ref(1);
 const modalRef = ref(null);
+/** URL actually shown in viewer; cleared when navigating to avoid showing previous file */
+const displayUrl = ref(props.currentFileURL);
+/** True while fetching next/previous file URL so we show loading instead of stale content */
+const isLoadingNext = ref(false);
 
 const { getTempUrl } = useDocumentTempUrl();
 
@@ -102,6 +106,13 @@ const hasPreviousFile = computed(() => {
   return currentFileIndex.value > 0;
 });
 
+/** Show loading when fetching URL (next/prev) or when we have a file but URL not ready yet (e.g. initial open) */
+const isFileLoading = computed(
+  () =>
+    isLoadingNext.value ||
+    (currentFile.value && !displayUrl.value),
+);
+
 /**
  * Closes the modal by emitting update:modelValue event with false
  * Resets zoom level to default when closing
@@ -113,29 +124,39 @@ const closeModal = () => {
 
 /**
  * Navigates to the next file in the gallery
- * Resets zoom level when navigating to a new file
+ * Clears display and shows loading until the new URL is ready to avoid showing previous file.
  */
 const nextFile = async () => {
-  if (hasNextFile.value) {
-    currentFileIndex.value++;
-    zoomLevel.value = 1;
-    // Get the new file URL after index change
+  if (!hasNextFile.value) return;
+  isLoadingNext.value = true;
+  displayUrl.value = '';
+  currentFileIndex.value++;
+  zoomLevel.value = 1;
+  try {
     const documentURL = await getTempUrl(currentFile.value.doc_url);
     emit('update:currentFileURL', documentURL);
+  } catch {
+    isLoadingNext.value = false;
+    displayUrl.value = props.currentFileURL;
   }
 };
 
 /**
  * Navigates to the previous file in the gallery
- * Resets zoom level when navigating to  a new file
+ * Clears display and shows loading until the new URL is ready to avoid showing previous file.
  */
 const previousFile = async () => {
-  if (hasPreviousFile.value) {
-    currentFileIndex.value--;
-    zoomLevel.value = 1;
-    // Get the new file URL after index change
+  if (!hasPreviousFile.value) return;
+  isLoadingNext.value = true;
+  displayUrl.value = '';
+  currentFileIndex.value--;
+  zoomLevel.value = 1;
+  try {
     const documentURL = await getTempUrl(currentFile.value.doc_url);
     emit('update:currentFileURL', documentURL);
+  } catch {
+    isLoadingNext.value = false;
+    displayUrl.value = props.currentFileURL;
   }
 };
 
@@ -182,19 +203,35 @@ watch(
   },
 );
 
+/** Sync display URL from parent when it updates (after next/previous fetch); clear loading state */
+watch(
+  () => props.currentFileURL,
+  url => {
+    displayUrl.value = url;
+    isLoadingNext.value = false;
+  },
+);
+
 /**
- * Watches for the modal visibility state
- * When modal opens, focuses the modal element for keyboard navigation
+ * Watches for the modal visibility state.
+ * When modal opens: sync display URL and focus.
+ * When modal closes: reset all state and pagination so next open starts fresh.
  */
 watch(
   () => props.modelValue,
   isOpen => {
     if (isOpen) {
+      displayUrl.value = props.currentFileURL;
       nextTick(() => {
         if (modalRef.value) {
           modalRef.value.focus();
         }
       });
+    } else {
+      currentFileIndex.value = props.initialIndex;
+      zoomLevel.value = 1;
+      displayUrl.value = '';
+      isLoadingNext.value = false;
     }
   },
 );
@@ -337,25 +374,39 @@ watch(
         </div>
       </div>
       <div class="modal-body flex-1 min-h-0 w-full mt-2 overflow-auto">
-        <div v-if="isCurrentFileImage" class="flex items-center justify-center">
-          <div class="overflow-auto items-center justify-center">
-            <img
-              :src="currentFileURL"
-              :style="{ transform: `scale(${zoomLevel})` }"
-              class="max-w-full max-h-full"
-              alt="Document Image"
-            />
+        <div
+          v-if="isFileLoading"
+          class="flex flex-1 items-center justify-center min-h-[200px] text-gray-400"
+        >
+          <div class="flex flex-col items-center gap-2">
+            <x-spinner class="w-10 h-10 text-gray-400" />
+            <span class="text-sm">File is being loaded…</span>
           </div>
         </div>
-        <div v-else-if="isCurrentFilePdf" class="w-full h-80vh">
-          <embed
-            :src="currentFileURL"
-            type="application/pdf"
-            class="w-full h-full"
-          />
-        </div>
+        <template v-else-if="displayUrl">
+          <div v-if="isCurrentFileImage" class="flex items-center justify-center">
+            <div class="overflow-auto items-center justify-center">
+              <img
+                :src="displayUrl"
+                :style="{ transform: `scale(${zoomLevel})` }"
+                class="max-w-full max-h-full"
+                alt="Document Image"
+              />
+            </div>
+          </div>
+          <div v-else-if="isCurrentFilePdf" class="w-full h-80vh">
+            <embed
+              :src="displayUrl"
+              type="application/pdf"
+              class="w-full h-full"
+            />
+          </div>
+          <div v-else class="text-center p-10 text-gray-500">
+            Preview not available for this file type.
+          </div>
+        </template>
         <div v-else class="text-center p-10 text-gray-500">
-          Preview not available for this file type.
+          No document to display.
         </div>
       </div>
     </div>
