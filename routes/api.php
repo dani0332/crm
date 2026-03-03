@@ -59,6 +59,8 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/document-notification', [ApiController::class, 'documentNotification'])->name('documentNotification');
     Route::post('send-my-alfred-welcome-email', [GenericLobController::class, 'sendMyAlfredWelcomeEmail']);
 
+    Route::get('generic-documents/{insuranceProviderId?}/{quoteType?}', [ApiController::class, 'getGenericDocuments']);
+
     // BOR (Broker on Record) API Routes
     Route::prefix('bor')->group(function () {
 
@@ -143,6 +145,7 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
     Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
 
+    Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

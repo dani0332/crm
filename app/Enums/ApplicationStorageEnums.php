@@ -281,6 +281,9 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
 
+    /* Claim Email Workflow URLs */
+    public const CLAIM_EMAILS_WORKFLOW_URL = 'CLAIM_EMAILS_WORKFLOW_URL';
+
     /* CPA Australia Home CC Emails */
     public const CPA_AUSTRALIA_HOME_BCC_EMAILS = 'CPA_AUSTRALIA_HOME_BCC_EMAILS';
     public const CPA_AUSTRALIA_SAVINGS_BCC_EMAILS = 'CPA_AUSTRALIA_SAVINGS_BCC_EMAILS';

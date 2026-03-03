@@ -450,6 +450,20 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
     // End of Savings Permissions
 
+    // Claims Permissions
+    public const CLAIM_LIST = 'claim-list';
+    public const CLAIM_CREATE = 'claim-create';
+    public const CLAIM_EDIT = 'claim-edit';
+    public const CLAIM_SHOW = 'claim-show';
+    public const CLAIMS_EXPORT_DATA = 'claim-export-data';
+    public const CLAIMS_STATUS_UPDATE = 'claim-status-update';
+    public const CLAIMS_SUB_STATUS_UPDATE = 'claim-sub-status-update';
+    public const CLAIM_DOCUMENT_UPLOAD = 'claim-document-upload';
+    public const CLAIM_DOCUMENT_DELETE = 'claim-document-delete';
+    public const CLAIM_DOCUMENT_S3_URL = 'claim-document-s3-url';
+    public const CLAIM_DOWNLOAD_ALL_DOCUMENTS = 'claim-download-all-documents';
+    // End of Claims Permissions
+
     public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
     public const EDIT_VEHICLE_TRANSACTION_DRIVER_DETAILS = 'edit-vehicle-transaction-driver-details';
     public const EDIT_LAST_YEAR_DETAILS = 'edit-last-year-details';
@@ -540,6 +554,35 @@ final class PermissionsEnum extends Enum
             /*self::VIEW_BULK_POLICY_BOOKING_LIST,
             self::BOOK_BULK_POLICY_ON_SAGE,*/
             self::BOOKING_FAILED_EDIT,
+        ];
+    }
+
+    public static function getClaimsPermissions()
+    {
+        return [
+            'claimManager' => [
+                self::CLAIM_LIST,
+                self::CLAIM_CREATE,
+                self::CLAIM_EDIT,
+                self::CLAIM_SHOW,
+                self::CLAIMS_EXPORT_DATA,
+                self::CLAIMS_SUB_STATUS_UPDATE,
+                self::CLAIM_DOCUMENT_UPLOAD,
+                self::CLAIM_DOCUMENT_S3_URL,
+            ],
+            'claimLead' => [
+                self::CLAIM_LIST,
+                self::CLAIM_CREATE,
+                self::CLAIM_EDIT,
+                self::CLAIM_SHOW,
+                self::CLAIMS_EXPORT_DATA,
+                self::CLAIMS_STATUS_UPDATE,
+                self::CLAIMS_SUB_STATUS_UPDATE,
+                self::CLAIM_DOCUMENT_UPLOAD,
+                self::CLAIM_DOCUMENT_DELETE,
+                self::CLAIM_DOCUMENT_S3_URL,
+                self::CLAIM_DOWNLOAD_ALL_DOCUMENTS,
+            ],
         ];
     }
 }

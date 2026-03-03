@@ -149,7 +149,7 @@ class Customer extends Model implements AuditableContract
     public static function formattedPcpTagCase($tableAlias = 'c'): string
     {
         return '
-            CASE 
+            CASE
                 WHEN '.$tableAlias.".pcp_tag = 1 THEN 'Yes'
                 WHEN ".$tableAlias.".pcp_tag = 0 THEN 'Ex-PC'
                 ELSE 'No'
@@ -160,5 +160,10 @@ class Customer extends Model implements AuditableContract
     public function personalQuote(): HasMany
     {
         return $this->hasMany(PersonalQuote::class, 'customer_id', 'id');
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(CustomerBankAccount::class, 'customer_id', 'id');
     }
 }

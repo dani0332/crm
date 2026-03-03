@@ -18,6 +18,9 @@ use App\Http\Controllers\BranchAssignmentController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
+use App\Http\Controllers\ClaimDocumentsController;
+use App\Http\Controllers\ClaimLogController;
+use App\Http\Controllers\ClaimsController;
 use App\Http\Controllers\CommercialKeywordsController;
 use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
@@ -317,6 +320,42 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::prefix('personal-quotes')->group(function () {
             Route::resource('/cyber', CyberQuoteController::class)->names(generateRouteNames('cyber-quotes'));
         });
+    });
+
+    // Claims Management Routes
+    Route::group(['prefix' => 'claim', 'as' => 'claims.'], function () {
+        // Main CRUD Routes
+        Route::get('/', [ClaimsController::class, 'index'])->name('index');
+        Route::get('/create', [ClaimsController::class, 'create'])->name('create');
+        Route::post('/', [ClaimsController::class, 'store'])->name('store');
+        Route::get('/{uuid}', [ClaimsController::class, 'show'])->name('show');
+        Route::get('/{uuid}/edit', [ClaimsController::class, 'edit'])->name('edit');
+        Route::put('/{uuid}', [ClaimsController::class, 'update'])->name('update');
+
+        // Search & Export
+        Route::post('/search-policies', [ClaimsController::class, 'searchPolicies'])->name('search-policies');
+        Route::post('/export', [ClaimsController::class, 'export'])->name('export');
+
+        // Claim Actions
+        Route::post('/{claim:uuid}/update-details', [ClaimsController::class, 'updateClaimDetails'])->name('update.details');
+        Route::post('/{claim:uuid}/update-status', [ClaimsController::class, 'updateClaimStatus'])->name('update.status');
+        Route::post('/{claim:uuid}/update-complaint-status', [ClaimsController::class, 'updateComplaintStatus'])->name('update.complaint-status');
+        Route::post('/{claim:uuid}/update-next-follow-up', [ClaimsController::class, 'updateNextFollowUp'])->name('update.next-follow-up');
+        Route::post('/{claim:uuid}/send-notification', [ClaimsController::class, 'sendNotification'])->name('send-notification');
+        Route::post('/{claim:uuid}/make-additional-contact-primary', [ClaimsController::class, 'makeAdditionalContactPrimary'])->name('make-additional-contact-primary');
+        Route::post('/optimize-message', [ClaimsController::class, 'optimizeMessage'])->name('optimize-message');
+
+        // Documents
+        Route::post('/{claim:uuid}/documents', [ClaimDocumentsController::class, 'storeDocument'])->name('documents.store');
+        Route::delete('/{claim:uuid}/documents/{document}', [ClaimDocumentsController::class, 'destroyDocument'])->name('documents.destroy');
+        Route::post('/documents/get-s3-temp-url', [ClaimDocumentsController::class, 'getS3TempUrl'])->name('documents.get-s3-temp-url');
+        Route::get('/{claim:uuid}/documents/download-all', [ClaimDocumentsController::class, 'downloadAllDocuments'])->name('documents.download-all');
+
+        // History & Logs
+        Route::get('/{claim:uuid}/lead-history', [ClaimLogController::class, 'getClaimLeadHistory'])->name('lead-history');
+        Route::get('/{claim:uuid}/sub-status-logs', [ClaimLogController::class, 'getClaimSubStatusLogs'])->name('sub-status-logs');
+        Route::get('/{claim:uuid}/complaint-status-logs', [ClaimLogController::class, 'getComplaintStatusLogs'])->name('complaint-status-logs');
+        Route::get('/{claim:uuid}/next-follow-up-logs', [ClaimLogController::class, 'getNextFollowUpLogs'])->name('next-follow-up-logs');
     });
 
     // Non Motor

@@ -45,6 +45,77 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         $this->seedBirdWorkflowUrls();
+        $this->claimGoogleReviewEmail();
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
+        //     [
+        //         'value' => 0,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
+        //     [
+        //         'value' => '2024-12-01',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL],
+        //     [
+        //         'value' => 0,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
+        //     [
+        //         'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+        //     [
+        //         'value' => 0,
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+        //     [
+        //         'value' => 0,
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
+        //     [
+        //         'value' => 'newleadpool@insurancemarket.ae',
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // $this->seedBenchmarking();
+        // $this->seedStopDeduplicateScript();
+        // $this->seedAmlAutomation();
+
+        // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
         $this->seedLifeOCAEmail();
@@ -742,6 +813,20 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+    }
+
+    private function claimGoogleReviewEmail()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CLAIM_EMAILS_WORKFLOW_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/f440f3b1-7c43-445c-a229-2b694e71179c/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
     }
 
     private function seedTravelEnquiryEmail()
