@@ -74,7 +74,8 @@ class BusinessCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         $data = $this->copyableAttributes($oldBusinessQuote->getAttributes(), $newQuote->id, $newQuote->uuid, $newQuote->code);
-        BusinessQuote::create($data);
+        $businessQuote = BusinessQuote::create($data);
+        $newQuote->businessQuote()->associate($businessQuote);
 
         LoggerService::info(self::class.' - Business quote detail copied for renewal quote');
     }
@@ -86,7 +87,6 @@ class BusinessCQFQuoteStorageService implements CQFQuoteStorageInterface
     protected function copyableAttributes(array $attributes, int $personalQuoteId, string $newQuoteUuid, string $newQuoteCode): array
     {
         unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at'], $attributes['uuid'], $attributes['code']);
-        $attributes['personal_quote_id'] = $personalQuoteId;
         $attributes['uuid'] = $newQuoteUuid;
         $attributes['code'] = $newQuoteCode;
 

@@ -6,6 +6,7 @@ use App\Enums\FilterTypes;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
@@ -328,7 +329,7 @@ class BusinessQuote extends Model implements AuditableContract
 
     public function personalQuote()
     {
-        return $this->belongsTo(PersonalQuote::class, 'quote_id', 'id');
+        return $this->hasOne(PersonalQuote::class, 'quote_id', 'id')->where('quote_type_id', QuoteTypes::BUSINESS->id());
     }
 
     public function renewalBatchModel()
