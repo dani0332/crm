@@ -17,7 +17,7 @@ beforeEach(function () {
     ]);
 
     TestSchemaCreator::createMinimalSchema();
-    
+
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
 });
@@ -30,10 +30,10 @@ afterEach(function () {
 
 test('can retrieve available plans for valid quote UUID', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockPlans = SavingsQuoteMockHelper::createPlansResponse(
         regular: [
             SavingsQuoteMockHelper::createMockPlanData(1),
@@ -41,10 +41,10 @@ test('can retrieve available plans for valid quote UUID', function () {
         ],
         lumpsum: [SavingsQuoteMockHelper::createMockPlanData(3)]
     );
-    
+
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, $mockPlans);
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $plans = $service->getAvailablePlans($quote->uuid);
 
@@ -55,14 +55,14 @@ test('can retrieve available plans for valid quote UUID', function () {
 
 test('retrieving available plans handles empty plan list gracefully', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockPlans = SavingsQuoteMockHelper::createPlansResponse(regular: [], lumpsum: []);
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, $mockPlans);
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $plans = $service->getAvailablePlans($quote->uuid);
 
@@ -72,13 +72,13 @@ test('retrieving available plans handles empty plan list gracefully', function (
 
 test('retrieving available plans for non-existent quote handles API error', function () {
     $nonExistentUuid = 'non-existent-uuid-'.uniqid();
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, 'Quote not found');
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $plans = $service->getAvailablePlans($nonExistentUuid);
 
@@ -89,20 +89,20 @@ test('retrieving available plans for non-existent quote handles API error', func
 test('retrieving available plans includes required fields', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
     $mockPlan = SavingsQuoteMockHelper::createMockPlanData(1);
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockPlans = SavingsQuoteMockHelper::createPlansResponse(regular: [$mockPlan]);
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, $mockPlans);
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $plans = $service->getAvailablePlans($quote->uuid);
 
     expect($plans)->not->toBeNull()
         ->and($plans)->toBeInstanceOf(\stdClass::class);
-    
+
     if (isset($plans->regular) && count($plans->regular) > 0) {
         $firstPlan = $plans->regular[0];
         expect($firstPlan->id)->toBe(1)
@@ -115,14 +115,14 @@ test('can get plan details for valid quote and plan ID', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
     $planId = 1;
     $mockPlan = SavingsQuoteMockHelper::createMockPlanData($planId);
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockPlans = SavingsQuoteMockHelper::createPlansResponse(regular: [$mockPlan]);
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, $mockPlans);
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $result = $service->getPlanDetails($quote->uuid, $planId);
 
@@ -143,14 +143,14 @@ test('getting plan details extracts eligibility values correctly', function () {
             (object) ['code' => 'policyTerm', 'value' => '15'],
         ],
     ]);
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockPlans = SavingsQuoteMockHelper::createPlansResponse(regular: [$mockPlan]);
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, $mockPlans);
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $result = $service->getPlanDetails($quote->uuid, $planId);
 
@@ -161,16 +161,16 @@ test('getting plan details extracts eligibility values correctly', function () {
 test('getting plan details returns 404 for non-existent plan', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
     $nonExistentPlanId = 999;
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockPlans = SavingsQuoteMockHelper::createPlansResponse(
         regular: [SavingsQuoteMockHelper::createMockPlanData(1)]
     );
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, $mockPlans);
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $result = $service->getPlanDetails($quote->uuid, $nonExistentPlanId);
 
@@ -181,13 +181,13 @@ test('getting plan details returns 404 for non-existent plan', function () {
 
 test('getting plan details returns error for non-existent quote', function () {
     $nonExistentUuid = 'non-existent-uuid-'.uniqid();
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, 'Quote not found');
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $result = $service->getPlanDetails($nonExistentUuid, 1);
 
@@ -198,7 +198,7 @@ test('getting plan details returns error for non-existent quote', function () {
 test('can create new plan with valid data', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
     $mockHttpService = SavingsQuoteMockHelper::mockHttpRequestService(200);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
 
     $payload = [
         'quoteUID' => $quote->uuid,
@@ -225,10 +225,10 @@ test('can create new plan with valid data', function () {
 
 test('plan creation validates required fields', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockService = Mockery::mock(SavingsQuoteService::class, [$mockHttpService])->makePartial();
     $mockService->shouldReceive('processSavingsPlan')->once()->andReturn(400);
     $this->app->instance(SavingsQuoteService::class, $mockService);
@@ -247,7 +247,7 @@ test('plan creation handles API errors gracefully', function () {
     $mockHttpService = Mockery::mock(HttpRequestService::class);
     $mockHttpService->shouldReceive('processRequest')
         ->andReturn('API Error: Service unavailable');
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
 
     $payload = [
         'quoteUID' => $quote->uuid,
@@ -265,7 +265,7 @@ test('plan creation handles API errors gracefully', function () {
 test('can update plan with valid data', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
     $mockHttpService = SavingsQuoteMockHelper::mockHttpRequestService(200);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
 
     $payload = [
         'quoteUID' => $quote->uuid,
@@ -320,13 +320,13 @@ test('plan update checks permission based on payment status', function () {
 
 test('handles API error responses correctly', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote();
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, 'API timeout error');
     $this->app->instance(SavingsQuoteService::class, $mockService);
-    
+
     $service = $this->app->make(SavingsQuoteService::class);
     $plans = $service->getQuotePlans($quote->uuid);
 
@@ -336,10 +336,10 @@ test('handles API error responses correctly', function () {
 
 test('handles invalid quote UUID format', function () {
     $invalidUuid = 'invalid-uuid-format';
-    
+
     $mockHttpService = Mockery::mock(HttpRequestService::class);
-    $this->app->singleton(HttpRequestService::class, fn() => $mockHttpService);
-    
+    $this->app->singleton(HttpRequestService::class, fn () => $mockHttpService);
+
     $mockService = SavingsQuoteMockHelper::mockSavingsQuoteService($mockHttpService, 'Quote not found');
     $this->app->instance(SavingsQuoteService::class, $mockService);
 
