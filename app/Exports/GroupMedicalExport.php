@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
@@ -39,6 +40,8 @@ class GroupMedicalExport implements CsvExportableInterface
             'ADVISOR',
             'OE / AE',
             'BRANCH',
+            'ASSIGNMENT TYPE',
+            'ADVISOR ASSIGNED DATE',
             'PREMIUM',
             'COMPANY NAME',
             'POLICY NUMBER',
@@ -46,7 +49,6 @@ class GroupMedicalExport implements CsvExportableInterface
             'SOURCE',
             'IMCRM SUB-SOURCE',
             'CREATED DATE',
-            'ADVISOR ASSIGNED DATE',
             'LAST MODIFIED DATE',
             'RENEWAL BATCH',
             'PREVIOUS POLICY EXPIRY DATE',
@@ -70,6 +72,8 @@ class GroupMedicalExport implements CsvExportableInterface
             optional($quote->advisor)->name,
             optional($quote->supportUser)->name,
             $branch,
+            $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText((int) $quote->assignment_type) : '',
+            isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
             $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->company_name,
             $quote->policy_number,
@@ -77,7 +81,6 @@ class GroupMedicalExport implements CsvExportableInterface
             $quote->source,
             optional($quote->subSource)->text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
-            isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->renewal_batch,
             $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',

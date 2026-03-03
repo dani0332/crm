@@ -15,6 +15,7 @@ defineProps({
   authorizedDays: Number,
   insurerAMLStatus: Array,
   subSources: Array,
+  assignmentTypes: Array,
 });
 
 const canExport = ref(false);
@@ -86,6 +87,7 @@ const filters = reactive({
   advisor_assigned_date: [],
   authorize_date: '',
   captured_date: '',
+  assignment_type: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -140,6 +142,8 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
+  { text: 'ASSIGNED AT', value: 'advisor_assigned_date' },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
@@ -267,6 +271,8 @@ function setQueryFilters() {
     } else if (key.includes('[')) {
       let index = key.replace('[]', '');
       filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+    } else if (key === 'assignment_type') {
+      filters[key] = value;
     } else {
       filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
     }
@@ -709,6 +715,16 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
+
+        <x-select
+          v-model="filters.assignment_type"
+          name="assignment_type"
+          placeholder="Search by Assignment Type"
+          :options="assignmentTypes || []"
+          class="w-full"
+          filterable
+          label="Assignment Type"
+        />
 
         <x-input
           v-model="filters.previous_quote_policy_number"

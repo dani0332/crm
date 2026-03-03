@@ -195,7 +195,30 @@ const onLoadHistoryData = async () => {
     }),
   );
   const finalRes = await res.json();
-  historyData.value = finalRes;
+  historyData.value = (Array.isArray(finalRes) ? finalRes : []).map(row => {
+  const hasNewAdvisor =
+    row.NewAdvisor != null && String(row.NewAdvisor).trim() !== '';
+
+  const hasOldAdvisor =
+    row.OldAdvisor != null && String(row.OldAdvisor).trim() !== '';
+
+  const prefix = hasOldAdvisor
+    ? 'Advisor Re-assigned'
+    : 'Advisor Assigned';
+
+  const advisorText = hasNewAdvisor
+    ? `${prefix}: ${row.NewAdvisor}`
+    : '';
+
+  return {
+    ...row,
+    NewNotes: advisorText
+      ? row.NewNotes && String(row.NewNotes).trim() !== ''
+        ? `${row.NewNotes} | ${advisorText}`
+        : advisorText
+      : row.NewNotes ?? '',
+  };
+});
   historyLoading.value = false;
 };
 
@@ -810,6 +833,11 @@ function handleOcrNotification(event) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
                 <dd>{{ quote.number_of_employees }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN TYPE</dt>
+                <dd>{{ quote.health_plan_type_text ?? '—' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">

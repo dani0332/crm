@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -24,6 +25,7 @@ use App\Models\BusinessQuote;
 use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\GroupMedicalType;
+use App\Models\HealthPlanType;
 use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\LostReasons;
@@ -92,6 +94,8 @@ class AmtController extends Controller
                 'bqr.uuid as uuid',
                 'bqr.first_name',
                 'bqr.last_name',
+                'bqr.assignment_type',
+                'bqrd.advisor_assigned_date',
                 'qs.text as leadStatus',
                 DB::raw('DATE_FORMAT(bqr.created_at, "%d-%b-%Y %r") as created_at'),
                 DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%b-%Y %r") as updated_at'),
@@ -264,6 +268,10 @@ class AmtController extends Controller
             $data->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
+        if (isset($request->assignment_type) && $request->assignment_type !== '' && $request->assignment_type !== 'all') {
+            $data->where('bqr.assignment_type', $request->assignment_type);
+        }
+
         if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
             $dateArray = $request->advisor_assigned_date;
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
@@ -311,13 +319,20 @@ class AmtController extends Controller
             Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
 
         $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
+        $quotes = $data->simplePaginate(15)->withQueryString()->through(function ($quote) {
+            $quote->assignment_type_id = $quote->assignment_type;
+            $quote->assignment_type = AssignmentTypeEnum::getAssignmentTypeText((int) $quote->assignment_type);
 
-        $quotes = $data->simplePaginate(15)->withQueryString();
+            return $quote;
+        });
+
         $this->postProcessAmtQuotes($quotes);
 
         $subSources = app(LookupService::class)->getSubSource();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources'));
+        $assignmentTypes = AssignmentTypeEnum::withLabels();
+
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'assignmentTypes'));
     }
 
     /**
@@ -428,6 +443,9 @@ class AmtController extends Controller
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
         $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        $record->health_plan_type_text = ! empty($record->health_plan_type_id)
+            ? (HealthPlanType::find($record->health_plan_type_id)?->text ?? null)
+            : null;
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasons::getAll();
