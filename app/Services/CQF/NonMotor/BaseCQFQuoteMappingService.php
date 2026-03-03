@@ -164,7 +164,7 @@ abstract class BaseCQFQuoteMappingService implements CQFQuoteMappingInterface
             'email' => $quote->email ?? null,
             'mobile_no' => $quote->mobile_no ?? null,
             'quote_type' => str_replace('-', '', $this->getQuoteType()->shortCode()),
-            'insurer' => $quote->insuranceProvider?->text ?? $quote->currentlyInsuredWith?->text ?? null,
+            'insurer' => $quote->insuranceProvider?->code ?? $quote->currentlyInsuredWith?->code ?? null,
             'product' => $this->getProductName(),
             'product_type' => null,
             'advisor' => null,
