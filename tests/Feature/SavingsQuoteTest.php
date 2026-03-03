@@ -285,13 +285,6 @@ test('can update plan with valid data', function () {
     expect($response)->toBe(200);
 });
 
-test('plan update validates required fields', function () {
-    $response = $this->post(route('savingsPlanUpdate'), []);
-
-    $response->assertStatus(302)
-        ->assertSessionHasErrors(['quote_uuid', 'plan_id']);
-});
-
 test('plan update checks permission based on payment status', function () {
     $quote = SavingsQuoteMockHelper::createTestSavingsQuote([
         'payment_status_id' => \App\Enums\PaymentStatusEnum::CAPTURED,

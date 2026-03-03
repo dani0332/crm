@@ -5,6 +5,7 @@ namespace Tests\Helpers\Savings;
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
 use App\Models\SavingsQuote;
+use Illuminate\Support\Facades\DB;
 use Mockery;
 
 class SavingsQuoteMockHelper
@@ -19,30 +20,32 @@ class SavingsQuoteMockHelper
 
     public static function createTestSavingsQuote(array $overrides = []): PersonalQuote
     {
-        $defaults = [
-            'uuid' => 'test-savings-quote-uuid-'.uniqid(),
-            'quote_type_id' => QuoteTypeId::Savings,
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'email' => 'john.doe@example.com',
-            'mobile_no' => '+971501234567',
-            'code' => 'SAV-'.uniqid(),
-            'created_by_id' => auth()->check() ? auth()->id() : 1,
-        ];
+        return DB::transaction(function () use ($overrides) {
+            $defaults = [
+                'uuid' => 'test-savings-quote-uuid-'.uniqid(),
+                'quote_type_id' => QuoteTypeId::Savings,
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'email' => 'john.doe@example.com',
+                'mobile_no' => '+971501234567',
+                'code' => 'SAV-'.uniqid(),
+                'created_by_id' => auth()->check() ? auth()->id() : 1,
+            ];
 
-        $personalQuote = PersonalQuote::create(array_merge($defaults, $overrides));
+            $personalQuote = PersonalQuote::create(array_merge($defaults, $overrides));
 
-        SavingsQuote::create([
-            'personal_quote_id' => $personalQuote->id,
-            'marital_status_id' => $overrides['marital_status_id'] ?? 1,
-            'tenure_id' => $overrides['tenure_id'] ?? 1,
-            'purpose_id' => $overrides['purpose_id'] ?? 1,
-            'currency_id' => $overrides['currency_id'] ?? 1,
-            'investment_amount' => $overrides['investment_amount'] ?? 10000,
-            'investment_criteria_id' => $overrides['investment_criteria_id'] ?? 1,
-        ]);
+            SavingsQuote::create([
+                'personal_quote_id' => $personalQuote->id,
+                'marital_status_id' => $overrides['marital_status_id'] ?? 1,
+                'tenure_id' => $overrides['tenure_id'] ?? 1,
+                'purpose_id' => $overrides['purpose_id'] ?? 1,
+                'currency_id' => $overrides['currency_id'] ?? 1,
+                'investment_amount' => $overrides['investment_amount'] ?? 10000,
+                'investment_criteria_id' => $overrides['investment_criteria_id'] ?? 1,
+            ]);
 
-        return $personalQuote->load('savingsQuote');
+            return $personalQuote->load('savingsQuote');
+        });
     }
 
     public static function createMockPlanData(int $planId = 1, array $overrides = []): object
