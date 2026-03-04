@@ -143,7 +143,10 @@ const ageRangeValid = computed(() => {
   </Head>
   <div class="card p-4 shadow-md rounded-lg mb-4">
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">SIC Health Configuration</h2>
+      <div>
+        <h2 class="text-xl font-semibold">SIC Health Configuration</h2>
+        <span class="text-xs">(Advisor Assignment Exclusion Rules)</span>
+      </div>
       <div>
         <Link @click="onSubmit">
           <x-button size="sm" color="#1d83bc" tag="div"> Update </x-button>
@@ -162,7 +165,7 @@ const ageRangeValid = computed(() => {
             <x-input
               v-model="sicConfigurableForm.min_age"
               placeholder="Min Age"
-              class="w-full"
+              class="w-full !mb-0"
               :rules="[isRequired, ageRangeValid]"
               :error="errors.min_age"
               label="Min Age"
@@ -170,7 +173,7 @@ const ageRangeValid = computed(() => {
             />
             <x-input
               v-model="sicConfigurableForm.max_age"
-              class="w-full"
+              class="w-full !mb-0"
               placeholder="Max Age"
               :rules="[isRequired]"
               :error="errors.max_age"
@@ -178,11 +181,12 @@ const ageRangeValid = computed(() => {
               required
             />
           </div>
+          <span class="text-xs">Leads with member age within this range will not be assigned to an advisor</span>
         </div>
         <div class="col-span-1 sm:col-span-1">
           <x-checkbox
             v-model="sicConfigurableForm.is_price_starting_from"
-            label="Max Price"
+            label="Price Threshold"
           />
           <div
             class="grid sm:grid-cols-1 gap-4"
@@ -191,13 +195,14 @@ const ageRangeValid = computed(() => {
             <x-input
               v-model="sicConfigurableForm.price_starting_from"
               required
-              placeholder="Max Price"
-              class="w-full"
+              placeholder="Min Starting Price (AED)"
+              class="w-full !mb-0"
               :rules="[isRequired]"
               :error="errors.price_starting_from"
-              label="Max Price"
+              label="Min Starting Price (AED)"
             />
           </div>
+          <span class="text-xs">Leads with starting price below this value will not be assigned to an advisor</span>
         </div>
         <div class="col-span-1 sm:col-span-1 hidden">
           <x-checkbox v-model="sicConfigurableForm.is_type" label="Plan Type" />

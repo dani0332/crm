@@ -37,7 +37,7 @@ onMounted(() => {
   <Head title="GBP Eligible Nationalities" />
   <div>
     <h2 class="text-xl font-semibold mb-1">GBP Eligible Nationalities</h2>
-    <span class="text-sm">Select nationalities AND/OR predefined groups that qualify for GBP Routing</span>
+    <span class="text-xs">Select nationalities AND/OR predefined groups that qualify for GBP Routing</span>
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
