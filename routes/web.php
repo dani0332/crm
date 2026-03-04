@@ -904,6 +904,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     ]);
 
     Route::get('nationality-groups', [NationalityGroupController::class, 'get'])->name('admin.nationality-groups');
+    Route::get('gbp-nationalities', [CanonicalNationalityController::class, 'get'])->name('admin.gbp-nationalities');
 
     Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
