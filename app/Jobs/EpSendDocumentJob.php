@@ -75,8 +75,8 @@ class EpSendDocumentJob implements ShouldQueue
         $appStorageRecords = ApplicationStorage::select('value', 'key_name')
             ->where('is_active', ApplicationStorageEnums::ACTIVE)
             ->whereIn('key_name', $epEcbAppStorageKeys)
-            ->get()
-            ->filter(fn ($record) => ! empty($record->value));
+            ->whereNotNull('value')
+            ->get();
 
         $missingAppStorageKeys = array_diff($epEcbAppStorageKeys, $appStorageRecords->pluck('key_name')->toArray());
 
