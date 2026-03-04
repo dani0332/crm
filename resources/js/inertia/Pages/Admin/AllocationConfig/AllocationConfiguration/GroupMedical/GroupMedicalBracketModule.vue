@@ -326,7 +326,9 @@ const toggleModule = () => {
               </div>
 
               <div class="border-b pb-4">
-                <h5 class="text-sm font-medium text-gray-700 mb-3">Departments</h5>
+                <h5 class="text-sm font-medium text-gray-700 mb-3">
+                  Departments
+                </h5>
                 <x-select
                   v-model="bracket.departmentIds"
                   :options="departmentOptions"
@@ -485,15 +487,16 @@ const toggleModule = () => {
                         >
                           <template
                             #content-footer
-                            v-if="getAdvisorOptions(bracketIndex).length > 0 && !viewMode"
+                            v-if="
+                              getAdvisorOptions(bracketIndex).length > 0 &&
+                              !viewMode
+                            "
                           >
                             <ui-select-actions
                               @select-all="
                                 profile.advisorIds = getAdvisorOptions(
                                   bracketIndex,
-                                ).map(
-                                  item => item.value,
-                                )
+                                ).map(item => item.value)
                               "
                               @clear="profile.advisorIds = []"
                             />

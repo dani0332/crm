@@ -123,7 +123,9 @@ const initializeData = async () => {
     },
     'non-auh': {
       micro_brackets: cloneBrackets(
-        config?.['non-auh']?.micro_brackets || config?.['non_auh']?.micro_brackets || [],
+        config?.['non-auh']?.micro_brackets ||
+          config?.['non_auh']?.micro_brackets ||
+          [],
       ),
       non_micro_brackets: cloneBrackets(
         config?.['non-auh']?.non_micro_brackets ||
@@ -234,8 +236,8 @@ const validateBracket = (bracket, bracketIndex, type, regionLabel) => {
 
 const validateRegion = regionKey => {
   const regionLabel = getRegionLabel(regionKey);
-  const { micro_brackets: micro, non_micro_brackets: nonMicro } =
-    regionBrackets.value[regionKey] || { micro_brackets: [], non_micro_brackets: [] };
+  const { micro_brackets: micro, non_micro_brackets: nonMicro } = regionBrackets
+    .value[regionKey] || { micro_brackets: [], non_micro_brackets: [] };
   const errors = [];
 
   const regionHasData = micro.length > 0 || nonMicro.length > 0;
@@ -244,11 +246,15 @@ const validateRegion = regionKey => {
   }
 
   if (micro.length === 0) {
-    errors.push(`[${regionLabel}] At least one Micro bracket must be configured`);
+    errors.push(
+      `[${regionLabel}] At least one Micro bracket must be configured`,
+    );
   }
 
   if (nonMicro.length === 0) {
-    errors.push(`[${regionLabel}] At least one Non-Micro bracket must be configured`);
+    errors.push(
+      `[${regionLabel}] At least one Non-Micro bracket must be configured`,
+    );
   }
 
   micro.forEach((bracket, index) => {
@@ -285,7 +291,8 @@ const validate = regionKey => {
     (regionBrackets.value['non-auh']?.non_micro_brackets?.length || 0) > 0;
 
   if (!hasAnyRegion) {
-    const message = 'Please configure at least one Micro or Non-Micro bracket for AUH or Non-AUH.';
+    const message =
+      'Please configure at least one Micro or Non-Micro bracket for AUH or Non-AUH.';
     setRegionErrors('auh', [message]);
     setRegionErrors('non-auh', [message]);
     return { isValid: false, errors: [message] };
@@ -355,7 +362,10 @@ const createEmptyBracket = () => ({
 
 const setAdvisorOptions = (regionKey, bracketType, bracketIndex, options) => {
   const typeKey = bracketType === 'micro_brackets' ? 'micro' : 'nonMicro';
-  const region = advisorOptionsMap.value[regionKey] ?? { micro: [], nonMicro: [] };
+  const region = advisorOptionsMap.value[regionKey] ?? {
+    micro: [],
+    nonMicro: [],
+  };
   const typeOptions = [...(region[typeKey] || [])];
   typeOptions[bracketIndex] = options;
 
@@ -423,12 +433,16 @@ const hydrateAdvisorOptionsForBracket = async (
   bracketType,
   bracketIndex,
 ) => {
-  const bracket = regionBrackets.value[regionKey]?.[bracketType]?.[bracketIndex];
+  const bracket =
+    regionBrackets.value[regionKey]?.[bracketType]?.[bracketIndex];
   if (!bracket) {
     return;
   }
 
-  const options = await fetchAdvisorsForDepartments(bracket.departmentIds, regionKey);
+  const options = await fetchAdvisorsForDepartments(
+    bracket.departmentIds,
+    regionKey,
+  );
   setAdvisorOptions(regionKey, bracketType, bracketIndex, options);
 
   const allowedAdvisorIds = new Set(options.map(option => option.value));
@@ -445,7 +459,8 @@ const handleDepartmentChange = async (
   bracketIndex,
   departmentIds,
 ) => {
-  const bracket = regionBrackets.value[regionKey]?.[bracketType]?.[bracketIndex];
+  const bracket =
+    regionBrackets.value[regionKey]?.[bracketType]?.[bracketIndex];
   if (!bracket) return;
 
   bracket.departmentIds = departmentIds;
@@ -540,8 +555,6 @@ defineExpose({
       </button>
     </div>
 
-    
-
     <div
       v-if="(validationErrors[activeRegion] || []).length > 0"
       class="bg-red-50 border border-red-200 text-red-700 rounded-md p-3 text-sm"
@@ -592,7 +605,9 @@ defineExpose({
       :department-options="departmentOptions"
       :view-mode="regionViewMode[activeRegion]"
       @add-bracket="addBracket(activeRegion, 'non_micro_brackets')"
-      @remove-bracket="removeBracket(activeRegion, 'non_micro_brackets', $event)"
+      @remove-bracket="
+        removeBracket(activeRegion, 'non_micro_brackets', $event)
+      "
       @department-change="
         ({ bracketIndex, departmentIds }) =>
           handleDepartmentChange(
