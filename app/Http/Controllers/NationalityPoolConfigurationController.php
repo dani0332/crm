@@ -24,7 +24,9 @@ class NationalityPoolConfigurationController extends Controller
             ->orderBy('canonical_nationality_name')->get();
 
         // Fetch nationality pool configurations
-        $nationalityPoolConfigurations = NationalityPool::all();
+        $nationalityPoolConfigurations = NationalityPool::select('effective_from', 'health_nationality_group_ids', 'canonical_nationality_codes')
+            ->get()
+            ->toArray();
 
         return inertia('Admin/AllocationConfig/NationalityPool/Index', [
             'gbpNationalities' => $nationalities,
