@@ -453,10 +453,11 @@ export function useAllocationForm(props, errorHandling) {
 
       isSubmitting.value = true;
 
-      const regionScopedData =
-        regionKey && templateData.value?.[regionKey]
-          ? { [regionKey]: templateData.value[regionKey] }
-          : templateData.value;
+      // When saving a specific region, always include it (use empty if missing so clearing a region is persisted)
+      const emptyRegion = { micro_brackets: [], non_micro_brackets: [] };
+      const regionScopedData = regionKey
+        ? { [regionKey]: templateData.value?.[regionKey] ?? emptyRegion }
+        : templateData.value;
 
       const submitData = {
         ...form.data(),

@@ -85,13 +85,8 @@ const emitData = () => {
       micro_brackets: [],
       non_micro_brackets: [],
     };
-    const hasData =
-      (region.micro_brackets?.length ?? 0) > 0 ||
-      (region.non_micro_brackets?.length ?? 0) > 0;
-
-    if (hasData) {
-      payload[regionKey] = region;
-    }
+    // Always include every region so clearing a region (empty brackets) is sent to the backend
+    payload[regionKey] = region;
   });
 
   emit('data-update', payload);
