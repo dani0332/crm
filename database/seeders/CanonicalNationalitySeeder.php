@@ -21,7 +21,7 @@ class CanonicalNationalitySeeder extends Seeder
             ['Anguillan', 'Anguillan', 'CN0007', false, true],
             ['Antiguan and Barbudan', 'Antiguan and Barbudan', 'CN0008', false, true],
             ['Antiguans', 'Antiguans', 'CN0009', false, true],
-            ['Argentinean', 'Argentinian', 'CN0010', 'true', true],
+            ['Argentinean', 'Argentinian', 'CN0010', true, true],
             ['Argentinian', 'Argentinian', 'CN0010', false, true],
             ['Armenian', 'Armenian', 'CN0011', false, true],
             ['Australian', 'Australian', 'CN0012', false, true],
@@ -243,15 +243,19 @@ class CanonicalNationalitySeeder extends Seeder
         foreach ($rows as $row) {
             $nationality = Nationality::where('text', $row[0])->first();
 
-            CanonicalNationality::create([
-                'nationality_id' => $nationality?->id,
-                'canonical_nationality_name' => $row[1],
-                'canonical_nationality_code' => $row[2],
-                'nationality_synonym' => $row[3],
-                'is_active' => true,
-                'effective_from' => Carbon::create(2026, 2, 2),
-                'effective_to' => Carbon::create(2099, 12, 31),
-            ]);
+            CanonicalNationality::updateOrCreate(
+                [
+                    'nationality_id' => $nationality?->id,
+                    'canonical_nationality_code' => $row[2],
+                ],
+                [
+                    'canonical_nationality_name' => $row[1],
+                    'nationality_synonym' => $row[3],
+                    'is_active' => true,
+                    'effective_from' => Carbon::create(2026, 2, 2),
+                    'effective_to' => Carbon::create(2099, 12, 31),
+                ]
+            );
         }
     }
 }
