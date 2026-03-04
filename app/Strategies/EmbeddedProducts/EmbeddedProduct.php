@@ -466,6 +466,6 @@ class EmbeddedProduct
     {
         $isPaymentPaid = in_array($epTransaction->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
 
-        return $epTransaction->is_active === 0 || $isPaymentPaid;
+        return ! $epTransaction->is_active || $isPaymentPaid;
     }
 }

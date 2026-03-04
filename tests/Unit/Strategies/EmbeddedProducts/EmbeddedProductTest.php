@@ -28,10 +28,30 @@ describe('EmbeddedProduct', function () {
             expect($strategy->isDisabled($epTransaction))->toBeTrue();
         });
 
-        test('returns true when is_active is 0', function () {
+        test('returns true when is_active is integer 0', function () {
             $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
             $epTransaction->payment_status_id = PaymentStatusEnum::DRAFT;
             $epTransaction->is_active = 0;
+
+            $strategy = new EmbeddedProduct;
+
+            expect($strategy->isDisabled($epTransaction))->toBeTrue();
+        });
+
+        test('returns true when is_active is string "0" (as returned by MySQL without a cast)', function () {
+            $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
+            $epTransaction->payment_status_id = PaymentStatusEnum::DRAFT;
+            $epTransaction->is_active = '0';
+
+            $strategy = new EmbeddedProduct;
+
+            expect($strategy->isDisabled($epTransaction))->toBeTrue();
+        });
+
+        test('returns true when is_active is boolean false', function () {
+            $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
+            $epTransaction->payment_status_id = PaymentStatusEnum::DRAFT;
+            $epTransaction->is_active = false;
 
             $strategy = new EmbeddedProduct;
 
