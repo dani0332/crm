@@ -42,8 +42,8 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->select('id', 'code', 'quote_type_id', 'quote_request_id', 'quote_request_type', 'is_selected', 'is_active', 'payment_status_id', 'product_id', 'policy_status')
             ->where(['quote_request_id' => $quoteId, 'quote_type_id' => $quoteTypeId])
             ->when($isActive !== null, fn ($q) => $q->IsActive($isActive))
-            ->when($paymentStatusId, fn ($q) => $q->where('payment_status_id', $paymentStatusId))
-            ->when($quoteStatusId, fn ($q) => $q->quoteRequestStatusId($quoteStatusId))
+            ->when($paymentStatusId !== null, fn ($q) => $q->where('payment_status_id', $paymentStatusId))
+            ->when($quoteStatusId !== null, fn ($q) => $q->quoteRequestStatusId($quoteStatusId))
             ->when($epShortCode !== null, fn ($q) => $q->epShortCode($epShortCode))
             ->get();
     }
@@ -64,8 +64,8 @@ class EmbeddedTransactionRepository extends BaseRepository
             ->where(['quote_request_id' => $quoteId, 'quote_type_id' => $quoteTypeId])
             ->when($embeddedTransactionCode !== null, fn ($q) => $q->where('code', $embeddedTransactionCode))
             ->when($isActive !== null, fn ($q) => $q->IsActive($isActive))
-            ->when($paymentStatusId, fn ($q) => $q->where('payment_status_id', $paymentStatusId))
-            ->when($quoteStatusId, fn ($q) => $q->quoteRequestStatusId($quoteStatusId))
+            ->when($paymentStatusId !== null, fn ($q) => $q->where('payment_status_id', $paymentStatusId))
+            ->when($quoteStatusId !== null, fn ($q) => $q->quoteRequestStatusId($quoteStatusId))
             ->when($epShortCode !== null, fn ($q) => $q->epShortCode($epShortCode))
             ->first();
     }
