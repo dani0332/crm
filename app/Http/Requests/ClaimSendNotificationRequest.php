@@ -81,7 +81,7 @@ class ClaimSendNotificationRequest extends FormRequest
         LoggerService::info('Claim send notification validation failed', extra: [
             'errors' => $errors->toArray(),
             'user_id' => Auth::id(),
-            'claim_uuid' => $this->route('claim'),
+            'claim_uuid' => $this->route('claim')?->uuid,
             'input_data' => $this->except(['password', 'password_confirmation']),
         ]);
 
