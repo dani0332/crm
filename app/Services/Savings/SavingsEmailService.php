@@ -41,7 +41,7 @@ class SavingsEmailService
             return false;
         }
 
-        if ($lead->isSuppressIntroEmail()) {
+        if ($lead->isSuppressIntroEmail() && ! ($data['forceSend'] ?? false)) {
             LoggerService::info('sendOCAEmail - Suppressing OCA Email');
 
             return null;
