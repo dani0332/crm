@@ -204,7 +204,7 @@ class UserController extends Controller
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
-                        if ($user->hasAnyRole(RolesEnum::ClaimsManager,RolesEnum::CarClaimManager,RolesEnum::GMClaimManager,RolesEnum::HealthClaimManager,RolesEnum::LifeClaimManager,RolesEnum::TravelClaimManager,RolesEnum::HomeClaimManager,RolesEnum::PetClaimManager,RolesEnum::YachtClaimManager,RolesEnum::CycleClaimManager,RolesEnum::JetskiClaimManager,RolesEnum::CorplineClaimManager)) {
+                        if ($user->hasAnyRole($this->assignsClaimManagerRole())) {
                             app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
                     }
@@ -393,7 +393,7 @@ class UserController extends Controller
                             if (empty($isLead)) {
                                 $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                             }
-                            if ($user->hasAnyRole(RolesEnum::ClaimsManager,RolesEnum::CarClaimManager,RolesEnum::GMClaimManager,RolesEnum::HealthClaimManager,RolesEnum::LifeClaimManager,RolesEnum::TravelClaimManager,RolesEnum::HomeClaimManager,RolesEnum::PetClaimManager,RolesEnum::YachtClaimManager,RolesEnum::CycleClaimManager,RolesEnum::JetskiClaimManager,RolesEnum::CorplineClaimManager)) {
+                            if ($user->hasAnyRole($this->assignsClaimManagerRole())) {
                                 app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                             }
                         }
@@ -642,5 +642,28 @@ class UserController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Whether the request assigns any claim manager role (used to sync claim allocation config from request roles, not current user roles).
+     */
+    private function assignsClaimManagerRole()
+    {
+        $claimManagerRoles = [
+            RolesEnum::ClaimsManager,
+            RolesEnum::CarClaimManager,
+            RolesEnum::GMClaimManager,
+            RolesEnum::HealthClaimManager,
+            RolesEnum::LifeClaimManager,
+            RolesEnum::TravelClaimManager,
+            RolesEnum::HomeClaimManager,
+            RolesEnum::PetClaimManager,
+            RolesEnum::YachtClaimManager,
+            RolesEnum::CycleClaimManager,
+            RolesEnum::JetskiClaimManager,
+            RolesEnum::CorplineClaimManager,
+        ];
+
+        return $claimManagerRoles;
     }
 }
