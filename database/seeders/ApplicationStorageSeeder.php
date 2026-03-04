@@ -45,11 +45,11 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        $isProd = env('APP_ENV') === 'production';
+        $isProd = config('app.env') === 'production';
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_CAR_EP_RETARGETING_REMINDER],
             [
-                'value' => env('APP_ENV') === 'production' ? 0 : 1,
+                'value' => $isProd ? 0 : 1,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => $isProd ? 0 : 1,
@@ -275,7 +275,7 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-        $isProd = env('APP_ENV') === 'production';
+        $isProd = config('app.env') === 'production';
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL],
             [
