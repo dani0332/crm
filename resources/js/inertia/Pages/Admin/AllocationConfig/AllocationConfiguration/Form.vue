@@ -254,10 +254,14 @@ onMounted(() => {
             :quote-type="form.quote_type"
             :view-mode="isViewMode"
             @data-update="onTemplateDataUpdate"
-            @request-save="event =>
-              onSubmit(event?.isValid ?? true, event?.regionKey)?.finally(() => {
-                groupMedicalTemplateRef?.clearSavingState?.();
-              })"
+            @request-save="
+              event =>
+                onSubmit(event?.isValid ?? true, event?.regionKey)?.finally(
+                  () => {
+                    groupMedicalTemplateRef?.clearSavingState?.();
+                  },
+                )
+            "
             ref="groupMedicalTemplateRef"
           />
         </div>
@@ -316,8 +320,10 @@ onMounted(() => {
         <div class="p-6 bg-white border-b border-gray-200">
           <!-- View Mode Buttons -->
           <div
-            v-if="      
-            isViewMode && currentConfiguration && form.quote_type !== quoteTypeCodeEnum.GroupMedical
+            v-if="
+              isViewMode &&
+              currentConfiguration &&
+              form.quote_type !== quoteTypeCodeEnum.GroupMedical
             "
             class="flex justify-end gap-3 mb-4"
           >

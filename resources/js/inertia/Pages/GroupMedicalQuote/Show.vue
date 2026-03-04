@@ -196,29 +196,25 @@ const onLoadHistoryData = async () => {
   );
   const finalRes = await res.json();
   historyData.value = (Array.isArray(finalRes) ? finalRes : []).map(row => {
-  const hasNewAdvisor =
-    row.NewAdvisor != null && String(row.NewAdvisor).trim() !== '';
+    const hasNewAdvisor =
+      row.NewAdvisor != null && String(row.NewAdvisor).trim() !== '';
 
-  const hasOldAdvisor =
-    row.OldAdvisor != null && String(row.OldAdvisor).trim() !== '';
+    const hasOldAdvisor =
+      row.OldAdvisor != null && String(row.OldAdvisor).trim() !== '';
 
-  const prefix = hasOldAdvisor
-    ? 'Advisor Re-assigned'
-    : 'Advisor Assigned';
+    const prefix = hasOldAdvisor ? 'Advisor Re-assigned' : 'Advisor Assigned';
 
-  const advisorText = hasNewAdvisor
-    ? `${prefix}: ${row.NewAdvisor}`
-    : '';
+    const advisorText = hasNewAdvisor ? `${prefix}: ${row.NewAdvisor}` : '';
 
-  return {
-    ...row,
-    NewNotes: advisorText
-      ? row.NewNotes && String(row.NewNotes).trim() !== ''
-        ? `${row.NewNotes} | ${advisorText}`
-        : advisorText
-      : row.NewNotes ?? '',
-  };
-});
+    return {
+      ...row,
+      NewNotes: advisorText
+        ? row.NewNotes && String(row.NewNotes).trim() !== ''
+          ? `${row.NewNotes} | ${advisorText}`
+          : advisorText
+        : (row.NewNotes ?? ''),
+    };
+  });
   historyLoading.value = false;
 };
 
