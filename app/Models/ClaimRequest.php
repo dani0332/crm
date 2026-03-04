@@ -26,8 +26,6 @@ class ClaimRequest extends Model implements AuditableContract
 
     protected $table = 'claim_requests';
 
-    protected $guarded = [];
-
     protected $fillable = [
         'incident',
         'claim_decline_reason',
@@ -40,6 +38,8 @@ class ClaimRequest extends Model implements AuditableContract
         'source',
         'manager_id',
         'manager_assigned_date',
+        'lead_allocation_started_at',
+        'lead_allocation_failed_at',
         'quote_uuid',
         'quote_type_id',
         'personal_quote_id',
@@ -63,6 +63,8 @@ class ClaimRequest extends Model implements AuditableContract
     ];
     protected $casts = [
         'google_review_email_sent_at' => 'datetime',
+        'lead_allocation_started_at' => 'datetime',
+        'lead_allocation_failed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

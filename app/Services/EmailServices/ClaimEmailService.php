@@ -32,7 +32,7 @@ class ClaimEmailService extends BaseService
             'customerName' => $claim->first_name.' '.$claim->last_name,
             'quoteUID' => $claim->uuid,
             'refID' => $claim->code,
-            'quoteType' => QuoteTypes::getName($claim->quote_type_id)?->value ?? null,
+            'quoteType' => QuoteTypes::getName($claim->quote_type_id)->value ?? null,
             'advisor' => $advisor,
             'source' => $claim->source,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
