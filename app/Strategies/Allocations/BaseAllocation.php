@@ -289,6 +289,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
         if (empty($excludedAdvisorIds)) {
             LoggerService::info(self::class.' - No excluded advisor IDs from nationality config');
+
             return;
         }
 
