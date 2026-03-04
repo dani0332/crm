@@ -50,6 +50,7 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $data = $this->copyableAttributesForBusinessQuote($oldBusinessQuote->getAttributes(), $newQuote->uuid, $newQuote->code);
         $businessQuote = BusinessQuote::create($data);
         $newQuote->businessQuote()->associate($businessQuote);
+        $newQuote->save();
 
         LoggerService::info(self::class.' - Business quote detail copied for renewal quote');
     }
