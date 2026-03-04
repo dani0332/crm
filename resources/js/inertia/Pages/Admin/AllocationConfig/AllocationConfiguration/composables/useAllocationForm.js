@@ -440,7 +440,8 @@ export function useAllocationForm(props, errorHandling) {
         form.quote_type === props.quoteTypeCodeEnum.GroupMedical &&
         groupMedicalTemplateRef.value
       ) {
-        const templateValidation = groupMedicalTemplateRef.value.validate(regionKey);
+        const templateValidation =
+          groupMedicalTemplateRef.value.validate(regionKey);
 
         if (!templateValidation.isValid) {
           templateValidation.errors.forEach(error => {
