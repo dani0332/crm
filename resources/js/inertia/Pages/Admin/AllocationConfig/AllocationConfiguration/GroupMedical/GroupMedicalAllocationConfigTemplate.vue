@@ -134,16 +134,16 @@ const initializeData = async () => {
   };
 
   // Backward compatibility: fall back to legacy micro/non-micro if region keys are absent
-  if (!hasRegionConfig && props.configuration) {
-    nextState['non-auh'].micro_brackets = cloneBrackets(
-      props.configuration.micro_brackets ?? [],
-    );
-    nextState['non-auh'].non_micro_brackets = cloneBrackets(
-      props.configuration.non_micro_brackets ?? [],
-    );
-    nextState.auh.micro_brackets = cloneBrackets([]);
-    nextState.auh.non_micro_brackets = cloneBrackets([]);
-  }
+  // if (!hasRegionConfig && props.configuration) {
+  //   nextState['non-auh'].micro_brackets = cloneBrackets(
+  //     props.configuration.micro_brackets ?? [],
+  //   );
+  //   nextState['non-auh'].non_micro_brackets = cloneBrackets(
+  //     props.configuration.non_micro_brackets ?? [],
+  //   );
+  //   nextState.auh.micro_brackets = cloneBrackets([]);
+  //   nextState.auh.non_micro_brackets = cloneBrackets([]);
+  // }
 
   // Keep the user on the region they last interacted with if it has data; otherwise prefer the region with data; fallback to auh.
   const previouslySelected = activeRegion.value;

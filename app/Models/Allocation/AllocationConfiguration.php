@@ -88,22 +88,28 @@ class AllocationConfiguration extends Model implements AuditableContract
         );
     }
 
+    /**
+     * Micro brackets: legacy top-level, or Group Medical auh then non-auh.
+     */
     public function microBrackets(): Attribute
     {
         return new Attribute(
             get: fn () => $this->config['micro_brackets']
-                ?? $this->config['non-auh']['micro_brackets']
-                ?? $this->config['non_auh']['micro_brackets']
+                ?? ($this->config['auh'] ?? [])['micro_brackets'] ?? null
+                ?? ($this->config['non-auh'] ?? [])['micro_brackets'] ?? null
                 ?? [],
         );
     }
 
+    /**
+     * Non-micro brackets: legacy top-level, or Group Medical auh then non-auh.
+     */
     public function nonMicroBrackets(): Attribute
     {
         return new Attribute(
             get: fn () => $this->config['non_micro_brackets']
-                ?? $this->config['non-auh']['non_micro_brackets']
-                ?? $this->config['non_auh']['non_micro_brackets']
+                ?? ($this->config['auh'] ?? [])['non_micro_brackets'] ?? null
+                ?? ($this->config['non-auh'] ?? [])['non_micro_brackets'] ?? null
                 ?? [],
         );
     }
