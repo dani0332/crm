@@ -40,7 +40,10 @@ class LifeAllocation extends BaseAllocation
 
         $this->skipRuleUsers = true;
 
+        LoggerService::info(self::class.'::getAdvisorEmails - Lead is not FIC, fetching eligible advisor ids');
         $advisorIds = AllocationConfigurer::getLifeEligibleAdvisorIds($this->lead);
+
+        LoggerService::info(self::class.'::getAdvisorEmails - Lead is not FIC, eligible advisor ids fetched', ['advisor_ids' => $advisorIds]);
 
         return User::whereIn('id', $advisorIds)->pluck('email')->toArray();
     }
