@@ -208,29 +208,11 @@ class SavingsQuoteController extends Controller
                 'plan_ids' => $request->plan_ids ?? [],
             ]);
 
-            $isFlowExecuted = app(BirdService::class)->isFollowupExecuted(
-                $quoteUuId,
-                QuoteTypes::SAVINGS->id(),
-                QuoteFlowType::SAVINGS_OCA_EMAIL->value
-            );
-
-            if ($isFlowExecuted) {
-                LoggerService::info('SavingsQuoteController - sendOCAEmail flow already executed', [
-                    'quote_uuid' => $quoteUuId,
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'OCA email has already been sent for this quote',
-                ], 400);
-            }
-
-            // Prepare data for the email
             $emailData = [
                 'plan_ids' => $request->plan_ids ?? [],
+                'forceSend' => true,
             ];
 
-            // Dispatch the job to send OCA email
             SendSavingsOCAEmailJob::dispatch($quoteUuId, $emailData);
 
             LoggerService::info('SavingsQuoteController - sendOCAEmail job dispatched');
