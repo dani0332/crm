@@ -8,13 +8,50 @@ const toDate = ref('2099-12-31');
 const nationalityGroups = ref([]);
 const selectedNationalityGroups = ref([]);
 const loadingGroups = ref(true);
+const loading = ref(false);
+const gbpNationalities = ref([]);
+const selectedNationalities = ref([]);
 
+// Custom function
 function getNationalityGroups() {
   loadingGroups.value = true;
 
   axios.get(route('admin.nationality-groups')).then(response => {
     nationalityGroups.value = response.data.data;
+
+  }).catch(error => {
+    notification.error({
+      title: 'Error fetching nationality groups',
+      position: 'top',
+    });
+  }).finally(() => {
     loadingGroups.value = false;
+  });
+}
+
+function getGbpNationalities() {
+  axios.get(route('admin.gbp-nationalities')).then(response => {
+    gbpNationalities.value = response.data.data;
+    console.log(gbpNationalities.value);
+  }).catch(error => {
+    notification.error({
+      title: 'Error fetching gbp nationalities',
+      position: 'top',
+    });
+  });
+}
+
+function getSelectedGroupNationalities() {
+  loading.value = true;
+
+  axios.post('group-nationalities', { group_ids: selectedNationalityGroups.value }).then(response => {
+    selectedNationalities.value = response.data.data;
+  }).catch(error => {
+    notification.error({
+      title: 'Error fetching selected group nationalities',
+    });
+  }).finally(() => {
+    loading.value = false;
   });
 }
 
@@ -25,10 +62,26 @@ const toggleGroup = (id) => {
   } else {
     selectedNationalityGroups.value.push(id)
   }
+
+  // Get selected group nationalities
+  getSelectedGroupNationalities();
 }
+
+function onSubmit() {
+  console.log(selectedNationalities.value);
+}
+
+// Computed properties to render dropdown
+const formattedNationalities = computed(() =>
+  gbpNationalities.value.map(n => ({
+    label: n.canonical_nationality_name,
+    value: n.canonical_nationality_code
+  }))
+)
 
 onMounted(() => {
   getNationalityGroups();
+  getGbpNationalities();
 });
 
 </script>
@@ -41,6 +94,11 @@ onMounted(() => {
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
+    <!-- Loader -->
+  <div v-if="loading" class="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
+    <div class="w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+  </div>
+
     <div class="mb-4">
         <x-field label="Effective Date">
             <div class="grid sm:grid-cols-2 gap-4">
@@ -80,10 +138,12 @@ onMounted(() => {
     <div class="">
       <x-field label="GBP Nationality">
         <x-select
-          :options="[]"
+          :options="formattedNationalities"
           class="w-100"
           placeholder="Select Nationality"
           filterable
+          multiple
+          v-model="selectedNationalities"
         />
       </x-field>
     </div>
