@@ -8,7 +8,6 @@ const toDate = ref('2099-12-31');
 const fromDate = ref('');
 const nationalityGroups = ref([]);
 const selectedNationalityGroups = ref([]);
-const loadingGroups = ref(true);
 const loading = ref(false);
 const gbpNationalities = ref([]);
 const selectedNationalities = ref([]);
@@ -16,7 +15,7 @@ const notification = useToast();
 
 // Custom function
 function getNationalityGroups() {
-  loadingGroups.value = true;
+  loading.value = true;
 
   axios.get(route('admin.nationality-groups')).then(response => {
     nationalityGroups.value = response.data.data;
@@ -27,7 +26,7 @@ function getNationalityGroups() {
       position: 'top',
     });
   }).finally(() => {
-    loadingGroups.value = false;
+    loading.value = false;
   });
 }
 
@@ -64,12 +63,37 @@ const toggleGroup = (id) => {
     selectedNationalityGroups.value.push(id)
   }
 
+  // If no groups are selected, clear the selected nationalities
+  if (selectedNationalityGroups.value.length == 0) {
+    selectedNationalities.value = [];
+    return;
+  }
   // Get selected group nationalities
   getSelectedGroupNationalities();
 }
 
 function onSubmit() {
-  validateForm();
+  if (!validateForm()) {
+    return;
+  }
+
+  loading.value = true;
+  axios.post(route('admin.nationality-pool-config.save'), {
+    effective_from: fromDate.value,
+    effective_to: toDate.value,
+    canonical_nationality_code: selectedNationalities.value,
+  }).then(response => {
+    notification.success({
+      title: 'Nationality pool configuration saved successfully',
+    });
+  }).catch(error => {
+    notification.error({
+      title: 'Error saving nationality pool configuration',
+      position: 'top',
+    });
+  }).finally(() => {
+    loading.value = false;
+  });
 }
 
 function validateForm() {
@@ -140,11 +164,6 @@ onMounted(() => {
     </div>
     <div class="grid sm:grid-cols-2 gap-4 mb-4">
         <x-field label="Predefined Group Selection">
-            <!-- Loader until groups are loaded -->
-            <div v-if="loadingGroups" class="text-gray-400 text-sm">
-                Loading groups...
-            </div>
-            
             <div class="flex flex-col gap-1">
                 <x-checkbox
                     v-for="group in nationalityGroups"
@@ -172,13 +191,13 @@ onMounted(() => {
     </div>
     <div class="flex justify-end gap-3">
       <x-button
-        size="sm"
+        size="md"
         color="#ff5e00"
         type="submit"
         :loading="isSearching"
         :disabled="isSearching"
       >
-        Save
+        Update
       </x-button>
     </div>
   </x-form>

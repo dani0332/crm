@@ -896,13 +896,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'destroy' => 'admin.nationality-allocation-config.destroy',
     ]);
 
-    Route::resource('nationality-pool-config', NationalityPoolConfigurationController::class)->names([
-        'index' => 'admin.nationality-pool-config.index',
-        'show' => 'admin.nationality-pool-config.show',
-        'edit' => 'admin.nationality-pool-config.edit',
-        'update' => 'admin.nationality-pool-config.update',
-    ]);
-
+    Route::get('nationality-pool-config', [NationalityPoolConfigurationController::class, 'index'])->name('admin.nationality-pool-config.index');
+    Route::post('nationality-pool-config', [NationalityPoolConfigurationController::class, 'save'])->name('admin.nationality-pool-config.save');
     Route::get('nationality-groups', [NationalityGroupController::class, 'get'])->name('admin.nationality-groups');
     Route::post('group-nationalities', [NationalityGroupController::class, 'getGroupNationalities'])->name('admin.group-nationalities');
 
