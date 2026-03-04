@@ -60,8 +60,9 @@ class ClaimAllocationService
 
     public function resolveAllocationResponse(AllocationRequest $request, ?Exception $exception = null): array
     {
-
-        if ($lead = $request->getLead()) {
+        $lead = $request->getLead();
+        // Only clear allocation-in-progress on failure path; success path already called endAllocation() in assignToManager()
+        if ($exception !== null && $lead) {
             $lead->endAllocation();
         }
 
