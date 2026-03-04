@@ -10,17 +10,18 @@ use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\EmbeddedProductRepository;
-use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
+use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
+class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
     public function __construct(
-        protected BikeCQFQuoteMappingService $mappingService
-    ) {}
+        BikeCQFQuoteMappingService $mappingService
+    ) {
+        parent::__construct($mappingService);
+    }
 
     public function storeRenewalQuote(
         Model $quote,
@@ -28,53 +29,33 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         int $renewalDaysThreshold,
         array &$epCodes = []
     ): ?Model {
-        $result = null;
-
         if ($quote instanceof CarQuote) {
-            $result = $this->storeRenewalQuoteFromCarQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $epCodes);
-        } elseif ($quote instanceof PersonalQuote) {
-            LoggerService::info(self::class.' - Storing bike CQF renewal quote');
-
-            $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
-            $policyStartDate = $policyExpiryDate->copy()->addDays(1);
-            $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
-
-            LoggerService::info(self::class.' - Policy details', [
-                'policyExpiryDate' => $policyExpiryDate,
-                'policyStartDate' => $policyStartDate,
-                'newPolicyExpiryDate' => $newPolicyExpiryDate,
-            ]);
-
-            $quoteUuid = $this->mappingService->generateUUID();
-            if ($quoteUuid === null) {
-                LoggerService::error(self::class.' - Failed to generate UUID for bike renewal quote');
-                $result = null;
-            } else {
-                $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
-                $quoteData['policy_start_date'] = $policyStartDate;
-                $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
-
-                $result = DB::transaction(function () use ($quoteData, $quote) {
-                    $newQuote = PersonalQuote::create($quoteData);
-                    $newQuote->quoteDetail()->create([]);
-                    $this->copyBikeQuoteDetail($newQuote, $quote);
-                    app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
-
-                    LoggerService::info(self::class.' - Bike CQF renewal quote created successfully', [
-                        'previous_quote_uuid' => $quote->uuid,
-                        'new_quote_uuid' => $newQuote->uuid,
-                        'previous_quote_id' => $quote->id,
-                        'new_quote_id' => $newQuote->id,
-                    ]);
-
-                    return $newQuote;
-                });
-            }
-        } else {
-            $result = null;
+            return $this->storeRenewalQuoteFromCarQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $epCodes);
         }
 
-        return $result;
+        if ($quote instanceof PersonalQuote) {
+            return parent::storeRenewalQuote($quote, $renewalsUploadLeads, $renewalDaysThreshold, $epCodes);
+        }
+
+        return null;
+    }
+
+    protected function getLobName(): string
+    {
+        return 'bike';
+    }
+
+    protected function getQuoteTypeId(): QuoteTypeId
+    {
+        return QuoteTypeId::Bike;
+    }
+
+    protected function copyLobQuoteDetail(PersonalQuote $newQuote, Model $oldQuote): void
+    {
+        if (! $oldQuote instanceof PersonalQuote) {
+            return;
+        }
+        $this->copyBikeQuoteDetail($newQuote, $oldQuote);
     }
 
     /**
@@ -90,9 +71,7 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
     ): ?Model {
         LoggerService::info(self::class.' - Storing bike CQF renewal quote from car_quote_request');
 
-        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
-        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
-        $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
+        [$policyStartDate, $newPolicyExpiryDate] = $this->computePolicyDates($quote, $renewalDaysThreshold);
 
         $quoteUuid = $this->mappingService->generateUUID();
         if ($quoteUuid === null) {
@@ -147,18 +126,5 @@ class BikeCQFQuoteStorageService implements CQFQuoteStorageInterface
         BikeQuote::create($data);
 
         LoggerService::info(self::class.' - Bike quote detail copied for renewal quote');
-    }
-
-    /**
-     * @param  array<string, mixed>  $attributes
-     * @return array<string, mixed>
-     */
-    protected function copyableAttributes(array $attributes, int $personalQuoteId, string $newQuoteUuid, string $newQuoteCode): array
-    {
-        unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at'], $attributes['uuid'], $attributes['code']);
-        $attributes['personal_quote_id'] = $personalQuoteId;
-        $attributes['uuid'] = $newQuoteUuid;
-        $attributes['code'] = $newQuoteCode;
-        return $attributes;
     }
 }

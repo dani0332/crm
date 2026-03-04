@@ -6,62 +6,36 @@ namespace App\Services\CQF\NonMotor\LOBs;
 
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
-use App\Models\RenewalsUploadLeads;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
-use App\Repositories\EmbeddedProductRepository;
-use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
+use App\Services\CQF\NonMotor\BaseCQFQuoteStorageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
-class YachtCQFQuoteStorageService implements CQFQuoteStorageInterface
+class YachtCQFQuoteStorageService extends BaseCQFQuoteStorageService
 {
     public function __construct(
-        protected YachtCQFQuoteMappingService $mappingService
-    ) {}
+        YachtCQFQuoteMappingService $mappingService
+    ) {
+        parent::__construct($mappingService);
+    }
 
-    public function storeRenewalQuote(
-        Model $quote,
-        RenewalsUploadLeads $renewalsUploadLeads,
-        int $renewalDaysThreshold,
-        array &$epCodes = []
-    ): ?Model {
-        if (! $quote instanceof PersonalQuote) {
-            return null;
+    protected function getLobName(): string
+    {
+        return 'yacht';
+    }
+
+    protected function getQuoteTypeId(): QuoteTypeId
+    {
+        return QuoteTypeId::Yacht;
+    }
+
+    protected function copyLobQuoteDetail(PersonalQuote $newQuote, Model $oldQuote): void
+    {
+        if (! $oldQuote instanceof PersonalQuote) {
+            return;
         }
-
-        LoggerService::info(self::class.' - Storing yacht CQF renewal quote');
-
-        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
-        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
-        $newPolicyExpiryDate = $policyStartDate->copy()->addDays($renewalDaysThreshold);
-
-        $quoteUuid = $this->mappingService->generateUUID();
-        if ($quoteUuid === null) {
-            LoggerService::error(self::class.' - Failed to generate UUID for yacht renewal quote');
-
-            return null;
-        }
-
-        $quoteData = $this->mappingService->mapRenewalQuote($quote, $renewalsUploadLeads, $quoteUuid);
-        $quoteData['policy_start_date'] = $policyStartDate;
-        $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
-
-        return DB::transaction(function () use ($quoteData, $quote) {
-            $newQuote = PersonalQuote::create($quoteData);
-            $newQuote->quoteDetail()->create([]);
-            $this->copyYachtQuoteDetail($newQuote, $quote);
-            app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Yacht);
-
-            LoggerService::info(self::class.' - Yacht CQF renewal quote created successfully', [
-                'previous_quote_uuid' => $quote->uuid,
-                'new_quote_uuid' => $newQuote->uuid,
-            ]);
-
-            return $newQuote;
-        });
+        $this->copyYachtQuoteDetail($newQuote, $oldQuote);
     }
 
     protected function copyYachtQuoteDetail(PersonalQuote $newQuote, PersonalQuote $oldQuote): void
@@ -85,19 +59,5 @@ class YachtCQFQuoteStorageService implements CQFQuoteStorageInterface
         }
 
         LoggerService::info(self::class.' - Yacht quote detail copied for renewal quote');
-    }
-
-    /**
-     * @param  array<string, mixed>  $attributes
-     * @return array<string, mixed>
-     */
-    protected function copyableAttributes(array $attributes, int $personalQuoteId, string $newQuoteUuid, string $newQuoteCode): array
-    {
-        unset($attributes['id'], $attributes['personal_quote_id'], $attributes['created_at'], $attributes['updated_at'], $attributes['uuid'], $attributes['code']);
-        $attributes['personal_quote_id'] = $personalQuoteId;
-        $attributes['uuid'] = $newQuoteUuid;
-        $attributes['code'] = $newQuoteCode;
-
-        return $attributes;
     }
 }
