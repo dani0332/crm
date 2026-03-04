@@ -37,7 +37,7 @@ class FetchEligibleManagersPipe extends BaseAllocationPipe
         $managers = [];
 
         if (empty($managers)) {
-            $managers = $this->fetchManagers('getManagersByStatus');
+            $managers = $this->fetchManagers();
         }
 
         return $managers ?? [];

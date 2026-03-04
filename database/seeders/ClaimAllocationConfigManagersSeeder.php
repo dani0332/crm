@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\ClaimsLeadAllocationConfig;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -27,6 +29,9 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
     ];
     public function run(): void
     {
+        try {
+        $this->claimILADashboardManagers();
+       
         $roles = $this->createClaimRoles();
 
         $this->claimAllocationConfigManagersForCar();
@@ -40,10 +45,38 @@ class ClaimAllocationConfigManagersSeeder extends Seeder
         $this->claimAllocationConfigManagersForCycle();
         $this->claimAllocationConfigManagersForJetski();
         $this->claimAllocationConfigManagersForCorpline();
+
+        } catch (\Exception $e) {
+            LoggerService::error('Error creating claim ILADashboard managers: '.$e->getMessage());
+        }
+    }
+    private function claimILADashboardManagers()
+    {
+      
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::ClaimsManager])->get();
+        foreach ($roles as $role) {
+            LoggerService::info('Claim allocation dashboard manager role: '.$role->name);
+            if (! $role->hasPermissionTo(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD)) {
+                LoggerService::info('Claim allocation dashboard manager role does not have permission: '.$role->name);
+                $role->givePermissionTo(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD);
+                LoggerService::info('Claim allocation dashboard manager role given permission: '.$role->name);
+            } else {
+                LoggerService::info('Claim allocation dashboard manager role already has permission: '.$role->name);
+            }
+        }
     }
     private function createClaimRoles()
     {
         $roles = [
+            RolesEnum::ClaimsManager,
             RolesEnum::CarClaimManager,
             RolesEnum::HealthClaimManager,
             RolesEnum::GMClaimManager,
