@@ -104,7 +104,6 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Controllers\NationalityGroupController;
-use App\Http\Controllers\CanonicalNationalityController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
@@ -905,7 +904,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     ]);
 
     Route::get('nationality-groups', [NationalityGroupController::class, 'get'])->name('admin.nationality-groups');
-    Route::get('gbp-nationalities', [CanonicalNationalityController::class, 'get'])->name('admin.gbp-nationalities');
     Route::post('group-nationalities', [NationalityGroupController::class, 'getGroupNationalities'])->name('admin.group-nationalities');
 
     Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',

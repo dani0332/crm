@@ -2,15 +2,17 @@
 import { onMounted, ref } from 'vue';
 
 const props = defineProps({
-  nationalities: Array,
+    gbpNationalities: Array,
 });
 const toDate = ref('2099-12-31');
+const fromDate = ref('');
 const nationalityGroups = ref([]);
 const selectedNationalityGroups = ref([]);
 const loadingGroups = ref(true);
 const loading = ref(false);
 const gbpNationalities = ref([]);
 const selectedNationalities = ref([]);
+const notification = useToast();
 
 // Custom function
 function getNationalityGroups() {
@@ -29,17 +31,16 @@ function getNationalityGroups() {
   });
 }
 
-function getGbpNationalities() {
+/*function getGbpNationalities() {
   axios.get(route('admin.gbp-nationalities')).then(response => {
     gbpNationalities.value = response.data.data;
-    console.log(gbpNationalities.value);
   }).catch(error => {
     notification.error({
       title: 'Error fetching gbp nationalities',
       position: 'top',
     });
   });
-}
+}*/
 
 function getSelectedGroupNationalities() {
   loading.value = true;
@@ -68,20 +69,40 @@ const toggleGroup = (id) => {
 }
 
 function onSubmit() {
-  console.log(selectedNationalities.value);
+  validateForm();
+}
+
+function validateForm() {
+  if (!fromDate.value) {
+    notification.error({
+      title: 'From date is required',
+      position: 'top',
+    });
+    return false;
+  }
+
+  if (selectedNationalities.value.length === 0) {
+    notification.error({
+      title: 'GBP Nationality is required',
+      position: 'top',
+    });
+    return false;
+  }
+
+  return true;
 }
 
 // Computed properties to render dropdown
-const formattedNationalities = computed(() =>
-  gbpNationalities.value.map(n => ({
+/*const formattedNationalities = computed(() =>
+  props.gbpNationalities.map(n => ({
     label: n.canonical_nationality_name,
     value: n.canonical_nationality_code
   }))
-)
+)*/
 
 onMounted(() => {
   getNationalityGroups();
-  getGbpNationalities();
+ // getGbpNationalities();
 });
 
 </script>
@@ -105,6 +126,8 @@ onMounted(() => {
                 <DatePicker
                     name="from"
                     label="From"
+                    v-model="fromDate"
+                    :min-date="new Date()"
                 />
                 <DatePicker
                     name="to"
@@ -138,7 +161,7 @@ onMounted(() => {
     <div class="">
       <x-field label="GBP Nationality">
         <x-select
-          :options="formattedNationalities"
+          :options="props.gbpNationalities"
           class="w-100"
           placeholder="Select Nationality"
           filterable
