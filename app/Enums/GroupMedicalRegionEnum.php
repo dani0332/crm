@@ -12,7 +12,7 @@ final class GroupMedicalRegionEnum extends Enum
     public const NON_AUH = 'non-auh';
 
     /**
-     * @return array<int, string>
+     * @return array<string> keys for the region config in the allocation configuration
      */
     public static function regionKeys(): array
     {
