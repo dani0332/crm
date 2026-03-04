@@ -2,29 +2,33 @@
 import { onMounted, ref } from 'vue';
 
 const props = defineProps({
-  configurations: Object,
   nationalities: Array,
-  quoteTypes: Array,
-  filters: Object,
 });
 const toDate = ref('2099-12-31');
+const nationalityGroups = ref([]);
+const selectedNationalityGroups = ref([]);
+const loadingGroups = ref(true);
 
-const loader = ref({
-  table: false,
-});
+function getNationalityGroups() {
+  loadingGroups.value = true;
 
-// Track Inertia events
+  axios.get(route('admin.nationality-groups')).then(response => {
+    nationalityGroups.value = response.data.data;
+    loadingGroups.value = false;
+  });
+}
+
+const toggleGroup = (id) => {
+  if (selectedNationalityGroups.value.includes(id)) {
+    selectedNationalityGroups.value =
+      selectedNationalityGroups.value.filter(g => g !== id)
+  } else {
+    selectedNationalityGroups.value.push(id)
+  }
+}
+
 onMounted(() => {
-  router.on('start', () => {
-    if (isSearchOperation) {
-      isSearching.value = true;
-    }
-  });
-
-  router.on('finish', () => {
-    isSearching.value = false;
-    isSearchOperation = false;
-  });
+  getNationalityGroups();
 });
 
 </script>
@@ -40,26 +44,38 @@ onMounted(() => {
     <div class="mb-4">
         <x-field label="Effective Date">
             <div class="grid sm:grid-cols-2 gap-4">
-                    <DatePicker
-                        name="from"
-                        label="From"
-                    />
-                    <DatePicker
-                        name="to"
-                        label="To"
-                        v-model="toDate"
-                        disabled
-                    />
+                <DatePicker
+                    name="from"
+                    label="From"
+                />
+                <DatePicker
+                    name="to"
+                    label="To"
+                    v-model="toDate"
+                    disabled
+                />
             </div>
         </x-field>   
     </div>
     <div class="grid sm:grid-cols-2 gap-4 mb-4">
         <x-field label="Predefined Group Selection">
-            <x-checkbox
-            label="Max Price"
-          />
+            <!-- Loader until groups are loaded -->
+            <div v-if="loadingGroups" class="text-gray-400 text-sm">
+                Loading groups...
+            </div>
+            
+            <div class="flex flex-col gap-1">
+                <x-checkbox
+                    v-for="group in nationalityGroups"
+                    :key="group.id"
+                    :value="group.id"
+                    :label="group.group_name"
+                    :model-value="selectedNationalityGroups.includes(group.id)"
+                     @update:modelValue="toggleGroup(group.id)"
+                    class="!mb-0"
+                />
+            </div>
         </x-field>
-        
     </div>
     <div class="">
       <x-field label="GBP Nationality">

@@ -103,6 +103,7 @@ use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use App\Http\Controllers\NationalityGroupController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
@@ -901,6 +902,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'edit' => 'admin.nationality-pool-config.edit',
         'update' => 'admin.nationality-pool-config.update',
     ]);
+
+    Route::get('nationality-groups', [NationalityGroupController::class, 'get'])->name('admin.nationality-groups');
 
     Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
