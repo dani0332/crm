@@ -69,6 +69,12 @@ class EmbeddedTransactionService extends BaseService
                     'status_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
                     'message' => $e->getMessage(),
                 ];
+
+                // Stop after first failure: avoid redundant calls to Bird when integration is down.
+                LoggerService::info('retargetEpReminder: Stopping further EP reminders after first Bird API failure', extra: [
+                    'quoteId' => $quote->id,
+                    'failedTransactionCode' => $epTransaction->code,
+                ]);
                 break;
             }
         }
