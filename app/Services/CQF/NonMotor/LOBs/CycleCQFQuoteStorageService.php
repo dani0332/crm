@@ -24,7 +24,7 @@ class CycleCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'cycle';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Cycle;
     }

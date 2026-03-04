@@ -25,7 +25,7 @@ class HomeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'home';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Home;
     }

@@ -25,7 +25,7 @@ class PetCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'pet';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Pet;
     }

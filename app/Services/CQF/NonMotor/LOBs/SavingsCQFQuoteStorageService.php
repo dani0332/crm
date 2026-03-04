@@ -24,7 +24,7 @@ class SavingsCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'savings';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Savings;
     }

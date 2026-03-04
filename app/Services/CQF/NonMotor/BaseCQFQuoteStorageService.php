@@ -72,7 +72,7 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
     /**
      * Quote type for EmbeddedProductRepository (e.g. QuoteTypeId::Bike).
      */
-    abstract protected function getQuoteTypeId(): QuoteTypeId;
+    abstract protected function getQuoteTypeId(): int;
 
     /**
      * Copy LOB-specific quote detail from old quote to new PersonalQuote (e.g. bikeQuote, homeQuote).

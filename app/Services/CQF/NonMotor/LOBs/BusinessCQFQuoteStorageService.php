@@ -24,7 +24,7 @@ class BusinessCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'business';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Business;
     }

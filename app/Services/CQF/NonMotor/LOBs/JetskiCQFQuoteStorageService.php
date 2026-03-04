@@ -24,7 +24,7 @@ class JetskiCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'jetski';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Jetski;
     }

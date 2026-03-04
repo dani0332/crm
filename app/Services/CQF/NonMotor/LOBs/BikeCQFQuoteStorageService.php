@@ -45,7 +45,7 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'bike';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Bike;
     }

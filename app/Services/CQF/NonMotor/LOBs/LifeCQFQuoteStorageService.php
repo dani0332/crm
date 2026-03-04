@@ -25,7 +25,7 @@ class LifeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'life';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Life;
     }

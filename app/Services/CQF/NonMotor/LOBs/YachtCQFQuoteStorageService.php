@@ -25,7 +25,7 @@ class YachtCQFQuoteStorageService extends BaseCQFQuoteStorageService
         return 'yacht';
     }
 
-    protected function getQuoteTypeId(): QuoteTypeId
+    protected function getQuoteTypeId(): int
     {
         return QuoteTypeId::Yacht;
     }
