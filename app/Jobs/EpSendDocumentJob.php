@@ -63,7 +63,7 @@ class EpSendDocumentJob implements ShouldQueue
         ]);
     }
 
-    private function getEpConfigurations()
+    private function getEpConfigurations(): void
     {
         $epEcbAppStorageKeys = [
             ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL,
@@ -75,8 +75,9 @@ class EpSendDocumentJob implements ShouldQueue
         $appStorageRecords = ApplicationStorage::select('value', 'key_name')
             ->where('is_active', ApplicationStorageEnums::ACTIVE)
             ->whereIn('key_name', $epEcbAppStorageKeys)
-            ->whereNotNull('value')
-            ->get();
+            ->get()
+            ->filter(fn ($record) => ! empty($record->value));
+
         $missingAppStorageKeys = array_diff($epEcbAppStorageKeys, $appStorageRecords->pluck('key_name')->toArray());
 
         $this->storageBaseUrl = storageUrl();
