@@ -80,7 +80,7 @@ function onSubmit() {
   loading.value = true;
   axios.post(route('admin.nationality-pool-config.save'), {
     effective_from: fromDate.value,
-    canonical_nationality_code: selectedNationalities.value,
+    canonical_nationality_codes: selectedNationalities.value,
   }).then(response => {
     notification.success({
       title: 'Nationality pool configuration saved successfully',
