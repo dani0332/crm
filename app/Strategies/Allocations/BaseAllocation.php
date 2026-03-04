@@ -148,7 +148,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 function ($q) {
                     if (! empty($this->excludedAdvisorIds)) {
                         LoggerService::info(self::class.' - Excluding advisors from nationality config', extra: [
-                            'excluded_advisor_ids' => $this->excludedAdvisorIds,
+                            'excluded_advisor_ids' => $this->excludedAdvisorIds ?? [],
                         ]);
                         $q->whereNotIn('users.id', $this->excludedAdvisorIds);
                     }
@@ -159,7 +159,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 $ruleUserIds = app(RuleService::class)->getRuleUserIds($this->quoteType);
                 $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
                 LoggerService::info(self::class.' - Excluding advisors from rules', extra: [
-                    'excluded_rule_user_ids' => $ruleUserIds,
+                    'excluded_rule_user_ids' => $ruleUserIds ?? [],
                 ]);
                 $q->whereNotIn('users.id', $ruleUserIds);
             })

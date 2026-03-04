@@ -22,7 +22,7 @@ class LifeAllocation extends BaseAllocation
         LoggerService::info(self::class.'::fetchAdvisor - Querying advisors with emails', [
             'online_status' => $onlineStatus,
             'email_count' => count($emails),
-            'emails' => $emails,
+            'emails' => $emails ?? [],
         ]);
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::LifeAdvisor])
@@ -41,20 +41,20 @@ class LifeAllocation extends BaseAllocation
             LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');
             $users = $this->getFicRulesUsers();
             LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule  ', [
-                'users_ids' => $users->pluck('id')->toArray(),
+                'users_ids' => $users ? $users->pluck('id')->toArray() : [],
             ]);
 
             return $users->pluck('email')->toArray();
         }
 
         LoggerService::info(self::class.'::getAdvisorEmails - Checking lead source rules', [
-            'lead_source' => $this->lead->source,
+            'lead_source' => $this->lead->source ?? 'unknown',
         ]);
 
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
         if (count($emails) > 0) {
             LoggerService::info(self::class.": Found advisor emails from rules | quote Ref-ID: {$this->lead->uuid} ", [
-                'emails' => $emails,
+                'emails' => $emails ?? [],
             ]);
 
             return $emails;
@@ -68,7 +68,7 @@ class LifeAllocation extends BaseAllocation
         $advisorIds = AllocationConfigurer::getLifeEligibleAdvisorIds($this->lead);
 
         LoggerService::info(self::class.'::getAdvisorEmails - Lead is not FIC, eligible advisor ids fetched', [
-            'advisor_ids' => $advisorIds,
+            'advisor_ids' => $advisorIds ?? [],
         ]);
 
         return User::whereIn('id', $advisorIds)->pluck('email')->toArray();
@@ -82,7 +82,7 @@ class LifeAllocation extends BaseAllocation
 
         LoggerService::info(self::class.'::getFicRulesUsers - FIC rule user IDs retrieved', [
             'user_id_count' => count($usersIds),
-            'user_ids' => $usersIds,
+            'user_ids' => $usersIds ?? [],
         ]);
 
         return User::select('id', 'email')->whereIn('id', $usersIds)->get();
