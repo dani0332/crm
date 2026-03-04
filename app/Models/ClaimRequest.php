@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Models;
 
+use App\Traits\QuoteTraits\QuoteAllocatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use Config;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -23,9 +22,10 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  */
 class ClaimRequest extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory;
+    use Auditable, FilterCriteria, HasFactory, QuoteAllocatable;
 
     protected $table = 'claim_requests';
+
     protected $fillable = [
         'incident',
         'claim_decline_reason',
@@ -38,6 +38,8 @@ class ClaimRequest extends Model implements AuditableContract
         'source',
         'manager_id',
         'manager_assigned_date',
+        'lead_allocation_started_at',
+        'lead_allocation_failed_at',
         'quote_uuid',
         'quote_type_id',
         'personal_quote_id',
@@ -61,6 +63,8 @@ class ClaimRequest extends Model implements AuditableContract
     ];
     protected $casts = [
         'google_review_email_sent_at' => 'datetime',
+        'lead_allocation_started_at' => 'datetime',
+        'lead_allocation_failed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

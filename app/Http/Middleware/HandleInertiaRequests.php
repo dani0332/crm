@@ -335,6 +335,13 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        // CLAIM_ALLOCATION_DASHBOARD
+                        auth()->user()->can(PermissionsEnum::CLAIM_ALLOCATION_DASHBOARD),
+                        'Claims',
+                        route('claim-allocation-dashboard'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD),
                         'Cyber',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYBER]),

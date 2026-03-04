@@ -448,8 +448,8 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
     public const SAVINGS_AS_AT_REPORT_MANAGER = 'savings-as-at-report-manager';
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
-    // End of Savings Permissions
 
+    // End of Savings Permissions
     // Claims Permissions
     public const CLAIM_LIST = 'claim-list';
     public const CLAIM_CREATE = 'claim-create';
@@ -490,6 +490,9 @@ final class PermissionsEnum extends Enum
     public const CYBER_LEADPOOL = 'cyber-leadpool';
     public const CYBER_API_TRIGGER = 'cyber-api-trigger';
     // End of Cyber Permissions
+
+    // Claim Allocation Permissions
+    public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
 
     public static function getAdvisorConversionReportPermissions()
     {

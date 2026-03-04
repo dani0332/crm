@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Enums\ClaimsEnum;
+use App\Jobs\Claim\ClaimIntroEmail;
 use App\Jobs\Claim\TriggerBirdClaimsFlowJob;
 use App\Models\ClaimRequest;
 use App\Models\ClaimStatus;
 use App\Services\ClaimStatusesService;
 use App\Services\EmailServices\ClaimRequestEmailService;
 use App\Services\Logger\LoggerService;
+use Exception;
 
 class ClaimRequestObserver
 {
@@ -30,7 +32,21 @@ class ClaimRequestObserver
 
     public function updating(ClaimRequest $claimRequest): void
     {
-
+        $dirty = $claimRequest->getDirty();
+        if (isset($dirty['manager_id'])) {
+          
+            try {
+                ClaimIntroEmail::dispatch($claimRequest->uuid)->delay(now()->addSeconds(10));
+                LoggerService::info("ClaimIntroEmail dispatched for claim: ".$claimRequest->uuid);
+                
+            } catch (Exception $e) {
+                LoggerService::warning('ClaimRequestObserver - handle claim  update manager failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $claimRequest->uuid,
+                    'manager_id' => $claimRequest->manager_id,
+                ]);
+            }
+        }
         if ($claimRequest->isDirty('claim_number')) {
             $originalClaimNumber = $claimRequest->getOriginal('claim_number');
             $newClaimNumber = $claimRequest->claim_number;

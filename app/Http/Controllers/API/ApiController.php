@@ -19,6 +19,7 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\ClaimAssignmentRequest;
 use App\Http\Requests\CheckDocumentUploadAfterPaymentRequest;
 use App\Http\Requests\DocumentNotificationRequest;
 use App\Http\Requests\EmailEventsRequest;
@@ -495,7 +496,10 @@ class ApiController extends Controller
     {
         return $this->apiService->documentNotification($request);
     }
-
+    public function assignClaim(ClaimAssignmentRequest $request)
+    {
+        return $this->apiService->processClaimAssignment($request);
+    }
     /**
      * Export email status logs as Excel file for a specific quote
      *

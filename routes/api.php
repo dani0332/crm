@@ -74,6 +74,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
         // Signature routes
         Route::post('sign-document', [BorController::class, 'signDocument'])->name('bor.sign-document');
     });
+    Route::post('/imcrm/claim/assign-quote', [ApiController::class, 'assignClaim'])->name('assignClaim');
 
     Route::post('check-document-upload-after-authorization', [ApiController::class, 'checkDocumentUploadAfterPayment']);
     // Missing docs reminder and verify missing docs routes

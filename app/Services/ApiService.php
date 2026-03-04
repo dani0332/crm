@@ -29,6 +29,7 @@ use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\MyAlFredUser;
 use App\Models\TravelQuote;
+use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
@@ -515,6 +516,27 @@ class ApiService
         }
     }
 
+    public function processClaimAssignment($request)
+    {
+        // Extract request parameters
+        $quoteTypeId = $request->input('quoteTypeId');
+        $claimUuid = $request->input('claimUUID');
+        $quoteTypeLabel = $request->input('quoteTypeLabel');
+
+        try {
+            $result = app(ClaimAllocationService::class)->execute($claimUuid, $quoteTypeId, $quoteTypeLabel);
+
+            return apiResponse($result, Response::HTTP_OK, 'Claim assignment processed successfully.');
+        } catch (\Exception $e) {
+            LoggerService::error('Error processing claim assignment', exception: $e);
+
+            return apiResponse(
+                null,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'An error occurred while processing the claim assignment.'
+            );
+        }
+    }
     public function getGenericDocuments($request)
     {
         $insuranceProvider = InsuranceProvider::find($request->insurance_provider_id);

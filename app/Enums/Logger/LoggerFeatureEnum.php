@@ -40,6 +40,7 @@ enum LoggerFeatureEnum: string
     case SEND_FAILED_PAYMENT_EMAIL = 'send-failed-payment-email';
     case CAR_CQF_RENEWALS = 'car-cqf-renewals';
     case SUPPORT_USER_ASSIGNMENT = 'support-user-assignment';
+    case CLAIM_ALLOCATION = 'claim-allocation';
     case EP_PROCESS_PURCHASE_FLOW = 'ep-process-purchase-flow';
     case EP_PROCESS_SYNC_DOCUMENT = 'ep-process-sync-document';
     case EP_PROCESS_WATERMARK_DOCUMENT = 'ep-process-watermark-document';

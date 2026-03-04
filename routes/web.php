@@ -8,6 +8,7 @@ use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationConfigurationController;
+use App\Http\Controllers\Allocations\ClaimAllocationController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
@@ -493,6 +494,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
+    // claim allocation
+    Route::get('claim-allocation-dashboard', [ClaimAllocationController::class, 'index'])->name('claim-allocation-dashboard');
+    Route::post('/claim-allocation/update-availability', [ClaimAllocationController::class, 'updateAvailability'])->name('claim-allocation.update-availability');
+    Route::post('/claim-allocation/update-cap', [ClaimAllocationController::class, 'updateCaps'])->name('claim-allocation.update-cap');
+    Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
+
+    Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/{quoteUuId}/update-validate-documents', [QuoteDocumentController::class, 'validateDocumentsUpdate']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
