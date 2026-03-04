@@ -59,7 +59,7 @@ class ClaimReassignJob implements ShouldQueue
         }
 
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::CLAIM_ALLOCATION);
+            LoggerService::startQuoteLogging($lead->uuid, LoggerFeatureEnum::CLAIM_ALLOCATION);
 
             LoggerService::info(self::class.'::handle - Reassignment started ---------');
 
