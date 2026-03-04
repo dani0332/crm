@@ -136,8 +136,9 @@ class ClaimAllocationController extends Controller
                 'message' => 'Reset Cap Capacity Updated Successfully.',
             ], 200);
         } else {
-            return back()->with('info', 'Please select at least one item.');
             LoggerService::error(self::class."::updateResetCapSwitch - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
+
+            return back()->with('info', 'Please select at least one item.');
         }
     }
 
