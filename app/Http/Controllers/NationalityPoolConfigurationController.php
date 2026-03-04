@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Http\Requests\NationalityPoolConfigurationRequest;
 use App\Models\CanonicalNationality;
-use Illuminate\Http\Request;
+use App\Models\NationalityPool;
+use Illuminate\Http\JsonResponse;
 use Inertia\Response;
 
 class NationalityPoolConfigurationController extends Controller
@@ -16,27 +18,33 @@ class NationalityPoolConfigurationController extends Controller
 
     public function index(): Response
     {
+        // Fetch all nationalities
         $nationalities = CanonicalNationality::where('nationality_synonym', 0)
             ->select('canonical_nationality_code as value', 'canonical_nationality_name as label')
             ->orderBy('canonical_nationality_name')->get();
 
+        // Fetch nationality pool configurations
+        $nationalityPoolConfigurations = NationalityPool::all();
+
         return inertia('Admin/AllocationConfig/NationalityPool/Index', [
             'gbpNationalities' => $nationalities,
+            'nationalityPoolConfigurations' => $nationalityPoolConfigurations,
         ]);
     }
 
-    public function show(string $id)
+    public function save(NationalityPoolConfigurationRequest $request): JsonResponse
     {
-        //
-    }
+        try {
+            $codes = collect($request->canonical_nationality_codes)->implode(',');
 
-    public function edit(string $id)
-    {
-        //
-    }
+            NationalityPool::create([
+                'effective_from' => $request->effective_from,
+                'canonical_nationality_codes' => $codes,
+            ]);
 
-    public function update(Request $request, string $id)
-    {
-        //
+            return response()->json(['message' => 'Nationality pool configuration saved successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
     }
 }
