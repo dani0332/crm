@@ -13,6 +13,7 @@ use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\VehicleTypeEnum;
 use App\Models\CarQuote;
+use App\Models\EmbeddedTransaction;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
@@ -194,6 +195,7 @@ class NonMotorCQFRenewalExecutionService
             }
 
             if ($context->newQuote !== null) {
+                $this->updateEmbeddedTransactionIsSelectedForEpCodes($context->epCodes);
                 $this->markQuoteAsCompleted($quote, $renewalsUploadLeads);
             } else {
                 $this->markQuoteAsFailed($quote, $renewalsUploadLeads, ['storage' => 'Failed to create renewal quote'], $mapper, $onFailure);
@@ -277,12 +279,27 @@ class NonMotorCQFRenewalExecutionService
     }
 
     /**
+     * Update EmbeddedTransaction::is_selected for collected ep codes during this quote's renewal creation. Same process as Car (MDX); for Bike storage we collect RDX and update immediately.
+     *
+     * @param  array<int, string>  $epCodes
+     */
+    protected function updateEmbeddedTransactionIsSelectedForEpCodes(array $epCodes): void
+    {
+        if (empty($epCodes)) {
+            return;
+        }
+
+        EmbeddedTransaction::whereIn('code', $epCodes)->update(['is_selected' => 1]);
+        LoggerService::info(self::class.' - Updated is_selected for embedded transaction EP codes', ['count' => count($epCodes)]);
+    }
+
+    /**
      * @return array<int, string>
      */
     protected function getEagerLoadRelationsForLOB(QuoteTypes $quoteType): array
     {
         return match ($quoteType) {
-            QuoteTypes::BIKE => ['bikeQuote', 'bikeQuote.bikeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
+            QuoteTypes::BIKE => ['bikeQuote', 'bikeQuote.bikeQuoteRequestDetail', 'embeddedTransactions', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::HOME => ['homeQuote', 'homeQuote.homeQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::PET => ['petQuote', 'petQuote.petQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],
             QuoteTypes::TRAVEL => ['travelQuote', 'travelQuote.travelQuoteRequestDetail', 'insuranceProvider', 'currentlyInsuredWith', 'advisor'],

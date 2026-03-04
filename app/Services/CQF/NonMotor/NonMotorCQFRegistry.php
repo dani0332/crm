@@ -103,7 +103,7 @@ class NonMotorCQFRegistry
     }
 
     /**
-     * LOBs supported for Non-motor CQF Phase 1 (PersonalQuote-based, excluding Health and Business).
+     * LOBs supported for Non-motor CQF Phase 1 (PersonalQuote-based, excluding Health).
      * Add LOBs to $lobMap when their validator/mapper/storage classes are implemented.
      *
      * @return array<int, QuoteTypes>

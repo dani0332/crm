@@ -116,7 +116,7 @@ class ProcessNonMotorCQFLOBJob implements ShouldQueue
         $batchName = $this->lobBatchName();
         Bus::batch($quoteJobs)
             ->name($batchName)
-            ->then(function () use ($renewalsUploadLeadsId) {
+            ->finally(function () use ($renewalsUploadLeadsId) {
                 FinalizeNonMotorCQFLOBJob::dispatch($renewalsUploadLeadsId);
             })
             ->allowFailures()

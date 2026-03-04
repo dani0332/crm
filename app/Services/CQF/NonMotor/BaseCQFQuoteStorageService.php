@@ -49,11 +49,12 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
         $quoteData['policy_start_date'] = $policyStartDate;
         $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
 
-        return DB::transaction(function () use ($quoteData, $quote) {
+        return DB::transaction(function () use ($quoteData, $quote, &$epCodes) {
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyLobQuoteDetail($newQuote, $quote);
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, $this->getQuoteTypeId());
+            $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
 
             LoggerService::info(self::class.' - '.ucfirst($this->getLobName()).' CQF renewal quote created successfully', [
                 'previous_quote_uuid' => $quote->uuid,
@@ -78,6 +79,13 @@ abstract class BaseCQFQuoteStorageService implements CQFQuoteStorageInterface
      * Copy LOB-specific quote detail from old quote to new PersonalQuote (e.g. bikeQuote, homeQuote).
      */
     abstract protected function copyLobQuoteDetail(PersonalQuote $newQuote, Model $oldQuote): void;
+
+    /**
+     * Optional hook for LOBs that support embedded products (e.g. Bike RDX). Base does nothing; override to collect ep codes from old quote into $epCodes.
+     *
+     * @param  array<int, string>  $epCodes
+     */
+    protected function collectEmbeddedProductCodes(Model $oldQuote, PersonalQuote $newQuote, array &$epCodes): void {}
 
     /**
      * @return array{0: \Illuminate\Support\Carbon, 1: \Illuminate\Support\Carbon}

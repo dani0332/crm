@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\CQF\NonMotor\LOBs;
 
+use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BikeQuote;
 use App\Models\CarQuote;
@@ -59,6 +61,39 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
     }
 
     /**
+     * Collect RDX embedded product codes from old quote (PersonalQuote or CarQuote) when selected + captured; same process as Car MDX.
+     *
+     * @param  array<int, string>  $epCodes
+     */
+    protected function collectEmbeddedProductCodes(Model $oldQuote, PersonalQuote $newQuote, array &$epCodes): void
+    {
+        if (! method_exists($oldQuote, 'embeddedTransactions')) {
+            return;
+        }
+
+        $oldQuote->loadMissing('embeddedTransactions');
+
+        foreach ($oldQuote->embeddedTransactions ?? [] as $embeddedTransaction) {
+            $isSelected = $embeddedTransaction->is_selected == 1;
+            $isPaymentCaptured = $embeddedTransaction->payment_status_id === PaymentStatusEnum::CAPTURED;
+            $isRdxProduct = str_contains($embeddedTransaction->code ?? '', EmbeddedProductEnum::RDX);
+
+            if ($isSelected && $isPaymentCaptured && $isRdxProduct) {
+                $epCodes[] = EmbeddedProductEnum::RDX.'-'.$newQuote->code;
+                LoggerService::info(self::class.' - Embedded transaction (RDX) found for bike renewal quote', [
+                    'embeddedTransaction' => [
+                        'code' => $embeddedTransaction->code,
+                        'is_selected' => $embeddedTransaction->is_selected,
+                        'payment_status_id' => $embeddedTransaction->payment_status_id,
+                        'previous_quote_uuid' => $oldQuote->uuid ?? null,
+                        'new_quote_uuid' => $newQuote->uuid,
+                    ],
+                ]);
+            }
+        }
+    }
+
+    /**
      * Create Bike renewal lead from CarQuote (car_quote_request where vehicle_type_id is Bike).
      *
      * @param  array<int, string>  $epCodes
@@ -84,11 +119,12 @@ class BikeCQFQuoteStorageService extends BaseCQFQuoteStorageService
         $quoteData['policy_start_date'] = $policyStartDate;
         $quoteData['policy_expiry_date'] = $newPolicyExpiryDate;
 
-        return DB::transaction(function () use ($quoteData, $quote) {
+        return DB::transaction(function () use ($quoteData, $quote, &$epCodes) {
             $newQuote = PersonalQuote::create($quoteData);
             $newQuote->quoteDetail()->create([]);
             $this->copyCarQuoteToBikeQuoteDetail($newQuote, $quote);
             app(EmbeddedProductRepository::class)->saveEmbeddedTransaction($newQuote, QuoteTypeId::Bike);
+            $this->collectEmbeddedProductCodes($quote, $newQuote, $epCodes);
 
             LoggerService::info(self::class.' - Bike CQF renewal quote created from car quote successfully', [
                 'previous_car_quote_id' => $quote->id,
