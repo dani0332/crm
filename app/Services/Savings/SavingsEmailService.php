@@ -41,24 +41,23 @@ class SavingsEmailService
             return false;
         }
 
-        if ($lead->isSuppressIntroEmail() && ! ($data['forceSend'] ?? false)) {
+        if ($lead->isSuppressIntroEmail()) {
             LoggerService::info('sendOCAEmail - Suppressing OCA Email');
 
             return null;
         }
 
-        if (! ($data['forceSend'] ?? false)) {
-            $isFlowExecuted = app(BirdService::class)->isFollowupExecuted(
-                $lead->uuid,
-                QuoteTypeId::Savings,
-                QuoteFlowType::SAVINGS_OCA_EMAIL->value
-            );
+        // Check if OCA email flow already executed to prevent duplicates
+        $isFlowExecuted = app(BirdService::class)->isFollowupExecuted(
+            $lead->uuid,
+            QuoteTypeId::Savings,
+            QuoteFlowType::SAVINGS_OCA_EMAIL->value
+        );
 
-            if ($isFlowExecuted) {
-                LoggerService::info("$logPrefix OCA email flow already executed for quote: {$lead->uuid}");
+        if ($isFlowExecuted) {
+            LoggerService::info("$logPrefix OCA email flow already executed for quote: {$lead->uuid}");
 
-                return null;
-            }
+            return null;
         }
 
         // Map data for bird service
