@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GroupNationalitiesRequest;
 use App\Models\HealthGroupNationality;
 use App\Models\HealthNationalityGroup;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class NationalityGroupController extends Controller
 {
@@ -26,7 +26,7 @@ class NationalityGroupController extends Controller
         }
     }
 
-    public function getGroupNationalities(Request $request): JsonResponse
+    public function getGroupNationalities(GroupNationalitiesRequest $request): JsonResponse
     {
         try {
             $groupIds = $request->input('group_ids');
