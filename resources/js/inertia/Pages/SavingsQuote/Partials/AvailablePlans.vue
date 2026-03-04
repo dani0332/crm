@@ -826,6 +826,7 @@ onMounted(() => {
           :lockLeadSectionsDetails="lockLeadSectionsDetails"
           :lookUpData="lookUpData"
           :localLookups="localLookups"
+          :payments="payments"
         />
 
         <!-- Send OCA Email Confirmation Modal -->
