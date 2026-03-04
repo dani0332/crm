@@ -9,7 +9,7 @@ class HealthNationalityGroupSeeder extends Seeder
 {
     public function run(): void
     {
-        HealthNationalityGroup::insert([
+        HealthNationalityGroup::upsert([
             [
                 'group_code' => 'GCC',
                 'group_name' => 'GCC Nationals',
@@ -80,6 +80,7 @@ class HealthNationalityGroupSeeder extends Seeder
                 'updated_at' => '2026-03-02',
                 'notes' => 'African continent',
             ],
-        ]);
+        ], ['group_code'], // unique key
+            ['group_name', 'is_active', 'effective_from', 'effective_to', 'updated_at', 'notes']);
     }
 }
