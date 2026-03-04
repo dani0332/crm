@@ -147,6 +147,9 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 fn ($q) => $q->whereIn('users.id', $this->advisorIDs),
                 function ($q) {
                     if (! empty($this->excludedAdvisorIds)) {
+                        LoggerService::info(self::class.' - Excluding advisors from nationality config', extra: [
+                            'excluded_advisor_ids' => $this->excludedAdvisorIds,
+                        ]);
                         $q->whereNotIn('users.id', $this->excludedAdvisorIds);
                     }
                 },
@@ -155,6 +158,9 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->when($this->skipRuleUsers, function ($q) {
                 $ruleUserIds = app(RuleService::class)->getRuleUserIds($this->quoteType);
                 $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
+                LoggerService::info(self::class.' - Excluding advisors from rules', extra: [
+                    'excluded_rule_user_ids' => $ruleUserIds,
+                ]);
                 $q->whereNotIn('users.id', $ruleUserIds);
             })
             ->orderBy('la.last_allocated', 'asc');
@@ -282,10 +288,19 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->quoteType);
 
         if (empty($excludedAdvisorIds)) {
+            LoggerService::info(self::class.' - No excluded advisor IDs from nationality config');
             return;
         }
 
+        LoggerService::info(self::class.' - Found excluded advisor IDs from nationality config', extra: [
+            'excluded_advisor_ids_before_finalize' => $excludedAdvisorIds,
+        ]);
+
         $excludedAdvisorIds = $this->finalizeExcludedAdvisorIds($excludedAdvisorIds);
+
+        LoggerService::info(self::class.' - Finalized excluded advisor IDs (after removing super advisors)', extra: [
+            'excluded_advisor_ids_after_finalize' => $excludedAdvisorIds,
+        ]);
 
         $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
