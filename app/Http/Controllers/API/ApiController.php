@@ -34,6 +34,7 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Http\Requests\STPAdvisorNotificationRequest;
 use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\UpdateCustomerRepliedRequest;
+use App\Http\Resources\GenericDocumentResource;
 use App\Jobs\CheckDocumentUploadAfterPaymentJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
@@ -552,6 +553,11 @@ class ApiController extends Controller
             return apiResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, 'Failed to run CQF jobs');
         }
 
+    }
+
+    public function getGenericDocuments(Request $request)
+    {
+        return GenericDocumentResource::collection($this->apiService->getGenericDocuments($request));
     }
 
     public function missingDocsReminder($quoteUuid)

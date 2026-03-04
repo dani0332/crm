@@ -26,6 +26,7 @@ use App\Jobs\SendHealthSICWAFollowupJob;
 use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\HealthQuote;
+use App\Models\InsuranceProvider;
 use App\Models\MyAlFredUser;
 use App\Models\TravelQuote;
 use App\Services\ClaimAllocation\ClaimAllocationService;
@@ -536,6 +537,16 @@ class ApiService
             );
         }
     }
+    public function getGenericDocuments($request)
+    {
+        $insuranceProvider = InsuranceProvider::find($request->insurance_provider_id);
+        $quoteTypeId = $request->quote_type_id;
+
+        return $genericDocuments = $insuranceProvider?->genericDocuments()?->when($quoteTypeId, function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })->get() ?? [];
+    }
+
     public function missingDocsReminder($quoteUuid)
     {
         try {

@@ -29,6 +29,7 @@ class DocumentTypeResource extends JsonResource
             'send_to_customer' => $this->send_to_customer,
             'category' => $this->category,
             'tool_tip' => $this->tool_tip,
+            'business_type_of_insurance_id' => $this->business_type_of_insurance_id,
         ];
     }
 }

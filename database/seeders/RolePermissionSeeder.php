@@ -40,6 +40,7 @@ class RolePermissionSeeder extends Seeder
         $this->addEmbeddedProductPaymentCancelAdminPermission();
 
         $this->addExportHomePuaUpdatesPermission();
+        $this->addClaimsPermissions(); // Add claims permissions
         $this->addUtmReportExportPermission();
         $this->addEditLastYearDetailsPermission();
         $this->sageProcessTrackerPermissions();
@@ -314,6 +315,65 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addClaimsPermissions(): void
+    {
+        $roleClaimsManager = Role::firstOrCreate([
+            'name' => RolesEnum::CLAIM_MANAGER,
+            'guard_name' => 'web',
+        ]);
+
+        $roleClaimsLead = Role::firstOrCreate([
+            'name' => RolesEnum::CLAIM_LEAD,
+            'guard_name' => 'web',
+        ]);
+
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::CLAIM_LEAD])->get();
+
+        $claimsPermissions = PermissionsEnum::getClaimsPermissions();
+
+        foreach ($claimsPermissions['claimLead'] as $permissionName) {
+            $permission = Permission::firstOrCreate([
+                'name' => $permissionName,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    info("Permission {$permission->name} assigned to {$role->name} role");
+                } else {
+                    info("{$role->name} role already has permission {$permission->name}");
+                }
+            }
+
+        }
+
+        $roles = Role::whereIn('name', [RolesEnum::CLAIM_MANAGER])->get();
+
+        foreach ($claimsPermissions['claimManager'] as $permissionName) {
+            $permission = Permission::firstOrCreate([
+                'name' => $permissionName,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($roles as $role) {
+                if (! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                    info("Permission {$permission->name} assigned to {$role->name} role");
+                } else {
+                    info("{$role->name} role already has permission {$permission->name}");
+                }
+            }
+
+        }
     }
 
     private function addAssignClientSupportPermission(): void

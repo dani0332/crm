@@ -130,6 +130,16 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
+     * car quote request relation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function carQuote()
+    {
+        return $this->hasOne(CarQuote::class, 'uuid', 'uuid');
+    }
+
+    /**
      * bike quote request relation.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne

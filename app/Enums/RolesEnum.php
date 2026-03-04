@@ -116,6 +116,8 @@ final class RolesEnum extends Enum
     public const CycleClaimManager = 'CYCLE_CLAIM_MANAGER';
     public const JetskiClaimManager = 'JETSKI_CLAIM_MANAGER';
     public const CorplineClaimManager = 'CORPLINE_CLAIM_MANAGER';
+    public const CLAIM_MANAGER = 'CLAIMS_MANAGER';
+    public const CLAIM_LEAD = 'CLAIMS_LEAD';
 
     /* Cyber Roles */
     public const CyberAdvisor = 'CYBER_ADVISOR';

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CacheKeyEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
@@ -9,6 +10,7 @@ use App\Enums\TeamTypeEnum;
 use App\Jobs\SendManagerDeactivationAttemptEmailJob;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Cache\CacheManager;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -504,4 +506,20 @@ class UserService extends BaseService
             'manager_user_id' => $managerUser->id,
         ]);
     }
+
+    /**
+     * Get claims managers (users with appropriate roles)
+     */
+    public function getClaimsManagers(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CLAIM_MANAGERS_KEY, function () {
+            return User::withRole(RolesEnum::CLAIM_MANAGER)
+                ->activeUser()
+                ->select('id', 'name', 'email')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        });
+    }
+
 }
