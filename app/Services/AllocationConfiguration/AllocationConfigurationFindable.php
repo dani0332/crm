@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\AllocationConfiguration;
 
 use App\Enums\EmirateEnum;
+use App\Enums\GroupMedicalRegionEnum;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Allocation\AllocationConfiguration;
@@ -86,7 +87,7 @@ trait AllocationConfigurationFindable
         $regionConfig = $this->getGroupMedicalRegionConfig($configuration, $lead);
 
         foreach (['micro_brackets', 'non_micro_brackets'] as $bracketType) {
-            $brackets = $regionConfig[$bracketType] ?? [];
+            $brackets = isset($regionConfig[$bracketType]) ? $regionConfig[$bracketType] : [];
             $advisorIds = $this->extractAdvisorIdsFromBrackets($brackets, $numberOfEmployees, $healthPlanTypeId, 'planTypeIds', 'employees_min', 'employees_max');
             if (! empty($advisorIds)) {
                 return $advisorIds;
@@ -249,26 +250,16 @@ trait AllocationConfigurationFindable
     {
         $config = $configuration->config ?? [];
 
-        $regionKey = ($lead->emirate_of_registration_id ?? null) === EmirateEnum::ABU_DHABI
-            ? 'auh'
-            : 'non-auh';
+        $regionKey = ($lead->emirate_of_registration_id ?? null) == EmirateEnum::ABU_DHABI
+            ? GroupMedicalRegionEnum::AUH
+            : GroupMedicalRegionEnum::NON_AUH;
 
         if (isset($config[$regionKey]) && is_array($config[$regionKey])) {
             return $config[$regionKey];
+        } else {
+            return [];
+
         }
 
-        // Backward compatibility for legacy configs
-        if (isset($config['non-auh']) && is_array($config['non-auh'])) {
-            return $config['non-auh'];
-        }
-
-        if (isset($config['non_auh']) && is_array($config['non_auh'])) {
-            return $config['non_auh'];
-        }
-
-        return [
-            'micro_brackets' => $config['micro_brackets'] ?? [],
-            'non_micro_brackets' => $config['non_micro_brackets'] ?? [],
-        ];
     }
 }

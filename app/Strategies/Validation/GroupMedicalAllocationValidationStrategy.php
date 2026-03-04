@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Strategies\Validation;
 
 use App\Contracts\AllocationValidationStrategyInterface;
+use App\Enums\GroupMedicalRegionEnum;
 use App\Models\Department;
 use App\Models\User;
 use App\Traits\ValidatesBracketStructure;
@@ -18,8 +19,7 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
     public function getRules(): array
     {
         return array_merge(
-            $this->buildRegionRules('auh'),
-            $this->buildRegionRules('non-auh'),
+            ...array_map(fn (string $key) => $this->buildRegionRules($key), GroupMedicalRegionEnum::regionKeys()),
         );
     }
 
@@ -144,7 +144,7 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
     {
         $hasAnyRegion = false;
 
-        foreach (['auh', 'non-auh'] as $regionKey) {
+        foreach (GroupMedicalRegionEnum::regionKeys() as $regionKey) {
             $regionProvided = array_key_exists($regionKey, $data);
             $region = $this->resolveRegionConfig($data, $regionKey);
             $hasBrackets = (! empty($region['micro_brackets']) && count($region['micro_brackets']) > 0) ||
@@ -202,14 +202,6 @@ class GroupMedicalAllocationValidationStrategy implements AllocationValidationSt
     {
         if (isset($data[$regionKey]) && is_array($data[$regionKey])) {
             return $data[$regionKey];
-        }
-
-        // Backward compatibility for legacy payloads
-        if ($regionKey === 'non-auh' && (isset($data['micro_brackets']) || isset($data['non_micro_brackets']))) {
-            return [
-                'micro_brackets' => $data['micro_brackets'] ?? [],
-                'non_micro_brackets' => $data['non_micro_brackets'] ?? [],
-            ];
         }
 
         return [

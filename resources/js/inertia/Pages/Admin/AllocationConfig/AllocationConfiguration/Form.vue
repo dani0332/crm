@@ -316,8 +316,8 @@ onMounted(() => {
         <div class="p-6 bg-white border-b border-gray-200">
           <!-- View Mode Buttons -->
           <div
-            v-if="              
-              form.quote_type !== quoteTypeCodeEnum.GroupMedical
+            v-if="      
+            isViewMode && currentConfiguration && form.quote_type !== quoteTypeCodeEnum.GroupMedical
             "
             class="flex justify-end gap-3 mb-4"
           >
