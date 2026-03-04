@@ -150,7 +150,7 @@ class SavingsQuoteService extends BaseQuoteService
         $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
 
         if (isset($response->quoteUID)) {
-            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, false);
+            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, true);
         }
 
         return $response;
