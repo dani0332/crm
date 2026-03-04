@@ -287,7 +287,7 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
             $mock->shouldReceive('triggerWebHookRequest')
                 ->once()
                 ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
-                ->andReturn((object) ['status_code' => Response::HTTP_NOT_FOUND, 'body' => `{"code":"NotFound","message":"The resource doesn't exist or you don't have access to it."}`]);
+                ->andReturn((object) ['status_code' => Response::HTTP_NOT_FOUND, 'body' => '{"code":"NotFound","message":"The resource doesn\'t exist or you don\'t have access to it."}']);
         });
 
         $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
