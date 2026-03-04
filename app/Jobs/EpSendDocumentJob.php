@@ -183,6 +183,11 @@ class EpSendDocumentJob implements ShouldQueue
     private function triggerBirdWorkflow(array $birdEmailData)
     {
         $birdWorkflowUrl = $this->epEcbConfiguration[ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL] ?? '';
+
+        if (empty($birdWorkflowUrl)) {
+            throw new \Exception('Bird EP workflow URL is not configured');
+        }
+
         LoggerService::info("{$this->logPrefix} triggerBirdWorkflow: ", extra: ['data' => $birdEmailData]);
 
         app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
