@@ -104,6 +104,7 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Controllers\NationalityGroupController;
+use App\Http\Controllers\CanonicalNationalityController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Models\BorLog;
 use App\Services\AddBatchForNonMotors;
