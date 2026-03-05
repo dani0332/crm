@@ -31,7 +31,7 @@ class AssignTeamPipe extends BaseAllocationPipe
         $this->setRequest($request);
 
         $logService = app(HealthTeamRoutingLogService::class);
-        $isSIC = $this->lead->isSIC($this->allocationRequest->getQuoteType());
+        /*$isSIC = $this->lead->isSIC($this->allocationRequest->getQuoteType());
 
         // Priority 1: Check if we should use health plan type for team assignment (regardless of SIC/non-SIC)
         if ($this->shouldUseHealthPlanType()) {
@@ -93,7 +93,55 @@ class AssignTeamPipe extends BaseAllocationPipe
                 $this->source
             );
             $this->assignTeamBasedOnPrices();
+        }*/
+
+        // Check if lead source ! ecom
+        if (! $this->lead->isEcommerce()) {
+            // Terminate
+            LoggerService::info('Lead source is not ecom, health team routing is applicable', ['source' => $this->source]);
+            $logService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'Lead source is not ecom, health team routing is applicable',
+                    'step' => 'ecom source check',
+                    'lead_source' => $this->source,
+                    'quote_type' => $this->allocationRequest->getQuoteType(),
+                ],
+                $this->lead->id,
+                $this->lead->uuid,
+                null,
+                $this->source
+            );
+
+            return $next($request);
         }
+
+        $isAUHLead = $this->lead->isAUHLead(false);
+
+        // AUH path
+        if ($isAUHLead) {
+            LoggerService::info('Lead is AUH lead', ['source' => $this->source]);
+            $logService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'Lead is AUH lead',
+                    'step' => 'AUH check',
+                    'is_auh' => true,
+                    'quote_type' => $this->allocationRequest->getQuoteType(),
+                ],
+                $this->lead->id,
+                $this->lead->uuid,
+                null,
+                $this->source
+            );
+
+            app(HealthTeamRoutingService::class, ['source' => $this->source])
+                ->triggerAUHTierRouting($this->lead, $this->allocationRequest->getQuoteType(), $this->source);
+
+            return $next($request);
+        }
+
+        // Non AUH path
 
         if (! $this->lead->health_team_type) {
             LoggerService::warning('No health team found');
@@ -101,12 +149,12 @@ class AssignTeamPipe extends BaseAllocationPipe
         }
 
         $this->lead->refresh();
-
         $this->allocationRequest->setLead($this->lead);
 
         return $next($request);
     }
 
+    /*
     protected function assignTeamBasedOnPrices()
     {
         LoggerService::info('Inside assignTeamBasedOnPrices', ['source' => $this->source]);
@@ -225,5 +273,5 @@ class AssignTeamPipe extends BaseAllocationPipe
             TeamCategoryEnum::NON_AUH,
             $this->source
         );
-    }
+    }*/
 }

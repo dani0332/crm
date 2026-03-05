@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\HealthTeamRouting;
 
+use App\Enums\HealthRoutingLogTypeEnum;
 use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\TeamCategoryEnum;
@@ -26,6 +27,96 @@ class HealthTeamRoutingService
         protected NationalityPoolService $nationalityPoolService,
         private HealthRoutingSourceEnum $source) {}
 
+    public function triggerAUHTierRouting(HealthQuote $lead, $quoteType, HealthRoutingSourceEnum $source)
+    {
+        // Check if SIC1 (no health plan type)
+        if ($lead->isSIC1()) {
+            // Terminate
+            LoggerService::info('Lead is SIC1 (no health plan type), routing is not applicable', ['source' => $this->source]);
+            $this->healthTeamRoutingLogService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'Lead is SIC1 (no health plan type), routing is not applicable',
+                    'step' => 'SIC1 check',
+                    'is_sic1' => true,
+                    'quote_type' => $quoteType,
+                    'source' => $source,
+                ],
+                $lead->id,
+                $lead->uuid,
+                null,
+                $source
+            );
+
+            return;
+        }
+
+        // As per business we need to check SIC2 for future
+        // For now we will just add logs
+        if ($lead->isSIC2()) {
+            // Do not terminate just add logs
+            LoggerService::info('Lead is SIC2', ['source' => $this->source]);
+            $this->healthTeamRoutingLogService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'Lead is SIC2',
+                    'step' => 'SIC2 check',
+                    'is_sic2' => true,
+                    'quote_type' => $quoteType,
+                    'source' => $source,
+                ],
+                $lead->id,
+                $lead->uuid,
+                null,
+                $source
+            );
+        }
+
+        // Check if GBP qualified
+        if ($this->isGBPQualified($lead)) {
+            LoggerService::info('GBP team qualified, assigning to GBP team', ['source' => $source]);
+            $this->healthTeamRoutingLogService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'GBP team qualified, assigning to GBP team',
+                    'step' => 'GBP team check',
+                    'is_gbp' => true,
+                    'quote_type' => $quoteType,
+                    'source' => $source,
+                ],
+                $lead->id,
+                $lead->uuid,
+                null,
+                $source
+            );
+            $lead->health_team_type = HealthTeamType::GBP;
+            $lead->save();
+
+            return true;
+        }
+
+        // Check if PEC team qualified
+        if ($lead->isPECLead()) {
+            // Do not terminate just add logs
+            LoggerService::info('PEC team qualified', ['source' => $source]);
+            $$this->healthTeamRoutingLogService->log(
+                HealthRoutingLogTypeEnum::ROUTING,
+                [
+                    'message' => 'PEC team qualified',
+                    'step' => 'PEC team check',
+                    'is_pec' => true,
+                    'quote_type' => $quoteType,
+                    'source' => $source,
+                ],
+                $lead->id,
+                $lead->uuid,
+                null,
+                $source
+            );
+        }
+
+        // Assign AUH team
+    }
     public function isGBPQualified(HealthQuote $lead): bool
     {
         $gbpMinPrice = $this->getGbpTeamMinPrice();
