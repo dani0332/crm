@@ -112,7 +112,7 @@ class ECB extends EmbeddedProduct
         $isNotExcludedCarMake = ! in_array($carMakeCode, EpEcbExcludeVehicleEnum::CAR_MAKE_CODES);
         $isNotExcludedCarModel = ! in_array($carModelCode, EpEcbExcludeVehicleEnum::CAR_MODEL_CODES);
         $isNotCommercialVehicle = $quote->vehicle_use !== CarVehicleUse::COMMERCIAL;
-        $isNotModifiedVehicle = $quote->is_modified == false;
+        $isNotModifiedVehicle = ! $quote->is_modified;
         $isNotTPLPlan = $planRepairType !== CarPlanType::TPL;
 
         return $isNotExcludedCarMake

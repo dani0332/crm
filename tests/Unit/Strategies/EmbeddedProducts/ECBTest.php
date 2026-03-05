@@ -166,6 +166,46 @@ describe('ECB', function () {
 
             expect($strategy->isDisabled($epTransaction))->toBeFalse();
         });
+
+        test('returns false when criteria matched with is_modified null (legacy records)', function () {
+            $quote = Mockery::mock(CarQuote::class)->makePartial();
+            $quote->quote_status_id = QuoteStatusEnum::PolicyBooked;
+            $quote->policy_booking_date = Carbon::now()->subDays(10)->toDateString();
+            $quote->carMake = (object) ['code' => 'TOY'];
+            $quote->carModel = (object) ['code' => 'CAM'];
+            $quote->plan = (object) ['repair_type' => CarPlanType::COMP];
+            $quote->vehicle_use = CarVehicleUse::PRIVATE;
+            $quote->is_modified = null;
+
+            $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
+            $epTransaction->payment_status_id = PaymentStatusEnum::DRAFT;
+            $epTransaction->is_active = 1;
+            $epTransaction->quoteRequest = $quote;
+
+            $strategy = new ECB;
+
+            expect($strategy->isDisabled($epTransaction))->toBeFalse();
+        });
+
+        test('returns true when is_modified is true (modified vehicle not eligible)', function () {
+            $quote = Mockery::mock(CarQuote::class)->makePartial();
+            $quote->quote_status_id = QuoteStatusEnum::PolicyBooked;
+            $quote->policy_booking_date = Carbon::now()->subDays(10)->toDateString();
+            $quote->carMake = (object) ['code' => 'TOY'];
+            $quote->carModel = (object) ['code' => 'CAM'];
+            $quote->plan = (object) ['repair_type' => CarPlanType::COMP];
+            $quote->vehicle_use = CarVehicleUse::PRIVATE;
+            $quote->is_modified = true;
+
+            $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
+            $epTransaction->payment_status_id = PaymentStatusEnum::DRAFT;
+            $epTransaction->is_active = 1;
+            $epTransaction->quoteRequest = $quote;
+
+            $strategy = new ECB;
+
+            expect($strategy->isDisabled($epTransaction))->toBeTrue();
+        });
     });
 });
 
