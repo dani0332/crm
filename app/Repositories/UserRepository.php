@@ -97,7 +97,7 @@ class UserRepository extends BaseRepository
     {
         $teamName = (! is_array($teamName)) ? [$teamName] : $teamName;
 
-        $teams = Team::whereIn('name', $teamName)->get();
+        $teams = Team::whereIn('code', $teamName)->active()->get();
 
         return $this->where('id', $userId)->whereHas('teams', function ($q) use ($teams) {
             if ($teams) {
