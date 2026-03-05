@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\HealthTeamRouting;
 
+use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\TeamCategoryEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
-use App\Enums\HealthRoutingSourceEnum;
 use App\Models\HealthQuote;
 use App\Models\Team;
 use App\Services\Logger\LoggerService;
@@ -19,9 +19,30 @@ class HealthTeamRoutingService
     use HealthTeamRoutable;
 
     public function __construct(
-    protected HealthTeamRoutingLogService $healthTeamRoutingLogService,
-    private HealthRoutingSourceEnum $source) {}
+        protected HealthTeamRoutingLogService $healthTeamRoutingLogService,
+        protected CanonicalNationalityService $canonicalNationalityService,
+        protected NationalityPoolService $nationalityPoolService,
+        private HealthRoutingSourceEnum $source) {}
 
+    public function isGBPQualified(HealthQuote $lead): bool
+    {
+        $gbpMinPrice = $this->getGbpTeamMinPrice();
+        // Return if not fall under price
+        if ($gbpMinPrice !== null && ! empty($lead->price_starting_from) && $lead->price_starting_from < $gbpMinPrice) {
+            return false;
+        }
+
+        // Check nationality among nationality pool
+        $canonicalNationality = $this->canonicalNationalityService->getByNationalityId($lead->nationality_id);
+        $nationalityPoolCodes = $this->nationalityPoolService->getNationalityCodes();
+
+        if (! collect(explode(',', $nationalityPoolCodes))->contains($canonicalNationality->canonical_nationality_code)) {
+            return false;
+        }
+
+        return true;
+    }
+    /*
     public function getTeamBasedOnHealthTeamRouting(HealthQuote $lead): ?string
     {
         LoggerService::startQuoteLogging($lead);
@@ -436,5 +457,5 @@ class HealthTeamRoutingService
         }
 
         return $team?->name;
-    }
+    }*/
 }
