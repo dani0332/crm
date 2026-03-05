@@ -69,6 +69,7 @@ class EmbeddedTransactionService extends BaseService
                     'status_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
                     'message' => $e->getMessage(),
                 ];
+
                 continue;
             }
         }
