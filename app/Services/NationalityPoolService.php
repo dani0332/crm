@@ -6,7 +6,7 @@ use App\Models\NationalityPool;
 
 class NationalityPoolService
 {
-    public function getNationalityCodes(int $nationalityId): ?NationalityPool
+    public function getNationalityCodes(): ?NationalityPool
     {
         return NationalityPool::active()
             ->select('canonical_nationality_codes')
