@@ -191,6 +191,10 @@ class EmbeddedTransaction extends Model
 
     public function scopeQuoteRequestStatusId($query, int $quoteStatusId)
     {
-        return $query->whereHas('quoteRequest', fn ($q) => $q->where('quote_status_id', $quoteStatusId));
+        return $query->whereHasMorph(
+            'quoteRequest',
+            [CarQuote::class, TravelQuote::class, HealthQuote::class],
+            fn ($q) => $q->where('quote_status_id', $quoteStatusId)
+        );
     }
 }
